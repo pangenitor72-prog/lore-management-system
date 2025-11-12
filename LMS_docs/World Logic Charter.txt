@@ -1,0 +1,489 @@
+# World Logic Charter
+**Version:** 1.2  
+**Last Updated:** November 6, 2025  
+**Status:** Conceptual Design (Future Phase II)
+
+---
+
+## Overview
+
+The **World Logic Charter** is a universal set of narrative coherence laws that apply to ALL fictional worlds in the LMS. These laws govern physics, causality, and narrative consistency independent of genre or setting.
+
+**Purpose:**
+- Provide baseline "physics" for fictional worlds
+- Detect narrative contradictions automatically
+- Guide contradiction reconciliation
+- Enable portability across genres
+
+**Integration:** Future Phase II (after Phase I core functionality)
+
+---
+
+## The Eleven Laws
+
+### LAW I: Conservation of Consequence
+**Statement:** "Every action must have a traceable cause and a proportional effect."
+
+**Meaning:**
+- Nothing happens without reason
+- Effects match causes in scale
+- Butterfly effects must be explained
+- No deus ex machina without setup
+
+**Violations:**
+- Random events with no cause
+- Disproportionate effects
+- Plot conveniences without justification
+
+**Example:**
+```
+✅ VALID: "The kingdom fell because the heir was assassinated."
+❌ INVALID: "The kingdom fell for no reason."
+```
+
+---
+
+### LAW II: Limited Exception
+**Statement:** "Every wonder must carry a cost, a conduit, or a consequence."
+
+**Meaning:**
+- Magic requires price/source/aftermath
+- Power isn't free
+- Shortcuts have drawbacks
+- Balance must be maintained
+
+**Violations:**
+- Unlimited power with no cost
+- Magic with no explanation
+- Consequences ignored
+
+**Example:**
+```
+✅ VALID: "Casting the spell drained his life force."
+❌ INVALID: "He cast unlimited spells with no cost."
+```
+
+---
+
+### LAW III: Local Truth (Flexible Exceptions)
+**Statement:** "Exceptions to other laws are permitted IF they are consistently applied within a defined scope."
+
+**Meaning:**
+- Local rules can override universal ones
+- But must be consistent within scope
+- Sacred grounds, dead zones, special locations
+- "Here, magic works differently"
+
+**Scope Examples:**
+- Inside the Sanctum, magic is costless (overrides Law II)
+- In the Dead Zone, magic fails entirely
+- Within the city walls, time flows differently
+
+**Requirements:**
+- Clearly defined boundaries
+- Consistent application
+- Explained to reader/players
+
+**Example:**
+```
+✅ VALID: "Inside the temple, the dead can speak (local exception)"
+❌ INVALID: "Sometimes the dead speak, sometimes not (inconsistent)"
+```
+
+---
+
+### LAW IV: Reconcilable Conflict
+**Statement:** "Contradictions must be resolvable through narrative means."
+
+**Meaning:**
+- Conflicting facts can coexist with explanation
+- Unreliable narrators are valid
+- Perspective differences are acceptable
+- Mystery ≠ contradiction
+
+**Resolution Methods:**
+- Unreliable narrator
+- Different perspectives
+- Time period changes
+- Lost/corrupted information
+- Deliberate misdirection
+
+**Example:**
+```
+✅ VALID: "He claims to be immortal, but witnesses saw him die. (unreliable narrator)"
+❌ INVALID: "He's immortal. He died. (unexplained contradiction)"
+```
+
+---
+
+### LAW V: Persistent Identity
+**Statement:** "An entity cannot be and not-be simultaneously without explanation."
+
+**Meaning:**
+- Entities have consistent existence
+- Death/transformation must be explained
+- Retcons require narrative justification
+- "Schrödinger's NPC" is invalid
+
+**Violations:**
+- Character alive and dead with no explanation
+- Entity exists in contradictory states
+- Unexplained resurrections
+
+**Example:**
+```
+✅ VALID: "He died, then was resurrected by dark magic."
+❌ INVALID: "He's both alive and dead."
+```
+
+---
+
+### LAW VI: Temporal Ordering
+**Statement:** "Events must maintain chronological consistency or provide a framework for paradox."
+
+**Meaning:**
+- Cause before effect (usually)
+- Timeline must be trackable
+- Time travel requires rules
+- Flashbacks must be identified
+
+**Violations:**
+- Effect before cause (without time travel)
+- Contradictory timelines
+- Inconsistent chronology
+
+**Example:**
+```
+✅ VALID: "The prophecy warned of the war. Then the war happened."
+❌ INVALID: "The war happened. The prophecy warned of it later."
+```
+
+---
+
+### LAW VII: Bounded Knowledge
+**Statement:** "Characters can only know what they could plausibly have learned."
+
+**Meaning:**
+- No omniscience without explanation
+- Information requires source
+- Secrets require discovery
+- Knowledge must be earned
+
+**Violations:**
+- Characters knowing impossible facts
+- Information from nowhere
+- Unexplained omniscience
+
+**Example:**
+```
+✅ VALID: "He learned the secret from the ancient tome."
+❌ INVALID: "He just knew the secret somehow."
+```
+
+---
+
+### LAW VIII: Material Permanence
+**Statement:** "Physical objects cannot spontaneously materialize or vanish without a mechanism."
+
+**Meaning:**
+- Conservation of mass (mostly)
+- Items require origin
+- Destruction requires cause
+- Teleportation needs explanation
+
+**Violations:**
+- Items appearing from nowhere
+- Things vanishing without cause
+- Unexplained creation/destruction
+
+**Example:**
+```
+✅ VALID: "The sword was forged by the dwarves."
+❌ INVALID: "The sword just appeared."
+```
+
+---
+
+### LAW IX: Proportional Power
+**Statement:** "An entity's capabilities must be consistent with its nature and history."
+
+**Meaning:**
+- Power levels must be justified
+- Growth requires time/training
+- Abilities match background
+- No sudden power-ups without explanation
+
+**Violations:**
+- Instant mastery
+- Inconsistent power levels
+- Unexplained abilities
+
+**Example:**
+```
+✅ VALID: "After years of training, he mastered the technique."
+❌ INVALID: "He suddenly knew how to fight perfectly."
+```
+
+---
+
+### LAW X: Geographical Coherence
+**Statement:** "Locations must maintain spatial relationships and traversal costs."
+
+**Meaning:**
+- Distance matters
+- Travel takes time
+- Geography is consistent
+- Maps should work
+
+**Violations:**
+- Inconsistent distances
+- Impossible travel times
+- Contradictory geography
+
+**Example:**
+```
+✅ VALID: "The journey from A to B took three days."
+❌ INVALID: "A to B is both 100 miles and 10 miles away."
+```
+
+---
+
+### LAW XI: Social Consistency
+**Statement:** "Cultures and societies must operate by internally consistent rules."
+
+**Meaning:**
+- Social structures make sense
+- Customs are followed
+- Economy functions
+- Politics are logical
+
+**Violations:**
+- Contradictory social rules
+- Impossible economies
+- Illogical politics
+
+**Example:**
+```
+✅ VALID: "The matriarchy is ruled by women, as tradition demands."
+❌ INVALID: "The matriarchy is ruled by men."
+```
+
+---
+
+## How the Charter Works
+
+### Three-Tier System
+
+```
+TIER 1: Universal Charter (This Document)
+↓ Applies to ALL worlds
+    
+TIER 2: Campaign Setting Document  
+↓ World-specific overrides
+    
+TIER 3: Local Truth (Law III)
+↓ Scene-specific exceptions
+```
+
+### Validation Process
+
+```python
+def validate_entity(entity):
+    # Check against Charter Laws
+    charter_violations = check_charter(entity)
+    
+    # Check against Campaign overrides
+    campaign_violations = check_campaign_rules(entity)
+    
+    # Check for Local Truth exceptions
+    local_exceptions = check_local_truths(entity)
+    
+    # Return violations with reconciliation guidance
+    return violations, guidance
+```
+
+---
+
+## Campaign Overrides
+
+Each campaign can override Charter laws for world-specific rules:
+
+```yaml
+# campaign_overrides.yaml
+charter_overrides:
+  - law_number: 2
+    law_title: "Limited Exception"
+    override_type: "refinement"
+    campaign_statement: "In Hollow Eye, magic costs SANITY not life force"
+```
+
+See `concepts/campaign-overrides-format.md` for full specification.
+
+---
+
+## Contradiction Reconciliation
+
+When contradictions are detected, the Charter provides guidance:
+
+### Law IV Reconciliation Methods:
+1. **Unreliable Narrator:** "The character was mistaken"
+2. **Perspective Difference:** "From their view, it seemed..."
+3. **Time Period:** "This was true then, changed later"
+4. **Lost Information:** "Records were corrupted"
+5. **Deliberate Deception:** "They were lying"
+
+### Reconciliation Workflow:
+```
+1. Detect contradiction
+2. Identify which laws are violated
+3. Check for Local Truth exceptions (Law III)
+4. Suggest reconciliation per Law IV
+5. DM approves/modifies reconciliation
+6. Store narrative resolution
+```
+
+---
+
+## Integration Timeline
+
+**Phase I (Current):** Core LMS without Charter
+- Basic contradiction detection
+- Manual reconciliation
+- No Charter validation
+
+**Phase II (Future):** Charter Integration
+- Add `charter_guidance` column to contradictions
+- Implement CharterValidator module
+- Load Charter laws from this document
+- Provide reconciliation suggestions
+
+**Phase III (Future):** Campaign Settings
+- Per-campaign Charter overrides
+- Local Truth tracking
+- Multi-world support
+
+---
+
+## Database Schema (Future)
+
+```sql
+-- Phase II Addition
+CREATE TABLE charter_laws (
+    law_number INTEGER PRIMARY KEY,
+    law_title TEXT NOT NULL,
+    statement TEXT NOT NULL,
+    meaning TEXT,
+    examples TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Phase III Addition
+CREATE TABLE local_truths (
+    truth_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    location_id TEXT NOT NULL,
+    statement TEXT NOT NULL,
+    parent_law INTEGER DEFAULT 3,  -- Usually Law III
+    reason TEXT,
+    active BOOLEAN DEFAULT TRUE
+);
+```
+
+---
+
+## Benefits of Charter System
+
+### For DMs:
+✅ Automatic narrative consistency checking  
+✅ Suggested contradiction resolutions  
+✅ Framework for world-building  
+✅ Portable across campaigns  
+
+### For Players:
+✅ Consistent world behavior  
+✅ No arbitrary rule changes  
+✅ Predictable cause-and-effect  
+✅ Immersive coherence  
+
+### For the System:
+✅ AI-assisted contradiction detection  
+✅ Structured reconciliation process  
+✅ Scalable to any genre  
+✅ Educational for narrative design  
+
+---
+
+## Example: Charter in Action
+
+### Scenario: Character Death Contradiction
+
+**Contradiction Detected:**
+- Document A: "Sir Aldric died in battle at Helm's Gate"
+- Document B: "Sir Aldric attended the feast last week"
+
+**Charter Analysis:**
+- **Violates:** Law V (Persistent Identity) - can't be dead and alive
+- **Violates:** Law VI (Temporal Ordering) - if dead first, can't attend later
+
+**Reconciliation Options (Law IV):**
+1. **Perspective:** "Reports of his death were false (mistaken identity)"
+2. **Temporal:** "The feast was BEFORE the battle (documents out of order)"
+3. **Supernatural:** "He was resurrected between events (Law II - magic cost)"
+4. **Unreliable:** "The witness lied about seeing him at feast"
+
+**DM Chooses:** Option 2 (feast before battle)
+
+**System Records:**
+```json
+{
+  "contradiction_id": "...",
+  "charter_guidance": "Violates Laws V & VI",
+  "reconciliation_type": "temporal_reordering",
+  "reconciliation_narrative": "The feast occurred before Sir Aldric's death at Helm's Gate. Documents were presented out of chronological order."
+}
+```
+
+---
+
+## World-Class Design
+
+This Charter system represents **world-class game design architecture**:
+
+- ✅ Universal laws + flexible overrides
+- ✅ Supports any genre (fantasy, sci-fi, horror, etc.)
+- ✅ AI-friendly (structured validation)
+- ✅ DM-friendly (helpful not restrictive)
+- ✅ Portable and shareable
+- ✅ Scales from simple to complex
+
+**The Charter is optional but powerful** - use as much or as little as needed.
+
+---
+
+## Version History
+
+**v1.2 (Nov 6, 2025):**
+- Finalized all 11 laws
+- Added reconciliation methods
+- Defined three-tier system
+- Integration timeline specified
+
+**v1.1 (Nov 5, 2025):**
+- Refined Law III (Local Truth)
+- Added campaign overrides concept
+- Example scenarios included
+
+**v1.0 (Oct 2025):**
+- Initial Charter concept
+- First 9 laws defined
+
+---
+
+**Status:** Conceptual design, ready for Phase II implementation  
+**Dependencies:** Phase I core LMS must be stable  
+**Implementation Estimate:** 1 week for full Charter system  
+
+**See Also:**
+- `concepts/campaign-overrides-format.md` - Campaign settings
+- `architecture/validation-pipeline.md` - How validation works
+- `concepts/entity-types.md` - What gets validated

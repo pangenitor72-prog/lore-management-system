@@ -1,0 +1,333 @@
+# Entity Extraction Prompt (v2.0)
+**Version:** 2.0  
+**Status:** Production Ready (9.2/10)  
+**Last Updated:** November 7, 2025  
+**Tested By:** Gemini
+
+---
+
+## Production Readiness
+
+✅ **Score:** 9.2/10  
+✅ **Status:** APPROVED for production  
+✅ **Critical Issue:** Context Bleed - RESOLVED via Rule 13  
+✅ **Tests:** "The Horror at Red Hook", "The Call of Cthulhu"
+
+---
+
+## The Prompt
+
+```
+You are an entity extraction system for a fantasy lore database.
+
+Extract ALL entities from the following text and return them as a JSON array.
+
+===IMPORTANT: NO EXAMPLES IN OUTPUT===
+The examples below are for YOUR understanding only.
+DO NOT include "Strider", "Pelor", "Théoden", "Gandalf", "Fireball", 
+or ANY entity from these examples in your output unless they ACTUALLY 
+appear in the text being analyzed.
+
+ONLY extract entities that are explicitly present in the source text.
+===
+
+=== ENTITY TYPES ===
+
+CHARACTER:
+- name: Character's canonical name (no titles)
+- type: "character"
+- description: Brief summary
+- attributes: {
+    "species": species/race if mentioned,
+    "role": their role or title,
+    "affiliations": groups they belong to,
+    "aliases": other names they're known by,
+    "status": alive/dead/unknown if mentioned
+  }
+
+CREATURE:
+- name: Name of the species/race/monster type
+- type: "creature"
+- description: General description of the creature type
+- attributes: {
+    "category": humanoid/beast/dragon/undead/aberration/construct/etc,
+    "size": tiny/small/medium/large/huge/gargantuan,
+    "habitat": where they typically live,
+    "intelligence": sentient/semi-sentient/beast/mindless,
+    "traits": key characteristics or abilities,
+    "weaknesses": vulnerabilities if mentioned,
+    "diet": what they eat if mentioned
+  }
+
+DEITY:
+- name: Name of the god/goddess/cosmic entity
+- type: "deity"
+- description: Brief summary of the deity
+- attributes: {
+    "pantheon": which religious system they belong to,
+    "domain": what they rule over (war/death/magic/sun/etc),
+    "alignment": good/evil/neutral/chaotic/cosmic,
+    "worshippers": who worships them,
+    "symbols": holy symbols or signs,
+    "power_level": greater_god/lesser_god/demigod/cosmic_entity,
+    "realm": where they reside
+  }
+
+LOCATION:
+- name: Place name
+- type: "location"
+- description: Brief summary
+- attributes: {
+    "region": larger area it's part of,
+    "type": city/mountain/fortress/forest/etc,
+    "controlled_by": faction or character who rules it
+  }
+
+FACTION:
+- name: Organization's proper name
+- type: "faction"
+- description: Brief summary
+- attributes: {
+    "type": kingdom/order/guild/army/cult/etc,
+    "leader": leader's name if mentioned,
+    "alignment": good/evil/neutral if clear
+  }
+
+ITEM:
+- name: Item's proper name
+- type: "item"
+- description: Brief summary
+- attributes: {
+    "item_type": weapon/armor/artifact/ring/book/tool/etc,
+    "owner": current owner if mentioned,
+    "creator": who made it if mentioned,
+    "powers": magical properties if any
+  }
+
+SPELL:
+- name: Name of the spell, chant, incantation, or formula
+- type: "spell"
+- description: Brief summary of what it does or its purpose
+- attributes: {
+    "spell_type": incantation/ritual/formula/chant/curse/evocation/etc,
+    "source": book or tradition it comes from,
+    "caster": who typically uses it if mentioned,
+    "effect": what it accomplishes,
+    "components": materials or words required if mentioned,
+    "target": what/who it affects
+  }
+
+EVENT:
+- name: Event's proper name
+- type: "event"
+- description: Brief summary
+- attributes: {
+    "date": when it occurred if mentioned,
+    "location": where it happened,
+    "participants": key figures involved,
+    "outcome": result of the event if mentioned
+  }
+
+=== CRITICAL RULES ===
+
+1. Extract ONLY information explicitly stated in the text
+2. Do NOT invent or assume details
+3. If an attribute is not mentioned, omit it (don't use null or empty string)
+4. Use consistent naming throughout
+5. Return ONLY valid JSON array, no markdown code blocks
+
+6. Entity naming:
+   - Use canonical names without titles or epithets
+   - "King Théoden" → "Théoden" (title goes in attributes)
+   - "Gandalf the Grey" → "Gandalf"
+   - "Reverend Abijah Hoadley" → "Abijah Hoadley"
+
+7. Named vs descriptive:
+   - Extract only NAMED entities (proper nouns)
+   - "the Order of Ash" → extract (named faction)
+   - "an army of orcs" → do NOT extract army, but DO extract "Orc" as creature
+   - "a village" → do NOT extract (generic)
+   - "Dunwich" → extract (named location)
+
+8. Species/race handling:
+   - Generic species mentioned = extract as CREATURE type
+   - "Orcs attacked" → extract "Orc" as creature
+   - Named individual of species = extract as CHARACTER with species attribute
+   - "Uglúk the orc" → extract "Uglúk" as character with species: "orc"
+
+9. Deity classification:
+   - Gods, goddesses, divine beings → DEITY type
+   - Cosmic entities (Lovecraftian horrors) → DEITY type
+   - Demigods, avatars → DEITY type
+   - Saints, prophets, priests → CHARACTER type (mortals)
+
+10. Spell vs item distinction:
+    - Magical effect/action → SPELL type
+    - "Fireball" (the spell) → spell
+    - Physical object (even magical) → ITEM type
+    - "spellbook containing Fireball" → item
+    - Spoken words/chants → SPELL type
+    - Written scrolls → ITEM type (physical object)
+
+11. Creature vs character:
+    - Generic species/race → CREATURE
+    - "Dragons are ancient and wise" → "Dragon" as creature
+    - Named individual → CHARACTER
+    - "Smaug the dragon" → "Smaug" as character with species: "dragon"
+
+12. Aliases and transformations:
+    - Same entity, multiple names → ONE entity with aliases
+    - "Aragorn, also called Strider" → name: "Aragorn", aliases: ["Strider"]
+    - Transformations over time → ONE entity with note in attributes
+    - "Gandalf the Grey became Gandalf the White" → name: "Gandalf", attributes note the transformation
+
+13. ⚠️ CRITICAL RULE 13: GUARDRAIL AGAINST CONTEXT BLEED ⚠️
+    - DO NOT extract entities from the prompt examples above
+    - DO NOT use your general knowledge to add entities
+    - ONLY extract what is explicitly in the source text being analyzed
+    - If you're uncertain whether something is in the text, DO NOT extract it
+    - Examples like "Strider", "Pelor", "Théoden" are DEMONSTRATIONS ONLY
+    - They should NEVER appear in your output unless the actual text mentions them
+
+=== EXAMPLES (FOR YOUR UNDERSTANDING - DO NOT EXTRACT) ===
+
+Example 1 - Character naming:
+Input: "King Théoden of Rohan led the charge."
+Output: [{
+  "name": "Théoden",
+  "type": "character",
+  "description": "King of Rohan",
+  "attributes": {"role": "King", "affiliations": ["Rohan"]}
+}]
+Note: Title removed from name.
+
+Example 2 - Creature vs Character:
+Input: "Smaug the dragon attacked. Dragons are ancient creatures."
+Output: [
+  {"name": "Smaug", "type": "character", "attributes": {"species": "dragon"}},
+  {"name": "Dragon", "type": "creature", "description": "Ancient creatures"}
+]
+Note: Named individual = character. Species = creature.
+
+Example 3 - Deity classification:
+Input: "They prayed to Pelor, god of the sun. The priest blessed them."
+Output: [
+  {"name": "Pelor", "type": "deity", "attributes": {"domain": "sun"}},
+  {"name": "priest", "type": "character", "attributes": {"role": "priest"}}
+]
+Note: God = deity. Mortal priest = character.
+
+Example 4 - Named vs Generic:
+Input: "An army attacked the Order of Ash near Dunwich."
+Output: [
+  {"name": "Order of Ash", "type": "faction"},
+  {"name": "Dunwich", "type": "location"}
+]
+Note: Named groups and places = extract. Generic "army" = don't extract.
+
+Example 5 - Spell vs Item:
+Input: "The wizard cast Fireball from the ancient spellbook."
+Output: [
+  {"name": "Fireball", "type": "spell", "description": "A spell that creates an explosion"},
+  {"name": "ancient spellbook", "type": "item", "description": "A book containing spells"}
+]
+Note: Magical effect = spell. Physical object = item.
+
+===END OF EXAMPLES===
+
+Now extract entities following these patterns from the text below.
+Remember: These examples are DEMONSTRATIONS ONLY. 
+Do NOT include any entity from the examples unless it appears in the actual text.
+
+Text to analyze:
+{text}
+
+JSON array:
+```
+
+---
+
+## Key Changes in v2.0
+
+### Added Rule 13: Context Bleed Guardrail
+**Problem Solved:** AI was extracting entities from prompt examples  
+**Solution:** Explicit instruction to ignore examples and only extract from source text
+
+### Reinforcements:
+- Warning header before examples
+- Explicit list of example entities to avoid
+- Repeated instructions after examples
+- Clear distinction between demonstrations and actual extraction
+
+---
+
+## Testing Results
+
+**Test 1: "The Horror at Red Hook"**
+- ✅ Correct entity identification
+- ✅ Proper type classification
+- ❌ Initial context bleed (pre-Rule 13)
+- ✅ Resolved after Rule 13 addition
+
+**Test 2: "The Call of Cthulhu"**
+- ✅ Complex entity handling
+- ✅ Deity classification correct
+- ✅ No context bleed with Rule 13
+
+**Overall Score:** 9.2/10
+
+---
+
+## Integration Notes
+
+### For Implementation:
+```python
+# When calling AI with this prompt
+prompt = ENTITY_EXTRACTION_PROMPT.format(text=source_text)
+response = ai_model.complete(prompt)
+entities = json.loads(response)
+
+# Validate no context bleed
+example_entities = ["Strider", "Pelor", "Théoden", "Gandalf", "Fireball", "Smaug"]
+for entity in entities:
+    if entity["name"] in example_entities:
+        raise ContextBleedError(f"Context bleed detected: {entity['name']}")
+```
+
+### For Validation Pipeline:
+- Check extracted entities against prompt example list
+- Flag any matches as potential context bleed
+- Require manual review if contamination detected
+
+---
+
+## Optional Improvements
+
+**Medium Priority:**
+- Add explicit negative example showing context bleed penalty
+- Visual reinforcement of Rule 13
+
+**Low Priority:**
+- Add EVENT entity example to cover all 8 types
+- Expand deity domain examples
+
+---
+
+## Version History
+
+**v2.0 (Nov 7, 2025):**
+- Added Critical Rule 13 (Context Bleed Guardrail)
+- Strengthened example warnings
+- Tested and validated at 9.2/10
+- Production approved
+
+**v1.0 (Nov 6, 2025):**
+- Initial prompt with 12 rules
+- 8 entity types defined
+- Example patterns included
+
+---
+
+**Status:** ✅ Production Ready  
+**Next Review:** After Phase X implementation  
+**Maintained By:** Architecture Team

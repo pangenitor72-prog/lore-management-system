@@ -1,0 +1,282 @@
+# Entity Types Specification
+**Version:** 2.0  
+**Last Updated:** November 7, 2025  
+**Status:** Production Ready
+
+---
+
+## Overview
+
+The LMS uses **8 core entity types** to represent all lore elements. Each entity type has a defined structure with required and optional attributes.
+
+---
+
+## Core Entity Structure
+
+All entities share this base structure:
+
+```json
+{
+  "canon_id": "SHA1(entity_type + canonical_name)",
+  "entity_type": "CHARACTER|CREATURE|DEITY|LOCATION|FACTION|ITEM|SPELL|EVENT",
+  "canonical_name": "Official name",
+  "aliases": ["alternate", "names"],
+  "approval_status": "APPROVED|PENDING|FLAGGED|REJECTED",
+  "confidence_level": "CONFIRMED|LIKELY|UNCERTAIN|CONFLICTING",
+  "approved_fields": {
+    "// Type-specific attributes go here"
+  },
+  "revision_history": [
+    {
+      "timestamp": "ISO-8601",
+      "changed_fields": {},
+      "source_document": "filename.doc",
+      "approver": "username"
+    }
+  ],
+  "source_document": "First document it appeared in",
+  "source_excerpt": "Text snippet it was extracted from",
+  "party_knowledge": "KNOWN|UNKNOWN|PARTIAL",
+  "campaign_id": "campaign-identifier"
+}
+```
+
+**Key Properties:**
+- `canon_id` is **immutable** (SHA1 hash)
+- Only **APPROVED** entities count as canon
+- All changes are **traceable** via revision history
+
+---
+
+## 1. CHARACTER
+
+**Description:** Named individuals (PCs, NPCs, named mortals)
+
+**Structure:**
+```json
+{
+  "entity_type": "character",
+  "canonical_name": "Name without titles",
+  "description": "Brief summary",
+  "attributes": {
+    "species": "race/species if mentioned",
+    "role": "their role or title",
+    "affiliations": ["groups", "they", "belong", "to"],
+    "aliases": ["other", "names"],
+    "status": "alive|dead|unknown",
+    "age": "if mentioned",
+    "personality": "character traits",
+    "goals": "motivations"
+  }
+}
+```
+
+**Naming Rules:**
+- **Without titles:** "King Théoden" → "Théoden" (title goes in `role`)
+- **Without epithets:** "Gandalf the Grey" → "Gandalf"
+- **Canonical form:** "Reverend Abijah Hoadley" → "Abijah Hoadley"
+
+---
+
+## 2. CREATURE
+
+**Description:** Species, races, monster types (not named individuals)
+
+**Structure:**
+```json
+{
+  "entity_type": "creature",
+  "canonical_name": "Species/race name",
+  "description": "General description",
+  "attributes": {
+    "category": "humanoid|beast|dragon|undead|aberration|construct",
+    "size": "tiny|small|medium|large|huge|gargantuan",
+    "habitat": "where they live",
+    "intelligence": "sentient|semi-sentient|beast|mindless",
+    "traits": ["key", "characteristics"],
+    "weaknesses": ["vulnerabilities"],
+    "diet": "what they eat"
+  }
+}
+```
+
+**Rules:**
+- Generic species → CREATURE
+- Named individual → CHARACTER with species attribute
+
+---
+
+## 3. DEITY
+
+**Description:** Gods, goddesses, divine beings, cosmic entities
+
+**Structure:**
+```json
+{
+  "entity_type": "deity",
+  "canonical_name": "Name of deity",
+  "description": "Brief summary",
+  "attributes": {
+    "pantheon": "religious system",
+    "domain": "war|death|magic|sun|etc",
+    "alignment": "good|evil|neutral|chaotic|cosmic",
+    "worshippers": "who worships them",
+    "symbols": ["holy", "symbols"],
+    "power_level": "greater_god|lesser_god|demigod|cosmic_entity",
+    "realm": "where they reside",
+    "status": "active|dead|sleeping|absent"
+  }
+}
+```
+
+**Classification:**
+- Gods, cosmic entities → DEITY
+- Saints, prophets, priests → CHARACTER
+
+---
+
+## 4. LOCATION
+
+**Description:** Named places
+
+**Structure:**
+```json
+{
+  "entity_type": "location",
+  "canonical_name": "Place name",
+  "description": "Brief summary",
+  "attributes": {
+    "region": "larger area",
+    "type": "city|mountain|fortress|forest|building|landmark",
+    "parent_location": "hierarchical containment",
+    "controlled_by": "faction or character",
+    "inhabitants": ["who", "lives", "there"],
+    "features": ["notable", "characteristics"]
+  }
+}
+```
+
+---
+
+## 5. FACTION
+
+**Description:** Organizations, groups, kingdoms
+
+**Structure:**
+```json
+{
+  "entity_type": "faction",
+  "canonical_name": "Organization name",
+  "description": "Brief summary",
+  "attributes": {
+    "type": "kingdom|order|guild|army|cult|clan",
+    "leader": "leader name",
+    "members": ["notable", "members"],
+    "alignment": "good|evil|neutral",
+    "goals": "what they want",
+    "methods": "how they operate",
+    "base_locations": ["where", "they", "operate"]
+  }
+}
+```
+
+---
+
+## 6. ITEM
+
+**Description:** Physical objects
+
+**Structure:**
+```json
+{
+  "entity_type": "item",
+  "canonical_name": "Item name",
+  "description": "Brief summary",
+  "attributes": {
+    "item_type": "weapon|armor|artifact|ring|book|tool",
+    "owner": "current owner",
+    "creator": "who made it",
+    "powers": ["magical", "properties"],
+    "location": "current location"
+  }
+}
+```
+
+---
+
+## 7. SPELL
+
+**Description:** Magical effects, incantations, rituals
+
+**Structure:**
+```json
+{
+  "entity_type": "spell",
+  "canonical_name": "Spell name",
+  "description": "What it does",
+  "attributes": {
+    "spell_type": "incantation|ritual|formula|chant|curse",
+    "source": "origin book/tradition",
+    "caster": "who uses it",
+    "effect": "what it does",
+    "components": ["materials", "needed"],
+    "target": "what/who affected"
+  }
+}
+```
+
+---
+
+## 8. EVENT
+
+**Description:** Named events, battles, ceremonies
+
+**Structure:**
+```json
+{
+  "entity_type": "event",
+  "canonical_name": "Event name",
+  "description": "Brief summary",
+  "attributes": {
+    "date": "when it occurred",
+    "location": "where it happened",
+    "participants": ["key", "figures"],
+    "factions_involved": ["organizations"],
+    "outcome": "result",
+    "consequences": ["effects"]
+  }
+}
+```
+
+---
+
+## Extraction Guidelines
+
+### DO Extract:
+✅ Named entities (proper nouns)  
+✅ Explicitly mentioned in text  
+✅ Sufficient context to categorize  
+
+### DON'T Extract:
+❌ Generic descriptions  
+❌ Assumed information  
+❌ Common nouns without names  
+❌ Information from examples  
+
+---
+
+## Relationship Types
+
+**Family:** PARENT_OF, CHILD_OF, SIBLING_OF, MARRIED_TO  
+**Social:** FRIEND_OF, ALLY_OF, MENTOR_OF, ENEMY_OF  
+**Political:** RULES, SERVES, COMMANDS, MEMBER_OF  
+**Geographic:** LIVES_IN, LOCATED_IN, CONTAINS, PART_OF  
+**Causal:** CAUSED, LED_TO, PREVENTED  
+**Secret:** SECRETLY_WORKS_FOR, PLOTTING_AGAINST  
+**Knowledge:** KNOWS_ABOUT, WITNESSED, DISCOVERED
+
+---
+
+**Version History:**
+- v2.0 (Nov 7, 2025): Added CREATURE and SPELL types
+- v1.0 (Oct 24, 2025): Initial 6 types

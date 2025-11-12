@@ -1,0 +1,14 @@
+{
+  "entity_type": "Character",
+  "canonical_name": "King Arion II",
+  "aliases": ["The Just", "Arion the Old"],
+  "approved_fields": {
+    "title": "King of Eldoria",
+    "race": "Human",
+    "birth_date": "998",
+    "death_date": "1050"
+  },
+  "approval_status": "APPROVED",
+  "confidence_level": "CONFIRMED",
+  "party_knowledge": "KNOWN"
+}

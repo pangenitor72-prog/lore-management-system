@@ -1,0 +1,110 @@
+# Dev Lab Quick Reference Cheat Sheet
+
+## 🔑 CRITICAL INFO
+- **GitHub User:** pangenitor72-prog (NOT pangenitor72)
+- **Email:** pangenitor72@gmail.com
+- **GPU:** RTX 2060 (6GB VRAM) - NOT 3070 Ti
+- **Project:** C:\Users\pange\Documents\dev-lab-setup
+- **Repo:** https://github.com/pangenitor72-prog/dev-lab-setup
+
+## 📦 INSTALLED
+✅ Python 3.11.6  |  ✅ Git 2.51.2  |  ✅ VS Code 1.95.1  |  ✅ CUDA 12.6
+❌ Ollama (need to install)
+
+## ⚡ MOST USED COMMANDS
+
+### Virtual Environment
+```powershell
+.\venv\Scripts\activate          # Activate
+deactivate                       # Deactivate
+pip install -r requirements.txt  # Install deps
+pip freeze > requirements.txt    # Save deps
+```
+
+### Git
+```powershell
+git status                       # Check status
+git add .                        # Stage all
+git commit -m "message"          # Commit
+git push                         # Push to GitHub
+git pull                         # Pull latest
+git log --oneline               # View history
+```
+
+### Ollama
+```powershell
+ollama list                      # List models
+ollama pull llama3.1:8b         # Download model
+ollama run llama3.1:8b          # Interactive chat
+ollama ps                        # Running models
+```
+
+### Testing
+```powershell
+pytest                           # Run all tests
+pytest -v                        # Verbose
+pytest tests/test_core.py       # Specific file
+pytest --cov=src tests/         # With coverage
+```
+
+### System Check
+```powershell
+python --version                 # Python version
+git --version                    # Git version
+nvidia-smi                       # GPU status
+```
+
+## 🎯 NEXT STEPS (Phase 1)
+1. Download Ollama: https://ollama.com/download
+2. Run: `.\setup_phase1.ps1`
+3. Activate venv: `.\venv\Scripts\activate`
+4. Install packages: `pip install -r requirements.txt`
+5. Pull model: `ollama pull llama3.1:8b-instruct-q4_K_M`
+6. Commit & push
+
+## 🔧 QUICK FIXES
+
+**Git push fails "not found":**
+```powershell
+git remote remove origin
+git remote add origin https://github.com/pangenitor72-prog/dev-lab-setup.git
+```
+
+**Ollama out of memory:**
+- Close Chrome/games
+- Use Q4 quantization (not Q5/Q8)
+- Try 3B model instead
+
+**Import errors:**
+```powershell
+.\venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+## 📁 PROJECT STRUCTURE
+```
+dev-lab-setup/
+├── src/              # Source code
+│   └── agents/       # Agent modules
+├── tests/            # Test files
+├── docs/             # Documentation
+├── venv/             # Virtual env (not in git)
+├── requirements.txt  # Dependencies
+└── README.md         # Project overview
+```
+
+## 🤖 RECOMMENDED MODELS (6GB VRAM)
+✅ llama3.1:8b-instruct-q4_K_M (4GB) - Best choice
+✅ mistral:7b-instruct-q4_K_M (4GB) - Fast
+✅ qwen2.5:7b-instruct-q4_0 (3.8GB) - Good reasoning
+❌ Any 13B+ models - Too large
+
+## 💾 WHERE THINGS ARE
+- **Handoff Doc:** HANDOFF_DOC.md (comprehensive)
+- **Setup Script:** setup_phase1.ps1
+- **This File:** QUICK_REF.md (print this!)
+- **Project Files:** C:\Users\pange\Documents\dev-lab-setup\
+- **Ollama Models:** C:\Users\pange\.ollama\models\
+
+---
+**Last Updated:** Nov 12, 2025  |  **Version:** 1.0

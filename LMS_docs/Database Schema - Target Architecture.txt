@@ -1,0 +1,488 @@
+# Database Schema - Target Architecture
+**Version:** 2.0  
+**Last Updated:** November 7, 2025  
+**Status:** Target specification for migration
+
+---
+
+## Overview
+
+This document defines the **target database schema** for the clean architecture. This is what the system should look like after Phase X migration.
+
+**Current State:** May differ - see audit for actual schema  
+**Migration Path:** Will be defined in gap analysis  
+
+---
+
+## Core Tables
+
+### entities
+**Purpose:** Store all lore entities (8 types)
+
+```sql
+CREATE TABLE IF NOT EXISTS entities (
+    -- Identity
+    canon_id TEXT PRIMARY KEY,
+    entity_type TEXT NOT NULL CHECK(entity_type IN (
+        'character', 'creature', 'deity', 'location', 
+        'faction', 'item', 'spell', 'event'
+    )),
+    canonical_name TEXT NOT NULL,
+    aliases TEXT,  -- JSON array of alternate names
+    
+    -- Status & Confidence
+    approval_status TEXT DEFAULT 'PENDING' CHECK(approval_status IN (
+        'APPROVED', 'PENDING', 'FLAGGED', 'REJECTED'
+    )),
+    confidence_level TEXT DEFAULT 'UNCERTAIN' CHECK(confidence_level IN (
+        'CONFIRMED', 'LIKELY', 'UNCERTAIN', 'CONFLICTING'
+    )),
+    
+    -- Content
+    approved_fields TEXT NOT NULL,  -- JSON with type-specific attributes
+    description TEXT,  -- Brief summary
+    
+    -- Provenance
+    source_document TEXT,
+    source_excerpt TEXT,
+    revision_history TEXT,  -- JSON array of changes
+    
+    -- Game Context
+    party_knowledge TEXT DEFAULT 'UNKNOWN' CHECK(party_knowledge IN (
+        'KNOWN', 'UNKNOWN', 'PARTIAL'
+    )),
+    campaign_id TEXT,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+
+-- Indexes for performance
+CREATE INDEX idx_entity_type ON entities(entity_type);
+CREATE INDEX idx_approval_status ON entities(approval_status);
+CREATE INDEX idx_canonical_name ON entities(canonical_name);
+CREATE INDEX idx_campaign ON entities(campaign_id);
+CREATE INDEX idx_confidence ON entities(confidence_level);
+```
+
+**Key Design Decisions:**
+- `canon_id` is SHA1(entity_type + canonical_name) - immutable
+- `approved_fields` stores type-specific JSON (flexible schema)
+- `revision_history` tracks all changes for audit trail
+- Only `APPROVED` entities are considered canon
+
+---
+
+### relationships
+**Purpose:** Connect entities via typed relationships
+
+```sql
+CREATE TABLE IF NOT EXISTS relationships (
+    -- Identity
+    relationship_id TEXT PRIMARY KEY,
+    source_canon_id TEXT NOT NULL,
+    target_canon_id TEXT NOT NULL,
+    relationship_type TEXT NOT NULL,
+    
+    -- Content
+    description TEXT,
+    status TEXT DEFAULT 'Current' CHECK(status IN (
+        'Current', 'Former', 'Secret', 'Potential'
+    )),
+    
+    -- Metadata
+    confidence TEXT DEFAULT 'SUGGESTED' CHECK(confidence IN (
+        'EXPLICIT', 'SUGGESTED', 'INFERRED'
+    )),
+    source_document TEXT,
+    approved BOOLEAN DEFAULT FALSE,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (source_canon_id) REFERENCES entities(canon_id),
+    FOREIGN KEY (target_canon_id) REFERENCES entities(canon_id)
+);
+
+-- Indexes
+CREATE INDEX idx_source ON relationships(source_canon_id);
+CREATE INDEX idx_target ON relationships(target_canon_id);
+CREATE INDEX idx_rel_type ON relationships(relationship_type);
+```
+
+**Relationship Types:**
+- Family: PARENT_OF, CHILD_OF, SIBLING_OF, MARRIED_TO
+- Social: FRIEND_OF, ALLY_OF, ENEMY_OF, RIVAL_OF, MENTOR_OF
+- Political: RULES, SERVES, COMMANDS, MEMBER_OF, LEADS
+- Geographic: LIVES_IN, LOCATED_IN, CONTAINS, PART_OF
+- Causal: CAUSED, LED_TO, PREVENTED
+- Secret: SECRETLY_WORKS_FOR, PLOTTING_AGAINST
+- Knowledge: KNOWS_ABOUT, WITNESSED, DISCOVERED
+
+---
+
+### contradictions
+**Purpose:** Track conflicts between entities for resolution
+
+```sql
+CREATE TABLE IF NOT EXISTS contradictions (
+    -- Identity
+    contradiction_id TEXT PRIMARY KEY,
+    entity_a_id TEXT NOT NULL,
+    entity_b_id TEXT NOT NULL,
+    
+    -- Conflict Details
+    conflict_type TEXT NOT NULL CHECK(conflict_type IN (
+        'attribute_mismatch',
+        'existence_conflict', 
+        'temporal_inconsistency',
+        'relationship_conflict',
+        'location_conflict',
+        'status_conflict',
+        'identity_conflict'
+    )),
+    severity TEXT DEFAULT 'medium' CHECK(severity IN (
+        'critical', 'high', 'medium', 'low'
+    )),
+    
+    -- Analysis
+    description TEXT NOT NULL,
+    ai_analysis TEXT,  -- AI-generated explanation
+    charter_guidance TEXT,  -- Which Charter laws involved
+    confidence_score REAL,  -- 0.0-1.0
+    
+    -- Resolution
+    resolution_status TEXT DEFAULT 'open' CHECK(resolution_status IN (
+        'open', 'investigating', 'resolved', 'ignored'
+    )),
+    reconciliation_type TEXT CHECK(reconciliation_type IN (
+        'unreliable_narrator',
+        'perspective_difference',
+        'temporal_reordering',
+        'lost_information',
+        'deliberate_deception',
+        'retcon',
+        'merged_entities',
+        'local_truth_exception',
+        'other'
+    )),
+    reconciliation_narrative TEXT,  -- How it was resolved
+    resolved_by TEXT,
+    resolved_at TIMESTAMP,
+    
+    -- Context
+    campaign_id TEXT,
+    flagged_for_review BOOLEAN DEFAULT TRUE,
+    
+    -- Timestamps
+    detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (entity_a_id) REFERENCES entities(canon_id),
+    FOREIGN KEY (entity_b_id) REFERENCES entities(canon_id),
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+
+-- Indexes
+CREATE INDEX idx_resolution_status ON contradictions(resolution_status);
+CREATE INDEX idx_severity ON contradictions(severity);
+CREATE INDEX idx_conflict_type ON contradictions(conflict_type);
+CREATE INDEX idx_entities ON contradictions(entity_a_id, entity_b_id);
+```
+
+---
+
+## Campaign System Tables (Phase III)
+
+### campaign_settings
+**Purpose:** Define campaign-specific configurations
+
+```sql
+CREATE TABLE IF NOT EXISTS campaign_settings (
+    campaign_id TEXT PRIMARY KEY,
+    world_name TEXT NOT NULL,
+    genre TEXT,
+    tech_level TEXT,
+    magic_prevalence TEXT,
+    tone TEXT,
+    description TEXT,
+    
+    -- Configuration
+    config_yaml TEXT,  -- Full YAML configuration
+    
+    -- Status
+    active BOOLEAN DEFAULT TRUE,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+### campaign_overrides
+**Purpose:** Store Charter law overrides per campaign
+
+```sql
+CREATE TABLE IF NOT EXISTS campaign_overrides (
+    override_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    law_number INTEGER NOT NULL,
+    law_title TEXT,
+    override_type TEXT NOT NULL CHECK(override_type IN (
+        'refinement', 'replacement', 'addition', 'removal'
+    )),
+    original_statement TEXT,
+    campaign_statement TEXT NOT NULL,
+    justification TEXT,
+    scope TEXT DEFAULT 'global',
+    
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+
+CREATE INDEX idx_campaign_overrides ON campaign_overrides(campaign_id);
+```
+
+---
+
+### world_rules
+**Purpose:** Campaign-specific rules beyond Charter
+
+```sql
+CREATE TABLE IF NOT EXISTS world_rules (
+    rule_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT,
+    statement TEXT NOT NULL,
+    mechanics TEXT,
+    lore_justification TEXT,
+    
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+```
+
+---
+
+### local_truths
+**Purpose:** Location-specific Law III exceptions
+
+```sql
+CREATE TABLE IF NOT EXISTS local_truths (
+    truth_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    location_id TEXT NOT NULL,
+    truth TEXT NOT NULL,
+    parent_law INTEGER DEFAULT 3,
+    scope TEXT,
+    reason TEXT,
+    system_effect TEXT,
+    active BOOLEAN DEFAULT TRUE,
+    
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id),
+    FOREIGN KEY (location_id) REFERENCES entities(canon_id)
+);
+```
+
+---
+
+### campaign_forbidden
+**Purpose:** Track forbidden elements per campaign
+
+```sql
+CREATE TABLE IF NOT EXISTS campaign_forbidden (
+    forbidden_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    element TEXT NOT NULL,
+    category TEXT,
+    reason TEXT,
+    severity TEXT DEFAULT 'major',
+    alternative TEXT,
+    
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+```
+
+---
+
+## Charter System Tables (Phase II)
+
+### charter_laws
+**Purpose:** Store the 11 universal Charter laws
+
+```sql
+CREATE TABLE IF NOT EXISTS charter_laws (
+    law_number INTEGER PRIMARY KEY,
+    law_title TEXT NOT NULL,
+    statement TEXT NOT NULL,
+    meaning TEXT,
+    violations TEXT,  -- JSON array of common violations
+    examples TEXT,  -- JSON array of examples
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## Metadata Tables
+
+### source_documents
+**Purpose:** Track ingested documents
+
+```sql
+CREATE TABLE IF NOT EXISTS source_documents (
+    document_id TEXT PRIMARY KEY,
+    filename TEXT NOT NULL,
+    filepath TEXT,
+    file_type TEXT,
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed BOOLEAN DEFAULT FALSE,
+    processed_at TIMESTAMP,
+    campaign_id TEXT,
+    
+    -- Statistics
+    entity_count INTEGER DEFAULT 0,
+    relationship_count INTEGER DEFAULT 0,
+    
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+```
+
+---
+
+### extraction_log
+**Purpose:** Track entity extraction attempts
+
+```sql
+CREATE TABLE IF NOT EXISTS extraction_log (
+    log_id TEXT PRIMARY KEY,
+    document_id TEXT NOT NULL,
+    extraction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    method TEXT,  -- 'manual', 'ai_assisted', 'bulk_import'
+    entities_extracted INTEGER DEFAULT 0,
+    entities_approved INTEGER DEFAULT 0,
+    entities_rejected INTEGER DEFAULT 0,
+    status TEXT CHECK(status IN ('success', 'partial', 'failed')),
+    error_message TEXT,
+    
+    FOREIGN KEY (document_id) REFERENCES source_documents(document_id)
+);
+```
+
+---
+
+## Data Flow
+
+```
+User uploads document
+    ↓
+source_documents record created
+    ↓
+ChunkingAgent extracts entities
+    ↓
+entities table populated (status: PENDING)
+    ↓
+AuditorAgent detects contradictions
+    ↓
+contradictions table populated
+    ↓
+User reviews/resolves contradictions
+    ↓
+entities updated (status: APPROVED)
+    ↓
+relationships extracted
+    ↓
+Canon established
+```
+
+---
+
+## Key Constraints
+
+### Data Integrity
+- `canon_id` is immutable (never changes)
+- Only APPROVED entities are canon
+- All changes tracked in revision_history
+- Foreign keys enforce referential integrity
+
+### Performance
+- Indexes on frequently queried columns
+- JSON fields for flexible attributes
+- Efficient lookups by entity_type, approval_status
+
+### Audit Trail
+- All tables have timestamps
+- extraction_log tracks ingestion
+- revision_history tracks entity changes
+- contradictions track resolution decisions
+
+---
+
+## Migration Considerations
+
+### From Current Schema
+**Will be defined in gap analysis based on audit**
+
+Likely changes:
+- Add new entity types (CREATURE, SPELL)
+- Add campaign_id columns
+- Add charter_guidance to contradictions
+- Restructure approved_fields JSON
+
+### Backward Compatibility
+- Data migration scripts required
+- No data loss acceptable
+- Preserve all revision history
+
+---
+
+## Size Estimates
+
+**For typical campaign (~500 entities):**
+- entities: ~50KB per entity → ~25MB
+- relationships: ~1KB per rel → ~500KB (for ~500 rels)
+- contradictions: ~10KB per contradiction → ~1MB (for ~100)
+- **Total:** ~30-50MB per campaign
+
+**With 10 campaigns:** ~300-500MB  
+**SQLite limit:** 281TB (not a concern)
+
+---
+
+## Backup Strategy
+
+**Recommended:**
+- Daily automated backups
+- Pre-migration snapshot
+- Revision history never deleted
+- Export to JSON for portability
+
+---
+
+## Version History
+
+**v2.0 (Nov 7, 2025):**
+- Added CREATURE and SPELL entity types
+- Added campaign system tables (Phase III)
+- Added charter system tables (Phase II)
+- Enhanced indexes for performance
+- Added extraction_log table
+
+**v1.0 (Oct 24, 2025):**
+- Initial schema with 6 entity types
+- Core entities, relationships, contradictions
+
+---
+
+**Status:** Target specification  
+**Current Implementation:** See GPT's audit report  
+**Migration Path:** Will be defined after gap analysis  
+
+**See Also:**
+- `concepts/entity-types.md` - Entity definitions
+- `concepts/world-logic-charter.md` - Charter laws
+- `concepts/campaign-overrides-format.md` - Campaign structure
+- `audit/phase-viii-complete-audit.md` - Current state (pending)

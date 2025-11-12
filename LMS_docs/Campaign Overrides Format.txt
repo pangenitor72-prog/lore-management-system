@@ -1,0 +1,505 @@
+# Campaign Overrides Format
+**Version:** 1.0  
+**Last Updated:** November 6, 2025  
+**Status:** Conceptual Design (Future Phase III)
+
+---
+
+## Overview
+
+Campaign overrides allow each game world to customize the Universal Charter laws for world-specific rules. This enables one LMS instance to support multiple campaigns with different physics, magic systems, and narrative conventions.
+
+---
+
+## File Format: YAML
+
+Each campaign has a `campaign_overrides.yaml` file defining its specific rules.
+
+---
+
+## Template Structure
+
+```yaml
+# ================================================
+# CAMPAIGN SETTING: [Campaign Name]
+# Version: 1.0
+# Author: [DM Name]
+# Charter Version: 1.2
+# ================================================
+
+metadata:
+  campaign_id: "unique-campaign-identifier"
+  world_name: "World Name"
+  genre: "fantasy|sci-fi|horror|historical|modern|other"
+  tech_level: "stone_age|medieval|renaissance|industrial|modern|futuristic"
+  magic_prevalence: "none|rare|common|ubiquitous"
+  tone: "heroic|gritty|grimdark|lighthearted|cosmic_horror"
+  created: "YYYY-MM-DD"
+  last_updated: "YYYY-MM-DD"
+
+# ================================================
+# CHARTER OVERRIDES
+# (How this world differs from baseline)
+# ================================================
+
+charter_overrides:
+  
+  # Override Format
+  - law_number: 1-11
+    law_title: "Name of Charter Law"
+    override_type: "refinement|replacement|addition|removal"
+    original_statement: "Original Charter law text"
+    campaign_statement: |
+      How this law works in THIS world.
+      Multi-line text supported.
+    justification: "Why this override makes sense for the setting"
+    scope: "global|regional|conditional"
+    examples:
+      - situation: "Specific scenario"
+        outcome: "How it plays out differently"
+
+# ================================================
+# WORLD-SPECIFIC RULES
+# (New rules that don't map to Charter)
+# ================================================
+
+world_rules:
+  
+  - rule_id: "unique-rule-identifier"
+    title: "Rule Name"
+    category: "magic|physics|society|technology|cosmology"
+    statement: "The rule statement"
+    mechanics: "How it works mechanically"
+    lore_justification: "Why this exists in-world"
+    impacts:
+      - "Effect on gameplay"
+      - "Effect on narrative"
+    examples:
+      - scenario: "Example situation"
+        result: "What happens"
+
+# ================================================
+# PANTHEON (if applicable)
+# ================================================
+
+pantheon:
+  name: "Pantheon Name"
+  type: "polytheistic|monotheistic|animistic|cosmic|atheistic"
+  
+  deities:
+    - name: "Deity Name"
+      domain: "What they rule"
+      alignment: "good|evil|neutral|chaotic"
+      power_level: "greater|lesser|demi|cosmic"
+      status: "active|dead|sleeping|absent"
+      worshippers: "Who worships them"
+      symbols: ["holy", "symbols"]
+      description: "Brief summary"
+
+# ================================================
+# FORBIDDEN ELEMENTS
+# (What's NOT allowed in this world)
+# ================================================
+
+forbidden:
+  
+  - element: "What's forbidden"
+    category: "entity_type|magic_type|technology|creature|concept"
+    reason: "Why it's excluded"
+    severity: "critical|major|minor"
+    alternative: "What to use instead (if any)"
+
+# ================================================
+# LOCAL TRUTHS
+# (Law III exceptions tied to locations)
+# ================================================
+
+local_truths:
+  
+  - location: "Location Name"
+    truth: "What's different here"
+    parent_law: 3  # Usually Law III
+    scope: "Boundaries of the exception"
+    reason: "Why this exception exists"
+    system_effect: "Mechanical implications"
+    examples:
+      - "Example of this in action"
+```
+
+---
+
+## Example: Hollow Eye Chronicles
+
+```yaml
+# ================================================
+# CAMPAIGN SETTING: Hollow Eye Chronicles
+# Version: 1.0
+# Author: Shawn King
+# Charter Version: 1.2
+# ================================================
+
+metadata:
+  campaign_id: "hollow-eye-chronicles"
+  world_name: "Hollow Eye"
+  genre: "dark_fantasy_horror"
+  tech_level: "renaissance"
+  magic_prevalence: "rare_and_dangerous"
+  tone: "grimdark"
+  created: "2025-11-06"
+
+# ================================================
+# CHARTER OVERRIDES
+# ================================================
+
+charter_overrides:
+  
+  # Magic costs SANITY, not life force
+  - law_number: 2
+    law_title: "Limited Exception"
+    override_type: "refinement"
+    original_statement: "Every wonder must carry a cost"
+    campaign_statement: |
+      In Hollow Eye, magic specifically costs SANITY, not blood or life force.
+      Each spell cast erodes the caster's grip on reality.
+      Prolonged magic use leads to madness and eventual transformation.
+    justification: "Reinforces cosmic horror theme"
+    scope: "global"
+    examples:
+      - situation: "Wizard casts healing spell"
+        outcome: "Heals wound, but wizard sees visions of the void"
+      - situation: "Repeated spell usage"
+        outcome: "Gradual descent into madness"
+
+  # The dead can speak but never return
+  - law_number: 5
+    law_title: "Persistent Identity"
+    override_type: "addition"
+    campaign_statement: |
+      In Hollow Eye, the dead can speak (via necromancy) but can never
+      truly return to life. Resurrection is impossible. The dead exist
+      in a liminal state - aware but not alive.
+    justification: "Emphasizes finality of death"
+    scope: "global"
+    examples:
+      - situation: "Necromancer questions corpse"
+        outcome: "Corpse answers but remains dead"
+      - situation: "Attempted resurrection"
+        outcome: "Spell fails, creates abomination instead"
+
+# ================================================
+# WORLD-SPECIFIC RULES
+# ================================================
+
+world_rules:
+  
+  - rule_id: "ancestral-significance"
+    title: "Ancestral Figures Have Special Weight"
+    category: "society"
+    statement: |
+      In Hollow Eye, your ancestors watch and judge.
+      Ancestral figures (grandparents, great-grandparents) have
+      thematic/spiritual significance beyond normal NPCs.
+    mechanics: |
+      When extracting entities, grandparents+ get special tags.
+      Their deaths/actions carry extra narrative weight.
+      Dreams/visions of ancestors are meaningful.
+    lore_justification: "Cultural emphasis on lineage and legacy"
+    impacts:
+      - "Ancestral ghosts can provide guidance"
+      - "Family shame is a real mechanical burden"
+      - "Bloodline matters for certain magics"
+
+  - rule_id: "the-hollow-eye"
+    title: "The Hollow Eye Watches"
+    category: "cosmology"
+    statement: |
+      There is a cosmic entity known as the Hollow Eye.
+      It is aware. It is hungry. It watches through mirrors,
+      still water, and the eyes of the dying.
+    mechanics: |
+      Mirrors are dangerous in this world.
+      Looking into still water invites attention.
+      The dying sometimes speak with the Eye's voice.
+    lore_justification: "Central cosmic horror element"
+    impacts:
+      - "Mirrors are avoided or covered"
+      - "Reflection-based magic is corrupted"
+      - "Players feel watched in key moments"
+
+# ================================================
+# PANTHEON
+# ================================================
+
+pantheon:
+  name: "The Forgotten Gods"
+  type: "dead_pantheon"
+  
+  deities:
+    - name: "The Hollow Eye"
+      domain: "Void, Madness, Entropy"
+      alignment: "cosmic_evil"
+      power_level: "cosmic_entity"
+      status: "active"
+      worshippers: "Cultists, the mad"
+      symbols: ["empty eye socket", "shattered mirror"]
+      description: |
+        Not a god but something older. It consumed the gods.
+        It waits in the spaces between.
+
+    - name: "The Seven"
+      domain: "Various (now dead)"
+      power_level: "greater_gods"
+      status: "dead"
+      description: |
+        The old pantheon, consumed by the Hollow Eye centuries ago.
+        Their names are forbidden. Their temples are ruins.
+
+# ================================================
+# FORBIDDEN ELEMENTS
+# ================================================
+
+forbidden:
+  
+  - element: "Resurrection magic"
+    category: "magic_type"
+    reason: "The dead cannot return (override to Law V)"
+    severity: "critical"
+    alternative: "Necromancy (speaking to dead, not reviving)"
+
+  - element: "High elves"
+    category: "creature"
+    reason: "Don't fit the grimdark tone"
+    severity: "major"
+    alternative: "Twisted fae or corrupted elves if needed"
+
+  - element: "Divine healing"
+    category: "magic_type"
+    reason: "Gods are dead, no divine magic"
+    severity: "critical"
+    alternative: "Alchemy, herbalism, risky blood magic"
+
+# ================================================
+# LOCAL TRUTHS
+# ================================================
+
+local_truths:
+  
+  - location: "The Sanctum of Mirrors"
+    truth: "Magic is costless here, but the Hollow Eye sees all"
+    parent_law: 2
+    scope: "Within the sanctum walls"
+    reason: "Ancient pact with the Eye"
+    system_effect: "Free casting, but everything is observed"
+    examples:
+      - "Mages come here to cast difficult spells without sanity loss"
+      - "But the Eye watches, and it remembers"
+
+  - location: "The Dead Forest"
+    truth: "Time flows differently - 1 hour outside = 1 day inside"
+    parent_law: 6
+    scope: "Forest boundaries"
+    reason: "Reality is thin here, touched by the void"
+    system_effect: "Temporal inconsistency for travel planning"
+    examples:
+      - "Party enters for 'quick' exploration, exits days later"
+      - "Aging accelerates inside"
+```
+
+---
+
+## Override Types
+
+### Refinement
+**Original law still applies, but with specific details**
+
+Example: Law II (Limited Exception)
+- Charter: "Magic requires cost"
+- Campaign: "Magic specifically costs sanity"
+
+### Replacement
+**Original law is replaced entirely**
+
+Example: Law V (Persistent Identity)
+- Charter: "Entities have consistent existence"
+- Campaign: "Death is final, no resurrection"
+
+### Addition
+**New rule added that relates to Charter law**
+
+Example: Adding to Law III
+- New: "Mirrors are portals in this world"
+
+### Removal
+**Charter law doesn't apply (rare)**
+
+Example: Removing Law VI in time-travel heavy campaign
+- Charter: "Events maintain chronology"
+- Campaign: "Time is non-linear, paradoxes are normal"
+
+---
+
+## Database Schema (Future Phase III)
+
+```sql
+CREATE TABLE campaign_settings (
+    campaign_id TEXT PRIMARY KEY,
+    world_name TEXT NOT NULL,
+    genre TEXT,
+    tech_level TEXT,
+    magic_prevalence TEXT,
+    tone TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    config_yaml TEXT  -- Full YAML stored here
+);
+
+CREATE TABLE campaign_overrides (
+    override_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    law_number INTEGER NOT NULL,
+    override_type TEXT NOT NULL,
+    campaign_statement TEXT NOT NULL,
+    justification TEXT,
+    scope TEXT DEFAULT 'global',
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+
+CREATE TABLE world_rules (
+    rule_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT,
+    statement TEXT NOT NULL,
+    mechanics TEXT,
+    lore_justification TEXT,
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+
+CREATE TABLE local_truths (
+    truth_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    location_id TEXT NOT NULL,
+    truth TEXT NOT NULL,
+    parent_law INTEGER DEFAULT 3,
+    scope TEXT,
+    reason TEXT,
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id),
+    FOREIGN KEY (location_id) REFERENCES entities(entity_id)
+);
+
+CREATE TABLE campaign_forbidden (
+    forbidden_id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL,
+    element TEXT NOT NULL,
+    category TEXT,
+    reason TEXT,
+    severity TEXT DEFAULT 'major',
+    FOREIGN KEY (campaign_id) REFERENCES campaign_settings(campaign_id)
+);
+```
+
+---
+
+## Validation Workflow
+
+```python
+class CampaignValidator:
+    """
+    Validates entities against:
+    1. Universal Charter
+    2. Campaign-specific overrides
+    3. Local truth rules
+    """
+    
+    def validate_entity(self, entity, campaign_id):
+        # Get campaign overrides
+        campaign = load_campaign(campaign_id)
+        
+        # Check Charter (with overrides applied)
+        charter_violations = check_charter_with_overrides(
+            entity, 
+            campaign.overrides
+        )
+        
+        # Check world-specific rules
+        world_violations = check_world_rules(
+            entity,
+            campaign.world_rules
+        )
+        
+        # Check forbidden elements
+        forbidden_violations = check_forbidden(
+            entity,
+            campaign.forbidden
+        )
+        
+        # Check local truths (location-specific)
+        if entity.location:
+            local_exceptions = check_local_truths(
+                entity,
+                entity.location,
+                campaign.local_truths
+            )
+        
+        return {
+            'violations': charter_violations + world_violations + forbidden_violations,
+            'local_exceptions': local_exceptions
+        }
+```
+
+---
+
+## Benefits
+
+### One LMS, Many Worlds
+```
+LMS Instance
+├─ Campaign: Hollow Eye Chronicles (Dark Fantasy)
+├─ Campaign: Starfall Dynasty (Space Opera)
+├─ Campaign: Sunlit Realms (Heroic Fantasy)
+└─ Campaign: Modern Mythos (Urban Horror)
+```
+
+### Shareable Settings
+```
+1. Export campaign_overrides.yaml
+2. Share with other DMs
+3. Import into their LMS
+4. Instant world rules
+```
+
+### Version Control
+```
+hollow-eye-v1.0.yaml  →  Initial rules
+hollow-eye-v1.1.yaml  →  Added pantheon
+hollow-eye-v2.0.yaml  →  Major world event update
+```
+
+---
+
+## Integration Timeline
+
+**Phase I:** Core LMS (no campaigns)
+**Phase II:** Charter system (universal rules)
+**Phase III:** Campaign overrides (THIS DOCUMENT)
+
+**Estimated Effort:** 1 week for full campaign system
+
+---
+
+## Version History
+
+**v1.0 (Nov 6, 2025):**
+- Initial specification
+- YAML format defined
+- Hollow Eye example provided
+- Database schema designed
+
+---
+
+**Status:** Conceptual design for future Phase III  
+**Dependencies:** Phase I complete, Phase II Charter implemented  
+
+**See Also:**
+- `concepts/world-logic-charter.md` - Universal laws
+- `concepts/entity-types.md` - What gets validated
+- `architecture/validation-pipeline.md` - How validation works

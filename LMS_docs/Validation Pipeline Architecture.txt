@@ -1,0 +1,454 @@
+# Validation Pipeline Architecture
+**Version:** 1.0  
+**Last Updated:** November 7, 2025  
+**Status:** Target specification
+
+---
+
+## Overview
+
+The validation pipeline ensures entity integrity, detects contradictions, and maintains narrative coherence across three tiers:
+
+```
+1. Source Text Validation (Rule 13)
+   ↓
+2. Entity Structure Validation
+   ↓
+3. Charter Law Validation (Phase II)
+   ↓
+4. Campaign Rule Validation (Phase III)
+   ↓
+5. Contradiction Detection
+```
+
+---
+
+## Stage 1: Source Text Validation
+
+**Purpose:** Prevent Context Bleed (Critical Rule 13)
+
+**Validates:**
+- Entity exists in source text
+- No contamination from prompt examples
+- No AI hallucinated entities
+
+**Implementation:**
+```python
+def validate_source_text(entity: Dict, source_text: str) -> bool:
+    """
+    Verify entity actually appears in source text.
+    """
+    canonical_name = entity["canonical_name"]
+    aliases = entity.get("aliases", [])
+    
+    # Check if name appears in text
+    if canonical_name.lower() not in source_text.lower():
+        # Check aliases
+        if not any(alias.lower() in source_text.lower() for alias in aliases):
+            raise ContextBleedError(
+                f"Entity '{canonical_name}' not found in source text"
+            )
+    
+    return True
+```
+
+**Known Example Entities (Block List):**
+```python
+EXAMPLE_ENTITIES = [
+    "Strider", "Pelor", "Théoden", "Gandalf", 
+    "Fireball", "Smaug", "Aragorn", "Order of Ash"
+]
+
+def check_context_bleed(entity_name: str) -> bool:
+    """Check if entity is from prompt examples."""
+    return entity_name in EXAMPLE_ENTITIES
+```
+
+---
+
+## Stage 2: Entity Structure Validation
+
+**Purpose:** Ensure entity matches type specification
+
+**Validates:**
+- Required fields present
+- Valid entity_type
+- Correct attribute structure
+- JSON well-formed
+
+**Implementation:**
+```python
+from pydantic import BaseModel, Field
+from typing import Dict, List, Optional
+
+class EntityValidator(BaseModel):
+    """Pydantic model for entity validation."""
+    
+    entity_type: str
+    canonical_name: str
+    description: Optional[str]
+    attributes: Dict[str, any]
+    
+    def validate_type_specific(self):
+        """Validate type-specific attributes."""
+        if self.entity_type == "character":
+            required = ["species", "role"]
+            for field in required:
+                if field not in self.attributes:
+                    raise ValidationError(f"Missing {field} for character")
+        
+        # ... similar for other types
+```
+
+---
+
+## Stage 3: Charter Law Validation (Phase II)
+
+**Purpose:** Check against Universal Charter laws
+
+**Validates:**
+- Conservation of Consequence (Law I)
+- Limited Exception (Law II)
+- Persistent Identity (Law V)
+- Temporal Ordering (Law VI)
+- And all 11 laws...
+
+**Implementation:**
+```python
+class CharterValidator:
+    """Validates entities against Charter laws."""
+    
+    def __init__(self, db: Database):
+        self.db = db
+        self.laws = load_charter_laws()
+    
+    def validate_entity(self, entity: Dict) -> List[Dict]:
+        """
+        Returns list of Charter violations.
+        """
+        violations = []
+        
+        # Law V: Persistent Identity
+        violations.extend(self._check_persistent_identity(entity))
+        
+        # Law II: Limited Exception (for magic)
+        if entity.get("entity_type") == "spell":
+            violations.extend(self._check_limited_exception(entity))
+        
+        # ... check all relevant laws
+        
+        return violations
+    
+    def _check_persistent_identity(self, entity):
+        """Check Law V: entity can't be and not-be simultaneously."""
+        violations = []
+        
+        # Check for contradictory status
+        status = entity.get("attributes", {}).get("status")
+        if status in ["alive", "dead"]:
+            # Check if other entities contradict this
+            contradictions = self.db.find_status_contradictions(
+                entity["canonical_name"],
+                status
+            )
+            if contradictions:
+                violations.append({
+                    "law": 5,
+                    "law_title": "Persistent Identity",
+                    "issue": f"Entity has contradictory status claims",
+                    "details": contradictions
+                })
+        
+        return violations
+```
+
+---
+
+## Stage 4: Campaign Rule Validation (Phase III)
+
+**Purpose:** Check against campaign-specific overrides
+
+**Validates:**
+- Campaign overrides to Charter
+- World-specific rules
+- Forbidden elements
+- Local truth exceptions
+
+**Implementation:**
+```python
+class CampaignValidator:
+    """Validates against campaign-specific rules."""
+    
+    def __init__(self, db: Database, campaign_id: str):
+        self.db = db
+        self.campaign = load_campaign(campaign_id)
+        self.charter_validator = CharterValidator(db)
+    
+    def validate_entity(self, entity: Dict) -> Dict:
+        """
+        Three-tier validation:
+        1. Charter (with campaign overrides applied)
+        2. World-specific rules
+        3. Forbidden elements check
+        """
+        results = {
+            "violations": [],
+            "warnings": [],
+            "local_exceptions": []
+        }
+        
+        # Apply campaign overrides to Charter
+        charter_violations = self.charter_validator.validate_entity(entity)
+        charter_violations = self._apply_overrides(
+            charter_violations,
+            self.campaign.overrides
+        )
+        results["violations"].extend(charter_violations)
+        
+        # Check world-specific rules
+        world_violations = self._check_world_rules(entity)
+        results["violations"].extend(world_violations)
+        
+        # Check forbidden elements
+        forbidden = self._check_forbidden(entity)
+        if forbidden:
+            results["violations"].append({
+                "type": "forbidden_element",
+                "severity": "critical",
+                "message": f"{entity['canonical_name']} is forbidden in this campaign",
+                "reason": forbidden["reason"]
+            })
+        
+        # Check for local truth exceptions
+        if entity.get("entity_type") == "location":
+            local_truths = self._check_local_truths(entity)
+            results["local_exceptions"].extend(local_truths)
+        
+        return results
+```
+
+---
+
+## Stage 5: Contradiction Detection
+
+**Purpose:** Find conflicts between entities
+
+**Detects:**
+- Attribute mismatches
+- Existence conflicts
+- Temporal inconsistencies
+- Relationship conflicts
+- Location conflicts
+- Status conflicts (alive/dead)
+- Identity conflicts
+
+**Implementation:**
+```python
+class ContradictionDetector:
+    """Detect contradictions between entities."""
+    
+    def __init__(self, db: Database):
+        self.db = db
+    
+    def detect_contradictions(self, entity: Dict) -> List[Dict]:
+        """
+        Find all contradictions with existing entities.
+        """
+        contradictions = []
+        
+        # Find similar entities (same name or aliases)
+        similar = self.db.find_similar_entities(
+            entity["canonical_name"],
+            entity.get("aliases", [])
+        )
+        
+        for other in similar:
+            # Check each conflict type
+            contradictions.extend(
+                self._check_attribute_mismatch(entity, other)
+            )
+            contradictions.extend(
+                self._check_status_conflict(entity, other)
+            )
+            contradictions.extend(
+                self._check_location_conflict(entity, other)
+            )
+        
+        return contradictions
+    
+    def _check_attribute_mismatch(self, entity_a, entity_b):
+        """Check for contradictory attributes."""
+        conflicts = []
+        
+        attrs_a = entity_a.get("attributes", {})
+        attrs_b = entity_b.get("attributes", {})
+        
+        # Find overlapping attributes with different values
+        for key in set(attrs_a.keys()) & set(attrs_b.keys()):
+            if attrs_a[key] != attrs_b[key]:
+                conflicts.append({
+                    "conflict_type": "attribute_mismatch",
+                    "attribute": key,
+                    "value_a": attrs_a[key],
+                    "value_b": attrs_b[key],
+                    "severity": self._determine_severity(key)
+                })
+        
+        return conflicts
+```
+
+---
+
+## Validation Workflow
+
+```python
+def validate_and_store_entity(
+    entity: Dict,
+    source_text: str,
+    campaign_id: str
+) -> Dict:
+    """
+    Complete validation pipeline.
+    """
+    results = {
+        "valid": True,
+        "errors": [],
+        "warnings": [],
+        "contradictions": []
+    }
+    
+    try:
+        # Stage 1: Source text validation
+        validate_source_text(entity, source_text)
+        
+        # Stage 2: Structure validation
+        EntityValidator(**entity)
+        
+        # Stage 3: Charter validation (if Phase II active)
+        charter_validator = CharterValidator(db)
+        charter_results = charter_validator.validate_entity(entity)
+        results["warnings"].extend(charter_results)
+        
+        # Stage 4: Campaign validation (if Phase III active)
+        if campaign_id:
+            campaign_validator = CampaignValidator(db, campaign_id)
+            campaign_results = campaign_validator.validate_entity(entity)
+            results["warnings"].extend(campaign_results["violations"])
+        
+        # Stage 5: Contradiction detection
+        detector = ContradictionDetector(db)
+        contradictions = detector.detect_contradictions(entity)
+        results["contradictions"] = contradictions
+        
+    except ContextBleedError as e:
+        results["valid"] = False
+        results["errors"].append({
+            "type": "context_bleed",
+            "message": str(e)
+        })
+    except ValidationError as e:
+        results["valid"] = False
+        results["errors"].append({
+            "type": "validation_error",
+            "message": str(e)
+        })
+    
+    return results
+```
+
+---
+
+## Error Handling
+
+### Critical Errors (Block Storage)
+- Context Bleed detected
+- Invalid entity structure
+- Missing required fields
+- Malformed JSON
+
+### Warnings (Allow with Flag)
+- Charter law violations
+- Campaign rule conflicts
+- Low confidence extractions
+
+### Info (Store for Review)
+- Contradictions detected
+- Similar entities found
+- Potential duplicates
+
+---
+
+## Performance Considerations
+
+**Optimization Strategies:**
+- Cache Charter laws in memory
+- Index entities by name + aliases
+- Batch contradiction detection
+- Lazy load campaign rules
+
+**Expected Performance:**
+- Structure validation: <1ms per entity
+- Charter validation: <10ms per entity
+- Contradiction detection: <100ms per entity
+- Full pipeline: <150ms per entity
+
+---
+
+## Testing Strategy
+
+**Unit Tests:**
+```python
+def test_context_bleed_detection():
+    entity = {"canonical_name": "Strider", ...}
+    source_text = "The ranger approached."
+    
+    with pytest.raises(ContextBleedError):
+        validate_source_text(entity, source_text)
+
+def test_charter_law_validation():
+    entity = {"entity_type": "character", "status": "alive"}
+    validator = CharterValidator(mock_db)
+    violations = validator.validate_entity(entity)
+    assert len(violations) == 0
+```
+
+**Integration Tests:**
+- Full pipeline with sample entities
+- Contradiction detection accuracy
+- Performance benchmarks
+
+---
+
+## Future Enhancements
+
+**Phase II:**
+- AI-assisted reconciliation suggestions
+- Natural language violation explanations
+- Interactive resolution wizard
+
+**Phase III:**
+- Campaign-specific validation rules
+- Local truth exception handling
+- Multi-campaign consistency checks
+
+---
+
+## Version History
+
+**v1.0 (Nov 7, 2025):**
+- Initial specification
+- Five-stage pipeline defined
+- Context Bleed prevention (Rule 13)
+- Charter validation framework
+
+---
+
+**Status:** Target specification  
+**Implementation:** Phases I-III  
+**Priority:** Context Bleed validation (Critical)  
+
+**See Also:**
+- `prompts/entity-extraction-final.md` - Extraction rules
+- `concepts/world-logic-charter.md` - Charter laws
+- `concepts/entity-types.md` - Type specifications
+- `architecture/database-schema-target.md` - Data structures

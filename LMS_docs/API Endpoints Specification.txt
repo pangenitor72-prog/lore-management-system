@@ -1,0 +1,627 @@
+# API Endpoints Specification
+**Version:** 1.0  
+**Last Updated:** November 7, 2025  
+**Status:** Target specification
+
+---
+
+## Overview
+
+FastAPI-based REST API for the LMS. All endpoints return JSON unless otherwise specified.
+
+**Base URL:** `http://localhost:8000`  
+**Authentication:** (Future - Phase II+)  
+**Rate Limiting:** (Future - Phase II+)
+
+---
+
+## Entity Management
+
+### POST /api/entities
+**Purpose:** Create new entity
+
+**Request:**
+```json
+{
+  "entity_type": "character",
+  "canonical_name": "Aldric",
+  "description": "Knight of the realm",
+  "attributes": {
+    "species": "human",
+    "role": "knight",
+    "status": "alive"
+  },
+  "source_document": "session_notes_001.txt",
+  "source_excerpt": "Sir Aldric drew his sword...",
+  "campaign_id": "hollow-eye"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "canon_id": "abc123...",
+  "entity_type": "character",
+  "canonical_name": "Aldric",
+  "approval_status": "PENDING",
+  "confidence_level": "LIKELY",
+  "validation": {
+    "errors": [],
+    "warnings": [],
+    "contradictions": [
+      {
+        "contradiction_id": "def456...",
+        "entity_b_id": "xyz789...",
+        "conflict_type": "attribute_mismatch",
+        "severity": "medium",
+        "description": "Status conflict with existing entity"
+      }
+    ]
+  }
+}
+```
+
+**Response (400 Bad Request):**
+```json
+{
+  "error": "validation_failed",
+  "details": [
+    {
+      "type": "context_bleed",
+      "message": "Entity 'Strider' not found in source text"
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/entities
+**Purpose:** List entities with filtering
+
+**Query Parameters:**
+- `entity_type`: Filter by type (character, location, etc.)
+- `approval_status`: Filter by status (APPROVED, PENDING, etc.)
+- `campaign_id`: Filter by campaign
+- `search`: Search by name or description
+- `limit`: Max results (default: 50, max: 500)
+- `offset`: Pagination offset
+
+**Example:** `GET /api/entities?entity_type=character&approval_status=APPROVED&limit=20`
+
+**Response (200 OK):**
+```json
+{
+  "total": 150,
+  "offset": 0,
+  "limit": 20,
+  "entities": [
+    {
+      "canon_id": "abc123...",
+      "entity_type": "character",
+      "canonical_name": "Aldric",
+      "description": "Knight of the realm",
+      "approval_status": "APPROVED",
+      "confidence_level": "CONFIRMED"
+    },
+    // ... more entities
+  ]
+}
+```
+
+---
+
+### GET /api/entities/{canon_id}
+**Purpose:** Get single entity by ID
+
+**Response (200 OK):**
+```json
+{
+  "canon_id": "abc123...",
+  "entity_type": "character",
+  "canonical_name": "Aldric",
+  "aliases": ["The Brave", "Aldric of Thornhaven"],
+  "description": "Knight of the realm",
+  "attributes": {
+    "species": "human",
+    "role": "knight",
+    "status": "alive",
+    "affiliations": ["Order of the Dawn"]
+  },
+  "approval_status": "APPROVED",
+  "confidence_level": "CONFIRMED",
+  "source_document": "session_notes_001.txt",
+  "source_excerpt": "Sir Aldric drew his sword...",
+  "party_knowledge": "KNOWN",
+  "campaign_id": "hollow-eye",
+  "revision_history": [
+    {
+      "timestamp": "2025-11-01T10:00:00Z",
+      "changed_fields": {"status": "unknown → alive"},
+      "source_document": "session_notes_002.txt",
+      "approver": "dm_shawn"
+    }
+  ],
+  "created_at": "2025-10-15T12:00:00Z",
+  "updated_at": "2025-11-01T10:00:00Z"
+}
+```
+
+---
+
+### PATCH /api/entities/{canon_id}
+**Purpose:** Update entity (approval, attributes, etc.)
+
+**Request:**
+```json
+{
+  "approval_status": "APPROVED",
+  "attributes": {
+    "status": "dead"
+  },
+  "approver": "dm_shawn",
+  "notes": "Died in battle at Helm's Gate"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "canon_id": "abc123...",
+  "canonical_name": "Aldric",
+  "approval_status": "APPROVED",
+  "updated_fields": ["approval_status", "attributes.status"],
+  "revision_created": true
+}
+```
+
+---
+
+### DELETE /api/entities/{canon_id}
+**Purpose:** Delete entity (rare - usually set approval_status to REJECTED instead)
+
+**Response (204 No Content)**
+
+---
+
+## Contradiction Management
+
+### GET /api/contradictions
+**Purpose:** List contradictions
+
+**Query Parameters:**
+- `resolution_status`: open, investigating, resolved, ignored
+- `severity`: critical, high, medium, low
+- `conflict_type`: attribute_mismatch, existence_conflict, etc.
+- `campaign_id`: Filter by campaign
+
+**Example:** `GET /api/contradictions?resolution_status=open&severity=critical`
+
+**Response (200 OK):**
+```json
+{
+  "total": 15,
+  "contradictions": [
+    {
+      "contradiction_id": "def456...",
+      "entity_a": {
+        "canon_id": "abc123...",
+        "canonical_name": "Aldric"
+      },
+      "entity_b": {
+        "canon_id": "xyz789...",
+        "canonical_name": "Aldric"
+      },
+      "conflict_type": "status_conflict",
+      "severity": "critical",
+      "description": "Entity A says alive, Entity B says dead",
+      "ai_analysis": "Documents may be out of chronological order",
+      "charter_guidance": "Violates Law V (Persistent Identity) and Law VI (Temporal Ordering)",
+      "confidence_score": 0.95,
+      "resolution_status": "open",
+      "detected_at": "2025-11-05T14:30:00Z"
+    },
+    // ... more contradictions
+  ]
+}
+```
+
+---
+
+### GET /api/contradictions/{contradiction_id}
+**Purpose:** Get single contradiction with full details
+
+**Response (200 OK):**
+```json
+{
+  "contradiction_id": "def456...",
+  "entity_a": { /* full entity object */ },
+  "entity_b": { /* full entity object */ },
+  "conflict_type": "status_conflict",
+  "severity": "critical",
+  "description": "Status conflict: alive vs dead",
+  "ai_analysis": "Both documents mention Aldric. Document A (dated Oct 15) says he's alive. Document B (dated Nov 1) says he died. Likely temporal ordering issue.",
+  "charter_guidance": "Violates Law V (Persistent Identity) and Law VI (Temporal Ordering)",
+  "confidence_score": 0.95,
+  "resolution_status": "open",
+  "suggested_reconciliations": [
+    {
+      "type": "temporal_reordering",
+      "narrative": "Aldric was alive on Oct 15, died on Nov 1. Documents reflect different time periods.",
+      "confidence": 0.9
+    },
+    {
+      "type": "mistaken_identity",
+      "narrative": "Two different people named Aldric. Need to disambiguate.",
+      "confidence": 0.6
+    }
+  ],
+  "detected_at": "2025-11-05T14:30:00Z"
+}
+```
+
+---
+
+### POST /api/contradictions/{contradiction_id}/resolve
+**Purpose:** Resolve contradiction
+
+**Request:**
+```json
+{
+  "reconciliation_type": "temporal_reordering",
+  "reconciliation_narrative": "Aldric was alive when first mentioned, died later in battle. Documents show progression over time, not contradiction.",
+  "resolved_by": "dm_shawn",
+  "entity_updates": [
+    {
+      "canon_id": "abc123...",
+      "attributes": {
+        "status": "dead",
+        "death_date": "Nov 1, 2025"
+      }
+    }
+  ]
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "contradiction_id": "def456...",
+  "resolution_status": "resolved",
+  "reconciliation_type": "temporal_reordering",
+  "resolved_at": "2025-11-06T10:00:00Z",
+  "entities_updated": ["abc123..."]
+}
+```
+
+---
+
+## Document Ingestion
+
+### POST /api/documents/upload
+**Purpose:** Upload source document for processing
+
+**Request (multipart/form-data):**
+```
+file: [binary file data]
+campaign_id: "hollow-eye"
+auto_approve: false
+```
+
+**Response (202 Accepted):**
+```json
+{
+  "document_id": "doc123...",
+  "filename": "session_notes_003.docx",
+  "status": "processing",
+  "extraction_job_id": "job456..."
+}
+```
+
+---
+
+### GET /api/documents/{document_id}/status
+**Purpose:** Check document processing status
+
+**Response (200 OK):**
+```json
+{
+  "document_id": "doc123...",
+  "filename": "session_notes_003.docx",
+  "status": "completed",
+  "processed_at": "2025-11-06T11:00:00Z",
+  "statistics": {
+    "entities_extracted": 25,
+    "entities_approved": 0,
+    "entities_pending": 25,
+    "contradictions_found": 3
+  }
+}
+```
+
+---
+
+### POST /api/documents/{document_id}/entities/extract
+**Purpose:** Trigger entity extraction (manual or re-process)
+
+**Request:**
+```json
+{
+  "method": "ai_assisted",
+  "campaign_id": "hollow-eye",
+  "auto_approve": false
+}
+```
+
+**Response (202 Accepted):**
+```json
+{
+  "extraction_job_id": "job789...",
+  "status": "processing"
+}
+```
+
+---
+
+## Relationships
+
+### POST /api/relationships
+**Purpose:** Create relationship between entities
+
+**Request:**
+```json
+{
+  "source_canon_id": "abc123...",
+  "target_canon_id": "xyz789...",
+  "relationship_type": "ALLY_OF",
+  "description": "Fought together at Helm's Gate",
+  "status": "Current",
+  "confidence": "EXPLICIT",
+  "source_document": "session_notes_003.txt"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "relationship_id": "rel123...",
+  "source_canon_id": "abc123...",
+  "target_canon_id": "xyz789...",
+  "relationship_type": "ALLY_OF",
+  "approved": false
+}
+```
+
+---
+
+### GET /api/entities/{canon_id}/relationships
+**Purpose:** Get all relationships for an entity
+
+**Response (200 OK):**
+```json
+{
+  "canon_id": "abc123...",
+  "canonical_name": "Aldric",
+  "relationships": {
+    "outgoing": [
+      {
+        "relationship_id": "rel123...",
+        "target": {
+          "canon_id": "xyz789...",
+          "canonical_name": "Brenna"
+        },
+        "relationship_type": "ALLY_OF",
+        "status": "Current"
+      }
+    ],
+    "incoming": [
+      {
+        "relationship_id": "rel456...",
+        "source": {
+          "canon_id": "def456...",
+          "canonical_name": "The King"
+        },
+        "relationship_type": "COMMANDS",
+        "status": "Current"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Search & Query
+
+### GET /api/search
+**Purpose:** Full-text search across entities
+
+**Query Parameters:**
+- `q`: Search query
+- `entity_type`: Filter by type
+- `fields`: Which fields to search (name, description, attributes)
+
+**Example:** `GET /api/search?q=knight&entity_type=character`
+
+**Response (200 OK):**
+```json
+{
+  "query": "knight",
+  "total": 5,
+  "results": [
+    {
+      "canon_id": "abc123...",
+      "canonical_name": "Aldric",
+      "entity_type": "character",
+      "description": "Knight of the realm",
+      "relevance_score": 0.95
+    },
+    // ... more results
+  ]
+}
+```
+
+---
+
+## Health & Status
+
+### GET /health
+**Purpose:** Health check
+
+**Response (200 OK):**
+```json
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "database": "connected",
+  "uptime_seconds": 86400
+}
+```
+
+---
+
+### GET /api/stats
+**Purpose:** System statistics
+
+**Response (200 OK):**
+```json
+{
+  "entities": {
+    "total": 500,
+    "by_type": {
+      "character": 150,
+      "location": 80,
+      "faction": 45,
+      // ... others
+    },
+    "by_status": {
+      "APPROVED": 350,
+      "PENDING": 120,
+      "FLAGGED": 25,
+      "REJECTED": 5
+    }
+  },
+  "contradictions": {
+    "total": 30,
+    "open": 15,
+    "resolved": 12,
+    "ignored": 3
+  },
+  "documents": {
+    "total": 12,
+    "processed": 10,
+    "processing": 2
+  }
+}
+```
+
+---
+
+## Dashboard (HTML)
+
+### GET /dashboard
+**Purpose:** Web UI for contradiction management
+
+**Returns:** HTML page with:
+- List of open contradictions
+- Entity browser
+- Document upload interface
+- Resolution tools
+
+---
+
+### GET /
+**Purpose:** Root redirect
+
+**Returns:** Redirect to `/dashboard`
+
+---
+
+## WebSocket Endpoints (Future)
+
+### WS /ws/agent-chat/{client_id}
+**Purpose:** Real-time chat with query agent
+
+**Future Phase:**
+- Natural language lore queries
+- Interactive contradiction resolution
+- Real-time updates
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+```json
+{
+  "error": "validation_failed",
+  "details": [
+    {"field": "entity_type", "message": "Invalid entity type"}
+  ]
+}
+```
+
+### 404 Not Found
+```json
+{
+  "error": "not_found",
+  "message": "Entity with canon_id 'abc123' not found"
+}
+```
+
+### 500 Internal Server Error
+```json
+{
+  "error": "internal_error",
+  "message": "Database connection failed",
+  "request_id": "req789..."
+}
+```
+
+---
+
+## Implementation Notes
+
+### Current Status (Phase VIII)
+**Implemented:**
+- `/debug/seed-contradictions` (test endpoint)
+- `/dashboard` (basic HTML)
+- `/api/contradiction-snapshot` (JSON)
+
+**To Implement:**
+- Full CRUD for entities
+- Relationship endpoints
+- Document upload/processing
+- Search functionality
+
+### Future Phases
+
+**Phase II (Charter):**
+- `/api/charter/laws` - Get Charter laws
+- `/api/charter/validate` - Validate against Charter
+
+**Phase III (Campaigns):**
+- `/api/campaigns` - Campaign CRUD
+- `/api/campaigns/{id}/overrides` - Override management
+- `/api/campaigns/{id}/entities` - Campaign-filtered entities
+
+---
+
+## Version History
+
+**v1.0 (Nov 7, 2025):**
+- Initial specification
+- Core CRUD endpoints defined
+- Contradiction management API
+- Search and stats endpoints
+
+---
+
+**Status:** Target specification  
+**Current Implementation:** Partial (see Phase VIII audit)  
+**Priority:** Entity CRUD, Contradiction management  
+
+**See Also:**
+- `architecture/database-schema-target.md` - Data structures
+- `architecture/validation-pipeline.md` - Validation logic
+- `audit/phase-viii-complete-audit.md` - Current endpoints (pending)

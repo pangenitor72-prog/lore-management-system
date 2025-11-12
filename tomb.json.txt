@@ -1,0 +1,13 @@
+{
+  "entity_type": "Location",
+  "canonical_name": "Arion's Memorial",
+  "aliases": ["The King's Rest"],
+  "approved_fields": {
+    "type": "Tomb",
+    "built_date": "1045",
+    "description": "A memorial built in memory of King Arion II."
+  },
+  "approval_status": "APPROVED",
+  "confidence_level": "CONFIRMED",
+  "party_knowledge": "KNOWN"
+}

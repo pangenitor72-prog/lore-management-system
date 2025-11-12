@@ -1,0 +1,179 @@
+# Dev Lab Setup - Phase 1 Automation Script
+# Run this in PowerShell from your dev-lab-setup directory
+# Last Updated: November 12, 2025
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Dev Lab Setup - Phase 1" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Check if we're in the right directory
+if (!(Test-Path "README.md")) {
+    Write-Host "ERROR: Not in dev-lab-setup directory!" -ForegroundColor Red
+    Write-Host "Please run this script from C:\Users\pange\Documents\dev-lab-setup" -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "[1/7] Checking Python installation..." -ForegroundColor Green
+$pythonVersion = python --version 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "✓ Python found: $pythonVersion" -ForegroundColor Green
+} else {
+    Write-Host "✗ Python not found!" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "[2/7] Creating Python virtual environment..." -ForegroundColor Green
+if (Test-Path "venv") {
+    Write-Host "! Virtual environment already exists. Skipping..." -ForegroundColor Yellow
+} else {
+    python -m venv venv
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✓ Virtual environment created" -ForegroundColor Green
+    } else {
+        Write-Host "✗ Failed to create virtual environment" -ForegroundColor Red
+        exit 1
+    }
+}
+
+Write-Host ""
+Write-Host "[3/7] Creating .gitignore..." -ForegroundColor Green
+$gitignoreContent = @"
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+"@
+
+$gitignoreContent | Out-File -FilePath ".gitignore" -Encoding UTF8
+Write-Host "✓ .gitignore created" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "[4/7] Creating requirements.txt..." -ForegroundColor Green
+$requirementsContent = @"
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Development tools
+pytest>=7.4.0
+pytest-cov>=4.1.0
+ruff>=0.1.0
+mypy>=1.5.0
+
+# Logging
+loguru>=0.7.0
+
+# Future: Add as needed
+# ollama-python>=0.1.0
+# langchain>=0.1.0
+"@
+
+$requirementsContent | Out-File -FilePath "requirements.txt" -Encoding UTF8
+Write-Host "✓ requirements.txt created" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "[5/7] Creating project directories..." -ForegroundColor Green
+$directories = @("src", "src\agents", "tests", "docs", "docs\session_logs")
+foreach ($dir in $directories) {
+    if (!(Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        Write-Host "  ✓ Created $dir" -ForegroundColor Green
+    } else {
+        Write-Host "  ! $dir already exists" -ForegroundColor Yellow
+    }
+}
+
+Write-Host ""
+Write-Host "[6/7] Creating initial Python files..." -ForegroundColor Green
+
+# src/__init__.py
+if (!(Test-Path "src\__init__.py")) {
+    '"""Abominable Orchestrator - Source Package"""' | Out-File -FilePath "src\__init__.py" -Encoding UTF8
+    Write-Host "  ✓ Created src\__init__.py" -ForegroundColor Green
+}
+
+# src/agents/__init__.py
+if (!(Test-Path "src\agents\__init__.py")) {
+    '"""Agent modules"""' | Out-File -FilePath "src\agents\__init__.py" -Encoding UTF8
+    Write-Host "  ✓ Created src\agents\__init__.py" -ForegroundColor Green
+}
+
+# tests/__init__.py
+if (!(Test-Path "tests\__init__.py")) {
+    '"""Test suite"""' | Out-File -FilePath "tests\__init__.py" -Encoding UTF8
+    Write-Host "  ✓ Created tests\__init__.py" -ForegroundColor Green
+}
+
+Write-Host ""
+Write-Host "[7/7] Creating .env.example..." -ForegroundColor Green
+$envExampleContent = @"
+# Environment Configuration Template
+# Copy this to .env and fill in your values
+
+# GitHub
+GITHUB_TOKEN=your_token_here
+
+# Ollama
+OLLAMA_HOST=http://localhost:11434
+
+# Logging
+LOG_LEVEL=INFO
+"@
+
+$envExampleContent | Out-File -FilePath ".env.example" -Encoding UTF8
+Write-Host "✓ .env.example created" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Phase 1 Setup Complete!" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Next steps:" -ForegroundColor Yellow
+Write-Host "1. Activate virtual environment:" -ForegroundColor White
+Write-Host "   .\venv\Scripts\activate" -ForegroundColor Gray
+Write-Host ""
+Write-Host "2. Install dependencies:" -ForegroundColor White
+Write-Host "   pip install -r requirements.txt" -ForegroundColor Gray
+Write-Host ""
+Write-Host "3. Commit changes:" -ForegroundColor White
+Write-Host "   git add ." -ForegroundColor Gray
+Write-Host "   git commit -m " -NoNewline -ForegroundColor Gray
+Write-Host '"Phase 1: Project structure and dependencies"' -ForegroundColor Gray
+Write-Host "   git push" -ForegroundColor Gray
+Write-Host ""
+Write-Host "4. Install Ollama:" -ForegroundColor White
+Write-Host "   Download from: https://ollama.com/download" -ForegroundColor Gray
+Write-Host ""
