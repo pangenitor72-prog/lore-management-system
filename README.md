@@ -4,7 +4,7 @@ A production-ready knowledge management system for maintaining narrative coheren
 
 ## Origin Story
 
-Built to solve a real problem: managing 30+ years of accumulated lore from Jim King's long-running D&D campaign, "The Hollow Eye Chronicles." When you have decades of session notes, character backstories, and world history, maintaining consistency becomes impossible without systematic tooling.
+Built to solve a real problem: managing 30+ years of accumulated lore from a friend's long-running D&D campaign, "The Hollow Eye Chronicles." When you have decades of session notes, character backstories, and world history, maintaining consistency becomes impossible without systematic tooling.
 
 ## Core Problem
 
