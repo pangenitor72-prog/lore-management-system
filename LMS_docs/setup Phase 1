@@ -1,0 +1,3428 @@
+# Dev Lab Setup - Phase 1 Automation Script
+# Run this in PowerShell from your dev-lab-setup directory
+# Last Upd# Gemini API Setup & LMS Integration - Complete Gameplan
+
+**For:** Shawn (pangenitor72-prog)  
+**Date:** November 12, 2025  
+**Project:** Lore Management System (LMS) Phase XII  
+**Goal:** Set up Gemini API for entity extraction, contradiction detection, and lore analysis
+
+---
+
+## 📋 TABLE OF CONTENTS
+
+1. [Overview & Architecture](#overview--architecture)
+2. [Phase 1: Get Gemini API Key](#phase-1-get-gemini-api-key)
+3. [Phase 2: Install Python SDK](#phase-2-install-python-sdk)
+4. [Phase 3: Test Connection](#phase-3-test-connection)
+5. [Phase 4: Build Chunking Pipeline](#phase-4-build-chunking-pipeline)
+6. [Phase 5: Integrate with LMS](#phase-5-integrate-with-lms)
+7. [Cost Estimates](#cost-estimates)
+8. [Testing Strategy](#testing-strategy)
+9. [Troubleshooting](#troubleshooting)
+
+---
+
+## 🏗️ OVERVIEW & ARCHITECTURE
+
+### The Two-Layer System
+
+```
+┌─────────────────────────────────────────────────┐
+│         RAW CAMPAIGN DOCUMENTS                   │
+│  (50+ pages, messy formatting, irrelevant data) │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│         LAYER 1: OLLAMA (MACHETE)                │
+│  • Free, local processing on RTX 2060           │
+│  • Runs overnight, batch processing             │
+│  • Chunks documents by topic/session            │
+│  • Removes formatting/metadata junk             │
+│  • Filters irrelevant content                   │
+│  • Output: Clean, categorized chunks            │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│    LAYER 2: GEMINI API (SCALPEL)                │
+│  • Paid per-token, cloud-based                  │
+│  • Fast, precise analysis                       │
+│  • Entity extraction with confidence scores     │
+│  • Relationship mapping                         │
+│  • Contradiction detection                      │
+│  • Output: Structured LMS entities              │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│         LMS DATABASE (SQLite)                    │
+│  • Entities, relationships, contradictions      │
+│  • Full audit trail                             │
+│  • User-facing UI                               │
+└─────────────────────────────────────────────────┘
+```
+
+### Why This Architecture?
+
+**Cost Efficiency:**
+- Ollama handles 80% of grunt work (free)
+- Gemini only processes clean, relevant data (cheaper)
+- Reduces token usage by 50-70%
+
+**Quality:**
+- Chunking prevents Gemini from being overwhelmed
+- Focused analysis on relevant content
+- Better entity extraction accuracy
+
+**Speed:**
+- Ollama runs overnight (you don't care about 15min/document)
+- Gemini processes chunks in seconds
+- Total pipeline: Hours instead of days
+
+---
+
+## 🔑 PHASE 1: GET GEMINI API KEY
+
+### Step 1: Go to Google AI Studio
+
+URL: https://aistudio.google.com/
+
+### Step 2: Sign In
+
+- Use your Google account (pangenitor72@gmail.com or other)
+- Accept terms of service
+
+### Step 3: Create API Key
+
+1. Click **"Get API Key"** in the sidebar
+2. Click **"Create API Key"**
+3. Choose: **"Create API key in new project"** (or select existing project)
+4. Copy the key - looks like: `AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX`
+5. **SAVE IT IMMEDIATELY** - you might not see it again
+
+### Step 4: Store Key Securely
+
+**Option A: Add to LMS .env file**
+
+Open: `C:\Users\pange\Downloads\lore-system.tar\lore-system\.env`
+
+Add this line:
+```
+GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+**Option B: Use Windows Environment Variable** (less recommended)
+
+```powershell
+[System.Environment]::SetEnvironmentVariable('GEMINI_API_KEY', 'AIzaSy...', 'User')
+```
+
+**CRITICAL:** Never commit .env to Git! (Already in .gitignore, but double-check)
+
+### Verification
+
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+cat .env | Select-String "GEMINI"
+```
+
+Should show your key (with most characters visible).
+
+---
+
+## 📦 PHASE 2: INSTALL PYTHON SDK
+
+### Step 1: Activate Virtual Environment
+
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+.\venv\Scripts\activate
+```
+
+You should see `(venv)` in your prompt.
+
+### Step 2: Install Gemini SDK
+
+```powershell
+pip install google-generativeai python-dotenv
+```
+
+This installs:
+- `google-generativeai` - Official Gemini SDK
+- `python-dotenv` - For loading .env files (if not already installed)
+
+### Step 3: Update requirements.txt
+
+```powershell
+pip freeze > requirements.txt
+```
+
+### Step 4: Commit Changes
+
+```powershell
+git add requirements.txt
+git commit -m "Add Gemini API dependencies"
+git push
+```
+
+---
+
+## 🧪 PHASE 3: TEST CONNECTION
+
+### Create Test Script
+
+**File:** `test_gemini.py` (in lore-system root)
+
+```python
+"""
+Test Gemini API connection and basic functionality.
+Run this to verify your API key works before integrating with LMS.
+"""
+import os
+from dotenv import load_dotenv
+import google.generativeai as genai
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini
+api_key = os.getenv('GEMINI_API_KEY')
+if not api_key:
+    print("ERROR: GEMINI_API_KEY not found in .env file")
+    exit(1)
+
+genai.configure(api_key=api_key)
+
+# Test 1: List available models
+print("=== Available Models ===")
+for model in genai.list_models():
+    if 'generateContent' in model.supported_generation_methods:
+        print(f"- {model.name}")
+
+print("\n=== Testing Gemini 1.5 Flash ===")
+
+# Test 2: Simple generation
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+prompt = """
+Extract entities from this text:
+
+"Thorin Ironforge, the dwarven blacksmith, crafted the legendary Hammer of Dawn 
+in the fires of Mount Ashengale. The hammer was later stolen by the Shadow Syndicate."
+
+Return JSON format:
+{
+  "characters": [...],
+  "locations": [...],
+  "items": [...]
+}
+"""
+
+response = model.generate_content(prompt)
+print("\nResponse:")
+print(response.text)
+
+print("\n✓ Gemini API connection successful!")
+```
+
+### Run Test
+
+```powershell
+python test_gemini.py
+```
+
+**Expected Output:**
+```
+=== Available Models ===
+- models/gemini-1.5-flash
+- models/gemini-1.5-pro
+...
+
+=== Testing Gemini 1.5 Flash ===
+
+Response:
+{
+  "characters": ["Thorin Ironforge"],
+  "locations": ["Mount Ashengale"],
+  "items": ["Hammer of Dawn"]
+}
+
+✓ Gemini API connection successful!
+```
+
+**If it works:** You're good to go!  
+**If it fails:** See [Troubleshooting](#troubleshooting) section.
+
+---
+
+## 🔨 PHASE 4: BUILD CHUNKING PIPELINE
+
+### Architecture Overview
+
+```
+Document → Ollama Chunker → Clean Chunks → Gemini Analyzer → Entities
+```
+
+### Step 1: Create Chunker Module
+
+**File:** `src/chunker.py`
+
+```python
+"""
+Document chunking using Ollama for preprocessing.
+Breaks large documents into manageable chunks for Gemini analysis.
+"""
+import ollama
+from typing import List, Dict
+import re
+
+
+class DocumentChunker:
+    """Chunks documents using local Ollama model."""
+    
+    def __init__(self, model: str = "llama3.1:8b"):
+        self.model = model
+        self.client = ollama.Client()
+    
+    def chunk_by_sessions(self, document: str) -> List[Dict[str, str]]:
+        """
+        Split a campaign document into session-based chunks.
+        
+        Args:
+            document: Raw campaign text
+            
+        Returns:
+            List of chunks with metadata
+        """
+        prompt = f"""
+Split this campaign document into separate sessions. 
+For each session, extract:
+1. Session number/title
+2. Main events
+3. Characters involved
+
+Document:
+{document[:2000]}  # Send first 2000 chars as example
+
+Format each chunk as:
+SESSION: [number]
+EVENTS: [brief summary]
+CHARACTERS: [list]
+---
+"""
+        
+        response = self.client.chat(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a document chunking assistant. Be concise and structured."
+                },
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        # Parse response into chunks
+        raw_chunks = response['message']['content'].split('---')
+        
+        chunks = []
+        for i, chunk in enumerate(raw_chunks):
+            if chunk.strip():
+                chunks.append({
+                    'chunk_id': f"chunk_{i}",
+                    'content': chunk.strip(),
+                    'metadata': self._extract_metadata(chunk)
+                })
+        
+        return chunks
+    
+    def _extract_metadata(self, chunk: str) -> Dict[str, str]:
+        """Extract metadata from chunk header."""
+        metadata = {}
+        
+        # Extract session number
+        session_match = re.search(r'SESSION:\s*(.+)', chunk)
+        if session_match:
+            metadata['session'] = session_match.group(1).strip()
+        
+        return metadata
+    
+    def clean_formatting(self, text: str) -> str:
+        """
+        Remove formatting junk from text.
+        
+        Args:
+            text: Raw text with timestamps, metadata, etc.
+            
+        Returns:
+            Cleaned text
+        """
+        prompt = f"""
+Remove all timestamps, user tags, and formatting from this text.
+Keep only the actual narrative content.
+
+Text:
+{text[:1000]}
+
+Return only the cleaned text, no explanations.
+"""
+        
+        response = self.client.chat(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        return response['message']['content']
+
+
+# Example usage
+if __name__ == "__main__":
+    chunker = DocumentChunker()
+    
+    # Test document
+    test_doc = """
+[2024-01-15 19:30] DM: The party arrives at Ironforge
+[2024-01-15 19:32] Player1: I want to talk to Thorin
+[2024-01-15 19:35] DM: Thorin Ironforge greets you at his smithy.
+He shows you the legendary Hammer of Dawn.
+[2024-01-15 19:40] Player2: Can we examine it?
+"""
+    
+    # Clean formatting
+    clean = chunker.clean_formatting(test_doc)
+    print("Cleaned text:")
+    print(clean)
+```
+
+### Step 2: Create Gemini Analyzer
+
+**File:** `src/gemini_analyzer.py`
+
+```python
+"""
+Gemini-powered entity extraction and analysis.
+Processes clean chunks from Ollama chunker.
+"""
+import os
+from typing import Dict, List, Optional
+import json
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+
+class GeminiAnalyzer:
+    """Analyzes chunks using Gemini API for entity extraction."""
+    
+    def __init__(self, model: str = "gemini-1.5-flash"):
+        load_dotenv()
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment")
+        
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel(model)
+    
+    def extract_entities(self, chunk: str) -> Dict:
+        """
+        Extract entities from a clean chunk.
+        
+        Args:
+            chunk: Cleaned text chunk
+            
+        Returns:
+            Dictionary with extracted entities
+        """
+        prompt = f"""
+Analyze this D&D campaign text and extract entities.
+
+Text:
+{chunk}
+
+Return JSON with this exact structure:
+{{
+  "characters": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "locations": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "items": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "factions": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "relationships": [
+    {{"entity1": "...", "relation": "...", "entity2": "...", "confidence": 0.9}}
+  ]
+}}
+
+Confidence: 0.0-1.0 based on how explicit/clear the entity is.
+Only return the JSON, no explanations.
+"""
+        
+        try:
+            response = self.model.generate_content(prompt)
+            # Parse JSON from response
+            json_text = response.text.strip()
+            
+            # Remove markdown code blocks if present
+            if json_text.startswith('```'):
+                json_text = json_text.split('```')[1]
+                if json_text.startswith('json'):
+                    json_text = json_text[4:]
+                json_text = json_text.strip()
+            
+            entities = json.loads(json_text)
+            return entities
+            
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse JSON: {e}")
+            print(f"Raw response: {response.text}")
+            return {}
+        except Exception as e:
+            print(f"Error during extraction: {e}")
+            return {}
+    
+    def detect_contradictions(
+        self, 
+        entity_name: str, 
+        descriptions: List[str]
+    ) -> Optional[Dict]:
+        """
+        Detect contradictions in entity descriptions.
+        
+        Args:
+            entity_name: Name of entity
+            descriptions: List of descriptions from different sources
+            
+        Returns:
+            Contradiction details or None
+        """
+        if len(descriptions) < 2:
+            return None
+        
+        prompt = f"""
+Analyze these descriptions of "{entity_name}" for contradictions.
+
+Descriptions:
+{chr(10).join(f"{i+1}. {desc}" for i, desc in enumerate(descriptions))}
+
+Are there any contradictions? Consider:
+- Physical descriptions
+- Abilities/powers
+- Relationships
+- History/backstory
+- Personality traits
+
+Return JSON:
+{{
+  "has_contradiction": true/false,
+  "type": "physical/ability/relationship/history/personality",
+  "description": "Brief explanation",
+  "severity": "minor/moderate/major",
+  "conflicting_points": ["point 1", "point 2"]
+}}
+
+Only return JSON, no explanations.
+"""
+        
+        try:
+            response = self.model.generate_content(prompt)
+            json_text = response.text.strip()
+            
+            # Clean markdown
+            if json_text.startswith('```'):
+                json_text = json_text.split('```')[1]
+                if json_text.startswith('json'):
+                    json_text = json_text[4:]
+                json_text = json_text.strip()
+            
+            result = json.loads(json_text)
+            
+            if result.get('has_contradiction'):
+                return result
+            return None
+            
+        except Exception as e:
+            print(f"Error detecting contradictions: {e}")
+            return None
+
+
+# Example usage
+if __name__ == "__main__":
+    analyzer = GeminiAnalyzer()
+    
+    # Test entity extraction
+    test_chunk = """
+    Thorin Ironforge, the master dwarven blacksmith of Hammerfall, 
+    forged the legendary Hammer of Dawn in the volcanic fires of Mount Ashengale.
+    The hammer was commissioned by King Baric III and later stolen by 
+    the Shadow Syndicate during the Siege of Irongate.
+    """
+    
+    print("=== Entity Extraction ===")
+    entities = analyzer.extract_entities(test_chunk)
+    print(json.dumps(entities, indent=2))
+    
+    # Test contradiction detection
+    print("\n=== Contradiction Detection ===")
+    descriptions = [
+        "Thorin is a master blacksmith who crafted the Hammer of Dawn",
+        "Thorin is a novice apprentice learning the trade"
+    ]
+    contradiction = analyzer.detect_contradictions("Thorin Ironforge", descriptions)
+    if contradiction:
+        print(json.dumps(contradiction, indent=2))
+    else:
+        print("No contradictions detected")
+```
+
+### Step 3: Create Pipeline Orchestrator
+
+**File:** `src/lore_pipeline.py`
+
+```python
+"""
+Complete lore processing pipeline: Ollama chunking → Gemini analysis → LMS storage.
+"""
+from typing import List, Dict
+import time
+from src.chunker import DocumentChunker
+from src.gemini_analyzer import GeminiAnalyzer
+
+
+class LorePipeline:
+    """Orchestrates the two-layer processing pipeline."""
+    
+    def __init__(self):
+        self.chunker = DocumentChunker()
+        self.analyzer = GeminiAnalyzer()
+    
+    def process_document(
+        self, 
+        document: str,
+        document_id: str
+    ) -> Dict:
+        """
+        Process a complete campaign document through the pipeline.
+        
+        Args:
+            document: Raw campaign text
+            document_id: Unique identifier for tracking
+            
+        Returns:
+            Processing results with extracted entities
+        """
+        print(f"Processing document: {document_id}")
+        
+        # Stage 1: Ollama Chunking (slow but free)
+        print("  [1/3] Chunking with Ollama...")
+        start = time.time()
+        chunks = self.chunker.chunk_by_sessions(document)
+        chunk_time = time.time() - start
+        print(f"    → Created {len(chunks)} chunks in {chunk_time:.1f}s")
+        
+        # Stage 2: Gemini Analysis (fast but paid)
+        print("  [2/3] Analyzing with Gemini...")
+        all_entities = {
+            'characters': [],
+            'locations': [],
+            'items': [],
+            'factions': [],
+            'relationships': []
+        }
+        
+        total_tokens = 0
+        
+        for i, chunk in enumerate(chunks):
+            print(f"    → Processing chunk {i+1}/{len(chunks)}...")
+            
+            # Extract entities
+            entities = self.analyzer.extract_entities(chunk['content'])
+            
+            # Merge into master list
+            for entity_type in all_entities.keys():
+                if entity_type in entities:
+                    all_entities[entity_type].extend(entities[entity_type])
+            
+            # Estimate token usage (rough: 1 token ≈ 4 chars)
+            total_tokens += len(chunk['content']) // 4
+            
+            # Small delay to avoid rate limits
+            time.sleep(0.5)
+        
+        analysis_time = time.time() - start - chunk_time
+        print(f"    → Analyzed in {analysis_time:.1f}s")
+        print(f"    → Estimated tokens: ~{total_tokens}")
+        
+        # Stage 3: Deduplication & Contradiction Detection
+        print("  [3/3] Checking for contradictions...")
+        contradictions = self._find_contradictions(all_entities)
+        
+        if contradictions:
+            print(f"    ⚠ Found {len(contradictions)} potential contradictions")
+        else:
+            print(f"    ✓ No contradictions detected")
+        
+        return {
+            'document_id': document_id,
+            'entities': all_entities,
+            'contradictions': contradictions,
+            'stats': {
+                'chunk_count': len(chunks),
+                'chunk_time': chunk_time,
+                'analysis_time': analysis_time,
+                'total_time': time.time() - start,
+                'estimated_tokens': total_tokens
+            }
+        }
+    
+    def _find_contradictions(self, entities: Dict) -> List[Dict]:
+        """Find contradictions within extracted entities."""
+        contradictions = []
+        
+        # Group characters by name
+        character_groups = {}
+        for char in entities.get('characters', []):
+            name = char.get('name', '')
+            if name not in character_groups:
+                character_groups[name] = []
+            character_groups[name].append(char.get('description', ''))
+        
+        # Check each character for contradictions
+        for name, descriptions in character_groups.items():
+            if len(descriptions) > 1:
+                result = self.analyzer.detect_contradictions(name, descriptions)
+                if result:
+                    result['entity_name'] = name
+                    result['entity_type'] = 'character'
+                    contradictions.append(result)
+        
+        return contradictions
+
+
+# Example usage
+if __name__ == "__main__":
+    pipeline = LorePipeline()
+    
+    # Test document
+    test_doc = """
+    Session 1: The Journey Begins
+    
+    The party meets Thorin Ironforge, a master dwarven blacksmith in the city of Hammerfall.
+    He tells them about the legendary Hammer of Dawn, which he forged in Mount Ashengale
+    for King Baric III. The hammer was stolen by the Shadow Syndicate during the Siege
+    of Irongate five years ago.
+    
+    Thorin agrees to help the party track down the hammer if they can prove themselves
+    by clearing out the goblin infestation in the nearby Whispering Caves.
+    """
+    
+    results = pipeline.process_document(test_doc, "campaign_001_session_01")
+    
+    print("\n=== RESULTS ===")
+    print(f"Characters found: {len(results['entities']['characters'])}")
+    print(f"Locations found: {len(results['entities']['locations'])}")
+    print(f"Items found: {len(results['entities']['items'])}")
+    print(f"Processing time: {results['stats']['total_time']:.1f}s")
+    print(f"Estimated cost: ${results['stats']['estimated_tokens'] * 0.00001:.4f}")
+```
+
+---
+
+## 🔌 PHASE 5: INTEGRATE WITH LMS
+
+### Where to Integrate
+
+Your LMS already has these components (based on file structure):
+- `src/` - Core logic
+- `data/` - SQLite database
+- `tests/` - Test suite
+
+The pipeline modules should integrate with your existing ingestion system.
+
+### Integration Points
+
+**1. Document Upload Handler**
+
+When a user uploads a document, route it through the pipeline:
+
+```python
+# In your existing upload handler
+from src.lore_pipeline import LorePipeline
+
+pipeline = LorePipeline()
+
+def handle_document_upload(file_path: str, campaign_id: str):
+    """Process uploaded document through lore pipeline."""
+    
+    # Read document
+    with open(file_path, 'r', encoding='utf-8') as f:
+        document = f.read()
+    
+    # Process through pipeline
+    results = pipeline.process_document(document, f"campaign_{campaign_id}")
+    
+    # Store entities in LMS database
+    store_entities_in_db(results['entities'])
+    
+    # Store contradictions for review
+    store_contradictions_in_db(results['contradictions'])
+    
+    return results
+```
+
+**2. Batch Processing Script**
+
+For processing existing documents:
+
+```python
+# scripts/batch_process_documents.py
+import os
+import glob
+from src.lore_pipeline import LorePipeline
+
+pipeline = LorePipeline()
+
+# Find all campaign documents
+doc_dir = "path/to/campaign/docs"
+documents = glob.glob(f"{doc_dir}/**/*.txt", recursive=True)
+
+print(f"Found {len(documents)} documents to process")
+
+for doc_path in documents:
+    print(f"\nProcessing: {doc_path}")
+    
+    with open(doc_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    doc_id = os.path.basename(doc_path).replace('.txt', '')
+    results = pipeline.process_document(content, doc_id)
+    
+    # Save results
+    output_path = doc_path.replace('.txt', '_entities.json')
+    with open(output_path, 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"  ✓ Saved results to: {output_path}")
+```
+
+### Database Schema Updates
+
+You may need to add fields to track:
+
+```sql
+-- Add to entities table
+ALTER TABLE entities ADD COLUMN gemini_confidence REAL;
+ALTER TABLE entities ADD COLUMN source_chunk_id TEXT;
+ALTER TABLE entities ADD COLUMN processed_date TEXT;
+
+-- Add processing metadata table
+CREATE TABLE IF NOT EXISTS processing_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id TEXT NOT NULL,
+    chunk_count INTEGER,
+    total_tokens INTEGER,
+    processing_time REAL,
+    cost_estimate REAL,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## 💰 COST ESTIMATES
+
+### Gemini Pricing (as of Nov 2025)
+
+**Gemini 1.5 Flash** (Recommended for LMS):
+- Input: $0.075 per 1M tokens (~$0.000075 per 1K tokens)
+- Output: $0.30 per 1M tokens (~$0.0003 per 1K tokens)
+
+**Gemini 1.5 Pro** (If you need higher quality):
+- Input: $1.25 per 1M tokens
+- Output: $5.00 per 1M tokens
+
+### Example Calculations
+
+**Processing a 50-page campaign document:**
+
+Without chunking (direct to Gemini):
+- Raw document: ~100,000 tokens
+- Cost: $0.0075 (input) + ~$0.03 (output) = **$0.04**
+
+With Ollama chunking:
+- Cleaned chunks: ~50,000 tokens (50% reduction)
+- Cost: $0.0038 (input) + ~$0.015 (output) = **$0.02**
+- **Savings: 50%**
+
+**Processing 100 campaign documents:**
+- Without chunking: $4.00
+- With chunking: $2.00
+- **Total savings: $2.00 (plus better quality)**
+
+### Free Tier
+
+Gemini has a generous free tier:
+- **15 requests per minute**
+- **1 million tokens per day**
+- **1,500 requests per day**
+
+For hobby/development use, you'll likely stay within free tier!
+
+### Cost Tracking
+
+Add this to your pipeline:
+
+```python
+def estimate_cost(tokens_used: int, model: str = "flash") -> float:
+    """Estimate cost of Gemini API usage."""
+    rates = {
+        "flash": {"input": 0.000075, "output": 0.0003},
+        "pro": {"input": 0.00125, "output": 0.005}
+    }
+    
+    # Rough estimate: 80% input, 20% output
+    input_tokens = tokens_used * 0.8
+    output_tokens = tokens_used * 0.2
+    
+    cost = (
+        (input_tokens / 1000) * rates[model]["input"] +
+        (output_tokens / 1000) * rates[model]["output"]
+    )
+    
+    return cost
+```
+
+---
+
+## 🧪 TESTING STRATEGY
+
+### Test 1: Gemini Connection (5 minutes)
+
+```powershell
+python test_gemini.py
+```
+
+Expected: Successful API call, entities extracted.
+
+### Test 2: Ollama Chunking (15 minutes)
+
+```powershell
+python src/chunker.py
+```
+
+Expected: Document split into logical chunks.
+
+### Test 3: Full Pipeline (30 minutes)
+
+```powershell
+python src/lore_pipeline.py
+```
+
+Expected: 
+- Chunks created
+- Entities extracted
+- Contradictions detected (if any)
+- Cost estimate displayed
+
+### Test 4: Integration with LMS (1 hour)
+
+1. Upload a test document through LMS UI
+2. Verify entities appear in database
+3. Check contradiction detection works
+4. Verify audit trail
+
+### Test 5: Batch Processing (2+ hours)
+
+Process your actual campaign documents overnight:
+
+```powershell
+# Set up batch job
+python scripts/batch_process_documents.py
+```
+
+Monitor:
+- Success rate
+- Processing time per document
+- Total cost
+- Entity quality
+
+---
+
+## 🔧 TROUBLESHOOTING
+
+### Issue: "GEMINI_API_KEY not found"
+
+**Cause:** .env file not loaded or key missing
+
+**Fix:**
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+cat .env | Select-String "GEMINI"
+```
+
+Should show your key. If not, add it:
+```
+GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+### Issue: "Rate limit exceeded"
+
+**Cause:** Too many requests per minute (free tier: 15/min)
+
+**Fix:** Add delays between requests:
+```python
+import time
+time.sleep(4)  # Wait 4 seconds between requests
+```
+
+### Issue: "Invalid JSON response from Gemini"
+
+**Cause:** Gemini returned markdown-wrapped JSON or malformed response
+
+**Fix:** Already handled in `gemini_analyzer.py` - strips markdown code blocks.
+
+If still failing, check the raw response:
+```python
+print(f"Raw response: {response.text}")
+```
+
+### Issue: Ollama too slow
+
+**Cause:** RTX 2060 (6GB) is bottlenecked
+
+**Options:**
+1. **Use smaller model:** `ollama pull llama3.1:3b`
+2. **Run overnight:** Set up as scheduled task
+3. **Skip chunking:** Just use Gemini for everything (costs more)
+
+### Issue: Entities not being stored in LMS
+
+**Cause:** Database schema mismatch or integration bug
+
+**Fix:**
+1. Check database schema matches expected format
+2. Verify `store_entities_in_db()` function exists
+3. Test with `print()` statements to trace data flow
+
+---
+
+## ✅ SUCCESS CRITERIA
+
+You'll know the system is working when:
+
+1. ✅ `test_gemini.py` runs successfully
+2. ✅ Ollama can chunk a test document
+3. ✅ Gemini extracts entities with confidence scores
+4. ✅ Pipeline processes full document end-to-end
+5. ✅ Entities appear in LMS database
+6. ✅ Contradictions are detected and logged
+7. ✅ Cost estimates are reasonable (<$0.05 per document)
+8. ✅ Batch processing works overnight
+
+---
+
+## 📝 QUICK START CHECKLIST
+
+When you get home, follow this order:
+
+```
+□ Go to https://aistudio.google.com/
+□ Create API key
+□ Add to .env file: GEMINI_API_KEY=...
+□ Activate venv: .\venv\Scripts\activate
+□ Install SDK: pip install google-generativeai
+□ Run test: python test_gemini.py
+□ Create chunker.py (copy from Phase 4)
+□ Create gemini_analyzer.py (copy from Phase 4)
+□ Create lore_pipeline.py (copy from Phase 4)
+□ Test pipeline: python src/lore_pipeline.py
+□ Integrate with LMS upload handler
+□ Process test document through LMS
+□ Verify entities in database
+□ Set up batch processing for overnight runs
+```
+
+---
+
+## 🎯 NEXT SESSION GOALS
+
+Once Gemini is working:
+
+1. **Optimize prompts** - Fine-tune entity extraction accuracy
+2. **Add entity types** - Events, spells, creatures, etc.
+3. **Improve contradiction logic** - More sophisticated detection
+4. **Build UI integration** - Show Gemini analysis in dashboard
+5. **Add confidence thresholds** - Auto-approve high-confidence entities
+6. **Implement feedback loop** - User corrections improve future extractions
+
+---
+
+## 🔗 USEFUL LINKS
+
+- **Google AI Studio:** https://aistudio.google.com/
+- **Gemini API Docs:** https://ai.google.dev/docs
+- **Python SDK:** https://github.com/google/generative-ai-python
+- **Pricing Calculator:** https://ai.google.dev/pricing
+- **Ollama Models:** https://ollama.com/library
+
+---
+
+**END OF GAMEPLAN**
+
+*Last Updated: November 12, 2025*  
+*Version: 1.0*
+
+---
+
+**Questions while working?** Just start a chat with:
+> "I'm setting up Gemini API for my LMS. I'm at [step]. Here's the error: [paste error]"
+
+Any AI will be able to help you debug!
+# Gemini API Setup & LMS Integration - Complete Gameplan
+
+**For:** Shawn (pangenitor72-prog)  
+**Date:** November 12, 2025  
+**Project:** Lore Management System (LMS) Phase XII  
+**Goal:** Set up Gemini API for entity extraction, contradiction detection, and lore analysis
+
+---
+
+## 📋 TABLE OF CONTENTS
+
+1. [Overview & Architecture](#overview--architecture)
+2. [Phase 1: Get Gemini API Key](#phase-1-get-gemini-api-key)
+3. [Phase 2: Install Python SDK](#phase-2-install-python-sdk)
+4. [Phase 3: Test Connection](#phase-3-test-connection)
+5. [Phase 4: Build Chunking Pipeline](#phase-4-build-chunking-pipeline)
+6. [Phase 5: Integrate with LMS](#phase-5-integrate-with-lms)
+7. [Cost Estimates](#cost-estimates)
+8. [Testing Strategy](#testing-strategy)
+9. [Troubleshooting](#troubleshooting)
+
+---
+
+## 🏗️ OVERVIEW & ARCHITECTURE
+
+### The Two-Layer System
+
+```
+┌─────────────────────────────────────────────────┐
+│         RAW CAMPAIGN DOCUMENTS                   │
+│  (50+ pages, messy formatting, irrelevant data) │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│         LAYER 1: OLLAMA (MACHETE)                │
+│  • Free, local processing on RTX 2060           │
+│  • Runs overnight, batch processing             │
+│  • Chunks documents by topic/session            │
+│  • Removes formatting/metadata junk             │
+│  • Filters irrelevant content                   │
+│  • Output: Clean, categorized chunks            │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│    LAYER 2: GEMINI API (SCALPEL)                │
+│  • Paid per-token, cloud-based                  │
+│  • Fast, precise analysis                       │
+│  • Entity extraction with confidence scores     │
+│  • Relationship mapping                         │
+│  • Contradiction detection                      │
+│  • Output: Structured LMS entities              │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│         LMS DATABASE (SQLite)                    │
+│  • Entities, relationships, contradictions      │
+│  • Full audit trail                             │
+│  • User-facing UI                               │
+└─────────────────────────────────────────────────┘
+```
+
+### Why This Architecture?
+
+**Cost Efficiency:**
+- Ollama handles 80% of grunt work (free)
+- Gemini only processes clean, relevant data (cheaper)
+- Reduces token usage by 50-70%
+
+**Quality:**
+- Chunking prevents Gemini from being overwhelmed
+- Focused analysis on relevant content
+- Better entity extraction accuracy
+
+**Speed:**
+- Ollama runs overnight (you don't care about 15min/document)
+- Gemini processes chunks in seconds
+- Total pipeline: Hours instead of days
+
+---
+
+## 🔑 PHASE 1: GET GEMINI API KEY
+
+### Step 1: Go to Google AI Studio
+
+URL: https://aistudio.google.com/
+
+### Step 2: Sign In
+
+- Use your Google account (pangenitor72@gmail.com or other)
+- Accept terms of service
+
+### Step 3: Create API Key
+
+1. Click **"Get API Key"** in the sidebar
+2. Click **"Create API Key"**
+3. Choose: **"Create API key in new project"** (or select existing project)
+4. Copy the key - looks like: `AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX`
+5. **SAVE IT IMMEDIATELY** - you might not see it again
+
+### Step 4: Store Key Securely
+
+**Option A: Add to LMS .env file**
+
+Open: `C:\Users\pange\Downloads\lore-system.tar\lore-system\.env`
+
+Add this line:
+```
+GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+**Option B: Use Windows Environment Variable** (less recommended)
+
+```powershell
+[System.Environment]::SetEnvironmentVariable('GEMINI_API_KEY', 'AIzaSy...', 'User')
+```
+
+**CRITICAL:** Never commit .env to Git! (Already in .gitignore, but double-check)
+
+### Verification
+
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+cat .env | Select-String "GEMINI"
+```
+
+Should show your key (with most characters visible).
+
+---
+
+## 📦 PHASE 2: INSTALL PYTHON SDK
+
+### Step 1: Activate Virtual Environment
+
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+.\venv\Scripts\activate
+```
+
+You should see `(venv)` in your prompt.
+
+### Step 2: Install Gemini SDK
+
+```powershell
+pip install google-generativeai python-dotenv
+```
+
+This installs:
+- `google-generativeai` - Official Gemini SDK
+- `python-dotenv` - For loading .env files (if not already installed)
+
+### Step 3: Update requirements.txt
+
+```powershell
+pip freeze > requirements.txt
+```
+
+### Step 4: Commit Changes
+
+```powershell
+git add requirements.txt
+git commit -m "Add Gemini API dependencies"
+git push
+```
+
+---
+
+## 🧪 PHASE 3: TEST CONNECTION
+
+### Create Test Script
+
+**File:** `test_gemini.py` (in lore-system root)
+
+```python
+"""
+Test Gemini API connection and basic functionality.
+Run this to verify your API key works before integrating with LMS.
+"""
+import os
+from dotenv import load_dotenv
+import google.generativeai as genai
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini
+api_key = os.getenv('GEMINI_API_KEY')
+if not api_key:
+    print("ERROR: GEMINI_API_KEY not found in .env file")
+    exit(1)
+
+genai.configure(api_key=api_key)
+
+# Test 1: List available models
+print("=== Available Models ===")
+for model in genai.list_models():
+    if 'generateContent' in model.supported_generation_methods:
+        print(f"- {model.name}")
+
+print("\n=== Testing Gemini 1.5 Flash ===")
+
+# Test 2: Simple generation
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+prompt = """
+Extract entities from this text:
+
+"Thorin Ironforge, the dwarven blacksmith, crafted the legendary Hammer of Dawn 
+in the fires of Mount Ashengale. The hammer was later stolen by the Shadow Syndicate."
+
+Return JSON format:
+{
+  "characters": [...],
+  "locations": [...],
+  "items": [...]
+}
+"""
+
+response = model.generate_content(prompt)
+print("\nResponse:")
+print(response.text)
+
+print("\n✓ Gemini API connection successful!")
+```
+
+### Run Test
+
+```powershell
+python test_gemini.py
+```
+
+**Expected Output:**
+```
+=== Available Models ===
+- models/gemini-1.5-flash
+- models/gemini-1.5-pro
+...
+
+=== Testing Gemini 1.5 Flash ===
+
+Response:
+{
+  "characters": ["Thorin Ironforge"],
+  "locations": ["Mount Ashengale"],
+  "items": ["Hammer of Dawn"]
+}
+
+✓ Gemini API connection successful!
+```
+
+**If it works:** You're good to go!  
+**If it fails:** See [Troubleshooting](#troubleshooting) section.
+
+---
+
+## 🔨 PHASE 4: BUILD CHUNKING PIPELINE
+
+### Architecture Overview
+
+```
+Document → Ollama Chunker → Clean Chunks → Gemini Analyzer → Entities
+```
+
+### Step 1: Create Chunker Module
+
+**File:** `src/chunker.py`
+
+```python
+"""
+Document chunking using Ollama for preprocessing.
+Breaks large documents into manageable chunks for Gemini analysis.
+"""
+import ollama
+from typing import List, Dict
+import re
+
+
+class DocumentChunker:
+    """Chunks documents using local Ollama model."""
+    
+    def __init__(self, model: str = "llama3.1:8b"):
+        self.model = model
+        self.client = ollama.Client()
+    
+    def chunk_by_sessions(self, document: str) -> List[Dict[str, str]]:
+        """
+        Split a campaign document into session-based chunks.
+        
+        Args:
+            document: Raw campaign text
+            
+        Returns:
+            List of chunks with metadata
+        """
+        prompt = f"""
+Split this campaign document into separate sessions. 
+For each session, extract:
+1. Session number/title
+2. Main events
+3. Characters involved
+
+Document:
+{document[:2000]}  # Send first 2000 chars as example
+
+Format each chunk as:
+SESSION: [number]
+EVENTS: [brief summary]
+CHARACTERS: [list]
+---
+"""
+        
+        response = self.client.chat(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a document chunking assistant. Be concise and structured."
+                },
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        # Parse response into chunks
+        raw_chunks = response['message']['content'].split('---')
+        
+        chunks = []
+        for i, chunk in enumerate(raw_chunks):
+            if chunk.strip():
+                chunks.append({
+                    'chunk_id': f"chunk_{i}",
+                    'content': chunk.strip(),
+                    'metadata': self._extract_metadata(chunk)
+                })
+        
+        return chunks
+    
+    def _extract_metadata(self, chunk: str) -> Dict[str, str]:
+        """Extract metadata from chunk header."""
+        metadata = {}
+        
+        # Extract session number
+        session_match = re.search(r'SESSION:\s*(.+)', chunk)
+        if session_match:
+            metadata['session'] = session_match.group(1).strip()
+        
+        return metadata
+    
+    def clean_formatting(self, text: str) -> str:
+        """
+        Remove formatting junk from text.
+        
+        Args:
+            text: Raw text with timestamps, metadata, etc.
+            
+        Returns:
+            Cleaned text
+        """
+        prompt = f"""
+Remove all timestamps, user tags, and formatting from this text.
+Keep only the actual narrative content.
+
+Text:
+{text[:1000]}
+
+Return only the cleaned text, no explanations.
+"""
+        
+        response = self.client.chat(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        return response['message']['content']
+
+
+# Example usage
+if __name__ == "__main__":
+    chunker = DocumentChunker()
+    
+    # Test document
+    test_doc = """
+[2024-01-15 19:30] DM: The party arrives at Ironforge
+[2024-01-15 19:32] Player1: I want to talk to Thorin
+[2024-01-15 19:35] DM: Thorin Ironforge greets you at his smithy.
+He shows you the legendary Hammer of Dawn.
+[2024-01-15 19:40] Player2: Can we examine it?
+"""
+    
+    # Clean formatting
+    clean = chunker.clean_formatting(test_doc)
+    print("Cleaned text:")
+    print(clean)
+```
+
+### Step 2: Create Gemini Analyzer
+
+**File:** `src/gemini_analyzer.py`
+
+```python
+"""
+Gemini-powered entity extraction and analysis.
+Processes clean chunks from Ollama chunker.
+"""
+import os
+from typing import Dict, List, Optional
+import json
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+
+class GeminiAnalyzer:
+    """Analyzes chunks using Gemini API for entity extraction."""
+    
+    def __init__(self, model: str = "gemini-1.5-flash"):
+        load_dotenv()
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment")
+        
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel(model)
+    
+    def extract_entities(self, chunk: str) -> Dict:
+        """
+        Extract entities from a clean chunk.
+        
+        Args:
+            chunk: Cleaned text chunk
+            
+        Returns:
+            Dictionary with extracted entities
+        """
+        prompt = f"""
+Analyze this D&D campaign text and extract entities.
+
+Text:
+{chunk}
+
+Return JSON with this exact structure:
+{{
+  "characters": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "locations": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "items": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "factions": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "relationships": [
+    {{"entity1": "...", "relation": "...", "entity2": "...", "confidence": 0.9}}
+  ]
+}}
+
+Confidence: 0.0-1.0 based on how explicit/clear the entity is.
+Only return the JSON, no explanations.
+"""
+        
+        try:
+            response = self.model.generate_content(prompt)
+            # Parse JSON from response
+            json_text = response.text.strip()
+            
+            # Remove markdown code blocks if present
+            if json_text.startswith('```'):
+                json_text = json_text.split('```')[1]
+                if json_text.startswith('json'):
+                    json_text = json_text[4:]
+                json_text = json_text.strip()
+            
+            entities = json.loads(json_text)
+            return entities
+            
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse JSON: {e}")
+            print(f"Raw response: {response.text}")
+            return {}
+        except Exception as e:
+            print(f"Error during extraction: {e}")
+            return {}
+    
+    def detect_contradictions(
+        self, 
+        entity_name: str, 
+        descriptions: List[str]
+    ) -> Optional[Dict]:
+        """
+        Detect contradictions in entity descriptions.
+        
+        Args:
+            entity_name: Name of entity
+            descriptions: List of descriptions from different sources
+            
+        Returns:
+            Contradiction details or None
+        """
+        if len(descriptions) < 2:
+            return None
+        
+        prompt = f"""
+Analyze these descriptions of "{entity_name}" for contradictions.
+
+Descriptions:
+{chr(10).join(f"{i+1}. {desc}" for i, desc in enumerate(descriptions))}
+
+Are there any contradictions? Consider:
+- Physical descriptions
+- Abilities/powers
+- Relationships
+- History/backstory
+- Personality traits
+
+Return JSON:
+{{
+  "has_contradiction": true/false,
+  "type": "physical/ability/relationship/history/personality",
+  "description": "Brief explanation",
+  "severity": "minor/moderate/major",
+  "conflicting_points": ["point 1", "point 2"]
+}}
+
+Only return JSON, no explanations.
+"""
+        
+        try:
+            response = self.model.generate_content(prompt)
+            json_text = response.text.strip()
+            
+            # Clean markdown
+            if json_text.startswith('```'):
+                json_text = json_text.split('```')[1]
+                if json_text.startswith('json'):
+                    json_text = json_text[4:]
+                json_text = json_text.strip()
+            
+            result = json.loads(json_text)
+            
+            if result.get('has_contradiction'):
+                return result
+            return None
+            
+        except Exception as e:
+            print(f"Error detecting contradictions: {e}")
+            return None
+
+
+# Example usage
+if __name__ == "__main__":
+    analyzer = GeminiAnalyzer()
+    
+    # Test entity extraction
+    test_chunk = """
+    Thorin Ironforge, the master dwarven blacksmith of Hammerfall, 
+    forged the legendary Hammer of Dawn in the volcanic fires of Mount Ashengale.
+    The hammer was commissioned by King Baric III and later stolen by 
+    the Shadow Syndicate during the Siege of Irongate.
+    """
+    
+    print("=== Entity Extraction ===")
+    entities = analyzer.extract_entities(test_chunk)
+    print(json.dumps(entities, indent=2))
+    
+    # Test contradiction detection
+    print("\n=== Contradiction Detection ===")
+    descriptions = [
+        "Thorin is a master blacksmith who crafted the Hammer of Dawn",
+        "Thorin is a novice apprentice learning the trade"
+    ]
+    contradiction = analyzer.detect_contradictions("Thorin Ironforge", descriptions)
+    if contradiction:
+        print(json.dumps(contradiction, indent=2))
+    else:
+        print("No contradictions detected")
+```
+
+### Step 3: Create Pipeline Orchestrator
+
+**File:** `src/lore_pipeline.py`
+
+```python
+"""
+Complete lore processing pipeline: Ollama chunking → Gemini analysis → LMS storage.
+"""
+from typing import List, Dict
+import time
+from src.chunker import DocumentChunker
+from src.gemini_analyzer import GeminiAnalyzer
+
+
+class LorePipeline:
+    """Orchestrates the two-layer processing pipeline."""
+    
+    def __init__(self):
+        self.chunker = DocumentChunker()
+        self.analyzer = GeminiAnalyzer()
+    
+    def process_document(
+        self, 
+        document: str,
+        document_id: str
+    ) -> Dict:
+        """
+        Process a complete campaign document through the pipeline.
+        
+        Args:
+            document: Raw campaign text
+            document_id: Unique identifier for tracking
+            
+        Returns:
+            Processing results with extracted entities
+        """
+        print(f"Processing document: {document_id}")
+        
+        # Stage 1: Ollama Chunking (slow but free)
+        print("  [1/3] Chunking with Ollama...")
+        start = time.time()
+        chunks = self.chunker.chunk_by_sessions(document)
+        chunk_time = time.time() - start
+        print(f"    → Created {len(chunks)} chunks in {chunk_time:.1f}s")
+        
+        # Stage 2: Gemini Analysis (fast but paid)
+        print("  [2/3] Analyzing with Gemini...")
+        all_entities = {
+            'characters': [],
+            'locations': [],
+            'items': [],
+            'factions': [],
+            'relationships': []
+        }
+        
+        total_tokens = 0
+        
+        for i, chunk in enumerate(chunks):
+            print(f"    → Processing chunk {i+1}/{len(chunks)}...")
+            
+            # Extract entities
+            entities = self.analyzer.extract_entities(chunk['content'])
+            
+            # Merge into master list
+            for entity_type in all_entities.keys():
+                if entity_type in entities:
+                    all_entities[entity_type].extend(entities[entity_type])
+            
+            # Estimate token usage (rough: 1 token ≈ 4 chars)
+            total_tokens += len(chunk['content']) // 4
+            
+            # Small delay to avoid rate limits
+            time.sleep(0.5)
+        
+        analysis_time = time.time() - start - chunk_time
+        print(f"    → Analyzed in {analysis_time:.1f}s")
+        print(f"    → Estimated tokens: ~{total_tokens}")
+        
+        # Stage 3: Deduplication & Contradiction Detection
+        print("  [3/3] Checking for contradictions...")
+        contradictions = self._find_contradictions(all_entities)
+        
+        if contradictions:
+            print(f"    ⚠ Found {len(contradictions)} potential contradictions")
+        else:
+            print(f"    ✓ No contradictions detected")
+        
+        return {
+            'document_id': document_id,
+            'entities': all_entities,
+            'contradictions': contradictions,
+            'stats': {
+                'chunk_count': len(chunks),
+                'chunk_time': chunk_time,
+                'analysis_time': analysis_time,
+                'total_time': time.time() - start,
+                'estimated_tokens': total_tokens
+            }
+        }
+    
+    def _find_contradictions(self, entities: Dict) -> List[Dict]:
+        """Find contradictions within extracted entities."""
+        contradictions = []
+        
+        # Group characters by name
+        character_groups = {}
+        for char in entities.get('characters', []):
+            name = char.get('name', '')
+            if name not in character_groups:
+                character_groups[name] = []
+            character_groups[name].append(char.get('description', ''))
+        
+        # Check each character for contradictions
+        for name, descriptions in character_groups.items():
+            if len(descriptions) > 1:
+                result = self.analyzer.detect_contradictions(name, descriptions)
+                if result:
+                    result['entity_name'] = name
+                    result['entity_type'] = 'character'
+                    contradictions.append(result)
+        
+        return contradictions
+
+
+# Example usage
+if __name__ == "__main__":
+    pipeline = LorePipeline()
+    
+    # Test document
+    test_doc = """
+    Session 1: The Journey Begins
+    
+    The party meets Thorin Ironforge, a master dwarven blacksmith in the city of Hammerfall.
+    He tells them about the legendary Hammer of Dawn, which he forged in Mount Ashengale
+    for King Baric III. The hammer was stolen by the Shadow Syndicate during the Siege
+    of Irongate five years ago.
+    
+    Thorin agrees to help the party track down the hammer if they can prove themselves
+    by clearing out the goblin infestation in the nearby Whispering Caves.
+    """
+    
+    results = pipeline.process_document(test_doc, "campaign_001_session_01")
+    
+    print("\n=== RESULTS ===")
+    print(f"Characters found: {len(results['entities']['characters'])}")
+    print(f"Locations found: {len(results['entities']['locations'])}")
+    print(f"Items found: {len(results['entities']['items'])}")
+    print(f"Processing time: {results['stats']['total_time']:.1f}s")
+    print(f"Estimated cost: ${results['stats']['estimated_tokens'] * 0.00001:.4f}")
+```
+
+---
+
+## 🔌 PHASE 5: INTEGRATE WITH LMS
+
+### Where to Integrate
+
+Your LMS already has these components (based on file structure):
+- `src/` - Core logic
+- `data/` - SQLite database
+- `tests/` - Test suite
+
+The pipeline modules should integrate with your existing ingestion system.
+
+### Integration Points
+
+**1. Document Upload Handler**
+
+When a user uploads a document, route it through the pipeline:
+
+```python
+# In your existing upload handler
+from src.lore_pipeline import LorePipeline
+
+pipeline = LorePipeline()
+
+def handle_document_upload(file_path: str, campaign_id: str):
+    """Process uploaded document through lore pipeline."""
+    
+    # Read document
+    with open(file_path, 'r', encoding='utf-8') as f:
+        document = f.read()
+    
+    # Process through pipeline
+    results = pipeline.process_document(document, f"campaign_{campaign_id}")
+    
+    # Store entities in LMS database
+    store_entities_in_db(results['entities'])
+    
+    # Store contradictions for review
+    store_contradictions_in_db(results['contradictions'])
+    
+    return results
+```
+
+**2. Batch Processing Script**
+
+For processing existing documents:
+
+```python
+# scripts/batch_process_documents.py
+import os
+import glob
+from src.lore_pipeline import LorePipeline
+
+pipeline = LorePipeline()
+
+# Find all campaign documents
+doc_dir = "path/to/campaign/docs"
+documents = glob.glob(f"{doc_dir}/**/*.txt", recursive=True)
+
+print(f"Found {len(documents)} documents to process")
+
+for doc_path in documents:
+    print(f"\nProcessing: {doc_path}")
+    
+    with open(doc_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    doc_id = os.path.basename(doc_path).replace('.txt', '')
+    results = pipeline.process_document(content, doc_id)
+    
+    # Save results
+    output_path = doc_path.replace('.txt', '_entities.json')
+    with open(output_path, 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"  ✓ Saved results to: {output_path}")
+```
+
+### Database Schema Updates
+
+You may need to add fields to track:
+
+```sql
+-- Add to entities table
+ALTER TABLE entities ADD COLUMN gemini_confidence REAL;
+ALTER TABLE entities ADD COLUMN source_chunk_id TEXT;
+ALTER TABLE entities ADD COLUMN processed_date TEXT;
+
+-- Add processing metadata table
+CREATE TABLE IF NOT EXISTS processing_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id TEXT NOT NULL,
+    chunk_count INTEGER,
+    total_tokens INTEGER,
+    processing_time REAL,
+    cost_estimate REAL,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## 💰 COST ESTIMATES
+
+### Gemini Pricing (as of Nov 2025)
+
+**Gemini 1.5 Flash** (Recommended for LMS):
+- Input: $0.075 per 1M tokens (~$0.000075 per 1K tokens)
+- Output: $0.30 per 1M tokens (~$0.0003 per 1K tokens)
+
+**Gemini 1.5 Pro** (If you need higher quality):
+- Input: $1.25 per 1M tokens
+- Output: $5.00 per 1M tokens
+
+### Example Calculations
+
+**Processing a 50-page campaign document:**
+
+Without chunking (direct to Gemini):
+- Raw document: ~100,000 tokens
+- Cost: $0.0075 (input) + ~$0.03 (output) = **$0.04**
+
+With Ollama chunking:
+- Cleaned chunks: ~50,000 tokens (50% reduction)
+- Cost: $0.0038 (input) + ~$0.015 (output) = **$0.02**
+- **Savings: 50%**
+
+**Processing 100 campaign documents:**
+- Without chunking: $4.00
+- With chunking: $2.00
+- **Total savings: $2.00 (plus better quality)**
+
+### Free Tier
+
+Gemini has a generous free tier:
+- **15 requests per minute**
+- **1 million tokens per day**
+- **1,500 requests per day**
+
+For hobby/development use, you'll likely stay within free tier!
+
+### Cost Tracking
+
+Add this to your pipeline:
+
+```python
+def estimate_cost(tokens_used: int, model: str = "flash") -> float:
+    """Estimate cost of Gemini API usage."""
+    rates = {
+        "flash": {"input": 0.000075, "output": 0.0003},
+        "pro": {"input": 0.00125, "output": 0.005}
+    }
+    
+    # Rough estimate: 80% input, 20% output
+    input_tokens = tokens_used * 0.8
+    output_tokens = tokens_used * 0.2
+    
+    cost = (
+        (input_tokens / 1000) * rates[model]["input"] +
+        (output_tokens / 1000) * rates[model]["output"]
+    )
+    
+    return cost
+```
+
+---
+
+## 🧪 TESTING STRATEGY
+
+### Test 1: Gemini Connection (5 minutes)
+
+```powershell
+python test_gemini.py
+```
+
+Expected: Successful API call, entities extracted.
+
+### Test 2: Ollama Chunking (15 minutes)
+
+```powershell
+python src/chunker.py
+```
+
+Expected: Document split into logical chunks.
+
+### Test 3: Full Pipeline (30 minutes)
+
+```powershell
+python src/lore_pipeline.py
+```
+
+Expected: 
+- Chunks created
+- Entities extracted
+- Contradictions detected (if any)
+- Cost estimate displayed
+
+### Test 4: Integration with LMS (1 hour)
+
+1. Upload a test document through LMS UI
+2. Verify entities appear in database
+3. Check contradiction detection works
+4. Verify audit trail
+
+### Test 5: Batch Processing (2+ hours)
+
+Process your actual campaign documents overnight:
+
+```powershell
+# Set up batch job
+python scripts/batch_process_documents.py
+```
+
+Monitor:
+- Success rate
+- Processing time per document
+- Total cost
+- Entity quality
+
+---
+
+## 🔧 TROUBLESHOOTING
+
+### Issue: "GEMINI_API_KEY not found"
+
+**Cause:** .env file not loaded or key missing
+
+**Fix:**
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+cat .env | Select-String "GEMINI"
+```
+
+Should show your key. If not, add it:
+```
+GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+### Issue: "Rate limit exceeded"
+
+**Cause:** Too many requests per minute (free tier: 15/min)
+
+**Fix:** Add delays between requests:
+```python
+import time
+time.sleep(4)  # Wait 4 seconds between requests
+```
+
+### Issue: "Invalid JSON response from Gemini"
+
+**Cause:** Gemini returned markdown-wrapped JSON or malformed response
+
+**Fix:** Already handled in `gemini_analyzer.py` - strips markdown code blocks.
+
+If still failing, check the raw response:
+```python
+print(f"Raw response: {response.text}")
+```
+
+### Issue: Ollama too slow
+
+**Cause:** RTX 2060 (6GB) is bottlenecked
+
+**Options:**
+1. **Use smaller model:** `ollama pull llama3.1:3b`
+2. **Run overnight:** Set up as scheduled task
+3. **Skip chunking:** Just use Gemini for everything (costs more)
+
+### Issue: Entities not being stored in LMS
+
+**Cause:** Database schema mismatch or integration bug
+
+**Fix:**
+1. Check database schema matches expected format
+2. Verify `store_entities_in_db()` function exists
+3. Test with `print()` statements to trace data flow
+
+---
+
+## ✅ SUCCESS CRITERIA
+
+You'll know the system is working when:
+
+1. ✅ `test_gemini.py` runs successfully
+2. ✅ Ollama can chunk a test document
+3. ✅ Gemini extracts entities with confidence scores
+4. ✅ Pipeline processes full document end-to-end
+5. ✅ Entities appear in LMS database
+6. ✅ Contradictions are detected and logged
+7. ✅ Cost estimates are reasonable (<$0.05 per document)
+8. ✅ Batch processing works overnight
+
+---
+
+## 📝 QUICK START CHECKLIST
+
+When you get home, follow this order:
+
+```
+□ Go to https://aistudio.google.com/
+□ Create API key
+□ Add to .env file: GEMINI_API_KEY=...
+□ Activate venv: .\venv\Scripts\activate
+□ Install SDK: pip install google-generativeai
+□ Run test: python test_gemini.py
+□ Create chunker.py (copy from Phase 4)
+□ Create gemini_analyzer.py (copy from Phase 4)
+□ Create lore_pipeline.py (copy from Phase 4)
+□ Test pipeline: python src/lore_pipeline.py
+□ Integrate with LMS upload handler
+□ Process test document through LMS
+□ Verify entities in database
+□ Set up batch processing for overnight runs
+```
+
+---
+
+## 🎯 NEXT SESSION GOALS
+
+Once Gemini is working:
+
+1. **Optimize prompts** - Fine-tune entity extraction accuracy
+2. **Add entity types** - Events, spells, creatures, etc.
+3. **Improve contradiction logic** - More sophisticated detection
+4. **Build UI integration** - Show Gemini analysis in dashboard
+5. **Add confidence thresholds** - Auto-approve high-confidence entities
+6. **Implement feedback loop** - User corrections improve future extractions
+
+---
+
+## 🔗 USEFUL LINKS
+
+- **Google AI Studio:** https://aistudio.google.com/
+- **Gemini API Docs:** https://ai.google.dev/docs
+- **Python SDK:** https://github.com/google/generative-ai-python
+- **Pricing Calculator:** https://ai.google.dev/pricing
+- **Ollama Models:** https://ollama.com/library
+
+---
+
+**END OF GAMEPLAN**
+
+*Last Updated: November 12, 2025*  
+*Version: 1.0*
+
+---
+
+**Questions while working?** Just start a chat with:
+> "I'm setting up Gemini API for my LMS. I'm at [step]. Here's the error: [paste error]"
+
+Any AI will be able to help you debug!
+# Gemini API Setup & LMS Integration - Complete Gameplan
+
+**For:** Shawn (pangenitor72-prog)  
+**Date:** November 12, 2025  
+**Project:** Lore Management System (LMS) Phase XII  
+**Goal:** Set up Gemini API for entity extraction, contradiction detection, and lore analysis
+
+---
+
+## 📋 TABLE OF CONTENTS
+
+1. [Overview & Architecture](#overview--architecture)
+2. [Phase 1: Get Gemini API Key](#phase-1-get-gemini-api-key)
+3. [Phase 2: Install Python SDK](#phase-2-install-python-sdk)
+4. [Phase 3: Test Connection](#phase-3-test-connection)
+5. [Phase 4: Build Chunking Pipeline](#phase-4-build-chunking-pipeline)
+6. [Phase 5: Integrate with LMS](#phase-5-integrate-with-lms)
+7. [Cost Estimates](#cost-estimates)
+8. [Testing Strategy](#testing-strategy)
+9. [Troubleshooting](#troubleshooting)
+
+---
+
+## 🏗️ OVERVIEW & ARCHITECTURE
+
+### The Two-Layer System
+
+```
+┌─────────────────────────────────────────────────┐
+│         RAW CAMPAIGN DOCUMENTS                   │
+│  (50+ pages, messy formatting, irrelevant data) │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│         LAYER 1: OLLAMA (MACHETE)                │
+│  • Free, local processing on RTX 2060           │
+│  • Runs overnight, batch processing             │
+│  • Chunks documents by topic/session            │
+│  • Removes formatting/metadata junk             │
+│  • Filters irrelevant content                   │
+│  • Output: Clean, categorized chunks            │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│    LAYER 2: GEMINI API (SCALPEL)                │
+│  • Paid per-token, cloud-based                  │
+│  • Fast, precise analysis                       │
+│  • Entity extraction with confidence scores     │
+│  • Relationship mapping                         │
+│  • Contradiction detection                      │
+│  • Output: Structured LMS entities              │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│         LMS DATABASE (SQLite)                    │
+│  • Entities, relationships, contradictions      │
+│  • Full audit trail                             │
+│  • User-facing UI                               │
+└─────────────────────────────────────────────────┘
+```
+
+### Why This Architecture?
+
+**Cost Efficiency:**
+- Ollama handles 80% of grunt work (free)
+- Gemini only processes clean, relevant data (cheaper)
+- Reduces token usage by 50-70%
+
+**Quality:**
+- Chunking prevents Gemini from being overwhelmed
+- Focused analysis on relevant content
+- Better entity extraction accuracy
+
+**Speed:**
+- Ollama runs overnight (you don't care about 15min/document)
+- Gemini processes chunks in seconds
+- Total pipeline: Hours instead of days
+
+---
+
+## 🔑 PHASE 1: GET GEMINI API KEY
+
+### Step 1: Go to Google AI Studio
+
+URL: https://aistudio.google.com/
+
+### Step 2: Sign In
+
+- Use your Google account (pangenitor72@gmail.com or other)
+- Accept terms of service
+
+### Step 3: Create API Key
+
+1. Click **"Get API Key"** in the sidebar
+2. Click **"Create API Key"**
+3. Choose: **"Create API key in new project"** (or select existing project)
+4. Copy the key - looks like: `AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX`
+5. **SAVE IT IMMEDIATELY** - you might not see it again
+
+### Step 4: Store Key Securely
+
+**Option A: Add to LMS .env file**
+
+Open: `C:\Users\pange\Downloads\lore-system.tar\lore-system\.env`
+
+Add this line:
+```
+GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+**Option B: Use Windows Environment Variable** (less recommended)
+
+```powershell
+[System.Environment]::SetEnvironmentVariable('GEMINI_API_KEY', 'AIzaSy...', 'User')
+```
+
+**CRITICAL:** Never commit .env to Git! (Already in .gitignore, but double-check)
+
+### Verification
+
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+cat .env | Select-String "GEMINI"
+```
+
+Should show your key (with most characters visible).
+
+---
+
+## 📦 PHASE 2: INSTALL PYTHON SDK
+
+### Step 1: Activate Virtual Environment
+
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+.\venv\Scripts\activate
+```
+
+You should see `(venv)` in your prompt.
+
+### Step 2: Install Gemini SDK
+
+```powershell
+pip install google-generativeai python-dotenv
+```
+
+This installs:
+- `google-generativeai` - Official Gemini SDK
+- `python-dotenv` - For loading .env files (if not already installed)
+
+### Step 3: Update requirements.txt
+
+```powershell
+pip freeze > requirements.txt
+```
+
+### Step 4: Commit Changes
+
+```powershell
+git add requirements.txt
+git commit -m "Add Gemini API dependencies"
+git push
+```
+
+---
+
+## 🧪 PHASE 3: TEST CONNECTION
+
+### Create Test Script
+
+**File:** `test_gemini.py` (in lore-system root)
+
+```python
+"""
+Test Gemini API connection and basic functionality.
+Run this to verify your API key works before integrating with LMS.
+"""
+import os
+from dotenv import load_dotenv
+import google.generativeai as genai
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini
+api_key = os.getenv('GEMINI_API_KEY')
+if not api_key:
+    print("ERROR: GEMINI_API_KEY not found in .env file")
+    exit(1)
+
+genai.configure(api_key=api_key)
+
+# Test 1: List available models
+print("=== Available Models ===")
+for model in genai.list_models():
+    if 'generateContent' in model.supported_generation_methods:
+        print(f"- {model.name}")
+
+print("\n=== Testing Gemini 1.5 Flash ===")
+
+# Test 2: Simple generation
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+prompt = """
+Extract entities from this text:
+
+"Thorin Ironforge, the dwarven blacksmith, crafted the legendary Hammer of Dawn 
+in the fires of Mount Ashengale. The hammer was later stolen by the Shadow Syndicate."
+
+Return JSON format:
+{
+  "characters": [...],
+  "locations": [...],
+  "items": [...]
+}
+"""
+
+response = model.generate_content(prompt)
+print("\nResponse:")
+print(response.text)
+
+print("\n✓ Gemini API connection successful!")
+```
+
+### Run Test
+
+```powershell
+python test_gemini.py
+```
+
+**Expected Output:**
+```
+=== Available Models ===
+- models/gemini-1.5-flash
+- models/gemini-1.5-pro
+...
+
+=== Testing Gemini 1.5 Flash ===
+
+Response:
+{
+  "characters": ["Thorin Ironforge"],
+  "locations": ["Mount Ashengale"],
+  "items": ["Hammer of Dawn"]
+}
+
+✓ Gemini API connection successful!
+```
+
+**If it works:** You're good to go!  
+**If it fails:** See [Troubleshooting](#troubleshooting) section.
+
+---
+
+## 🔨 PHASE 4: BUILD CHUNKING PIPELINE
+
+### Architecture Overview
+
+```
+Document → Ollama Chunker → Clean Chunks → Gemini Analyzer → Entities
+```
+
+### Step 1: Create Chunker Module
+
+**File:** `src/chunker.py`
+
+```python
+"""
+Document chunking using Ollama for preprocessing.
+Breaks large documents into manageable chunks for Gemini analysis.
+"""
+import ollama
+from typing import List, Dict
+import re
+
+
+class DocumentChunker:
+    """Chunks documents using local Ollama model."""
+    
+    def __init__(self, model: str = "llama3.1:8b"):
+        self.model = model
+        self.client = ollama.Client()
+    
+    def chunk_by_sessions(self, document: str) -> List[Dict[str, str]]:
+        """
+        Split a campaign document into session-based chunks.
+        
+        Args:
+            document: Raw campaign text
+            
+        Returns:
+            List of chunks with metadata
+        """
+        prompt = f"""
+Split this campaign document into separate sessions. 
+For each session, extract:
+1. Session number/title
+2. Main events
+3. Characters involved
+
+Document:
+{document[:2000]}  # Send first 2000 chars as example
+
+Format each chunk as:
+SESSION: [number]
+EVENTS: [brief summary]
+CHARACTERS: [list]
+---
+"""
+        
+        response = self.client.chat(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a document chunking assistant. Be concise and structured."
+                },
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        # Parse response into chunks
+        raw_chunks = response['message']['content'].split('---')
+        
+        chunks = []
+        for i, chunk in enumerate(raw_chunks):
+            if chunk.strip():
+                chunks.append({
+                    'chunk_id': f"chunk_{i}",
+                    'content': chunk.strip(),
+                    'metadata': self._extract_metadata(chunk)
+                })
+        
+        return chunks
+    
+    def _extract_metadata(self, chunk: str) -> Dict[str, str]:
+        """Extract metadata from chunk header."""
+        metadata = {}
+        
+        # Extract session number
+        session_match = re.search(r'SESSION:\s*(.+)', chunk)
+        if session_match:
+            metadata['session'] = session_match.group(1).strip()
+        
+        return metadata
+    
+    def clean_formatting(self, text: str) -> str:
+        """
+        Remove formatting junk from text.
+        
+        Args:
+            text: Raw text with timestamps, metadata, etc.
+            
+        Returns:
+            Cleaned text
+        """
+        prompt = f"""
+Remove all timestamps, user tags, and formatting from this text.
+Keep only the actual narrative content.
+
+Text:
+{text[:1000]}
+
+Return only the cleaned text, no explanations.
+"""
+        
+        response = self.client.chat(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        return response['message']['content']
+
+
+# Example usage
+if __name__ == "__main__":
+    chunker = DocumentChunker()
+    
+    # Test document
+    test_doc = """
+[2024-01-15 19:30] DM: The party arrives at Ironforge
+[2024-01-15 19:32] Player1: I want to talk to Thorin
+[2024-01-15 19:35] DM: Thorin Ironforge greets you at his smithy.
+He shows you the legendary Hammer of Dawn.
+[2024-01-15 19:40] Player2: Can we examine it?
+"""
+    
+    # Clean formatting
+    clean = chunker.clean_formatting(test_doc)
+    print("Cleaned text:")
+    print(clean)
+```
+
+### Step 2: Create Gemini Analyzer
+
+**File:** `src/gemini_analyzer.py`
+
+```python
+"""
+Gemini-powered entity extraction and analysis.
+Processes clean chunks from Ollama chunker.
+"""
+import os
+from typing import Dict, List, Optional
+import json
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+
+class GeminiAnalyzer:
+    """Analyzes chunks using Gemini API for entity extraction."""
+    
+    def __init__(self, model: str = "gemini-1.5-flash"):
+        load_dotenv()
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment")
+        
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel(model)
+    
+    def extract_entities(self, chunk: str) -> Dict:
+        """
+        Extract entities from a clean chunk.
+        
+        Args:
+            chunk: Cleaned text chunk
+            
+        Returns:
+            Dictionary with extracted entities
+        """
+        prompt = f"""
+Analyze this D&D campaign text and extract entities.
+
+Text:
+{chunk}
+
+Return JSON with this exact structure:
+{{
+  "characters": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "locations": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "items": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "factions": [
+    {{"name": "...", "description": "...", "confidence": 0.9}}
+  ],
+  "relationships": [
+    {{"entity1": "...", "relation": "...", "entity2": "...", "confidence": 0.9}}
+  ]
+}}
+
+Confidence: 0.0-1.0 based on how explicit/clear the entity is.
+Only return the JSON, no explanations.
+"""
+        
+        try:
+            response = self.model.generate_content(prompt)
+            # Parse JSON from response
+            json_text = response.text.strip()
+            
+            # Remove markdown code blocks if present
+            if json_text.startswith('```'):
+                json_text = json_text.split('```')[1]
+                if json_text.startswith('json'):
+                    json_text = json_text[4:]
+                json_text = json_text.strip()
+            
+            entities = json.loads(json_text)
+            return entities
+            
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse JSON: {e}")
+            print(f"Raw response: {response.text}")
+            return {}
+        except Exception as e:
+            print(f"Error during extraction: {e}")
+            return {}
+    
+    def detect_contradictions(
+        self, 
+        entity_name: str, 
+        descriptions: List[str]
+    ) -> Optional[Dict]:
+        """
+        Detect contradictions in entity descriptions.
+        
+        Args:
+            entity_name: Name of entity
+            descriptions: List of descriptions from different sources
+            
+        Returns:
+            Contradiction details or None
+        """
+        if len(descriptions) < 2:
+            return None
+        
+        prompt = f"""
+Analyze these descriptions of "{entity_name}" for contradictions.
+
+Descriptions:
+{chr(10).join(f"{i+1}. {desc}" for i, desc in enumerate(descriptions))}
+
+Are there any contradictions? Consider:
+- Physical descriptions
+- Abilities/powers
+- Relationships
+- History/backstory
+- Personality traits
+
+Return JSON:
+{{
+  "has_contradiction": true/false,
+  "type": "physical/ability/relationship/history/personality",
+  "description": "Brief explanation",
+  "severity": "minor/moderate/major",
+  "conflicting_points": ["point 1", "point 2"]
+}}
+
+Only return JSON, no explanations.
+"""
+        
+        try:
+            response = self.model.generate_content(prompt)
+            json_text = response.text.strip()
+            
+            # Clean markdown
+            if json_text.startswith('```'):
+                json_text = json_text.split('```')[1]
+                if json_text.startswith('json'):
+                    json_text = json_text[4:]
+                json_text = json_text.strip()
+            
+            result = json.loads(json_text)
+            
+            if result.get('has_contradiction'):
+                return result
+            return None
+            
+        except Exception as e:
+            print(f"Error detecting contradictions: {e}")
+            return None
+
+
+# Example usage
+if __name__ == "__main__":
+    analyzer = GeminiAnalyzer()
+    
+    # Test entity extraction
+    test_chunk = """
+    Thorin Ironforge, the master dwarven blacksmith of Hammerfall, 
+    forged the legendary Hammer of Dawn in the volcanic fires of Mount Ashengale.
+    The hammer was commissioned by King Baric III and later stolen by 
+    the Shadow Syndicate during the Siege of Irongate.
+    """
+    
+    print("=== Entity Extraction ===")
+    entities = analyzer.extract_entities(test_chunk)
+    print(json.dumps(entities, indent=2))
+    
+    # Test contradiction detection
+    print("\n=== Contradiction Detection ===")
+    descriptions = [
+        "Thorin is a master blacksmith who crafted the Hammer of Dawn",
+        "Thorin is a novice apprentice learning the trade"
+    ]
+    contradiction = analyzer.detect_contradictions("Thorin Ironforge", descriptions)
+    if contradiction:
+        print(json.dumps(contradiction, indent=2))
+    else:
+        print("No contradictions detected")
+```
+
+### Step 3: Create Pipeline Orchestrator
+
+**File:** `src/lore_pipeline.py`
+
+```python
+"""
+Complete lore processing pipeline: Ollama chunking → Gemini analysis → LMS storage.
+"""
+from typing import List, Dict
+import time
+from src.chunker import DocumentChunker
+from src.gemini_analyzer import GeminiAnalyzer
+
+
+class LorePipeline:
+    """Orchestrates the two-layer processing pipeline."""
+    
+    def __init__(self):
+        self.chunker = DocumentChunker()
+        self.analyzer = GeminiAnalyzer()
+    
+    def process_document(
+        self, 
+        document: str,
+        document_id: str
+    ) -> Dict:
+        """
+        Process a complete campaign document through the pipeline.
+        
+        Args:
+            document: Raw campaign text
+            document_id: Unique identifier for tracking
+            
+        Returns:
+            Processing results with extracted entities
+        """
+        print(f"Processing document: {document_id}")
+        
+        # Stage 1: Ollama Chunking (slow but free)
+        print("  [1/3] Chunking with Ollama...")
+        start = time.time()
+        chunks = self.chunker.chunk_by_sessions(document)
+        chunk_time = time.time() - start
+        print(f"    → Created {len(chunks)} chunks in {chunk_time:.1f}s")
+        
+        # Stage 2: Gemini Analysis (fast but paid)
+        print("  [2/3] Analyzing with Gemini...")
+        all_entities = {
+            'characters': [],
+            'locations': [],
+            'items': [],
+            'factions': [],
+            'relationships': []
+        }
+        
+        total_tokens = 0
+        
+        for i, chunk in enumerate(chunks):
+            print(f"    → Processing chunk {i+1}/{len(chunks)}...")
+            
+            # Extract entities
+            entities = self.analyzer.extract_entities(chunk['content'])
+            
+            # Merge into master list
+            for entity_type in all_entities.keys():
+                if entity_type in entities:
+                    all_entities[entity_type].extend(entities[entity_type])
+            
+            # Estimate token usage (rough: 1 token ≈ 4 chars)
+            total_tokens += len(chunk['content']) // 4
+            
+            # Small delay to avoid rate limits
+            time.sleep(0.5)
+        
+        analysis_time = time.time() - start - chunk_time
+        print(f"    → Analyzed in {analysis_time:.1f}s")
+        print(f"    → Estimated tokens: ~{total_tokens}")
+        
+        # Stage 3: Deduplication & Contradiction Detection
+        print("  [3/3] Checking for contradictions...")
+        contradictions = self._find_contradictions(all_entities)
+        
+        if contradictions:
+            print(f"    ⚠ Found {len(contradictions)} potential contradictions")
+        else:
+            print(f"    ✓ No contradictions detected")
+        
+        return {
+            'document_id': document_id,
+            'entities': all_entities,
+            'contradictions': contradictions,
+            'stats': {
+                'chunk_count': len(chunks),
+                'chunk_time': chunk_time,
+                'analysis_time': analysis_time,
+                'total_time': time.time() - start,
+                'estimated_tokens': total_tokens
+            }
+        }
+    
+    def _find_contradictions(self, entities: Dict) -> List[Dict]:
+        """Find contradictions within extracted entities."""
+        contradictions = []
+        
+        # Group characters by name
+        character_groups = {}
+        for char in entities.get('characters', []):
+            name = char.get('name', '')
+            if name not in character_groups:
+                character_groups[name] = []
+            character_groups[name].append(char.get('description', ''))
+        
+        # Check each character for contradictions
+        for name, descriptions in character_groups.items():
+            if len(descriptions) > 1:
+                result = self.analyzer.detect_contradictions(name, descriptions)
+                if result:
+                    result['entity_name'] = name
+                    result['entity_type'] = 'character'
+                    contradictions.append(result)
+        
+        return contradictions
+
+
+# Example usage
+if __name__ == "__main__":
+    pipeline = LorePipeline()
+    
+    # Test document
+    test_doc = """
+    Session 1: The Journey Begins
+    
+    The party meets Thorin Ironforge, a master dwarven blacksmith in the city of Hammerfall.
+    He tells them about the legendary Hammer of Dawn, which he forged in Mount Ashengale
+    for King Baric III. The hammer was stolen by the Shadow Syndicate during the Siege
+    of Irongate five years ago.
+    
+    Thorin agrees to help the party track down the hammer if they can prove themselves
+    by clearing out the goblin infestation in the nearby Whispering Caves.
+    """
+    
+    results = pipeline.process_document(test_doc, "campaign_001_session_01")
+    
+    print("\n=== RESULTS ===")
+    print(f"Characters found: {len(results['entities']['characters'])}")
+    print(f"Locations found: {len(results['entities']['locations'])}")
+    print(f"Items found: {len(results['entities']['items'])}")
+    print(f"Processing time: {results['stats']['total_time']:.1f}s")
+    print(f"Estimated cost: ${results['stats']['estimated_tokens'] * 0.00001:.4f}")
+```
+
+---
+
+## 🔌 PHASE 5: INTEGRATE WITH LMS
+
+### Where to Integrate
+
+Your LMS already has these components (based on file structure):
+- `src/` - Core logic
+- `data/` - SQLite database
+- `tests/` - Test suite
+
+The pipeline modules should integrate with your existing ingestion system.
+
+### Integration Points
+
+**1. Document Upload Handler**
+
+When a user uploads a document, route it through the pipeline:
+
+```python
+# In your existing upload handler
+from src.lore_pipeline import LorePipeline
+
+pipeline = LorePipeline()
+
+def handle_document_upload(file_path: str, campaign_id: str):
+    """Process uploaded document through lore pipeline."""
+    
+    # Read document
+    with open(file_path, 'r', encoding='utf-8') as f:
+        document = f.read()
+    
+    # Process through pipeline
+    results = pipeline.process_document(document, f"campaign_{campaign_id}")
+    
+    # Store entities in LMS database
+    store_entities_in_db(results['entities'])
+    
+    # Store contradictions for review
+    store_contradictions_in_db(results['contradictions'])
+    
+    return results
+```
+
+**2. Batch Processing Script**
+
+For processing existing documents:
+
+```python
+# scripts/batch_process_documents.py
+import os
+import glob
+from src.lore_pipeline import LorePipeline
+
+pipeline = LorePipeline()
+
+# Find all campaign documents
+doc_dir = "path/to/campaign/docs"
+documents = glob.glob(f"{doc_dir}/**/*.txt", recursive=True)
+
+print(f"Found {len(documents)} documents to process")
+
+for doc_path in documents:
+    print(f"\nProcessing: {doc_path}")
+    
+    with open(doc_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    doc_id = os.path.basename(doc_path).replace('.txt', '')
+    results = pipeline.process_document(content, doc_id)
+    
+    # Save results
+    output_path = doc_path.replace('.txt', '_entities.json')
+    with open(output_path, 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"  ✓ Saved results to: {output_path}")
+```
+
+### Database Schema Updates
+
+You may need to add fields to track:
+
+```sql
+-- Add to entities table
+ALTER TABLE entities ADD COLUMN gemini_confidence REAL;
+ALTER TABLE entities ADD COLUMN source_chunk_id TEXT;
+ALTER TABLE entities ADD COLUMN processed_date TEXT;
+
+-- Add processing metadata table
+CREATE TABLE IF NOT EXISTS processing_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id TEXT NOT NULL,
+    chunk_count INTEGER,
+    total_tokens INTEGER,
+    processing_time REAL,
+    cost_estimate REAL,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## 💰 COST ESTIMATES
+
+### Gemini Pricing (as of Nov 2025)
+
+**Gemini 1.5 Flash** (Recommended for LMS):
+- Input: $0.075 per 1M tokens (~$0.000075 per 1K tokens)
+- Output: $0.30 per 1M tokens (~$0.0003 per 1K tokens)
+
+**Gemini 1.5 Pro** (If you need higher quality):
+- Input: $1.25 per 1M tokens
+- Output: $5.00 per 1M tokens
+
+### Example Calculations
+
+**Processing a 50-page campaign document:**
+
+Without chunking (direct to Gemini):
+- Raw document: ~100,000 tokens
+- Cost: $0.0075 (input) + ~$0.03 (output) = **$0.04**
+
+With Ollama chunking:
+- Cleaned chunks: ~50,000 tokens (50% reduction)
+- Cost: $0.0038 (input) + ~$0.015 (output) = **$0.02**
+- **Savings: 50%**
+
+**Processing 100 campaign documents:**
+- Without chunking: $4.00
+- With chunking: $2.00
+- **Total savings: $2.00 (plus better quality)**
+
+### Free Tier
+
+Gemini has a generous free tier:
+- **15 requests per minute**
+- **1 million tokens per day**
+- **1,500 requests per day**
+
+For hobby/development use, you'll likely stay within free tier!
+
+### Cost Tracking
+
+Add this to your pipeline:
+
+```python
+def estimate_cost(tokens_used: int, model: str = "flash") -> float:
+    """Estimate cost of Gemini API usage."""
+    rates = {
+        "flash": {"input": 0.000075, "output": 0.0003},
+        "pro": {"input": 0.00125, "output": 0.005}
+    }
+    
+    # Rough estimate: 80% input, 20% output
+    input_tokens = tokens_used * 0.8
+    output_tokens = tokens_used * 0.2
+    
+    cost = (
+        (input_tokens / 1000) * rates[model]["input"] +
+        (output_tokens / 1000) * rates[model]["output"]
+    )
+    
+    return cost
+```
+
+---
+
+## 🧪 TESTING STRATEGY
+
+### Test 1: Gemini Connection (5 minutes)
+
+```powershell
+python test_gemini.py
+```
+
+Expected: Successful API call, entities extracted.
+
+### Test 2: Ollama Chunking (15 minutes)
+
+```powershell
+python src/chunker.py
+```
+
+Expected: Document split into logical chunks.
+
+### Test 3: Full Pipeline (30 minutes)
+
+```powershell
+python src/lore_pipeline.py
+```
+
+Expected: 
+- Chunks created
+- Entities extracted
+- Contradictions detected (if any)
+- Cost estimate displayed
+
+### Test 4: Integration with LMS (1 hour)
+
+1. Upload a test document through LMS UI
+2. Verify entities appear in database
+3. Check contradiction detection works
+4. Verify audit trail
+
+### Test 5: Batch Processing (2+ hours)
+
+Process your actual campaign documents overnight:
+
+```powershell
+# Set up batch job
+python scripts/batch_process_documents.py
+```
+
+Monitor:
+- Success rate
+- Processing time per document
+- Total cost
+- Entity quality
+
+---
+
+## 🔧 TROUBLESHOOTING
+
+### Issue: "GEMINI_API_KEY not found"
+
+**Cause:** .env file not loaded or key missing
+
+**Fix:**
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+cat .env | Select-String "GEMINI"
+```
+
+Should show your key. If not, add it:
+```
+GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+### Issue: "Rate limit exceeded"
+
+**Cause:** Too many requests per minute (free tier: 15/min)
+
+**Fix:** Add delays between requests:
+```python
+import time
+time.sleep(4)  # Wait 4 seconds between requests
+```
+
+### Issue: "Invalid JSON response from Gemini"
+
+**Cause:** Gemini returned markdown-wrapped JSON or malformed response
+
+**Fix:** Already handled in `gemini_analyzer.py` - strips markdown code blocks.
+
+If still failing, check the raw response:
+```python
+print(f"Raw response: {response.text}")
+```
+
+### Issue: Ollama too slow
+
+**Cause:** RTX 2060 (6GB) is bottlenecked
+
+**Options:**
+1. **Use smaller model:** `ollama pull llama3.1:3b`
+2. **Run overnight:** Set up as scheduled task
+3. **Skip chunking:** Just use Gemini for everything (costs more)
+
+### Issue: Entities not being stored in LMS
+
+**Cause:** Database schema mismatch or integration bug
+
+**Fix:**
+1. Check database schema matches expected format
+2. Verify `store_entities_in_db()` function exists
+3. Test with `print()` statements to trace data flow
+
+---
+
+## ✅ SUCCESS CRITERIA
+
+You'll know the system is working when:
+
+1. ✅ `test_gemini.py` runs successfully
+2. ✅ Ollama can chunk a test document
+3. ✅ Gemini extracts entities with confidence scores
+4. ✅ Pipeline processes full document end-to-end
+5. ✅ Entities appear in LMS database
+6. ✅ Contradictions are detected and logged
+7. ✅ Cost estimates are reasonable (<$0.05 per document)
+8. ✅ Batch processing works overnight
+
+---
+
+## 📝 QUICK START CHECKLIST
+
+When you get home, follow this order:
+
+```
+□ Go to https://aistudio.google.com/
+□ Create API key
+□ Add to .env file: GEMINI_API_KEY=...
+□ Activate venv: .\venv\Scripts\activate
+□ Install SDK: pip install google-generativeai
+□ Run test: python test_gemini.py
+□ Create chunker.py (copy from Phase 4)
+□ Create gemini_analyzer.py (copy from Phase 4)
+□ Create lore_pipeline.py (copy from Phase 4)
+□ Test pipeline: python src/lore_pipeline.py
+□ Integrate with LMS upload handler
+□ Process test document through LMS
+□ Verify entities in database
+□ Set up batch processing for overnight runs
+```
+
+---
+
+## 🎯 NEXT SESSION GOALS
+
+Once Gemini is working:
+
+1. **Optimize prompts** - Fine-tune entity extraction accuracy
+2. **Add entity types** - Events, spells, creatures, etc.
+3. **Improve contradiction logic** - More sophisticated detection
+4. **Build UI integration** - Show Gemini analysis in dashboard
+5. **Add confidence thresholds** - Auto-approve high-confidence entities
+6. **Implement feedback loop** - User corrections improve future extractions
+
+---
+
+## 🔗 USEFUL LINKS
+
+- **Google AI Studio:** https://aistudio.google.com/
+- **Gemini API Docs:** https://ai.google.dev/docs
+- **Python SDK:** https://github.com/google/generative-ai-python
+- **Pricing Calculator:** https://ai.google.dev/pricing
+- **Ollama Models:** https://ollama.com/library
+
+---
+
+**END OF GAMEPLAN**
+
+*Last Updated: November 12, 2025*  
+*Version: 1.0*
+
+---
+
+**Questions while working?** Just start a chat with:
+> "I'm setting up Gemini API for my LMS. I'm at [step]. Here's the error: [paste error]"
+
+Any AI will be able to help you debug!
+ated: November 12, 2025
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Dev Lab Setup - Phase 1" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Check if we're in the right directory
+if (!(Test-Path "README.md")) {
+    Write-Host "ERROR: Not in dev-lab-setup directory!" -ForegroundColor Red
+    Write-Host "Please run this script from C:\Users\pange\Documents\dev-lab-setup" -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "[1/7] Checking Python installation..." -ForegroundColor Green
+$pythonVersion = python --version 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "✓ Python found: $pythonVersion" -ForegroundColor Green
+} else {
+    Write-Host "✗ Python not found!" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+Write-Host "[2/7] Creating Python virtual environment..." -ForegroundColor Green
+if (Test-Path "venv") {
+    Write-Host "! Virtual environment already exists. Skipping..." -ForegroundColor Yellow
+} else {
+    python -m venv venv
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✓ Virtual environment created" -ForegroundColor Green
+    } else {
+        Write-Host "✗ Failed to create virtual environment" -ForegroundColor Red
+        exit 1
+    }
+}
+
+Write-Host ""
+Write-Host "[3/7] Creating .gitignore..." -ForegroundColor Green
+$gitignoreContent = @"
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+"@
+
+$gitignoreContent | Out-File -FilePath ".gitignore" -Encoding UTF8
+Write-Host "✓ .gitignore created" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "[4/7] Creating requirements.txt..." -ForegroundColor Green
+$requirementsContent = @"
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Development tools
+pytest>=7.4.0
+pytest-cov>=4.1.0
+ruff>=0.1.0
+mypy>=1.5.0
+
+# Logging
+loguru>=0.7.0
+
+# Future: Add as needed
+# ollama-python>=0.1.0
+# langchain>=0.1.0
+"@
+
+$requirementsContent | Out-File -FilePath "requirements.txt" -Encoding UTF8
+Write-Host "✓ requirements.txt created" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "[5/7] Creating project directories..." -ForegroundColor Green
+$directories = @("src", "src\agents", "tests", "docs", "docs\session_logs")
+foreach ($dir in $directories) {
+    if (!(Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        Write-Host "  ✓ Created $dir" -ForegroundColor Green
+    } else {
+        Write-Host "  ! $dir already exists" -ForegroundColor Yellow
+    }
+}
+
+Write-Host ""
+Write-Host "[6/7] Creating initial Python files..." -ForegroundColor Green
+
+# src/__init__.py
+if (!(Test-Path "src\__init__.py")) {
+    '"""Abominable Orchestrator - Source Package"""' | Out-File -FilePath "src\__init__.py" -Encoding UTF8
+    Write-Host "  ✓ Created src\__init__.py" -ForegroundColor Green
+}
+
+# src/agents/__init__.py
+if (!(Test-Path "src\agents\__init__.py")) {
+    '"""Agent modules"""' | Out-File -FilePath "src\agents\__init__.py" -Encoding UTF8
+    Write-Host "  ✓ Created src\agents\__init__.py" -ForegroundColor Green
+}
+
+# tests/__init__.py
+if (!(Test-Path "tests\__init__.py")) {
+    '"""Test suite"""' | Out-File -FilePath "tests\__init__.py" -Encoding UTF8
+    Write-Host "  ✓ Created tests\__init__.py" -ForegroundColor Green
+}
+
+Write-Host ""
+Write-Host "[7/7] Creating .env.example..." -ForegroundColor Green
+$envExampleContent = @"
+# Environment Configuration Template
+# Copy this to .env and fill in your values
+
+# GitHub
+GITHUB_TOKEN=your_token_here
+
+# Ollama
+OLLAMA_HOST=http://localhost:11434
+
+# Logging
+LOG_LEVEL=INFO
+"@
+
+$envExampleContent | Out-File -FilePath ".env.example" -Encoding UTF8
+Write-Host "✓ .env.example created" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Phase 1 Setup Complete!" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Next steps:" -ForegroundColor Yellow
+Write-Host "1. Activate virtual environment:" -ForegroundColor White
+Write-Host "   .\venv\Scripts\activate" -ForegroundColor Gray
+Write-Host ""
+Write-Host "2. Install dependencies:" -ForegroundColor White
+Write-Host "   pip install -r requirements.txt" -ForegroundColor Gray
+Write-Host ""
+Write-Host "3. Commit changes:" -ForegroundColor White
+Write-Host "   git add ." -ForegroundColor Gray
+Write-Host "   git commit -m " -NoNewline -ForegroundColor Gray
+Write-Host '"Phase 1: Project structure and dependencies"' -ForegroundColor Gray
+Write-Host "   git push" -ForegroundColor Gray
+Write-Host ""
+Write-Host "4. Install Ollama:" -ForegroundColor White
+Write-Host "   Download from: https://ollama.com/download" -ForegroundColor Gray
+Write-Host ""
