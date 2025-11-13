@@ -1,0 +1,811 @@
+# Dev Lab Setup - Comprehensive Handoff Document
+**Generated:** November 12, 2025  
+**User:** pangenitor72-prog  
+**Project:** Abominable MiniLab / AI Orchestrator Development Environment
+
+---
+
+## 📋 TABLE OF CONTENTS
+1. [Current System State](#current-system-state)
+2. [What's Installed & Configured](#whats-installed--configured)
+3. [GitHub Setup](#github-setup)
+4. [Project Structure](#project-structure)
+5. [What We've Accomplished](#what-weve-accomplished)
+6. [What's Next - Dev Lab Setup Plan](#whats-next---dev-lab-setup-plan)
+7. [Quick Reference Commands](#quick-reference-commands)
+8. [Troubleshooting Notes](#troubleshooting-notes)
+
+---
+
+## 🖥️ CURRENT SYSTEM STATE
+
+### Hardware
+- **OS:** Windows 10
+- **GPU:** NVIDIA GeForce RTX 2060 (6GB VRAM)
+  - Driver Version: 560.94
+  - CUDA Version: 12.6
+  - Currently using ~2GB, leaving ~4GB available
+- **Note:** Originally thought to be RTX 3070 Ti (8GB), but nvidia-smi confirmed it's RTX 2060 (6GB)
+
+### GPU Implications for Local AI
+With 6GB VRAM, optimal models are:
+- ✅ **7B models at 4-bit quantization** (~4GB VRAM) - SWEET SPOT
+- ✅ **3B models** - Excellent performance
+- ⚠️ **13B models at 4-bit** - Too tight, not recommended
+- ❌ **Larger models** - Won't fit
+
+**Recommended First Models:**
+- Llama 3.1 8B (4-bit)
+- Mistral 7B (4-bit/5-bit)
+- Qwen 2.5 7B (4-bit)
+
+### User Info
+- **Windows Username:** pange
+- **Email:** pangenitor72@gmail.com
+- **GitHub Username:** pangenitor72-prog (NOT pangenitor72)
+- **Working Directory:** `C:\Users\pange\Documents\dev-lab-setup`
+
+---
+
+## ✅ WHAT'S INSTALLED & CONFIGURED
+
+### Core Tools (Confirmed Working)
+
+| Tool | Version | Status | Location Check |
+|------|---------|--------|----------------|
+| **Python** | 3.11.6 | ✅ Installed | `python --version` |
+| **Git** | 2.51.2 | ✅ Installed | `git --version` |
+| **VS Code** | 1.95.1 | ✅ Installed | `code --version` |
+| **NVIDIA Drivers** | 560.94 | ✅ Working | `nvidia-smi` |
+| **CUDA** | 12.6 | ✅ Available | `nvcc --version` |
+
+### Git Configuration (Confirmed)
+```powershell
+user.name=pangenitor72
+user.email=pangenitor72@gmail.com
+core.editor=C:\Users\pange\AppData\Local\Programs\Microsoft VS Code\bin\code --wait
+```
+
+### What's NOT Installed Yet
+- ❌ **Ollama** - Local AI runtime (PRIORITY for next steps)
+- ❌ **Python virtual environment tools** - Need to set up venv
+- ❌ **Testing frameworks** - pytest
+- ❌ **Code quality tools** - ruff, mypy
+- ❌ **Pre-commit hooks**
+- ❌ **Requirements management** - requirements.txt or pyproject.toml
+
+---
+
+## 🔐 GITHUB SETUP
+
+### Account Details
+- **GitHub Username:** pangenitor72-prog
+- **Profile:** https://github.com/pangenitor72-prog
+- **Account Created:** ~3 weeks ago (as of Nov 2025)
+
+### Authentication
+- **Method:** HTTPS with Personal Access Token (PAT)
+- **Token Status:** ✅ Created and working
+- **Token Stored:** Windows Credential Manager (automatic after first use)
+- **Token Permissions:** repo, workflow
+
+### Active Repository
+- **Repo Name:** dev-lab-setup
+- **URL:** https://github.com/pangenitor72-prog/dev-lab-setup
+- **Visibility:** Private
+- **Status:** ✅ Initialized, 1 commit pushed successfully
+- **Local Path:** `C:\Users\pange\Documents\dev-lab-setup`
+
+### Other Repositories Visible
+- **abominable-minilab** (Public)
+  - Description: "Local development environment for The Abominable Orchestrator — recursive AI systems lab"
+  - This appears to be a previous/related project
+
+---
+
+## 📁 PROJECT STRUCTURE
+
+### Current Local Structure
+```
+C:\Users\pange\Documents\dev-lab-setup\
+├── .git\              (Git repository data)
+└── README.md          (Initial project description)
+```
+
+### Recommended Structure (To Be Created)
+```
+dev-lab-setup\
+├── .git\
+├── .gitignore         (Exclude venv, cache, secrets)
+├── README.md          (Project overview)
+├── requirements.txt   (Python dependencies)
+├── .env.example       (Template for secrets)
+├── docs\              (Documentation)
+│   ├── setup.md
+│   ├── toolchain.md
+│   └── session_logs\
+├── src\               (Source code)
+│   ├── __init__.py
+│   ├── core.py       (Orchestrator core)
+│   └── agents\       (Agent modules)
+├── tests\             (Test files)
+│   └── test_core.py
+└── venv\              (Python virtual environment - in .gitignore)
+```
+
+---
+
+## 🎯 WHAT WE'VE ACCOMPLISHED
+
+### Session Summary
+1. ✅ **Reviewed GPT's dev lab plan** - Identified strengths and gaps
+2. ✅ **Assessed hardware** - Confirmed RTX 2060 6GB (not 3070 Ti)
+3. ✅ **Verified installed tools** - Python, Git, VS Code all working
+4. ✅ **Configured Git** - Set user.name and user.email
+5. ✅ **Set up GitHub authentication** - Created PAT, tested connection
+6. ✅ **Created first repository** - dev-lab-setup initialized and pushed
+7. ✅ **Confirmed GPU/CUDA status** - Ready for local AI workloads
+
+### Git Commands Used Successfully
+```powershell
+# Configuration
+git config --global user.name "pangenitor72"
+git config --global user.email "pangenitor72@gmail.com"
+
+# Repository initialization
+cd C:\Users\pange\Documents\dev-lab-setup
+git init
+echo "# Dev Lab Setup" > README.md
+git add README.md
+git commit -m "Initial commit: project setup"
+
+# Remote connection
+git remote add origin https://github.com/pangenitor72-prog/dev-lab-setup.git
+git branch -M main
+git push -u origin main
+```
+
+---
+
+## 🚀 WHAT'S NEXT - DEV LAB SETUP PLAN
+
+### Phase 1: Environment Foundation (CURRENT PRIORITY)
+
+#### 1A. Install Ollama (Local AI Runtime)
+**Why:** Run local AI models on your RTX 2060
+
+**Steps:**
+1. Download Ollama: https://ollama.com/download
+2. Run installer (OllamaSetup.exe)
+3. Verify installation:
+   ```powershell
+   ollama --version
+   ```
+4. Pull your first model:
+   ```powershell
+   ollama pull llama3.1:8b-instruct-q4_K_M
+   ```
+5. Test it:
+   ```powershell
+   ollama run llama3.1:8b-instruct-q4_K_M
+   ```
+
+**Expected Results:**
+- Model downloads (~4GB)
+- Chat interface opens
+- Should respond in 1-2 seconds per message
+
+**If It Fails:**
+- Check NVIDIA drivers: `nvidia-smi`
+- Verify CUDA: `nvcc --version`
+- Check Ollama logs: `%LOCALAPPDATA%\Ollama\logs\`
+
+#### 1B. Set Up Python Virtual Environment
+**Why:** Isolate project dependencies
+
+**Steps:**
+```powershell
+cd C:\Users\pange\Documents\dev-lab-setup
+
+# Create virtual environment
+python -m venv venv
+
+# Activate it
+.\venv\Scripts\activate
+
+# Verify
+python --version
+which python  # Should point to venv\Scripts\python.exe
+```
+
+**Add to .gitignore:**
+```
+venv/
+__pycache__/
+*.pyc
+.env
+*.log
+.pytest_cache/
+```
+
+#### 1C. Install Core Python Packages
+**Why:** Set up development and code quality tools
+
+**Create requirements.txt:**
+```txt
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Development tools
+pytest>=7.4.0
+pytest-cov>=4.1.0
+ruff>=0.1.0
+mypy>=1.5.0
+pre-commit>=3.5.0
+
+# Logging
+loguru>=0.7.0
+
+# Future: AI/ML libraries (add as needed)
+# ollama-python>=0.1.0
+# langchain>=0.1.0
+```
+
+**Install:**
+```powershell
+pip install -r requirements.txt
+```
+
+#### 1D. Configure Code Quality Tools
+
+**Create .ruff.toml:**
+```toml
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]  # Line too long (handled by formatter)
+```
+
+**Create .pre-commit-config.yaml:**
+```yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+```
+
+**Install pre-commit hooks:**
+```powershell
+pre-commit install
+```
+
+### Phase 2: Project Structure Setup
+
+#### 2A. Create Directory Structure
+```powershell
+cd C:\Users\pange\Documents\dev-lab-setup
+
+# Create directories
+mkdir src, src\agents, tests, docs, docs\session_logs
+
+# Create initial Python files
+New-Item -Path "src\__init__.py" -ItemType File
+New-Item -Path "src\core.py" -ItemType File
+New-Item -Path "tests\__init__.py" -ItemType File
+New-Item -Path "tests\test_core.py" -ItemType File
+```
+
+#### 2B. Create Initial Core Module
+**File:** `src/core.py`
+
+```python
+"""
+Abominable Orchestrator - Core Module
+Command interpreter and agent coordinator
+"""
+from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class Orchestrator:
+    """Main orchestrator for coordinating AI agents."""
+    
+    def __init__(self):
+        self.agents = {}
+        logger.info("Orchestrator initialized")
+    
+    def register_agent(self, name: str, agent) -> None:
+        """Register a new agent with the orchestrator."""
+        self.agents[name] = agent
+        logger.info(f"Agent registered: {name}")
+    
+    def execute_command(self, command: str) -> Optional[str]:
+        """Execute a command and route to appropriate agent."""
+        logger.debug(f"Executing command: {command}")
+        
+        if command.lower() == "status":
+            return self._get_status()
+        
+        return None
+    
+    def _get_status(self) -> str:
+        """Get orchestrator status."""
+        return f"Orchestrator active. Agents: {len(self.agents)}"
+
+
+if __name__ == "__main__":
+    # Basic test
+    orch = Orchestrator()
+    print(orch.execute_command("status"))
+```
+
+#### 2C. Create Initial Test
+**File:** `tests/test_core.py`
+
+```python
+"""Tests for core orchestrator functionality."""
+import pytest
+from src.core import Orchestrator
+
+
+def test_orchestrator_init():
+    """Test orchestrator initialization."""
+    orch = Orchestrator()
+    assert orch.agents == {}
+
+
+def test_status_command():
+    """Test status command execution."""
+    orch = Orchestrator()
+    result = orch.execute_command("status")
+    assert "Orchestrator active" in result
+    assert "Agents: 0" in result
+
+
+def test_agent_registration():
+    """Test agent registration."""
+    orch = Orchestrator()
+    
+    class DummyAgent:
+        pass
+    
+    agent = DummyAgent()
+    orch.register_agent("test_agent", agent)
+    
+    assert "test_agent" in orch.agents
+    assert orch.agents["test_agent"] == agent
+```
+
+**Run tests:**
+```powershell
+pytest tests/ -v
+```
+
+#### 2D. Update README.md
+```markdown
+# Dev Lab Setup
+
+Development environment for the Abominable Orchestrator project - a recursive AI systems laboratory.
+
+## Hardware
+- RTX 2060 (6GB VRAM)
+- CUDA 12.6
+
+## Installed Tools
+- Python 3.11.6
+- Git 2.51.2
+- VS Code 1.95.1
+- Ollama (local AI runtime)
+
+## Setup
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/pangenitor72-prog/dev-lab-setup.git
+cd dev-lab-setup
+```
+
+### 2. Create Virtual Environment
+```bash
+python -m venv venv
+.\venv\Scripts\activate  # Windows
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Run Tests
+```bash
+pytest tests/ -v
+```
+
+## Project Structure
+```
+dev-lab-setup/
+├── src/            # Source code
+├── tests/          # Test files
+├── docs/           # Documentation
+└── venv/           # Virtual environment (not in git)
+```
+
+## Next Steps
+See `docs/setup.md` for detailed setup instructions.
+```
+
+### Phase 3: Git Workflow Setup
+
+#### 3A. Commit Project Structure
+```powershell
+git add .
+git commit -m "Add project structure and initial orchestrator core"
+git push
+```
+
+#### 3B. Create Development Branch
+```powershell
+git checkout -b dev
+git push -u origin dev
+```
+
+**Workflow:**
+- `main` branch = stable, tested code
+- `dev` branch = active development
+- Feature branches for specific work
+
+### Phase 4: Ollama Integration
+
+#### 4A. Install Ollama Python Client
+```powershell
+pip install ollama-python
+pip freeze > requirements.txt
+```
+
+#### 4B. Create Agent Base Class
+**File:** `src/agents/__init__.py`
+
+```python
+"""Agent base classes and interfaces."""
+from abc import ABC, abstractmethod
+from typing import Any, Optional
+import ollama
+
+
+class BaseAgent(ABC):
+    """Base class for all agents."""
+    
+    def __init__(self, name: str, model: str = "llama3.1:8b"):
+        self.name = name
+        self.model = model
+        self.client = ollama.Client()
+    
+    @abstractmethod
+    def process(self, input_data: Any) -> Any:
+        """Process input and return result."""
+        pass
+    
+    def generate(self, prompt: str, system: Optional[str] = None) -> str:
+        """Generate response using local model."""
+        messages = []
+        
+        if system:
+            messages.append({"role": "system", "content": system})
+        
+        messages.append({"role": "user", "content": prompt})
+        
+        response = self.client.chat(
+            model=self.model,
+            messages=messages
+        )
+        
+        return response['message']['content']
+
+
+class ScribeAgent(BaseAgent):
+    """Agent for documentation and logging."""
+    
+    def __init__(self):
+        super().__init__(name="Scribe", model="llama3.1:8b")
+    
+    def process(self, input_data: str) -> str:
+        """Generate documentation for given input."""
+        system = "You are a technical documentation specialist. Create clear, concise documentation."
+        return self.generate(input_data, system=system)
+```
+
+#### 4C. Test Local AI Integration
+**File:** `tests/test_agents.py`
+
+```python
+"""Tests for agent functionality."""
+import pytest
+from src.agents import ScribeAgent
+
+
+@pytest.mark.integration
+def test_scribe_agent_generation():
+    """Test Scribe agent can generate text (requires Ollama running)."""
+    agent = ScribeAgent()
+    result = agent.process("Explain what a Python virtual environment is in one sentence.")
+    
+    assert len(result) > 0
+    assert isinstance(result, str)
+```
+
+**Run integration tests:**
+```powershell
+pytest tests/ -v -m integration
+```
+
+---
+
+## 📚 QUICK REFERENCE COMMANDS
+
+### Git Operations
+```powershell
+# Check status
+git status
+
+# See all remotes
+git remote -v
+
+# Pull latest changes
+git pull origin main
+
+# Create feature branch
+git checkout -b feature/new-feature
+
+# Commit changes
+git add .
+git commit -m "Description of changes"
+git push
+
+# Switch branches
+git checkout main
+git checkout dev
+
+# View commit history
+git log --oneline --graph
+```
+
+### Python Virtual Environment
+```powershell
+# Activate
+.\venv\Scripts\activate
+
+# Deactivate
+deactivate
+
+# Install package and save
+pip install package-name
+pip freeze > requirements.txt
+
+# Install from requirements
+pip install -r requirements.txt
+```
+
+### Ollama Commands
+```powershell
+# List installed models
+ollama list
+
+# Pull a model
+ollama pull llama3.1:8b
+
+# Run interactive chat
+ollama run llama3.1:8b
+
+# Remove a model
+ollama rm model-name
+
+# Check service status
+ollama ps
+```
+
+### Testing
+```powershell
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_core.py
+
+# Run with coverage
+pytest --cov=src tests/
+
+# Run only integration tests
+pytest -m integration
+```
+
+### VS Code
+```powershell
+# Open project in VS Code
+code .
+
+# Open specific file
+code src/core.py
+
+# Compare files
+code --diff file1.py file2.py
+```
+
+---
+
+## 🔧 TROUBLESHOOTING NOTES
+
+### Issue: Git Push Fails with "Repository not found"
+**Cause:** Wrong GitHub username (pangenitor72 vs pangenitor72-prog)
+
+**Solution:**
+```powershell
+git remote remove origin
+git remote add origin https://github.com/pangenitor72-prog/repo-name.git
+git push -u origin main
+```
+
+### Issue: Ollama Model Won't Load
+**Symptoms:** Out of memory error, slow loading
+
+**Diagnosis:**
+```powershell
+nvidia-smi  # Check VRAM usage
+ollama ps   # Check running models
+```
+
+**Solutions:**
+1. Use smaller quantization (Q4 instead of Q5)
+2. Close other GPU applications (Chrome, games)
+3. Try 3B model instead of 7B
+4. Restart Ollama service
+
+### Issue: Virtual Environment Not Activating
+**Symptoms:** `activate` command not recognized
+
+**Solutions:**
+```powershell
+# Ensure you're in project directory
+cd C:\Users\pange\Documents\dev-lab-setup
+
+# Use full path
+.\venv\Scripts\activate
+
+# If still fails, recreate venv
+Remove-Item -Recurse -Force venv
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+### Issue: Import Errors in Python
+**Cause:** Wrong Python interpreter or missing packages
+
+**Solutions:**
+```powershell
+# Verify you're in venv
+which python  # Should show venv path
+
+# Reinstall requirements
+pip install -r requirements.txt
+
+# Check installed packages
+pip list
+```
+
+### Issue: Pre-commit Hooks Failing
+**Symptoms:** Commit rejected, formatting errors
+
+**Solutions:**
+```powershell
+# Run ruff manually
+ruff check src/ tests/
+ruff format src/ tests/
+
+# Update pre-commit
+pre-commit autoupdate
+pre-commit run --all-files
+
+# Skip hooks temporarily (not recommended)
+git commit --no-verify -m "message"
+```
+
+---
+
+## 🎯 SUCCESS CRITERIA
+
+### Phase 1 Complete When:
+- ✅ Ollama installed and can run 7B model
+- ✅ Python venv created and activated
+- ✅ Core dependencies installed from requirements.txt
+- ✅ Ruff and pytest working
+- ✅ Pre-commit hooks installed
+
+### Phase 2 Complete When:
+- ✅ Project structure created
+- ✅ Core orchestrator module written
+- ✅ Initial tests passing
+- ✅ README updated
+- ✅ Changes pushed to GitHub
+
+### Phase 3 Complete When:
+- ✅ Development branch created
+- ✅ Git workflow documented
+- ✅ .gitignore properly configured
+
+### Phase 4 Complete When:
+- ✅ Ollama Python client installed
+- ✅ Base agent class created
+- ✅ Scribe agent implemented
+- ✅ Integration test passing with local model
+
+---
+
+## 📝 NOTES FOR NEXT SESSION
+
+### Remember to Tell Claude:
+1. Your GitHub username is **pangenitor72-prog** (not pangenitor72)
+2. You have an RTX 2060 (6GB VRAM), not 3070 Ti
+3. Project path: `C:\Users\pange\Documents\dev-lab-setup`
+4. You have ADHD - expect files scattered, need comprehensive docs
+
+### Current Blockers:
+- None! Ready to proceed with Phase 1
+
+### Questions to Resolve:
+1. Do you want to use the existing "abominable-minilab" repo or keep dev-lab-setup?
+2. Preferred model: Llama 3.1 or Mistral 7B?
+3. How many agents do you want in the initial system?
+
+### Things to Explore:
+- Multi-agent coordination patterns
+- Message bus architecture for agent communication
+- Session logging format (Markdown? JSON?)
+- Integration with external APIs (Claude, GPT) as fallback
+
+---
+
+## 🔗 IMPORTANT LINKS
+
+- **GitHub Profile:** https://github.com/pangenitor72-prog
+- **This Repo:** https://github.com/pangenitor72-prog/dev-lab-setup
+- **Ollama Docs:** https://ollama.com/docs
+- **Python 3.11 Docs:** https://docs.python.org/3.11/
+- **Ruff Docs:** https://docs.astral.sh/ruff/
+- **Pytest Docs:** https://docs.pytest.org/
+
+---
+
+## 📅 SESSION LOG
+
+**Session Date:** November 12, 2025  
+**Duration:** ~45 minutes  
+**Participants:** Claude (AI Assistant), User (pangenitor72-prog)
+
+**Key Achievements:**
+- Verified system configuration
+- Set up GitHub authentication
+- Created first repository
+- Planned comprehensive dev environment
+
+**Next Session Goals:**
+- Install Ollama
+- Set up Python venv
+- Create project structure
+- Write first orchestrator code
+
+---
+
+**END OF HANDOFF DOCUMENT**
+
+*Last Updated: November 12, 2025*  
+*Version: 1.0*
