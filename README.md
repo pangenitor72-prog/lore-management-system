@@ -331,3 +331,8 @@ pip install fastapi uvicorn pydantic --break-system-packages
 
 **Built:** 2025-10-24  
 **Status:** Production Ready ✓
+
+## 📘 Project Roadmap
+The full multi-phase development plan for LMS and AIRPG is available here:
+
+➡️ **[docs/roadmap.md](docs/roadmap.md)**
