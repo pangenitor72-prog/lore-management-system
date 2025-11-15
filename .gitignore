@@ -46,6 +46,8 @@ Thumbs.db
 
 # LMS Specific
 tomb.json
+
+docs/tokens/
 audit/
 *.db-shm
 *.db-wal
