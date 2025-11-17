@@ -3,6 +3,15 @@ FastAPI application for Lore Management System
 Provides REST API endpoints for managing lore entities
 """
 # === START: Replace lines 5-35 with this ===
+from dotenv import load_dotenv
+load_dotenv()
+
+# --- Now your other imports can start ---
+import uvicorn
+from fastapi import FastAPI
+from ai_service import generate_content
+
+# ... (the rest of your app code) ...
 
 from pathlib import Path
 from fastapi import (
@@ -47,11 +56,16 @@ from src.models import (
     TriageAnalysisResponse, ContradictionWithAnalysis, ContradictionStatus, 
     ContradictionSeverity
 )
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
+
 app = FastAPI(
     title="Lore Management System API",
     description="API for managing canonical lore with Gospel Principle enforcement",
     version="1.0.0",
 )
+
 
 
 active_connections: List[WebSocket] = []
@@ -78,7 +92,12 @@ async def agent_chat_socket(websocket: WebSocket):
 # (You only need this defined once)
 BASE_DIR = Path(__file__).resolve().parent.parent 
 templates = Jinja2Templates(directory=str(BASE_DIR / 'src' / 'templates'))
-
+# BASE_DIR should already exist in your file; re-use it instead of redefining if present.
+app.mount(
+    "/static",
+    StaticFiles(directory=str(BASE_DIR / "src" / "static")),
+    name="static",
+)
 
 
 # --- Initialization ---
@@ -86,8 +105,7 @@ load_dotenv()
 gemini_key=os.getenv("GEMINI_API_KEY")
 
 if not gemini_key or gemini_key == "YOUR_KEY_HERE":
-    print("❌ FATAL: API Key is MISSING or is the default placeholder!")
-    raise SystemExit # Force the application to stop
+    print("⚠️ WARNING: GEMINI_API_KEY missing — continuing without remote features.")
 if not gemini_key:
     print("WARNING: GEMINI_API_KEY missing...")  
 
@@ -103,6 +121,25 @@ from fastapi import APIRouter
 router = APIRouter()
 
 from uuid import uuid4
+
+from fastapi import Request
+
+@router.get("/entities/browser", response_class=HTMLResponse)
+async def entities_browser(request: Request, canon_id: Optional[str] = None):
+    """
+    Entity Browser UI (Module 1)
+
+    - If no canon_id: render the list browser (entities.html)
+    - If canon_id provided: render the detail view (entity_detail.html)
+    """
+    context = {"request": request}
+    template_name = "entities.html"
+
+    if canon_id:
+        template_name = "entity_detail.html"
+        context["canon_id"] = canon_id
+
+    return templates.TemplateResponse(template_name, context)
 
 @router.get("/debug/seed-contradictions")
 @router.post("/debug/seed-contradictions")
@@ -511,9 +548,6 @@ from . import models    # <-- **ADD THIS IMPORT**
 from .auditor_agent import AuditorAgent
 from .query_agent import QueryAgent
 
-# Configure Jinja2 templates
-BASE_DIR = Path(__file__).resolve().parent
-templates = Jinja2Templates(directory=str(Path(BASE_DIR, 'templates')))
 
 
 

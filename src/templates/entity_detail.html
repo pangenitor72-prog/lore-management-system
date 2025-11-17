@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LMS — Entity Detail</title>
+    <link rel="stylesheet" href="/static/entities.css">
+</head>
+<body data-view="detail" data-canon-id="{{ canon_id }}">
+    <header class="eb-header">
+        <h1 class="eb-title">Entity Detail</h1>
+        <a href="/entities/browser" class="eb-back-link">&larr; Back to Entity Browser</a>
+    </header>
+
+    <main class="eb-main">
+        <section id="entity-detail" class="eb-detail-panel">
+            <div id="entity-detail-loading" class="eb-status">
+                <p>Loading entity…</p>
+            </div>
+            <div id="entity-detail-error" class="eb-status eb-error hidden">
+                <p>Failed to load entity.</p>
+            </div>
+            <div id="entity-detail-content" class="eb-detail hidden">
+                <!-- Populated by entities.js -->
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/entities.js"></script>
+</body>
+</html>
