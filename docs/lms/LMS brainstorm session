@@ -1,0 +1,437 @@
+# LMS Project Brainstorm Session - 2025-11-13
+
+## Context
+Architectural discussion about skills creation, multi-agent coordination, local model integration, and validation pipeline design for the Lore Management System (LMS) project.
+
+## Key Decisions & Insights
+
+### Skills Strategy
+
+**Skills are Claude-specific optimization:**
+- Skills only work within Claude.ai ecosystem
+- Not accessible to Gemini or ChatGPT
+- Function as "compiled, modular prompt patterns"
+- Use progressive disclosure: metadata → body → resources
+
+**Current skill assessment:**
+- `lms-project-context` skill is solid and production-ready
+- Contains: project overview, path conventions, scope discipline, handoff protocols
+- Includes references: gospel-principle.md, handoff-template.md
+- Well-structured with appropriate level of detail
+
+**Strategy: Wait for operational pain:**
+- Don't create skills preemptively before stress-testing with real lore
+- Let pain points emerge from actual usage (processing 50-100+ entities)
+- Skills should solve proven, repeated problems, not hypothetical ones
+- After pipeline testing, likely candidates:
+  - `entity-validation-standards` - review checklists for Gemini/GPT outputs
+  - `test-coverage-requirements` - standards for generated tests
+  - `parallel-task-coordinator` - multi-agent coordination protocols
+
+**Skills reduce token costs:**
+- Traditional prompting: 2000+ word context pasted every conversation
+- With skills: ~100 word metadata always loaded, full body loads on-demand
+- Critical for Claude's role as architect/orchestrator on lowest paid tier
+- Enables longer architectural conversations without hitting limits
+
+### Multi-Agent Architecture
+
+**Claude's role: Co-architect and orchestrator**
+- Reviews Gemini/GPT outputs against standards
+- Validates architectural decisions
+- Maintains "big picture" coherence
+- Generates handoff dossiers
+- Enforces scope discipline
+- Provides bidirectional oversight (checks and balances)
+
+**Gemini's role: Executor**
+- Processes lore documents at scale
+- Extracts entities per schemas
+- Returns structured data to API
+- Handles well-defined extraction tasks
+- Has massive context window (up to 2M tokens)
+
+**ChatGPT's role: Parallel executor**
+- Coding tasks in parallel with Gemini
+- Test generation for code validation
+- Ad-hoc specialized tasks
+
+**Implication:**
+Skills are high-value for Claude because Claude does meta-work (coordination, review, architecture) that requires persistent context across sessions. Gemini/GPT get task-specific instructions per execution.
+
+### Local Model Integration (Llama 3 8B)
+
+**Motivation: Cost optimization**
+- Production system will process thousands of entities
+- API costs scale linearly with volume
+- Local compute costs are fixed (after hardware)
+- Goal: Offload grunt work from paid APIs to local models
+
+**Three-tier architecture proposed:**
+
+**Tier 1: Llama 3 8B (local, free, fast)**
+- Pre-filtering documents (entity presence detection)
+- Schema validation (format checking)
+- Duplicate detection (name matching)
+- Simple classification tasks
+- Format standardization
+
+**Tier 2: Gemini/GPT (API, moderate cost)**
+- Complex entity extraction
+- Ambiguous cases flagged by Tier 1
+- Cross-document relationship inference
+- Quality scoring
+
+**Tier 3: Claude (architect/orchestrator)**
+- Review Tier 1 & 2 outputs
+- Gospel Principle arbitration
+- Architectural decisions
+- Human-in-the-loop coordination
+
+**Realistic capabilities of Llama 3 8B:**
+- Good at: Schema validation, explicit entity extraction, format conversion, rule-based tasks
+- Struggles with: Multi-step reasoning, implicit relationships, Gospel Principle scenarios, semantic coherence
+- Interaction style: More like programming than conversation - needs explicit, structured prompts
+
+**Testing approach:**
+1. Take 5-10 sample lore documents
+2. Hand-craft "perfect" extractions
+3. Test Llama against same documents
+4. Measure: accuracy rate, error patterns, prompt sensitivity
+5. Decide if Tier 1 integration worth the engineering effort
+
+### Pre-Filtering Prompt for Llama 3 8B
+
+**Task:** Analyze documents to determine if they contain entities worth extracting, avoiding wasted API calls on non-entity content.
+
+**Prompt structure:**
+```
+TASK: Analyze D&D session document for entity extraction potential
+
+INPUT: Session notes or campaign document
+OUTPUT: JSON only, no additional text
+
+ENTITY TYPES TO DETECT:
+- NPCs: Named characters (players, villains, merchants, etc.)
+- LOCATIONS: Named places (cities, dungeons, taverns, regions)
+- EVENTS: Significant occurrences (battles, discoveries, political events)
+- ITEMS: Named artifacts or significant objects
+- ORGANIZATIONS: Groups, factions, guilds
+
+CLASSIFICATION RULES:
+1. HIGH_VALUE: 3+ distinct named entities of different types
+2. MEDIUM_VALUE: 1-2 named entities OR significant narrative content
+3. LOW_VALUE: Generic descriptions, mechanics only, no named entities
+4. NO_VALUE: Combat logs, dice rolls, session logistics only
+
+OUTPUT SCHEMA:
+{
+  "classification": "HIGH_VALUE|MEDIUM_VALUE|LOW_VALUE|NO_VALUE",
+  "entity_count_estimate": <integer>,
+  "entity_types_present": [<array of types found>],
+  "confidence": <0.0-1.0>,
+  "sample_entities": [<up to 3 example entity names found>],
+  "reasoning": "<one sentence explanation>"
+}
+
+DOCUMENT TO ANALYZE:
+---
+{DOCUMENT_TEXT_HERE}
+---
+
+OUTPUT:
+```
+
+**Why this works:**
+- Explicit formatting (clear task, exact schema, specific categories)
+- Rule-based logic (clear thresholds, enumerated types, simple counting)
+- Constrained output (JSON only, fixed schema, parseable)
+
+**Testing strategy:**
+- Test with high-value doc (rich session with multiple entities)
+- Test with low-value doc (combat mechanics, no narrative)
+- Test with edge case (single important entity in generic text)
+
+**Next prompts to develop:**
+- Schema validation (validate extracted entity JSON)
+- Duplicate detection (identify potential duplicate entities)
+- Format standardization (normalize entity representations)
+
+### Validation Pipeline Architecture
+
+**Multi-stage validation concept:**
+
+**Stage 1: Extraction Validation (Pre-DB)**
+- Schema compliance (required fields, correct data types)
+- Format correctness (valid JSON structure)
+- Basic sanity checks (dates make sense, names not empty)
+
+**Stage 2: Database Insertion Validation (DB Layer)**
+- Constraint enforcement (uniqueness, foreign keys)
+- Data type validation (DB schema compliance)
+- Duplicate detection
+
+**Stage 3: Relationship Validation (Graph/Vector Layer)**
+- Logical relationship consistency
+- Orphaned node detection
+- Contradictory relationship detection (A friend and enemy of B)
+- Temporal consistency (events before character birth, etc.)
+
+**Stage 4: Cross-Document Validation**
+- Entity consistency across sources
+- Contradiction detection (Gospel Principle territory)
+- Confidence scoring
+- Canonical version selection
+
+**Stage 5: Semantic Validation (Vector DB)**
+- Embedding cluster coherence
+- Anomaly detection (entity doesn't fit world)
+- Contextual consistency
+
+**AI tier mapping:**
+- Llama 3 8B: Stages 1-2 (schema/format validation, simple rules)
+- Gemini/GPT: Stages 3-4 (complex logic, contradiction detection)
+- Claude: Stage 5 + Gospel Principle oversight
+
+**Five-dimensional quality problem:**
+1. Structural integrity (schema/format)
+2. Logical consistency (relationships make sense)
+3. Temporal coherence (timeline works)
+4. Source fidelity (matches canon)
+5. Semantic plausibility (fits the world)
+
+### Graph/Vector Database Integration
+
+**Current status:**
+- SQL database in production (Phases I-XI complete)
+- Graph/Vector DB listed as "Future Phases" (potential migration)
+- No immediate plans to implement
+
+**Decision: Pain-driven migration**
+- Don't migrate because it's "better"
+- Migrate when SQL can't do what you need
+- Test first with real lore at scale
+- Let user needs drive architecture decisions
+
+**Graph DB (Neo4j) triggers:**
+- Relationship queries become painful in SQL
+- Traversal queries common ("how did artifact get from A to B?")
+- Network analysis needed ("which NPCs are most central?")
+- SQL joins exploding (5+ joins for simple queries)
+
+**Vector DB triggers:**
+- Semantic search critical ("find entities similar to this")
+- RAG patterns needed for AI agents
+- Duplicate detection hard ("same character, different name?")
+- Natural language queries important
+
+**Recommended sequence:**
+1. Finish Phase XII with SQL
+2. Process lore at scale (100+ entities)
+3. User testing with Jim - what does he actually query?
+4. Identify SQL bottlenecks
+5. Then decide: graph, vector, both, or neither
+
+**Benefits of waiting:**
+- Understand query patterns before designing graph schema
+- Avoid solving hypothetical problems
+- Build better models based on real usage
+- Reduce learning curve overhead (Cypher, embeddings, etc.)
+
+**Potential hybrid approach (if needed later):**
+- SQL as source of truth
+- Vector DB for semantic search only
+- Graph DB for relationship queries only
+- All three sync'd, each doing what it does best
+
+### Chunking Strategy
+
+**Question:** Does Gemini's massive context window (2M tokens) eliminate need for chunking?
+
+**Analysis:**
+- Gemini context likely sufficient for typical session notes
+- Chunking adds complexity without clear benefit
+- Entity extraction benefits from full document context
+- Llama 3 8B would struggle with semantic chunk boundaries
+
+**Chunking needed when:**
+- Documents exceed model context window
+- Processing costs scale significantly with input size
+- Parallel processing desired
+- Memory constraints exist
+
+**Chunking NOT needed when:**
+- Documents comfortably fit in context (likely for session notes)
+- Sequential processing acceptable
+- Simplicity preferred
+
+**Recommendation:**
+- Test first: take longest session note, check token count
+- If fits in Gemini, skip chunking entirely
+- Don't solve problems you don't have
+
+**Where Llama DOES add value (not chunking):**
+- Pre-filtering (does document have entities?)
+- Post-extraction validation (schema compliance)
+- Duplicate detection
+- Format standardization
+
+### Context Bleed Vulnerability
+
+**Status:** Rare but critical hazard
+- Occurred once during project
+- Low frequency, HIGH impact (can corrupt canonical lore)
+- Recognized as ongoing risk despite rarity
+
+**Definition:**
+AI instances accidentally merge context from different conversations, allowing information from unrelated sources to contaminate lore entities.
+
+**Recognition patterns:**
+- Entity references not in source material
+- Anachronistic details (modern concepts in medieval setting)
+- Cross-contamination from other campaigns/media
+- Information that "feels right" but has no citation
+
+**Prevention:**
+- Always cite source material explicitly
+- Flag any detail without direct citation
+- When uncertain about origin: `[HUMAN_DECISION_REQUIRED]`
+- Never fill gaps with "what makes sense"
+
+**Detection protocol:**
+1. Flag immediately with `[CONTEXT_BLEED_DETECTED]`
+2. Identify contaminated entities
+3. Trace to source conversation/document
+4. Quarantine for human review
+
+**Skill implication:**
+Should be documented in `lms-project-context` as "Known Vulnerabilities" section rather than separate skill (rare occurrence doesn't justify standalone skill).
+
+## Current Project Status
+
+**Production system (Phases I-XI):**
+- ✅ Core database and API
+- ✅ Entity extraction system
+- ✅ Contradiction detection
+- ✅ Triage workflow
+- ✅ WebSocket integration
+- ✅ Dashboard and analytics
+- ✅ System stability: 100% health, 0% error rate
+
+**Active development (Phase XII):**
+- 🚧 Entity browser UI with "Haunting Machine" aesthetic
+- 🚧 Dashboard refinement (with GPT assistance)
+- 🚧 Enhanced contradiction resolution workflow
+- 🚧 Batch document processing
+- 🚧 Comprehensive test suite (75+ test cases)
+
+**Recent milestones:**
+- ✅ Gemini API integration complete (can communicate with API)
+- ✅ Llama 3 8B local model setup for testing
+- 🎯 Next: Process actual lore at scale (major stress test)
+
+**Integration status:**
+- Gemini connected to API
+- ChatGPT used for parallel coding/testing tasks
+- Llama 3 8B in R&D/testing phase
+- Have NOT yet processed real lore through full pipeline
+
+## Key Principles Reaffirmed
+
+**The Gospel Principle:**
+- Humans have final authority on ALL canonical lore decisions
+- When uncertain: FLAG, don't infer
+- When sources conflict: FLAG, don't choose
+- Never make "reasonable assumptions" about lore
+- Use `[HUMAN_DECISION_REQUIRED]` tags liberally
+
+**Scope Discipline:**
+- Complete specific task with minimal surface area of change
+- Do NOT refactor, rename, or "improve" unnecessarily
+- Flag improvements, don't make them
+- Treat Phases I-XI as PRODUCTION CODE
+
+**Mandatory Pause Rule:**
+- After completing work, force scope confirmation before next steps
+- Don't proceed on enthusiastic "yes!" without explicit boundaries
+- Require: scope, boundaries, success criteria, estimated changes
+
+## Unknowns Requiring Testing
+
+**Jim's usage patterns:**
+- What queries will he actually run?
+- Which relationships matter most?
+- How does he navigate the lore?
+- What's the typical session note length?
+
+**System performance at scale:**
+- Which validation stages matter most?
+- Where does SQL become a bottleneck?
+- What are the most common extraction errors?
+- Which AI tier handles what workload best?
+
+**Local model capabilities:**
+- Can Llama 3 8B reliably pre-filter?
+- What's the accuracy/error rate?
+- How sensitive is it to prompt structure?
+- Where's the quality/cost tradeoff point?
+
+**Database architecture needs:**
+- Are relationship queries painful in SQL?
+- Do we need graph traversal?
+- Is semantic search critical?
+- When does migration become necessary?
+
+## Next Actions
+
+**Immediate (when back at PC):**
+1. Test Llama 3 8B pre-filtering prompt with sample documents
+2. Continue dashboard refinement with GPT
+3. Measure accuracy/error patterns of local model
+
+**Near-term milestone:**
+1. Process Jim's actual lore through pipeline at scale
+2. Observe operational pain points
+3. Gather data on query patterns and bottlenecks
+4. Let real usage drive architecture decisions
+
+**Post-testing (after pipeline stress test):**
+1. Create operational skills based on proven pain points
+2. Decide on graph/vector DB migration (if needed)
+3. Finalize AI tier responsibilities based on performance data
+4. Optimize cost structure with local model integration (if viable)
+
+## Open Questions
+
+1. How large are Jim's typical session notes? (impacts chunking decision)
+2. What specific queries does Jim want to run? (impacts DB architecture)
+3. Can Llama 3 8B hit acceptable accuracy thresholds? (impacts tier architecture)
+4. Where are the actual bottlenecks in the pipeline? (impacts optimization focus)
+
+## Meta-Notes
+
+**Conversation characteristics:**
+- Heavy focus on architectural planning and system design
+- Emphasis on testing before optimizing
+- Preference for pain-driven rather than theoretical design
+- Multi-AI orchestration sophistication
+- Recognition of unknown-unknowns requiring empirical data
+
+**Communication style:**
+- Philosophical depth with technical rigor
+- Appreciation for elegant, modular solutions
+- Healthy skepticism of premature optimization
+- "Run the gauntlet first" mentality
+
+**Project management approach:**
+- Structured vault system for AI coordination
+- Handoff protocols between agents
+- Gospel Principle for human-in-the-loop decisions
+- Scope discipline to prevent feature creep
+- Production mindset (not prototype iteration)
+
+---
+
+**Document Purpose:** Capture architectural decisions, testing strategies, and open questions from brainstorming session. Provides context for future AI instances working on LMS project.
+
+**Next Session Focus:** Test Llama 3 8B pre-filtering, continue dashboard work, prepare for large-scale lore processing pipeline test.
