@@ -423,21 +423,44 @@ async def dismiss_contradiction(contradiction_id: str, payload: ContradictionUpd
     }
 
 
-@router.post("/contradictions/{contradiction_id}/review", tags=["Contradictions"])
-async def set_contradiction_in_review(contradiction_id: str):
-    """Set a contradiction to in-review status."""
+@router.post("/api/contradictions/{contradiction_id}/resolve", tags=["Contradictions"])
+async def resolve_contradiction(contradiction_id: str, action_data: dict = Body(...)):
+    """
+    Unified triage endpoint for Module 2 UI.
+    Handles: resolve, dismiss, in_review actions.
+    """
     from . import contradiction_service
     
-    success = contradiction_service.set_in_review(contradiction_id, user="System")
+    action = action_data.get("action")  # "resolve", "dismiss", "in_review"
+    user = action_data.get("user", "System")
+    notes = action_data.get("notes", "")
+    
+    if action == "in_review":
+        success = contradiction_service.set_in_review(contradiction_id, user=user)
+        new_status = "IN_REVIEW"
+    elif action == "resolve":
+        # TODO: Implement resolve logic in contradiction_service
+        success = contradiction_service.set_resolved(contradiction_id, user=user, notes=notes)
+        new_status = "RESOLVED"
+    elif action == "dismiss":
+        # TODO: Implement dismiss logic in contradiction_service
+        success = contradiction_service.set_dismissed(contradiction_id, user=user, notes=notes)
+        new_status = "DISMISSED"
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action. Use: resolve, dismiss, or in_review")
+    
     if not success:
         raise HTTPException(
             status_code=404, 
             detail="Contradiction not found or update failed"
         )
+    
     return {
         "status": "success", 
-        "new_status": STATUS_IN_REVIEW, 
-        "contradiction_id": contradiction_id
+        "new_status": new_status, 
+        "contradiction_id": contradiction_id,
+        "user": user,
+        "notes": notes
     }
 
 @router.get("/api/contradictions", response_class=JSONResponse, tags=["Contradictions"])
