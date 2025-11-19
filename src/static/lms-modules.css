@@ -1,0 +1,221 @@
+/* ============================================================
+   LMS — Module 2: Contradiction Resolution Workflow
+   Additive CSS enhancements
+   ============================================================ */
+
+/* ---------------------------
+   Badges — Severity
+   --------------------------- */
+.lms-badge--severity {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.lms-severity-high {
+  background-color: #7f1d1d;    /* deep red */
+  color: #fca5a5;               /* soft red text */
+}
+
+.lms-severity-medium {
+  background-color: #78350f;    /* amber/brown */
+  color: #fbbf24;               /* amber */
+}
+
+.lms-severity-low {
+  background-color: #064e3b;    /* dark green */
+  color: #6ee7b7;               /* mint green */
+}
+
+/* ---------------------------
+   Badges — Status
+   --------------------------- */
+.lms-badge--status {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.lms-status-pending {
+  background-color: #1e3a8a; /* deep blue */
+  color: #93c5fd;
+}
+
+.lms-status-open {
+  background-color: #0f172a; /* near-black slate */
+  color: #cbd5e1;
+}
+
+.lms-status-in_review {
+  background-color: #3f2e0c; /* muted gold */
+  color: #fcd34d;
+}
+
+.lms-status-resolved {
+  background-color: #14532d; /* dark green */
+  color: #86efac;
+}
+
+.lms-status-dismissed {
+  background-color: #4a044e; /* purple/blood */
+  color: #f0abfc;
+}
+
+/* ---------------------------
+   Selected row highlight
+   --------------------------- */
+.lms-table__row.is-selected {
+  background-color: rgba(74, 222, 128, 0.1); /* accent green, low opacity */
+  border-left: 3px solid var(--color-accent);
+}
+
+/* ---------------------------
+   Hover effect for list rows
+   --------------------------- */
+.lms-table__row--body:hover {
+  background-color: var(--color-surface-hover);
+  cursor: pointer;
+}
+
+/* ---------------------------
+   Two-panel split layout
+   --------------------------- */
+.lms-layout--split {
+  display: grid;
+  grid-template-columns: 1.1fr 1.8fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* ---------------------------
+   Definition lists (dl/dt/dd)
+   --------------------------- */
+.lms-field-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  row-gap: 4px;
+  column-gap: 12px;
+  margin: 0;
+  padding: 0;
+}
+
+.lms-field-list dt {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.lms-field-list dd {
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+/* highlight differences */
+.lms-field-list dt.is-different,
+.lms-field-list dd.is-different {
+  background-color: rgba(255, 56, 96, 0.12); /* muted red highlight */
+  border-radius: 4px;
+  padding: 2px 4px;
+  color: #fecdd3;
+}
+
+/* ---------------------------
+   Comparison grid (Entity A/B)
+   --------------------------- */
+.lms-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.lms-comparison-column {
+  background-color: var(--color-surface-soft);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.lms-comparison-header {
+  margin-bottom: 1rem;
+}
+
+.lms-comparison-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 2px;
+}
+
+.lms-comparison-subtitle {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* ---------------------------
+   Analysis section
+   --------------------------- */
+.lms-analysis-body {
+  margin-top: 0.75rem;
+  line-height: 1.45;
+}
+
+.lms-analysis-heading {
+  font-weight: 600;
+  margin-top: 0.75rem;
+  color: var(--color-text-primary);
+}
+
+.lms-analysis-text {
+  color: var(--color-text-secondary);
+}
+
+/* ---------------------------
+   Form Actions (Resolve / Dismiss / Review)
+   --------------------------- */
+.lms-form-row--actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.lms-button-group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------------------------
+   Empty State Panel
+   --------------------------- */
+.lms-empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--color-text-muted);
+}
+
+.lms-empty-state__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.lms-empty-state__subtitle {
+  font-size: 0.9rem;
+}
+
+/* ---------------------------
+   Entity ID tags in list view
+   --------------------------- */
+.lms-entity-id {
+  background-color: var(--color-surface-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
