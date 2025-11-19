@@ -69,7 +69,6 @@ const btnDismiss = document.getElementById("btn-dismiss");
 const btnInReview = document.getElementById("btn-in-review");
 const triageStatusMessage = document.getElementById("triage-status-message");
 
-
 //
 // ============================================================
 // Fetch Functions
@@ -87,7 +86,8 @@ async function fetchContradictions() {
 
   params.append("limit", "50");
 
-  const url = `/contradictions?${params.toString()}`;
+  // FIXED: /api prefix
+  const url = `/api/contradictions?${params.toString()}`;
 
   try {
     const res = await fetch(url);
@@ -100,13 +100,13 @@ async function fetchContradictions() {
 }
 
 async function fetchContradictionDetails(contradictionId) {
-  const res = await fetch(`/contradictions/${contradictionId}`);
+  const res = await fetch(`/api/contradictions/${contradictionId}`);
   if (!res.ok) throw new Error("Failed to fetch contradiction details.");
   return res.json();
 }
 
 async function fetchEntity(canonId) {
-  const res = await fetch(`/entities/${canonId}`);
+  const res = await fetch(`/api/entities/${canonId}`);
   if (!res.ok) throw new Error(`Entity not found: ${canonId}`);
   return res.json();
 }
@@ -182,7 +182,7 @@ function renderContradictionList() {
 
 async function selectContradiction(contradictionId) {
   selectedContradictionId = contradictionId;
-  renderContradictionList(); // highlight row
+  renderContradictionList(); 
 
   try {
     const detail = await fetchContradictionDetails(contradictionId);
@@ -220,7 +220,6 @@ function renderDetailPanel(detail) {
     evidenceRaw.textContent = c.evidence;
   }
 
-  // Reset comparison view
   comparisonSection.hidden = true;
   entityAFields.innerHTML = "";
   entityBFields.innerHTML = "";
@@ -233,7 +232,6 @@ function renderDetailPanel(detail) {
     loadEntityComparison(c.entity_ids);
   }
 
-  // Triage analysis
   if (detail.analysis) {
     analysisSection.hidden = false;
     analysisAnalyst.textContent = `Analyst: ${detail.analysis.analyst}`;
@@ -244,7 +242,6 @@ function renderDetailPanel(detail) {
     analysisSection.hidden = true;
   }
 
-  // Enable action buttons
   actionsSection.hidden = false;
   btnResolve.disabled = false;
   btnDismiss.disabled = false;
@@ -297,9 +294,6 @@ function renderEntityFields(entityA, entityB) {
 
     const isDifferent = JSON.stringify(aVal) !== JSON.stringify(bVal);
 
-    // -------------------------------
-    // Entity A <dt>/<dd>
-    // -------------------------------
     const aDt = document.createElement("dt");
     aDt.textContent = key;
     if (isDifferent) aDt.classList.add("is-different");
@@ -311,9 +305,6 @@ function renderEntityFields(entityA, entityB) {
     entityAFields.appendChild(aDt);
     entityAFields.appendChild(aDd);
 
-    // -------------------------------
-    // Entity B <dt>/<dd>
-    // -------------------------------
     const bDt = document.createElement("dt");
     bDt.textContent = key;
     if (isDifferent) bDt.classList.add("is-different");
@@ -325,7 +316,6 @@ function renderEntityFields(entityA, entityB) {
     entityBFields.appendChild(bDt);
     entityBFields.appendChild(bDd);
   });
-}
 }
 
 function renderValue(val) {
@@ -358,11 +348,10 @@ async function performStatusChange(actionType, actionLabel) {
   const user = triageUserInput.value.trim();
   const notes = triageNotesInput.value.trim();
 
-  let endpoint = `/contradictions/${selectedContradictionId}/${actionType}`;
+  let endpoint = `/api/contradictions/${selectedContradictionId}/${actionType}`;
   let options;
 
   if (actionType === "review") {
-    // review has no payload
     options = { method: "POST" };
   } else {
     options = {
@@ -380,7 +369,6 @@ async function performStatusChange(actionType, actionLabel) {
 
     triageStatusMessage.textContent = `${actionLabel} successfully.`;
 
-    // Refresh list & detail
     await fetchContradictions();
     renderContradictionList();
     const detail = await fetchContradictionDetails(selectedContradictionId);

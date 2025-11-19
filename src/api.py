@@ -369,15 +369,6 @@ def list_contradictions():
     return JSONResponse(content=results)
 
 
-@router.get("/contradictions/{contradiction_id}", tags=["Contradictions"])
-async def get_single_contradiction(contradiction_id: str):
-    """Get a single contradiction by ID."""
-    from . import contradiction_service
-    
-    contradiction = contradiction_service.get_contradiction(contradiction_id)
-    if not contradiction:
-        raise HTTPException(status_code=404, detail="Contradiction not found")
-    return contradiction
 
 
 @router.post("/api/contradictions/{contradiction_id}/resolve", tags=["Contradictions"])
