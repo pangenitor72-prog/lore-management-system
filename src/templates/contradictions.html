@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Contradiction Triage{% endblock %}
+
+{% block content %}
+<main class="lms-page lms-page--contradictions">
+  <!-- Page Header / Filters -->
+  <section class="lms-header lms-header--contradictions">
+    <div class="lms-header__left">
+      <h1 class="lms-title">Contradiction Triage</h1>
+      <p class="lms-subtitle">
+        Review, compare, and resolve contradictions detected in the lore graph.
+      </p>
+    </div>
+
+    <div class="lms-header__right">
+      <!-- Status Filter Tabs -->
+      <div class="lms-filter-group" id="status-filter">
+        <span class="lms-filter-label">Status</span>
+        <div class="lms-filter-tabs">
+          <button class="lms-chip lms-chip--filter is-active" data-status="PENDING">
+            Pending
+          </button>
+          <button class="lms-chip lms-chip--filter" data-status="OPEN">
+            Open
+          </button>
+          <button class="lms-chip lms-chip--filter" data-status="IN_REVIEW">
+            In Review
+          </button>
+          <button class="lms-chip lms-chip--filter" data-status="RESOLVED">
+            Resolved
+          </button>
+          <button class="lms-chip lms-chip--filter" data-status="DISMISSED">
+            Dismissed
+          </button>
+        </div>
+      </div>
+
+      <!-- Severity Filter -->
+      <div class="lms-filter-group" id="severity-filter">
+        <span class="lms-filter-label">Severity</span>
+        <div class="lms-filter-badges">
+          <button class="lms-chip lms-chip--filter is-active" data-severity="ALL">
+            All
+          </button>
+          <button class="lms-chip lms-chip--filter" data-severity="HIGH">
+            High
+          </button>
+          <button class="lms-chip lms-chip--filter" data-severity="MEDIUM">
+            Medium
+          </button>
+          <button class="lms-chip lms-chip--filter" data-severity="LOW">
+            Low
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Two-Panel Layout -->
+  <section class="lms-layout lms-layout--split">
+    <!-- Left: Contradiction Browser -->
+    <aside class="lms-panel lms-panel--list">
+      <header class="lms-panel__header">
+        <div class="lms-panel__title-group">
+          <h2 class="lms-panel__title">Contradictions</h2>
+          <p class="lms-panel__subtitle">
+            Filter and select contradictions from the triage queue.
+          </p>
+        </div>
+
+        <div class="lms-panel__controls">
+          <div class="lms-search">
+            <input
+              id="contradiction-search"
+              type="text"
+              class="lms-input lms-input--search"
+              placeholder="Search description or type..."
+              autocomplete="off"
+            />
+          </div>
+        </div>
+      </header>
+
+      <div class="lms-panel__body">
+        <div class="lms-table lms-table--contradictions">
+          <div class="lms-table__head">
+            <div class="lms-table__row lms-table__row--head">
+              <div class="lms-table__cell lms-col--id">ID</div>
+              <div class="lms-table__cell lms-col--type">Type</div>
+              <div class="lms-table__cell lms-col--severity">Severity</div>
+              <div class="lms-table__cell lms-col--status">Status</div>
+              <div class="lms-table__cell lms-col--entities">Entities</div>
+              <div class="lms-table__cell lms-col--detected">Detected</div>
+            </div>
+          </div>
+          <div class="lms-table__body" id="contradiction-list">
+            <!-- Rows injected by contradictions-browser.js -->
+
+            <div class="lms-empty-state" id="contradiction-empty-state">
+              <p class="lms-empty-state__title">No contradictions match this filter.</p>
+              <p class="lms-empty-state__subtitle">
+                Adjust the status or severity filters, or clear the search query.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right: Contradiction Detail / Comparison / Actions -->
+    <section class="lms-panel lms-panel--detail" id="contradiction-detail-panel">
+      <header class="lms-panel__header lms-panel__header--detail">
+        <div class="lms-panel__title-group">
+          <h2 class="lms-panel__title" id="detail-contradiction-id">
+            Select a contradiction to inspect
+          </h2>
+          <p class="lms-panel__subtitle" id="detail-contradiction-subtitle">
+            Side-by-side entity comparison and triage controls will appear here.
+          </p>
+        </div>
+        <div class="lms-panel__meta" id="detail-meta-group" hidden>
+          <span class="lms-badge lms-badge--status" id="detail-status-badge">
+            <!-- status -->
+          </span>
+          <span class="lms-badge lms-badge--severity" id="detail-severity-badge">
+            <!-- severity -->
+          </span>
+          <span class="lms-meta-item" id="detail-detected-at">
+            <!-- detected_at -->
+          </span>
+          <span class="lms-meta-item" id="detail-created-at">
+            <!-- created_at -->
+          </span>
+        </div>
+      </header>
+
+      <div class="lms-panel__body lms-panel__body--detail">
+        <!-- Description & Evidence -->
+        <section class="lms-section lms-section--description" id="detail-description-section" hidden>
+          <h3 class="lms-section__title">Description</h3>
+          <p class="lms-section__body" id="detail-description"></p>
+        </section>
+
+        <section class="lms-section lms-section--evidence" id="detail-evidence-section" hidden>
+          <h3 class="lms-section__title">Evidence</h3>
+          <pre class="lms-code-block" id="detail-evidence-raw"></pre>
+        </section>
+
+        <!-- Side-by-Side Entity Comparison -->
+        <section class="lms-section lms-section--comparison" id="detail-comparison-section" hidden>
+          <div class="lms-section__header-row">
+            <h3 class="lms-section__title">Entity Comparison</h3>
+            <p class="lms-section__subtitle" id="detail-entities-label">
+              Comparing entities linked to this contradiction.
+            </p>
+          </div>
+
+          <div class="lms-comparison-grid">
+            <article class="lms-comparison-column" id="entity-a-column">
+              <header class="lms-comparison-header">
+                <h4 class="lms-comparison-title" id="entity-a-name">Entity A</h4>
+                <p class="lms-comparison-subtitle" id="entity-a-meta"></p>
+              </header>
+
+              <div class="lms-comparison-section">
+                <h5 class="lms-comparison-section__title">Approved Fields</h5>
+                <dl class="lms-field-list" id="entity-a-fields">
+                  <!-- Entity A fields injected here -->
+                </dl>
+              </div>
+            </article>
+
+            <article class="lms-comparison-column" id="entity-b-column">
+              <header class="lms-comparison-header">
+                <h4 class="lms-comparison-title" id="entity-b-name">Entity B</h4>
+                <p class="lms-comparison-subtitle" id="entity-b-meta"></p>
+              </header>
+
+              <div class="lms-comparison-section">
+                <h5 class="lms-comparison-section__title">Approved Fields</h5>
+                <dl class="lms-field-list" id="entity-b-fields">
+                  <!-- Entity B fields injected here -->
+                </dl>
+              </div>
+            </article>
+          </div>
+
+          <p class="lms-comparison-hint" id="comparison-hint">
+            Differences between Entity A and Entity B will be highlighted to focus triage.
+          </p>
+        </section>
+
+        <!-- Triage Analysis -->
+        <section class="lms-section lms-section--analysis" id="detail-analysis-section" hidden>
+          <header class="lms-section__header-row">
+            <h3 class="lms-section__title">Triage Analysis</h3>
+            <p class="lms-section__subtitle">
+              Stored recommendations and confidence from previous AI triage.
+            </p>
+          </header>
+          <div class="lms-analysis-meta">
+            <span class="lms-meta-item" id="analysis-analyst"></span>
+            <span class="lms-meta-item" id="analysis-confidence"></span>
+          </div>
+          <div class="lms-analysis-body">
+            <h4 class="lms-analysis-heading">Recommendation</h4>
+            <p class="lms-analysis-text" id="analysis-recommendation"></p>
+
+            <h4 class="lms-analysis-heading">Details</h4>
+            <p class="lms-analysis-text" id="analysis-details"></p>
+          </div>
+        </section>
+
+        <!-- Resolution Actions -->
+        <section class="lms-section lms-section--actions" id="detail-actions-section" hidden>
+          <header class="lms-section__header-row">
+            <h3 class="lms-section__title">Resolution Actions</h3>
+            <p class="lms-section__subtitle">
+              Record who made the decision and why, then update the contradiction’s status.
+            </p>
+          </header>
+
+          <form class="lms-form lms-form--triage" id="triage-form" onsubmit="return false;">
+            <div class="lms-form-row">
+              <div class="lms-form-field">
+                <label for="triage-user" class="lms-label">User</label>
+                <input
+                  id="triage-user"
+                  type="text"
+                  class="lms-input"
+                  placeholder="e.g., Shawn, Jim, Null"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="lms-form-field lms-form-field--notes">
+                <label for="triage-notes" class="lms-label">Notes</label>
+                <textarea
+                  id="triage-notes"
+                  class="lms-textarea"
+                  rows="3"
+                  placeholder="Briefly describe why this contradiction was resolved, dismissed, or moved into review."
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="lms-form-row lms-form-row--actions">
+              <div class="lms-button-group">
+                <button
+                  type="button"
+                  class="lms-btn lms-btn--primary"
+                  id="btn-resolve"
+                  disabled
+                >
+                  Resolve
+                </button>
+                <button
+                  type="button"
+                  class="lms-btn lms-btn--ghost"
+                  id="btn-in-review"
+                  disabled
+                >
+                  Mark In Review
+                </button>
+                <button
+                  type="button"
+                  class="lms-btn lms-btn--danger"
+                  id="btn-dismiss"
+                  disabled
+                >
+                  Dismiss
+                </button>
+              </div>
+
+              <div class="lms-form-status">
+                <span class="lms-meta-item" id="triage-status-message"></span>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </section>
+</main>
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', path='js/contradictions-browser.js') }}"></script>
+{% endblock %}
