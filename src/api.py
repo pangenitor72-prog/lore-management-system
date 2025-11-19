@@ -363,11 +363,12 @@ def list_contradictions():
             "evidence": json.loads(r["evidence"]) if r["evidence"] else {},
             "detected_at": r["detected_at"],
             "created_at": r["created_at"],
-            "entity_ids": []  # Your DB doesn’t store entity_ids yet, this keeps UI happy
+            "entity_ids": []  # placeholder until we wire entity links
         })
 
     return JSONResponse(content=results)
-    
+
+
 @router.get("/contradictions/{contradiction_id}", tags=["Contradictions"])
 async def get_single_contradiction(contradiction_id: str):
     """Get a single contradiction by ID."""
@@ -379,52 +380,8 @@ async def get_single_contradiction(contradiction_id: str):
     return contradiction
 
 
-@router.post("/contradictions/{contradiction_id}/resolve", tags=["Contradictions"])
-async def resolve_contradiction(contradiction_id: str, payload: ContradictionUpdateRequest):
-    """Mark a contradiction as resolved."""
-    from . import contradiction_service
-    
-    success = contradiction_service.resolve_contradiction(
-        contradiction_id, 
-        payload.user, 
-        payload.notes
-    )
-    if not success:
-        raise HTTPException(
-            status_code=404, 
-            detail="Contradiction not found or update failed"
-        )
-    return {
-        "status": "success", 
-        "new_status": STATUS_RESOLVED, 
-        "contradiction_id": contradiction_id
-    }
-
-
-@router.post("/contradictions/{contradiction_id}/dismiss", tags=["Contradictions"])
-async def dismiss_contradiction(contradiction_id: str, payload: ContradictionUpdateRequest):
-    """Dismiss a contradiction."""
-    from . import contradiction_service
-    
-    success = contradiction_service.dismiss_contradiction(
-        contradiction_id, 
-        payload.user, 
-        payload.notes
-    )
-    if not success:
-        raise HTTPException(
-            status_code=404, 
-            detail="Contradiction not found or update failed"
-        )
-    return {
-        "status": "success", 
-        "new_status": STATUS_DISMISSED, 
-        "contradiction_id": contradiction_id
-    }
-
-
 @router.post("/api/contradictions/{contradiction_id}/resolve", tags=["Contradictions"])
-async def resolve_contradiction(contradiction_id: str, action_data: dict = Body(...)):
+async def resolve_contradiction_unified(contradiction_id: str, action_data: dict = Body(...)):
     """
     Unified triage endpoint for Module 2 UI.
     Handles: resolve, dismiss, in_review actions.
@@ -439,11 +396,9 @@ async def resolve_contradiction(contradiction_id: str, action_data: dict = Body(
         success = contradiction_service.set_in_review(contradiction_id, user=user)
         new_status = "IN_REVIEW"
     elif action == "resolve":
-        # TODO: Implement resolve logic in contradiction_service
         success = contradiction_service.set_resolved(contradiction_id, user=user, notes=notes)
         new_status = "RESOLVED"
     elif action == "dismiss":
-        # TODO: Implement dismiss logic in contradiction_service
         success = contradiction_service.set_dismissed(contradiction_id, user=user, notes=notes)
         new_status = "DISMISSED"
     else:
@@ -463,40 +418,6 @@ async def resolve_contradiction(contradiction_id: str, action_data: dict = Body(
         "notes": notes
     }
 
-@router.get("/api/contradictions", response_class=JSONResponse, tags=["Contradictions"])
-def list_contradictions():
-    """
-    Returns all contradictions for the Module 2 UI.
-    """
-    rows = db.fetch_all("""
-        SELECT 
-            contradiction_id,
-            contradiction_type,
-            severity,
-            status,
-            description,
-            evidence,
-            detected_at,
-            created_at
-        FROM contradictions
-        ORDER BY detected_at DESC
-    """)
-
-    results = []
-    for r in rows:
-        results.append({
-            "contradiction_id": r["contradiction_id"],
-            "contradiction_type": r["contradiction_type"],
-            "severity": r["severity"],
-            "status": r["status"],
-            "description": r["description"],
-            "evidence": json.loads(r["evidence"]) if r["evidence"] else {},
-            "detected_at": r["detected_at"],
-            "created_at": r["created_at"],
-            "entity_ids": []  # placeholder until we wire entity links
-        })
-
-    return JSONResponse(content=results)
 
 @router.get("/contradictions/browser", response_class=HTMLResponse)
 async def contradiction_browser(request: Request):
