@@ -7,12 +7,16 @@ DB_PATH = Path("data/lore.db")
 
 class Database:
     def __init__(self, db_path="data/lore.db"):
-        # Use the correct relative path from the root
-        self.db_path = Path(__file__).parent.parent / db_path
-        self.schema_path = Path(__file__).parent.parent / "data/schema.sql"
+        if db_path == ":memory:":
+            self.db_path = ":memory:"
+            self.schema_path = Path(__file__).parent.parent / "data/schema.sql"
+        else:
+            # Use the correct relative path from the root
+            self.db_path = Path(__file__).parent.parent / db_path
+            self.schema_path = Path(__file__).parent.parent / "data/schema.sql"
 
-        # Ensure the database directory exists
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            # Ensure the database directory exists
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Set timeout to 10 seconds (10.0)
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=10.0)
@@ -54,6 +58,11 @@ class Database:
         cur.execute(query, params)
         row = cur.fetchone()
         return dict(row) if row else None
+
+    def close(self):
+        """Closes the database connection."""
+        if self.conn:
+            self.conn.close()
 
     @contextlib.contextmanager
     def transaction(self) -> Generator[sqlite3.Connection, None, None]:

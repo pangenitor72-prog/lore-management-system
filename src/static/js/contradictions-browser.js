@@ -1,0 +1,439 @@
+// ============================================================
+// Contradiction Browser & Detail Panel (Module 2)
+// ============================================================
+
+console.log("[LMS] Contradictions Browser initialized.");
+
+//
+// -------------------------------
+// State
+// -------------------------------
+let contradictions = [];
+let selectedContradictionId = null;
+
+let currentStatusFilter = "PENDING";
+let currentSeverityFilter = "ALL";
+let currentSearchQuery = "";
+
+//
+// -------------------------------
+// DOM Elements
+// -------------------------------
+const listContainer = document.getElementById("contradiction-list");
+const emptyState = document.getElementById("contradiction-empty-state");
+
+const searchInput = document.getElementById("contradiction-search");
+
+// Detail panel elements
+const detailPanel = document.getElementById("contradiction-detail-panel");
+
+const detailIdEl = document.getElementById("detail-contradiction-id");
+const detailSubtitleEl = document.getElementById("detail-contradiction-subtitle");
+const detailMetaGroup = document.getElementById("detail-meta-group");
+
+const detailStatusBadge = document.getElementById("detail-status-badge");
+const detailSeverityBadge = document.getElementById("detail-severity-badge");
+const detailDetectedAt = document.getElementById("detail-detected-at");
+const detailCreatedAt = document.getElementById("detail-created-at");
+
+// Description & evidence
+const descriptionSection = document.getElementById("detail-description-section");
+const evidenceSection = document.getElementById("detail-evidence-section");
+const descriptionBody = document.getElementById("detail-description");
+const evidenceRaw = document.getElementById("detail-evidence-raw");
+
+// Comparison
+const comparisonSection = document.getElementById("detail-comparison-section");
+const comparisonHint = document.getElementById("comparison-hint");
+const entityAFields = document.getElementById("entity-a-fields");
+const entityBFields = document.getElementById("entity-b-fields");
+const entityAName = document.getElementById("entity-a-name");
+const entityBName = document.getElementById("entity-b-name");
+const entityAMeta = document.getElementById("entity-a-meta");
+const entityBMeta = document.getElementById("entity-b-meta");
+
+// Analysis
+const analysisSection = document.getElementById("detail-analysis-section");
+const analysisAnalyst = document.getElementById("analysis-analyst");
+const analysisConfidence = document.getElementById("analysis-confidence");
+const analysisRecommendation = document.getElementById("analysis-recommendation");
+const analysisDetails = document.getElementById("analysis-details");
+
+// Actions
+const actionsSection = document.getElementById("detail-actions-section");
+const triageUserInput = document.getElementById("triage-user");
+const triageNotesInput = document.getElementById("triage-notes");
+
+const btnResolve = document.getElementById("btn-resolve");
+const btnDismiss = document.getElementById("btn-dismiss");
+const btnInReview = document.getElementById("btn-in-review");
+const triageStatusMessage = document.getElementById("triage-status-message");
+
+//
+// ============================================================
+// Fetch Functions
+// ============================================================
+
+async function fetchContradictions() {
+  const params = new URLSearchParams();
+
+  if (currentStatusFilter && currentStatusFilter !== "ALL") {
+    params.append("status", currentStatusFilter);
+  }
+  if (currentSeverityFilter && currentSeverityFilter !== "ALL") {
+    params.append("severity", currentSeverityFilter);
+  }
+
+  params.append("limit", "50");
+
+  // FIXED: /api prefix
+  const url = `/api/contradictions?${params.toString()}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch contradictions.");
+    contradictions = await res.json();
+  } catch (err) {
+    console.error("[LMS] Error fetching contradictions:", err);
+    contradictions = [];
+  }
+}
+
+async function fetchContradictionDetails(contradictionId) {
+  const res = await fetch(`/api/contradictions/${contradictionId}`);
+  if (!res.ok) throw new Error("Failed to fetch contradiction details.");
+  return res.json();
+}
+
+async function fetchEntity(canonId) {
+  const res = await fetch(`/api/entities/${canonId}`);
+  if (!res.ok) throw new Error(`Entity not found: ${canonId}`);
+  return res.json();
+}
+
+//
+// ============================================================
+// Rendering — List Panel
+// ============================================================
+
+function renderContradictionList() {
+  listContainer.innerHTML = "";
+
+  // Apply client-side search filter
+  let filtered = contradictions;
+  if (currentSearchQuery.trim() !== "") {
+    const q = currentSearchQuery.toLowerCase();
+    filtered = contradictions.filter((c) => {
+      return (
+        c.description.toLowerCase().includes(q) ||
+        c.contradiction_type.toLowerCase().includes(q)
+      );
+    });
+  }
+
+  if (filtered.length === 0) {
+    emptyState.style.display = "block";
+    return;
+  }
+  emptyState.style.display = "none";
+
+  filtered.forEach((c) => {
+    const row = document.createElement("div");
+    row.className = "lms-table__row lms-table__row--body";
+    row.dataset.id = c.contradiction_id;
+
+    if (c.contradiction_id === selectedContradictionId) {
+      row.classList.add("is-selected");
+    }
+
+    row.innerHTML = `
+      <div class="lms-table__cell lms-col--id">${c.contradiction_id}</div>
+      <div class="lms-table__cell lms-col--type">${c.contradiction_type}</div>
+      <div class="lms-table__cell lms-col--severity">
+        <span class="lms-badge lms-badge--severity lms-severity-${c.severity.toLowerCase()}">
+          ${c.severity}
+        </span>
+      </div>
+      <div class="lms-table__cell lms-col--status">
+        <span class="lms-badge lms-badge--status lms-status-${c.status.toLowerCase()}">
+          ${c.status}
+        </span>
+      </div>
+      <div class="lms-table__cell lms-col--entities">
+        ${c.entity_ids.map((e) => `<span class="lms-entity-id">${e}</span>`).join("")}
+      </div>
+      <div class="lms-table__cell lms-col--detected">
+        ${formatDate(c.detected_at)}
+      </div>
+    `;
+
+    row.addEventListener("click", () => {
+      selectContradiction(c.contradiction_id);
+    });
+
+    listContainer.appendChild(row);
+  });
+}
+
+//
+// ============================================================
+// Detail Panel Rendering
+// ============================================================
+
+async function selectContradiction(contradictionId) {
+  selectedContradictionId = contradictionId;
+  renderContradictionList(); 
+
+  try {
+    const detail = await fetchContradictionDetails(contradictionId);
+    renderDetailPanel(detail);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderDetailPanel(detail) {
+  const c = detail.contradiction;
+
+  detailIdEl.textContent = c.contradiction_id;
+  detailSubtitleEl.textContent = c.contradiction_type;
+
+  detailMetaGroup.hidden = false;
+  detailStatusBadge.textContent = c.status;
+  detailSeverityBadge.textContent = c.severity;
+  detailStatusBadge.className = `lms-badge lms-badge--status lms-status-${c.status.toLowerCase()}`;
+  detailSeverityBadge.className = `lms-badge lms-badge--severity lms-severity-${c.severity.toLowerCase()}`;
+
+  detailDetectedAt.textContent = `Detected: ${formatDate(c.detected_at)}`;
+  if (c.created_at) {
+    detailCreatedAt.textContent = `Created: ${formatDate(c.created_at)}`;
+  }
+
+  descriptionSection.hidden = false;
+  descriptionBody.textContent = c.description;
+
+  evidenceSection.hidden = false;
+  try {
+    const parsed = JSON.parse(c.evidence);
+    evidenceRaw.textContent = JSON.stringify(parsed, null, 2);
+  } catch {
+    evidenceRaw.textContent = c.evidence;
+  }
+
+  comparisonSection.hidden = true;
+  entityAFields.innerHTML = "";
+  entityBFields.innerHTML = "";
+  entityAName.textContent = "Entity A";
+  entityBName.textContent = "Entity B";
+  entityAMeta.textContent = "";
+  entityBMeta.textContent = "";
+
+  if (c.entity_ids && c.entity_ids.length > 0) {
+    loadEntityComparison(c.entity_ids);
+  }
+
+  if (detail.analysis) {
+    analysisSection.hidden = false;
+    analysisAnalyst.textContent = `Analyst: ${detail.analysis.analyst}`;
+    analysisConfidence.textContent = `Confidence: ${Math.round(detail.analysis.confidence * 100)}%`;
+    analysisRecommendation.textContent = detail.analysis.recommendation;
+    analysisDetails.textContent = detail.analysis.analysis;
+  } else {
+    analysisSection.hidden = true;
+  }
+
+  actionsSection.hidden = false;
+  btnResolve.disabled = false;
+  btnDismiss.disabled = false;
+  btnInReview.disabled = false;
+}
+
+//
+// ============================================================
+// Entity Comparison
+// ============================================================
+
+async function loadEntityComparison(entityIds) {
+  if (entityIds.length < 2) {
+    comparisonSection.hidden = true;
+    return;
+  }
+
+  try {
+    const [aId, bId] = entityIds;
+    const [a, b] = await Promise.all([
+      fetchEntity(aId),
+      fetchEntity(bId),
+    ]);
+
+    comparisonSection.hidden = false;
+    renderEntityFields(a, b);
+  } catch (err) {
+    console.error("[LMS] Entity comparison error:", err);
+  }
+}
+
+function renderEntityFields(entityA, entityB) {
+  entityAName.textContent = entityA.canonical_name;
+  entityBName.textContent = entityB.canonical_name;
+
+  entityAMeta.textContent = `${entityA.entity_type}`;
+  entityBMeta.textContent = `${entityB.entity_type}`;
+
+  entityAFields.innerHTML = "";
+  entityBFields.innerHTML = "";
+
+  const allKeys = new Set([
+    ...Object.keys(entityA.approved_fields),
+    ...Object.keys(entityB.approved_fields),
+  ]);
+
+  [...allKeys].sort().forEach((key) => {
+    const aVal = entityA.approved_fields[key];
+    const bVal = entityB.approved_fields[key];
+
+    const isDifferent = JSON.stringify(aVal) !== JSON.stringify(bVal);
+
+    const aDt = document.createElement("dt");
+    aDt.textContent = key;
+    if (isDifferent) aDt.classList.add("is-different");
+
+    const aDd = document.createElement("dd");
+    aDd.innerHTML = renderValue(aVal);
+    if (isDifferent) aDd.classList.add("is-different");
+
+    entityAFields.appendChild(aDt);
+    entityAFields.appendChild(aDd);
+
+    const bDt = document.createElement("dt");
+    bDt.textContent = key;
+    if (isDifferent) bDt.classList.add("is-different");
+
+    const bDd = document.createElement("dd");
+    bDd.innerHTML = renderValue(bVal);
+    if (isDifferent) bDd.classList.add("is-different");
+
+    entityBFields.appendChild(bDt);
+    entityBFields.appendChild(bDd);
+  });
+}
+
+function renderValue(val) {
+  if (val === null || val === undefined) return "<em>—</em>";
+  if (typeof val === "object") return JSON.stringify(val);
+  return String(val);
+}
+
+//
+// ============================================================
+// Resolution Actions
+// ============================================================
+
+btnResolve.addEventListener("click", async () => {
+  await performStatusChange("resolve", "Resolved");
+});
+
+btnDismiss.addEventListener("click", async () => {
+  await performStatusChange("dismiss", "Dismissed");
+});
+
+btnInReview.addEventListener("click", async () => {
+  await performStatusChange("review", "In Review");
+});
+
+async function performStatusChange(actionType, actionLabel) {
+  if (!selectedContradictionId) return;
+
+  triageStatusMessage.textContent = "Working...";
+  const user = triageUserInput.value.trim();
+  const notes = triageNotesInput.value.trim();
+
+  let endpoint = `/api/contradictions/${selectedContradictionId}/${actionType}`;
+  let options;
+
+  if (actionType === "review") {
+    options = { method: "POST" };
+  } else {
+    options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ user, notes }),
+    };
+  }
+
+  try {
+    const res = await fetch(endpoint, options);
+    if (!res.ok) throw new Error("Status update failed.");
+
+    triageStatusMessage.textContent = `${actionLabel} successfully.`;
+
+    await fetchContradictions();
+    renderContradictionList();
+    const detail = await fetchContradictionDetails(selectedContradictionId);
+    renderDetailPanel(detail);
+  } catch (err) {
+    console.error("[LMS] Status update error:", err);
+    triageStatusMessage.textContent = "Error applying status change.";
+  }
+}
+
+//
+// ============================================================
+// Filters & Search
+// ============================================================
+
+document.querySelectorAll("#status-filter .lms-chip").forEach((chip) => {
+  chip.addEventListener("click", async () => {
+    document
+      .querySelectorAll("#status-filter .lms-chip")
+      .forEach((c) => c.classList.remove("is-active"));
+
+    chip.classList.add("is-active");
+    currentStatusFilter = chip.dataset.status;
+
+    await fetchContradictions();
+    renderContradictionList();
+  });
+});
+
+document.querySelectorAll("#severity-filter .lms-chip").forEach((chip) => {
+  chip.addEventListener("click", async () => {
+    document
+      .querySelectorAll("#severity-filter .lms-chip")
+      .forEach((c) => c.classList.remove("is-active"));
+
+    chip.classList.add("is-active");
+    currentSeverityFilter = chip.dataset.severity;
+
+    await fetchContradictions();
+    renderContradictionList();
+  });
+});
+
+searchInput.addEventListener("input", () => {
+  currentSearchQuery = searchInput.value;
+  renderContradictionList();
+});
+
+//
+// ============================================================
+// Helpers
+// ============================================================
+
+function formatDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString();
+}
+
+//
+// ============================================================
+// Initial Load
+// ============================================================
+
+(async function init() {
+  await fetchContradictions();
+  renderContradictionList();
+})();

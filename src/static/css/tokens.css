@@ -1,0 +1,137 @@
+/* ============================
+   Lore Management System – UI Tokens
+   Phase XII · Entity Browser
+   ============================ */
+
+:root {
+  /* ===== Colors ===== */
+
+  /* App background & surfaces */
+  --color-bg: #05060a;
+  --color-bg-elevated: #0b0f19;
+  --color-surface: #111827;
+  --color-surface-soft: #1f2937;
+  --color-surface-hover: #1b2535;
+
+  /* Borders & focus */
+  --color-border-subtle: #1f2937;
+  --color-border-strong: #374151;
+  --color-border-focus: #4ade80;
+
+  /* Text */
+  --color-text-primary: #e5e7eb;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+  --color-text-inverse: #020617;
+
+  /* Accent (Null / LMS green) */
+  --color-accent: #4ade80;
+  --color-accent-strong: #22c55e;
+  --color-accent-soft: rgba(74, 222, 128, 0.14);
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Tags / pills */
+  --color-tag-bg: rgba(148, 163, 184, 0.12);
+  --color-tag-border: rgba(148, 163, 184, 0.4);
+  --color-tag-text: #e5e7eb;
+
+  /* Scrollbars & overlays */
+  --color-scrollbar-track: #020617;
+  --color-scrollbar-thumb: #1f2937;
+  --color-scrollbar-thumb-hover: #374151;
+  --color-backdrop: rgba(15, 23, 42, 0.75);
+  --color-shadow-soft: rgba(15, 23, 42, 0.65);
+
+
+  /* ===== Typography ===== */
+
+  --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont,
+                      "SF Pro Text", "Segoe UI", sans-serif;
+  --font-family-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+
+  --font-size-xs: 0.75rem;      /* 12px */
+  --font-size-sm: 0.8125rem;    /* 13px */
+  --font-size-base: 0.9375rem;  /* 15px */
+  --font-size-lg: 1.0625rem;    /* 17px */
+  --font-size-xl: 1.25rem;      /* 20px */
+  --font-size-2xl: 1.5rem;      /* 24px */
+
+  --line-height-tight: 1.2;
+  --line-height-default: 1.45;
+  --line-height-loose: 1.7;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+
+  /* ===== Spacing (8px grid, with half-steps) ===== */
+
+  --space-0: 0;
+  --space-1: 0.125rem; /* 2px  */
+  --space-2: 0.25rem;  /* 4px  */
+  --space-3: 0.375rem; /* 6px  */
+  --space-4: 0.5rem;   /* 8px  */
+  --space-5: 0.75rem;  /* 12px */
+  --space-6: 1rem;     /* 16px */
+  --space-7: 1.25rem;  /* 20px */
+  --space-8: 1.5rem;   /* 24px */
+  --space-9: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+
+  /* Layout */
+  --layout-max-width: 1440px;
+  --layout-gutter: var(--space-6);
+  --layout-entity-sidebar-width: 320px;
+
+
+  /* ===== Radii ===== */
+
+  --radius-xs: 0.125rem; /* 2px  */
+  --radius-sm: 0.25rem;  /* 4px  */
+  --radius-md: 0.375rem; /* 6px  */
+  --radius-lg: 0.5rem;   /* 8px  */
+  --radius-xl: 0.75rem;  /* 12px */
+  --radius-pill: 9999px;
+
+
+  /* ===== Shadows ===== */
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.6);
+  --shadow-sm: 0 4px 10px rgba(15, 23, 42, 0.75);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.85);
+  --shadow-focus: 0 0 0 1px rgba(15, 23, 42, 1),
+                  0 0 0 2px rgba(74, 222, 128, 0.9);
+
+
+  /* ===== Motion ===== */
+
+  --ease-standard: cubic-bezier(0.21, 0.61, 0.35, 1);
+  --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-accelerate: cubic-bezier(0.3, 0, 0.7, 0.9);
+
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-slow: 260ms;
+
+
+  /* ===== Z-index ===== */
+
+  --z-base: 0;
+  --z-header: 10;
+  --z-dropdown: 20;
+  --z-modal: 40;
+  --z-toast: 50;
+}
+
+/* Optional dark hook */
+.lms-dark {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
+}

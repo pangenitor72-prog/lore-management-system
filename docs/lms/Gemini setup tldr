@@ -1,0 +1,130 @@
+# Gemini Setup - TL;DR Version
+
+**Quick reference while working. Full details in GEMINI_SETUP_GAMEPLAN.md**
+
+---
+
+## 🎯 THE PLAN
+
+**Ollama (Machete)** → Rough chunking, free, slow  
+**Gemini (Scalpel)** → Precise analysis, paid, fast  
+**Together** → Cost-effective pipeline
+
+---
+
+## ⚡ QUICK START (30 minutes)
+
+### 1. Get API Key (5 min)
+- Go to: https://aistudio.google.com/
+- Click "Get API Key" → "Create API Key"
+- Copy key (starts with `AIzaSy...`)
+- Add to `.env`: `GEMINI_API_KEY=AIzaSy...`
+
+### 2. Install SDK (2 min)
+```powershell
+cd "C:\Users\pange\Downloads\lore-system.tar\lore-system"
+.\venv\Scripts\activate
+pip install google-generativeai
+```
+
+### 3. Test Connection (3 min)
+Create `test_gemini.py` (see full gameplan for code)
+```powershell
+python test_gemini.py
+```
+
+### 4. Build Pipeline (20 min)
+Copy these files from gameplan:
+- `src/chunker.py`
+- `src/gemini_analyzer.py`  
+- `src/lore_pipeline.py`
+
+Test:
+```powershell
+python src/lore_pipeline.py
+```
+
+---
+
+## 💰 COSTS
+
+**Gemini 1.5 Flash** (recommended):
+- $0.075 per 1M input tokens
+- $0.30 per 1M output tokens
+
+**Real numbers:**
+- 50-page document: ~$0.02 with chunking
+- 100 documents: ~$2.00
+- **Free tier: 1M tokens/day** (hobby use is free!)
+
+---
+
+## 🔧 IF IT BREAKS
+
+**"API key not found":**
+```powershell
+cat .env | Select-String "GEMINI"
+```
+Should show your key. If not, add it.
+
+**"Rate limit":**
+Add delays: `time.sleep(4)` between requests
+
+**"Invalid JSON":**
+Already handled in code - check raw response if fails
+
+**Ollama too slow:**
+- Use smaller model: `ollama pull llama3.1:3b`
+- OR run overnight
+- OR skip chunking, just use Gemini
+
+---
+
+## 📋 INTEGRATION CHECKLIST
+
+```
+□ API key in .env
+□ SDK installed
+□ test_gemini.py works
+□ Pipeline modules created
+□ Test pipeline runs
+□ Integrate with LMS upload handler
+□ Process test document
+□ Verify entities in database
+```
+
+---
+
+## 🎯 WHAT SUCCESS LOOKS LIKE
+
+Upload campaign doc → Ollama chunks it → Gemini extracts entities → Entities in LMS database → Contradictions detected
+
+**Processing time:** 5-30 min per document (depending on size)  
+**Cost:** $0.01-0.05 per document  
+**Quality:** High-confidence entities with relationships
+
+---
+
+## 📁 FILE LOCATIONS
+
+- **Full gameplan:** GEMINI_SETUP_GAMEPLAN.md (30KB)
+- **Code examples:** All in gameplan
+- **LMS project:** `C:\Users\pange\Downloads\lore-system.tar\lore-system`
+- **GitHub:** https://github.com/pangenitor72-prog/lore-management-system
+
+---
+
+## 💬 WHEN YOU GET STUCK
+
+Tell any AI:
+> "Setting up Gemini for LMS. At [step X]. Error: [paste]"
+
+We'll walk you through it!
+
+---
+
+**Next:** After Gemini works, optimize prompts and add to LMS UI
+
+---
+
+*Quick ref version - see GEMINI_SETUP_GAMEPLAN.md for complete details*

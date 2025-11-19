@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LMS — Entity Browser</title>
+    <link rel="stylesheet" href="/static/entities.css">
+</head>
+<body data-view="list">
+    <header class="eb-header">
+        <h1 class="eb-title">Entity Browser</h1>
+        <div class="eb-search-wrapper">
+            <input
+                id="entity-search"
+                type="text"
+                placeholder="Search entities…"
+                autocomplete="off"
+            />
+        </div>
+    </header>
+
+    <main class="eb-main">
+        <section class="eb-list-panel">
+            <div id="entity-list" class="eb-list">
+                <!-- Populated by entities.js -->
+            </div>
+            <div id="entity-list-empty" class="eb-empty-message hidden">
+                <p>No entities match your search.</p>
+            </div>
+            <div id="entity-list-loading" class="eb-status">
+                <p>Loading entities…</p>
+            </div>
+            <div id="entity-list-error" class="eb-status eb-error hidden">
+                <p>Failed to load entities.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/entities.js"></script>
+</body>
+</html>
