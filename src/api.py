@@ -440,6 +440,41 @@ async def set_contradiction_in_review(contradiction_id: str):
         "contradiction_id": contradiction_id
     }
 
+@router.get("/api/contradictions", response_class=JSONResponse, tags=["Contradictions"])
+def list_contradictions():
+    """
+    Returns all contradictions for the Module 2 UI.
+    """
+    rows = db.fetch_all("""
+        SELECT 
+            contradiction_id,
+            contradiction_type,
+            severity,
+            status,
+            description,
+            evidence,
+            detected_at,
+            created_at
+        FROM contradictions
+        ORDER BY detected_at DESC
+    """)
+
+    results = []
+    for r in rows:
+        results.append({
+            "contradiction_id": r["contradiction_id"],
+            "contradiction_type": r["contradiction_type"],
+            "severity": r["severity"],
+            "status": r["status"],
+            "description": r["description"],
+            "evidence": json.loads(r["evidence"]) if r["evidence"] else {},
+            "detected_at": r["detected_at"],
+            "created_at": r["created_at"],
+            "entity_ids": []  # placeholder until we wire entity links
+        })
+
+    return JSONResponse(content=results)
+
 # ============================================================
 # DASHBOARD ENDPOINTS
 # ============================================================
