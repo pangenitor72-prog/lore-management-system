@@ -475,6 +475,11 @@ def list_contradictions():
 
     return JSONResponse(content=results)
 
+@router.get("/contradictions/browser", response_class=HTMLResponse)
+async def contradiction_browser(request: Request):
+    """Serves the contradiction triage/resolution interface"""
+    return templates.TemplateResponse("contradictions.html", {"request": request})
+
 # ============================================================
 # DASHBOARD ENDPOINTS
 # ============================================================
