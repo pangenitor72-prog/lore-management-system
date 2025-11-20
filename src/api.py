@@ -9,6 +9,8 @@ import logging
 import sqlite3
 from contextlib import asynccontextmanager
 
+
+
 # Third Party
 import uvicorn
 from dotenv import load_dotenv
@@ -20,6 +22,7 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.concurrency import run_in_threadpool
+from fastapi.middleware.cors import CORSMiddleware
 
 # Local Imports - Database
 from .database import Database, get_db, get_db_connection, db_session
@@ -37,6 +40,7 @@ from .models import (
 # Local Imports - Agents
 from .auditor_agent import AuditorAgent
 from .query_agent import QueryAgent
+from .broadcaster import broadcaster
 
 # Local Imports - Services
 from .contradiction_service import get_router as get_contradiction_router
@@ -46,6 +50,8 @@ logger = logging.getLogger("lms_api")
 # ============================================================
 # APP LIFESPAN
 # ============================================================
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # On startup
@@ -71,18 +77,29 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
+
 # Initialize Router
 router = APIRouter()
 
 # Path Configuration
-BASE_DIR = Path(__file__).resolve().parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / 'src' / 'templates'))
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / 'templates'))
 
 # Mount Static Files
 app.mount(
     "/static",
-    StaticFiles(directory=str(BASE_DIR / "src" / "static")),
-    name="static",
+    StaticFiles(directory=str(BASE_DIR / "static"))
+
 )
 
 # API Key Configuration
@@ -96,7 +113,23 @@ query_agent = QueryAgent(get_db_connection, gemini_key)
 logger.info("API: All agents wired.")
 
 # WebSocket Connection Management
-active_connections: List[WebSocket] = []
+# active_connections: List[WebSocket] = [] # No longer needed with broadcaster pattern
+
+@app.websocket("/ws/auditor")
+async def websocket_auditor_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    queue = await broadcaster.subscribe("auditor_events")
+    try:
+        while True:
+            message = await queue.get()
+            await websocket.send_json(message)
+    except WebSocketDisconnect:
+        logger.info("Auditor WebSocket client disconnected.")
+    except Exception as e:
+        logger.error(f"Auditor WebSocket error: {e}", exc_info=True)
+    finally:
+        broadcaster.unsubscribe("auditor_events", queue)
+        await websocket.close()
 
 # ============================================================
 # ROOT & INFO ENDPOINTS
@@ -110,6 +143,7 @@ def root():
         "version": "1.0.0",
         "status": "operational"
     }
+
 
 # ============================================================
 # ENTITY ENDPOINTS

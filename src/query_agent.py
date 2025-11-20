@@ -6,6 +6,9 @@ import logging
 import sqlite3 # Import for type hinting Callable
 from fastapi import WebSocket, WebSocketDisconnect # <-- ESSENTIAL IMPORT
 from fastapi.concurrency import run_in_threadpool # For offloading blocking calls
+import asyncio # For async operations
+from .broadcaster import broadcaster # Import the global broadcaster instance
+from datetime import datetime
 
 logger = logging.getLogger("lms_query")
 
@@ -69,6 +72,15 @@ When answering, be:
                 # Use run_in_threadpool to offload the blocking 'ask' method (C1)
                 response = await run_in_threadpool(self.ask, query)
                 
+                # Publish event for query completion
+                event_data = {
+                    "type": "query_completed",
+                    "query": query,
+                    "response_snippet": response[:200] + "..." if len(response) > 200 else response, # Snippet for brevity
+                    "timestamp": datetime.now().isoformat()
+                }
+                asyncio.create_task(broadcaster.publish("query_events", event_data))
+
                 # Send the response back to the client
                 await websocket.send_text(response)
                 

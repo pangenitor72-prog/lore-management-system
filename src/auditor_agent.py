@@ -12,8 +12,10 @@ import re
 import uuid
 import logging
 import sqlite3
+import asyncio # For async operations
 from .database import Database, db_session, get_db_connection # Import necessary db components
 import google.generativeai as genai
+from .broadcaster import broadcaster # Import the global broadcaster instance
 
 logger = logging.getLogger("lms_auditor")
 
@@ -103,6 +105,11 @@ class AuditorAgent:
                     count += 1
                 
         logger.info(f"Complete: {count} contradictions found and persisted.")
+        asyncio.create_task(broadcaster.publish("auditor_events", {
+            "type": "audit_progress",
+            "message": f"AI audit complete. {count} contradictions found and persisted.",
+            "total_contradictions_found": count
+        }))
         return count
 
     def _should_compare(self,a,b)->bool:
@@ -280,6 +287,21 @@ Return ONLY a JSON object like this:
             finally:
                 conn.close()
             logger.info(f"PERSIST: Stored contradiction {con_id} ({con.get('type')})")
+            
+            # Publish event for new contradiction
+            event_data = {
+                "type": "new_contradiction",
+                "contradiction": {
+                    "id": con_id,
+                    "type": con.get("type", "UNKNOWN"),
+                    "severity": con.get("severity", "LOW"),
+                    "description": con.get("description", "No description provided."),
+                    "entity_a_id": entity_a.get("canon_id"),
+                    "entity_b_id": entity_b.get("canon_id"),
+                    "detected_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+            asyncio.create_task(broadcaster.publish("auditor_events", event_data))
 
         except Exception as e:
             logger.error(f"Failed to persist contradiction: {e}", exc_info=True)
@@ -310,6 +332,12 @@ Return ONLY a JSON object like this:
         results["circular_relationships"] = [c.to_dict() for c in self.check_circular_relationships()]
         results["unparseable_dates"] = [c.to_dict() for c in self.check_unparseable_dates()]
         
+        summary = self.get_summary(results)
+        asyncio.create_task(broadcaster.publish("auditor_events", {
+            "type": "audit_progress",
+            "message": "Rule-based audit complete.",
+            "summary": summary
+        }))
         return results
     
     def check_conflicting_birthplaces(self) -> List[Contradiction]:

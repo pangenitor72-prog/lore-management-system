@@ -12,7 +12,12 @@ DB_PATH = Path(__file__).parent.parent / DB_FILE_PATH # This is now the absolute
 
 def get_db_connection(db_path: str = str(DB_PATH)) -> sqlite3.Connection:
     """Establishes and returns a new database connection."""
-    conn = sqlite3.connect(db_path, timeout=10.0)
+    conn = sqlite3.connect(
+    str(db_path),
+    timeout=10.0,
+    check_same_thread=False
+)
+
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     conn.execute("PRAGMA journal_mode=WAL;")
