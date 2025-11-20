@@ -1,3 +1,7 @@
+import sqlite3
+from pathlib import Path
+from typing import Generator
+import contextlib
 from fastapi import Depends
 import logging
 
@@ -6,16 +10,17 @@ logger = logging.getLogger("lms_db")
 DB_FILE_PATH = Path("data/lore.db") # Renamed for clarity to avoid conflict with DB_PATH in Database class
 DB_PATH = Path(__file__).parent.parent / DB_FILE_PATH # This is now the absolute path
 
-def get_db_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
-    conn = sqlite3.connect(str(db_path), timeout=10.0)
+def get_db_connection(db_path: str = str(DB_PATH)) -> sqlite3.Connection:
+    """Establishes and returns a new database connection."""
+    conn = sqlite3.connect(db_path, timeout=10.0)
     conn.row_factory = sqlite3.Row
-    # Enforce foreign key constraints for data integrity
     conn.execute("PRAGMA foreign_keys = ON;")
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
 @contextlib.contextmanager
-def db_session(db_path: Path = DB_PATH) -> Generator[sqlite3.Connection, None, None]:
+def db_session(db_path: str = str(DB_PATH)) -> Generator[sqlite3.Connection, None, None]:
+    """Provides a transactional database session as a context manager."""
     conn = get_db_connection(db_path)
     try:
         yield conn
@@ -29,28 +34,37 @@ def db_session(db_path: Path = DB_PATH) -> Generator[sqlite3.Connection, None, N
 
 # Dependency for FastAPI to provide a DB connection per request
 async def get_db() -> Generator[sqlite3.Connection, None, None]:
+    # This will use the default file path
     with db_session() as conn:
         yield conn
 
 class Database:
     """Utility class for database operations, especially schema initialization."""
-    def __init__(self, db_file_path: Path = DB_FILE_PATH):
-        self.db_path = Path(__file__).parent.parent / db_file_path
-        self.schema_path = Path(__file__).parent.parent / "data/schema.sql"
+    def __init__(self, db_file_path_str: str = str(DB_FILE_PATH)):
+        self.db_path_str = db_file_path_str
+        
+        if self.db_path_str != ":memory:":
+            db_path = Path(__file__).parent.parent / db_file_path_str
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+            self.db_path = db_path
+        else:
+            self.db_path = ":memory:"
 
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.schema_path = Path(__file__).parent.parent / "data/schema.sql"
         self._initialize_schema()
 
     def _initialize_schema(self):
         """Loads and executes the schema.sql file to create tables if they don't exist."""
         try:
-            with db_session(self.db_path) as conn:
+            # Use db_session to ensure the schema is applied correctly.
+            db_to_init = str(self.db_path) if self.db_path != ":memory:" else ":memory:"
+            with db_session(db_path=db_to_init) as conn:
                 with open(self.schema_path, 'r') as f:
                     schema_sql = f.read()
                 conn.executescript(schema_sql)
-            logger.info("Schema initialized successfully.")
+            logger.info(f"Schema initialized successfully for database: {db_to_init}")
         except Exception as e:
-            logger.critical(f"Failed to initialize schema: {e}", exc_info=True)
+            logger.critical(f"Failed to initialize schema for {self.db_path}: {e}", exc_info=True)
             raise
 
     # Static methods for core DB operations, taking a connection

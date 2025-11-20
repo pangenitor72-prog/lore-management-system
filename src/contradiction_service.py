@@ -6,6 +6,7 @@ import json
 import sqlite3
 import logging
 import os # For M5 environment check
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, Depends, status
 from fastapi.responses import HTMLResponse
@@ -105,6 +106,7 @@ async def create_contradiction(contradiction_data: ContradictionCreate, db: sqli
             raise HTTPException(status_code=500, detail="Failed to retrieve contradiction after creation.")
 
         response_data = dict(created)
+        response_data['evidence'] = json.loads(response_data['evidence']) if response_data['evidence'] else {}
         response_data['entity_ids'] = contradiction_data.entity_ids
         return ContradictionResponse(**response_data)
 
