@@ -1,4 +1,4 @@
-Lore Management System (LMS)
+# Lore Management System (LMS)
 
 A production-ready knowledge management system for maintaining narrative coherence in complex fictional worlds, with a focus on tabletop RPG campaigns.
 
@@ -56,28 +56,23 @@ Built to solve a real problem: managing 30+ years of accumulated lore from a fri
 - Guided resolution workflow
 - Full audit trail
 
-### World Logic Charter (Future Phase II)
-- 11 universal narrative laws (Conservation of Consequence, Limited Exception, etc.)
-- Campaign-specific overrides via YAML
-- Local Truth exceptions for special locations
-- Reconciliation guidance per Charter Law IV
-
-### Campaign System (Future Phase III)
-- Multi-campaign support
-- Setting-specific rule overrides
-- Pantheon definitions
-- Forbidden element lists
+### Robust & Scalable Backend
+- **Modernized Database Layer:** Refactored for per-request, thread-safe SQLite connections with explicit transaction management (WAL mode, Foreign Keys ON).
+- **Asynchronous API:** All blocking I/O (DB & LLM calls) in `async` endpoints are now correctly offloaded to a threadpool for improved concurrency.
+- **Unified Data Models:** Consolidated and validated Pydantic models and Enums ensure strict data integrity and consistency.
+- **Optimized Queries:** N+1 query patterns eliminated in key listing endpoints for better performance.
+- **Centralized Logging:** Comprehensive logging and enhanced error handling for better observability and debugging.
 
 ## Technical Implementation
 
 ### Backend
 - **Python 3.11+** with FastAPI
-- **SQLite** (WAL mode for concurrency)
-- **Pydantic** for validation
+- **SQLite** (WAL mode for concurrency, explicit FK enforcement)
+- **Pydantic v2** for validation and data modeling
 - **Google Gemini API** for AI features
 
 ### Database Schema
-- Immutable entity IDs (SHA1 hashing)
+- Immutable entity IDs
 - Full revision history
 - Relationship tracking with confidence levels
 - Contradiction queue with resolution tracking
@@ -104,12 +99,12 @@ Built to solve a real problem: managing 30+ years of accumulated lore from a fri
 - ✅ WebSocket integration
 - ✅ Dashboard and analytics
 - ✅ System stability (100% health, 0% error rate)
+- ✅ **LMS Audit Alignment & Test Suite Upgrade (Completed)**: Core codebase aligned with modern entity model, DB schema validated, comprehensive test suite rewritten, and engineering documentation generated.
 
 **Active Development (Phase XII)**:
 - 🎨 Entity browser UI with "Haunting Machine" aesthetic
 - 🔄 Enhanced contradiction resolution workflow
 - 🔄 Batch document processing
-- 🔄 Comprehensive test suite (75+ test cases)
 
 **Future Phases**:
 - Charter Law validation system
@@ -141,198 +136,65 @@ This allows one LMS instance to manage multiple campaigns across different genre
 - Uptime: 99.8%
 
 ## Project Structure
-lms/
+```
+.
 ├── data/
 │   └── lore.db              # SQLite database (WAL mode)
 ├── src/
 │   ├── api.py               # FastAPI application
 │   ├── database.py          # Database layer
 │   ├── models.py            # Pydantic models
-│   ├── agents/
-│   │   ├── chunking.py      # Entity extraction
-│   │   ├── auditor.py       # Contradiction detection
-│   │   └── query.py         # Natural language queries
-│   └── templates/
-│       └── dashboard.html   # Web interface
-├── frontend/
-│   └── styles/
-│       └── haunting_machine.css  # UI theme
+│   ├── agents/              # AI Agent implementations (AuditorAgent, QueryAgent)
+│   ├── services/            # Core business services (e.g., contradiction_service)
+│   ├── utils/               # Utility functions (e.g., logging_config)
+│   └── templates/           # Jinja2 HTML templates
 ├── docs/
-│   ├── concepts/            # Design documents
-│   ├── architecture/        # Technical specs
-│   └── audit/              # Stability reports
-└── schema.sql              # Database schema (v1.1)
+│   ├── engineering/         # Engineering-specific documentation (e.g., ARCHITECTURE_OVERVIEW, REPO_RULES)
+│   └── (other docs)
+├── tests/                   # Comprehensive test suite (unit, integration, API)
+└── README.md                # Project overview (this file)
+```
+*Note: The actual project structure might include additional subdirectories within `src/` for agents and services.*
+
 ## Getting Started
 
 ```bash
 # Install dependencies
 pip install -r requirements.txt
+pip install httpx pytest-asyncio # Required for running tests (not in requirements.txt initially)
 
 # Set up environment
 cp .env.example .env
 # Add your GEMINI_API_KEY
 
-# Initialize database
-python -m src.database
-
 # Run server
-uvicorn src.api:app --reload
+uvicorn src.api:app --reload --lifespan on
 
 # Access dashboard
 http://localhost:8000/dashboard
-Contributing
+```
+
+## Running Tests
+
+To run the comprehensive test suite:
+
+```bash
+pytest
+```
+
+## Contributing
 This is a personal project for managing a specific D&D campaign, but the architecture is designed to be generalizable. Key areas for contribution:
-Additional entity types
-New contradiction detection patterns
-UI/UX improvements
-Test coverage
-Documentation
-License
+- Additional entity types
+- New contradiction detection patterns
+- UI/UX improvements
+- Test coverage
+- Documentation
+
+## License
 [Your chosen license]
-Credits
+
+## Credits
 Created by: Shawn King
 Campaign World: Jim King's "Hollow Eye Chronicles" (30+ years)
 AI Architecture: Multi-agent coordination (GPT-5, Claude Sonnet 4.5, Gemini)
 "Managing decades of lore so the cosmic horrors stay consistent." 🐙
-
-
-
-# Lore Management System - API Foundation v1.0
-
-## ✅ STATUS: COMPLETE AND TESTED
-
-All core functionality is working and tested.
-
-## What's Included
-
-### Core Files
-- `src/schema.sql` - Database schema with all tables
-- `src/database.py` - Database connection and operations
-- `src/models.py` - Pydantic data models for validation
-- `src/api.py` - FastAPI application with REST endpoints
-
-### Database
-- `data/database/lore.db` - SQLite database (initialized and tested)
-
-### Tests
-- `tests/test_foundation.py` - Database foundation tests (all passing ✓)
-
-## What Works
-
-✅ Database initialization  
-✅ Entity creation (with aliases and fields)  
-✅ Entity retrieval  
-✅ Entity listing  
-✅ Relationship creation  
-✅ Data validation (Pydantic models)  
-✅ REST API endpoints  
-
-## Test Results
-
-```
-============================================================
-LORE MANAGEMENT SYSTEM - API FOUNDATION TEST
-============================================================
-
-[TEST 1] Creating test entity...
-✓ Entity created successfully
-
-[TEST 2] Retrieving entity...
-✓ Entity retrieved: Test Character
-
-[TEST 3] Retrieving aliases...
-✓ Found 1 alias(es): ['TC']
-
-[TEST 4] Retrieving approved fields...
-✓ Found 1 field(s):
-  - age: 30
-
-[TEST 5] Listing all entities...
-✓ Found 1 entity/entities in database
-
-============================================================
-ALL TESTS PASSED ✓
-============================================================
-```
-
-## API Endpoints Tested
-
-### POST /entities
-**Status:** ✅ Working
-
-Created entity "Aragorn" with aliases and fields successfully.
-
-### GET /entities/{canon_id}
-**Status:** ✅ Working
-
-Retrieved entity by ID successfully.
-
-### GET /entities
-**Status:** ✅ Working
-
-Listed all entities successfully.
-
-## How to Run
-
-### Start the API Server
-```bash
-cd src
-python3 -m uvicorn api:app --host 0.0.0.0 --port 8000
-```
-
-### Run Tests
-```bash
-python3 tests/test_foundation.py
-```
-
-### Test API with curl
-```bash
-# Create entity
-curl -X POST http://localhost:8000/entities \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entity_type": "Character",
-    "canonical_name": "Test Name",
-    "aliases": ["Alias1"],
-    "approved_fields": {"field": "value"},
-    "approval_status": "APPROVED",
-    "confidence_level": "CONFIRMED",
-    "party_knowledge": "KNOWN"
-  }'
-
-# Get entity
-curl http://localhost:8000/entities/{canon_id}
-
-# List entities
-curl http://localhost:8000/entities
-```
-
-## Dependencies
-
-```bash
-pip install fastapi uvicorn pydantic --break-system-packages
-```
-
-## Next Steps
-
-1. ✅ API Foundation - COMPLETE
-2. 🔄 Integrate Auditor Agent (Gemini's module)
-3. 🔄 Build Archivist Bridge
-4. 🔄 Add Triage system (Phase V)
-5. 🔄 Add Resolution system (Phase VI)
-
-## Notes
-
-- Gospel Principle enforced (preserve, don't create)
-- All data validated via Pydantic models
-- Thread-safe database operations
-- Proper error handling
-- RESTful design
-
-**Built:** 2025-10-24  
-**Status:** Production Ready ✓
-
-## 📘 Project Roadmap
-The full multi-phase development plan for LMS and AIRPG is available here:
-
-➡️ **[docs/roadmap.md](docs/roadmap.md)**
