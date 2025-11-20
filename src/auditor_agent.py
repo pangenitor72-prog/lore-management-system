@@ -5,18 +5,21 @@ AND complex semantic contradictions (AI-Based).
 """
 
 from __future__ import annotations
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Callable
 from datetime import datetime, timezone
 import json
 import re
 import uuid
-from .database import Database
+import logging
+import sqlite3
+from .database import Database, db_session, get_db_connection # Import necessary db components
 import google.generativeai as genai
 
+logger = logging.getLogger("lms_auditor")
 
 class Contradiction:
     """Represents a detected contradiction."""
-    
+
     def __init__(
         self,
         contradiction_type: str,
@@ -30,7 +33,7 @@ class Contradiction:
         self.description = description
         self.entity_ids = entity_ids
         self.evidence = evidence
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -44,20 +47,17 @@ class Contradiction:
 
 class AuditorAgent:
     """Runs systematic audits for contradictions in lore database."""
-    
-    # --- 1. MERGED INITIALIZATION ---
-    def __init__(self, db: Database, gemini_api_key: str):
-# src/auditor_agent.py (Inside __init__)
-        genai.configure(api_key=gemini_api_key)
-        self.db = db
-        genai.configure(api_key=gemini_api_key)
+
+    def __init__(self, get_db_connection_func: Callable[[], sqlite3.Connection], gemini_api_key: str):
+        self.get_db_connection = get_db_connection_func
+        genai.configure(api_key=gemini_api_key) # Safe to call multiple times
         self.flash = genai.GenerativeModel("gemini-2.5-flash") # Standard model for fast detection
         self.pro = genai.GenerativeModel("gemini-2.5-pro")     # Standard model for complex reasoning (scoring/resolving)
-        print("[INIT] AuditorAgent: Hybrid mode. DB and AI models initialized.")
+        logger.info("AuditorAgent: Hybrid mode. DB and AI models initialized.")
     def detect_contradictions(self, entity_a: Dict[str, Any], entity_b: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Finds, Scores, and suggests Resolutions for AI-detected contradictions."""
         a_name, b_name = entity_a.get("name","?"), entity_b.get("name","?")
-        print(f"[AI-DETECT] Comparing {a_name} vs {b_name}")
+        logger.info(f"AI-DETECT: Comparing {a_name} vs {b_name}")
         prompt = self._build_prompt(entity_a, entity_b)
         
         try:
@@ -76,14 +76,19 @@ class AuditorAgent:
             return final_contradictions
             
         except Exception as e:
-            print(f"[ERROR] AI detection failed: {e}")
+            logger.error(f"AI detection failed: {e}", exc_info=True)
             return []
 
     def analyze_all_entities(self, limit:int|None=None) -> int:
         """Runs detect_contradictions across all entity pairs and persists findings."""
-        print("[ANALYZE] Batch AI scan start")
-        entities=self.db.fetch_all("SELECT * FROM entities")
-        if limit: entities=entities[:int(limit)]
+        logger.info("Batch AI scan start")
+        conn = self.get_db_connection()
+        try:
+            entities = Database.fetch_all(conn, "SELECT * FROM entities")
+        finally:
+            conn.close()
+
+        if limit: entities = entities[:int(limit)]
         
         count = 0
         for i,a in enumerate(entities):
@@ -97,7 +102,7 @@ class AuditorAgent:
                     self.persist_contradiction(c, a, b)
                     count += 1
                 
-        print(f"[ANALYZE] Complete: {count} contradictions found and persisted.")
+        logger.info(f"Complete: {count} contradictions found and persisted.")
         return count
 
     def _should_compare(self,a,b)->bool:
@@ -106,12 +111,16 @@ class AuditorAgent:
             if a.get("name","").lower()==b.get("name","").lower(): return True
             if a.get("type")==b.get("type"): return True
             q="""SELECT COUNT(*) as cnt FROM relationships
-                 WHERE (source_id=? AND target_id=?) OR (source_id=? AND target_id=?)"""
+                 WHERE (from_canon_id=? AND to_canon_id=?) OR (from_canon_id=? AND to_canon_id=?)""" # Corrected column names
             
-            r=self.db.fetch_one(q,(a["canon_id"],b["canon_id"],b["canon_id"],a["canon_id"]))
+            conn = self.get_db_connection()
+            try:
+                r = Database.fetch_one(conn, q,(a["canon_id"],b["canon_id"],b["canon_id"],a["canon_id"]))
+            finally:
+                conn.close()
             return (r and (r.get("cnt") or r.get("count") or 0)>0)
         except Exception as e:
-            print(f"[WARN] _should_compare error: {e}")
+            logger.warning(f"_should_compare error: {e}", exc_info=True)
             return False
 
     def _build_prompt(self,a,b)->str:
@@ -145,16 +154,20 @@ If none, return [].
                     if isinstance(d,dict) and "contradictions" in d:
                         arr=d["contradictions"]
                         return arr if isinstance(arr,list) else []
-                except: return []
+                except json.JSONDecodeError:
+                    logger.debug("Failed to parse dict from LLM response for contradictions.")
+                    return []
             return []
         try:
             arr=json.loads(m.group())
             return arr if isinstance(arr,list) else []
-        except: return []
+        except json.JSONDecodeError:
+            logger.debug("Failed to parse list from LLM response for contradictions.")
+            return []
 
     def _score_contradiction_confidence(self, contradiction: Dict[str, Any], entity_a: Dict[str, Any], entity_b: Dict[str, Any]) -> Dict[str, Any]:
         """Uses gemini-1.5-pro to assign a confidence score."""
-        print(f"[AI-SCORE] Scoring contradiction: {contradiction.get('description', 'N/A')[:50]}...")
+        logger.info(f"AI-SCORE: Scoring contradiction: {contradiction.get('description', 'N/A')[:50]}...")
         
         prompt = f"""
 You are a confidence score analyst.
@@ -182,7 +195,7 @@ Assign a confidence score from 0.0 (unlikely) to 1.0 (certain).
                 contradiction["confidence"] = 0.0
                 contradiction["scoring_reasoning"] = "Failed to parse pro-model scoring response."
         except Exception as e:
-            print(f"[ERROR] AI scoring failed: {e}")
+            logger.error(f"AI scoring failed: {e}", exc_info=True)
             contradiction["confidence"] = 0.0
             contradiction["scoring_reasoning"] = f"Error during scoring: {e}"
         return contradiction
@@ -194,7 +207,7 @@ Assign a confidence score from 0.0 (unlikely) to 1.0 (certain).
             contradiction["resolution_reasoning"] = "Confidence score too low to suggest resolution."
             return contradiction
 
-        print(f"[AI-RESOLVE] Suggesting resolutions for: {contradiction.get('description', 'N/A')[:50]}...")
+        logger.info(f"AI-RESOLVE: Suggesting resolutions for: {contradiction.get('description', 'N/A')[:50]}...")
         
         prompt = f"""
 You are a "Lore Arbiter's Assistant."
@@ -228,7 +241,7 @@ Return ONLY a JSON object like this:
                 contradiction["possible_resolutions"] = []
                 contradiction["resolution_reasoning"] = "Failed to parse pro-model resolution response."
         except Exception as e:
-            print(f"[ERROR] AI resolution suggestion failed: {e}")
+            logger.error(f"AI resolution suggestion failed: {e}", exc_info=True)
             contradiction["possible_resolutions"] = []
             contradiction["resolution_reasoning"] = f"Error during resolution suggestion: {e}"
         return contradiction
@@ -261,11 +274,15 @@ Return ONLY a JSON object like this:
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             
-            self.db.execute(sql, data)
-            print(f"[PERSIST] Stored contradiction {con_id} ({con.get('type')})")
+            conn = self.get_db_connection()
+            try:
+                Database.execute(conn, sql, data, commit=True)
+            finally:
+                conn.close()
+            logger.info(f"PERSIST: Stored contradiction {con_id} ({con.get('type')})")
 
         except Exception as e:
-            print(f"[ERROR] Failed to persist contradiction: {e}")
+            logger.error(f"Failed to persist contradiction: {e}", exc_info=True)
 
     # --- 3. RULE-BASED METHODS (SQL CHECKS) ---
 
@@ -308,7 +325,11 @@ Return ONLY a JSON object like this:
         WHERE af1.field_key = 'birthplace' AND af2.field_key = 'birthplace'
         AND af1.id < af2.id AND af1.field_value != af2.field_value
         """
-        conflicts = self.db.fetch_all(query)
+        conn = self.get_db_connection()
+        try:
+            conflicts = Database.fetch_all(conn, query)
+        finally:
+            conn.close()
         for conflict in conflicts:
             contradictions.append(Contradiction(
                 contradiction_type="CONFLICTING_BIRTHPLACES", severity="HIGH",
@@ -330,7 +351,11 @@ Return ONLY a JSON object like this:
         JOIN approved_fields death ON e.canon_id = death.canon_id AND death.field_key = 'death_date'
         WHERE birth.field_value > death.field_value
         """
-        impossibles = self.db.fetch_all(query)
+        conn = self.get_db_connection()
+        try:
+            impossibles = Database.fetch_all(conn, query)
+        finally:
+            conn.close()
         for impossible in impossibles:
             contradictions.append(Contradiction(
                 contradiction_type="IMPOSSIBLE_TIMELINE", severity="HIGH",
@@ -357,7 +382,11 @@ Return ONLY a JSON object like this:
         AND r2.relationship_type = 'PRIMARY_MEMBER_OF'
         AND r1.id < r2.id AND r1.to_canon_id != r2.to_canon_id
         """
-        conflicts = self.db.fetch_all(query)
+        conn = self.get_db_connection()
+        try:
+            conflicts = Database.fetch_all(conn, query)
+        finally:
+            conn.close()
         for conflict in conflicts:
             contradictions.append(Contradiction(
                 contradiction_type="CONFLICTING_MEMBERSHIP", severity="MEDIUM",
@@ -375,7 +404,11 @@ Return ONLY a JSON object like this:
         FROM relationships r LEFT JOIN entities e ON r.from_canon_id = e.canon_id
         WHERE e.canon_id IS NULL
         """
-        orphans_from = self.db.fetch_all(query_from)
+        conn = self.get_db_connection()
+        try:
+            orphans_from = Database.fetch_all(conn, query_from)
+        finally:
+            conn.close()
         for orphan in orphans_from:
             contradictions.append(Contradiction(
                 contradiction_type="ORPHANED_RELATIONSHIP", severity="HIGH",
@@ -392,7 +425,11 @@ Return ONLY a JSON object like this:
         FROM relationships r LEFT JOIN entities e ON r.to_canon_id = e.canon_id
         WHERE e.canon_id IS NULL
         """
-        orphans_to = self.db.fetch_all(query_to)
+        conn = self.get_db_connection()
+        try:
+            orphans_to = Database.fetch_all(conn, query_to)
+        finally:
+            conn.close()
         for orphan in orphans_to:
             contradictions.append(Contradiction(
                 contradiction_type="ORPHANED_RELATIONSHIP", severity="HIGH",
@@ -419,7 +456,11 @@ Return ONLY a JSON object like this:
         WHERE e.confidence_level IN ('UNCERTAIN', 'SPECULATIVE')
         AND r.confidence_level = 'CONFIRMED'
         """
-        mismatches = self.db.fetch_all(query)
+        conn = self.get_db_connection()
+        try:
+            mismatches = Database.fetch_all(conn, query)
+        finally:
+            conn.close()
         for mismatch in mismatches:
             contradictions.append(Contradiction(
                 contradiction_type="CONFIDENCE_MISMATCH", severity="MEDIUM",
@@ -445,7 +486,11 @@ Return ONLY a JSON object like this:
             SELECT canon_id FROM approved_fields WHERE field_key = 'race'
         )
         """
-        missing_race = self.db.fetch_all(query)
+        conn = self.get_db_connection()
+        try:
+            missing_race = Database.fetch_all(conn, query)
+        finally:
+            conn.close()
         for entity in missing_race:
             contradictions.append(Contradiction(
                 contradiction_type="MISSING_REQUIRED_FIELD", severity="LOW",
@@ -464,7 +509,11 @@ Return ONLY a JSON object like this:
         JOIN entities e ON r.from_canon_id = e.canon_id
         WHERE r.from_canon_id = r.to_canon_id
         """
-        self_refs = self.db.fetch_all(query)
+        conn = self.get_db_connection()
+        try:
+            self_refs = Database.fetch_all(conn, query)
+        finally:
+            conn.close()
         for ref in self_refs:
             contradictions.append(Contradiction(
                 contradiction_type="SELF_REFERENTIAL", severity="HIGH",
@@ -476,7 +525,7 @@ Return ONLY a JSON object like this:
     
     def check_circular_relationships(self) -> List[Contradiction]:
         """Check for 2-hop and 3-hop circular relationships (A->B->A or A->B->C->A)."""
-        print("[AUDIT] Running circular relationship checks...")
+        logger.info("Running circular relationship checks...")
         contradictions = []
         
         query_2hop = """
@@ -490,7 +539,11 @@ Return ONLY a JSON object like this:
         JOIN entities e2 ON r1.to_canon_id = e2.canon_id
         WHERE r1.from_canon_id = r2.to_canon_id AND r1.from_canon_id < r1.to_canon_id
         """
-        cycles_2 = self.db.fetch_all(query_2hop)
+        conn = self.get_db_connection()
+        try:
+            cycles_2 = Database.fetch_all(conn, query_2hop)
+        finally:
+            conn.close()
         for cycle in cycles_2:
             contradictions.append(Contradiction(
                 contradiction_type="CIRCULAR_RELATIONSHIP", severity="MEDIUM",
@@ -517,7 +570,11 @@ Return ONLY a JSON object like this:
         AND r1.from_canon_id != r2.from_canon_id
         AND r1.from_canon_id < r2.from_canon_id
         """
-        cycles_3 = self.db.fetch_all(query_3hop)
+        conn = self.get_db_connection()
+        try:
+            cycles_3 = Database.fetch_all(conn, query_3hop)
+        finally:
+            conn.close()
         for cycle in cycles_3:
             is_valid_cycle = (cycle['entity_a'] < cycle['entity_b'] and cycle['entity_a'] < cycle['entity_c'])
             if is_valid_cycle:
@@ -530,7 +587,7 @@ Return ONLY a JSON object like this:
                         "relationships": [cycle['rel1_type'], cycle['rel2_type'], cycle['rel3_type']]
                     }
                 ))
-        print(f"[AUDIT] Circular checks complete. Found {len(contradictions)} cycles.")
+        logger.info(f"Circular checks complete. Found {len(contradictions)} cycles.")
         return contradictions
     
     def check_unparseable_dates(self) -> List[Contradiction]:
@@ -548,7 +605,11 @@ Return ONLY a JSON object like this:
             AND af.field_value NOT LIKE '____'
             AND LENGTH(af.field_value) > 0
             """
-            bad_dates = self.db.fetch_all(query)
+            conn = self.get_db_connection()
+            try:
+                bad_dates = Database.fetch_all(conn, query)
+            finally:
+                conn.close()
             for bad in bad_dates:
                 contradictions.append(Contradiction(
                     contradiction_type="UNPARSEABLE_DATE", severity="LOW",
@@ -576,13 +637,13 @@ Return ONLY a JSON object like this:
         Placeholder review method for AuditorAgent.
         Simulates contradiction analysis and returns a status recommendation.
         """
-        print(f"[DEBUG] AuditorAgent reviewing contradiction: {record.get('contradiction_id')}")
+        logger.debug(f"AuditorAgent reviewing contradiction: {record.get('contradiction_id')}")
         try:
             description = record.get("description", "").lower()
             resolved = "test" in description or "example" in description
-            print(f"[DEBUG] Review decision -> resolved={resolved}")
+            logger.debug(f"Review decision -> resolved={resolved}")
             return {"resolved": resolved}
         except Exception as e:
             
-            print(f"[ERROR] AuditorAgent.review failed: {e}")
+            logger.error(f"AuditorAgent.review failed: {e}", exc_info=True)
             return {"resolved": False, "error": str(e)}

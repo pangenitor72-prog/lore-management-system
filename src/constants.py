@@ -17,21 +17,3 @@ ACTION_LIST_CONTRADICTIONS = "list_contradictions"
 ACTION_BLOCK = "block"
 ACTION_HELP = "help"
 ACTION_STATUS = "status"
-
-# === ENTITY TYPES ===
-ENTITY_CHARACTER = "character"
-ENTITY_LOCATION = "location"
-ENTITY_ITEM = "item"
-ENTITY_FACTION = "faction"
-ENTITY_EVENT = "event"
-
-# === CONTRADICTION STATUSES ===
-STATUS_PENDING = "pending"
-STATUS_IN_REVIEW = "in_review"
-STATUS_RESOLVED = "resolved"
-STATUS_DISMISSED = "dismissed"
-
-# === CONTRADICTION SEVERITIES ===
-SEVERITY_HIGH = "high"
-SEVERITY_MEDIUM = "medium"
-SEVERITY_LOW = "low"

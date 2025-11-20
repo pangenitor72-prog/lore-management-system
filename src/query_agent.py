@@ -1,12 +1,17 @@
 # src/query_agent.py (COMPLETE, FINAL VERSION)
 from __future__ import annotations
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Callable
 import google.generativeai as genai
+import logging
+import sqlite3 # Import for type hinting Callable
 from fastapi import WebSocket, WebSocketDisconnect # <-- ESSENTIAL IMPORT
+from fastapi.concurrency import run_in_threadpool # For offloading blocking calls
+
+logger = logging.getLogger("lms_query")
 
 class QueryAgent:
-    def __init__(self, db: Any, gemini_api_key: str):
-        self.db = db
+    def __init__(self, get_db_connection_func: Callable[[], sqlite3.Connection], gemini_api_key: str): # Updated db parameter
+        self.get_db_connection = get_db_connection_func # Store the connection function
         # Configure Gemini (safe to call again, as it's idempotent)
         genai.configure(api_key=gemini_api_key)
 
@@ -32,19 +37,20 @@ When answering, be:
                 {'role': 'model', 'parts': ["Understood. I am the LMS Query Agent."]}
             ]
         )
-        print("[INIT] QueryAgent: AI model and chat session initialized.")
+        logger.info("QueryAgent: AI model and chat session initialized.")
 
     def ask(self, query: str) -> str:
         """
         Sends a user's query to the Gemini chat session and returns the text response.
+        This is a BLOCKING call to the LLM.
         """
-        print(f"[QUERY] QueryAgent received: '{query}'")
+        logger.info(f"QueryAgent received: '{query}'")
         try:
             # We don't need to re-send the system prompt; the chat session is persistent
             response = self.chat.send_message(query)
             return response.text
         except Exception as e:
-            print(f"[ERROR] QueryAgent failed to get response: {e}")
+            logger.error(f"QueryAgent failed to get response: {e}", exc_info=True)
             return "An error occurred while processing your query. Please check the API logs."
             
     # --- HANDLER REQUIRED BY API.PY ---
@@ -53,21 +59,21 @@ When answering, be:
         Handles the WebSocket connection for a single client (REQUIRED FOR PHASE IX DASHBOARD).
         """
         await websocket.accept()
-        print(f"[WS] Client {client_id} connected.")
+        logger.info(f"Client {client_id} connected.")
         
         try:
             while True:
                 # Wait for a message from the client
                 query = await websocket.receive_text()
                 
-                # Use your existing 'ask' method to get a response
-                response = self.ask(query)
+                # Use run_in_threadpool to offload the blocking 'ask' method (C1)
+                response = await run_in_threadpool(self.ask, query)
                 
                 # Send the response back to the client
                 await websocket.send_text(response)
                 
         except WebSocketDisconnect:
-            print(f"[WS] Client {client_id} disconnected.")
+            logger.info(f"Client {client_id} disconnected.")
         except Exception as e:
-            print(f"[WS-ERROR] Error for client {client_id}: {e}")
+            logger.error(f"Error for client {client_id}: {e}", exc_info=True)
             await websocket.close(code=1011, reason="Internal error")

@@ -1,78 +1,82 @@
-import sqlite3
-from pathlib import Path
-import contextlib
-from typing import Generator
+from fastapi import Depends
+import logging
 
-DB_PATH = Path("data/lore.db")
+logger = logging.getLogger("lms_db")
+
+DB_FILE_PATH = Path("data/lore.db") # Renamed for clarity to avoid conflict with DB_PATH in Database class
+DB_PATH = Path(__file__).parent.parent / DB_FILE_PATH # This is now the absolute path
+
+def get_db_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
+    conn = sqlite3.connect(str(db_path), timeout=10.0)
+    conn.row_factory = sqlite3.Row
+    # Enforce foreign key constraints for data integrity
+    conn.execute("PRAGMA foreign_keys = ON;")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    return conn
+
+@contextlib.contextmanager
+def db_session(db_path: Path = DB_PATH) -> Generator[sqlite3.Connection, None, None]:
+    conn = get_db_connection(db_path)
+    try:
+        yield conn
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Database transaction failed: {e}. Rolling back.", exc_info=True)
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+# Dependency for FastAPI to provide a DB connection per request
+async def get_db() -> Generator[sqlite3.Connection, None, None]:
+    with db_session() as conn:
+        yield conn
 
 class Database:
-    def __init__(self, db_path="data/lore.db"):
-        if db_path == ":memory:":
-            self.db_path = ":memory:"
-            self.schema_path = Path(__file__).parent.parent / "data/schema.sql"
-        else:
-            # Use the correct relative path from the root
-            self.db_path = Path(__file__).parent.parent / db_path
-            self.schema_path = Path(__file__).parent.parent / "data/schema.sql"
+    """Utility class for database operations, especially schema initialization."""
+    def __init__(self, db_file_path: Path = DB_FILE_PATH):
+        self.db_path = Path(__file__).parent.parent / db_file_path
+        self.schema_path = Path(__file__).parent.parent / "data/schema.sql"
 
-            # Ensure the database directory exists
-            self.db_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Set timeout to 10 seconds (10.0)
-        self.conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=10.0)
-        self.conn.row_factory = sqlite3.Row
-
-        # Enable WAL (Write-Ahead Logging) mode for better concurrency
-        self.conn.execute("PRAGMA journal_mode=WAL;")
-
-        print(f"[DB] Connected to database at {self.db_path} (WAL Mode)")
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize_schema()
 
     def _initialize_schema(self):
         """Loads and executes the schema.sql file to create tables if they don't exist."""
         try:
-            with open(self.schema_path, 'r') as f:
-                schema_sql = f.read()
-
-            # Use executescript to run all SQL commands in the file
-            self.conn.executescript(schema_sql)
-            self.conn.commit()
-            print("[DB] Schema initialized successfully.")
+            with db_session(self.db_path) as conn:
+                with open(self.schema_path, 'r') as f:
+                    schema_sql = f.read()
+                conn.executescript(schema_sql)
+            logger.info("Schema initialized successfully.")
         except Exception as e:
-            print(f"[DB] CRITICAL: Failed to initialize schema: {e}")
+            logger.critical(f"Failed to initialize schema: {e}", exc_info=True)
+            raise
 
-    def execute(self, query, params=()):
-        """Executes a query *without* committing."""
-        cur = self.conn.cursor()
+    # Static methods for core DB operations, taking a connection
+    @staticmethod
+    def execute(conn: sqlite3.Connection, query: str, params=(), commit: bool = False):
+        """Executes a query. Can optionally commit immediately."""
+        cur = conn.cursor()
         cur.execute(query, params)
-        # DO NOT COMMIT HERE - The transaction manager will handle it.
+        if commit:
+            conn.commit()
         return cur
 
-    def fetch_all(self, query, params=()):
-        cur = self.conn.cursor()
+    @staticmethod
+    def fetch_all(conn: sqlite3.Connection, query: str, params=()):
+        cur = conn.cursor()
         cur.execute(query, params)
         return [dict(row) for row in cur.fetchall()]
 
-    def fetch_one(self, query, params=()):
-        cur = self.conn.cursor()
+    @staticmethod
+    def fetch_one(conn: sqlite3.Connection, query: str, params=()):
+        cur = conn.cursor()
         cur.execute(query, params)
         row = cur.fetchone()
         return dict(row) if row else None
 
-    def close(self):
-        """Closes the database connection."""
-        if self.conn:
-            self.conn.close()
 
-    @contextlib.contextmanager
-    def transaction(self) -> Generator[sqlite3.Connection, None, None]:
-        """Correctly manages a database transaction with commit and rollback."""
-        try:
-            yield self.conn
-            # If yield succeeds, commit the changes
-            self.conn.commit()
-        except Exception as e:
-            print(f"Transaction failed: {e}. Rolling back.")
-            # If any error occurs, roll back all changes
-            self.conn.rollback()
-            raise
+
+    # The close and transaction methods are no longer needed for the refactored class
+    # as db_session context manager handles connection lifecycle.
