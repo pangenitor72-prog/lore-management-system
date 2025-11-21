@@ -3,7 +3,7 @@ import asyncio
 from src.broadcaster import Broadcaster, broadcaster as global_broadcaster
 from src.auditor_agent import AuditorAgent, Contradiction
 from src.query_agent import QueryAgent
-from src.database import Database
+from src.database import Database, get_db, get_db_connection
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, AsyncMock, patch
 import sqlite3
@@ -13,23 +13,64 @@ import json
 # Import the FastAPI app directly for testing
 from src.api import app
 
-# Ensure that the database module uses our mock connection for tests
+# Ensure that the database module uses a temporary file-based DB for tests
+@pytest.fixture(scope="function")
+def test_db_path():
+    """Creates a temporary database file for a test session and ensures schema exists."""
+    # Use a fixed name for simplicity in debugging and to ensure it's in a writable directory
+    db_path = "test_broadcast_db.sqlite3"
+    if os.path.exists(db_path):
+        os.unlink(db_path)
+
+    # Create tables in the new DB file
+    # The connection needs to be sharable across threads for the test to work
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    Database.create_tables(conn)
+    conn.close()
+
+    yield db_path
+
+    if os.path.exists(db_path):
+        os.unlink(db_path)
+
 @pytest.fixture
-def mock_db_connection():
-    """Fixture for an in-memory SQLite database connection."""
-    conn = sqlite3.connect(":memory:")
-    Database.create_tables(conn) # Use the Database class to create tables
+def mock_db_connection(test_db_path):
+    """Fixture that provides a connection to the temporary file-based test DB."""
+    conn = sqlite3.connect(test_db_path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
     yield conn
     conn.close()
 
 @pytest.fixture
-def api_client(mock_db_connection):
-    """Test client for the FastAPI app with a mocked database."""
-    app.dependency_overrides[Database.get_db] = lambda: mock_db_connection
-    app.dependency_overrides[Database.get_db_connection] = lambda: mock_db_connection
+def api_client(test_db_path):
+    """
+    Test client for the FastAPI app that uses a temporary file-based database.
+    This allows the database to be shared between the main test thread and
+    application worker threads, which is not possible with an in-memory DB.
+    """
+    def override_get_db_connection():
+        # Each part of the app gets its own connection to the same file.
+        # check_same_thread=False is critical for threaded access.
+        conn = sqlite3.connect(test_db_path, check_same_thread=False)
+        conn.row_factory = sqlite3.Row # Ensure rows can be accessed by column name
+        return conn
+
+    app.dependency_overrides[get_db_connection] = override_get_db_connection
+    
+    def override_get_db():
+        conn = override_get_db_connection()
+        try:
+            yield conn
+        finally:
+            conn.close()
+    
+    app.dependency_overrides[get_db] = override_get_db
+
     with TestClient(app) as client:
         yield client
-    app.dependency_overrides = {}
+    
+    # Clean up the overrides after the test
+    app.dependency_overrides.clear()
 
 @pytest.fixture(autouse=True)
 def mock_gemini_models():
@@ -58,14 +99,24 @@ def mock_gemini_models():
         yield
 
 @pytest.fixture
-def auditor_agent(mock_db_connection):
-    """Fixture for AuditorAgent with mocked dependencies."""
-    return AuditorAgent(lambda: mock_db_connection, "mock_gemini_key")
+def auditor_agent(test_db_path):
+    """Fixture for AuditorAgent that uses the file-based test database."""
+    def get_test_db_connection():
+        conn = sqlite3.connect(test_db_path, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        return conn
+    
+    return AuditorAgent(get_test_db_connection, "mock_gemini_key")
 
 @pytest.fixture
-def query_agent(mock_db_connection):
-    """Fixture for QueryAgent with mocked dependencies."""
-    return QueryAgent(lambda: mock_db_connection, "mock_gemini_key")
+def query_agent(test_db_path):
+    """Fixture for QueryAgent that uses the file-based test database."""
+    def get_test_db_connection():
+        conn = sqlite3.connect(test_db_path, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    return QueryAgent(get_test_db_connection, "mock_gemini_key")
 
 @pytest.mark.asyncio
 async def test_broadcaster_publish_subscribe():
@@ -153,6 +204,7 @@ async def test_auditor_agent_publishes_on_persist_contradiction(auditor_agent, m
                      ("entity-1", "Character", "Test Entity 1", "APPROVED", "CONFIRMED", "KNOWN", "2023-01-01T00:00:00Z", "2023-01-01T00:00:00Z"))
     Database.execute(mock_db_connection, "INSERT INTO entities (canon_id, entity_type, canonical_name, approval_status, confidence_level, party_knowledge, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                      ("entity-2", "Character", "Test Entity 2", "APPROVED", "CONFIRMED", "KNOWN", "2023-01-01T00:00:00Z", "2023-01-01T00:00:00Z"))
+    mock_db_connection.commit()
 
     test_contradiction_data = {
         "type": "TEST_CONTRADICTION",
@@ -169,7 +221,6 @@ async def test_auditor_agent_publishes_on_persist_contradiction(auditor_agent, m
 
     # Subscribe to the auditor_events channel
     queue = await global_broadcaster.subscribe("auditor_events")
-
     await auditor_agent.persist_contradiction(test_contradiction_data, entity_a, entity_b)
 
     # The publish call is wrapped in asyncio.create_task, so we need to yield to event loop
@@ -195,15 +246,18 @@ async def test_auditor_agent_publishes_on_ai_audit_completion(auditor_agent, moc
                      ("char-1", "Character", "Char 1", "APPROVED", "CONFIRMED", "KNOWN", "2023-01-01T00:00:00Z", "2023-01-01T00:00:00Z"))
     Database.execute(mock_db_connection, "INSERT INTO entities (canon_id, entity_type, canonical_name, approval_status, confidence_level, party_knowledge, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                      ("char-2", "Character", "Char 2", "APPROVED", "CONFIRMED", "KNOWN", "2023-01-01T00:00:00Z", "2023-01-01T00:00:00Z"))
+    mock_db_connection.commit()
 
     queue = await global_broadcaster.subscribe("auditor_events")
 
     # Call the method that triggers the event
     await auditor_agent.analyze_all_entities(limit=2) # Limit to avoid excessive mocks
 
-    await asyncio.sleep(0.01) # Allow task to run
-
-    received_event = await asyncio.wait_for(queue.get(), timeout=1)
+    # This can publish multiple events, we need to find the right one
+    while True:
+        received_event = await asyncio.wait_for(queue.get(), timeout=2)
+        if received_event.get("type") == "audit_progress" and "AI audit complete" in received_event.get("message", ""):
+            break
 
     assert received_event["type"] == "audit_progress"
     assert "AI audit complete" in received_event["message"]
@@ -283,40 +337,35 @@ async def test_websocket_auditor_endpoint_receives_events(api_client, auditor_ag
                      ("entity-A", "Character", "Entity A", "APPROVED", "CONFIRMED", "KNOWN", "2023-01-01T00:00:00Z", "2023-01-01T00:00:00Z"))
     Database.execute(mock_db_connection, "INSERT INTO entities (canon_id, entity_type, canonical_name, approval_status, confidence_level, party_knowledge, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                      ("entity-B", "Character", "Entity B", "APPROVED", "CONFIRMED", "KNOWN", "2023-01-01T00:00:00Z", "2023-01-01T00:00:00Z"))
+    mock_db_connection.commit()
+
+    # The 'auditor_agent' fixture is a separate instance from the one used by the FastAPI app.
+    # To test the websocket, we must trigger an action that causes the app's
+    # own broadcaster to publish. The most reliable way is to publish directly.
+    # However, for an integration test like this, we'll assume the fixture setup
+    # correctly injects a usable agent, and we'll call its methods.
 
     # Connect to the WebSocket endpoint
     with api_client.websocket_connect("/ws/auditor") as websocket:
-        # Publish an event from the auditor_agent
-        test_contradiction_data = {
-            "type": "WS_TEST",
-            "severity": "LOW",
-            "description": "WebSocket test contradiction.",
-            "entity_ids": ["entity-A", "entity-B"],
-            "evidence": {"ws": "test"},
-            "confidence": 0.5,
-            "scoring_reasoning": "WS scoring",
-            "possible_resolutions": ["WS resolution"]
-        }
+        
+        # 1. Test 'new_contradiction' event
+        test_contradiction_data = { "type": "WS_TEST", "description": "WebSocket test contradiction." }
         entity_a = {"canon_id": "entity-A"}
         entity_b = {"canon_id": "entity-B"}
 
+        # This call will run in a thread, persist to the file DB, and then broadcast.
+        # The websocket, running in the main thread, should receive the event.
         await auditor_agent.persist_contradiction(test_contradiction_data, entity_a, entity_b)
 
         # Wait for the message to be received by the WebSocket client
-        try:
-            received_message = await asyncio.wait_for(websocket.receive_json(), timeout=2)
-            assert received_message["type"] == "new_contradiction"
-            assert received_message["contradiction"]["type"] == "WS_TEST"
-            assert received_message["contradiction"]["description"] == "WebSocket test contradiction."
-        except asyncio.TimeoutError:
-            pytest.fail("WebSocket client did not receive message in time.")
+        received_message = websocket.receive_json()
+        assert received_message["type"] == "new_contradiction"
+        assert received_message["contradiction"]["type"] == "WS_TEST"
+        assert received_message["contradiction"]["description"] == "WebSocket test contradiction."
 
-        # Also test audit completion message
+        # 2. Test 'audit_progress' event from rule-based audit
         await auditor_agent.run_full_audit()
-        try:
-            received_message = await asyncio.wait_for(websocket.receive_json(), timeout=2)
-            assert received_message["type"] == "audit_progress"
-            assert "Rule-based audit complete" in received_message["message"]
-        except asyncio.TimeoutError:
-            pytest.fail("WebSocket client did not receive audit completion message in time.")
+        received_message_2 = websocket.receive_json()
+        assert received_message_2["type"] == "audit_progress"
+        assert "Rule-based audit complete" in received_message_2["message"]
 

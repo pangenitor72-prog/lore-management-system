@@ -72,6 +72,14 @@ class Database:
             logger.critical(f"Failed to initialize schema for {self.db_path}: {e}", exc_info=True)
             raise
 
+    @staticmethod
+    def create_tables(conn: sqlite3.Connection):
+        """Creates tables in the given database connection."""
+        schema_path = Path(__file__).parent.parent / "data/schema.sql"
+        with open(schema_path, 'r') as f:
+            schema_sql = f.read()
+        conn.executescript(schema_sql)
+
     # Static methods for core DB operations, taking a connection
     @staticmethod
     def execute(conn: sqlite3.Connection, query: str, params=(), commit: bool = False):
@@ -84,9 +92,16 @@ class Database:
 
     @staticmethod
     def fetch_all(conn: sqlite3.Connection, query: str, params=()):
+        logger.debug(f"Executing query: {query} with params: {params}")
         cur = conn.cursor()
         cur.execute(query, params)
-        return [dict(row) for row in cur.fetchall()]
+        rows = cur.fetchall()
+        logger.debug(f"Fetched rows: {rows}")
+        try:
+            return [dict(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Error converting rows to dict: {e}", exc_info=True)
+            raise
 
     @staticmethod
     def fetch_one(conn: sqlite3.Connection, query: str, params=()):

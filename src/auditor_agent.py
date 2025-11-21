@@ -5,6 +5,7 @@ AND complex semantic contradictions (AI-Based).
 """
 
 from __future__ import annotations
+from starlette.concurrency import run_in_threadpool
 from typing import List, Dict, Optional, Any, Callable
 from datetime import datetime, timezone
 import json
@@ -81,14 +82,22 @@ class AuditorAgent:
             logger.error(f"AI detection failed: {e}", exc_info=True)
             return []
 
-    def analyze_all_entities(self, limit:int|None=None) -> int:
-        """Runs detect_contradictions across all entity pairs and persists findings."""
-        logger.info("Batch AI scan start")
+    def _fetch_entities_sync(self, limit: int | None = None) -> List[Dict[str, Any]]:
+        """Synchronously fetches all entities from the database."""
+        logger.debug(f"Sync fetch starting.")
         conn = self.get_db_connection()
         try:
             entities = Database.fetch_all(conn, "SELECT * FROM entities")
         finally:
             conn.close()
+        logger.debug(f"Sync fetch complete. {len(entities)} entities loaded.")
+        return entities
+
+    async def analyze_all_entities(self, limit:int|None=None) -> int:
+        """Runs detect_contradictions across all entity pairs and persists findings."""
+        logger.info("Batch AI scan start")
+        
+        entities = await run_in_threadpool(self._fetch_entities_sync, limit)
 
         if limit: entities = entities[:int(limit)]
         
@@ -101,15 +110,15 @@ class AuditorAgent:
                 cons = self.detect_contradictions(a,b)
                 
                 for c in cons:
-                    self.persist_contradiction(c, a, b)
+                    await self.persist_contradiction(c, a, b)
                     count += 1
                 
         logger.info(f"Complete: {count} contradictions found and persisted.")
-        asyncio.create_task(broadcaster.publish("auditor_events", {
+        await broadcaster.publish("auditor_events", {
             "type": "audit_progress",
             "message": f"AI audit complete. {count} contradictions found and persisted.",
             "total_contradictions_found": count
-        }))
+        })
         return count
 
     def _should_compare(self,a,b)->bool:
@@ -253,26 +262,28 @@ Return ONLY a JSON object like this:
             contradiction["resolution_reasoning"] = f"Error during resolution suggestion: {e}"
         return contradiction
 
-    def persist_contradiction(self, con: Dict[str, Any], entity_a: Dict[str, Any], entity_b: Dict[str, Any]):
-        """Inserts a single AI-detected contradiction into the database."""
+    def _persist_contradiction_sync(self, contradiction: Dict, entity_a: Dict, entity_b: Dict):
+        logger.debug(f"Sync persist starting for {contradiction.get('id')}")
+        conn = self.get_db_connection() # New connection for this thread
         try:
             con_id = str(uuid.uuid4())
-            resolutions_json = json.dumps(con.get("possible_resolutions", []))
-            
+            contradiction['id'] = con_id # Add id for return
+            resolutions_json = json.dumps(contradiction.get("possible_resolutions", []))
+
             data = (
                 con_id,
                 datetime.now(timezone.utc).isoformat(),
                 entity_a.get("canon_id"),
                 entity_b.get("canon_id"),
-                con.get("type", "UNKNOWN"),
-                con.get("severity", "LOW"),
-                con.get("description", "No description provided."),
-                json.dumps(con.get("evidence", {})),
-                con.get("confidence", 0.0),
-                con.get("scoring_reasoning", ""),
+                contradiction.get("type", "UNKNOWN"),
+                contradiction.get("severity", "LOW"),
+                contradiction.get("description", "No description provided."),
+                json.dumps(contradiction.get("evidence", {})),
+                contradiction.get("confidence", 0.0),
+                contradiction.get("scoring_reasoning", ""),
                 resolutions_json
             )
-            
+
             sql = """
             INSERT INTO contradictions (
                 contradiction_id, detected_at, entity_a_id, entity_b_id,
@@ -280,36 +291,46 @@ Return ONLY a JSON object like this:
                 confidence, scoring_reasoning, possible_resolutions
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
-            
-            conn = self.get_db_connection()
-            try:
-                Database.execute(conn, sql, data, commit=True)
-            finally:
-                conn.close()
-            logger.info(f"PERSIST: Stored contradiction {con_id} ({con.get('type')})")
-            
+            Database.execute(conn, sql, data)
+            conn.commit()
+            logger.info(f"PERSIST: Stored contradiction {con_id} ({contradiction.get('type')})")
+
+        except Exception as e:
+            logger.error(f"Sync persist failed: {e}", exc_info=True)
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+        return contradiction
+
+    async def persist_contradiction(self, con: Dict[str, Any], entity_a: Dict[str, Any], entity_b: Dict[str, Any]):
+        """Inserts a single AI-detected contradiction into the database."""
+        try:
+            persisted_con = await run_in_threadpool(self._persist_contradiction_sync, con, entity_a, entity_b)
+
             # Publish event for new contradiction
             event_data = {
                 "type": "new_contradiction",
                 "contradiction": {
-                    "id": con_id,
-                    "type": con.get("type", "UNKNOWN"),
-                    "severity": con.get("severity", "LOW"),
-                    "description": con.get("description", "No description provided."),
+                    "id": persisted_con.get("id"),
+                    "type": persisted_con.get("type", "UNKNOWN"),
+                    "severity": persisted_con.get("severity", "LOW"),
+                    "description": persisted_con.get("description", "No description provided."),
                     "entity_a_id": entity_a.get("canon_id"),
                     "entity_b_id": entity_b.get("canon_id"),
                     "detected_at": datetime.now(timezone.utc).isoformat()
                 }
             }
-            asyncio.create_task(broadcaster.publish("auditor_events", event_data))
+            await broadcaster.publish("auditor_events", event_data)
 
         except Exception as e:
             logger.error(f"Failed to persist contradiction: {e}", exc_info=True)
 
     # --- 3. RULE-BASED METHODS (SQL CHECKS) ---
 
-    def run_full_audit(self) -> Dict[str, List[Dict]]:
-        """Run all RULE-BASED audit checks and return results."""
+    def _run_full_audit_sync(self) -> Dict[str, List[Dict]]:
+        """Synchronously runs all RULE-BASED audit checks."""
+        logger.info("Starting synchronous rule-based audit.")
         results = {
             "conflicting_birthplaces": [],
             "impossible_timelines": [],
@@ -332,12 +353,20 @@ Return ONLY a JSON object like this:
         results["circular_relationships"] = [c.to_dict() for c in self.check_circular_relationships()]
         results["unparseable_dates"] = [c.to_dict() for c in self.check_unparseable_dates()]
         
+        logger.info("Synchronous rule-based audit complete.")
+        return results
+
+    async def run_full_audit(self) -> Dict[str, List[Dict]]:
+        """Asynchronously runs all RULE-BASED audit checks and publishes completion event."""
+        
+        results = await run_in_threadpool(self._run_full_audit_sync)
+        
         summary = self.get_summary(results)
-        asyncio.create_task(broadcaster.publish("auditor_events", {
+        await broadcaster.publish("auditor_events", {
             "type": "audit_progress",
             "message": "Rule-based audit complete.",
             "summary": summary
-        }))
+        })
         return results
     
     def check_conflicting_birthplaces(self) -> List[Contradiction]:

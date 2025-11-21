@@ -24,6 +24,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 
+# Local Imports - Utils
+from .utils.logging_config import configure_logging
+
 # Local Imports - Database
 from .database import Database, get_db, get_db_connection, db_session
 
@@ -55,12 +58,14 @@ logger = logging.getLogger("lms_api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # On startup
-    logger.info("Application startup...")
+    await run_in_threadpool(logger.info, "Application startup...")
+    log_listener = configure_logging()
     # This is the correct place to initialize the database schema
     _ = Database() 
     yield
     # On shutdown
-    logger.info("Application shutdown...")
+    await run_in_threadpool(logger.info, "Application shutdown...")
+    log_listener.stop()
 
 # ============================================================
 # CONFIGURATION & INITIALIZATION
@@ -124,9 +129,9 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
             message = await queue.get()
             await websocket.send_json(message)
     except WebSocketDisconnect:
-        logger.info("Auditor WebSocket client disconnected.")
+        await run_in_threadpool(logger.info, "Auditor WebSocket client disconnected.")
     except Exception as e:
-        logger.error(f"Auditor WebSocket error: {e}", exc_info=True)
+        await run_in_threadpool(logger.error, f"Auditor WebSocket error: {e}", exc_info=True)
     finally:
         broadcaster.unsubscribe("auditor_events", queue)
         await websocket.close()
@@ -180,7 +185,7 @@ async def create_entity(entity_data: EntityCreate, db: sqlite3.Connection = Depe
         created_entity = await get_entity(canon_id, db=db) 
 
         if not created_entity:
-            logger.error(f"Failed to retrieve entity after creation for canon_id: {canon_id}")
+            await run_in_threadpool(logger.error, f"Failed to retrieve entity after creation for canon_id: {canon_id}")
             raise HTTPException(
                 status_code=500,
                 detail="Failed to retrieve entity after creation."
@@ -188,7 +193,7 @@ async def create_entity(entity_data: EntityCreate, db: sqlite3.Connection = Depe
         return created_entity
 
     except Exception as e:
-        logger.exception(f"Error in create_entity: {e}")
+        await run_in_threadpool(logger.exception, f"Error in create_entity: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create entity: {e}")
 
 
@@ -274,7 +279,7 @@ async def list_entities(
                     key, value = item.split(':::', 1)
                     approved_fields_dict[key] = json.loads(value)
                 except (ValueError, json.JSONDecodeError):
-                    logger.warning(f"Failed to parse approved_field item '{item}'")
+                    await run_in_threadpool(logger.warning, f"Failed to parse approved_field item '{item}'")
                     key, value = item.split(':::', 1)
                     approved_fields_dict[key] = value
 
