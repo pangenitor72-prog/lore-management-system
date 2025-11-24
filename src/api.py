@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 # Local Imports - Audit
 from .audit_log import AuditLogger
@@ -289,10 +290,7 @@ async def list_entities(
         ))
     return result_entities
 
-@router.get("/contradictions", response_class=HTMLResponse)
-async def contradictions_browser(request: Request):
-    """Serve the contradiction triage UI."""
-    return templates.TemplateResponse("contradictions.html", {"request": request})
+
 
 
 @router.get("/entities/browser", response_class=HTMLResponse)
@@ -310,6 +308,39 @@ async def entities_browser(request: Request, canon_id: Optional[str] = None):
 # and websocket endpoints, which have already been refactored in previous steps.
 # The `app.include_router` and `if __name__ == "__main__"` blocks also remain.
 # This replacement focuses on fixing the startup and create_entity logic.
+
+# --- DASHBOARD ROUTES ---
+class DashboardCard(BaseModel):
+    id: int
+    title: str
+    description: str | None = None
+    severity: str
+    source: str
+
+@router.get("/dashboard")
+async def read_dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@router.get("/contradictions", response_model=List[DashboardCard])
+async def get_contradictions():
+    # MOCK DATA FOR UI TESTING
+    return [
+        DashboardCard(
+            id=101, title="Timeline Fracture: The Black King",
+            description="Player claimed to kill the Black King in Year 298, but Archive shows he appears in Year 302.",
+            severity="CRITICAL", source="Session 42 Log"
+        ),
+        DashboardCard(
+            id=102, title="Inventory Mismatch: Sun Blade",
+            description="Party sheet lists Sun Blade as sold; Jim's notes say 'Stolen by Kobolds'.",
+            severity="MINOR", source="Inventory Audit"
+        ),
+        DashboardCard(
+            id=103, title="NPC Status: Lady Vengeance",
+            description="Status flag is DEAD, but she is currently giving a quest in the Waterdeep module.",
+            severity="CRITICAL", source="NPC Tracker"
+        )
+    ]
 
 app.include_router(router)
 app.include_router(get_contradiction_router())

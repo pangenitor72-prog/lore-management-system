@@ -1,0 +1,130 @@
+import os
+
+# The 'Frankenstein' Dashboard HTML
+html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS // ARCHIVE DASHBOARD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-enter { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen font-mono selection:bg-indigo-500 selection:text-white">
+
+    <nav class="sticky top-0 z-50 bg-slate-900/95 border-b border-slate-700 backdrop-blur-sm px-6 py-4 flex justify-between items-center shadow-lg">
+        <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" id="connection-dot"></div>
+            <h1 class="text-xl font-bold tracking-widest text-slate-100">LMS <span class="text-slate-500">//</span> DASHBOARD</h1>
+        </div>
+        <div class="text-xs text-slate-500" id="system-status">SYSTEM ONLINE</div>
+    </nav>
+
+    <main class="p-6">
+        <header class="mb-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-3xl font-bold text-white mb-2">Active Contradictions</h2>
+                <p class="text-slate-400 text-sm">Review and resolve narrative inconsistencies.</p>
+            </div>
+            <button onclick="refreshGrid()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-sm transition-colors">
+                Refresh Data
+            </button>
+        </header>
+
+        <div id="card-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+    </main>
+
+    <script>
+        const GRID = document.getElementById('card-grid');
+
+        function createCardHTML(item) {
+            const severityColor = item.severity === 'CRITICAL' ? 'border-red-500' : 'border-indigo-500';
+            
+            return `
+            <article id="card-${item.id}" class="card-enter group relative bg-slate-800 border-l-4 ${severityColor} rounded shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden" onclick="selectCard(${item.id})">
+                <div class="p-5">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">ID: ${item.id}</span>
+                        <span class="px-2 py-1 bg-slate-900 rounded text-xs font-medium ${item.severity === 'CRITICAL' ? 'text-red-400' : 'text-indigo-400'}">
+                            ${item.severity || 'MINOR'}
+                        </span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-100 mb-2 group-hover:text-indigo-300 transition-colors">
+                        ${item.title}
+                    </h3>
+                    <p class="text-slate-400 text-sm line-clamp-3">
+                        ${item.description || 'No description provided.'}
+                    </p>
+                </div>
+                <div class="bg-slate-900/50 px-5 py-3 border-t border-slate-700 flex justify-between items-center">
+                    <span class="text-xs text-slate-500">Source: ${item.source || 'Unknown'}</span>
+                    <span class="text-xs text-slate-400 group-hover:text-white transition-colors">View Details &rarr;</span>
+                </div>
+            </article>
+            `;
+        }
+
+        async function fetchContradictions() {
+            try {
+                GRID.innerHTML = `<div class="col-span-full text-center py-20 text-slate-500 animate-pulse">Scanning Archives...</div>`;
+                
+                // RELATIVE PATH FETCH
+                const response = await fetch(`/contradictions`); 
+                
+                if (!response.ok) throw new Error("Archive Unreachable");
+                const data = await response.json();
+                
+                GRID.innerHTML = '';
+                if (data.length === 0) {
+                    GRID.innerHTML = `<div class="col-span-full text-center py-20 text-slate-500">No contradictions found.</div>`;
+                    return;
+                }
+                data.forEach(item => GRID.innerHTML += createCardHTML(item));
+
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                GRID.innerHTML = `<div class="col-span-full text-red-500 text-center py-10">Connection Lost</div>`;
+            }
+        }
+
+        function selectCard(id) {
+            console.log(`Card ${id} clicked`);
+        }
+
+        function refreshGrid() {
+            fetchContradictions();
+        }
+
+        refreshGrid();
+    </script>
+</body>
+</html>"""
+
+# Define the target path
+target_path = os.path.join("src", "templates", "dashboard.html")
+
+# Ensure directory exists
+os.makedirs(os.path.dirname(target_path), exist_ok=True)
+
+# Write the file
+with open(target_path, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print(f"✅ SUCCESS: Overwrote {target_path} with the new Frankenstein Dashboard.")
+"""
+
+**After running this:**
+1.  Refresh your browser at `localhost:8000/dashboard`.
+2.  You should see the **Mock Cards** (Black King, Sun Blade, etc.).
