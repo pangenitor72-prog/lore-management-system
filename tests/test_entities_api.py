@@ -97,3 +97,34 @@ def test_list_entities_returns_real_entities(api_client: TestClient):
     assert isinstance(sample_entity['aliases'], list)
     assert "approved_fields" in sample_entity
     assert isinstance(sample_entity['approved_fields'], dict)
+
+def test_create_minimal_entity_and_retrieve(api_client: TestClient):
+    """
+    Confirms the race condition fix by creating an entity and immediately
+    retrieving it, which would fail if the DB read happens before the
+    write transaction is visible.
+    """
+    entity_data = {
+        "entity_type": "Location",
+        "canonical_name": "The Lonely Mountain",
+        "approval_status": "PENDING",
+        "confidence_level": "SPECULATIVE",
+        "party_knowledge": "UNKNOWN"
+    }
+    create_response = api_client.post("/entities", json=entity_data)
+    
+    # 1. Assert creation was successful
+    assert create_response.status_code == status.HTTP_201_CREATED
+    created_entity = create_response.json()
+    canon_id = created_entity['canon_id']
+    
+    # 2. Immediately retrieve the new entity
+    get_response = api_client.get(f"/entities/{canon_id}")
+    
+    # 3. Assert retrieval was successful
+    assert get_response.status_code == status.HTTP_200_OK
+    retrieved_entity = get_response.json()
+    
+    # 4. Verify data integrity
+    assert retrieved_entity['canonical_name'] == "The Lonely Mountain"
+    assert retrieved_entity['canon_id'] == canon_id

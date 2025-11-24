@@ -11,14 +11,15 @@ from datetime import datetime, timezone
 import json
 import re
 import uuid
-import logging
+from .audit_log import AuditLogger
+import logging # For level constants
 import sqlite3
 import asyncio # For async operations
 from .database import Database, db_session, get_db_connection # Import necessary db components
 import google.generativeai as genai
 from .broadcaster import broadcaster # Import the global broadcaster instance
 
-logger = logging.getLogger("lms_auditor")
+
 
 class Contradiction:
     """Represents a detected contradiction."""
@@ -56,11 +57,11 @@ class AuditorAgent:
         genai.configure(api_key=gemini_api_key) # Safe to call multiple times
         self.flash = genai.GenerativeModel("gemini-2.5-flash") # Standard model for fast detection
         self.pro = genai.GenerativeModel("gemini-2.5-pro")     # Standard model for complex reasoning (scoring/resolving)
-        logger.info("AuditorAgent: Hybrid mode. DB and AI models initialized.")
+        AuditLogger.log_sync("AuditorAgent: Hybrid mode. DB and AI models initialized.")
     def detect_contradictions(self, entity_a: Dict[str, Any], entity_b: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Finds, Scores, and suggests Resolutions for AI-detected contradictions."""
         a_name, b_name = entity_a.get("name","?"), entity_b.get("name","?")
-        logger.info(f"AI-DETECT: Comparing {a_name} vs {b_name}")
+        AuditLogger.log_sync(f"AI-DETECT: Comparing {a_name} vs {b_name}")
         prompt = self._build_prompt(entity_a, entity_b)
         
         try:
@@ -79,23 +80,23 @@ class AuditorAgent:
             return final_contradictions
             
         except Exception as e:
-            logger.error(f"AI detection failed: {e}", exc_info=True)
+            AuditLogger.log_sync(f"AI detection failed: {e}", level=logging.ERROR)
             return []
 
     def _fetch_entities_sync(self, limit: int | None = None) -> List[Dict[str, Any]]:
         """Synchronously fetches all entities from the database."""
-        logger.debug(f"Sync fetch starting.")
+        AuditLogger.log_sync(f"Sync fetch starting.")
         conn = self.get_db_connection()
         try:
             entities = Database.fetch_all(conn, "SELECT * FROM entities")
         finally:
             conn.close()
-        logger.debug(f"Sync fetch complete. {len(entities)} entities loaded.")
+        AuditLogger.log_sync(f"Sync fetch complete. {len(entities)} entities loaded.")
         return entities
 
     async def analyze_all_entities(self, limit:int|None=None) -> int:
         """Runs detect_contradictions across all entity pairs and persists findings."""
-        logger.info("Batch AI scan start")
+        await AuditLogger.log("Batch AI scan start")
         
         entities = await run_in_threadpool(self._fetch_entities_sync, limit)
 
@@ -113,7 +114,7 @@ class AuditorAgent:
                     await self.persist_contradiction(c, a, b)
                     count += 1
                 
-        logger.info(f"Complete: {count} contradictions found and persisted.")
+        await AuditLogger.log(f"Complete: {count} contradictions found and persisted.")
         await broadcaster.publish("auditor_events", {
             "type": "audit_progress",
             "message": f"AI audit complete. {count} contradictions found and persisted.",
@@ -136,7 +137,7 @@ class AuditorAgent:
                 conn.close()
             return (r and (r.get("cnt") or r.get("count") or 0)>0)
         except Exception as e:
-            logger.warning(f"_should_compare error: {e}", exc_info=True)
+            AuditLogger.log_sync(f"_should_compare error: {e}", exc_info=True)
             return False
 
     def _build_prompt(self,a,b)->str:
@@ -171,19 +172,19 @@ If none, return [].
                         arr=d["contradictions"]
                         return arr if isinstance(arr,list) else []
                 except json.JSONDecodeError:
-                    logger.debug("Failed to parse dict from LLM response for contradictions.")
+                    AuditLogger.log_sync("Failed to parse dict from LLM response for contradictions.")
                     return []
             return []
         try:
             arr=json.loads(m.group())
             return arr if isinstance(arr,list) else []
         except json.JSONDecodeError:
-            logger.debug("Failed to parse list from LLM response for contradictions.")
+            AuditLogger.log_sync("Failed to parse list from LLM response for contradictions.")
             return []
 
     def _score_contradiction_confidence(self, contradiction: Dict[str, Any], entity_a: Dict[str, Any], entity_b: Dict[str, Any]) -> Dict[str, Any]:
         """Uses gemini-1.5-pro to assign a confidence score."""
-        logger.info(f"AI-SCORE: Scoring contradiction: {contradiction.get('description', 'N/A')[:50]}...")
+        AuditLogger.log_sync(f"AI-SCORE: Scoring contradiction: {contradiction.get('description', 'N/A')[:50]}...")
         
         prompt = f"""
 You are a confidence score analyst.
@@ -211,7 +212,7 @@ Assign a confidence score from 0.0 (unlikely) to 1.0 (certain).
                 contradiction["confidence"] = 0.0
                 contradiction["scoring_reasoning"] = "Failed to parse pro-model scoring response."
         except Exception as e:
-            logger.error(f"AI scoring failed: {e}", exc_info=True)
+            AuditLogger.log_sync(f"AI scoring failed: {e}", level=logging.ERROR)
             contradiction["confidence"] = 0.0
             contradiction["scoring_reasoning"] = f"Error during scoring: {e}"
         return contradiction
@@ -223,7 +224,7 @@ Assign a confidence score from 0.0 (unlikely) to 1.0 (certain).
             contradiction["resolution_reasoning"] = "Confidence score too low to suggest resolution."
             return contradiction
 
-        logger.info(f"AI-RESOLVE: Suggesting resolutions for: {contradiction.get('description', 'N/A')[:50]}...")
+        AuditLogger.log_sync(f"AI-RESOLVE: Suggesting resolutions for: {contradiction.get('description', 'N/A')[:50]}...")
         
         prompt = f"""
 You are a "Lore Arbiter's Assistant."
@@ -257,13 +258,13 @@ Return ONLY a JSON object like this:
                 contradiction["possible_resolutions"] = []
                 contradiction["resolution_reasoning"] = "Failed to parse pro-model resolution response."
         except Exception as e:
-            logger.error(f"AI resolution suggestion failed: {e}", exc_info=True)
+            AuditLogger.log_sync(f"AI resolution suggestion failed: {e}", level=logging.ERROR)
             contradiction["possible_resolutions"] = []
             contradiction["resolution_reasoning"] = f"Error during resolution suggestion: {e}"
         return contradiction
 
     def _persist_contradiction_sync(self, contradiction: Dict, entity_a: Dict, entity_b: Dict):
-        logger.debug(f"Sync persist starting for {contradiction.get('id')}")
+        AuditLogger.log_sync(f"Sync persist starting for {contradiction.get('id')}")
         conn = self.get_db_connection() # New connection for this thread
         try:
             con_id = str(uuid.uuid4())
@@ -293,10 +294,10 @@ Return ONLY a JSON object like this:
             """
             Database.execute(conn, sql, data)
             conn.commit()
-            logger.info(f"PERSIST: Stored contradiction {con_id} ({contradiction.get('type')})")
+            AuditLogger.log_sync(f"PERSIST: Stored contradiction {con_id} ({contradiction.get('type')})")
 
         except Exception as e:
-            logger.error(f"Sync persist failed: {e}", exc_info=True)
+            AuditLogger.log_sync(f"Sync persist failed: {e}", level=logging.ERROR)
             conn.rollback()
             raise
         finally:
@@ -324,13 +325,13 @@ Return ONLY a JSON object like this:
             await broadcaster.publish("auditor_events", event_data)
 
         except Exception as e:
-            logger.error(f"Failed to persist contradiction: {e}", exc_info=True)
+            await AuditLogger.log(f"Failed to persist contradiction: {e}", level=logging.ERROR)
 
     # --- 3. RULE-BASED METHODS (SQL CHECKS) ---
 
     def _run_full_audit_sync(self) -> Dict[str, List[Dict]]:
         """Synchronously runs all RULE-BASED audit checks."""
-        logger.info("Starting synchronous rule-based audit.")
+        AuditLogger.log_sync("Starting synchronous rule-based audit.")
         results = {
             "conflicting_birthplaces": [],
             "impossible_timelines": [],
@@ -353,7 +354,7 @@ Return ONLY a JSON object like this:
         results["circular_relationships"] = [c.to_dict() for c in self.check_circular_relationships()]
         results["unparseable_dates"] = [c.to_dict() for c in self.check_unparseable_dates()]
         
-        logger.info("Synchronous rule-based audit complete.")
+        AuditLogger.log_sync("Synchronous rule-based audit complete.")
         return results
 
     async def run_full_audit(self) -> Dict[str, List[Dict]]:
@@ -582,7 +583,7 @@ Return ONLY a JSON object like this:
     
     def check_circular_relationships(self) -> List[Contradiction]:
         """Check for 2-hop and 3-hop circular relationships (A->B->A or A->B->C->A)."""
-        logger.info("Running circular relationship checks...")
+        AuditLogger.log_sync("Running circular relationship checks...")
         contradictions = []
         
         query_2hop = """
@@ -644,7 +645,7 @@ Return ONLY a JSON object like this:
                         "relationships": [cycle['rel1_type'], cycle['rel2_type'], cycle['rel3_type']]
                     }
                 ))
-        logger.info(f"Circular checks complete. Found {len(contradictions)} cycles.")
+        AuditLogger.log_sync(f"Circular checks complete. Found {len(contradictions)} cycles.")
         return contradictions
     
     def check_unparseable_dates(self) -> List[Contradiction]:
@@ -694,13 +695,13 @@ Return ONLY a JSON object like this:
         Placeholder review method for AuditorAgent.
         Simulates contradiction analysis and returns a status recommendation.
         """
-        logger.debug(f"AuditorAgent reviewing contradiction: {record.get('contradiction_id')}")
+        AuditLogger.log_sync(f"AuditorAgent reviewing contradiction: {record.get('contradiction_id')}")
         try:
             description = record.get("description", "").lower()
             resolved = "test" in description or "example" in description
-            logger.debug(f"Review decision -> resolved={resolved}")
+            AuditLogger.log_sync(f"Review decision -> resolved={resolved}")
             return {"resolved": resolved}
         except Exception as e:
             
-            logger.error(f"AuditorAgent.review failed: {e}", exc_info=True)
+            AuditLogger.log_sync(f"AuditorAgent.review failed: {e}", level=logging.ERROR)
             return {"resolved": False, "error": str(e)}

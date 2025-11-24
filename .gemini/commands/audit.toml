@@ -1,0 +1,20 @@
+description = "Run the Phase XII Validation Gauntlet (Manual Mode)"
+prompt = """
+ACT AS: Senior QA Lead.
+TASK: Analyze the test results the user provides.
+
+INSTRUCTIONS FOR USER:
+Please run these 3 commands in your terminal now and paste the output below:
+1. python -m src.database init
+2. pytest tests/test_concurrency.py -v
+3. Select-String "async def log" src/audit_log.py
+
+ANALYSIS:
+1. Did the database initialize without error?
+2. Did 20/20 concurrency tests pass?
+3. Is the 'log' function defined as 'async'?
+
+VERDICT:
+If ALL are true, output: "? READY FOR MERGE".
+If ANY fail, output specific fix instructions.
+"""

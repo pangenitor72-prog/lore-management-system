@@ -2,7 +2,8 @@
 from __future__ import annotations
 from typing import Dict, List, Any, Callable
 import google.generativeai as genai
-import logging
+from .audit_log import AuditLogger
+import logging # For level constants
 import sqlite3 # Import for type hinting Callable
 from fastapi import WebSocket, WebSocketDisconnect # <-- ESSENTIAL IMPORT
 from fastapi.concurrency import run_in_threadpool # For offloading blocking calls
@@ -10,7 +11,7 @@ import asyncio # For async operations
 from .broadcaster import broadcaster # Import the global broadcaster instance
 from datetime import datetime
 
-logger = logging.getLogger("lms_query")
+
 
 class QueryAgent:
     def __init__(self, get_db_connection_func: Callable[[], sqlite3.Connection], gemini_api_key: str): # Updated db parameter
@@ -40,20 +41,20 @@ When answering, be:
                 {'role': 'model', 'parts': ["Understood. I am the LMS Query Agent."]}
             ]
         )
-        logger.info("QueryAgent: AI model and chat session initialized.")
+        AuditLogger.log_sync("QueryAgent: AI model and chat session initialized.")
 
     def ask(self, query: str) -> str:
         """
         Sends a user's query to the Gemini chat session and returns the text response.
         This is a BLOCKING call to the LLM.
         """
-        logger.info(f"QueryAgent received: '{query}'")
+        AuditLogger.log_sync(f"QueryAgent received: '{query}'")
         try:
             # We don't need to re-send the system prompt; the chat session is persistent
             response = self.chat.send_message(query)
             return response.text
         except Exception as e:
-            logger.error(f"QueryAgent failed to get response: {e}", exc_info=True)
+            AuditLogger.log_sync(f"QueryAgent failed to get response: {e}", level=logging.ERROR)
             return "An error occurred while processing your query. Please check the API logs."
             
     # --- HANDLER REQUIRED BY API.PY ---
@@ -62,7 +63,7 @@ When answering, be:
         Handles the WebSocket connection for a single client (REQUIRED FOR PHASE IX DASHBOARD).
         """
         await websocket.accept()
-        logger.info(f"Client {client_id} connected.")
+        await AuditLogger.log(f"Client {client_id} connected.")
         
         try:
             while True:
@@ -85,7 +86,7 @@ When answering, be:
                 await websocket.send_text(response)
                 
         except WebSocketDisconnect:
-            logger.info(f"Client {client_id} disconnected.")
+            await AuditLogger.log(f"Client {client_id} disconnected.")
         except Exception as e:
-            logger.error(f"Error for client {client_id}: {e}", exc_info=True)
+            await AuditLogger.log(f"Error for client {client_id}: {e}", level=logging.ERROR)
             await websocket.close(code=1011, reason="Internal error")

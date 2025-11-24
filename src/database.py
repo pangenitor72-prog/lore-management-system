@@ -3,9 +3,10 @@ from pathlib import Path
 from typing import Generator
 import contextlib
 from fastapi import Depends
-import logging
+from .audit_log import AuditLogger
+import logging # For level constants
 
-logger = logging.getLogger("lms_db")
+
 
 DB_FILE_PATH = Path("data/lore.db") # Renamed for clarity to avoid conflict with DB_PATH in Database class
 DB_PATH = Path(__file__).parent.parent / DB_FILE_PATH # This is now the absolute path
@@ -31,7 +32,7 @@ def db_session(db_path: str = str(DB_PATH)) -> Generator[sqlite3.Connection, Non
         yield conn
         conn.commit()
     except Exception as e:
-        logger.error(f"Database transaction failed: {e}. Rolling back.", exc_info=True)
+        AuditLogger.log_sync(f"Database transaction failed: {e}. Rolling back.", level=logging.ERROR)
         conn.rollback()
         raise
     finally:
@@ -67,9 +68,9 @@ class Database:
                 with open(self.schema_path, 'r') as f:
                     schema_sql = f.read()
                 conn.executescript(schema_sql)
-            logger.info(f"Schema initialized successfully for database: {db_to_init}")
+            AuditLogger.log_sync(f"Schema initialized successfully for database: {db_to_init}")
         except Exception as e:
-            logger.critical(f"Failed to initialize schema for {self.db_path}: {e}", exc_info=True)
+            AuditLogger.log_sync(f"Failed to initialize schema for {self.db_path}: {e}", level=logging.CRITICAL)
             raise
 
     @staticmethod
@@ -92,15 +93,15 @@ class Database:
 
     @staticmethod
     def fetch_all(conn: sqlite3.Connection, query: str, params=()):
-        logger.debug(f"Executing query: {query} with params: {params}")
+        AuditLogger.log_sync(f"Executing query: {query} with params: {params}", level=logging.DEBUG)
         cur = conn.cursor()
         cur.execute(query, params)
         rows = cur.fetchall()
-        logger.debug(f"Fetched rows: {rows}")
+        AuditLogger.log_sync(f"Fetched rows: {rows}", level=logging.DEBUG)
         try:
             return [dict(row) for row in rows]
         except Exception as e:
-            logger.error(f"Error converting rows to dict: {e}", exc_info=True)
+            AuditLogger.log_sync(f"Error converting rows to dict: {e}", level=logging.ERROR)
             raise
 
     @staticmethod

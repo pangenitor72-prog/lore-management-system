@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 import json
 import sqlite3
-import logging
+from src.audit_log import AuditLogger
+import logging # For level constants
 import os # For M5 environment check
 from typing import Optional
 
@@ -20,9 +21,9 @@ from src.models import (
     ContradictionSeverity
 )
 
-logger = logging.getLogger("lms_contradiction_service")
 
-router = APIRouter()
+
+router = APIRouter(prefix="/api")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / 'src' / 'templates')) # M7: Standardize template path
@@ -64,10 +65,10 @@ async def seed_contradictions(db: sqlite3.Connection = Depends(get_db)):
                 ),
                 commit=True
             )
-        logger.info("Inserted 10 test contradictions.")
+        await AuditLogger.log("Inserted 10 test contradictions.")
         return {"status": "ok", "message": "Inserted 10 test contradictions"}
     except Exception as e:
-        logger.error(f"Seeding error: {e}", exc_info=True)
+        await AuditLogger.log(f"Seeding error: {e}", level=logging.ERROR)
         raise HTTPException(status_code=500, detail=str(e))
     # --- TRIAGE QUEUE ENDPOINTS ---
 
@@ -102,7 +103,7 @@ async def create_contradiction(contradiction_data: ContradictionCreate, db: sqli
         # Fetch the created contradiction to return it
         created = await run_in_threadpool(Database.fetch_one, db, "SELECT * FROM contradictions WHERE id = ?", (new_id,))
         if not created:
-            logger.error(f"Failed to retrieve contradiction after creation for ID: {new_id}")
+            await AuditLogger.log(f"Failed to retrieve contradiction after creation for ID: {new_id}", level=logging.ERROR)
             raise HTTPException(status_code=500, detail="Failed to retrieve contradiction after creation.")
 
         response_data = dict(created)
@@ -111,12 +112,12 @@ async def create_contradiction(contradiction_data: ContradictionCreate, db: sqli
         return ContradictionResponse(**response_data)
 
     except sqlite3.IntegrityError as e:
-        logger.warning(f"Database integrity error when creating contradiction: {e}", exc_info=True)
+        await AuditLogger.log(f"Database integrity error when creating contradiction: {e}", level=logging.WARNING)
         if "UNIQUE constraint failed: contradictions.contradiction_id" in str(e):
             raise HTTPException(status_code=409, detail=f"Contradiction ID already exists: {contradiction_data.contradiction_id}")
         raise HTTPException(status_code=500, detail=f"Database integrity error: {e}")
     except Exception as e:
-        logger.exception(f"Failed to create contradiction: {e}")
+        await AuditLogger.log(f"Failed to create contradiction: {e}", level=logging.ERROR)
         raise HTTPException(status_code=500, detail=f"Failed to create contradiction: {e}")
 
 
@@ -232,6 +233,84 @@ async def get_contradiction_details(contradiction_id: str, db: sqlite3.Connectio
     
     return ContradictionWithAnalysis(contradiction=contradiction, analysis=analysis)
 
+# --- TRIAGE ACTION ENDPOINTS (Module 2 UI) ---
+
+@router.post("/contradictions/{contradiction_id}/resolve", response_model=ContradictionResponse)
+async def resolve_contradiction(
+    contradiction_id: str,
+    body: dict,
+    db: sqlite3.Connection = Depends(get_db)
+):
+    """Mark contradiction as RESOLVED with user notes."""
+    user = body.get("user", "Unknown")
+    notes = body.get("notes", "")
+    
+    # Use the existing helper function wrapped in threadpool
+    success = await run_in_threadpool(set_resolved, contradiction_id, user, notes, db)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Contradiction not found: {contradiction_id}")
+    
+    # Return updated contradiction
+    return await get_contradiction_response(contradiction_id, db)
+
+
+@router.post("/contradictions/{contradiction_id}/dismiss", response_model=ContradictionResponse)
+async def dismiss_contradiction(
+    contradiction_id: str,
+    body: dict,
+    db: sqlite3.Connection = Depends(get_db)
+):
+    """Mark contradiction as DISMISSED with user notes."""
+    user = body.get("user", "Unknown")
+    notes = body.get("notes", "")
+    
+    success = await run_in_threadpool(set_dismissed, contradiction_id, user, notes, db)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Contradiction not found: {contradiction_id}")
+    
+    return await get_contradiction_response(contradiction_id, db)
+
+
+@router.post("/contradictions/{contradiction_id}/review", response_model=ContradictionResponse)
+async def mark_in_review(
+    contradiction_id: str,
+    db: sqlite3.Connection = Depends(get_db)
+):
+    """Mark contradiction as IN_REVIEW (no user/notes required)."""
+    # JavaScript sends no body for this endpoint
+    success = await run_in_threadpool(set_in_review, contradiction_id, "System", db)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Contradiction not found: {contradiction_id}")
+    
+    return await get_contradiction_response(contradiction_id, db)
+
+
+# Helper to build ContradictionResponse
+async def get_contradiction_response(contradiction_id: str, db: sqlite3.Connection) -> ContradictionResponse:
+    """Fetch full contradiction data and return as ContradictionResponse."""
+    contradiction_dict = await run_in_threadpool(
+        Database.fetch_one, db,
+        "SELECT * FROM contradictions WHERE contradiction_id = ?",
+        (contradiction_id,)
+    )
+    
+    if not contradiction_dict:
+        raise HTTPException(status_code=404, detail=f"Contradiction not found: {contradiction_id}")
+    
+    entity_ids_rows = await run_in_threadpool(
+        Database.fetch_all, db,
+        "SELECT canon_id FROM contradiction_entities WHERE contradiction_id = ?",
+        (contradiction_id,)
+    )
+    
+    data = dict(contradiction_dict)
+    data['evidence'] = json.loads(data['evidence']) if data['evidence'] else {}
+    data['entity_ids'] = [row['canon_id'] for row in entity_ids_rows]
+    
+    return ContradictionResponse(**data)
 
 @router.patch("/contradictions/{contradiction_id}/status", response_model=ContradictionResponse)
 async def update_contradiction_status(contradiction_id: str, new_status_data: dict, db: sqlite3.Connection = Depends(get_db)):
@@ -292,7 +371,7 @@ async def add_triage_analysis(contradiction_id: str, analysis_data: TriageAnalys
 
         analysis_dict = await run_in_threadpool(Database.fetch_one, db, "SELECT * FROM triage_analysis WHERE id = ?", (new_id,))
         if not analysis_dict:
-            logger.error(f"Failed to retrieve analysis after creation for ID: {new_id}")
+            await AuditLogger.log(f"Failed to retrieve analysis after creation for ID: {new_id}", level=logging.ERROR)
             raise HTTPException(status_code=500, detail="Failed to retrieve analysis after creation.")
         
         # Explicitly convert confidence string to Enum for TriageAnalysisResponse (M3)
@@ -301,12 +380,12 @@ async def add_triage_analysis(contradiction_id: str, analysis_data: TriageAnalys
         return TriageAnalysisResponse(**analysis_data_response)
         
     except sqlite3.IntegrityError as e:
-        logger.warning(f"Database integrity error when adding triage analysis: {e}", exc_info=True)
+        await AuditLogger.log(f"Database integrity error when adding triage analysis: {e}", level=logging.WARNING)
         if "UNIQUE constraint failed: triage_analysis.contradiction_id" in str(e):
             raise HTTPException(status_code=409, detail=f"Analysis already exists for contradiction: {contradiction_id}")
         raise HTTPException(status_code=500, detail=f"Database integrity error: {e}")
     except Exception as e:
-        logger.exception(f"Failed to add analysis: {e}")
+        await AuditLogger.log(f"Failed to add analysis: {e}", level=logging.ERROR)
         raise HTTPException(status_code=500, detail=f"Failed to add analysis: {e}")
 
 
@@ -361,12 +440,12 @@ def set_in_review(contradiction_id: str, user: str, db: sqlite3.Connection) -> b
             commit=True
         )
         if updated.rowcount == 0:
-            logger.warning(f"Contradiction {contradiction_id} not found for 'in_review' update.")
+            AuditLogger.log_sync(f"Contradiction {contradiction_id} not found for 'in_review' update.", level=logging.WARNING)
             return False
-        logger.info(f"Contradiction {contradiction_id} set to IN_REVIEW by {user}.")
+        AuditLogger.log_sync(f"Contradiction {contradiction_id} set to IN_REVIEW by {user}.")
         return True
     except Exception as e:
-        logger.exception(f"Error setting contradiction {contradiction_id} to IN_REVIEW: {e}")
+        AuditLogger.log_sync(f"Error setting contradiction {contradiction_id} to IN_REVIEW: {e}", level=logging.ERROR)
         return False
 
 def set_resolved(contradiction_id: str, user: str, notes: str, db: sqlite3.Connection) -> bool:
@@ -379,12 +458,12 @@ def set_resolved(contradiction_id: str, user: str, notes: str, db: sqlite3.Conne
             commit=True
         )
         if updated.rowcount == 0:
-            logger.warning(f"Contradiction {contradiction_id} not found for 'resolved' update.")
+            AuditLogger.log_sync(f"Contradiction {contradiction_id} not found for 'resolved' update.", level=logging.WARNING)
             return False
-        logger.info(f"Contradiction {contradiction_id} set to RESOLVED by {user}. Notes: {notes}")
+        AuditLogger.log_sync(f"Contradiction {contradiction_id} set to RESOLVED by {user}. Notes: {notes}")
         return True
     except Exception as e:
-        logger.exception(f"Error setting contradiction {contradiction_id} to RESOLVED: {e}")
+        AuditLogger.log_sync(f"Error setting contradiction {contradiction_id} to RESOLVED: {e}", level=logging.ERROR)
         return False
 
 def set_dismissed(contradiction_id: str, user: str, notes: str, db: sqlite3.Connection) -> bool:
@@ -397,12 +476,12 @@ def set_dismissed(contradiction_id: str, user: str, notes: str, db: sqlite3.Conn
             commit=True
         )
         if updated.rowcount == 0:
-            logger.warning(f"Contradiction {contradiction_id} not found for 'dismissed' update.")
+            AuditLogger.log_sync(f"Contradiction {contradiction_id} not found for 'dismissed' update.", level=logging.WARNING)
             return False
-        logger.info(f"Contradiction {contradiction_id} set to DISMISSED by {user}. Notes: {notes}")
+        AuditLogger.log_sync(f"Contradiction {contradiction_id} set to DISMISSED by {user}. Notes: {notes}")
         return True
     except Exception as e:
-        logger.exception(f"Error setting contradiction {contradiction_id} to DISMISSED: {e}")
+        AuditLogger.log_sync(f"Error setting contradiction {contradiction_id} to DISMISSED: {e}", level=logging.ERROR)
         return False
 
 

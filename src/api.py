@@ -24,8 +24,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 
-# Local Imports - Utils
-from .utils.logging_config import configure_logging
+# Local Imports - Audit
+from .audit_log import AuditLogger
 
 # Local Imports - Database
 from .database import Database, get_db, get_db_connection, db_session
@@ -48,8 +48,6 @@ from .broadcaster import broadcaster
 # Local Imports - Services
 from .contradiction_service import get_router as get_contradiction_router
 
-logger = logging.getLogger("lms_api")
-
 # ============================================================
 # APP LIFESPAN
 # ============================================================
@@ -58,14 +56,21 @@ logger = logging.getLogger("lms_api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # On startup
-    await run_in_threadpool(logger.info, "Application startup...")
-    log_listener = configure_logging()
+    await AuditLogger.log("Application startup...")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key or gemini_key == "YOUR_KEY_HERE":
+        await AuditLogger.log("GEMINI_API_KEY missing — continuing without remote features.", level=logging.WARNING)
+    
+    # Initialize agents here, so we can log
+    app.state.auditor = AuditorAgent(get_db_connection, gemini_key)
+    app.state.query_agent = QueryAgent(get_db_connection, gemini_key)
+    await AuditLogger.log("API: All agents wired.")
+
     # This is the correct place to initialize the database schema
     _ = Database() 
     yield
     # On shutdown
-    await run_in_threadpool(logger.info, "Application shutdown...")
-    log_listener.stop()
+    await AuditLogger.log("Application shutdown...")
 
 # ============================================================
 # CONFIGURATION & INITIALIZATION
@@ -103,22 +108,9 @@ templates = Jinja2Templates(directory=str(BASE_DIR / 'templates'))
 # Mount Static Files
 app.mount(
     "/static",
-    StaticFiles(directory=str(BASE_DIR / "static"))
-
+    StaticFiles(directory=str(BASE_DIR / "static")),
+    name="static"  # ← ADD THIS LINE
 )
-
-# API Key Configuration
-gemini_key = os.getenv("GEMINI_API_KEY")
-if not gemini_key or gemini_key == "YOUR_KEY_HERE":
-    logger.warning("GEMINI_API_KEY missing — continuing without remote features.")
-
-# Agent Initialization
-auditor = AuditorAgent(get_db_connection, gemini_key)
-query_agent = QueryAgent(get_db_connection, gemini_key)
-logger.info("API: All agents wired.")
-
-# WebSocket Connection Management
-# active_connections: List[WebSocket] = [] # No longer needed with broadcaster pattern
 
 @app.websocket("/ws/auditor")
 async def websocket_auditor_endpoint(websocket: WebSocket):
@@ -129,9 +121,9 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
             message = await queue.get()
             await websocket.send_json(message)
     except WebSocketDisconnect:
-        await run_in_threadpool(logger.info, "Auditor WebSocket client disconnected.")
+        await AuditLogger.log("Auditor WebSocket client disconnected.")
     except Exception as e:
-        await run_in_threadpool(logger.error, f"Auditor WebSocket error: {e}", exc_info=True)
+        await AuditLogger.log(f"Auditor WebSocket error: {e}", level=logging.ERROR)
     finally:
         broadcaster.unsubscribe("auditor_events", queue)
         await websocket.close()
@@ -162,30 +154,30 @@ async def create_entity(entity_data: EntityCreate, db: sqlite3.Connection = Depe
 
     try:
         # Use a single transaction for all writes
-        def _create_entity_db():
-            with db_session() as conn:
-                Database.execute(conn, """
-                    INSERT INTO entities (canon_id, entity_type, canonical_name,
-                                          approval_status, confidence_level,
-                                          party_knowledge, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    canon_id, entity_data.entity_type.value, entity_data.canonical_name,
-                    entity_data.approval_status.value, entity_data.confidence_level.value,
-                    entity_data.party_knowledge.value, created_at, created_at
-                ))
-                for alias in entity_data.aliases:
-                    Database.execute(conn, "INSERT INTO aliases (canon_id, alias) VALUES (?, ?)", (canon_id, alias))
-                for key, value in entity_data.approved_fields.items():
-                    Database.execute(conn, "INSERT INTO approved_fields (canon_id, field_key, field_value) VALUES (?, ?, ?)", (canon_id, key, json.dumps(value)))
+        def _create_entity_db(conn: sqlite3.Connection):
+            # Use the passed-in connection for all writes
+            Database.execute(conn, """
+                INSERT INTO entities (canon_id, entity_type, canonical_name,
+                                      approval_status, confidence_level,
+                                      party_knowledge, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                canon_id, entity_data.entity_type.value, entity_data.canonical_name,
+                entity_data.approval_status.value, entity_data.confidence_level.value,
+                entity_data.party_knowledge.value, created_at, created_at
+            ))
+            for alias in entity_data.aliases:
+                Database.execute(conn, "INSERT INTO aliases (canon_id, alias) VALUES (?, ?)", (canon_id, alias))
+            for key, value in entity_data.approved_fields.items():
+                Database.execute(conn, "INSERT INTO approved_fields (canon_id, field_key, field_value) VALUES (?, ?, ?)", (canon_id, key, json.dumps(value)))
         
-        await run_in_threadpool(_create_entity_db)
+        await run_in_threadpool(_create_entity_db, db)
 
         # Correctly await the async get_entity function
         created_entity = await get_entity(canon_id, db=db) 
 
         if not created_entity:
-            await run_in_threadpool(logger.error, f"Failed to retrieve entity after creation for canon_id: {canon_id}")
+            await AuditLogger.log(f"Failed to retrieve entity after creation for canon_id: {canon_id}", level=logging.ERROR)
             raise HTTPException(
                 status_code=500,
                 detail="Failed to retrieve entity after creation."
@@ -193,7 +185,7 @@ async def create_entity(entity_data: EntityCreate, db: sqlite3.Connection = Depe
         return created_entity
 
     except Exception as e:
-        await run_in_threadpool(logger.exception, f"Error in create_entity: {e}")
+        await AuditLogger.log(f"Error in create_entity: {e}", level=logging.ERROR)
         raise HTTPException(status_code=500, detail=f"Failed to create entity: {e}")
 
 
@@ -279,7 +271,7 @@ async def list_entities(
                     key, value = item.split(':::', 1)
                     approved_fields_dict[key] = json.loads(value)
                 except (ValueError, json.JSONDecodeError):
-                    await run_in_threadpool(logger.warning, f"Failed to parse approved_field item '{item}'")
+                    await AuditLogger.log(f"Failed to parse approved_field item '{item}'", level=logging.WARNING)
                     key, value = item.split(':::', 1)
                     approved_fields_dict[key] = value
 
@@ -296,6 +288,11 @@ async def list_entities(
             updated_at=row['updated_at']
         ))
     return result_entities
+
+@router.get("/contradictions", response_class=HTMLResponse)
+async def contradictions_browser(request: Request):
+    """Serve the contradiction triage UI."""
+    return templates.TemplateResponse("contradictions.html", {"request": request})
 
 
 @router.get("/entities/browser", response_class=HTMLResponse)
