@@ -1,0 +1,11 @@
+{
+  "entity_type": "Character",
+  "canonical_name": "The Black King",
+  "aliases": ["The Shadow King", "The King in Black"],
+  "approved_fields": {
+    "title": "The Black King",
+    "description": "A mysterious figure who rules the Shadow Realm."
+  },
+  "confidence_level": "CONFIRMED",
+  "party_knowledge": "KNOWN"
+}

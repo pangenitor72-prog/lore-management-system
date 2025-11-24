@@ -439,45 +439,68 @@
         });
 
         // Handle uploaded files
-        function handleFiles(files) {
+        async function handleFiles(files) {
             if (files.length === 0) return;
 
             // Show queue
             queueDisplay.style.display = 'block';
             queueList.innerHTML = '';
+            
+            // Add a placeholder for the entire batch
+            const queueItem = document.createElement('div');
+            queueItem.className = 'queue-item';
+            queueItem.innerHTML = `
+                <span class="filename">Uploading ${files.length} file(s)...</span>
+                <span class="status processing">UPLOADING...</span>
+            `;
+            queueList.appendChild(queueItem);
 
-            // Process each file
-            Array.from(files).forEach((file, index) => {
-                const queueItem = document.createElement('div');
-                queueItem.className = 'queue-item';
-                queueItem.innerHTML = `
-                    <span class="filename">${file.name}</span>
-                    <span class="status processing">PROCESSING...</span>
-                `;
-                queueList.appendChild(queueItem);
-
-                // Simulate processing (replace with actual backend call)
-                setTimeout(() => {
-                    queueItem.querySelector('.status').textContent = 'COMPLETE';
-                    queueItem.querySelector('.status').classList.remove('processing');
-                    queueItem.querySelector('.status').classList.add('complete');
-
-                    // Show results after all complete
-                    if (index === files.length - 1) {
-                        showResults(files.length);
-                    }
-                }, 1000 + (index * 500));
+            const formData = new FormData();
+            Array.from(files).forEach(file => {
+                formData.append('files', file);
             });
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: 'An unknown error occurred.' }));
+                    throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorData.detail}`);
+                }
+
+                const result = await response.json();
+                console.log('Upload successful:', result);
+
+                // Update UI to show processing status from backend
+                queueItem.querySelector('.filename').textContent = `Batch ID: ${result.batch_id}`;
+                queueItem.querySelector('.status').textContent = result.status.toUpperCase();
+                
+                // For now, we will just show the batch results immediately.
+                // A more advanced implementation would poll a /status/{batch_id} endpoint.
+                showResults(result.files_queued, result.filenames);
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                queueItem.querySelector('.filename').textContent = 'Upload Failed';
+                queueItem.querySelector('.status').textContent = error.message;
+                queueItem.querySelector('.status').style.color = '#a44'; // Use warning color for error
+            }
         }
 
         // Show batch results
-        function showResults(fileCount) {
+        function showResults(fileCount, filenames) {
             batchResults.style.display = 'block';
             
-            // Simulate results (replace with actual data from backend)
+            // Use actual data from backend response
             document.getElementById('filesProcessed').textContent = fileCount;
+            // These are still simulated for now as the backend doesn't provide them yet.
             document.getElementById('entitiesFound').textContent = Math.floor(Math.random() * 200) + 50;
             document.getElementById('contradictionsDetected').textContent = Math.floor(Math.random() * 20);
+
+            // You could also list the filenames in the results area if desired
         }
     </script>
 </body>

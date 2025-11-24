@@ -16,7 +16,7 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import (
     FastAPI, HTTPException, Query, Body, Request,
-    WebSocket, WebSocketDisconnect, status, APIRouter, Depends
+    WebSocket, WebSocketDisconnect, status, APIRouter, Depends, File, UploadFile
 )
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -144,6 +144,48 @@ def root():
 
 
 # ============================================================
+# INGESTION ENDPOINTS
+# ============================================================
+
+@router.post("/upload")
+async def upload_files(files: List[UploadFile] = File(...)):
+    """
+    Accepts a batch of files for processing, saves them to a unique
+    batch directory, and returns a confirmation.
+    """
+    batch_id = f"batch-{uuid.uuid4().hex}"
+    upload_dir = Path("uploads") / batch_id
+    upload_dir.mkdir(parents=True, exist_ok=True) # Create the batch-specific directory
+
+    saved_files = []
+    for file in files:
+        try:
+            file_path = upload_dir / file.filename
+            
+            # Use run_in_threadpool for the blocking I/O operation
+            content = await file.read()
+            await run_in_threadpool(file_path.write_bytes, content)
+            
+            saved_files.append(file.filename)
+        except Exception as e:
+            # Log the error
+            await AuditLogger.log(f"Error saving file {file.filename}: {e}", level=logging.ERROR)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Could not save file: {file.filename}"
+            )
+
+    return {
+        "batch_id": batch_id,
+        "files_queued": len(saved_files),
+        "status": "processing",
+        "filenames": saved_files
+    }
+
+
+
+
+# ============================================================
 # ENTITY ENDPOINTS
 # ============================================================
 
@@ -188,6 +230,17 @@ async def create_entity(entity_data: EntityCreate, db: sqlite3.Connection = Depe
     except Exception as e:
         await AuditLogger.log(f"Error in create_entity: {e}", level=logging.ERROR)
         raise HTTPException(status_code=500, detail=f"Failed to create entity: {e}")
+
+
+
+@router.get("/entities/browser", response_class=HTMLResponse)
+async def entities_browser(request: Request, canon_id: Optional[str] = None):
+    context = {"request": request}
+    template_name = "entities.html"
+    if canon_id:
+        template_name = "entity_detail.html"
+        context["canon_id"] = canon_id
+    return templates.TemplateResponse(template_name, context)
 
 
 @router.get("/entities/{canon_id}", response_model=EntityResponse)
@@ -290,17 +343,6 @@ async def list_entities(
         ))
     return result_entities
 
-
-
-
-@router.get("/entities/browser", response_class=HTMLResponse)
-async def entities_browser(request: Request, canon_id: Optional[str] = None):
-    context = {"request": request}
-    template_name = "entities.html"
-    if canon_id:
-        template_name = "entity_detail.html"
-        context["canon_id"] = canon_id
-    return templates.TemplateResponse(template_name, context)
 
 # ... (rest of the file remains the same, but for brevity, I'm replacing the whole file) ...
 
