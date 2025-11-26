@@ -241,7 +241,7 @@ Every phase builds directly on the one before it.
 # 🔷 IMPLEMENTATION STRATEGY FOR GITHUB
 # ===========================================================
 
-### 🅰 Markdown Roadmap (this file)
+### 🅰 Markdown Roadmap (this file)  
 This is the **single source of truth**.  
 Long-term vision, all phases, full context.
 
@@ -252,7 +252,7 @@ Only the **current active phase** appears on the board:
 - Review  
 - Done  
 
-When a phase is complete, **archive the board** and create a new one.
+Archive and recreate the board each phase.
 
 ### 🅲 GitHub Issues  
 Create issues only from active deliverables.  
