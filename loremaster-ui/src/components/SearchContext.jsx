@@ -1,12 +1,23 @@
 import React from 'react';
 
-function SearchContext({ data }) {
+const SearchContext = () => {
   return (
-    <div className="context-placeholder search-context">
-      <h2>Search Context</h2>
-      <p>Data: {JSON.stringify(data)}</p>
+    <div className="search-context">
+      <h2>Search Entities</h2>
+      <div className="filter-bar">
+        <p>Filters will go here</p>
+      </div>
+      <div className="results-header">
+        <p>Found 0 entities</p>
+      </div>
+      <div className="results-grid">
+        <p>Entity cards will be displayed here</p>
+      </div>
+      <div className="bulk-action-bar">
+        <p>Bulk actions will go here</p>
+      </div>
     </div>
   );
-}
+};
 
 export default SearchContext;

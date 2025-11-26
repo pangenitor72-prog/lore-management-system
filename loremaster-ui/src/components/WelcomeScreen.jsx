@@ -1,12 +1,13 @@
 import React from 'react';
 
-function WelcomeScreen() {
+const WelcomeScreen = () => {
   return (
     <div className="welcome-screen">
-      <h1>LoreMaster LMS</h1>
-      <p>Your epic campaign deserves epic organization.</p>
+      <h2>Welcome to the LoreMaster UI</h2>
+      <p>Your journey to manage the chronicles begins here.</p>
+      <p>Ask me anything or upload your lore files.</p>
     </div>
   );
-}
+};
 
 export default WelcomeScreen;

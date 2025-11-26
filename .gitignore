@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 venv/
 __pycache__/
 *.pyc
@@ -51,3 +51,13 @@ docs/tokens/
 audit/
 *.db-shm
 *.db-wal
+
+# Untracked files
+loremaster-ui-backup/
+backups/
+uploads/
+New Text Document.txt
+
+# Gemini-specific
+.gemini/
+*.gemini.bak

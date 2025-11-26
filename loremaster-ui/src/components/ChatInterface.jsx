@@ -2,13 +2,13 @@ import React from 'react';
 import MessageHistory from './MessageHistory';
 import InputArea from './InputArea';
 
-function ChatInterface({ messages, onSendMessage }) {
+const ChatInterface = () => {
   return (
     <div className="chat-interface">
-      <MessageHistory messages={messages} />
-      <InputArea onSendMessage={onSendMessage} />
+      <MessageHistory />
+      <InputArea />
     </div>
   );
-}
+};
 
 export default ChatInterface;

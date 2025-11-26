@@ -1,155 +1,130 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import './App.css';
+import React, { useState, useCallback, useEffect } from 'react';
 import ChatInterface from './components/ChatInterface';
 import WelcomeScreen from './components/WelcomeScreen';
 import UploadContext from './components/UploadContext';
 import SearchContext from './components/SearchContext';
-import ContradictionContext from './components/ContradictionContext';
 import EntityDetailContext from './components/EntityDetailContext';
-import CanonDecisionContext from './components/CanonDecisionContext';
-import DashboardContext from './components/DashboardContext';
-import QuickActionsBar from './components/QuickActionsBar'; // Import QuickActionsBar
-import ActionButton from './components/ActionButton'; // Import ActionButton
+import ContradictionContext from './components/ContradictionContext';
+import { useWebSocket } from './contexts/WebSocketContext'; // Import useWebSocket
 
 function App() {
-  const [currentContext, setCurrentContext] = useState(null);
-  const [contextData, setContextData] = useState(null);
-  const [messages, setMessages] = useState([
-    { sender: 'gemini', text: "Welcome to your Lore Management System, Jim. I'm here to help organize 30 years of campaign history. Let's start by uploading some files." },
-  ]);
-  const [availableActions, setAvailableActions] = useState([]);
+  const { sendMessage } = useWebSocket();
+  const [context, setContext] = useState('welcome'); // Default context
+  const [actionHistory, setActionHistory] = useState([]);
   const [canUndo, setCanUndo] = useState(false);
-  const ws = useRef(null);
 
-  const sendMessageToGemini = useCallback((message) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify(message));
-    } else {
-      console.warn('WebSocket not connected.');
-      // Optionally, queue messages or show an error to the user
-    }
+  // Function to record actions
+  const recordAction = useCallback((actionType, beforeState, description) => {
+    setActionHistory((prevHistory) => {
+      const newHistory = [...prevHistory, { type: actionType, before: beforeState, description, timestamp: Date.now() }];
+      if (newHistory.length > 10) { // Keep only last 10 actions
+        return newHistory.slice(newHistory.length - 10);
+      }
+      return newHistory;
+    });
   }, []);
 
-  const handleSendMessage = (text) => {
-    setMessages((prevMessages) => [...prevMessages, { sender: 'user', text }]);
-    sendMessageToGemini({
-      type: 'user_message',
-      text: text,
-      current_context: currentContext,
-      current_state: {} // TODO: Populate current state
-    });
-  };
-
-  const handleActionClick = (actionId) => {
-    // For now, only handle the undo action
-    if (actionId === 'undo') {
-      sendMessageToGemini({
-        type: 'action',
-        action_id: 'undo',
-        params: {} // Undo typically doesn't need params from frontend
-      });
-      setMessages((prevMessages) => [...prevMessages, { sender: 'user', text: "Undo last action" }]);
-    }
-    // TODO: Handle other actions based on actionId
-  };
-
   useEffect(() => {
-    const connectWs = () => {
-      ws.current = new WebSocket('ws://localhost:8000/ws/gemini');
+    setCanUndo(actionHistory.length > 0);
+  }, [actionHistory]);
 
-      ws.current.onopen = () => {
-        console.log('WebSocket Connected');
-        // Initial message or state sync could go here
-      };
+  // Function to perform undo
+  const handleUndo = useCallback(async () => {
+    if (!canUndo) return;
 
-      ws.current.onmessage = (event) => {
-        const response = JSON.parse(event.data);
-        console.log('Received from Gemini:', response);
+    const lastAction = actionHistory[actionHistory.length - 1];
+    // Call backend to restore state
+    try {
+      // Assuming a REST API for undo, will need to confirm with backend spec
+      const response = await fetch('/api/undo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(lastAction),
+      });
 
-        if (response.text) {
-          setMessages((prevMessages) => [...prevMessages, { sender: 'gemini', text: response.text }]);
-        }
-        
-        if (response.context) {
-          setCurrentContext(response.context);
-          setContextData(response.data);
-        }
+      if (!response.ok) {
+        throw new Error(`Undo failed: ${response.status}`);
+      }
 
-        if (response.actions) {
-          setAvailableActions(response.actions);
-          // Check if undo action is available and update canUndo state
-          const undoAction = response.actions.find(action => action.id === 'undo');
-          setCanUndo(!!undoAction);
-        }
-      };
+      const result = await response.json();
+      if (result.success) {
+        setActionHistory((prevHistory) => prevHistory.slice(0, prevHistory.length - 1)); // Remove last action
+        // Here you would typically trigger a refresh of the UI state based on the restored backend state
+        // For now, we'll just log and potentially change context if needed
+        console.log('Undo successful:', result.restored_state);
+        // Example: if undoing an upload, maybe go back to welcome screen or show upload context
+        // setContext('welcome');
+      } else {
+        console.error('Undo was not successful:', result);
+      }
+    } catch (error) {
+      console.error('Error during undo:', error);
+      alert(`Undo failed: ${error.message}`);
+    }
+  }, [actionHistory, canUndo]);
 
-      ws.current.onclose = (event) => {
-        console.log('WebSocket Disconnected:', event);
-        // Attempt to reconnect after a delay
-        setTimeout(connectWs, 3000);
-      };
-
-      ws.current.onerror = (error) => {
-        console.error('WebSocket Error:', error);
-        ws.current.close(); // Close to trigger onclose and reconnect logic
-      };
-    };
-
-    connectWs();
-
-    return () => {
-      if (ws.current) {
-        ws.current.close();
+  // Keyboard shortcut for undo (Ctrl+Z)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.key === 'z') {
+        event.preventDefault(); // Prevent browser undo
+        handleUndo();
       }
     };
-  }, [sendMessageToGemini]);
 
-  const ContextIndicator = () => (
-    <div className="context-indicator">
-      <span>Context: {currentContext || 'Welcome'}</span>
-    </div>
-  );
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleUndo]);
 
-  const StatusCorner = () => (
-    <div className="status-corner">
-      <span>Status: OK</span>
-    </div>
-  );
 
-  const DynamicCanvas = ({ context, data }) => {
-    let content;
+  // This will later be driven by WebSocket messages
+  const renderDynamicContent = () => {
     switch (context) {
+      case 'welcome':
+        return <WelcomeScreen />;
       case 'upload':
-        content = <UploadContext data={data} setCurrentContext={setCurrentContext} />;
-        break;
+        return <UploadContext />;
       case 'search':
-        content = <SearchContext data={data} />;
-        break;
-      case 'contradiction':
-        content = <ContradictionContext data={data} />;
-        break;
+        return <SearchContext />;
       case 'entity_detail':
-        content = <EntityDetailContext data={data} />;
-        break;
-      case 'canon_decision':
-        content = <CanonDecisionContext data={data} />;
-        break;
-      case 'dashboard':
-        content = <DashboardContext data={data} />;
-        break;
+        return <EntityDetailContext />;
+      case 'contradiction':
+        return <ContradictionContext />;
       default:
-        content = <WelcomeScreen />;
+        return <WelcomeScreen />;
     }
-    return <div className="dynamic-canvas">{content}</div>;
   };
 
   return (
     <div className="app-container">
-      <QuickActionsBar canUndo={canUndo} actions={availableActions} onActionClick={handleActionClick} />
-      <ContextIndicator currentContext={currentContext} />
-      <StatusCorner />
-      <DynamicCanvas context={currentContext} data={contextData} />
-      <ChatInterface messages={messages} onSendMessage={handleSendMessage} />
+      {/* Placeholder Undo Button */}
+      <button
+        onClick={handleUndo}
+        disabled={!canUndo}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          padding: '8px 15px',
+          backgroundColor: '#8b7355',
+          color: '#f4e8d0',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          opacity: canUndo ? 1 : 0.5,
+        }}
+      >
+        Undo (Ctrl+Z)
+      </button>
+
+      <div className="dynamic-canvas">
+        {renderDynamicContent()}
+      </div>
+      <ChatInterface />
     </div>
   );
 }
