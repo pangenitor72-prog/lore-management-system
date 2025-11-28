@@ -28,8 +28,11 @@ from pydantic import BaseModel
 # Local Imports - Audit
 from .audit_log import AuditLogger
 
-# Local Imports - Database
+# Local Imports - Database (Legacy SQLite - kept for existing query logic)
 from .database import Database, get_db, get_db_connection, db_session
+
+# Local Imports - Database (New Neo4j adapter)
+from .neo4j_adapter import Neo4jDatabase
 
 # Local Imports - Models
 from .models import (
@@ -62,15 +65,26 @@ async def lifespan(app: FastAPI):
     if not gemini_key or gemini_key == "YOUR_KEY_HERE":
         await AuditLogger.log("GEMINI_API_KEY missing — continuing without remote features.", level=logging.WARNING)
     
+    # Initialize Neo4j Database (new graph layer)
+    neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+    neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
+    neo4j_auth = (neo4j_user, neo4j_password)
+    
+    app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_auth)
+    await app.state.neo4j_db.connect()
+    await AuditLogger.log(f"Neo4j connected: {neo4j_uri}")
+    
     # Initialize agents here, so we can log
-    app.state.auditor = AuditorAgent(get_db_connection, gemini_key)
-    app.state.query_agent = QueryAgent(get_db_connection, gemini_key)
-    await AuditLogger.log("API: All agents wired.")
+    app.state.auditor = AuditorAgent(app.state.neo4j_db, gemini_key)
+    app.state.query_agent = QueryAgent(app.state.neo4j_db, gemini_key)
+    await AuditLogger.log("API: All agents wired (Neo4j + Gemini RAG).")
 
-    # This is the correct place to initialize the database schema
+    # Legacy SQLite schema initialization (kept for existing endpoints)
     _ = Database() 
     yield
     # On shutdown
+    await app.state.neo4j_db.close()
     await AuditLogger.log("Application shutdown...")
 
 # ============================================================

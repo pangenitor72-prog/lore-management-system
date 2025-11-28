@@ -1,26 +1,39 @@
-# src/query_agent.py (COMPLETE, FINAL VERSION)
+# src/query_agent.py - Refactored for Neo4j
+"""
+Query Agent - RAG-powered Q&A over the Neo4j knowledge graph.
+Uses graph traversal to retrieve relevant context before querying Gemini.
+"""
 from __future__ import annotations
-from typing import Dict, List, Any, Callable
+from typing import Dict, List, Any
+import json
 import google.generativeai as genai
-from .audit_log import AuditLogger
-import logging # For level constants
-import sqlite3 # Import for type hinting Callable
-from fastapi import WebSocket, WebSocketDisconnect # <-- ESSENTIAL IMPORT
-from fastapi.concurrency import run_in_threadpool # For offloading blocking calls
-import asyncio # For async operations
-from .broadcaster import broadcaster # Import the global broadcaster instance
+from audit_log import AuditLogger
+import logging
+from fastapi import WebSocket, WebSocketDisconnect
+import asyncio
+from .broadcaster import broadcaster
 from datetime import datetime
-
+from .neo4j_adapter import Neo4jDatabase
 
 
 class QueryAgent:
-    def __init__(self, get_db_connection_func: Callable[[], sqlite3.Connection], gemini_api_key: str): # Updated db parameter
-        self.get_db_connection = get_db_connection_func # Store the connection function
-        # Configure Gemini (safe to call again, as it's idempotent)
+    """RAG-powered query agent using Neo4j for context retrieval."""
+    
+    # Filler words/phrases to strip from queries before searching
+    FILLER_PHRASES = [
+        "tell me about", "what do you know about", "who is", "who are", 
+        "what is", "what are", "where is", "where are", "can you tell me about",
+        "i want to know about", "describe", "explain", "give me info on",
+        "give me information on", "what can you tell me about", "summarize",
+        "summary of", "details about", "details on", "info on", "info about"
+    ]
+    
+    def __init__(self, neo4j_db: Neo4jDatabase, gemini_api_key: str):
+        self.db = neo4j_db
         genai.configure(api_key=gemini_api_key)
-
-        # Use Pro for complex Q&A
-        self.pro_model = genai.GenerativeModel("gemini-2.5-flash") # <-- FINAL MODEL FIX
+        
+        # Use Flash for fast Q&A
+        self.pro_model = genai.GenerativeModel("gemini-2.5-flash")
         
         # Define the system prompt for the chat
         self.system_prompt = """
@@ -33,34 +46,323 @@ When answering, be:
 1. **Sincere:** Direct and honest about the data.
 2. **Intelligent:** Synthesize information, don't just list facts.
 3. **Unvarnished:** Do not use flowery or evasive language. Get to the point.
+
+You will be provided with CONTEXT from the knowledge graph before each question.
+Use this context to ground your answers in the canonical lore.
 """
         # Start a new chat session with the system prompt
         self.chat = self.pro_model.start_chat(
             history=[
                 {'role': 'user', 'parts': [self.system_prompt]},
-                {'role': 'model', 'parts': ["Understood. I am the LMS Query Agent."]}
+                {'role': 'model', 'parts': ["Understood. I am the LMS Query Agent. I will only answer based on the lore context provided."]}
             ]
         )
-        AuditLogger.log_sync("QueryAgent: AI model and chat session initialized.")
+        AuditLogger.log_sync("QueryAgent: Neo4j + Gemini RAG mode initialized.")
 
-    def ask(self, query: str) -> str:
+    async def extract_search_entities(self, user_query: str) -> List[str]:
         """
-        Sends a user's query to the Gemini chat session and returns the text response.
-        This is a BLOCKING call to the LLM.
+        Agentic Entity Extraction: Use Gemini to intelligently extract named entities
+        from the user's query before searching the graph.
+        
+        This handles:
+        - Complex phrasing ("What happened when the dark one attacked the village?")
+        - Slang and typos (Gemini can normalize these)
+        - Multi-entity queries ("Tell me about Kael and the Vulture Clan")
+        
+        Returns a list of clean entity names to search for.
         """
-        AuditLogger.log_sync(f"QueryAgent received: '{query}'")
+        extraction_prompt = f"""You are an entity extractor for a fantasy/tabletop RPG knowledge base.
+Extract the key NAMED ENTITIES (Characters, Factions, Items, Locations, Concepts) from this question.
+
+Rules:
+1. Return ONLY a JSON array of strings, e.g. ["Kael", "Vulture Clan", "Blade of Whispers"]
+2. Extract proper nouns and important concepts the user is asking about
+3. Do NOT include generic words like "person", "thing", "place"
+4. If no entities found, return []
+5. Correct obvious typos if you can infer the intended entity
+6. Keep multi-word names together (e.g. "Vulture Clan" not "Vulture", "Clan")
+
+Question: "{user_query}"
+
+JSON array of entities:"""
+
         try:
-            # We don't need to re-send the system prompt; the chat session is persistent
-            response = self.chat.send_message(query)
-            return response.text
-        except Exception as e:
-            AuditLogger.log_sync(f"QueryAgent failed to get response: {e}", level=logging.ERROR)
-            return "An error occurred while processing your query. Please check the API logs."
+            # Use a fresh model call (not the chat) for extraction
+            response = self.pro_model.generate_content(
+                extraction_prompt,
+                generation_config={"temperature": 0.1, "max_output_tokens": 256}
+            )
             
+            # Parse the JSON response
+            cleaned_json = response.text.replace("```json", "").replace("```", "").strip()
+            entities = json.loads(cleaned_json)
+            
+            if isinstance(entities, list):
+                # Filter out empty strings and very short entities
+                entities = [e.strip() for e in entities if isinstance(e, str) and len(e.strip()) > 1]
+                await AuditLogger.log(f"Agentic extraction found entities: {entities}")
+                return entities
+            
+            return []
+        except Exception as e:
+            await AuditLogger.log(f"Agentic entity extraction failed: {e}", level=logging.WARNING)
+            return []  # Graceful fallback - continue with other strategies
+
+    def _strip_filler_words(self, query: str) -> str:
+        """
+        Strips common conversational filler phrases from the query.
+        Returns a cleaner search string.
+        """
+        cleaned = query.lower().strip()
+        
+        # Remove filler phrases (sorted by length, longest first to avoid partial matches)
+        for phrase in sorted(self.FILLER_PHRASES, key=len, reverse=True):
+            if cleaned.startswith(phrase):
+                cleaned = cleaned[len(phrase):].strip()
+                break  # Only remove one filler phrase
+        
+        # Remove trailing punctuation
+        cleaned = cleaned.rstrip("?.!")
+        
+        return cleaned.strip()
+
+    def _extract_search_terms(self, query: str) -> List[str]:
+        """
+        Extracts meaningful search terms from a query.
+        Strips filler words and splits into individual terms + multi-word phrases.
+        """
+        cleaned = self._strip_filler_words(query)
+        
+        # Common stop words to filter out
+        stop_words = {
+            "what", "who", "where", "when", "how", "why", "is", "are", "was", "were",
+            "the", "a", "an", "of", "to", "in", "for", "about", "tell", "me", "and",
+            "their", "they", "them", "his", "her", "its", "with", "from", "this", "that"
+        }
+        
+        terms = []
+        
+        # First, try the entire cleaned phrase (for multi-word entities like "Vulture Clan")
+        if len(cleaned) > 2:
+            terms.append(cleaned)
+        
+        # Then add individual words that aren't stop words
+        words = cleaned.split()
+        for word in words:
+            word_clean = word.strip(",.!?;:'\"")
+            if word_clean.lower() not in stop_words and len(word_clean) > 2:
+                if word_clean not in terms:
+                    terms.append(word_clean)
+        
+        return terms[:5]  # Limit to 5 terms
+
+    async def search_nodes(self, term: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Search for nodes in the graph that match the search term.
+        Case-insensitive search across name, content, and description properties.
+        """
+        cypher = """
+        MATCH (n)
+        WHERE toLower(n.name) CONTAINS toLower($term) 
+           OR toLower(n.canonical_name) CONTAINS toLower($term)
+           OR toLower(n.description) CONTAINS toLower($term)
+           OR toLower(n.content) CONTAINS toLower($term)
+        RETURN n.name AS name,
+               n.canonical_name AS canonical_name,
+               labels(n)[0] AS type,
+               properties(n) AS properties
+        LIMIT $limit
+        """
+        params = {"term": term, "limit": limit}
+        records = await self.db.execute(cypher, params)
+        
+        results = []
+        if records:
+            for record in records:
+                results.append({
+                    "name": record["name"] or record["canonical_name"],
+                    "type": record["type"],
+                    "properties": record["properties"]
+                })
+        return results
+
+    async def get_node_with_neighbors(self, name: str, depth: int = 1) -> Dict[str, Any]:
+        """
+        Retrieve a node and its immediate neighbors from the graph.
+        Case-insensitive matching for robust lookups.
+        """
+        cypher = """
+        MATCH (n)
+        WHERE toLower(n.name) = toLower($name) 
+           OR toLower(n.canonical_name) = toLower($name)
+        OPTIONAL MATCH (n)-[r]-(neighbor)
+        RETURN n.name AS name,
+               labels(n)[0] AS type,
+               properties(n) AS properties,
+               collect(DISTINCT {
+                   relationship: type(r),
+                   neighbor_name: neighbor.name,
+                   neighbor_type: labels(neighbor)[0],
+                   direction: CASE WHEN startNode(r) = n THEN 'outgoing' ELSE 'incoming' END
+               }) AS relationships
+        """
+        params = {"name": name}
+        records = await self.db.execute(cypher, params)
+        
+        if records and len(records) > 0:
+            record = records[0]
+            return {
+                "name": record["name"],
+                "type": record["type"],
+                "properties": record["properties"],
+                "relationships": [r for r in record["relationships"] if r["neighbor_name"]]
+            }
+        return {}
+
+    async def reverse_match_entities(self, message: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Reverse Match Strategy: Find all nodes whose names appear in the user's message.
+        
+        Instead of extracting keywords and searching for them, we ask Neo4j:
+        "Which node names are contained within this message?"
+        
+        Example: "Tell me about the Vulture Clan" will match node "Vulture Clan"
+        because toLower("tell me about the vulture clan") CONTAINS toLower("Vulture Clan")
+        """
+        cypher = """
+        MATCH (n)
+        WHERE n.name IS NOT NULL 
+          AND size(n.name) > 2
+          AND toLower($message) CONTAINS toLower(n.name)
+        RETURN n.name AS name,
+               labels(n)[0] AS type,
+               properties(n) AS properties,
+               size(n.name) AS name_length
+        ORDER BY name_length DESC
+        LIMIT $limit
+        """
+        params = {"message": message, "limit": limit}
+        records = await self.db.execute(cypher, params)
+        
+        results = []
+        if records:
+            for record in records:
+                results.append({
+                    "name": record["name"],
+                    "type": record["type"],
+                    "properties": record["properties"]
+                })
+        return results
+
+    async def retrieve_context(self, query: str) -> str:
+        """
+        Retrieves relevant context from the Neo4j graph using a multi-strategy approach:
+        
+        1. AGENTIC EXTRACTION (Primary): Use Gemini to extract entities from the query
+        2. REVERSE MATCH (Fallback): Find nodes whose names appear in the raw query
+        3. KEYWORD SEARCH (Last Resort): Traditional keyword-based search
+        """
+        await AuditLogger.log(f"Retrieving context for: '{query}'")
+        
+        context_parts = []
+        seen_entities = set()
+        
+        # Helper to fetch and format entity context
+        async def fetch_entity_context(entity_name: str):
+            if entity_name and entity_name.lower() not in seen_entities:
+                seen_entities.add(entity_name.lower())
+                full_context = await self.get_node_with_neighbors(entity_name)
+                if full_context:
+                    context_parts.append(self._format_entity_context(full_context))
+        
+        # === STRATEGY 1: Agentic Entity Extraction (Primary) ===
+        # Use Gemini to intelligently extract entities from complex queries
+        extracted_entities = await self.extract_search_entities(query)
+        
+        if extracted_entities:
+            await AuditLogger.log(f"Strategy 1 (Agentic): Searching for {extracted_entities}")
+            for entity in extracted_entities:
+                # Search for the extracted entity (handles typos, variations)
+                matches = await self.search_nodes(entity, limit=3)
+                for match in matches:
+                    await fetch_entity_context(match["name"])
+        
+        # === STRATEGY 2: Reverse Match (if Strategy 1 found nothing) ===
+        # Find nodes whose names appear within the raw query string
+        if not context_parts:
+            await AuditLogger.log("Strategy 2 (Reverse Match): Checking for node names in query...")
+            matches = await self.reverse_match_entities(query, limit=10)
+            await AuditLogger.log(f"Reverse match found {len(matches)} entities")
+            
+            for match in matches:
+                await fetch_entity_context(match["name"])
+        
+        # === STRATEGY 3: Keyword Search (Last Resort) ===
+        # Traditional keyword extraction and search
+        if not context_parts:
+            await AuditLogger.log("Strategy 3 (Keyword Search): Trying keyword extraction...")
+            search_terms = self._extract_search_terms(query)
+            
+            for term in search_terms:
+                matches = await self.search_nodes(term, limit=5)
+                for match in matches:
+                    await fetch_entity_context(match["name"])
+        
+        if context_parts:
+            context = "=== LORE CONTEXT FROM KNOWLEDGE GRAPH ===\n\n" + "\n\n".join(context_parts)
+        else:
+            context = "=== NO MATCHING LORE FOUND IN KNOWLEDGE GRAPH ==="
+        
+        await AuditLogger.log(f"Retrieved {len(context_parts)} context entries for {len(seen_entities)} unique entities")
+        return context
+
+    def _format_entity_context(self, entity: Dict[str, Any]) -> str:
+        """Formats an entity and its relationships into readable context."""
+        lines = [f"**{entity.get('name', 'Unknown')}** ({entity.get('type', 'Entity')})"]
+        
+        # Add key properties
+        props = entity.get("properties", {})
+        important_keys = ["description", "content", "race", "class", "location", "birth_date", "death_date"]
+        for key in important_keys:
+            if key in props and props[key]:
+                lines.append(f"  - {key}: {props[key]}")
+        
+        # Add relationships
+        relationships = entity.get("relationships", [])
+        if relationships:
+            lines.append("  Relationships:")
+            for rel in relationships[:10]:  # Limit to 10 relationships
+                direction = "→" if rel.get("direction") == "outgoing" else "←"
+                lines.append(f"    {direction} {rel.get('relationship', 'RELATED_TO')} {rel.get('neighbor_name', '?')} ({rel.get('neighbor_type', '?')})")
+        
+        return "\n".join(lines)
+
+    async def ask(self, query: str) -> str:
+        """
+        RAG-powered query: retrieves context from Neo4j, then asks Gemini.
+        """
+        await AuditLogger.log(f"QueryAgent received: '{query}'")
+        
+        try:
+            # Step 1: Retrieve relevant context from the graph
+            context = await self.retrieve_context(query)
+            
+            # Step 2: Build the augmented prompt
+            augmented_prompt = f"{context}\n\n=== USER QUESTION ===\n{query}"
+            
+            # Step 3: Send to Gemini
+            response = self.chat.send_message(augmented_prompt)
+            return response.text
+            
+        except Exception as e:
+            await AuditLogger.log(f"QueryAgent failed: {e}", level=logging.ERROR)
+            return "An error occurred while processing your query. Please check the API logs."
+
     # --- HANDLER REQUIRED BY API.PY ---
     async def handle_websocket(self, websocket: WebSocket, client_id: str):
         """
-        Handles the WebSocket connection for a single client (REQUIRED FOR PHASE IX DASHBOARD).
+        Handles the WebSocket connection for a single client.
+        Now uses async RAG-powered ask method.
         """
         await websocket.accept()
         await AuditLogger.log(f"Client {client_id} connected.")
@@ -70,14 +372,14 @@ When answering, be:
                 # Wait for a message from the client
                 query = await websocket.receive_text()
                 
-                # Use run_in_threadpool to offload the blocking 'ask' method (C1)
-                response = await run_in_threadpool(self.ask, query)
+                # Use the async ask method (now with RAG)
+                response = await self.ask(query)
                 
                 # Publish event for query completion
                 event_data = {
                     "type": "query_completed",
                     "query": query,
-                    "response_snippet": response[:200] + "..." if len(response) > 200 else response, # Snippet for brevity
+                    "response_snippet": response[:200] + "..." if len(response) > 200 else response,
                     "timestamp": datetime.now().isoformat()
                 }
                 asyncio.create_task(broadcaster.publish("query_events", event_data))

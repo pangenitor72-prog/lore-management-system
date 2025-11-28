@@ -24,6 +24,7 @@ build/
 *.sqlite3
 data/*.db
 data/*.sqlite
+neo4j/
 
 # IDE
 .vscode/

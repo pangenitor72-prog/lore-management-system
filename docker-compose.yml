@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5.15.0
+    container_name: airpg_brain
+    ports:
+      - "7474:7474" # Browser Interface (HTTP)
+      - "7687:7687" # Database Connection (Bolt)
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      # Enable APOC (Essential for complex graph operations)
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+    volumes:
+      - ./neo4j/data:/data
+    restart: unless-stopped

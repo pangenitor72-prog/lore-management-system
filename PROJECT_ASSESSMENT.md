@@ -1,9 +1,21 @@
 # PROJECT ASSESSMENT: Lore Management System (LMS)
 
-## Date of Assessment: 2025-11-26
+## Date of Assessment: 2025-11-28 (Updated)
 
 ## Overall Project Status:
-The project has a robust backend foundation and a clear architectural vision for the frontend. However, the frontend is currently a non-functional shell, and there is a critical missing link in communication between the two layers.
+The project is progressing well toward its ultimate goal: **AIRPG** - an AI-powered text-based RPG where an AI Dungeon Master uses this lore system as its memory.
+
+**Current Focus:** Neo4j integration and agentic query capabilities are now functional. The query layer can intelligently extract entities from natural language and retrieve relevant lore context.
+
+## The Big Picture Vision
+
+```
+AIRPG (The Game) ← uses ← MANTLE (The DM Engine) ← uses ← LMS (The Memory)
+```
+
+- **LMS** = Canonical lore storage (Neo4j graph, World Logic Charter, Gospel Principle)
+- **MANTLE** = AI DM personality and rules (DM Prompt v2.3, soft corralling, audacity rewards)
+- **AIRPG** = The playable AI RPG experience
 
 ---
 
@@ -51,9 +63,39 @@ The project has a robust backend foundation and a clear architectural vision for
 
 ## High-Level Next Steps for Development:
 
-1.  **Critical Backend WebSocket Implementation:** Focus on implementing the `/ws/gemini` endpoint in `src/api.py`.
-2.  **Core Chat Functionality:** Connect the frontend's `ChatInterface` (input and history) to this new backend WebSocket.
-3.  **Dynamic UI Context Management:** Implement the logic for the frontend's `App.jsx` to switch views based on backend directives.
-4.  **Integrate Specific Contexts:** Begin wiring up the UI elements within each context component (e.g., `UploadContext`'s dropzone, `SearchContext`'s filter bar) to their respective backend API endpoints or WebSocket interactions.
+### Immediate (Next Session)
+1. [ ] Fix blocking Gemini calls in `query_agent.py` (wrap in `run_in_threadpool`)
+2. [ ] Fix import inconsistency in `query_agent.py` (use relative import for audit_log)
+
+### Short-Term (LMS Phase XII)
+3. [ ] Polish Streamlit UI for a fun DM experience
+4. [ ] Implement `/ws/gemini` WebSocket endpoint for React frontend
+5. [ ] Add party knowledge filtering to graph queries
+
+### Medium-Term (LMS Phase XV - Pre-AIRPG Bridge)
+6. [ ] Stable JSON API for external clients (AIRPG)
+7. [ ] Session event logging (record what happens during gameplay)
+8. [ ] Timeline-based event storage
+
+### Long-Term (AIRPG Track 2)
+9. [ ] DM Agent v0.1 using MANTLE personality (DM PROMPT v2.3)
+10. [ ] Scene and dialogue generation
+11. [ ] Basic action resolution with Modified Rule of Cool
+
+---
+
+## Technical Status (2025-11-28)
+
+| Component | Status | File(s) |
+|-----------|--------|---------|
+| Neo4j Adapter | ✅ Working | `src/neo4j_adapter.py` |
+| Entity Ingestor | ✅ Working | `src/ingestor.py` |
+| QueryAgent (RAG) | ✅ Enhanced | `src/query_agent.py` - 3-tier agentic retrieval |
+| AuditorAgent | ✅ Working | `src/auditor_agent.py` |
+| Streamlit UI | 🟡 Basic | `app.py` |
+| React UI | ❌ Shell | `loremaster-ui/` |
+| WebSocket `/ws/gemini` | ❌ Missing | Needed in `src/api.py` |
+
+---
 
 This assessment should provide a clear roadmap for any future agent to continue development effectively.
