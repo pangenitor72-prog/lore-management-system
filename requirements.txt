@@ -1,0 +1,12 @@
+streamlit==1.51.0
+streamlit-agraph==0.0.45
+neo4j==6.0.3
+google-generativeai==0.8.5
+python-dotenv==1.2.1
+fastapi==0.121.0
+uvicorn==0.38.0
+pandas==2.3.3
+networkx==3.6
+protobuf==5.29.5
+watchdog==6.0.0
+
