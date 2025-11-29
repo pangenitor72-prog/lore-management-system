@@ -2,6 +2,9 @@ import streamlit as st
 import os
 import sys
 import asyncio
+import json
+import re
+from datetime import datetime
 from dotenv import load_dotenv
 from neo4j import GraphDatabase, AsyncGraphDatabase  # Use sync driver for Streamlit
 from streamlit_agraph import agraph, Node, Edge, Config
@@ -523,6 +526,27 @@ with st.sidebar:
     
     st.divider()
     
+    # Lore Integrity Monitor (Review Queue)
+    if is_connected:
+        try:
+            # Check for pending reviews
+            review_query = """
+            MATCH (r:ReviewQueue {status: 'PENDING'})
+            RETURN count(r) AS pending_count
+            """
+            review_result = run_query(neo4j_driver, review_query)
+            pending_count = review_result[0]['pending_count'] if review_result else 0
+            
+            if pending_count > 0:
+                st.markdown("### 🔍 Lore Integrity")
+                st.warning(f"⚠️ {pending_count} blocked entities need review")
+                if st.button("📋 Open Review Queue"):
+                    st.session_state['show_review_queue'] = True
+        except Exception:
+            pass  # Silently fail if query doesn't work
+    
+    st.divider()
+    
     # Oracle wisdom
     st.markdown("""
     <div class="oracle-quote">
@@ -987,6 +1011,76 @@ elif mode == "📊 Graph Nexus":
                 agraph(nodes=nodes, edges=edges, config=config)
             else:
                 st.info("No data to visualize.")
+
+# ==========================================
+# REVIEW QUEUE MODAL
+# ==========================================
+if st.session_state.get('show_review_queue') and is_connected:
+    st.markdown("---")
+    st.markdown("## 📋 Lore Review Queue")
+    st.markdown("*Entities blocked due to contradictions with existing canon.*")
+    
+    # Fetch pending reviews
+    review_query = """
+    MATCH (r:ReviewQueue {status: 'PENDING'})
+    RETURN r.review_id AS id,
+           r.entity_name AS entity_name,
+           r.entity_type AS entity_type,
+           r.contradiction AS contradiction,
+           r.severity AS severity,
+           r.session_id AS session_id,
+           r.created_at AS created_at
+    ORDER BY r.created_at DESC
+    LIMIT 10
+    """
+    pending_reviews = run_query(neo4j_driver, review_query)
+    
+    if pending_reviews:
+        for review in pending_reviews:
+            with st.container():
+                col1, col2 = st.columns([3, 1])
+                
+                with col1:
+                    st.markdown(f"### {review['entity_name']} ({review['entity_type']})")
+                    st.caption(f"**Conflict:** {review['contradiction']}")
+                    st.caption(f"Severity: `{review['severity']}` | Session: `{review['session_id'][:8]}...`")
+                
+                with col2:
+                    if st.button("✅ Approve", key=f"approve_{review['id']}"):
+                        approve_query = """
+                        MATCH (r:ReviewQueue {review_id: $review_id})
+                        SET r.status = 'APPROVED',
+                            r.approved_at = $now
+                        RETURN r.entity_name AS name
+                        """
+                        run_query(neo4j_driver, approve_query, {
+                            "review_id": review['id'],
+                            "now": datetime.now().isoformat()
+                        })
+                        st.success(f"Approved: {review['entity_name']}")
+                        st.rerun()
+                    
+                    if st.button("❌ Reject", key=f"reject_{review['id']}"):
+                        reject_query = """
+                        MATCH (r:ReviewQueue {review_id: $review_id})
+                        SET r.status = 'REJECTED',
+                            r.rejected_at = $now
+                        RETURN r.entity_name AS name
+                        """
+                        run_query(neo4j_driver, reject_query, {
+                            "review_id": review['id'],
+                            "now": datetime.now().isoformat()
+                        })
+                        st.info(f"Rejected: {review['entity_name']}")
+                        st.rerun()
+                
+                st.markdown("---")
+    else:
+        st.success("✨ No pending reviews. All clear!")
+    
+    if st.button("Close Review Queue"):
+        st.session_state['show_review_queue'] = False
+        st.rerun()
 
 # ==========================================
 # FOOTER

@@ -28,6 +28,7 @@ from src.audit_log import AuditLogger
 
 # Load the DM Prompt from docs
 DM_PROMPT_PATH = Path(__file__).parent.parent / "docs" / "mantle" / "DM PROMPT v2.3"
+WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
 
 def load_system_prompt() -> str:
     """Load the DM system prompt from file."""
@@ -37,6 +38,30 @@ def load_system_prompt() -> str:
         # Fallback minimal prompt if file not found
         return """You are an AI Dungeon Master. Keep the player inside the fiction.
 Never speak for the player. Describe the world and wait for their action."""
+
+def load_worldbuilding_rules() -> str:
+    """Load worldbuilding consistency rules from file."""
+    if os.getenv("ENABLE_WORLDBUILDING_RULES", "true").lower() == "false":
+        return ""
+    
+    if WORLDBUILDING_RULES_PATH.exists():
+        content = WORLDBUILDING_RULES_PATH.read_text(encoding="utf-8")
+        # Extract just the rules section (skip the header and usage notes)
+        lines = content.split("\n")
+        rules_lines = []
+        in_rules = False
+        for line in lines:
+            if line.startswith("## SETTING:"):
+                in_rules = True
+            if line.startswith("## Usage in DMAgent"):
+                break
+            if in_rules:
+                rules_lines.append(line)
+        
+        if rules_lines:
+            return "\n=== WORLDBUILDING CONSISTENCY RULES ===\n" + "\n".join(rules_lines)
+    
+    return ""
 
 
 class DMAgent:
@@ -64,8 +89,8 @@ class DMAgent:
         genai.configure(api_key=self.api_key)
         self.model = genai.GenerativeModel(self.model_name)
         
-        # Load system prompt
-        self.system_prompt = load_system_prompt()
+        # Load system prompt with worldbuilding rules
+        self.system_prompt = load_system_prompt() + load_worldbuilding_rules()
         
         # Session and Query Agent (initialized per-session)
         self.session: Optional[GameSession] = None
