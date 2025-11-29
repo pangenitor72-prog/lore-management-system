@@ -1,23 +1,29 @@
-# src/query_agent.py - Refactored for Neo4j
+# src/query_agent.py - Refactored for Neo4j with Vector Search
 """
 Query Agent - RAG-powered Q&A over the Neo4j knowledge graph.
-Uses graph traversal to retrieve relevant context before querying Gemini.
+Uses 4-tier retrieval strategy:
+  1. Agentic Entity Extraction (Gemini)
+  2. Vector Similarity Search (semantic)
+  3. Reverse Match (node names in query)
+  4. Keyword Search (fallback)
 """
 from __future__ import annotations
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import json
 import google.generativeai as genai
-from audit_log import AuditLogger
+from .audit_log import AuditLogger
 import logging
 from fastapi import WebSocket, WebSocketDisconnect
+from starlette.concurrency import run_in_threadpool
 import asyncio
 from .broadcaster import broadcaster
 from datetime import datetime
 from .neo4j_adapter import Neo4jDatabase
+from .embedding_service import EmbeddingService
 
 
 class QueryAgent:
-    """RAG-powered query agent using Neo4j for context retrieval."""
+    """RAG-powered query agent using Neo4j for context retrieval with vector search."""
     
     # Filler words/phrases to strip from queries before searching
     FILLER_PHRASES = [
@@ -28,9 +34,22 @@ class QueryAgent:
         "summary of", "details about", "details on", "info on", "info about"
     ]
     
-    def __init__(self, neo4j_db: Neo4jDatabase, gemini_api_key: str):
+    def __init__(self, neo4j_db: Neo4jDatabase, gemini_api_key: str, enable_vector_search: bool = True):
         self.db = neo4j_db
+        self.gemini_api_key = gemini_api_key
         genai.configure(api_key=gemini_api_key)
+        
+        # Vector search configuration
+        self.vector_search_enabled = enable_vector_search
+        self.embedding_service: Optional[EmbeddingService] = None
+        
+        if enable_vector_search:
+            try:
+                self.embedding_service = EmbeddingService(gemini_api_key)
+                AuditLogger.log_sync("QueryAgent: Vector search ENABLED")
+            except Exception as e:
+                AuditLogger.log_sync(f"QueryAgent: Vector search disabled - {e}", level=logging.WARNING)
+                self.vector_search_enabled = False
         
         # Use Flash for fast Q&A
         self.pro_model = genai.GenerativeModel("gemini-2.5-flash")
@@ -57,7 +76,8 @@ Use this context to ground your answers in the canonical lore.
                 {'role': 'model', 'parts': ["Understood. I am the LMS Query Agent. I will only answer based on the lore context provided."]}
             ]
         )
-        AuditLogger.log_sync("QueryAgent: Neo4j + Gemini RAG mode initialized.")
+        mode = "4-tier (with vector)" if self.vector_search_enabled else "3-tier (no vector)"
+        AuditLogger.log_sync(f"QueryAgent: Neo4j + Gemini RAG initialized. Retrieval: {mode}")
 
     async def extract_search_entities(self, user_query: str) -> List[str]:
         """
@@ -88,7 +108,9 @@ JSON array of entities:"""
 
         try:
             # Use a fresh model call (not the chat) for extraction
-            response = self.pro_model.generate_content(
+            # Wrap blocking Gemini call in threadpool to avoid blocking the event loop
+            response = await run_in_threadpool(
+                self.pro_model.generate_content,
                 extraction_prompt,
                 generation_config={"temperature": 0.1, "max_output_tokens": 256}
             )
@@ -254,26 +276,78 @@ JSON array of entities:"""
                 })
         return results
 
+    async def vector_search(self, query: str, limit: int = 5, min_score: float = 0.6) -> List[Dict[str, Any]]:
+        """
+        Vector Similarity Search: Find semantically similar entities.
+        
+        Embeds the query and searches the Neo4j vector index for similar entities.
+        This finds conceptually related content even without keyword matches.
+        
+        Example: "Who fought in the great war?" might find "Battle of Ashenvale"
+        even if "great war" isn't mentioned in that entity.
+        
+        Args:
+            query: The user's natural language query
+            limit: Maximum number of results
+            min_score: Minimum cosine similarity threshold (0-1)
+        
+        Returns:
+            List of entities with similarity scores
+        """
+        if not self.vector_search_enabled or not self.embedding_service:
+            return []
+        
+        try:
+            # Generate query embedding (use RETRIEVAL_QUERY for optimal matching)
+            query_embedding = await run_in_threadpool(
+                self.embedding_service.embed_query, 
+                query
+            )
+            
+            if not query_embedding:
+                await AuditLogger.log("Vector search: Failed to embed query", level=logging.WARNING)
+                return []
+            
+            # Search Neo4j vector index
+            results = await self.db.vector_search(
+                query_embedding=query_embedding,
+                limit=limit,
+                min_score=min_score
+            )
+            
+            if results:
+                await AuditLogger.log(f"Vector search found {len(results)} entities (min_score={min_score})")
+            
+            return results
+            
+        except Exception as e:
+            await AuditLogger.log(f"Vector search failed: {e}", level=logging.WARNING)
+            return []
+
     async def retrieve_context(self, query: str) -> str:
         """
-        Retrieves relevant context from the Neo4j graph using a multi-strategy approach:
+        Retrieves relevant context from the Neo4j graph using a 4-tier strategy:
         
         1. AGENTIC EXTRACTION (Primary): Use Gemini to extract entities from the query
-        2. REVERSE MATCH (Fallback): Find nodes whose names appear in the raw query
-        3. KEYWORD SEARCH (Last Resort): Traditional keyword-based search
+        2. VECTOR SEARCH (Semantic): Find semantically similar entities via embeddings
+        3. REVERSE MATCH (Fallback): Find nodes whose names appear in the raw query
+        4. KEYWORD SEARCH (Last Resort): Traditional keyword-based search
         """
         await AuditLogger.log(f"Retrieving context for: '{query}'")
         
         context_parts = []
         seen_entities = set()
+        strategies_used = []
         
         # Helper to fetch and format entity context
-        async def fetch_entity_context(entity_name: str):
+        async def fetch_entity_context(entity_name: str, source: str = "unknown"):
             if entity_name and entity_name.lower() not in seen_entities:
                 seen_entities.add(entity_name.lower())
                 full_context = await self.get_node_with_neighbors(entity_name)
                 if full_context:
                     context_parts.append(self._format_entity_context(full_context))
+                    return True
+            return False
         
         # === STRATEGY 1: Agentic Entity Extraction (Primary) ===
         # Use Gemini to intelligently extract entities from complex queries
@@ -281,39 +355,61 @@ JSON array of entities:"""
         
         if extracted_entities:
             await AuditLogger.log(f"Strategy 1 (Agentic): Searching for {extracted_entities}")
+            strategies_used.append("agentic")
             for entity in extracted_entities:
                 # Search for the extracted entity (handles typos, variations)
                 matches = await self.search_nodes(entity, limit=3)
                 for match in matches:
-                    await fetch_entity_context(match["name"])
+                    await fetch_entity_context(match["name"], "agentic")
         
-        # === STRATEGY 2: Reverse Match (if Strategy 1 found nothing) ===
+        # === STRATEGY 2: Vector Similarity Search (Semantic) ===
+        # Find conceptually similar entities even without keyword matches
+        if self.vector_search_enabled and len(context_parts) < 3:
+            await AuditLogger.log("Strategy 2 (Vector): Searching for semantically similar entities...")
+            vector_results = await self.vector_search(query, limit=5, min_score=0.6)
+            
+            if vector_results:
+                strategies_used.append("vector")
+                for result in vector_results:
+                    name = result.get("name")
+                    score = result.get("score", 0)
+                    if name:
+                        added = await fetch_entity_context(name, "vector")
+                        if added:
+                            await AuditLogger.log(f"  Vector match: {name} (score={score:.3f})")
+        
+        # === STRATEGY 3: Reverse Match (if still need more context) ===
         # Find nodes whose names appear within the raw query string
         if not context_parts:
-            await AuditLogger.log("Strategy 2 (Reverse Match): Checking for node names in query...")
+            await AuditLogger.log("Strategy 3 (Reverse Match): Checking for node names in query...")
+            strategies_used.append("reverse")
             matches = await self.reverse_match_entities(query, limit=10)
             await AuditLogger.log(f"Reverse match found {len(matches)} entities")
             
             for match in matches:
-                await fetch_entity_context(match["name"])
+                await fetch_entity_context(match["name"], "reverse")
         
-        # === STRATEGY 3: Keyword Search (Last Resort) ===
+        # === STRATEGY 4: Keyword Search (Last Resort) ===
         # Traditional keyword extraction and search
         if not context_parts:
-            await AuditLogger.log("Strategy 3 (Keyword Search): Trying keyword extraction...")
+            await AuditLogger.log("Strategy 4 (Keyword Search): Trying keyword extraction...")
+            strategies_used.append("keyword")
             search_terms = self._extract_search_terms(query)
             
             for term in search_terms:
                 matches = await self.search_nodes(term, limit=5)
                 for match in matches:
-                    await fetch_entity_context(match["name"])
+                    await fetch_entity_context(match["name"], "keyword")
         
         if context_parts:
             context = "=== LORE CONTEXT FROM KNOWLEDGE GRAPH ===\n\n" + "\n\n".join(context_parts)
         else:
             context = "=== NO MATCHING LORE FOUND IN KNOWLEDGE GRAPH ==="
         
-        await AuditLogger.log(f"Retrieved {len(context_parts)} context entries for {len(seen_entities)} unique entities")
+        await AuditLogger.log(
+            f"Retrieved {len(context_parts)} context entries for {len(seen_entities)} unique entities. "
+            f"Strategies: {', '.join(strategies_used) or 'none'}"
+        )
         return context
 
     def _format_entity_context(self, entity: Dict[str, Any]) -> str:
@@ -350,8 +446,8 @@ JSON array of entities:"""
             # Step 2: Build the augmented prompt
             augmented_prompt = f"{context}\n\n=== USER QUESTION ===\n{query}"
             
-            # Step 3: Send to Gemini
-            response = self.chat.send_message(augmented_prompt)
+            # Step 3: Send to Gemini (wrap blocking call in threadpool)
+            response = await run_in_threadpool(self.chat.send_message, augmented_prompt)
             return response.text
             
         except Exception as e:

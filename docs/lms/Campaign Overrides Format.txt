@@ -128,19 +128,19 @@ local_truths:
 
 ---
 
-## Example: Hollow Eye Chronicles
+## Example: Shadowmire Campaign
 
 ```yaml
 # ================================================
-# CAMPAIGN SETTING: Hollow Eye Chronicles
+# CAMPAIGN SETTING: Shadowmire (Example)
 # Version: 1.0
-# Author: Shawn King
+# Author: Example DM
 # Charter Version: 1.2
 # ================================================
 
 metadata:
-  campaign_id: "hollow-eye-chronicles"
-  world_name: "Hollow Eye"
+  campaign_id: "shadowmire-campaign"
+  world_name: "Shadowmire"
   genre: "dark_fantasy_horror"
   tech_level: "renaissance"
   magic_prevalence: "rare_and_dangerous"
@@ -159,7 +159,7 @@ charter_overrides:
     override_type: "refinement"
     original_statement: "Every wonder must carry a cost"
     campaign_statement: |
-      In Hollow Eye, magic specifically costs SANITY, not blood or life force.
+      In Shadowmire, magic specifically costs SANITY, not blood or life force.
       Each spell cast erodes the caster's grip on reality.
       Prolonged magic use leads to madness and eventual transformation.
     justification: "Reinforces cosmic horror theme"
@@ -175,7 +175,7 @@ charter_overrides:
     law_title: "Persistent Identity"
     override_type: "addition"
     campaign_statement: |
-      In Hollow Eye, the dead can speak (via necromancy) but can never
+      In Shadowmire, the dead can speak (via necromancy) but can never
       truly return to life. Resurrection is impossible. The dead exist
       in a liminal state - aware but not alive.
     justification: "Emphasizes finality of death"
@@ -196,7 +196,7 @@ world_rules:
     title: "Ancestral Figures Have Special Weight"
     category: "society"
     statement: |
-      In Hollow Eye, your ancestors watch and judge.
+      In Shadowmire, your ancestors watch and judge.
       Ancestral figures (grandparents, great-grandparents) have
       thematic/spiritual significance beyond normal NPCs.
     mechanics: |
@@ -210,10 +210,10 @@ world_rules:
       - "Bloodline matters for certain magics"
 
   - rule_id: "the-hollow-eye"
-    title: "The Hollow Eye Watches"
+    title: "The Shadowmire Watches"
     category: "cosmology"
     statement: |
-      There is a cosmic entity known as the Hollow Eye.
+      There is a cosmic entity known as the Watcher.
       It is aware. It is hungry. It watches through mirrors,
       still water, and the eyes of the dying.
     mechanics: |
@@ -235,7 +235,7 @@ pantheon:
   type: "dead_pantheon"
   
   deities:
-    - name: "The Hollow Eye"
+    - name: "The Watcher"
       domain: "Void, Madness, Entropy"
       alignment: "cosmic_evil"
       power_level: "cosmic_entity"
@@ -251,7 +251,7 @@ pantheon:
       power_level: "greater_gods"
       status: "dead"
       description: |
-        The old pantheon, consumed by the Hollow Eye centuries ago.
+        The old pantheon, consumed by the Watcher centuries ago.
         Their names are forbidden. Their temples are ruins.
 
 # ================================================
@@ -285,7 +285,7 @@ forbidden:
 local_truths:
   
   - location: "The Sanctum of Mirrors"
-    truth: "Magic is costless here, but the Hollow Eye sees all"
+    truth: "Magic is costless here, but the Watcher sees all"
     parent_law: 2
     scope: "Within the sanctum walls"
     reason: "Ancient pact with the Eye"
@@ -453,7 +453,7 @@ class CampaignValidator:
 ### One LMS, Many Worlds
 ```
 LMS Instance
-├─ Campaign: Hollow Eye Chronicles (Dark Fantasy)
+├─ Campaign: Shadowmire (Dark Fantasy)
 ├─ Campaign: Starfall Dynasty (Space Opera)
 ├─ Campaign: Sunlit Realms (Heroic Fantasy)
 └─ Campaign: Modern Mythos (Urban Horror)
@@ -491,7 +491,7 @@ hollow-eye-v2.0.yaml  →  Major world event update
 **v1.0 (Nov 6, 2025):**
 - Initial specification
 - YAML format defined
-- Hollow Eye example provided
+- Shadowmire example provided
 - Database schema designed
 
 ---

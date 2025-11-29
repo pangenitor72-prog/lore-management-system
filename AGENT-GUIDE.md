@@ -45,7 +45,7 @@
 
 **This is NOT a prototype. This is a PRODUCTION SYSTEM.**
 
-LMS manages 30 years of D&D campaign lore for Jim's "Hollow Eye Chronicles" world. It's actively used and must maintain 100% stability.
+LMS manages 30 years of D&D campaign lore. It's actively used and must maintain 100% stability.
 
 ### Phase Status
 
@@ -682,7 +682,7 @@ When you encounter:
 
 **Last Updated:** 2025-11-25  
 **Maintainer:** Shawn King  
-**Campaign World:** Jim King's "Hollow Eye Chronicles" (30+ years)  
+**Campaign World:** Jim King's D&D Campaign (30+ years)  
 **System Status:** Production-ready, actively developed
 
 **For AI agents:** Load this file first, follow it strictly, and ask when uncertain.  

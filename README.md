@@ -32,7 +32,7 @@ A production-ready knowledge management system for maintaining narrative coheren
 
 ## Origin Story
 
-Built to solve a real problem: managing 30+ years of accumulated lore from Jim's long-running D&D campaign, "The Hollow Eye Chronicles." When you have decades of session notes, character backstories, and world history, maintaining consistency becomes impossible without systematic tooling.
+Built to solve a real problem: managing 30+ years of accumulated lore from a long-running D&D campaign. When you have decades of session notes, character backstories, and world history, maintaining consistency becomes impossible without systematic tooling.
 
 **The Challenge**: After 30 years of weekly D&D sessions, you have:
 - Thousands of NPCs, locations, and events
@@ -202,7 +202,7 @@ The system explicitly prevents AI from injecting knowledge from training data. O
 ## Credits
 
 Created by: **Shawn King**  
-Campaign World: **Jim King's "Hollow Eye Chronicles"** (30+ years)  
+Campaign World: **Jim King's D&D Campaign** (30+ years)  
 AI Architecture: Multi-agent coordination (Claude, Gemini)
 
 *"Managing decades of lore so the cosmic horrors stay consistent."* 🐙

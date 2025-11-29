@@ -20,7 +20,7 @@
 
 ## System Overview
 
-The Lore Management System (LMS) is a production-grade knowledge management system designed to maintain narrative coherence in Jim's 30-year D&D campaign "The Hollow Eye Chronicles."
+The Lore Management System (LMS) is a production-grade knowledge management system designed to maintain narrative coherence in a 30-year D&D campaign.
 
 **Core Problem Solved:**
 After 30 years of weekly sessions, maintaining consistency across thousands of NPCs, locations, events, and relationships becomes impossible without systematic tooling. LMS provides AI-assisted extraction, validation, and contradiction management while enforcing human authority over canonical decisions (Gospel Principle).
@@ -734,5 +734,5 @@ This document is part of a comprehensive documentation suite:
 
 **Last Updated:** 2025-11-25  
 **Maintained By:** Shawn King  
-**Campaign World:** Jim King's "Hollow Eye Chronicles" (30+ years)  
+**Campaign World:** Jim King's D&D Campaign (30+ years)  
 **System Status:** Production-ready, actively developed

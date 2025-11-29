@@ -314,7 +314,7 @@ charter_overrides:
   - law_number: 2
     law_title: "Limited Exception"
     override_type: "refinement"
-    campaign_statement: "In Hollow Eye, magic costs SANITY not life force"
+    campaign_statement: "In this world, magic costs SANITY not life force"
 ```
 
 See `concepts/campaign-overrides-format.md` for full specification.
