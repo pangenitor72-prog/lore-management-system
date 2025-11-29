@@ -2,9 +2,10 @@ import asyncio
 import os
 import json
 import re
+import logging
+from typing import List, Dict, Any, Optional
 import google.generativeai as genai
-from typing import List, Dict, Any
-from .neo4j_adapter import Neo4jDatabase
+from .embedding_service import EmbeddingService
 from .audit_log import AuditLogger
 
 class LoreIngestor:
@@ -41,13 +42,16 @@ Example:
 4. If no entities found, return: {"nodes": [], "relationships": []}
 5. CRITICAL: Return ONLY valid JSON. No markdown, no explanations."""
 
-    def __init__(self, neo4j_driver, api_key: str):
+    def __init__(self, neo4j_driver, api_key: str, enable_embeddings: bool = True):
         """
         Initialize the ingestor with a Neo4j driver and Gemini API key.
         """
         self.driver = neo4j_driver
+        self.api_key = api_key
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-2.0-flash')
+        self.enable_embeddings = enable_embeddings
+        self.embedding_service = EmbeddingService(api_key) if enable_embeddings else None
 
     def chunk_text(self, text: str) -> List[str]:
         """Split large text into overlapping chunks."""
@@ -127,35 +131,75 @@ Example:
             "relationships": all_rels
         }
 
-    def process_file_content(self, filename: str, content: str) -> Dict[str, Any]:
+    async def _extract_chunk(self, chunk: str, index: int) -> Dict[str, Any]:
+        """
+        Extract entities from a single chunk using Gemini in an executor.
+        """
+        loop = asyncio.get_event_loop()
+        try:
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.model.generate_content(
+                    self.EXTRACTION_PROMPT + "\n\nTEXT:\n" + chunk,
+                    generation_config={"temperature": 0.1}
+                )
+            )
+            return self.parse_json_response(response.text)
+        except Exception as e:
+            await AuditLogger.log(f"Chunk {index+1} extraction failed: {str(e)}", level=logging.ERROR)
+            return {"nodes": [], "relationships": []}
+
+    async def _generate_node_embedding(self, node: Dict) -> Optional[List[float]]:
+        """
+        Generate embedding for a node based on its content.
+        Combines node ID, description, and content into embedding text.
+        """
+        if not self.enable_embeddings or not self.embedding_service:
+            return None
+
+        node_id = node.get("id", "")
+        props = node.get("properties", {})
+        description = props.get("description", "")
+        content = props.get("content", "")
+
+        # Construct text for embedding
+        embedding_text = f"ID: {node_id}\nDescription: {description}\nContent: {content}"
+        
+        loop = asyncio.get_event_loop()
+        try:
+            # EmbeddingService.embed_text is synchronous, run in executor
+            embedding = await loop.run_in_executor(
+                None,
+                lambda: self.embedding_service.embed_text(embedding_text)
+            )
+            return embedding
+        except Exception as e:
+            await AuditLogger.log(f"Embedding generation failed for node {node_id}: {str(e)}", level=logging.ERROR)
+            return None
+
+    async def process_file_content(self, filename: str, content: str) -> Dict[str, Any]:
         """
         Process file content: Chunk -> Extract -> Return Data (does not save yet).
         Useful for UI preview.
         """
         chunks = self.chunk_text(content)
-        extractions = []
-        errors = []
         
-        for i, chunk in enumerate(chunks):
-            try:
-                response = self.model.generate_content(
-                    self.EXTRACTION_PROMPT + "\n\nTEXT:\n" + chunk,
-                    generation_config={"temperature": 0.1}
-                )
-                data = self.parse_json_response(response.text)
-                extractions.append(data)
-            except Exception as e:
-                errors.append(f"Chunk {i+1} failed: {str(e)}")
+        # Concurrent extraction
+        tasks = [self._extract_chunk(chunk, i) for i, chunk in enumerate(chunks)]
+        extractions = await asyncio.gather(*tasks)
+        
+        # Check for empty results which might indicate errors (already logged in _extract_chunk)
+        errors = [] # We rely on AuditLogger for details now, but keep list for return compatibility if needed
         
         merged_data = self.merge_extractions(extractions)
         return {
             "filename": filename,
             "data": merged_data,
             "chunks_count": len(chunks),
-            "errors": errors
+            "errors": errors 
         }
 
-    def save_to_neo4j(self, data: Dict[str, Any], filename: str) -> Dict[str, int]:
+    async def save_to_neo4j(self, data: Dict[str, Any], filename: str) -> Dict[str, int]:
         """
         Save extracted data to Neo4j using the provided driver.
         Returns counts of saved nodes and relationships.
@@ -165,30 +209,45 @@ Example:
         nodes_saved = 0
         rels_saved = 0
         
-        # 1. Save Nodes
+        # 1. Prepare Nodes with Embeddings
+        # Generate embeddings concurrently for better performance
+        if self.enable_embeddings and self.embedding_service:
+            embedding_tasks = []
+            nodes_to_embed = []
+            
+            for node in nodes:
+                nodes_to_embed.append(node)
+                embedding_tasks.append(self._generate_node_embedding(node))
+            
+            if embedding_tasks:
+                embeddings = await asyncio.gather(*embedding_tasks)
+                
+                # Assign embeddings back to nodes
+                for i, node in enumerate(nodes_to_embed):
+                    if embeddings[i]:
+                        if "properties" not in node:
+                            node["properties"] = {}
+                        node["properties"]["embedding"] = embeddings[i]
+
+        # Prepare batch data for nodes
+        node_batch = []
         for node in nodes:
             node_id = node.get("id", "")
+            if not node_id: continue
+            
             label = node.get("label", "Entity")
+            # Sanitize label
+            safe_label = re.sub(r'[^a-zA-Z0-9_]', '', label) or "Entity"
             props = node.get("properties", {})
             
-            if node_id:
-                # Sanitize label
-                safe_label = re.sub(r'[^a-zA-Z0-9_]', '', label) or "Entity"
-                
-                query = f"""
-                MERGE (n:`{safe_label}` {{name: $name}})
-                SET n += $props
-                SET n:Entity
-                RETURN n.name
-                """
-                try:
-                    with self.driver.session() as session:
-                        session.run(query, {"name": node_id, "props": props})
-                    nodes_saved += 1
-                except Exception as e:
-                    print(f"Error saving node {node_id}: {e}")
+            node_batch.append({
+                "name": node_id,
+                "label": safe_label,
+                "props": props
+            })
 
-        # 2. Save Relationships
+        # Prepare batch data for relationships
+        rel_batch = []
         for rel in rels:
             source = rel.get("source")
             target = rel.get("target")
@@ -196,23 +255,65 @@ Example:
             rel_type = re.sub(r'[^a-zA-Z0-9_]', '_', rel_type)
             
             if source and target:
-                query = f"""
-                MATCH (a {{name: $source}})
-                MATCH (b {{name: $target}})
-                MERGE (a)-[r:`{rel_type}`]->(b)
-                """
-                try:
-                    with self.driver.session() as session:
-                        session.run(query, {"source": source, "target": target})
-                    rels_saved += 1
-                except Exception as e:
-                     print(f"Error saving rel {source}->{target}: {e}")
+                rel_batch.append({
+                    "source": source,
+                    "target": target,
+                    "type": rel_type
+                })
+
+        # 1. Save Nodes (Batch)
+        if node_batch:
+            # Group by label to optimize MERGE
+            nodes_by_label = {}
+            for item in node_batch:
+                lbl = item["label"]
+                if lbl not in nodes_by_label:
+                    nodes_by_label[lbl] = []
+                nodes_by_label[lbl].append(item)
+            
+            async with self.driver.session() as session:
+                for label, items in nodes_by_label.items():
+                    query = f"""
+                    UNWIND $items AS item
+                    MERGE (n:`{label}` {{name: item.name}})
+                    SET n += item.props
+                    SET n:Entity
+                    """
+                    try:
+                        await session.run(query, {"items": items})
+                        nodes_saved += len(items)
+                    except Exception as e:
+                        await AuditLogger.log(f"Error saving nodes batch for label {label}: {e}", level=logging.ERROR)
+
+        # 2. Save Relationships (Batch)
+        if rel_batch:
+            # Group by type
+            rels_by_type = {}
+            for item in rel_batch:
+                rtype = item["type"]
+                if rtype not in rels_by_type:
+                    rels_by_type[rtype] = []
+                rels_by_type[rtype].append(item)
+                
+            async with self.driver.session() as session:
+                for rtype, items in rels_by_type.items():
+                    query = f"""
+                    UNWIND $items AS item
+                    MATCH (a {{name: item.source}})
+                    MATCH (b {{name: item.target}})
+                    MERGE (a)-[r:`{rtype}`]->(b)
+                    """
+                    try:
+                        await session.run(query, {"items": items})
+                        rels_saved += len(items)
+                    except Exception as e:
+                        await AuditLogger.log(f"Error saving rels batch for type {rtype}: {e}", level=logging.ERROR)
 
         # 3. Link File Source
-        try:
-            with self.driver.session() as session:
-                session.run("MERGE (f:File {name: $filename})", {"filename": filename})
-        except:
-            pass
+        async with self.driver.session() as session:
+            try:
+                await session.run("MERGE (f:File {name: $filename})", {"filename": filename})
+            except Exception as e:
+                await AuditLogger.log(f"Error creating File node: {e}", level=logging.ERROR)
 
         return {"nodes_saved": nodes_saved, "rels_saved": rels_saved}

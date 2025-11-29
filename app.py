@@ -3,7 +3,7 @@ import os
 import sys
 import asyncio
 from dotenv import load_dotenv
-from neo4j import GraphDatabase  # Use sync driver for Streamlit
+from neo4j import GraphDatabase, AsyncGraphDatabase  # Use sync driver for Streamlit
 from streamlit_agraph import agraph, Node, Edge, Config
 
 # Add src to path for imports
@@ -517,7 +517,7 @@ with st.sidebar:
     st.markdown("### 📜 Consult The Archives")
     mode = st.radio(
         "Choose your path:",
-        ["🔮 Query The Oracle", "📥 Lore Ingestion", "⚖️ Truth Auditor", "📊 Graph Nexus"],
+        ["⚔️ Play AIRpg", "🔮 Query The Oracle", "📥 Lore Ingestion", "⚖️ Truth Auditor", "📊 Graph Nexus"],
         label_visibility="collapsed"
     )
     
@@ -533,7 +533,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     # Version info
-    st.caption("v0.9.5 — Phase XII (Refactored)")
+    st.caption("v1.0.0 — AIRpg Phase I")
 
 # ==========================================
 # MAIN CONTENT
@@ -542,9 +542,108 @@ st.markdown("# ⚗️ The Lore Oracle")
 st.caption("*30 years of memory. One source of truth.*")
 
 # ==========================================
+# MODE: PLAY AIRPG
+# ==========================================
+if mode == "⚔️ Play AIRpg":
+    st.markdown("## ⚔️ AIRpg — The Grounded Dungeon Master")
+    st.markdown("*Step into the fiction. The Oracle becomes your guide.*")
+    
+    st.divider()
+    
+    # Initialize AIRpg session state
+    if "airpg_session_id" not in st.session_state:
+        st.session_state.airpg_session_id = None
+    if "airpg_history" not in st.session_state:
+        st.session_state.airpg_history = []
+    if "airpg_session_0_complete" not in st.session_state:
+        st.session_state.airpg_session_0_complete = False
+    if "airpg_session_0_answers" not in st.session_state:
+        st.session_state.airpg_session_0_answers = {}
+    
+    # Session Controls
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        if st.button("🔄 New Session", type="secondary"):
+            st.session_state.airpg_session_id = None
+            st.session_state.airpg_history = []
+            st.session_state.airpg_session_0_complete = False
+            st.session_state.airpg_session_0_answers = {}
+            st.rerun()
+    
+    # Start new session if needed
+    if st.session_state.airpg_session_id is None and is_connected:
+        # Create new session
+        import uuid
+        st.session_state.airpg_session_id = str(uuid.uuid4())
+        
+        # Show Session 0 intro
+        intro_msg = (
+            "*The Oracle stirs...*\n\n"
+            "Before we begin, I need to understand the shape of our story.\n\n"
+            "**What kind of world are we in?**\n\n"
+            "*Examples: A rain-swept border town, a grimy city district, "
+            "a haunted forest, a quiet monastery...*"
+        )
+        st.session_state.airpg_history.append({"role": "assistant", "content": intro_msg})
+    
+    # Display conversation history
+    for msg in st.session_state.airpg_history:
+        avatar = "🎭" if msg["role"] == "assistant" else "⚔️"
+        with st.chat_message(msg["role"], avatar=avatar):
+            st.markdown(msg["content"])
+    
+    # Chat input
+    if is_connected and (player_input := st.chat_input("What do you do?")):
+        # Add player message
+        st.session_state.airpg_history.append({"role": "user", "content": player_input})
+        with st.chat_message("user", avatar="⚔️"):
+            st.markdown(player_input)
+        
+        # Generate DM response
+        with st.chat_message("assistant", avatar="🎭"):
+            with st.spinner("*The DM considers...*"):
+                try:
+                    # Import and run DM Agent
+                    from src.dm_agent import DMAgent
+                    
+                    async def get_dm_response():
+                        async_driver = AsyncGraphDatabase.driver(DB_URI, auth=(DB_USER, DB_PASSWORD))
+                        db = Neo4jDatabase(DB_URI, (DB_USER, DB_PASSWORD))
+                        await db.connect()
+                        
+                        try:
+                            dm = DMAgent(db, GEMINI_KEY)
+                            await dm.start_session(st.session_state.airpg_session_id)
+                            
+                            # Restore session state
+                            dm.session_0_complete = st.session_state.airpg_session_0_complete
+                            dm.session_0_answers = st.session_state.airpg_session_0_answers.copy()
+                            dm.history = [h.copy() for h in st.session_state.airpg_history[:-1]]  # Exclude current input
+                            
+                            # Process input
+                            response = await dm.process_input(player_input)
+                            
+                            # Save session state back
+                            st.session_state.airpg_session_0_complete = dm.session_0_complete
+                            st.session_state.airpg_session_0_answers = dm.session_0_answers.copy()
+                            
+                            return response
+                        finally:
+                            await db.close()
+                    
+                    response = asyncio.run(get_dm_response())
+                    st.markdown(response)
+                    st.session_state.airpg_history.append({"role": "assistant", "content": response})
+                    
+                except Exception as e:
+                    st.error(f"DM Error: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
+
+# ==========================================
 # MODE: QUERY THE ORACLE
 # ==========================================
-if mode == "🔮 Query The Oracle":
+elif mode == "🔮 Query The Oracle":
     st.markdown("## 🔮 Query The Oracle")
     st.markdown("*Speak your question, and the Oracle shall search the depths of recorded lore...*")
     
@@ -694,7 +793,7 @@ elif mode == "📥 Lore Ingestion":
     st.markdown("*Feed the Oracle new knowledge from your campaign files.*")
     
     # Initialize Ingestor
-    ingestor = LoreIngestor(neo4j_driver, GEMINI_KEY)
+    # ingestor = LoreIngestor(neo4j_driver, GEMINI_KEY) # OLD SYNC WAY
     
     st.divider()
     
@@ -723,11 +822,20 @@ elif mode == "📥 Lore Ingestion":
                 content = file.getvalue().decode("utf-8")
                 
                 try:
-                    # 1. Process (Extract)
-                    result_data = ingestor.process_file_content(filename, content)
-                    
-                    # 2. Save
-                    save_stats = ingestor.save_to_neo4j(result_data["data"], filename)
+                    # 1. Process (Extract) - Async wrapper
+                    async def run_ingestion():
+                         async_driver = AsyncGraphDatabase.driver(DB_URI, auth=(DB_USER, DB_PASSWORD))
+                         local_ingestor = LoreIngestor(async_driver, GEMINI_KEY)
+                         try:
+                             # Process
+                             r_data = await local_ingestor.process_file_content(filename, content)
+                             # Save
+                             s_stats = await local_ingestor.save_to_neo4j(r_data["data"], filename)
+                             return r_data, s_stats
+                         finally:
+                             await async_driver.close()
+
+                    result_data, save_stats = asyncio.run(run_ingestion())
                     
                     total_nodes += save_stats["nodes_saved"]
                     total_rels += save_stats["rels_saved"]
