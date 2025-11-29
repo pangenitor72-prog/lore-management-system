@@ -1,14 +1,19 @@
 """
-DMAgent v0.1 - The Grounded Dungeon Master
+DMAgent v0.2 - The Grounded Dungeon Master with Generative Worldbuilding
 
 This agent wraps Gemini with the DM Prompt v2.3 to create an immersive,
-text-based RPG experience. It integrates with GameSession for state
-and QueryAgent for lore retrieval.
+text-based RPG experience. It integrates with GameSession for state,
+QueryAgent for lore retrieval, and AuditorAgent for contradiction checking.
+
+Phase I-B: Adds contradiction-checked entity generation.
 """
 
 import os
 import json
 import re
+import asyncio
+import logging
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 import google.generativeai as genai
@@ -16,6 +21,9 @@ import google.generativeai as genai
 from src.game_session import GameSession
 from src.query_agent import QueryAgent
 from src.neo4j_adapter import Neo4jDatabase
+from src.auditor_agent import AuditorAgent
+from src.models import LoreConfidence
+from src.audit_log import AuditLogger
 
 
 # Load the DM Prompt from docs
@@ -63,12 +71,19 @@ class DMAgent:
         self.session: Optional[GameSession] = None
         self.query_agent: Optional[QueryAgent] = None
         
+        # Auditor Agent for contradiction checking
+        self.auditor: Optional[AuditorAgent] = None
+        
         # Conversation history for context window
         self.history: List[Dict[str, str]] = []
         
         # Session 0 state
         self.session_0_complete = False
         self.session_0_answers: Dict[str, str] = {}
+        
+        # Track entities generated this session
+        self.entities_generated: List[str] = []
+        self.entities_blocked: List[Dict[str, Any]] = []
 
     async def start_session(self, session_id: Optional[str] = None, player_id: str = "player_1"):
         """Initialize a new game session."""
@@ -78,10 +93,15 @@ class DMAgent:
         # Initialize QueryAgent for lore retrieval
         self.query_agent = QueryAgent(self.db, self.api_key)
         
+        # Initialize AuditorAgent for contradiction checking
+        self.auditor = AuditorAgent(self.db, self.api_key)
+        
         # Reset conversation state
         self.history = []
         self.session_0_complete = False
         self.session_0_answers = {}
+        self.entities_generated = []
+        self.entities_blocked = []
         
         return self.session.session_id
 
@@ -309,4 +329,318 @@ If the action requires a roll, narrate the attempt and outcome.
                 formatted += f"- {inst.get('name', 'Unknown')} (HP: {inst.get('current_hp', '?')}, Status: {inst.get('status', 'Normal')})\n"
         
         return formatted
+
+    # ==========================================
+    # ENTITY EXTRACTION & GENERATION (Phase I-B)
+    # ==========================================
+
+    async def _extract_entities_from_input(self, player_input: str) -> List[Dict[str, Any]]:
+        """
+        Extract entities the player is referencing or creating.
+        
+        Example:
+            Input: "I ask the bartender about the Crimson Wastes"
+            Output: [
+                {"name": "Bartender", "type": "Character"},
+                {"name": "Crimson Wastes", "type": "Location"}
+            ]
+        """
+        extraction_prompt = f"""You are an entity extractor for a D&D game.
+
+Extract entities the player is referencing from this input:
+"{player_input}"
+
+Return ONLY valid JSON with this format:
+{{
+  "entities": [
+    {{"name": "Entity Name", "type": "Character|Location|Item|Faction|Concept"}}
+  ]
+}}
+
+Rules:
+1. Extract proper nouns and important concepts
+2. Classify type accurately (Character, Location, Item, Faction, Concept)
+3. Don't extract generic words like "thing", "place", "person"
+4. If no entities found, return {{"entities": []}}
+5. Keep multi-word names together ("Crimson Wastes" not "Crimson", "Wastes")
+6. Generic roles like "bartender" or "guard" should be typed as Character
+
+JSON output:"""
+
+        try:
+            response = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: self.model.generate_content(
+                    extraction_prompt,
+                    generation_config={"temperature": 0.1, "max_output_tokens": 512}
+                )
+            )
+            
+            # Parse JSON response
+            cleaned = response.text.strip()
+            cleaned = re.sub(r'^```json\s*', '', cleaned)
+            cleaned = re.sub(r'^```\s*', '', cleaned)
+            cleaned = re.sub(r'\s*```$', '', cleaned)
+            
+            data = json.loads(cleaned)
+            entities = data.get("entities", [])
+            
+            await AuditLogger.log(f"Extracted {len(entities)} entities from input: {[e.get('name') for e in entities]}")
+            return entities
+            
+        except Exception as e:
+            await AuditLogger.log(f"Entity extraction failed: {e}", level=logging.WARNING)
+            return []
+
+    async def _create_canonical_entity(
+        self, 
+        entity: Dict[str, Any],
+        session_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create a new canonical entity with contradiction checking.
+        
+        Args:
+            entity: {
+                "name": str,
+                "label": str,
+                "properties": {...}
+            }
+            session_id: Current game session ID
+        
+        Returns:
+            Created entity dict or None if blocked
+        """
+        if not self.auditor:
+            await AuditLogger.log("No auditor available - skipping contradiction check", level=logging.WARNING)
+            return None
+        
+        await AuditLogger.log(f"Creating canonical entity: {entity.get('name')} ({entity.get('label')})")
+        
+        # 1. Run contradiction detection
+        audit_result = await self.auditor.audit_new_entity(entity)
+        
+        # 2. Handle based on severity
+        if not audit_result["approved"]:
+            # CRITICAL contradiction - block creation and queue for review
+            await self.auditor.queue_blocked_entity(entity, audit_result, session_id)
+            
+            self.entities_blocked.append({
+                "entity": entity,
+                "reason": audit_result["contradictions"][0]["conflict"] if audit_result["contradictions"] else "Unknown"
+            })
+            
+            await AuditLogger.log(
+                f"Entity creation blocked: {entity.get('name')} - {audit_result['contradictions'][0]['conflict'] if audit_result['contradictions'] else 'Unknown'}"
+            )
+            
+            return None
+        
+        # 3. Set confidence level based on audit result
+        if audit_result["severity"] in ["MEDIUM", "LOW"]:
+            confidence = LoreConfidence.AI_FLAGGED.value
+        else:
+            confidence = LoreConfidence.AI_GENERATED.value
+        
+        # 4. Persist to Neo4j
+        result = await self._persist_entity_to_neo4j(entity, confidence, session_id)
+        
+        if result:
+            self.entities_generated.append(entity.get("name", "Unknown"))
+            await AuditLogger.log(f"Entity created: {entity.get('name')} (confidence: {confidence})")
+        
+        return result
+
+    async def _persist_entity_to_neo4j(
+        self, 
+        entity: Dict[str, Any],
+        confidence: str,
+        session_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Persist entity to Neo4j graph."""
+        # Sanitize label for Cypher
+        label = entity.get("label", "Entity").replace(" ", "")
+        name = entity.get("name", "Unknown")
+        properties = entity.get("properties", {})
+        
+        # Build properties dict
+        props = {
+            "name": name,
+            "confidence": confidence,
+            "created_by": "dm_agent",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "source_session": session_id,
+            **properties
+        }
+        
+        query = f"""
+        MERGE (e:`{label}` {{name: $name}})
+        SET e += $props
+        SET e:Entity
+        RETURN e.name AS name, labels(e) AS labels, properties(e) AS properties
+        """
+        
+        try:
+            result = await self.db.execute(query, {"name": name, "props": props})
+            
+            if result and len(result) > 0:
+                return dict(result[0])
+            return None
+        except Exception as e:
+            await AuditLogger.log(f"Failed to persist entity: {e}", level=logging.ERROR)
+            return None
+
+    async def _check_entity_exists(self, entity_name: str) -> bool:
+        """Check if an entity with this name exists in the lore."""
+        query = """
+        MATCH (e)
+        WHERE toLower(e.name) = toLower($name)
+        RETURN count(e) > 0 AS exists
+        """
+        result = await self.db.execute(query, {"name": entity_name})
+        return result[0]["exists"] if result else False
+
+    async def _handle_active_play_with_generation(self, player_input: str) -> str:
+        """
+        Enhanced active play handler with lore-or-generate pattern.
+        
+        Flow:
+        1. Extract entities from player input
+        2. Check what exists in canon
+        3. Generate new entities if needed (with auditing)
+        4. Build context-aware prompt
+        5. Generate narrative response
+        """
+        # 1. Extract entities mentioned
+        entities_mentioned = await self._extract_entities_from_input(player_input)
+        
+        # 2. Check what exists vs needs generation
+        lore_context_parts = []
+        entities_to_generate = []
+        
+        for entity_ref in entities_mentioned:
+            entity_name = entity_ref.get("name", "")
+            if not entity_name:
+                continue
+                
+            # Query existing lore
+            exists = await self._check_entity_exists(entity_name)
+            
+            if exists:
+                # Use canonical lore
+                lore = await self._retrieve_lore_context(entity_name)
+                if lore and "No directly relevant lore found" not in lore:
+                    lore_context_parts.append(lore)
+            else:
+                # Mark for potential generation
+                entities_to_generate.append(entity_ref)
+        
+        # 3. Build context
+        lore_context = "\n".join(lore_context_parts) if lore_context_parts else "No existing lore found."
+        
+        # Build generation instruction if entities need creation
+        generation_instruction = ""
+        if entities_to_generate:
+            generation_instruction = f"""
+
+=== ENTITIES TO CREATE (if you introduce them in your narrative) ===
+{json.dumps(entities_to_generate, indent=2)}
+
+If you mention any of these entities in your response, include a JSON block at the END of your response:
+```json
+{{
+  "new_entities": [
+    {{
+      "name": "Entity Name",
+      "label": "Character|Location|Item|Faction|Concept",
+      "properties": {{
+        "description": "Brief description"
+      }}
+    }}
+  ]
+}}
+```
+If you don't introduce new entities, omit this JSON block entirely.
+"""
+
+        # 4. Build full prompt
+        history_context = self._format_history(limit=10)
+        state = await self.session.get_state()
+        state_context = self._format_state(state)
+        
+        prompt = f"""{self.system_prompt}
+
+=== SESSION CONTEXT ===
+Setting: {self.session_0_answers.get('setting', 'Unknown')}
+Character: {self.session_0_answers.get('character', 'Unknown')}
+Tone: {self.session_0_answers.get('tone', 'Unknown')}
+
+=== CONVERSATION HISTORY ===
+{history_context}
+
+=== CURRENT STATE ===
+{state_context}
+
+=== LORE CONTEXT (Canon - Use if relevant) ===
+{lore_context}
+{generation_instruction}
+
+=== PLAYER'S ACTION ===
+{player_input}
+
+=== INSTRUCTION ===
+Respond as the DM. Follow the Pacing Formula. Do NOT speak for the player.
+If the action requires a roll, narrate the attempt and outcome.
+"""
+
+        # 5. Generate response
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: self.model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.85,
+                    "max_output_tokens": 800
+                }
+            )
+        )
+        
+        response_text = response.text
+        
+        # 6. Extract and create any new entities from the response
+        narrative, new_entities = self._parse_response_with_entities(response_text)
+        
+        if new_entities and self.session:
+            for entity in new_entities:
+                created = await self._create_canonical_entity(entity, self.session.session_id)
+                if not created:
+                    # Entity was blocked - add note to narrative
+                    narrative += "\n\n*[Some details require verification with the lore archives...]*"
+                    break  # Only add note once
+        
+        return narrative
+
+    def _parse_response_with_entities(self, response_text: str) -> tuple[str, List[Dict[str, Any]]]:
+        """
+        Parse DM response to extract narrative and any new entity definitions.
+        
+        Returns: (narrative_text, list_of_new_entities)
+        """
+        # Try to find JSON block at end of response
+        json_match = re.search(r'```json\s*(\{[\s\S]*?\})\s*```', response_text)
+        
+        if json_match:
+            try:
+                data = json.loads(json_match.group(1))
+                new_entities = data.get("new_entities", [])
+                
+                # Remove JSON block from narrative
+                narrative = response_text[:json_match.start()].strip()
+                
+                return narrative, new_entities
+            except json.JSONDecodeError:
+                pass
+        
+        # No valid JSON found - return full response as narrative
+        return response_text, []
 

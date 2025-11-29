@@ -53,6 +53,22 @@ class Contradiction:
 class AuditorAgent:
     """Runs systematic audits for contradictions in Neo4j graph database."""
 
+    # Severity classification rules for entity creation auditing
+    CRITICAL_CONTRADICTION_TYPES = [
+        "same_name_different_type",           # "Thornhaven" is both Location and Character
+        "temporal_impossibility",              # Event referenced before it happened
+        "resurrection_without_explanation",    # Dead character appears alive
+        "location_inconsistency",             # Same entity in two places simultaneously
+        "direct_negation"                     # "X is alive" vs "X is dead"
+    ]
+    
+    MINOR_CONTRADICTION_TYPES = [
+        "personality_inconsistency",          # Character acts out of character
+        "description_variation",              # Minor detail differences
+        "relationship_ambiguity",             # Unclear faction status
+        "implicit_contradiction"              # Subtle inconsistency
+    ]
+
     def __init__(self, neo4j_db: Neo4jDatabase, gemini_api_key: str):
         self.db = neo4j_db
         genai.configure(api_key=gemini_api_key)
@@ -945,3 +961,225 @@ CRITICAL: Return ONLY valid JSON. No markdown, no explanations outside the JSON.
             
             AuditLogger.log_sync(f"AuditorAgent.review failed: {e}", level=logging.ERROR)
             return {"resolved": False, "error": str(e)}
+
+    # ==========================================
+    # ENTITY CREATION AUDITING (Phase I-B)
+    # ==========================================
+
+    def _classify_contradiction_severity(
+        self, 
+        entity_new: Dict[str, Any], 
+        entity_existing: Dict[str, Any],
+        contradiction_type: str
+    ) -> str:
+        """
+        Classify contradiction severity as CRITICAL (HIGH) or MINOR (MEDIUM/LOW).
+        
+        CRITICAL = blocks creation, queues for human review
+        MINOR = flags but allows creation
+        """
+        # Check against critical types
+        if contradiction_type in self.CRITICAL_CONTRADICTION_TYPES:
+            return "HIGH"
+        
+        # Same name but different entity type = always critical
+        if entity_new.get("label") != entity_existing.get("label"):
+            return "HIGH"
+        
+        # Check against minor types
+        if contradiction_type in self.MINOR_CONTRADICTION_TYPES:
+            return "MEDIUM"
+        
+        # Default to low severity
+        return "LOW"
+
+    async def audit_new_entity(
+        self, 
+        entity_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Audit a new entity BEFORE creation to check for contradictions.
+        
+        Args:
+            entity_data: {
+                "name": str,
+                "label": str (Character, Location, etc.),
+                "properties": {...}
+            }
+        
+        Returns: {
+            "approved": bool,
+            "contradictions": [...],
+            "severity": "HIGH" | "MEDIUM" | "LOW" | None,
+            "action": "BLOCK" | "FLAG" | "APPROVE"
+        }
+        """
+        await AuditLogger.log(f"Auditing new entity: {entity_data.get('name')} ({entity_data.get('label')})")
+        
+        contradictions = []
+        max_severity = None
+        
+        # 1. Check if entity with same name exists
+        existing = await self.db.execute("""
+            MATCH (e)
+            WHERE toLower(e.name) = toLower($name)
+            RETURN e.name AS name,
+                   labels(e)[0] AS label,
+                   properties(e) AS properties
+            LIMIT 1
+        """, {"name": entity_data.get("name", "")})
+        
+        if existing and len(existing) > 0:
+            existing_entity = existing[0]
+            
+            # 2. Detect contradiction type
+            if existing_entity["label"] != entity_data.get("label"):
+                contradiction_type = "same_name_different_type"
+            else:
+                # Same type - check for property conflicts
+                contradiction_type = "description_variation"
+            
+            # 3. Classify severity
+            severity = self._classify_contradiction_severity(
+                entity_data,
+                dict(existing_entity),
+                contradiction_type
+            )
+            
+            contradictions.append({
+                "type": contradiction_type,
+                "severity": severity,
+                "existing_entity": existing_entity["name"],
+                "existing_label": existing_entity["label"],
+                "conflict": f"New {entity_data.get('label')} '{entity_data.get('name')}' conflicts with existing {existing_entity['label']}"
+            })
+            
+            max_severity = severity
+            await AuditLogger.log(f"Contradiction found: {contradiction_type} (severity: {severity})")
+        
+        # 4. Determine action based on severity
+        if max_severity == "HIGH":
+            action = "BLOCK"
+            approved = False
+        elif max_severity in ["MEDIUM", "LOW"]:
+            action = "FLAG"
+            approved = True  # Allow creation but flag for review
+        else:
+            action = "APPROVE"
+            approved = True
+        
+        result = {
+            "approved": approved,
+            "contradictions": contradictions,
+            "severity": max_severity,
+            "action": action
+        }
+        
+        await AuditLogger.log(f"Audit result: {action} (approved={approved})")
+        return result
+
+    async def queue_blocked_entity(
+        self,
+        entity: Dict[str, Any],
+        audit_result: Dict[str, Any],
+        session_id: str
+    ):
+        """Queue a blocked entity for human review."""
+        await AuditLogger.log(f"Queuing blocked entity for review: {entity.get('name')}")
+        
+        query = """
+        CREATE (r:ReviewQueue {
+            review_id: $review_id,
+            entity_name: $entity_name,
+            entity_type: $entity_type,
+            proposed_properties: $properties,
+            contradiction: $contradiction,
+            severity: $severity,
+            session_id: $session_id,
+            status: 'PENDING',
+            created_at: $created_at
+        })
+        RETURN r.review_id AS id
+        """
+        
+        params = {
+            "review_id": str(uuid.uuid4()),
+            "entity_name": entity.get("name", "Unknown"),
+            "entity_type": entity.get("label", "Entity"),
+            "properties": json.dumps(entity.get("properties", {})),
+            "contradiction": audit_result["contradictions"][0]["conflict"] if audit_result["contradictions"] else "Unknown conflict",
+            "severity": audit_result.get("severity", "HIGH"),
+            "session_id": session_id,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await self.db.execute(query, params)
+        
+        # Broadcast event
+        await broadcaster.publish("auditor_events", {
+            "type": "entity_blocked",
+            "entity_name": entity.get("name"),
+            "reason": audit_result["contradictions"][0]["conflict"] if audit_result["contradictions"] else "Unknown"
+        })
+
+    async def get_pending_reviews(self) -> List[Dict[str, Any]]:
+        """Get all entities pending human review."""
+        query = """
+        MATCH (r:ReviewQueue {status: 'PENDING'})
+        RETURN r.review_id AS id,
+               r.entity_name AS entity_name,
+               r.entity_type AS entity_type,
+               r.contradiction AS contradiction,
+               r.severity AS severity,
+               r.session_id AS session_id,
+               r.created_at AS created_at
+        ORDER BY r.created_at DESC
+        """
+        results = await self.db.execute(query)
+        return [dict(r) for r in results] if results else []
+
+    async def approve_queued_entity(self, review_id: str, approver: str = "Human") -> bool:
+        """Approve a queued entity for creation."""
+        await AuditLogger.log(f"Approving queued entity: {review_id} by {approver}")
+        
+        # Get the review record
+        query = """
+        MATCH (r:ReviewQueue {review_id: $review_id})
+        SET r.status = 'APPROVED',
+            r.approved_by = $approver,
+            r.approved_at = $now
+        RETURN r.entity_name AS name, 
+               r.entity_type AS label,
+               r.proposed_properties AS properties
+        """
+        result = await self.db.execute(query, {
+            "review_id": review_id,
+            "approver": approver,
+            "now": datetime.now(timezone.utc).isoformat()
+        })
+        
+        if result and len(result) > 0:
+            # Entity can now be created with human_approved confidence
+            return True
+        return False
+
+    async def reject_queued_entity(self, review_id: str, rejector: str = "Human", reason: str = "") -> bool:
+        """Reject a queued entity."""
+        await AuditLogger.log(f"Rejecting queued entity: {review_id} by {rejector}")
+        
+        query = """
+        MATCH (r:ReviewQueue {review_id: $review_id})
+        SET r.status = 'REJECTED',
+            r.rejected_by = $rejector,
+            r.rejection_reason = $reason,
+            r.rejected_at = $now
+        RETURN r.review_id
+        """
+        result = await self.db.execute(query, {
+            "review_id": review_id,
+            "rejector": rejector,
+            "reason": reason,
+            "now": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return result is not None and len(result) > 0
