@@ -60,142 +60,76 @@ curl http://localhost:8000/
 
 ## Database Issues
 
-### Error: `sqlite3.OperationalError: database is locked`
+### Error: Connection Refused / Timeout
 
-**Symptom:** Database operations fail with "database is locked"
+**Symptom:** The application fails to start, or API calls fail with a service unavailable error. Logs show `Connection refused` or a timeout error when trying to connect to Neo4j.
 
-**Cause:** Multiple connections trying to write simultaneously, or WAL mode not enabled
-
-**Solution:**
-```python
-# 1. Verify WAL mode is enabled in connection
-conn.execute("PRAGMA journal_mode=WAL;")
-
-# 2. Ensure using db_session() context manager
-with db_session() as conn:
-    Database.execute(conn, "INSERT INTO ...")
-    # Commits on exit
-
-# 3. Check for long-running transactions
-# Don't keep connections open across multiple requests
-```
-
-**Prevention:**
-- Always use `db_session()` for transactions
-- Use `Depends(get_db)` for route handlers
-- Don't manually manage connections
-- WAL mode is set automatically in `get_db_connection()`
-
----
-
-### Error: `FOREIGN KEY constraint failed`
-
-**Symptom:** Insert/update fails with foreign key violation
-
-**Cause:** Trying to reference non-existent entity or relationship
-
-**Solution:**
-```python
-# 1. Check that referenced entity exists
-entity = Database.fetch_one(db, "SELECT * FROM entities WHERE canon_id = ?", (canon_id,))
-if not entity:
-    raise HTTPException(status_code=404, detail="Referenced entity not found")
-
-# 2. Verify foreign keys are enabled
-conn.execute("PRAGMA foreign_keys = ON;")  # This is set automatically
-
-# 3. Check data integrity
-# Make sure canon_id values match between tables
-```
-
-**Common Scenarios:**
-- Adding alias for non-existent entity
-- Creating relationship with invalid canon_id
-- Linking contradiction to missing entity
-
----
-
-### Error: Database file not found
-
-**Symptom:** `sqlite3.OperationalError: unable to open database file`
-
-**Cause:** Database path doesn't exist or permissions issue
+**Cause:**
+1.  The Neo4j database is not running.
+2.  The `NEO4J_URI`, `NEO4J_USER`, or `NEO4J_PASSWORD` in your `.env` file are incorrect.
+3.  A firewall is blocking the connection to the Neo4j port (usually 7687).
 
 **Solution:**
 ```bash
-# 1. Check if data directory exists
-ls -la data/
+# 1. Check if the Neo4j Docker container is running
+docker-compose ps
 
-# 2. Create directory if missing
-mkdir -p data
+# 2. If not running, start it
+docker-compose up -d
 
-# 3. Verify file permissions
-chmod 644 data/lore.db  # If file exists
+# 3. Verify your .env file credentials match your docker-compose.yml setup
+# NEO4J_URI=bolt://localhost:7687
+# NEO4J_USER=neo4j
+# NEO4J_PASSWORD=password
 
-# 4. Check DB_PATH in database.py
-# Should be: Path(__file__).parent.parent / "data/lore.db"
+# 4. Test the connection manually using cypher-shell
+cypher-shell -a "bolt://localhost:7687" -u neo4j -p password
 ```
-
-**Prevention:**
-- `Database.__init__()` creates directory automatically
-- Don't move database file manually
-- Use environment-based paths for different environments
 
 ---
 
-### Schema initialization failed
+### Error: `Neo4jError: ConstraintValidationFailed`
 
-**Symptom:** `CRITICAL: Failed to initialize schema`
+**Symptom:** Creating a node fails with a constraint validation error.
 
-**Cause:** Missing `data/schema.sql` or SQL syntax error
+**Cause:** You are trying to create a node that violates a uniqueness constraint (e.g., creating a node with a `canon_id` that already exists).
 
 **Solution:**
-```bash
-# 1. Verify schema.sql exists
-ls -la data/schema.sql
-
-# 2. Check for SQL syntax errors
-sqlite3 :memory: < data/schema.sql
-
-# 3. If schema is corrupted, regenerate from backup
-# Or restore from version control
-
-# 4. Delete database and reinitialize
-rm data/lore.db
-# Restart server (schema auto-initializes)
-```
+- Ensure you are generating unique `canon_id` values for new entities.
+- If you intend to update an existing entity, use `MERGE` instead of `CREATE` in your Cypher query.
+- Example of a safe creation query: `MERGE (n:Entity {canon_id: $id}) ON CREATE SET n.name = $name ...`
 
 ---
 
-### Database corruption
+### Error: Vector Index Creation Failed
 
-**Symptom:** Random errors, inconsistent data, WAL file issues
+**Symptom:** At startup, logs show `Vector index validation failed` or `Failed to create vector index`.
+
+**Cause:**
+1.  The version of Neo4j you are using does not support vector indexes.
+2.  There is a syntax error in the `create_vector_index` method in `src/neo4j_adapter.py`.
 
 **Solution:**
-```bash
-# 1. Check database integrity
-sqlite3 data/lore.db "PRAGMA integrity_check;"
-
-# Expected output: "ok"
-
-# 2. If corrupted, recover from backup
-cp data/lore.db data/lore.db.backup
-# Restore from last known good backup
-
-# 3. If no backup, try to recover
-sqlite3 data/lore.db ".dump" > recovery.sql
-rm data/lore.db
-sqlite3 data/lore.db < recovery.sql
-```
-
-**Prevention:**
-- Regular backups (copy `data/lore.db`)
-- Don't kill server process forcefully
-- Use `db_session()` for transaction safety
+- Ensure you are using a compatible version of Neo4j (e.g., 5.11+).
+- Check the Neo4j logs for more detailed error messages regarding the index creation.
+- The system can run without vector search in a degraded mode, but semantic search features will be unavailable.
 
 ---
 
-## API Errors
+### Error: Inconsistent Graph State
+
+**Symptom:** Queries return unexpected results, relationships are missing, or nodes have partial data.
+
+**Cause:** A multi-step transaction was interrupted, or data was written incorrectly.
+
+**Solution:**
+- Use the Neo4j Browser (`http://localhost:7474`) to visually inspect the graph.
+- Write Cypher queries to find the inconsistent data. For example, to find `Character` nodes without a `name` property:
+  ```cypher
+  MATCH (c:Character) WHERE c.name IS NULL RETURN c
+  ```
+- Use the `scripts/clear_db.py` script to wipe the database and start over from a clean state if the corruption is severe and you can re-ingest the data.
+
 
 ### Error: `404 Not Found` on valid endpoint
 
@@ -267,13 +201,13 @@ class EntityCreate(BaseModel):
 
 **Solution:**
 ```python
-# 1. Check for existing resource first
-existing = Database.fetch_one(db, 
-    "SELECT * FROM contradictions WHERE contradiction_id = ?", 
-    (contradiction_id,)
+# 1. Use MERGE to handle this atomically in the database
+# MERGE will find a node if it exists or create it if it doesn't.
+# This avoids a separate SELECT call.
+await db.execute(
+    "MERGE (c:Contradiction {contradiction_id: $id}) ON CREATE SET c.is_new = true",
+    {"id": contradiction_id}
 )
-if existing:
-    raise HTTPException(status_code=409, detail="Already exists")
 
 # 2. Generate unique IDs
 contradiction_id = str(uuid.uuid4())  # Always unique
@@ -381,32 +315,28 @@ class ContradictionUpdate(BaseModel):
 
 ## Async/Threading Issues
 
-### Error: Blocking operation in async function
+### Error: Forgetting `await` on an async call
 
-**Symptom:** Performance degrades, or "Event loop is closed" error
+**Symptom:** `TypeError: 'coroutine' object is not subscriptable` or other unexpected errors.
 
-**Cause:** Synchronous I/O in async function blocks event loop
+**Cause:** Calling an `async` function without `await` returns a coroutine object, not the result.
 
 **Solution:**
 ```python
-# ❌ Wrong - blocks event loop
-async def get_entity(canon_id: str, db = Depends(get_db)):
-    entity = Database.fetch_one(db, "SELECT ...", (canon_id,))  # Blocking!
-    return entity
+# ❌ Wrong - doesn't wait for the query to finish
+async def get_entity(canon_id: str, db: Neo4jDatabase = Depends(get_neo4j_db)):
+    records = db.execute("MATCH (n) WHERE n.id = $id RETURN n", {"id": id})
+    return records[0] # This will fail, `records` is a coroutine
 
-# ✅ Correct - wrapped in threadpool
-async def get_entity(canon_id: str, db = Depends(get_db)):
-    entity = await run_in_threadpool(
-        Database.fetch_one, db, "SELECT ...", (canon_id,)
-    )
-    return entity
+# ✅ Correct - awaits the async database call
+async def get_entity(canon_id: str, db: Neo4jDatabase = Depends(get_neo4j_db)):
+    records = await db.execute("MATCH (n) WHERE n.id = $id RETURN n", {"id": id})
+    return records[0]
 ```
 
 **Rule of Thumb:**
-- Any `Database.*` call → wrap in `run_in_threadpool`
-- Any file I/O → wrap in `run_in_threadpool`
-- Any network I/O → use async library or wrap
-- CPU-bound work → wrap in `run_in_threadpool`
+- Any method on the `Neo4jDatabase` adapter is `async` and must be `await`ed.
+- The `run_in_threadpool` wrapper is no longer needed for database calls.
 
 ---
 
@@ -755,89 +685,46 @@ const chart = new Chart(ctx, {
 
 ## Performance Issues
 
-### Issue: Slow list endpoints
+### Issue: Slow Cypher Queries
 
-**Symptom:** `/entities` or `/contradictions` takes >1 second
+**Symptom:** API endpoints are slow.
 
-**Cause:** N+1 query pattern - fetching related data in loop
+**Cause:** Inefficient Cypher query that isn't using an index or is performing a very large graph traversal.
 
 **Solution:**
-```python
-# ❌ Bad - N+1 queries
-entities = Database.fetch_all(db, "SELECT * FROM entities")
-for entity in entities:
-    # This runs a query for EACH entity!
-    aliases = Database.fetch_all(db, 
-        "SELECT * FROM aliases WHERE canon_id = ?", 
-        (entity['canon_id'],)
-    )
-
-# ✅ Good - Single query with JOIN
-query = """
-    SELECT 
-        e.*,
-        GROUP_CONCAT(a.alias) AS aliases
-    FROM entities e
-    LEFT JOIN aliases a ON e.canon_id = a.canon_id
-    GROUP BY e.canon_id
-"""
-entities = Database.fetch_all(db, query)
-```
-
-**Check For:**
-- Multiple `fetch_all` calls in loops
-- Separate queries for related data
-- Missing JOIN clauses
+- Use the Neo4j Browser (`http://localhost:7474`) to `PROFILE` or `EXPLAIN` your query.
+- Look for operations like `NodeByLabelScan` instead of `NodeIndexSeek`.
+- Ensure you have indexes on the properties you are querying (e.g., `canon_id`, `name`).
+- Rework the query to be more efficient, starting from indexed nodes and traversing as little of the graph as possible.
+- Example: `CREATE INDEX entity_name_index IF NOT EXISTS FOR (n:Entity) ON (n.name);`
 
 ---
 
 ### Issue: High memory usage
 
-**Symptom:** Python process using excessive RAM
+**Symptom:** Python process or Neo4j server using excessive RAM.
 
-**Cause:** Large result sets loaded into memory, or connection leak
+**Cause:** A query is returning a huge number of nodes or relationships, which are then loaded into memory.
 
 **Solution:**
-```python
-# 1. Limit query results
-query += " LIMIT 100"  # Don't fetch entire table
-
-# 2. Use pagination
-@router.get("/entities")
-async def list_entities(
-    offset: int = 0,
-    limit: int = 100
-):
-    query += " LIMIT ? OFFSET ?"
-    return Database.fetch_all(db, query, (limit, offset))
-
-# 3. Check for connection leaks
-# Always use Depends(get_db) or db_session()
-# Never create connections manually without cleanup
-```
+- Always use `LIMIT` in your Cypher queries, especially for listing endpoints.
+- Implement pagination using `SKIP` and `LIMIT`.
+- Avoid returning entire nodes (`RETURN n`) when you only need a few properties (`RETURN n.name, n.canon_id`).
 
 ---
 
-### Issue: Database file growing too large
+### Issue: Slow Vector Searches
 
-**Symptom:** `lore.db` is multiple GB
+**Symptom:** Semantic searches are slow.
 
-**Cause:** No cleanup of old WAL files, or excessive logging
+**Cause:**
+1.  A vector index does not exist or is not being used.
+2.  The query is not selective enough.
 
 **Solution:**
-```bash
-# 1. Check WAL file size
-ls -lh data/lore.db*
-
-# 2. Checkpoint WAL to main database
-sqlite3 data/lore.db "PRAGMA wal_checkpoint(TRUNCATE);"
-
-# 3. Vacuum database (reclaim space)
-sqlite3 data/lore.db "VACUUM;"
-
-# 4. Consider archiving old data
-# Move resolved contradictions to archive table
-```
+- Verify the vector index exists using `SHOW INDEXES` in Neo4j Browser.
+- Use a higher `min_score` threshold in your `vector_search` call to return fewer, more relevant results.
+- Combine vector search with other filters (e.g., on node labels or properties) to narrow down the search space.
 
 ---
 
@@ -867,36 +754,30 @@ print(f"Response: {response.json()}")
 
 ---
 
-### Error: Database locked during tests
+### Error: Mock database not configured correctly
 
-**Symptom:** Tests fail with "database is locked"
+**Symptom:** Tests that interact with the database fail with `422 Unprocessable Entity`, `404 Not Found`, or other unexpected errors.
 
-**Cause:** Tests not cleaning up connections, or parallel execution
+**Cause:** The `mock_neo4j_db` fixture from `conftest.py` is being used, but it has not been configured to provide the correct return values for the specific database calls made during the test.
 
 **Solution:**
 ```python
-# 1. Use separate test database
-DB_PATH = Path("data/test_lore.db")
-
-# 2. Clean up between tests
-import pytest
-
-@pytest.fixture
-def db():
-    conn = get_db_connection()
-    yield conn
-    conn.close()
-
-# 3. Don't run tests in parallel for SQLite
-pytest -n 1  # Single process
-
-# 4. Use transactions that rollback
-@pytest.fixture
-def db_transaction():
-    with db_session() as conn:
-        yield conn
-        conn.rollback()  # Undo test changes
+# In your test function, configure the mock's side_effect
+def test_my_api_call(client: TestClient, mock_neo4j_db: AsyncMock):
+    # This test expects two db calls: a CREATE, then a GET
+    mock_neo4j_db.execute.side_effect = [
+        [],  # Return for the CREATE
+        [{'canon_id': 'abc', ...}] # Return for the GET
+    ]
+    
+    response = client.post("/my-endpoint", json={...})
+    
+    assert response.status_code == 201
 ```
+
+**Rule of Thumb:**
+- Every database call made within the code path your test is exercising needs a corresponding return value configured in your mock's `side_effect` list.
+- Check the endpoint logic to see how many times `db.execute` (or similar) is called.
 
 ---
 
@@ -905,25 +786,20 @@ def db_transaction():
 ### Corrupted Database
 
 ```bash
-# 1. Stop server immediately
-kill <uvicorn_pid>
+# 1. Stop server and Neo4j
+docker-compose down
 
 # 2. Backup current state (even if corrupted)
-cp data/lore.db data/lore.db.corrupted.$(date +%Y%m%d)
+# The data is typically in a volume managed by Docker. Find the volume name:
+docker volume ls
+# Then back it up (this can be complex, consult Docker/Neo4j docs)
 
-# 3. Attempt integrity check
-sqlite3 data/lore.db "PRAGMA integrity_check;"
+# 3. If no backup, the simplest recovery is to reset and re-ingest
+# WARNING: THIS DELETES ALL DATA
+docker-compose down -v # The -v flag removes the volume
+docker-compose up -d
 
-# 4. If corrupted, dump and reload
-sqlite3 data/lore.db ".dump" > dump.sql
-rm data/lore.db
-sqlite3 data/lore.db < dump.sql
-
-# 5. If still broken, restore from backup
-cp data/lore.db.backup data/lore.db
-
-# 6. Restart server
-uvicorn src.api:app --reload
+# 4. Re-ingest your lore files using the Ingestion UI
 ```
 
 ---
@@ -940,9 +816,9 @@ pip list | grep -E "fastapi|pydantic|uvicorn"
 # 3. Check for syntax errors
 python -m py_compile src/api.py
 
-# 4. Check database
-ls -la data/lore.db
-sqlite3 data/lore.db "SELECT COUNT(*) FROM entities;"
+# 4. Check database connection
+docker-compose ps # Ensure neo4j container is running
+cypher-shell -a "bolt://localhost:7687" -u neo4j -p yourpassword "MATCH (n) RETURN count(n);"
 
 # 5. Check logs for clues
 # Look at full traceback in terminal

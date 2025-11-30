@@ -11,7 +11,6 @@ This glossary defines key terms and project-specific jargon used within the Lore
 -   **Contradiction:** An inconsistency or conflict identified within the lore data, indicating a potential error or unresolved narrative element.
 -   **Contradiction Status (`ContradictionStatus` Enum):** An enumeration (`PENDING`, `IN_REVIEW`, `RESOLVED`, `DISMISSED`) indicating the current stage of a detected contradiction within the triage workflow.
 -   **Contradiction Severity (`ContradictionSeverity` Enum):** An enumeration (`HIGH`, `MEDIUM`, `LOW`) indicating the impact or importance of a detected contradiction.
--   **Database Session (`db_session`):** A context manager that provides an isolated `sqlite3.Connection` for a block of code, ensuring transactional integrity (commit on success, rollback on error) and proper connection closure.
 -   **Dependency Injection (`Depends`):** A FastAPI mechanism used to provide external components (like database connections) to route handlers, promoting modularity and testability.
 -   **DM (Dungeon Master):** Refers to the human user, particularly in the context of the tabletop role-playing game metaphor.
 -   **Entity:** A fundamental piece of lore, representing a person, place, item, event, or concept.
@@ -26,7 +25,7 @@ This glossary defines key terms and project-specific jargon used within the Lore
 -   **Pytest:** The Python testing framework used for writing and running unit and integration tests.
 -   **Query Agent (`QueryAgent`):** An AI agent responsible for answering natural language queries about the lore.
 -   **Relationship:** A directed connection between two Entities, describing how they are linked (e.g., 'parent_of', 'located_in').
--   **`run_in_threadpool`:** A FastAPI utility that offloads a synchronous (blocking) function call to a separate thread, preventing it from blocking the main event loop of an `async def` endpoint.
--   **SQLite:** The lightweight, file-based relational database used by the LMS.
+-   **`run_in_threadpool`:** A FastAPI utility that offloads a synchronous (blocking) function call to a separate thread. Previously used for all database calls, now primarily used for other blocking I/O if necessary.
+-   **Neo4j:** The graph database used by the LMS to store and query highly connected lore data.
 -   **Triage:** The process of reviewing, categorizing, and deciding the action to take on a detected Contradiction.
 -   **Triage Analysis:** The detailed evaluation and recommended action for a contradiction, typically provided by an AI or human analyst.

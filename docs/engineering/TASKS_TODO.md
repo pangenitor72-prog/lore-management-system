@@ -4,7 +4,7 @@ This document outlines follow-up tasks, potential refactorings, test expansions,
 
 ## 1. Further Refactors
 
--   **Consolidate `Database` Utility:** While the `Database` class now exposes static methods, consider if it should be an instantiable class or just a module of functions. The current `Database()` instantiation is only used for `db_path` in `AuditorAgent` and `QueryAgent`, which might be over-complicating dependency injection.
+-   **Refine `Neo4jDatabase` Adapter:** The `Neo4jDatabase` class provides a good abstraction. Future work could involve adding more helper methods for common query patterns to further simplify the service and agent layers.
 -   **Agent Initialization in `api.py`:** Review the global initialization of `AuditorAgent` and `QueryAgent` in `src/api.py`. While it now passes a callable for `get_db_connection`, consider if a more explicit dependency injection pattern for these agents directly into routes (e.g., using a custom FastAPI `Depends` for agents) might be cleaner for managing their lifecycle or dynamic configuration.
 -   **Centralized Error Handling Middleware:** Implement a FastAPI exception handler or middleware for consistent, application-wide error responses, rather than `try-except` blocks in every endpoint.
 -   **Configuration Management:** Use a dedicated configuration library (e.g., `Dynaconf`, `Pydantic-Settings`) instead of `os.getenv` for more structured settings management.
@@ -21,14 +21,14 @@ This document outlines follow-up tasks, potential refactorings, test expansions,
 
 ## 3. Performance Work
 
--   **Database Indexing Review:** Regularly review SQL query performance and add or optimize database indexes as needed, especially for frequently queried columns and foreign keys.
--   **Database Connection Pooling:** For high-load scenarios, consider implementing a database connection pool, rather than opening and closing a new connection for every request. SQLite performance often benefits more from efficient transaction management than pooling, but it's a consideration.
+-   **Database Indexing Review:** Regularly review Cypher query performance and add or optimize database indexes on node properties to improve query speed.
+-   **Database Connection Pooling:** The `neo4j` driver handles connection pooling automatically. Monitor performance under load to ensure the pool is configured optimally for the application's needs.
 -   **LLM Caching:** Implement caching for LLM responses to reduce latency and API costs for repetitive queries.
 
 ## 4. Documentation Deepenings
 
 -   **API Reference:** Generate a more detailed API reference (e.g., using Sphinx or extending OpenAPI spec) to document all endpoints, request/response models, and error codes.
--   **Database ERD:** Create an Entity-Relationship Diagram (ERD) for the database schema to provide a visual representation.
+-   **Graph Schema Visualization:** Create a visualization of the graph schema (nodes, relationships, properties) to provide a clear visual reference.
 -   **Deployment Guide:** Document the steps required to deploy the LMS application to various environments (e.g., Docker, Kubernetes, cloud platforms).
 -   **Security Hardening:** Document security considerations, best practices, and any implemented security features (e.g., authentication, authorization).
 -   **Design Decisions:** Document specific design choices and their justifications.

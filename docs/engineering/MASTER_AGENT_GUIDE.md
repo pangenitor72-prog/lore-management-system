@@ -7,11 +7,11 @@ This guide is specifically for AI collaborators working within the Lore Manageme
 To quickly orient yourself within the codebase, prioritize reading the following documents and files:
 
 -   **`docs/engineering/ARCHITECTURE_OVERVIEW.md`**: High-level understanding of the system's structure and data flow.
--   **`docs/engineering/PROJECT_CONVENTIONS.md`**: Essential for understanding coding style, naming, and structural expectations.
+-   **`../CONVENTIONS.md`**: Essential for understanding coding style, naming, and structural expectations.
 -   **`docs/engineering/REPO_RULES.md`**: Non-negotiable rules for Git workflow, testing, and what *not* to touch.
 -   **`src/api.py`**: The main FastAPI application entry point, providing an overview of exposed endpoints.
 -   **`src/models.py`**: Defines all Pydantic models and Enums, which are crucial for understanding data structures.
--   **`src/database.py`**: Explains how database connections are managed and operations are performed.
+-   **`src/neo4j_adapter.py`**: Explains how the async connection to the Neo4j database is managed and queries are executed.
 
 ## 2. How to Propose Changes
 
@@ -28,7 +28,7 @@ Follow a structured approach for all proposed changes:
 
 ## 3. Required Steps During Implementation
 
--   **Adhere to Conventions:** Strictly follow `docs/engineering/PROJECT_CONVENTIONS.md`.
+-   **Adhere to Conventions:** Strictly follow `../CONVENTIONS.md`.
 -   **Respect Repository Rules:** Abide by `docs/engineering/REPO_RULES.md` (e.g., use feature branches, write tests).
 -   **Explain Critical Commands:** Before executing any `run_shell_command` that modifies the file system or state, provide a brief explanation of its purpose and potential impact.
 -   **Show Diffs for All Changes:** After every logical change to the codebase (e.g., fixing one audit point, implementing a small part of a feature), use `git diff` or `git diff --staged` and present the diff to the user for review. Wait for explicit approval before proceeding to the next logical change.
@@ -37,7 +37,7 @@ Follow a structured approach for all proposed changes:
 
 ## 4. How to Respect `PROJECT_CONVENTIONS` and `REPO_RULES`
 
--   **Read and Internalize:** Regularly review `PROJECT_CONVENTIONS.md` and `REPO_RULES.md`.
+-   **Read and Internalize:** Regularly review `../CONVENTIONS.md` and `REPO_RULES.md`.
 -   **Self-Correction:** If you identify a deviation from these rules in your own generated code, proactively correct it.
 -   **Consistency over Preference:** Always prioritize project-established conventions over personal or generalized coding preferences.
 -   **Question Ambiguity:** If a convention is unclear or a rule seems to conflict with the current task, ask the human user for clarification.
