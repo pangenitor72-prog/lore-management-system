@@ -22,7 +22,7 @@ AIRPG (The Game) ← uses ← MANTLE (The DM Engine) ← uses ← LMS (The Memor
 ## Backend Analysis Summary:
 -   **Structure:** Well-organized FastAPI application with modular components (services, agents).
 -   **Main Application:** `src/api.py` is the primary entry point.
--   **Database:** Uses SQLite, with schema defined in `data/schema.sql` and managed by `src/database.py`.
+-   **Database:** Uses a Neo4j graph database, with the schema documented in `docs/NEO4J_SCHEMA.md` and managed by `src/neo4j_adapter.py`.
 -   **API Routes:** Comprehensive RESTful API is implemented for entities, contradictions, and other core functionalities, defined in `src/api.py` and `src/contradiction_service.py`.
 -   **WebSockets:**
     -   An auditor-specific WebSocket endpoint (`/ws/auditor`) exists for event broadcasting.

@@ -34,8 +34,8 @@ These rules govern all work performed within this Lore Management System (LMS) r
 ## 5. What is Off-Limits (Do Not Touch)
 
 - **`.env` files:** Never commit `.env` files or hardcode sensitive information (API keys, credentials, etc.) directly into the codebase. Use environment variables.
-- **Database Files (`.db`):** Never commit SQLite database files (e.g., `data/lore.db`) to version control. The schema (`schema.sql`) is version controlled, but the data is not.
-- **Renaming Modules/Public Endpoints:** Do not rename core modules (`src/api.py`, `src/models.py`, `src/database.py`) or public-facing API endpoints without explicit, prior approval and a clear migration strategy.
+- **Database Files:** Never commit local graph database files to version control. The schema is documented in `docs/NEO4J_SCHEMA.md`.
+- **Renaming Modules/Public Endpoints:** Do not rename core modules (`src/api.py`, `src/models.py`, `src/neo4j_adapter.py`) or public-facing API endpoints without explicit, prior approval and a clear migration strategy.
 - **Breaking DB Schema Changes:** Avoid making breaking changes to the database schema (`schema.sql`) without a clear migration guide and communication.
 - **Vendor Directories:** Do not modify or commit files within automatically generated vendor directories (e.g., `venv/`, `__pycache__/`, `.pytest_cache/`).
 

@@ -32,21 +32,21 @@ pytest -s
 
 ## 2. Recommended Structure for Future Tests
 
-### a. `tests/test_db_*.py` (Unit Tests for Database Layer)
+### a. Mocking the Database Layer
 
--   **Purpose:** Verify the functionality of `src/database.py`'s core methods (connection handling, schema initialization, `execute`, `fetch_one`, `fetch_all`).
+-   **Purpose:** To test services and API endpoints without requiring a live Neo4j database connection.
 -   **Approach:**
-    -   Use `pytest.fixture` to set up an isolated in-memory SQLite database (`":memory:"`) for each test function or test class.
-    -   Directly interact with `src/database.py` functions and static methods.
-    -   Ensure schema is initialized for the in-memory database within the fixture.
--   **Example:** See `tests/test_db_basic.py`.
+    -   The primary testing strategy uses `unittest.mock.AsyncMock` to create a mock of the `Neo4jDatabase` class.
+    -   This mock is provided to tests via the `mock_neo4j_db` fixture in `tests/conftest.py`.
+    -   For individual tests, the mock's methods (e.g., `execute`, `fetch_one`) can be configured with specific return values or side effects to simulate different database states and responses.
+-   **Example:** See `tests/test_smoke.py` for how the `mock_neo4j_db` fixture is used.
 
 ### b. `tests/test_*_api.py` (Integration Tests for API Endpoints)
 
 -   **Purpose:** Verify that FastAPI endpoints correctly handle requests, interact with the database, and return appropriate responses.
 -   **Approach:**
-    -   Use `httpx.AsyncClient` to make requests to the FastAPI application.
-    -   Use `pytest.fixture` to set up an in-memory database and override FastAPI's `get_db` dependency to point to this test database. This ensures isolated tests for API endpoints.
+    -   Use `fastapi.testclient.TestClient`, which is provided by the `client` fixture in `tests/conftest.py`.
+    -   The `client` fixture automatically uses a mocked version of the `Neo4jDatabase` by overriding the `get_neo4j_db` dependency. This ensures API tests run in isolation without a live database.
     -   Mock external dependencies (e.g., LLM calls in agents) if they are not the primary focus of the test.
     -   Test request/response validation, status codes, and the correctness of the data returned/modified.
 -   **Example:** See `tests/test_entities_api.py`, `tests/test_contradictions_api.py`.
@@ -63,11 +63,10 @@ pytest -s
 
 Following the recent audit and refactoring, the following basic test coverage has been established:
 
--   **`tests/test_db_basic.py`**:
-    -   Verification of in-memory database connection.
-    -   Confirmation of database schema initialization.
-    -   Basic entity insertion and retrieval.
-    -   Entity insertion with aliases and approved fields, including JSON field handling verification.
+-   **`tests/test_smoke.py`**:
+    -   Verifies that the `/health` endpoint is working.
+    -   Performs a mock creation of an entity to test the `POST /entities` endpoint.
+    -   Tests the `/upload` endpoint.
 -   **`tests/test_entities_api.py`**:
     -   Successful creation of entities via `POST /entities`.
     -   Retrieval of a specific entity via `GET /entities/{canon_id}`.

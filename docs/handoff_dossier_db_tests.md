@@ -1,3 +1,6 @@
+> **ARCHIVAL NOTE:** This document describes the initial migration of tests to `pytest` when the backend was still using SQLite. The project has since been fully migrated to Neo4j. The test suite has been updated accordingly, and this document is kept for historical purposes only.
+---
+
 # Handoff Dossier: Convert Database Tests to Pytest
 
 ## 1. Scope Confirmation
