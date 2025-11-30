@@ -308,6 +308,8 @@ class QueryAgent:
         2. VECTOR SEARCH (Semantic): Find semantically similar entities via embeddings
         3. REVERSE MATCH (Fallback): Find nodes whose names appear in the raw query
         4. KEYWORD SEARCH (Last Resort): Traditional keyword-based search
+        
+        Strategies 1 and 2 run in PARALLEL using asyncio.gather for better latency.
         """
         await AuditLogger.log(f"Retrieving context for: '{query}'")
         
@@ -325,10 +327,31 @@ class QueryAgent:
                     return True
             return False
         
-        # === STRATEGY 1: Agentic Entity Extraction (Primary) ===
-        # Use Gemini to intelligently extract entities from complex queries
-        extracted_entities = await self.extract_search_entities(query)
+        # === RUN STRATEGIES 1 & 2 IN PARALLEL ===
+        # Both involve LLM/embedding calls that can run concurrently
+        async def noop_vector_search():
+            """No-op coroutine when vector search is disabled."""
+            return []
         
+        extraction_task = self.extract_search_entities(query)
+        vector_task = self.vector_search(query, limit=5, min_score=0.6) if self.vector_search_enabled else noop_vector_search()
+        
+        # Wait for both to complete simultaneously
+        extracted_entities, vector_results = await asyncio.gather(
+            extraction_task,
+            vector_task,
+            return_exceptions=True  # Don't fail if one strategy errors
+        )
+        
+        # Handle exceptions from gather
+        if isinstance(extracted_entities, Exception):
+            await AuditLogger.log(f"Agentic extraction failed: {extracted_entities}", level=logging.WARNING)
+            extracted_entities = []
+        if isinstance(vector_results, Exception):
+            await AuditLogger.log(f"Vector search failed: {vector_results}", level=logging.WARNING)
+            vector_results = []
+        
+        # === PROCESS STRATEGY 1 RESULTS: Agentic Entity Extraction ===
         if extracted_entities:
             await AuditLogger.log(f"Strategy 1 (Agentic): Searching for {extracted_entities}")
             strategies_used.append("agentic")
@@ -338,21 +361,17 @@ class QueryAgent:
                 for match in matches:
                     await fetch_entity_context(match["name"], "agentic")
         
-        # === STRATEGY 2: Vector Similarity Search (Semantic) ===
-        # Find conceptually similar entities even without keyword matches
-        if self.vector_search_enabled and len(context_parts) < 3:
-            await AuditLogger.log("Strategy 2 (Vector): Searching for semantically similar entities...")
-            vector_results = await self.vector_search(query, limit=5, min_score=0.6)
-            
-            if vector_results:
-                strategies_used.append("vector")
-                for result in vector_results:
-                    name = result.get("name")
-                    score = result.get("score", 0)
-                    if name:
-                        added = await fetch_entity_context(name, "vector")
-                        if added:
-                            await AuditLogger.log(f"  Vector match: {name} (score={score:.3f})")
+        # === PROCESS STRATEGY 2 RESULTS: Vector Similarity Search ===
+        if vector_results and len(context_parts) < 5:
+            await AuditLogger.log(f"Strategy 2 (Vector): Processing {len(vector_results)} semantic matches...")
+            strategies_used.append("vector")
+            for result in vector_results:
+                name = result.get("name")
+                score = result.get("score", 0)
+                if name:
+                    added = await fetch_entity_context(name, "vector")
+                    if added:
+                        await AuditLogger.log(f"  Vector match: {name} (score={score:.3f})")
         
         # === STRATEGY 3: Reverse Match (if still need more context) ===
         # Find nodes whose names appear within the raw query string

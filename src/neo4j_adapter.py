@@ -3,8 +3,14 @@ from neo4j import AsyncGraphDatabase
 from typing import List, Dict, Any, Optional
 import logging
 
+# Configure module logger
+logger = logging.getLogger(__name__)
+
 # Embedding dimension for Gemini text-embedding-004
 EMBEDDING_DIMENSION = 768
+
+# Regex pattern for safe Cypher identifiers
+IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
 
 
 class Neo4jDatabase:
@@ -21,20 +27,47 @@ class Neo4jDatabase:
         self.db_name = db_name
         self.driver = None
 
-    def _sanitize_cypher_identifier(self, identifier: str, fallback: str = "default") -> str:
+    @staticmethod
+    def validate_identifier(name: str) -> str:
         """
-        Sanitize identifiers for use in Cypher queries.
-        Only allows alphanumeric characters and underscores.
+        Whitelist identifiers to prevent Cypher injection.
+        Allows only alphanumeric characters, underscores, and must start with
+        a letter or underscore (standard Cypher identifier rules).
+        
+        Args:
+            name: The identifier to validate
+            
+        Returns:
+            The validated identifier (unchanged if valid)
+            
+        Raises:
+            ValueError: If the identifier contains invalid characters
         """
-        if not identifier:
-            return fallback
+        if not name or not IDENTIFIER_PATTERN.match(name):
+            raise ValueError(f"Invalid Cypher identifier: '{name}'. "
+                           "Must start with letter/underscore, contain only alphanumeric/underscore.")
+        return name
+    
+    @staticmethod
+    def _sanitize_cypher_identifier(name: str, default: str) -> str:
+        """
+        Sanitize an identifier for use in Cypher f-strings.
+        Returns the default if the name is invalid.
         
-        sanitized = re.sub(r'[^a-zA-Z0-9_]', '', identifier)
-        
-        if sanitized and sanitized[0].isdigit():
-            sanitized = f"_{sanitized}"
-        
-        return sanitized if sanitized else fallback
+        Args:
+            name: The identifier to sanitize
+            default: Fallback value if name is invalid
+            
+        Returns:
+            The sanitized identifier or default
+        """
+        if not name:
+            logger.warning(f"Empty identifier provided, using default: {default}")
+            return default
+        if not IDENTIFIER_PATTERN.match(name):
+            logger.warning(f"Invalid identifier '{name}' sanitized to default: {default}")
+            return default
+        return name
 
     async def connect(self):
         """Establishes the connection pool."""
@@ -42,16 +75,16 @@ class Neo4jDatabase:
             try:
                 self.driver = AsyncGraphDatabase.driver(self.uri, auth=self.auth)
                 await self.driver.verify_connectivity()
-                print(f"🔌 Connected to Neo4j ({self.uri})")
+                logger.info(f"Connected to Neo4j ({self.uri})")
             except Exception as e:
-                print(f"❌ Connection Failed: {e}")
+                logger.error(f"Connection failed: {e}")
                 raise e
 
     async def close(self):
         """Closes the connection pool."""
         if self.driver:
             await self.driver.close()
-            print("🔒 Connection Closed")
+            logger.info("Neo4j connection closed")
 
     async def execute(self, query, params=None):
         """
@@ -71,11 +104,11 @@ class Neo4jDatabase:
                 parameters_=params,
                 database_=self.db_name
             )
-            # print(f"   ⚡ Cypher Executed: {summary.counters}") # Optional: Debug noise
+            logger.debug(f"Cypher executed: {summary.counters}")
             return records
         except Exception as e:
-            print(f"❌ Query Error: {e}")
-            print(f"   Query: {query}")
+            logger.error(f"Query error: {e}")
+            logger.debug(f"Failed query: {query}")
             return None
             
     async def fetch_all(self, query, params=None):
@@ -109,7 +142,7 @@ class Neo4jDatabase:
         """
         # Validate inputs
         if similarity_function not in ["cosine", "euclidean"]:
-            print(f"❌ Invalid similarity function: {similarity_function}")
+            logger.error(f"Invalid similarity function: {similarity_function}")
             return False
             
         clean_index = self._sanitize_cypher_identifier(index_name, "entity_embeddings")
@@ -135,10 +168,10 @@ class Neo4jDatabase:
         
         try:
             await self.execute(query, params)
-            print(f"✅ Vector index '{clean_index}' created (or already exists)")
+            logger.info(f"Vector index '{clean_index}' created (or already exists)")
             return True
         except Exception as e:
-            print(f"❌ Failed to create vector index: {e}")
+            logger.error(f"Failed to create vector index: {e}")
             return False
     
     async def drop_vector_index(self, index_name: str = "entity_embeddings") -> bool:
@@ -147,10 +180,10 @@ class Neo4jDatabase:
         query = f"DROP INDEX {clean_index} IF EXISTS"
         try:
             await self.execute(query)
-            print(f"🗑️ Vector index '{clean_index}' dropped")
+            logger.info(f"Vector index '{clean_index}' dropped")
             return True
         except Exception as e:
-            print(f"❌ Failed to drop vector index: {e}")
+            logger.error(f"Failed to drop vector index: {e}")
             return False
     
     async def list_indexes(self) -> List[Dict[str, Any]]:
@@ -182,8 +215,11 @@ class Neo4jDatabase:
         Returns:
             True if successful
         """
+        # Validate identifier to prevent Cypher injection
+        clean_id_prop = self._sanitize_cypher_identifier(id_property, "canon_id")
+        
         query = f"""
-        MATCH (n {{{id_property}: $node_id}})
+        MATCH (n {{{clean_id_prop}: $node_id}})
         SET n.embedding = $embedding
         RETURN n.name AS name
         """
@@ -195,7 +231,7 @@ class Neo4jDatabase:
                 return True
             return False
         except Exception as e:
-            print(f"❌ Failed to store embedding: {e}")
+            logger.error(f"Failed to store embedding for node '{node_id}': {e}")
             return False
     
     async def store_embeddings_batch(
@@ -213,9 +249,12 @@ class Neo4jDatabase:
         Returns:
             Number of nodes updated
         """
+        # Validate identifier to prevent Cypher injection
+        clean_id_prop = self._sanitize_cypher_identifier(id_property, "canon_id")
+        
         query = f"""
         UNWIND $items AS item
-        MATCH (n {{{id_property}: item.node_id}})
+        MATCH (n {{{clean_id_prop}: item.node_id}})
         SET n.embedding = item.embedding
         RETURN count(n) AS updated
         """
@@ -227,7 +266,7 @@ class Neo4jDatabase:
                 return records[0]["updated"]
             return 0
         except Exception as e:
-            print(f"❌ Batch embedding storage failed: {e}")
+            logger.error(f"Batch embedding storage failed: {e}")
             return 0
     
     async def get_nodes_without_embeddings(self, limit: int = 100) -> List[Dict[str, Any]]:
@@ -325,7 +364,7 @@ class Neo4jDatabase:
                 return [dict(r) for r in records]
             return []
         except Exception as e:
-            print(f"❌ Vector search failed: {e}")
+            logger.error(f"Vector search failed: {e}")
             return []
     
     async def hybrid_search(
@@ -346,7 +385,7 @@ class Neo4jDatabase:
         Args:
             query_embedding: The query vector
             start_node_id: canon_id of the starting node
-            max_hops: Maximum relationship distance
+            max_hops: Maximum relationship distance (1-10)
             limit: Maximum results
             min_score: Minimum similarity score
             index_name: Vector index name
@@ -354,6 +393,11 @@ class Neo4jDatabase:
         Returns:
             Nodes matching both criteria with similarity scores
         """
+        # Validate max_hops to prevent injection via integer overflow/abuse
+        if not isinstance(max_hops, int) or max_hops < 1 or max_hops > 10:
+            logger.warning(f"Invalid max_hops value '{max_hops}', clamping to range [1,10]")
+            max_hops = max(1, min(10, int(max_hops) if isinstance(max_hops, (int, float)) else 2))
+        
         query = f"""
         // First, find the start node
         MATCH (start {{canon_id: $start_node_id}})
@@ -388,5 +432,5 @@ class Neo4jDatabase:
                 return [dict(r) for r in records]
             return []
         except Exception as e:
-            print(f"❌ Hybrid search failed: {e}")
+            logger.error(f"Hybrid search failed: {e}")
             return []

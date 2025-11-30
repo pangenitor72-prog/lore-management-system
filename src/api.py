@@ -165,7 +165,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -188,9 +188,21 @@ app.mount(
     name="static"  # ← ADD THIS LINE
 )
 
+@app.websocket("/ws/gemini")
+async def websocket_gemini_endpoint(websocket: WebSocket, client_id: str = Query(...)):
+    if not app.state.ai_enabled or not hasattr(app.state, "query_agent"):
+        await websocket.accept()
+        await websocket.send_json({"error": "AI features are not enabled or QueryAgent not initialized."})
+        await websocket.close(code=status.WS_1013_UNEXPECTED_CONDITION)
+        return
+
+    await app.state.query_agent.handle_websocket(websocket, client_id)
+
 @app.websocket("/ws/auditor")
 async def websocket_auditor_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for auditor events (contradiction detection, etc.)."""
     await websocket.accept()
+    await AuditLogger.log("Auditor WebSocket client connected.")
     queue = await broadcaster.subscribe("auditor_events")
     try:
         while True:
@@ -202,7 +214,92 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
         await AuditLogger.log(f"Auditor WebSocket error: {e}", level=logging.ERROR)
     finally:
         broadcaster.unsubscribe("auditor_events", queue)
-        await websocket.close()
+        try:
+            await websocket.close()
+        except Exception:
+            pass  # Connection may already be closed
+
+
+@app.websocket("/ws/events")
+async def websocket_events_endpoint(websocket: WebSocket, channels: str = Query("query_events")):
+    """
+    General-purpose WebSocket endpoint for subscribing to multiple event channels.
+    
+    Args:
+        channels: Comma-separated list of channels to subscribe to.
+                  Available: query_events, auditor_events, ingestion_events
+    
+    Example:
+        ws://localhost:8000/ws/events?channels=query_events,auditor_events
+    """
+    await websocket.accept()
+    
+    # Parse requested channels
+    channel_list = [c.strip() for c in channels.split(",") if c.strip()]
+    valid_channels = {"query_events", "auditor_events", "ingestion_events"}
+    subscribed_channels = [c for c in channel_list if c in valid_channels]
+    
+    if not subscribed_channels:
+        await websocket.send_json({
+            "error": "No valid channels specified",
+            "valid_channels": list(valid_channels)
+        })
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+    
+    await AuditLogger.log(f"Events WebSocket connected to channels: {subscribed_channels}")
+    
+    # Subscribe to all requested channels
+    queues = {}
+    for channel in subscribed_channels:
+        queues[channel] = await broadcaster.subscribe(channel)
+    
+    async def read_from_queue(channel: str, queue: asyncio.Queue):
+        """Read messages from a single queue and tag with channel name."""
+        while True:
+            message = await queue.get()
+            if isinstance(message, dict):
+                message["_channel"] = channel
+            return message
+    
+    try:
+        while True:
+            # Create tasks for all queues
+            tasks = {
+                asyncio.create_task(read_from_queue(ch, q)): ch 
+                for ch, q in queues.items()
+            }
+            
+            # Wait for any queue to have a message
+            done, pending = await asyncio.wait(
+                tasks.keys(),
+                return_when=asyncio.FIRST_COMPLETED
+            )
+            
+            # Cancel pending tasks
+            for task in pending:
+                task.cancel()
+            
+            # Send completed messages
+            for task in done:
+                try:
+                    message = task.result()
+                    await websocket.send_json(message)
+                except Exception as e:
+                    await AuditLogger.log(f"Error sending event: {e}", level=logging.WARNING)
+                    
+    except WebSocketDisconnect:
+        await AuditLogger.log("Events WebSocket client disconnected.")
+    except Exception as e:
+        await AuditLogger.log(f"Events WebSocket error: {e}", level=logging.ERROR)
+    finally:
+        # Unsubscribe from all channels
+        for channel, queue in queues.items():
+            broadcaster.unsubscribe(channel, queue)
+        try:
+            await websocket.close()
+        except Exception:
+            pass
 
 # ============================================================
 # ROOT & INFO ENDPOINTS

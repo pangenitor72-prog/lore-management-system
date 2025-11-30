@@ -3,10 +3,22 @@ import os
 import json
 import re
 import logging
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 import google.generativeai as genai
 from .embedding_service import EmbeddingService
 from .audit_log import AuditLogger
+
+# Configure module logger
+logger = logging.getLogger(__name__)
+
+# Regex pattern for safe Cypher identifiers (labels, relationship types)
+CYPHER_IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+# Default values for data model compliance
+DEFAULT_CONFIDENCE_LEVEL = "AI_GENERATED"
+DEFAULT_PARTY_KNOWLEDGE = "SECRET"
+
 
 class LoreIngestor:
     """
@@ -52,6 +64,44 @@ Example:
         self.model = genai.GenerativeModel('gemini-2.0-flash')
         self.enable_embeddings = enable_embeddings
         self.embedding_service = EmbeddingService(api_key) if enable_embeddings else None
+
+    @staticmethod
+    def sanitize_cypher_identifier(name: str, default: str = "Entity") -> str:
+        """
+        Sanitize a string for use as a Cypher label or relationship type.
+        
+        Rules:
+        - Must start with a letter or underscore
+        - Can only contain alphanumeric characters and underscores
+        - Returns default if sanitization fails
+        
+        Args:
+            name: The identifier to sanitize
+            default: Fallback value if name cannot be sanitized
+            
+        Returns:
+            A safe Cypher identifier
+        """
+        if not name:
+            logger.warning(f"Empty identifier provided, using default: {default}")
+            return default
+        
+        # First, replace spaces and hyphens with underscores
+        sanitized = name.replace(" ", "_").replace("-", "_")
+        
+        # Remove any other invalid characters
+        sanitized = re.sub(r'[^a-zA-Z0-9_]', '', sanitized)
+        
+        # Ensure it starts with a letter or underscore (not a digit)
+        if sanitized and sanitized[0].isdigit():
+            sanitized = "_" + sanitized
+        
+        # Final validation
+        if not sanitized or not CYPHER_IDENTIFIER_PATTERN.match(sanitized):
+            logger.warning(f"Invalid identifier '{name}' sanitized to default: {default}")
+            return default
+        
+        return sanitized
 
     def chunk_text(self, text: str) -> List[str]:
         """Split large text into overlapping chunks."""
@@ -197,12 +247,27 @@ Example:
     async def save_to_neo4j(self, data: Dict[str, Any], filename: str) -> Dict[str, int]:
         """
         Save extracted data to Neo4j using the provided driver.
+        
+        Ensures all nodes adhere to the data model by injecting default values:
+        - confidence_level: "AI_GENERATED" (unless specified)
+        - party_knowledge: "SECRET" (unless specified)
+        - source: The filename the entity was extracted from
+        - created_at: ISO timestamp of ingestion
+        
+        All labels and relationship types are sanitized to prevent Cypher injection.
+        
         Returns counts of saved nodes and relationships.
         """
         nodes = data.get("nodes", [])
         rels = data.get("relationships", [])
         nodes_saved = 0
         rels_saved = 0
+        
+        # Timestamp for this ingestion batch
+        ingestion_timestamp = datetime.now(timezone.utc).isoformat()
+        
+        # Sanitize filename for use as source reference
+        safe_filename = re.sub(r'[<>:"/\\|?*]', '_', filename) if filename else "unknown_source"
         
         # 1. Prepare Nodes with Embeddings
         # Generate embeddings concurrently for better performance
@@ -225,16 +290,39 @@ Example:
                             node["properties"] = {}
                         node["properties"]["embedding"] = embeddings[i]
 
-        # Prepare batch data for nodes
+        # Prepare batch data for nodes with default value injection
         node_batch = []
         for node in nodes:
             node_id = node.get("id", "")
-            if not node_id: continue
+            if not node_id:
+                continue
             
+            # Sanitize label using the proper identifier sanitizer
             label = node.get("label", "Entity")
-            # Sanitize label
-            safe_label = re.sub(r'[^a-zA-Z0-9_]', '', label) or "Entity"
-            props = node.get("properties", {})
+            safe_label = self.sanitize_cypher_identifier(label, "Entity")
+            
+            # Get existing properties
+            props = node.get("properties", {}).copy()
+            
+            # === INJECT DEFAULT VALUES IF MISSING ===
+            # confidence_level: How much to trust this data
+            if "confidence_level" not in props:
+                props["confidence_level"] = DEFAULT_CONFIDENCE_LEVEL
+            
+            # party_knowledge: Who knows about this entity
+            if "party_knowledge" not in props:
+                props["party_knowledge"] = DEFAULT_PARTY_KNOWLEDGE
+            
+            # source: Where this data came from
+            if "source" not in props:
+                props["source"] = safe_filename
+            
+            # created_at: When this entity was ingested (don't overwrite if updating)
+            if "created_at" not in props:
+                props["created_at"] = ingestion_timestamp
+            
+            # updated_at: Always update this timestamp
+            props["updated_at"] = ingestion_timestamp
             
             node_batch.append({
                 "name": node_id,
@@ -242,19 +330,21 @@ Example:
                 "props": props
             })
 
-        # Prepare batch data for relationships
+        # Prepare batch data for relationships with sanitization
         rel_batch = []
         for rel in rels:
             source = rel.get("source")
             target = rel.get("target")
-            rel_type = rel.get("type", "RELATED_TO").upper().replace(" ", "_")
-            rel_type = re.sub(r'[^a-zA-Z0-9_]', '_', rel_type)
+            
+            # Sanitize relationship type
+            rel_type = rel.get("type", "RELATED_TO").upper()
+            safe_rel_type = self.sanitize_cypher_identifier(rel_type, "RELATED_TO")
             
             if source and target:
                 rel_batch.append({
                     "source": source,
                     "target": target,
-                    "type": rel_type
+                    "type": safe_rel_type
                 })
 
         # 1. Save Nodes (Batch)

@@ -130,3 +130,4 @@ Reviewed all project documentation to understand the full architecture:
 The QueryAgent is now agentic but has two minor issues to fix (blocking calls, import path). The bigger picture is clear: LMS is the memory layer for AIRPG. Next work should either polish the UI or continue the Neo4j integration path.
 
 
+

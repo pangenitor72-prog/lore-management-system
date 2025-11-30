@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 import json
 import re
 import uuid
-from audit_log import AuditLogger
+from .audit_log import AuditLogger
 import logging
 import asyncio
 from .neo4j_adapter import Neo4jDatabase
@@ -82,13 +82,39 @@ class AuditorAgent:
         self.system_prompt = AuditorPrompts.get_system_prompt(self.campaign_context)
 
     def detect_contradictions(self, entity_a: Dict[str, Any], entity_b: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Finds, Scores, and suggests Resolutions for AI-detected contradictions."""
-        a_name, b_name = entity_a.get("name","?"), entity_b.get("name","?")
-        AuditLogger.log_sync(f"AI-DETECT: Comparing {a_name} vs {b_name}")
+        """
+        Finds, Scores, and suggests Resolutions for AI-detected contradictions.
         
+        Implements the Gospel Principle: Extracts trust scores from entities
+        and passes them to the prompt so the LLM knows which entity is more authoritative.
+        """
+        a_name, b_name = entity_a.get("name","?"), entity_b.get("name","?")
+        
+        # Extract confidence levels for Gospel Principle (trust scoring)
+        # Check multiple possible property names for confidence level
+        confidence_a = (
+            entity_a.get("confidence_level") or 
+            entity_a.get("confidence") or 
+            entity_a.get("properties", {}).get("confidence_level") or
+            "ai_generated"
+        )
+        confidence_b = (
+            entity_b.get("confidence_level") or 
+            entity_b.get("confidence") or 
+            entity_b.get("properties", {}).get("confidence_level") or
+            "ai_generated"
+        )
+        
+        AuditLogger.log_sync(
+            f"AI-DETECT: Comparing {a_name} (trust: {confidence_a}) vs {b_name} (trust: {confidence_b})"
+        )
+        
+        # Build prompt with trust scores for Gospel Principle compliance
         prompt = AuditorPrompts.build_detection_prompt(
             json.dumps(entity_a, indent=2),
-            json.dumps(entity_b, indent=2)
+            json.dumps(entity_b, indent=2),
+            confidence_a=confidence_a,
+            confidence_b=confidence_b
         )
         
         try:
@@ -219,13 +245,33 @@ class AuditorAgent:
             return []
 
     def _score_contradiction_confidence(self, contradiction: Dict[str, Any], entity_a: Dict[str, Any], entity_b: Dict[str, Any]) -> Dict[str, Any]:
-        """Uses gemini-1.5-pro to assign a confidence score."""
+        """
+        Uses gemini-1.5-pro to assign a confidence score.
+        
+        Implements the Gospel Principle by passing trust scores to the scoring prompt.
+        """
         AuditLogger.log_sync(f"AI-SCORE: Scoring contradiction: {contradiction.get('description', 'N/A')[:50]}...")
+        
+        # Extract confidence levels for Gospel Principle
+        confidence_a = (
+            entity_a.get("confidence_level") or 
+            entity_a.get("confidence") or 
+            entity_a.get("properties", {}).get("confidence_level") or
+            "ai_generated"
+        )
+        confidence_b = (
+            entity_b.get("confidence_level") or 
+            entity_b.get("confidence") or 
+            entity_b.get("properties", {}).get("confidence_level") or
+            "ai_generated"
+        )
         
         prompt = AuditorPrompts.build_score_confidence_prompt(
             json.dumps(entity_a, indent=2),
             json.dumps(entity_b, indent=2),
-            json.dumps(contradiction, indent=2)
+            json.dumps(contradiction, indent=2),
+            confidence_a=confidence_a,
+            confidence_b=confidence_b
         )
         
         try:
