@@ -116,7 +116,6 @@ Universal narrative coherence rules:
 ### Backend
 - **Python 3.11+** with FastAPI
 - **Neo4j** Graph Database (relationship-aware queries)
-- **SQLite** (legacy, for compatibility)
 - **Pydantic v2** for validation
 - **Google Gemini API** for AI features
 
@@ -186,7 +185,9 @@ uvicorn src.api:app --reload
 ## Current Status
 
 ### Complete ✅
-- Core database and API (SQLite + Neo4j)
+- Fully migrated to a pure Neo4j graph database backend.
+- Legacy SQLite code and obsolete files removed.
+- Test suite stabilized and passing (74 passed, 1 skipped).
 - Neo4j graph integration with entity relationships
 - Entity extraction pipeline (text → graph)
 - Agentic query retrieval (3-tier strategy)
