@@ -75,7 +75,10 @@ class AuditorAgent:
         self.flash = genai.GenerativeModel("gemini-2.5-flash")
         self.pro = genai.GenerativeModel("gemini-2.5-pro")
         AuditLogger.log_sync("AuditorAgent: Neo4j + AI hybrid mode initialized.")
-        self.system_prompt = AuditorPrompts.get_system_prompt()
+        
+        # Load campaign context (placeholder for now, ideally from config)
+        self.campaign_context = {"campaign_name": "Aethermoor"} 
+        self.system_prompt = AuditorPrompts.get_system_prompt(self.campaign_context)
 
     def detect_contradictions(self, entity_a: Dict[str, Any], entity_b: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Finds, Scores, and suggests Resolutions for AI-detected contradictions."""

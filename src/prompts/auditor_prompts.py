@@ -13,7 +13,7 @@ class PromptMetadata:
 class AuditorPrompts:
     """All prompts for the Auditor Agent."""
     
-    SYSTEM = """You are the Lore Auditor for the Aethermoor campaign.
+    SYSTEM = """You are the Lore Auditor for the {campaign_name} campaign.
 Your role is to detect contradictions in the canonical lore and classify their severity.
 
 When analyzing entities:
@@ -33,7 +33,7 @@ Direct factual contradictions (alive vs dead, location conflicts) are critical."
         temperature=0.1
     )
     
-    ENTITY_EXTRACTION_PROMPT = """You are a Named Entity Extractor for a D&D Campaign lore system.
+    ENTITY_EXTRACTION_PROMPT = """You are a Named Entity Extractor for a {campaign_name} lore system.
 Analyze the following text and extract ONLY the names of entities mentioned.
 
 **Entity Types to Look For:**
@@ -119,8 +119,10 @@ Return ONLY a JSON array like:
 If none, return []."""
 
     @staticmethod
-    def get_system_prompt() -> str:
-        return AuditorPrompts.SYSTEM
+    def get_system_prompt(context: dict = None) -> str:
+        if context is None:
+            context = {"campaign_name": "Fantasy"}
+        return AuditorPrompts.SYSTEM.format(**context)
 
     @staticmethod
     def build_detection_prompt(entity_a: str, entity_b: str) -> str:

@@ -17,7 +17,7 @@ class PromptMetadata:
 class DMPrompts:
     """All prompts for the DM Agent."""
     
-    SYSTEM_V2_4 = """You are the AI Dungeon Master for the Aethermoor campaign.
+    SYSTEM_V2_4 = """You are the AI Dungeon Master for the {campaign_name} campaign.
 
 === YOUR ROLE ===
 - Narrate the world and its inhabitants
@@ -27,17 +27,17 @@ class DMPrompts:
 - Enforce game boundaries (players control attempts, you control outcomes)
 
 === TONE & STYLE ===
-World: High-magic dark fairy tale (beautiful but wrong)
+World: {world_tone}
 Narrative: Vivid, atmospheric, slightly unsettling
 NPCs: Morally complex, never purely good/evil
 Magic: Powerful but always has consequences
 Pace: Let players drive, but keep tension
 
 === WORLDBUILDING CONSTRAINTS ===
-Setting: Aethermoor - reality is unstable, magic corrupts
-Year: 1247, Third Age
+Setting: {setting_description}
+Year: {current_date}
 Tech Level: Medieval fantasy (no guns, no modern tech)
-Naming: Celtic/Gaelic inspired (Thornhaven, Mor'vale, Kaelith)
+Naming: {naming_conventions}
 Theme: Every choice has weight, nothing is free
 
 === PLAYER BOUNDARIES ===
@@ -77,7 +77,7 @@ If generating new entities, append JSON at end:
         notes="Core DM system prompt with boundaries and worldbuilding rules"
     )
     
-    ENTITY_GENERATION_TEMPLATE = """You are creating a new {entity_type} for the Aethermoor campaign.
+    ENTITY_GENERATION_TEMPLATE = """You are creating a new {entity_type} for the {campaign_name} campaign.
 
 ENTITY NAME: {entity_name}
 
@@ -125,10 +125,19 @@ Rules:
 JSON output:"""
 
     @staticmethod
-    def get_system_prompt(version: str = "2.4") -> str:
+    def get_system_prompt(version: str = "2.4", context: Dict[str, str] = None) -> str:
         """Get DM system prompt by version."""
+        if context is None:
+            context = {
+                "campaign_name": "Fantasy",
+                "world_tone": "High Adventure",
+                "setting_description": "A magical world",
+                "current_date": "Unknown Era",
+                "naming_conventions": "Standard Fantasy"
+            }
+            
         if version == "2.4":
-            return DMPrompts.SYSTEM_V2_4
+            return DMPrompts.SYSTEM_V2_4.format(**context)
         else:
             raise ValueError(f"Unknown DM prompt version: {version}")
     
@@ -140,7 +149,8 @@ JSON output:"""
         naming_conventions: str,
         required_properties: str,
         optional_properties: str,
-        lore_context: str = "No existing context"
+        lore_context: str = "No existing context",
+        campaign_name: str = "Fantasy"
     ) -> str:
         """Build entity generation prompt from template."""
         return DMPrompts.ENTITY_GENERATION_TEMPLATE.format(
@@ -150,7 +160,8 @@ JSON output:"""
             naming_conventions=naming_conventions,
             required_properties=required_properties,
             optional_properties=optional_properties,
-            lore_context=lore_context
+            lore_context=lore_context,
+            campaign_name=campaign_name
         )
     
     @staticmethod

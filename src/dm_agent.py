@@ -24,6 +24,7 @@ from src.neo4j_adapter import Neo4jDatabase
 from src.auditor_agent import AuditorAgent
 from src.models import LoreConfidence
 from src.audit_log import AuditLogger
+from src.entity_factory import EntityFactory, EntityType, EntityTemplate
 from src.prompts import DMPrompts
 
 WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
@@ -79,8 +80,17 @@ class DMAgent:
         genai.configure(api_key=self.api_key)
         self.model = genai.GenerativeModel(self.model_name)
         
+        # Load campaign context from config or rules
+        self.campaign_context = {
+            "campaign_name": "Aethermoor",
+            "world_tone": "High-magic dark fairy tale",
+            "setting_description": "Reality is unstable, magic corrupts",
+            "current_date": "Year 1247, Third Age",
+            "naming_conventions": "Celtic/Gaelic inspired"
+        }
+        
         # Load system prompt from Prompt Library and append rules
-        self.system_prompt = DMPrompts.get_system_prompt(prompt_version) + load_worldbuilding_rules()
+        self.system_prompt = DMPrompts.get_system_prompt(prompt_version, self.campaign_context) + load_worldbuilding_rules()
         self.prompt_metadata = DMPrompts.SYSTEM_METADATA
         
         # Session and Query Agent (initialized per-session)
@@ -523,24 +533,41 @@ If the action requires a roll, narrate the attempt and outcome.
         # Build generation instruction if entities need creation
         generation_instruction = ""
         if entities_to_generate:
-            generation_instruction = f"""
+            generation_instruction = "\n\n=== ENTITIES TO CREATE (if you introduce them in your narrative) ===\n"
+            
+            for entity in entities_to_generate:
+                # Map extracted type to EntityType
+                raw_type = entity.get("type", "Concept")
+                try:
+                    e_type = EntityType(raw_type)
+                except ValueError:
+                    e_type = EntityType.CONCEPT
+                
+                # Get template and guidelines
+                template = EntityFactory.get_template(e_type)
+                
+                generation_instruction += f"""
+ENTITY: {entity.get("name")} ({e_type.value})
+GUIDELINES:
+{template.generation_guidelines}
+NAMING: {template.naming_conventions}
+"""
 
-=== ENTITIES TO CREATE (if you introduce them in your narrative) ===
-{json.dumps(entities_to_generate, indent=2)}
-
+            generation_instruction += """
 If you mention any of these entities in your response, include a JSON block at the END of your response:
 ```json
-{{
+{
   "new_entities": [
-    {{
+    {
       "name": "Entity Name",
       "label": "Character|Location|Item|Faction|Concept",
-      "properties": {{
-        "description": "Brief description"
-      }}
-    }}
+      "properties": {
+        "description": "Brief description",
+        // Include other template properties
+      }
+    }
   ]
-}}
+}
 ```
 If you don't introduce new entities, omit this JSON block entirely.
 """
@@ -594,6 +621,15 @@ If the action requires a roll, narrate the attempt and outcome.
         
         if new_entities and self.session:
             for entity in new_entities:
+                # Use factory skeleton as base to ensure structure
+                try:
+                    e_type = EntityType(entity.get("label", "Concept"))
+                except ValueError:
+                    e_type = EntityType.CONCEPT
+                    
+                # Validate roughly (optional, as we are creating it now)
+                # EntityFactory.validate_entity(entity, EntityFactory.get_template(e_type))
+                
                 created = await self._create_canonical_entity(entity, self.session.session_id)
                 if not created:
                     # Entity was blocked - add note to narrative
