@@ -77,7 +77,7 @@ class EntityType(str, Enum):
 # Function signatures
 async def get_entity(
     canon_id: str, 
-    db: sqlite3.Connection = Depends(get_db)
+    db: Neo4jDatabase = Depends(get_neo4j_db)
 ) -> EntityResponse:
     pass
 
@@ -86,7 +86,7 @@ entity_ids: List[str] = []
 data: Dict[str, Any] = {}
 
 # Return types always specified
-def fetch_one(conn: sqlite3.Connection, query: str) -> Optional[dict]:
+async def fetch_one(query: str) -> Optional[dict]:
     pass
 ```
 
@@ -99,29 +99,28 @@ def fetch_one(conn: sqlite3.Connection, query: str) -> Optional[dict]:
 @router.post("/entities", response_model=EntityResponse, status_code=201)
 async def create_entity(
     entity_data: EntityCreate,
-    db: sqlite3.Connection = Depends(get_db)
+    db: Neo4jDatabase = Depends(get_neo4j_db)
 ) -> EntityResponse:
-    """Creates a new entity in the database."""
+    """Creates a new entity in the graph database."""
     # Implementation
 ```
 
 **Rules:**
-- Async for all endpoints (even if mostly synchronous inside)
-- Pydantic models for request/response
-- Explicit status codes for non-200 responses
-- Dependency injection for database connections
-- Docstrings required on all routes
+- Async for all endpoints.
+- Pydantic models for request/response validation.
+- Explicit status codes for non-200 responses.
+- Dependency injection for the database instance.
+- Docstrings required on all routes.
 
 ### Dependency Injection Pattern
 ```python
-# Database connection dependency
-async def get_db() -> Generator[sqlite3.Connection, None, None]:
-    with db_session() as conn:
-        yield conn
+# src/dependencies.py
+async def get_neo4j_db(request: Request) -> Neo4jDatabase:
+    return request.app.state.neo4j_db
 
 # Usage in route
-async def my_route(db: sqlite3.Connection = Depends(get_db)):
-    # db connection is managed by FastAPI
+async def my_route(db: Neo4jDatabase = Depends(get_neo4j_db)):
+    # db instance is managed by FastAPI's lifespan context
 ```
 
 ### Response Models
@@ -135,13 +134,15 @@ return {"canon_id": "123", ...}  # ❌ Bad - no validation
 ### Error Handling
 ```python
 # Standard pattern
+from neo4j.exceptions import Neo4jError
+
 try:
-    result = await operation(db)
-except sqlite3.IntegrityError as e:
-    await AuditLogger.log(f"Integrity error: {e}", level=logging.WARNING)
-    if "UNIQUE constraint" in str(e):
+    result = await db.execute("CREATE (n:Thing {id: $id})", {"id": "123"})
+except Neo4jError as e:
+    await AuditLogger.log(f"Database error: {e.message}", level=logging.WARNING)
+    if "already exists" in e.message: # Example check
         raise HTTPException(status_code=409, detail="Resource already exists")
-    raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    raise HTTPException(status_code=500, detail=f"Database error: {e.message}")
 except Exception as e:
     await AuditLogger.log(f"Unexpected error: {e}", level=logging.ERROR)
     raise HTTPException(status_code=500, detail=str(e))
@@ -160,89 +161,73 @@ except Exception as e:
 
 ### Connection Management
 ```python
-# NEVER manage connections manually in routes
-# Use dependency injection
-async def my_route(db: sqlite3.Connection = Depends(get_db)):
-    # Connection automatically managed
+# Connection is managed via FastAPI's lifespan and dependency injection.
+# The `Neo4jDatabase` instance is created once and reused.
+async def my_route(db: Neo4jDatabase = Depends(get_neo4j_db)):
+    # The 'db' instance is ready to use.
+    results = await db.execute("MATCH (n) RETURN count(n)")
 ```
 
 ### Transaction Pattern
 ```python
-# Use db_session context manager for transactions
-with db_session() as conn:
-    Database.execute(conn, "INSERT INTO ...", params)
-    Database.execute(conn, "UPDATE ...", params)
-    # Commits on success, rolls back on exception
+# The neo4j driver's `execute_query` method handles transactions automatically.
+# For more complex, multi-statement transactions, you can use a transaction object.
+async with db.driver.session() as session:
+    async with session.begin_transaction() as tx:
+        await tx.run("CREATE (:Entity {name: 'A'})")
+        await tx.run("CREATE (:Entity {name: 'B'})")
+        # Transaction is committed automatically on exit, or rolled back on exception.
 ```
 
 ### Database Operations
 ```python
-# Execute (with optional immediate commit)
-cursor = Database.execute(
-    conn, 
-    "INSERT INTO entities (...) VALUES (?, ?)", 
-    (value1, value2),
-    commit=True  # Only if not in transaction
+# All database operations are async and should be awaited.
+# No run_in_threadpool wrapper is needed.
+
+# Execute a query (returns a list of records)
+records = await db.execute(
+    "CREATE (e:Entity {name: $name}) RETURN e",
+    {"name": "New Entity"}
 )
 
 # Fetch one result
-entity = await run_in_threadpool(
-    Database.fetch_one, 
-    db, 
-    "SELECT * FROM entities WHERE canon_id = ?", 
-    (canon_id,)
+# (Note: `fetch_one` is not a method on the new adapter, you'd typically use `execute` and process the result)
+records = await db.execute(
+    "MATCH (e:Entity) WHERE e.name = $name RETURN e",
+    {"name": "Test"}
 )
+entity = records[0] if records else None
 
 # Fetch multiple results
-entities = await run_in_threadpool(
-    Database.fetch_all,
-    db,
-    "SELECT * FROM entities WHERE type = ?",
-    (entity_type,)
+entities = await db.execute(
+    "MATCH (e:Entity) WHERE e.type = $type RETURN e",
+    {"type": "Character"}
 )
 ```
 
-### Async Wrapper Pattern (Critical)
-```python
-# ALWAYS wrap blocking database calls in run_in_threadpool
-from fastapi.concurrency import run_in_threadpool
-
-# ✅ Correct
-entity = await run_in_threadpool(
-    Database.fetch_one, 
-    db, 
-    "SELECT * FROM entities WHERE id = ?", 
-    (entity_id,)
-)
-
-# ❌ Wrong - blocks event loop
-entity = Database.fetch_one(db, "SELECT * FROM entities WHERE id = ?", (entity_id,))
-```
+### Async Wrapper Pattern (Obsolete)
+The `run_in_threadpool` pattern for database calls is no longer necessary, as the `neo4j` driver is natively asynchronous. All calls to the `Neo4jDatabase` adapter are `async` and should be `await`ed directly.
 
 ### Preventing N+1 Queries
 ```python
-# ❌ Bad - N+1 query pattern
-entities = fetch_all(db, "SELECT * FROM entities")
-for entity in entities:
-    aliases = fetch_all(db, "SELECT * FROM aliases WHERE canon_id = ?", (entity['canon_id'],))
+# The N+1 problem still exists in graph databases, but is solved differently.
 
-# ✅ Good - Single query with JOIN or GROUP_CONCAT
+# ❌ Bad - N+1 query pattern (separate queries for nodes and their relationships)
+# entities = await db.execute("MATCH (e:Entity) RETURN e")
+# for entity in entities:
+#     rels = await db.execute("MATCH (e {name: $name})-[r]->(m) RETURN r, m", {"name": entity['e']['name']})
+
+# ✅ Good - Single query with aggregation
 query = """
-    SELECT 
-        e.*, 
-        GROUP_CONCAT(a.alias) AS aliases
-    FROM entities e
-    LEFT JOIN aliases a ON e.canon_id = a.canon_id
-    GROUP BY e.canon_id
+    MATCH (e:Entity)
+    OPTIONAL MATCH (e)-[r]->(m)
+    RETURN e, collect({relationship: type(r), neighbor: m}) AS relationships
 """
-entities = fetch_all(db, query)
+results = await db.execute(query)
 ```
 
-### SQLite Configuration (Always Set)
-```python
-conn.execute("PRAGMA foreign_keys = ON;")   # Enforce relationships
-conn.execute("PRAGMA journal_mode=WAL;")    # Better concurrency
-```
+### Neo4j Configuration
+Configuration (URI, user, password) is handled via environment variables at application startup. The `Neo4jDatabase` adapter manages the connection pool.
 
 ---
 
@@ -288,24 +273,28 @@ class EntityCreate(BaseModel):
 
 # Convert to/from database
 # To DB: use .value
-Database.execute(conn, "INSERT INTO entities (type) VALUES (?)", (entity.entity_type.value,))
+await db.execute("CREATE (n:Entity {type: $type})", {"type": entity.entity_type.value})
 
-# From DB: explicit conversion
-entity_dict = Database.fetch_one(conn, "SELECT * FROM entities WHERE id = ?", (id,))
-entity_type = EntityType(entity_dict['entity_type'])  # String → Enum
+# From DB: Pydantic handles conversion
+# When you load data into a Pydantic model, it automatically
+# converts the string from the database back into an Enum member.
+record = await db.execute("MATCH (n:Entity) WHERE n.id = $id RETURN n", {"id": id})
+response = EntityResponse(**record[0]['n']) # Pydantic validates and converts
 ```
 
 ### JSON Field Handling
 ```python
-# Storing JSON in SQLite
-evidence_json = json.dumps(contradiction.evidence)
-Database.execute(conn, "INSERT INTO contradictions (evidence) VALUES (?)", (evidence_json,))
+# Storing JSON in Neo4j
+# The python neo4j driver handles dicts automatically.
+await db.execute(
+    "CREATE (c:Contradiction {evidence: $evidence})",
+    {"evidence": contradiction.evidence}
+)
 
-# Loading JSON from SQLite
-row = Database.fetch_one(conn, "SELECT evidence FROM contradictions WHERE id = ?", (id,))
-evidence = json.loads(row['evidence']) if row['evidence'] else {}
-
-# Pydantic automatically handles dict/JSON conversion
+# Loading JSON from Neo4j
+# The driver also deserializes automatically when fetching.
+record = await db.execute("MATCH (c:Contradiction) WHERE c.id = $id RETURN c.evidence", {"id": id})
+evidence = record[0]['c.evidence']
 ```
 
 ### Validators
@@ -351,51 +340,44 @@ app.include_router(get_contradiction_router())
 # Helper functions in service file, outside routes
 async def get_contradiction_response(
     contradiction_id: str, 
-    db: sqlite3.Connection
+    db: Neo4jDatabase
 ) -> ContradictionResponse:
     """Fetch full contradiction data and return as ContradictionResponse."""
-    contradiction_dict = await run_in_threadpool(
-        Database.fetch_one, db,
-        "SELECT * FROM contradictions WHERE contradiction_id = ?",
-        (contradiction_id,)
+    records = await db.execute(
+        "MATCH (c:Contradiction {contradiction_id: $id}) RETURN c",
+        {"id": contradiction_id}
     )
     
-    if not contradiction_dict:
+    if not records:
         raise HTTPException(status_code=404, detail=f"Not found: {contradiction_id}")
     
-    # Build response
-    return ContradictionResponse(**data)
-
-# Called from routes
-@router.post("/contradictions/{id}/resolve")
-async def resolve_contradiction(id: str, db = Depends(get_db)):
-    # ... logic ...
-    return await get_contradiction_response(id, db)
+    # Build response from graph properties
+    return ContradictionResponse(**records[0]['c'])
 ```
 
 ### Status Update Functions
 ```python
-# Synchronous helpers for status updates (called via run_in_threadpool)
-def set_resolved(contradiction_id: str, user: str, notes: str, db: sqlite3.Connection) -> bool:
+# Async helpers for status updates
+async def set_resolved(contradiction_id: str, user: str, notes: str, db: Neo4jDatabase) -> bool:
     """Sets contradiction status to RESOLVED."""
     try:
-        updated = Database.execute(
-            db,
-            "UPDATE contradictions SET status = ?, resolution_notes = ?, updated_by = ? WHERE contradiction_id = ?",
-            (ContradictionStatus.RESOLVED.value, notes, user, contradiction_id),
-            commit=True
+        result = await db.execute(
+            "MATCH (c:Contradiction {contradiction_id: $id}) SET c.status = $status, c.resolution_notes = $notes, c.updated_by = $user RETURN c",
+            {
+                "id": contradiction_id,
+                "status": ContradictionStatus.RESOLVED.value,
+                "notes": notes,
+                "user": user
+            }
         )
-        if updated.rowcount == 0:
+        if not result:
             AuditLogger.log_sync(f"Contradiction {contradiction_id} not found.", level=logging.WARNING)
             return False
         AuditLogger.log_sync(f"Contradiction {contradiction_id} resolved by {user}.")
         return True
     except Exception as e:
-        AuditLogger.log_sync(f"Error: {e}", level=logging.ERROR)
+        await AuditLogger.log(f"Error: {e}", level=logging.ERROR)
         return False
-
-# Called from async route
-success = await run_in_threadpool(set_resolved, contradiction_id, user, notes, db)
 ```
 
 ---
@@ -477,7 +459,7 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
 ```
 src/
   ├── api.py                    # Main FastAPI app, core routes
-  ├── database.py               # Database utilities, connection management
+  ├── neo4j_adapter.py          # Database utilities, connection management
   ├── models.py                 # Pydantic models and Enums
   ├── audit_log.py              # Logging utilities
   ├── broadcaster.py            # WebSocket event broadcaster
@@ -533,48 +515,46 @@ async def list_entities(
     approval_status: Optional[ApprovalStatus] = None,
     limit: int = 100
 ):
-    query = "SELECT * FROM entities"
-    params = []
-    conditions = []
+    # Build a dynamic Cypher query
+    query = "MATCH (n:Entity)"
+    where_clauses = []
+    params = {"limit": limit}
     
     if entity_type:
-        conditions.append("entity_type = ?")
-        params.append(entity_type.value)
+        where_clauses.append("n.entity_type = $type")
+        params["type"] = entity_type.value
     
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
+    if approval_status:
+        where_clauses.append("n.approval_status = $status")
+        params["status"] = approval_status.value
+        
+    if where_clauses:
+        query += " WHERE " + " AND ".join(where_clauses)
+        
+    query += " RETURN n LIMIT $limit"
     
-    query += " LIMIT ?"
-    params.append(limit)
-    
-    return Database.fetch_all(db, query, tuple(params))
+    return await db.execute(query, params)
 ```
 
 ### Building Response with Nested Data
 ```python
-# Fetch main entity
-entity = Database.fetch_one(db, "SELECT * FROM entities WHERE canon_id = ?", (canon_id,))
+# With a graph database, fetching nested data is done with a single query
+query = """
+    MATCH (e:Entity {canon_id: $canon_id})
+    OPTIONAL MATCH (e)-[r]->(m)
+    RETURN e, collect({relationship: type(r), neighbor: m}) AS relationships
+"""
+result = await db.execute(query, {"canon_id": canon_id})
 
-# Fetch related data
-aliases = Database.fetch_all(db, "SELECT alias FROM aliases WHERE canon_id = ?", (canon_id,))
-fields = Database.fetch_all(db, "SELECT field_key, field_value FROM approved_fields WHERE canon_id = ?", (canon_id,))
+if not result:
+    raise HTTPException(404)
 
-# Parse JSON fields
-approved_fields_parsed = {}
-for f in fields:
-    try:
-        approved_fields_parsed[f['field_key']] = json.loads(f['field_value'])
-    except (json.JSONDecodeError, TypeError):
-        approved_fields_parsed[f['field_key']] = f['field_value']
+entity_props = result[0]['e']
+relationships = result[0]['relationships']
 
-# Build response
-return EntityResponse(
-    canon_id=entity['canon_id'],
-    entity_type=EntityType(entity['entity_type']),
-    aliases=[a['alias'] for a in aliases],
-    approved_fields=approved_fields_parsed,
-    # ... other fields
-)
+# Pydantic can then be used to build the final response model
+# (often requiring custom parsing logic to shape the graph result)
+return EntityResponseWithRelationships(**entity_props, relationships=relationships)
 ```
 
 ---
@@ -584,17 +564,25 @@ return EntityResponse(
 ### Test File Organization
 ```
 tests/
-  ├── test_entities.py
-  ├── test_contradictions.py
-  └── test_database.py
+  ├── conftest.py              # Core fixtures (mock_neo4j_db, client)
+  ├── test_smoke.py            # Basic application health tests
+  ├── test_entities_api.py     # Integration tests for entity endpoints
+  └── test_contradictions_api.py # Integration tests for contradiction endpoints
 ```
 
 ### API Integration Tests
 ```python
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock
 
-def test_create_entity(client: TestClient):
+def test_create_entity(client: TestClient, mock_neo4j_db: AsyncMock):
+    # Configure mock DB for the test
+    mock_neo4j_db.execute.side_effect = [
+        [], # Mock CREATE call
+        [{ "canon_id": "char-123", "canonical_name": "Test Character", ... }] # Mock GET call
+    ]
+
     response = client.post("/entities", json={
         "entity_type": "Character",
         "canonical_name": "Test Character",
@@ -605,7 +593,7 @@ def test_create_entity(client: TestClient):
     assert response.status_code == 201
     data = response.json()
     assert data['canonical_name'] == "Test Character"
-    assert 'canon_id' in data
+    assert data['canon_id'] == "char-123"
 ```
 
 ---
@@ -623,35 +611,18 @@ passed, _ = test_endpoint("POST", "/resolve", json={{}})
 passed, _ = test_endpoint("POST", "/resolve", json={})
 ```
 
-### ❌ WRONG: Mixing Sync/Async
+### ❌ WRONG: Forgetting `await`
 ```python
-async def my_route(db = Depends(get_db)):
-    # Blocking call in async function
-    entity = Database.fetch_one(db, "SELECT ...")  # Blocks event loop
+async def my_route(db: Neo4jDatabase = Depends(get_neo4j_db)):
+    # This does not wait for the query to finish and will cause errors
+    records = db.execute("MATCH (n) RETURN n")
 ```
 
-### ✅ CORRECT: Wrap Blocking Calls
+### ✅ CORRECT: Use `await`
 ```python
-async def my_route(db = Depends(get_db)):
-    entity = await run_in_threadpool(Database.fetch_one, db, "SELECT ...")
-```
-
-### ❌ WRONG: Committing in Route
-```python
-@router.post("/entities")
-async def create_entity(entity: EntityCreate, db = Depends(get_db)):
-    Database.execute(db, "INSERT INTO entities ...", commit=True)  # Don't do this
-```
-
-### ✅ CORRECT: Use Transaction
-```python
-@router.post("/entities")
-async def create_entity(entity: EntityCreate, db = Depends(get_db)):
-    def _create_entity_db(conn):
-        Database.execute(conn, "INSERT INTO entities ...")
-        Database.execute(conn, "INSERT INTO aliases ...")
-    
-    await run_in_threadpool(_create_entity_db, db)  # Transaction handled by db_session
+async def my_route(db: Neo4jDatabase = Depends(get_neo4j_db)):
+    # Always await calls to the async database adapter
+    records = await db.execute("MATCH (n) RETURN n")
 ```
 
 ### ❌ WRONG: Forgetting Enum Conversion
@@ -708,16 +679,19 @@ async def lifespan(app: FastAPI):
     # On startup
     await AuditLogger.log("Application startup...")
     
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    app.state.auditor = AuditorAgent(get_db_connection, gemini_key)
-    app.state.query_agent = QueryAgent(get_db_connection, gemini_key)
+    # Initialize Neo4j Database
+    app.state.neo4j_db = Neo4jDatabase(...)
+    await app.state.neo4j_db.connect()
     
-    # Initialize database schema
-    _ = Database()
+    # Initialize agents with the database instance
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    app.state.auditor = AuditorAgent(app.state.neo4j_db, gemini_key)
+    app.state.query_agent = QueryAgent(app.state.neo4j_db, gemini_key)
     
     yield
     
     # On shutdown
+    await app.state.neo4j_db.close()
     await AuditLogger.log("Application shutdown...")
 
 app = FastAPI(lifespan=lifespan)
@@ -782,11 +756,11 @@ app.add_middleware(
 10. ✅ Handle exceptions with HTTPException
 
 **When working with database:**
-1. ✅ Use `db_session()` context manager for transactions
-2. ✅ Use `Depends(get_db)` for route injection
-3. ✅ Always wrap in `run_in_threadpool`
-4. ✅ Set PRAGMA foreign_keys and journal_mode
-5. ✅ Avoid N+1 queries with JOINs/GROUP_CONCAT
+1. ✅ Use `Depends(get_neo4j_db)` for route injection.
+2. ✅ `await` all database calls.
+3. ✅ No `run_in_threadpool` needed for the native async driver.
+4. ✅ Build graph-aware queries to prevent N+1 style problems.
+5. ✅ Use Cypher query parameters to prevent injection.
 
 **When using Enums:**
 1. ✅ Store: `enum_value.value`

@@ -315,7 +315,7 @@ They can eat disk space, but they’re conceptually “downloaded assets,” not
 
 I am not a beginner. I’ve already:
 
-Run a real API backend (FastAPI + SQLite)
+Run a real API backend (FastAPI + Neo4j)
 
 Debugged schema issues and DB paths
 

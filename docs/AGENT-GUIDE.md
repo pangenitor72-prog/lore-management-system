@@ -93,7 +93,7 @@ LMS manages 30 years of D&D campaign lore. It's actively used and must maintain 
 ### Rule 1: Production Code is Sacred
 
 **NEVER touch these files without explicit permission:**
-- `src/database.py` - Database layer
+- `src/neo4j_adapter.py` - Database layer
 - `src/api.py` - Core API routes
 - `src/models.py` - Pydantic models
 - `src/constants.py` - System constants
@@ -246,14 +246,12 @@ Question: Which date is canonical?
 ```
 lore-system/
 ├── data/
-│   ├── lore.db                    # SQLite database
-│   ├── schema.sql                 # Database schema
 │   └── lore/                      # Lore files (if any)
 │       ├── entities/              # Entity YAML/JSON files
 │       └── sessions/              # Session notes
 ├── src/
 │   ├── api.py                     # Main FastAPI app
-│   ├── database.py                # DB connection management
+│   ├── neo4j_adapter.py           # DB connection management
 │   ├── models.py                  # Pydantic models
 │   ├── constants.py               # System constants
 │   ├── audit_log.py               # Logging
@@ -285,7 +283,7 @@ lore-system/
 ### System Overview
 
 ```
-Frontend (HTML/JS) ←→ WebSocket ←→ FastAPI Backend ←→ SQLite Database
+Frontend (HTML/JS) ←→ WebSocket ←→ FastAPI Backend ←→ Neo4j Graph Database
                                          ↓
                                    Gemini API (optional)
 ```
@@ -293,7 +291,7 @@ Frontend (HTML/JS) ←→ WebSocket ←→ FastAPI Backend ←→ SQLite Databas
 ### Component Responsibilities
 
 **`api.py`** - Entry point, core routes, app initialization  
-**`database.py`** - Connection management, schema init, utility methods  
+**`neo4j_adapter.py`** - Connection management, Cypher query execution, vector search support  
 **`models.py`** - Pydantic models, enums, validators  
 **`services/`** - Business logic layer  
 **`agents/`** - AI integration (Auditor, Query)  
@@ -307,17 +305,19 @@ Frontend (HTML/JS) ←→ WebSocket ←→ FastAPI Backend ←→ SQLite Databas
 @router.post("/entities")
 async def create_entity(
     entity: EntityCreate,
-    db: sqlite3.Connection = Depends(get_db)
+    db: Neo4jDatabase = Depends(get_neo4j_db)
 ):
-    result = await run_in_threadpool(Database.fetch_one, db, ...)
+    # The neo4j_adapter is async, so no threadpool is needed
+    result = await db.execute("MATCH (n) RETURN n LIMIT 1")
     return result
 ```
 
 **Dependency Injection:**
 ```python
-async def get_db() -> Generator[sqlite3.Connection, None, None]:
-    with db_session() as conn:
-        yield conn
+async def get_neo4j_db() -> Neo4jDatabase:
+    # This function is defined in src/dependencies.py
+    # and provides the database instance for the request.
+    ...
 ```
 
 **Service Layer:**

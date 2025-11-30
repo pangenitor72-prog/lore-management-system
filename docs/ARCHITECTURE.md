@@ -81,25 +81,16 @@ After 30 years of weekly sessions, maintaining consistency across thousands of N
 │                       DATA LAYER                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│  SQLite Database (WAL mode)                                      │
-│  ├─ database.py - Connection management, schema init            │
+│  Neo4j Graph Database                                            │
+│  ├─ neo4j_adapter.py - Async connection management & queries    │
 │  ├─ models.py - Pydantic v2 models & enums                      │
-│  └─ data/schema.sql - Database schema definition                │
+│  └─ docs/NEO4J_SCHEMA.md - Graph schema documentation           │
 │                                                                   │
-│  Configuration:                                                   │
-│  ├─ WAL mode for concurrency                                    │
-│  ├─ Foreign keys enforced                                       │
-│  ├─ Per-request connections                                     │
-│  └─ Explicit transaction management                             │
-│                                                                   │
-│  Tables:                                                          │
-│  ├─ entities - Core lore entities                               │
-│  ├─ aliases - Entity alternate names                            │
-│  ├─ approved_fields - Entity metadata (JSON)                    │
-│  ├─ relationships - Entity connections                          │
-│  ├─ contradictions - Detected conflicts                         │
-│  ├─ contradiction_entities - Many-to-many links                 │
-│  └─ triage_analysis - AI analysis results                       │
+│  Structure:                                                       │
+│  ├─ Nodes (Entities): Character, Location, Faction, Item, etc.  │
+│  ├─ Relationships: KNOWS, LOCATED_IN, MEMBER_OF, etc.           │
+│  ├─ Properties on nodes and relationships                       │
+│  └─ Vector Index for semantic search                            │
 │                                                                   │
 └────────────────────┬────────────────────────────────────────────┘
                      │
@@ -250,12 +241,11 @@ def get_router():
 
 #### Supporting Components
 
-**database.py:**
-- Connection factory (`get_db_connection`)
-- Transaction context manager (`db_session`)
-- Static utility methods (`execute`, `fetch_all`, `fetch_one`)
-- Schema initialization
-- PRAGMA configuration (WAL mode, foreign keys)
+**neo4j_adapter.py:**
+- Async-first class (`Neo4jDatabase`) for connection pooling and queries.
+- Executes Cypher queries asynchronously.
+- Manages vector indexes for semantic search.
+- Provides helper methods for storing and retrieving node data.
 
 **models.py:**
 - Pydantic v2 models for validation
@@ -281,46 +271,33 @@ def get_router():
 
 ### Data Layer
 
-#### Database Structure
+#### Graph Structure
 
-**entities table:**
-- Primary lore objects (characters, locations, events, etc.)
-- Canonical names and metadata
-- Approval status and confidence levels
-- Party knowledge tracking
-- Timestamps (created_at, updated_at)
+The data layer is a property graph in Neo4j, consisting of nodes and relationships.
 
-**aliases table:**
-- Alternate names for entities
-- Many-to-one relationship with entities
-- Enables flexible searching
+**Nodes:**
+- **`Entity`:** A generic label for all lore objects. All entities also have a specific type label (e.g., `Character`, `Location`).
+- **`Character`:** Represents NPCs and other individuals. Contains properties like `name`, `description`, and OCEAN personality scores.
+- **`Location`:** Represents places in the world.
+- **`Faction`:** Represents organizations and groups.
+- **`Item`:** Represents significant objects.
+- **`Event`:** Represents historical or ongoing events.
+- **`Concept`:** Represents abstract ideas like magic systems.
+- **`Contradiction`:** A node representing a detected conflict in the lore.
+- **`TriageAnalysis`:** An AI-generated analysis of a `Contradiction`.
+- **`GameSession`:** Stores the state and history of a play session in AIRpg mode.
 
-**approved_fields table:**
-- Key-value store for entity metadata
-- JSON values for complex data
-- Extensible without schema changes
+**Relationships:**
+- Relationships connect nodes to represent their interactions (e.g., `(:Character)-[:MEMBER_OF]->(:Faction)`).
+- Common relationship types include `KNOWS`, `ALLIED_WITH`, `ENEMY_OF`, `LOCATED_IN`, `OWNS`, `PARTICIPATED_IN`, and `ANALYZES`.
+- Relationships can also have properties, such as `confidence`.
 
-**relationships table:**
-- Connections between entities
-- Typed relationships (e.g., "ally_of", "located_in")
-- Confidence levels for relationships
+**Key Properties:**
+- **`canon_id`:** A unique ID for every `Entity` node.
+- **`name`:** The human-readable name of an entity.
+- **`embedding`:** A 768-dimension vector on `Entity` nodes used for semantic search.
 
-**contradictions table:**
-- Detected logical/temporal conflicts
-- Severity levels (HIGH, MEDIUM, LOW)
-- Status tracking (PENDING → IN_REVIEW → RESOLVED/DISMISSED)
-- Evidence storage (JSON)
-- Timestamps and resolution notes
-
-**contradiction_entities table:**
-- Many-to-many link between contradictions and entities
-- Enables finding all contradictions affecting an entity
-
-**triage_analysis table:**
-- AI analysis of contradictions
-- Recommendations for resolution
-- Confidence scores
-- Analyst attribution
+For a complete and detailed schema, see `docs/NEO4J_SCHEMA.md`.
 
 ---
 
@@ -413,56 +390,41 @@ def get_router():
 
 ---
 
-### Pattern 3: Async I/O with Thread Pool
+### Pattern 3: Async-Native Database Operations
 
-**Problem:** SQLite operations are blocking, but FastAPI is async
+**Old Problem:** The previous SQLite driver was synchronous, requiring all database calls in async routes to be wrapped in `run_in_threadpool` to avoid blocking the event loop.
 
-**Solution:** Wrap all blocking DB calls in `run_in_threadpool`
+**New Solution:** The `neo4j` async driver and our `Neo4jDatabase` adapter are inherently asynchronous. No special wrappers are needed. All database methods are `async` and can be `await`ed directly in route handlers.
 
 ```python
-from fastapi.concurrency import run_in_threadpool
-
-# ❌ Wrong - blocks event loop
-async def get_entity(canon_id: str, db = Depends(get_db)):
-    entity = Database.fetch_one(db, "SELECT ...", (canon_id,))
-    return entity
-
-# ✅ Correct - non-blocking
-async def get_entity(canon_id: str, db = Depends(get_db)):
-    entity = await run_in_threadpool(
-        Database.fetch_one, 
-        db, 
-        "SELECT ...", 
-        (canon_id,)
-    )
+# ✅ Correct: Direct await on the async method
+@router.get("/entities/{canon_id}")
+async def get_entity(canon_id: str, db: Neo4jDatabase = Depends(get_neo4j_db)):
+    entity = await db.execute("MATCH (n:Entity {canon_id: $id}) RETURN n", {"id": canon_id})
     return entity
 ```
-
-**Pattern Applied To:**
-- All `Database.fetch_one()` calls
-- All `Database.fetch_all()` calls
-- All `Database.execute()` calls
-- File I/O operations
-- Any synchronous helper functions
 
 ---
 
 ### Pattern 4: Dependency Injection for Database
 
-```python
-# Dependency provides connection per request
-async def get_db() -> Generator[sqlite3.Connection, None, None]:
-    with db_session() as conn:
-        yield conn
+The dependency injection pattern remains crucial, but is updated for the new adapter.
 
-# Route receives connection via dependency injection
+```python
+# src/dependencies.py
+# Dependency provides a single database instance for the app's lifespan
+# (or per request, depending on the desired scoping)
+async def get_neo4j_db(request: Request) -> Neo4jDatabase:
+    return request.app.state.neo4j_db
+
+# Route receives the database instance via dependency injection
 @router.post("/entities")
 async def create_entity(
     entity: EntityCreate,
-    db: sqlite3.Connection = Depends(get_db)  # ← Injected
+    db: Neo4jDatabase = Depends(get_neo4j_db)  # ← Injected
 ):
-    # Use db connection
-    # Connection automatically committed/closed by context manager
+    # Use the async db instance
+    await db.execute("CREATE ...")
 ```
 
 **Benefits:**
@@ -479,7 +441,7 @@ async def create_entity(
 - **Python 3.11+** - Modern async support, type hints
 - **FastAPI** - High-performance async web framework
 - **Pydantic v2** - Data validation and serialization
-- **SQLite** - Embedded database with WAL mode
+- **Neo4j** - Graph database for relationship-centric data
 - **Uvicorn** - ASGI server
 
 ### Frontend
@@ -601,9 +563,9 @@ All canonical lore decisions require explicit human approval. The system provide
 ```
 Local Machine
 ├─ Python 3.11+ with virtualenv
-├─ SQLite database (data/lore.db)
+├─ Neo4j Graph Database (via Docker or local install)
 ├─ Uvicorn dev server (--reload)
-└─ Environment: .env file with GEMINI_API_KEY
+└─ Environment: .env file with GEMINI_API_KEY & Neo4j credentials
 ```
 
 ### Production Deployment (Recommended)
@@ -611,7 +573,7 @@ Local Machine
 Server
 ├─ Docker container (optional)
 ├─ Uvicorn with multiple workers
-├─ SQLite with WAL mode
+├─ Neo4j Graph Database (e.g., AuraDB)
 ├─ Nginx reverse proxy (optional)
 ├─ HTTPS/SSL termination
 └─ Environment variables via secure config
@@ -620,15 +582,12 @@ Server
 ### Scaling Considerations
 
 **Current Design (Single User):**
-- SQLite sufficient for ~1000 req/sec
-- WAL mode enables concurrent reads
-- Single writer pattern acceptable
+- Neo4j is highly scalable and suitable for production use.
+- The `neo4j` driver handles connection pooling automatically.
 
 **Future Multi-User:**
-- Migrate to PostgreSQL/MySQL
-- Implement connection pooling
-- Add Redis for caching
-- Horizontal scaling with load balancer
+- Neo4j can be clustered for high availability and horizontal scaling.
+- Caching strategies can be implemented with Redis for frequently accessed query results.
 
 ---
 
@@ -636,11 +595,9 @@ Server
 
 ### Phase XIII+: Planned Enhancements
 
-**1. Graph Database Migration (Potential)**
-- Current: SQLite with relationship table
-- Future: Neo4j for complex relationship queries
-- Benefit: Better performance for deep relationship traversal
-- Challenge: Migration complexity
+**1. Graph Database Migration (Complete)**
+- The system has been successfully migrated from SQLite to a Neo4j graph database.
+- This provides significant performance benefits for relationship-heavy queries and enables semantic search capabilities.
 
 **2. Charter Law Validation System**
 - Universal lore rules (applies to all campaigns)
@@ -669,7 +626,7 @@ Server
 │   api.py    │ ← Entry point, imports everything
 └──────┬──────┘
        │
-       ├─→ database.py (connection management)
+       ├─→ neo4j_adapter.py (connection management)
        ├─→ models.py (Pydantic schemas)
        ├─→ audit_log.py (logging)
        ├─→ broadcaster.py (WebSocket)
@@ -680,7 +637,7 @@ Server
        │
        └─→ services/
            └─ contradiction_service.py
-               └─ uses database.py, models.py, audit_log.py
+               └─ uses neo4j_adapter.py, models.py, audit_log.py
 ```
 
 **Key Insight:** `api.py` orchestrates all components but delegates responsibility. Each component is independently testable.
@@ -726,10 +683,10 @@ Server
 ## Testing Strategy
 
 ### Integration Tests
-- All 22 API endpoints verified
-- Real database transactions
-- Full request/response cycle
-- Located: `test_api_integration.py`
+- API tests are located in `tests/`.
+- They use `pytest` and a mocked `Neo4jDatabase` instance to ensure isolation.
+- Key endpoints for entities and contradictions are covered.
+- A smoke test file (`test_smoke.py`) verifies basic application health.
 
 ### Future Test Coverage
 - Unit tests for service functions
