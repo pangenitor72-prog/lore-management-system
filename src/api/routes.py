@@ -30,6 +30,7 @@ from src.services.audit_log import AuditLogger
 
 # Local Imports - Database (New Neo4j adapter)
 from src.db.neo4j_adapter import Neo4jDatabase
+from src.db.mock_adapter import InMemoryMockDatabase
 from src.api.dependencies import get_neo4j_db
 
 # Local Imports - Models
@@ -100,15 +101,24 @@ async def lifespan(app: FastAPI):
         app.state.ai_enabled = True
     
     # Initialize Neo4j Database (new graph layer)
-    neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-    neo4j_user = os.getenv("NEO4J_USER", "neo4j")
-    neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
-    neo4j_auth = (neo4j_user, neo4j_password)
+    use_mock_db = os.getenv("USE_MOCK_DB", "false").lower() == "true"
     
-    app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_auth)
-    
-    # 2. Use connection timeout
-    connected = await connect_neo4j_with_timeout(app.state.neo4j_db, timeout=10)
+    if use_mock_db:
+        await AuditLogger.log("🔶 STARTING IN MOCK MODE (No Neo4j connection)")
+        app.state.neo4j_db = InMemoryMockDatabase()
+        # Mock database doesn't need connecting, but we simulate it
+        await AuditLogger.log("✅ Mock Database ready")
+        connected = True
+    else:
+        neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+        neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+        neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
+        neo4j_auth = (neo4j_user, neo4j_password)
+        
+        app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_auth)
+        
+        # 2. Use connection timeout
+        connected = await connect_neo4j_with_timeout(app.state.neo4j_db, timeout=10)
 
     if not connected:
         await AuditLogger.log(
@@ -119,25 +129,31 @@ async def lifespan(app: FastAPI):
     
     # 3. Validate vector index
     try:
-        indexes = await app.state.neo4j_db.list_indexes()
-        has_vector_index = any(
-            idx.get("name") == "entity_embeddings" 
-            for idx in indexes
-        )
-        
-        if not has_vector_index:
-            await AuditLogger.log("⚠️ Vector index missing - creating...")
-            success = await app.state.neo4j_db.create_vector_index()
-            app.state.vector_search_enabled = success
+        if use_mock_db:
+             app.state.vector_search_enabled = True
+             await AuditLogger.log("✅ Mock Vector index verified")
         else:
-            await AuditLogger.log("✅ Vector index verified")
-            app.state.vector_search_enabled = True
+            indexes = await app.state.neo4j_db.list_indexes()
+            has_vector_index = any(
+                idx.get("name") == "entity_embeddings" 
+                for idx in indexes
+            )
+            
+            if not has_vector_index:
+                await AuditLogger.log("⚠️ Vector index missing - creating...")
+                success = await app.state.neo4j_db.create_vector_index()
+                app.state.vector_search_enabled = success
+            else:
+                await AuditLogger.log("✅ Vector index verified")
+                app.state.vector_search_enabled = True
     except Exception as e:
         await AuditLogger.log(f"⚠️ Vector index validation failed: {e}")
         app.state.vector_search_enabled = False
     
     # 4. Initialize agents only if AI enabled
     if app.state.ai_enabled:
+        # For mock mode, we might want to mock agents too, but let's try to init them
+        # They will use the mock DB
         app.state.auditor = AuditorAgent(app.state.neo4j_db, gemini_key)
         app.state.query_agent = QueryAgent(
             app.state.neo4j_db, 
