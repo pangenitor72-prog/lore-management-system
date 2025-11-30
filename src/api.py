@@ -1,5 +1,6 @@
 # Standard Library
 import os
+import asyncio
 import json
 import uuid
 from pathlib import Path
@@ -56,13 +57,45 @@ from .contradiction_service import get_router as get_contradiction_router
 # ============================================================
 
 
+async def connect_neo4j_with_timeout(
+    neo4j_db: Neo4jDatabase,
+    timeout: int = 10
+) -> bool:
+    """Connect to Neo4j with timeout to prevent startup hang."""
+    try:
+        await asyncio.wait_for(neo4j_db.connect(), timeout=timeout)
+        await AuditLogger.log("✅ Neo4j connected successfully")
+        return True
+    except asyncio.TimeoutError:
+        await AuditLogger.log(
+            f"❌ Neo4j connection timeout after {timeout}s",
+            level=logging.ERROR
+        )
+        return False
+    except Exception as e:
+        await AuditLogger.log(
+            f"❌ Neo4j connection failed: {e}",
+            level=logging.ERROR
+        )
+        return False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # On startup
     await AuditLogger.log("Application startup...")
+    
+    # 1. Validate GEMINI_API_KEY
     gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key or gemini_key == "YOUR_KEY_HERE":
-        await AuditLogger.log("GEMINI_API_KEY missing — continuing without remote features.", level=logging.WARNING)
+    if not gemini_key or gemini_key in ["YOUR_KEY_HERE", "your-key"]:
+        await AuditLogger.log(
+            "⚠️ GEMINI_API_KEY missing or invalid - AI features disabled",
+            level=logging.WARNING
+        )
+        app.state.ai_enabled = False
+    else:
+        await AuditLogger.log("✅ Gemini API key loaded")
+        app.state.ai_enabled = True
     
     # Initialize Neo4j Database (new graph layer)
     neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
@@ -71,26 +104,45 @@ async def lifespan(app: FastAPI):
     neo4j_auth = (neo4j_user, neo4j_password)
     
     app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_auth)
-    await app.state.neo4j_db.connect()
-    await AuditLogger.log(f"Neo4j connected: {neo4j_uri}")
     
-    # Initialize agents here, so we can log
-    app.state.auditor = AuditorAgent(app.state.neo4j_db, gemini_key)
-    app.state.query_agent = QueryAgent(app.state.neo4j_db, gemini_key)
-    
-    # Initialize Vector Index
-    try:
-        await app.state.neo4j_db.create_vector_index(
-            index_name="entity_embeddings",
-            label="Entity",
-            property_name="embedding",
-            dimensions=768
-        )
-        await AuditLogger.log("Vector index initialized.")
-    except Exception as e:
-        await AuditLogger.log(f"Vector index init failed (non-fatal): {e}", level=logging.WARNING)
+    # 2. Use connection timeout
+    connected = await connect_neo4j_with_timeout(app.state.neo4j_db, timeout=10)
 
-    await AuditLogger.log("API: All agents wired (Neo4j + Gemini RAG).")
+    if not connected:
+        await AuditLogger.log(
+            "🔴 FATAL: Cannot start without Neo4j",
+            level=logging.CRITICAL
+        )
+        raise RuntimeError("Neo4j connection failed")
+    
+    # 3. Validate vector index
+    try:
+        indexes = await app.state.neo4j_db.list_indexes()
+        has_vector_index = any(
+            idx.get("name") == "entity_embeddings" 
+            for idx in indexes
+        )
+        
+        if not has_vector_index:
+            await AuditLogger.log("⚠️ Vector index missing - creating...")
+            success = await app.state.neo4j_db.create_vector_index()
+            app.state.vector_search_enabled = success
+        else:
+            await AuditLogger.log("✅ Vector index verified")
+            app.state.vector_search_enabled = True
+    except Exception as e:
+        await AuditLogger.log(f"⚠️ Vector index validation failed: {e}")
+        app.state.vector_search_enabled = False
+    
+    # 4. Initialize agents only if AI enabled
+    if app.state.ai_enabled:
+        app.state.auditor = AuditorAgent(app.state.neo4j_db, gemini_key)
+        app.state.query_agent = QueryAgent(
+            app.state.neo4j_db, 
+            gemini_key,
+            enable_vector_search=app.state.vector_search_enabled
+        )
+        await AuditLogger.log("✅ All agents initialized")
 
     yield
     # On shutdown
@@ -168,17 +220,14 @@ def root():
 
 @router.get("/health")
 async def health_check(request: Request):
-    """
-    System health check.
-    Verifies: Neo4j connection, Vector index exists, Agents initialized.
-    """
+    """System health check with feature flags."""
     health_status = {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "checks": {}
+        "checks": {},
+        "features": {}
     }
     
-    # Check 1: Neo4j connectivity
     try:
         await request.app.state.neo4j_db.execute("RETURN 1")
         health_status["checks"]["neo4j"] = "connected"
@@ -186,21 +235,21 @@ async def health_check(request: Request):
         health_status["checks"]["neo4j"] = f"error: {str(e)}"
         health_status["status"] = "degraded"
     
-    # Check 2: Vector index exists
     try:
         indexes = await request.app.state.neo4j_db.list_indexes()
         has_vector_index = any(idx.get("name") == "entity_embeddings" for idx in indexes)
         health_status["checks"]["vector_index"] = "exists" if has_vector_index else "missing"
         if not has_vector_index:
-            # Not strictly fatal for API but degrades RAG
-            health_status["checks"]["vector_index"] += " (search degraded)"
+            health_status["status"] = "degraded"
     except Exception as e:
         health_status["checks"]["vector_index"] = f"error: {str(e)}"
         health_status["status"] = "degraded"
     
-    # Check 3: Agents initialized
     health_status["checks"]["query_agent"] = "ready" if hasattr(request.app.state, "query_agent") else "not_initialized"
     health_status["checks"]["auditor"] = "ready" if hasattr(request.app.state, "auditor") else "not_initialized"
+    
+    health_status["features"]["ai_enabled"] = getattr(request.app.state, "ai_enabled", False)
+    health_status["features"]["vector_search"] = getattr(request.app.state, "vector_search_enabled", False)
     
     return health_status
 

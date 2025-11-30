@@ -6,6 +6,27 @@ import threading
 
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'audit.log')
 
+import re
+
+def redact_credentials(message: str) -> str:
+    """Redact potential credentials from log messages."""
+    # Redact connection strings
+    message = re.sub(
+        r'(bolt|neo4j):\/\/([^:]+):([^@]+)@',
+        r'\1://\2:***REDACTED***@',
+        message
+    )
+    
+    # Redact API keys and tokens
+    message = re.sub(
+        r'(api[_-]?key|token|password|secret)\s*[=:]\s*[\'"]?([^\s\'"]{8,})[\'"]?',
+        r'\1=***REDACTED***',
+        message,
+        flags=re.IGNORECASE
+    )
+    
+    return message
+
 class AuditLogger:
     _initialized = False
     _handler = None
@@ -24,6 +45,10 @@ class AuditLogger:
         with AuditLogger._lock:
             if not AuditLogger._initialized:
                 AuditLogger._initialize()
+            
+            # Apply redaction
+            if isinstance(message, str):
+                message = redact_credentials(message)
             
             log_record = logging.LogRecord(
                 name='audit',

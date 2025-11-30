@@ -1,3 +1,4 @@
+import re
 from neo4j import AsyncGraphDatabase
 from typing import List, Dict, Any, Optional
 import logging
@@ -19,6 +20,21 @@ class Neo4jDatabase:
         self.auth = auth
         self.db_name = db_name
         self.driver = None
+
+    def _sanitize_cypher_identifier(self, identifier: str, fallback: str = "default") -> str:
+        """
+        Sanitize identifiers for use in Cypher queries.
+        Only allows alphanumeric characters and underscores.
+        """
+        if not identifier:
+            return fallback
+        
+        sanitized = re.sub(r'[^a-zA-Z0-9_]', '', identifier)
+        
+        if sanitized and sanitized[0].isdigit():
+            sanitized = f"_{sanitized}"
+        
+        return sanitized if sanitized else fallback
 
     async def connect(self):
         """Establishes the connection pool."""
@@ -91,21 +107,35 @@ class Neo4jDatabase:
         Returns:
             True if successful, False otherwise
         """
+        # Validate inputs
+        if similarity_function not in ["cosine", "euclidean"]:
+            print(f"❌ Invalid similarity function: {similarity_function}")
+            return False
+            
+        clean_index = self._sanitize_cypher_identifier(index_name, "entity_embeddings")
+        clean_label = self._sanitize_cypher_identifier(label, "Entity")
+        clean_prop = self._sanitize_cypher_identifier(property_name, "embedding")
+        
         # Neo4j 5.x vector index creation syntax
         query = f"""
-        CREATE VECTOR INDEX {index_name} IF NOT EXISTS
-        FOR (n:{label})
-        ON (n.{property_name})
+        CREATE VECTOR INDEX {clean_index} IF NOT EXISTS
+        FOR (n:{clean_label})
+        ON (n.{clean_prop})
         OPTIONS {{
             indexConfig: {{
-                `vector.dimensions`: {dimensions},
-                `vector.similarity_function`: '{similarity_function}'
+                `vector.dimensions`: $dimensions,
+                `vector.similarity_function`: $similarity_function
             }}
         }}
         """
+        params = {
+            "dimensions": dimensions,
+            "similarity_function": similarity_function
+        }
+        
         try:
-            await self.execute(query)
-            print(f"✅ Vector index '{index_name}' created (or already exists)")
+            await self.execute(query, params)
+            print(f"✅ Vector index '{clean_index}' created (or already exists)")
             return True
         except Exception as e:
             print(f"❌ Failed to create vector index: {e}")
@@ -113,10 +143,11 @@ class Neo4jDatabase:
     
     async def drop_vector_index(self, index_name: str = "entity_embeddings") -> bool:
         """Drop a vector index."""
-        query = f"DROP INDEX {index_name} IF EXISTS"
+        clean_index = self._sanitize_cypher_identifier(index_name, "entity_embeddings")
+        query = f"DROP INDEX {clean_index} IF EXISTS"
         try:
             await self.execute(query)
-            print(f"🗑️ Vector index '{index_name}' dropped")
+            print(f"🗑️ Vector index '{clean_index}' dropped")
             return True
         except Exception as e:
             print(f"❌ Failed to drop vector index: {e}")
