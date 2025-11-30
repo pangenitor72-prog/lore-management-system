@@ -1,11 +1,11 @@
 """
-DMAgent v0.2 - The Grounded Dungeon Master with Generative Worldbuilding
+DMAgent v0.3 - The Grounded Dungeon Master with Generative Worldbuilding
 
-This agent wraps Gemini with the DM Prompt v2.3 to create an immersive,
+This agent wraps Gemini with the DM Prompt to create an immersive,
 text-based RPG experience. It integrates with GameSession for state,
 QueryAgent for lore retrieval, and AuditorAgent for contradiction checking.
 
-Phase I-B: Adds contradiction-checked entity generation.
+Uses centralized Prompt Library for all system prompts.
 """
 
 import os
@@ -24,20 +24,9 @@ from src.neo4j_adapter import Neo4jDatabase
 from src.auditor_agent import AuditorAgent
 from src.models import LoreConfidence
 from src.audit_log import AuditLogger
+from src.prompts import DMPrompts
 
-
-# Load the DM Prompt from docs
-DM_PROMPT_PATH = Path(__file__).parent.parent / "docs" / "mantle" / "DM PROMPT v2.3"
 WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
-
-def load_system_prompt() -> str:
-    """Load the DM system prompt from file."""
-    if DM_PROMPT_PATH.exists():
-        return DM_PROMPT_PATH.read_text(encoding="utf-8")
-    else:
-        # Fallback minimal prompt if file not found
-        return """You are an AI Dungeon Master. Keep the player inside the fiction.
-Never speak for the player. Describe the world and wait for their action."""
 
 def load_worldbuilding_rules() -> str:
     """Load worldbuilding consistency rules from file."""
@@ -79,7 +68,8 @@ class DMAgent:
         self,
         db: Neo4jDatabase,
         api_key: Optional[str] = None,
-        model_name: str = "gemini-2.0-flash"
+        model_name: str = "gemini-2.0-flash",
+        prompt_version: str = "2.4"
     ):
         self.db = db
         self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -89,8 +79,9 @@ class DMAgent:
         genai.configure(api_key=self.api_key)
         self.model = genai.GenerativeModel(self.model_name)
         
-        # Load system prompt with worldbuilding rules
-        self.system_prompt = load_system_prompt() + load_worldbuilding_rules()
+        # Load system prompt from Prompt Library and append rules
+        self.system_prompt = DMPrompts.get_system_prompt(prompt_version) + load_worldbuilding_rules()
+        self.prompt_metadata = DMPrompts.SYSTEM_METADATA
         
         # Session and Query Agent (initialized per-session)
         self.session: Optional[GameSession] = None
@@ -362,35 +353,8 @@ If the action requires a roll, narrate the attempt and outcome.
     async def _extract_entities_from_input(self, player_input: str) -> List[Dict[str, Any]]:
         """
         Extract entities the player is referencing or creating.
-        
-        Example:
-            Input: "I ask the bartender about the Crimson Wastes"
-            Output: [
-                {"name": "Bartender", "type": "Character"},
-                {"name": "Crimson Wastes", "type": "Location"}
-            ]
         """
-        extraction_prompt = f"""You are an entity extractor for a D&D game.
-
-Extract entities the player is referencing from this input:
-"{player_input}"
-
-Return ONLY valid JSON with this format:
-{{
-  "entities": [
-    {{"name": "Entity Name", "type": "Character|Location|Item|Faction|Concept"}}
-  ]
-}}
-
-Rules:
-1. Extract proper nouns and important concepts
-2. Classify type accurately (Character, Location, Item, Faction, Concept)
-3. Don't extract generic words like "thing", "place", "person"
-4. If no entities found, return {{"entities": []}}
-5. Keep multi-word names together ("Crimson Wastes" not "Crimson", "Wastes")
-6. Generic roles like "bartender" or "guard" should be typed as Character
-
-JSON output:"""
+        extraction_prompt = DMPrompts.build_extraction_prompt(player_input)
 
         try:
             response = await asyncio.get_event_loop().run_in_executor(
@@ -528,13 +492,6 @@ JSON output:"""
     async def _handle_active_play_with_generation(self, player_input: str) -> str:
         """
         Enhanced active play handler with lore-or-generate pattern.
-        
-        Flow:
-        1. Extract entities from player input
-        2. Check what exists in canon
-        3. Generate new entities if needed (with auditing)
-        4. Build context-aware prompt
-        5. Generate narrative response
         """
         # 1. Extract entities mentioned
         entities_mentioned = await self._extract_entities_from_input(player_input)
@@ -668,4 +625,3 @@ If the action requires a roll, narrate the attempt and outcome.
         
         # No valid JSON found - return full response as narrative
         return response_text, []
-

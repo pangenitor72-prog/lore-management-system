@@ -20,6 +20,7 @@ from .broadcaster import broadcaster
 from datetime import datetime
 from .neo4j_adapter import Neo4jDatabase
 from .embedding_service import EmbeddingService
+from src.prompts import QueryPrompts
 
 
 class QueryAgent:
@@ -55,20 +56,8 @@ class QueryAgent:
         self.pro_model = genai.GenerativeModel("gemini-2.5-flash")
         
         # Define the system prompt for the chat
-        self.system_prompt = """
-You are the "LMS Query Agent," an AI assistant for a 30-year-old tabletop Dungeon Master's (DM). 
-Your sole purpose is to answer DM questions about the canonical campaign lore managed by this system.
-You must adhere to the "Gospel Principle": You only report on existing lore.
-If the answer is not in the lore, you must state "That information is not in the lore."
+        self.system_prompt = QueryPrompts.get_system_prompt()
 
-When answering, be:
-1. **Sincere:** Direct and honest about the data.
-2. **Intelligent:** Synthesize information, don't just list facts.
-3. **Unvarnished:** Do not use flowery or evasive language. Get to the point.
-
-You will be provided with CONTEXT from the knowledge graph before each question.
-Use this context to ground your answers in the canonical lore.
-"""
         # Start a new chat session with the system prompt
         self.chat = self.pro_model.start_chat(
             history=[
@@ -91,20 +80,7 @@ Use this context to ground your answers in the canonical lore.
         
         Returns a list of clean entity names to search for.
         """
-        extraction_prompt = f"""You are an entity extractor for a fantasy/tabletop RPG knowledge base.
-Extract the key NAMED ENTITIES (Characters, Factions, Items, Locations, Concepts) from this question.
-
-Rules:
-1. Return ONLY a JSON array of strings, e.g. ["Kael", "Vulture Clan", "Blade of Whispers"]
-2. Extract proper nouns and important concepts the user is asking about
-3. Do NOT include generic words like "person", "thing", "place"
-4. If no entities found, return []
-5. Correct obvious typos if you can infer the intended entity
-6. Keep multi-word names together (e.g. "Vulture Clan" not "Vulture", "Clan")
-
-Question: "{user_query}"
-
-JSON array of entities:"""
+        extraction_prompt = QueryPrompts.build_extraction_prompt(user_query)
 
         try:
             # Use a fresh model call (not the chat) for extraction

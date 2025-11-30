@@ -19,7 +19,7 @@ import asyncio
 from .neo4j_adapter import Neo4jDatabase
 import google.generativeai as genai
 from .broadcaster import broadcaster
-
+from src.prompts import AuditorPrompts
 
 
 class Contradiction:
@@ -75,11 +75,17 @@ class AuditorAgent:
         self.flash = genai.GenerativeModel("gemini-2.5-flash")
         self.pro = genai.GenerativeModel("gemini-2.5-pro")
         AuditLogger.log_sync("AuditorAgent: Neo4j + AI hybrid mode initialized.")
+        self.system_prompt = AuditorPrompts.get_system_prompt()
+
     def detect_contradictions(self, entity_a: Dict[str, Any], entity_b: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Finds, Scores, and suggests Resolutions for AI-detected contradictions."""
         a_name, b_name = entity_a.get("name","?"), entity_b.get("name","?")
         AuditLogger.log_sync(f"AI-DETECT: Comparing {a_name} vs {b_name}")
-        prompt = self._build_prompt(entity_a, entity_b)
+        
+        prompt = AuditorPrompts.build_detection_prompt(
+            json.dumps(entity_a, indent=2),
+            json.dumps(entity_b, indent=2)
+        )
         
         try:
             resp = self.flash.generate_content(
@@ -185,25 +191,6 @@ class AuditorAgent:
             AuditLogger.log_sync(f"_should_compare error: {e}")
             return False
 
-    def _build_prompt(self,a,b)->str:
-        """Builds the initial detection prompt for Gemini-Flash."""
-        return f"""
-You are a lore consistency analyzer. Compare:
-
-ENTITY_A:
-{json.dumps(a,indent=2)}
-
-ENTITY_B:
-{json.dumps(b,indent=2)}
-
-Identify contradictions (attribute, relationship, temporal, geographic, narrative).
-Return ONLY a JSON array like:
-[{{"type":"temporal","severity":"HIGH","description":"...",
-"evidence_a":"...","evidence_b":"...","confidence":0.9,
-"reasoning":"...","possible_resolutions":["..."]}}]
-If none, return [].
-""".strip()
-
     def _parse_json_array(self,text:str)->List[Dict[str,Any]]:
         """Parses the JSON array from the AI's response."""
         if not text: return []
@@ -231,17 +218,11 @@ If none, return [].
         """Uses gemini-1.5-pro to assign a confidence score."""
         AuditLogger.log_sync(f"AI-SCORE: Scoring contradiction: {contradiction.get('description', 'N/A')[:50]}...")
         
-        prompt = f"""
-You are a confidence score analyst.
-A "flash" model has detected the following contradiction:
-ENTITY_A: {json.dumps(entity_a, indent=2)}
-ENTITY_B: {json.dumps(entity_b, indent=2)}
-DETECTED CONTRADICTION: {json.dumps(contradiction, indent=2)}
-Your task is to analyze this contradiction and the evidence.
-Return ONLY a JSON object with your analysis, like this:
-{{"confidence": 0.85, "reasoning": "The flash model's reasoning is sound..."}}
-Assign a confidence score from 0.0 (unlikely) to 1.0 (certain).
-"""
+        prompt = AuditorPrompts.build_score_confidence_prompt(
+            json.dumps(entity_a, indent=2),
+            json.dumps(entity_b, indent=2),
+            json.dumps(contradiction, indent=2)
+        )
         
         try:
             resp = self.pro.generate_content(
@@ -271,23 +252,12 @@ Assign a confidence score from 0.0 (unlikely) to 1.0 (certain).
 
         AuditLogger.log_sync(f"AI-RESOLVE: Suggesting resolutions for: {contradiction.get('description', 'N/A')[:50]}...")
         
-        prompt = f"""
-You are a "Lore Arbiter's Assistant."
-A highly confident contradiction has been detected:
-ENTITY_A: {json.dumps(entity_a, indent=2)}
-ENTITY_B: {json.dumps(entity_b, indent=2)}
-DETECTED CONTRADICTION (Confidence: {contradiction.get('confidence')}):
-{json.dumps(contradiction, indent=2)}
-
-Your task is to suggest 1-3 possible resolutions for the human arbiter (the DM).
-NEVER decide the "truth." Only present options. Adhere to the Gospel Principle.
-Example: "Verify the 'death_date' of Entity A from Source X."
-
-Return ONLY a JSON object like this:
-{{"reasoning": "The core conflict is a temporal paradox.",
-  "possible_resolutions": ["SUGGESTION 1: ..."]
-}}
-"""
+        prompt = AuditorPrompts.build_suggest_resolution_prompt(
+            json.dumps(entity_a, indent=2),
+            json.dumps(entity_b, indent=2),
+            json.dumps(contradiction, indent=2),
+            contradiction.get('confidence', 0.0)
+        )
         
         try:
             resp = self.pro.generate_content(
@@ -702,51 +672,6 @@ Return ONLY a JSON object like this:
     # SEMANTIC SUBMISSION AUDIT (NEW)
     # ==========================================
     
-    # Entity extraction prompt (adapted from ingestor.py)
-    ENTITY_EXTRACTION_PROMPT = """You are a Named Entity Extractor for a D&D Campaign lore system.
-Analyze the following text and extract ONLY the names of entities mentioned.
-
-**Entity Types to Look For:**
-- Characters (NPCs, PCs, villains, heroes)
-- Factions (Organizations, groups, clans, cults)
-- Locations (Places, regions, buildings)
-- Items (Weapons, artifacts, objects)
-- Events (Battles, ceremonies, historical moments)
-- Concepts (Magic types, curses, prophecies)
-
-**Output Format:**
-Return ONLY a JSON object with a single key "entities" containing a list of entity names.
-Do NOT include markdown code fences.
-
-Example:
-{"entities": ["Vulture Clan", "Lead Corps", "Gyrocopter", "Smoker Legion"]}
-
-TEXT:
-"""
-
-    CONTRADICTION_CHECK_PROMPT = """You are a Lore Consistency Checker for a D&D Campaign.
-
-Your task is to determine if NEW SUBMISSION contradicts the ESTABLISHED TRUTH from the canonical knowledge graph.
-
-**ESTABLISHED TRUTH (from Knowledge Graph):**
-{graph_truth}
-
-**NEW SUBMISSION (to be checked):**
-{new_text}
-
-**Instructions:**
-1. Compare the claims in the NEW SUBMISSION against the ESTABLISHED TRUTH.
-2. A contradiction exists if the new text makes claims that DIRECTLY CONFLICT with established facts.
-3. New information that ADDS to existing lore without conflicting is NOT a contradiction.
-4. Be specific about what conflicts.
-
-**Output Format:**
-Return ONLY a valid JSON object:
-- If contradictions found: {{"status": "CONTRADICTION", "contradictions": [{{"claim": "what the new text says", "truth": "what the graph says", "severity": "HIGH/MEDIUM/LOW", "explanation": "why this conflicts"}}]}}
-- If no contradictions: {{"status": "SAFE", "notes": "Brief explanation of why the submission is compatible"}}
-
-CRITICAL: Return ONLY valid JSON. No markdown, no explanations outside the JSON."""
-
     def _parse_json_response(self, text: str) -> dict:
         """Parse JSON from AI response with error recovery."""
         cleaned = text.strip()
@@ -777,7 +702,7 @@ CRITICAL: Return ONLY valid JSON. No markdown, no explanations outside the JSON.
         
         try:
             response = self.flash.generate_content(
-                self.ENTITY_EXTRACTION_PROMPT + text,
+                AuditorPrompts.ENTITY_EXTRACTION_PROMPT + text,
                 generation_config={"temperature": 0.1}
             )
             data = self._parse_json_response(response.text)
@@ -915,7 +840,7 @@ CRITICAL: Return ONLY valid JSON. No markdown, no explanations outside the JSON.
         # Step 4: Ask Gemini to compare
         await AuditLogger.log("Sending to Gemini for semantic comparison...")
         
-        comparison_prompt = self.CONTRADICTION_CHECK_PROMPT.format(
+        comparison_prompt = AuditorPrompts.build_contradiction_check_prompt(
             graph_truth=formatted_truth,
             new_text=text
         )
