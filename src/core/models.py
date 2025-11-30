@@ -206,6 +206,32 @@ class ContradictionWithAnalysis(BaseModel):
     contradiction: ContradictionResponse
     analysis: Optional[TriageAnalysisResponse] = None
 
+# ---------------- GAME SESSION MODELS ---------------- #
+
+class InstanceResponse(BaseModel):
+    """Generic model for any instance data that is a key-value store."""
+    id: str = Field(..., description="Unique identifier for the instance")
+    name: str = Field(..., description="Display name of the instance")
+    type: str = Field(..., description="Type of instance (e.g., Character, Location)")
+    # Allow arbitrary fields for flexibility
+    model_config = ConfigDict(extra="allow")
+
+class GameSessionResponse(BaseModel):
+    """Model for game session responses."""
+    session_id: str
+    dm_id: str
+    active_entities: List[InstanceResponse] = Field(default_factory=list)
+    player_characters: List[InstanceResponse] = Field(default_factory=list)
+    current_events: List[str] = Field(default_factory=list)
+    world_state_summary: str
+    campaign_name: str
+    campaign_goal: str
+    lore_accuracy_score: float
+    active_contradictions_count: int
+    last_updated: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
 # ---------------- ERROR MODEL ---------------- #
 
 class ErrorResponse(BaseModel):

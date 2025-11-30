@@ -375,4 +375,3 @@ Kaela Thornwick - A merchant who sells rare herbs
                 prop: "" for prop in template.required_properties
             }
         }
-

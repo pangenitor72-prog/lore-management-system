@@ -4,7 +4,7 @@ Tests for Phase I-B: Generative Worldbuilding with Contradiction Checking
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.models import LoreConfidence, CONFIDENCE_RULES
+from src.core.models import LoreConfidence, CONFIDENCE_RULES
 
 
 class TestLoreConfidence:
@@ -41,12 +41,12 @@ class TestAuditorEntityAudit:
     @pytest.fixture
     def mock_auditor(self):
         """Create a mock AuditorAgent."""
-        from src.auditor_agent import AuditorAgent
+        from src.agents.auditor_agent import AuditorAgent
         
         mock_db = AsyncMock()
         mock_db.execute = AsyncMock(return_value=[])
         
-        with patch('src.auditor_agent.genai'):
+        with patch('src.agents.auditor_agent.genai'):
             auditor = AuditorAgent(mock_db, "fake-api-key")
         
         return auditor, mock_db
@@ -129,11 +129,11 @@ class TestDMAgentEntityExtraction:
     @pytest.fixture
     def mock_dm_agent(self):
         """Create a mock DMAgent."""
-        from src.dm_agent import DMAgent
+        from src.agents.dm_agent import DMAgent
         
         mock_db = AsyncMock()
         
-        with patch('src.dm_agent.genai') as mock_genai:
+        with patch('src.agents.dm_agent.genai') as mock_genai:
             mock_model = MagicMock()
             mock_genai.GenerativeModel.return_value = mock_model
             
@@ -184,7 +184,7 @@ class TestWorldbuildingRules:
     
     def test_load_worldbuilding_rules(self):
         """Test that worldbuilding rules can be loaded."""
-        from src.dm_agent import load_worldbuilding_rules
+        from src.agents.dm_agent import load_worldbuilding_rules
         
         rules = load_worldbuilding_rules()
         
@@ -194,7 +194,7 @@ class TestWorldbuildingRules:
     def test_rules_disabled_via_env(self):
         """Test that rules can be disabled via environment variable."""
         import os
-        from src.dm_agent import load_worldbuilding_rules
+        from src.agents.dm_agent import load_worldbuilding_rules
         
         original = os.environ.get("ENABLE_WORLDBUILDING_RULES")
         

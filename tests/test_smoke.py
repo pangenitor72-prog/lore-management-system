@@ -1,6 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
-from src.models import EntityType, ApprovalStatus, ConfidenceLevel, PartyKnowledge
+from src.core.models import EntityType, ApprovalStatus, ConfidenceLevel, PartyKnowledge
 
 @pytest.mark.asyncio
 async def test_health_check(client):
@@ -12,25 +11,8 @@ async def test_health_check(client):
     assert data["checks"]["neo4j"] == "connected"
 
 @pytest.mark.asyncio
-async def test_entity_creation_mock(client, mock_neo4j_db):
-    """Verify entity creation logic (mocked)."""
-    # Setup mock return for get_entity check after creation
-    mock_neo4j_db.execute.side_effect = [
-        [], # Create result
-        [{ # Get Entity result
-            "canon_id": "char-123",
-            "entity_type": "Character",
-            "canonical_name": "Test Hero",
-            "aliases": [],
-            "approval_status": "PENDING",
-            "confidence_level": "CONFIRMED",
-            "party_knowledge": "KNOWN",
-            "created_at": "2023-01-01T00:00:00",
-            "updated_at": "2023-01-01T00:00:00",
-            "all_props": {"description": "A test hero"}
-        }]
-    ]
-
+async def test_entity_creation_mock(client):
+    """Verify entity creation logic with in-memory mock."""
     payload = {
         "entity_type": "Character",
         "canonical_name": "Test Hero",
@@ -46,17 +28,11 @@ async def test_entity_creation_mock(client, mock_neo4j_db):
     data = response.json()
     assert data["canonical_name"] == "Test Hero"
     assert "canon_id" in data
+    assert data["canon_id"].startswith("character-")
 
 @pytest.mark.asyncio
-async def test_upload_endpoint(client, mock_neo4j_db):
+async def test_upload_endpoint(client):
     """Verify upload endpoint accepts files."""
-    # Mock ingestor processing (it happens inside the endpoint if process_immediately=True)
-    # Since we are mocking the DB, the Ingestor initialization inside the route might fail 
-    # if it tries to use the driver from the mock.
-    # However, the route uses request.app.state.neo4j_db.driver.
-    # We need to ensure our mock_neo4j_db has a driver attribute that is also a mock.
-    mock_neo4j_db.driver = MagicMock()
-    
     files = {'files': ('test.txt', b'Some lore text', 'text/plain')}
     response = client.post("/upload", files=files, data={"process_immediately": "false"})
     

@@ -13,14 +13,14 @@ from datetime import datetime, timezone
 import json
 import re
 import uuid
-from .audit_log import AuditLogger
+from src.services.audit_log import AuditLogger
 import logging
 import asyncio
-from .neo4j_adapter import Neo4jDatabase
+from src.db.neo4j_adapter import Neo4jDatabase
 import google.generativeai as genai
-from .broadcaster import broadcaster
+from src.services.broadcaster import broadcaster
 from src.prompts import AuditorPrompts
-from src.personality import OCEANProfile
+from src.agents.personality import OCEANProfile
 
 
 class Contradiction:
@@ -427,8 +427,6 @@ class AuditorAgent:
     async def check_conflicting_birthplaces(self) -> List[Contradiction]:
         """Check for entities with multiple conflicting birthplace values stored as properties."""
         contradictions = []
-        # In Neo4j, we look for nodes with a birthplace property that might have conflicts
-        # This assumes birthplace is stored as a list or we check related Location nodes
         cypher = """
         MATCH (e)-[:BORN_IN]->(loc1:Location)
         MATCH (e)-[:BORN_IN]->(loc2:Location)
@@ -501,15 +499,8 @@ class AuditorAgent:
         return contradictions
     
     async def check_orphaned_relationships(self) -> List[Contradiction]:
-        """Check for relationships pointing to non-existent entities.
-        
-        Note: In Neo4j, relationships cannot exist without both endpoints,
-        so this check looks for dangling references in properties instead.
-        """
+        """Check for relationships pointing to non-existent entities."""
         contradictions = []
-        # In Neo4j, edges always connect existing nodes, so orphans aren't possible
-        # in the traditional sense. However, we can check for nodes with reference
-        # properties pointing to non-existent canon_ids.
         cypher = """
         MATCH (n)
         WHERE n.references IS NOT NULL
@@ -611,11 +602,11 @@ class AuditorAgent:
         return contradictions
     
     async def check_circular_relationships(self) -> List[Contradiction]:
-        """Check for 2-hop and 3-hop circular relationships (A->B->A or A->B->C->A)."""
+        """Check for 2-hop and 3-hop circular relationships."""
         await AuditLogger.log("Running circular relationship checks...")
         contradictions = []
         
-        # 2-hop cycles: A -> B -> A
+        # 2-hop cycles
         cypher_2hop = """
         MATCH (a)-[r1]->(b)-[r2]->(a)
         WHERE id(a) < id(b)
@@ -641,7 +632,7 @@ class AuditorAgent:
                     }
                 ))
 
-        # 3-hop cycles: A -> B -> C -> A
+        # 3-hop cycles
         cypher_3hop = """
         MATCH (a)-[r1]->(b)-[r2]->(c)-[r3]->(a)
         WHERE a <> b AND b <> c AND a <> c
@@ -678,7 +669,7 @@ class AuditorAgent:
         return contradictions
     
     async def check_unparseable_dates(self) -> List[Contradiction]:
-        """Check for date fields that don't match expected format (YYYY-MM-DD or YYYY)."""
+        """Check for date fields that don't match expected format."""
         contradictions = []
         date_fields = ['birth_date', 'death_date', 'founded_date', 'occurred_date']
         
@@ -719,7 +710,7 @@ class AuditorAgent:
         }
     
     # ==========================================
-    # SEMANTIC SUBMISSION AUDIT (NEW)
+    # SEMANTIC SUBMISSION AUDIT
     # ==========================================
     
     def _parse_json_response(self, text: str) -> dict:
@@ -735,7 +726,6 @@ class AuditorAgent:
         except json.JSONDecodeError:
             pass
         
-        # Try to find JSON object in response
         match = re.search(r'\{[\s\S]*\}', cleaned)
         if match:
             try:
@@ -743,7 +733,6 @@ class AuditorAgent:
             except json.JSONDecodeError:
                 pass
         
-        # Return empty structure if all else fails
         return {"status": "ERROR", "message": "Failed to parse AI response"}
 
     async def _extract_entities_from_text(self, text: str) -> List[str]:
@@ -770,7 +759,6 @@ class AuditorAgent:
         
         await AuditLogger.log(f"Retrieving graph truth for: {entity_names}")
         
-        # Query for entities and their relationships
         cypher = """
         MATCH (n)
         WHERE n.name IN $names
@@ -799,9 +787,8 @@ class AuditorAgent:
                 }
                 truth["entities"].append(entity_info)
                 
-                # Add relationships
                 for rel in record["relationships"]:
-                    if rel.get("target"):  # Filter out null relationships
+                    if rel.get("target"):
                         truth["relationships"].append({
                             "from": record["entity_name"] if rel["direction"] == "outgoing" else rel["target"],
                             "to": rel["target"] if rel["direction"] == "outgoing" else record["entity_name"],
@@ -818,7 +805,6 @@ class AuditorAgent:
         
         lines = []
         
-        # Format entities
         for entity in truth["entities"]:
             props = entity.get("properties", {})
             desc = props.get("description", "")
@@ -827,12 +813,10 @@ class AuditorAgent:
                 line += f": {desc}"
             lines.append(line)
             
-            # Add key properties
             for key, value in props.items():
                 if key not in ["name", "description"] and value:
                     lines.append(f"    • {key}: {value}")
         
-        # Format relationships
         if truth["relationships"]:
             lines.append("\nEstablished Relationships:")
             seen = set()
@@ -845,17 +829,7 @@ class AuditorAgent:
         return "\n".join(lines)
 
     async def audit_submission(self, text: str) -> Dict[str, Any]:
-        """
-        Audit a new lore submission against the existing knowledge graph.
-        
-        Returns:
-            {
-                "status": "SAFE" | "CONTRADICTION" | "ERROR",
-                "entities_checked": [...],
-                "contradictions": [...] (if any),
-                "notes": "..." (explanation)
-            }
-        """
+        """Audit a new lore submission against the existing knowledge graph."""
         await AuditLogger.log("=" * 50)
         await AuditLogger.log("SEMANTIC AUDIT: Starting submission check")
         await AuditLogger.log("=" * 50)
@@ -867,7 +841,6 @@ class AuditorAgent:
             "notes": ""
         }
         
-        # Step 1: Extract entities from the submission
         entities = await self._extract_entities_from_text(text)
         result["entities_checked"] = entities
         
@@ -876,7 +849,6 @@ class AuditorAgent:
             await AuditLogger.log("No entities found - skipping verification")
             return result
         
-        # Step 2: Retrieve existing facts from the graph
         graph_truth = await self._retrieve_graph_truth(entities)
         
         if not graph_truth["entities"]:
@@ -884,10 +856,8 @@ class AuditorAgent:
             await AuditLogger.log("Entities not in graph - treating as new lore")
             return result
         
-        # Step 3: Format the graph truth for the prompt
         formatted_truth = self._format_graph_truth(graph_truth)
         
-        # Step 4: Ask Gemini to compare
         await AuditLogger.log("Sending to Gemini for semantic comparison...")
         
         comparison_prompt = AuditorPrompts.build_contradiction_check_prompt(
@@ -922,10 +892,7 @@ class AuditorAgent:
         return result
 
     def review(self, record: dict) -> dict:
-        """
-        Placeholder review method for AuditorAgent.
-        Simulates contradiction analysis and returns a status recommendation.
-        """
+        """Placeholder review method for AuditorAgent."""
         AuditLogger.log_sync(f"AuditorAgent reviewing contradiction: {record.get('contradiction_id')}")
         try:
             description = record.get("description", "").lower()
@@ -933,12 +900,11 @@ class AuditorAgent:
             AuditLogger.log_sync(f"Review decision -> resolved={resolved}")
             return {"resolved": resolved}
         except Exception as e:
-            
             AuditLogger.log_sync(f"AuditorAgent.review failed: {e}", level=logging.ERROR)
             return {"resolved": False, "error": str(e)}
 
     # ==========================================
-    # ENTITY CREATION AUDITING (Phase I-B)
+    # ENTITY CREATION AUDITING
     # ==========================================
 
     def _classify_contradiction_severity(
@@ -947,54 +913,25 @@ class AuditorAgent:
         entity_existing: Dict[str, Any],
         contradiction_type: str
     ) -> str:
-        """
-        Classify contradiction severity as CRITICAL (HIGH) or MINOR (MEDIUM/LOW).
-        
-        CRITICAL = blocks creation, queues for human review
-        MINOR = flags but allows creation
-        """
-        # Check against critical types
+        """Classify contradiction severity as CRITICAL or MINOR."""
         if contradiction_type in self.CRITICAL_CONTRADICTION_TYPES:
             return "HIGH"
         
-        # Same name but different entity type = always critical
         if entity_new.get("label") != entity_existing.get("label"):
             return "HIGH"
         
-        # Check against minor types
         if contradiction_type in self.MINOR_CONTRADICTION_TYPES:
             return "MEDIUM"
         
-        # Default to low severity
         return "LOW"
 
-    async def audit_new_entity(
-        self, 
-        entity_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Audit a new entity BEFORE creation to check for contradictions.
-        
-        Args:
-            entity_data: {
-                "name": str,
-                "label": str (Character, Location, etc.),
-                "properties": {...}
-            }
-        
-        Returns: {
-            "approved": bool,
-            "contradictions": [...],
-            "severity": "HIGH" | "MEDIUM" | "LOW" | None,
-            "action": "BLOCK" | "FLAG" | "APPROVE"
-        }
-        """
+    async def audit_new_entity(self, entity_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Audit a new entity BEFORE creation to check for contradictions."""
         await AuditLogger.log(f"Auditing new entity: {entity_data.get('name')} ({entity_data.get('label')})")
         
         contradictions = []
         max_severity = None
         
-        # 1. Check if entity with same name exists
         existing = await self.db.execute("""
             MATCH (e)
             WHERE toLower(e.name) = toLower($name)
@@ -1007,14 +944,11 @@ class AuditorAgent:
         if existing and len(existing) > 0:
             existing_entity = existing[0]
             
-            # 2. Detect contradiction type
             if existing_entity["label"] != entity_data.get("label"):
                 contradiction_type = "same_name_different_type"
             else:
-                # Same type - check for property conflicts
                 contradiction_type = "description_variation"
             
-            # 3. Classify severity
             severity = self._classify_contradiction_severity(
                 entity_data,
                 dict(existing_entity),
@@ -1032,13 +966,12 @@ class AuditorAgent:
             max_severity = severity
             await AuditLogger.log(f"Contradiction found: {contradiction_type} (severity: {severity})")
         
-        # 4. Determine action based on severity
         if max_severity == "HIGH":
             action = "BLOCK"
             approved = False
         elif max_severity in ["MEDIUM", "LOW"]:
             action = "FLAG"
-            approved = True  # Allow creation but flag for review
+            approved = True
         else:
             action = "APPROVE"
             approved = True
@@ -1090,7 +1023,6 @@ class AuditorAgent:
         
         await self.db.execute(query, params)
         
-        # Broadcast event
         await broadcaster.publish("auditor_events", {
             "type": "entity_blocked",
             "entity_name": entity.get("name"),
@@ -1117,7 +1049,6 @@ class AuditorAgent:
         """Approve a queued entity for creation."""
         await AuditLogger.log(f"Approving queued entity: {review_id} by {approver}")
         
-        # Get the review record
         query = """
         MATCH (r:ReviewQueue {review_id: $review_id})
         SET r.status = 'APPROVED',
@@ -1134,7 +1065,6 @@ class AuditorAgent:
         })
         
         if result and len(result) > 0:
-            # Entity can now be created with human_approved confidence
             return True
         return False
 
@@ -1160,7 +1090,7 @@ class AuditorAgent:
         return result is not None and len(result) > 0
 
     # ==========================================
-    # PERSONALITY CONSISTENCY CHECKING (OCEAN)
+    # PERSONALITY CONSISTENCY CHECKING
     # ==========================================
 
     async def check_personality_consistency(
@@ -1169,17 +1099,7 @@ class AuditorAgent:
         old_personality: OCEANProfile,
         new_behavior_description: str
     ) -> Optional[Dict[str, Any]]:
-        """
-        Check if new behavior is consistent with established personality.
-        
-        Args:
-            entity_name: NPC name
-            old_personality: Established OCEAN profile
-            new_behavior_description: Description of new behavior
-            
-        Returns:
-            Contradiction dict if inconsistent, None if consistent
-        """
+        """Check if new behavior is consistent with established personality."""
         await AuditLogger.log(f"Checking personality consistency for: {entity_name}")
         
         prompt = f"""
@@ -1230,15 +1150,7 @@ Return ONLY valid JSON:
         return None
 
     async def get_entity_personality(self, entity_name: str) -> Optional[OCEANProfile]:
-        """
-        Retrieve OCEAN personality profile for an entity from Neo4j.
-        
-        Args:
-            entity_name: Name of the entity
-            
-        Returns:
-            OCEANProfile if found, None otherwise
-        """
+        """Retrieve OCEAN personality profile for an entity from Neo4j."""
         query = """
         MATCH (e:Character)
         WHERE toLower(e.name) = toLower($name)

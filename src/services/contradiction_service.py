@@ -1,4 +1,4 @@
-# src/contradiction_service.py
+# src/services/contradiction_service.py
 from pathlib import Path
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -11,10 +11,10 @@ from fastapi import APIRouter, HTTPException, Request, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from src.audit_log import AuditLogger
-from src.neo4j_adapter import Neo4jDatabase
-from src.dependencies import get_neo4j_db
-from src.models import (
+from src.services.audit_log import AuditLogger
+from src.db.neo4j_adapter import Neo4jDatabase
+from src.api.dependencies import get_neo4j_db
+from src.core.models import (
     ContradictionCreate, ContradictionResponse, TriageAnalysisCreate,
     TriageAnalysisResponse, ContradictionWithAnalysis, ContradictionStatus,
     ContradictionSeverity
@@ -22,8 +22,8 @@ from src.models import (
 
 router = APIRouter(prefix="/api")
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / 'src' / 'templates'))
+BASE_DIR = Path(__file__).resolve().parent.parent  # Goes to src/
+templates = Jinja2Templates(directory=str(BASE_DIR / 'ui' / 'templates'))
 
 # --- HELPER: Parse Contradiction Record ---
 def parse_contradiction_record(record) -> ContradictionResponse:

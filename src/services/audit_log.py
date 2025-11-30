@@ -4,7 +4,8 @@ from logging import FileHandler
 import os
 import threading
 
-LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'audit.log')
+# Log file location - in the project root, not in services/
+LOG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'audit.log')
 
 import re
 

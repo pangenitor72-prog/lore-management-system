@@ -18,18 +18,18 @@ from typing import Optional, Dict, Any, List
 from pathlib import Path
 import google.generativeai as genai
 
-from src.game_session import GameSession
-from src.query_agent import QueryAgent
-from src.neo4j_adapter import Neo4jDatabase
-from src.auditor_agent import AuditorAgent
-from src.models import LoreConfidence
-from src.audit_log import AuditLogger
-from src.entity_factory import EntityFactory, EntityType, EntityTemplate
+from src.core.game_session import GameSession
+from src.agents.query_agent import QueryAgent
+from src.db.neo4j_adapter import Neo4jDatabase
+from src.agents.auditor_agent import AuditorAgent
+from src.core.models import LoreConfidence
+from src.services.audit_log import AuditLogger
+from src.core.entity_factory import EntityFactory, EntityType, EntityTemplate
 from src.prompts import DMPrompts, BoundaryPrompts
-from src.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
-from src.personality import OCEANProfile, PersonalityGenerator, PersonalityTemplates
+from src.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
+from src.agents.personality import OCEANProfile, PersonalityGenerator, PersonalityTemplates
 
-WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
+WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
 
 def load_worldbuilding_rules() -> str:
     """Load worldbuilding consistency rules from file."""

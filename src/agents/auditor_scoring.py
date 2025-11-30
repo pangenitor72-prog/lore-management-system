@@ -11,7 +11,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Union
 
-from .models import CONFIDENCE_RULES, ContradictionSeverity, LoreConfidence
+from src.core.models import CONFIDENCE_RULES, ContradictionSeverity, LoreConfidence
 
 # Configure module logger
 logger = logging.getLogger(__name__)

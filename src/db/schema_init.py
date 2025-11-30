@@ -3,10 +3,10 @@ Neo4j Schema Initialization Module
 Creates all necessary constraints, indexes, and vector indexes for the LMS database.
 
 Usage:
-    python -m src.schema_init
+    python -m src.db.schema_init
     
 Or import and call:
-    from src.schema_init import initialize_schema
+    from src.db.schema_init import initialize_schema
     await initialize_schema()
 """
 
@@ -16,7 +16,7 @@ import logging
 from typing import List, Tuple, Optional
 from dotenv import load_dotenv
 
-from .neo4j_adapter import Neo4jDatabase, EMBEDDING_DIMENSION
+from src.db.neo4j_adapter import Neo4jDatabase, EMBEDDING_DIMENSION
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

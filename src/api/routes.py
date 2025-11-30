@@ -26,30 +26,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # Local Imports - Audit
-from .audit_log import AuditLogger
+from src.services.audit_log import AuditLogger
 
 # Local Imports - Database (New Neo4j adapter)
-from .neo4j_adapter import Neo4jDatabase
-from .dependencies import get_neo4j_db
+from src.db.neo4j_adapter import Neo4jDatabase
+from src.api.dependencies import get_neo4j_db
 
 # Local Imports - Models
-from .models import (
+from src.core.models import (
     EntityCreate, EntityResponse, RelationshipCreate,
     ErrorResponse, ContradictionResponse, ContradictionCreate,
     ContradictionStatus, RelationshipResponse, ContradictionSeverity,
     ContradictionWithAnalysis, TriageAnalysisCreate,
     TriageAnalysisResponse, ContradictionUpdateRequest,
-    EntityType, ApprovalStatus, ConfidenceLevel, PartyKnowledge
+    EntityType, ApprovalStatus, ConfidenceLevel, PartyKnowledge,
+    GameSessionResponse, InstanceResponse
 )
 
 # Local Imports - Agents
-from .auditor_agent import AuditorAgent
-from .query_agent import QueryAgent
-from .broadcaster import broadcaster
-from .ingestor import LoreIngestor
+from src.agents.auditor_agent import AuditorAgent
+from src.agents.query_agent import QueryAgent
+from src.services.broadcaster import broadcaster
+from src.ingestion.ingestor import LoreIngestor
+from src.core.game_session import GameSession
 
 # Local Imports - Services
-from .contradiction_service import get_router as get_contradiction_router
+from src.services.contradiction_service import get_router as get_contradiction_router
 
 # ============================================================
 # APP LIFESPAN
@@ -83,6 +85,7 @@ async def connect_neo4j_with_timeout(
 async def lifespan(app: FastAPI):
     # On startup
     await AuditLogger.log("Application startup...")
+
     
     # 1. Validate GEMINI_API_KEY
     gemini_key = os.getenv("GEMINI_API_KEY")
@@ -177,15 +180,15 @@ app.add_middleware(
 # Initialize Router
 router = APIRouter()
 
-# Path Configuration
-BASE_DIR = Path(__file__).resolve().parent
-templates = Jinja2Templates(directory=str(BASE_DIR / 'templates'))
+# Path Configuration - Updated for new structure
+BASE_DIR = Path(__file__).resolve().parent.parent  # Points to src/
+templates = Jinja2Templates(directory=str(BASE_DIR / 'ui' / 'templates'))
 
-# Mount Static Files
+# Mount Static Files - Updated for new structure
 app.mount(
     "/static",
-    StaticFiles(directory=str(BASE_DIR / "static")),
-    name="static"  # ← ADD THIS LINE
+    StaticFiles(directory=str(BASE_DIR / "ui" / "static")),
+    name="static"
 )
 
 @app.websocket("/ws/gemini")
@@ -637,14 +640,10 @@ async def list_entities(
     return result_entities
 
 
-# ... (rest of the file remains the same, but for brevity, I'm replacing the whole file) ...
+# ============================================================
+# DASHBOARD ROUTES
+# ============================================================
 
-# The rest of the file follows, including relationship, audit, contradiction, dashboard,
-# and websocket endpoints, which have already been refactored in previous steps.
-# The `app.include_router` and `if __name__ == "__main__"` blocks also remain.
-# This replacement focuses on fixing the startup and create_entity logic.
-
-# --- DASHBOARD ROUTES ---
 class DashboardCard(BaseModel):
     id: int
     title: str

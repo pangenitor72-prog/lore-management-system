@@ -2,8 +2,8 @@ import uuid
 import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-from src.neo4j_adapter import Neo4jDatabase
-from src.audit_log import AuditLogger
+from src.db.neo4j_adapter import Neo4jDatabase
+from src.services.audit_log import AuditLogger
 
 class GameSession:
     """
@@ -123,4 +123,3 @@ class GameSession:
             "session": dict(row['s']),
             "instances": [dict(i) for i in row['instances']]
         }
-

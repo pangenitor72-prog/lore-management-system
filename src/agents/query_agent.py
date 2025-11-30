@@ -1,4 +1,4 @@
-# src/query_agent.py - Refactored for Neo4j with Vector Search
+# src/agents/query_agent.py - Refactored for Neo4j with Vector Search
 """
 Query Agent - RAG-powered Q&A over the Neo4j knowledge graph.
 Uses 4-tier retrieval strategy:
@@ -11,15 +11,15 @@ from __future__ import annotations
 from typing import Dict, List, Any, Optional
 import json
 import google.generativeai as genai
-from .audit_log import AuditLogger
+from src.services.audit_log import AuditLogger
 import logging
 from fastapi import WebSocket, WebSocketDisconnect
 from starlette.concurrency import run_in_threadpool
 import asyncio
-from .broadcaster import broadcaster
+from src.services.broadcaster import broadcaster
 from datetime import datetime
-from .neo4j_adapter import Neo4jDatabase
-from .embedding_service import EmbeddingService
+from src.db.neo4j_adapter import Neo4jDatabase
+from src.agents.embedding_service import EmbeddingService
 from src.prompts import QueryPrompts
 
 

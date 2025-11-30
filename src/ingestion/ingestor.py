@@ -6,8 +6,8 @@ import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 import google.generativeai as genai
-from .embedding_service import EmbeddingService
-from .audit_log import AuditLogger
+from src.agents.embedding_service import EmbeddingService
+from src.services.audit_log import AuditLogger
 
 # Configure module logger
 logger = logging.getLogger(__name__)
