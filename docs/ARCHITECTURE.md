@@ -1,8 +1,8 @@
 # LMS Architecture
 **System Design Overview for 30-Year D&D Campaign Lore Management**
 
-**Last Updated:** 2025-11-25  
-**System Status:** Production (Phases I-XI complete, Phase XII in progress)
+**Last Updated:** 2025-11-30  
+**System Status:** Production (Phases I-XIII complete)
 
 ---
 
@@ -203,25 +203,45 @@ def get_router():
 
 ---
 
-#### Agent Layer (`src/agents/`)
+#### Agent Layer (`src/`)
 
 **Purpose:** AI integration and intelligent analysis
+
+**dm_agent.py (DMAgent):**
+- AI Dungeon Master for AIRpg play mode
+- Session 0 handling (world/character/tone setup)
+- Grounded narrative generation
+- Boundary enforcement integration
+- Entity extraction and saving during play
+- Personality-aware NPC dialogue generation
 
 **auditor_agent.py (AuditorAgent):**
 - Analyzes lore for contradictions
 - Detects 9 types of logical and temporal conflicts
 - Generates confidence scores
 - Broadcasts events via WebSocket
+- Personality consistency checking
 - Operates with or without Gemini API
 
 **query_agent.py (QueryAgent):**
 - Natural language lore queries
 - Semantic search across entities
 - Context-aware responses
-- Future: Conversational interface
+
+**boundary_enforcement.py:**
+- Player intent classification (action, question, perception, dialogue)
+- Violation detection (declaration, outcome forcing, meta-control)
+- Agency override rules with in-world justifications
+- Educational reframing of invalid inputs
+
+**personality.py:**
+- OCEAN (Five-Factor) personality model
+- 8 preset archetypes (Merchant, Guard, Scholar, etc.)
+- Personality generation from role with variation
+- Behavioral summary and dialogue style guidance
 
 **Design Philosophy:**
-- Agents suggest, never decide
+- Agents suggest, never decide (except DMAgent for narrative)
 - All AI recommendations require human approval
 - Graceful degradation without API keys
 - Comprehensive logging of all agent actions
@@ -732,7 +752,7 @@ This document is part of a comprehensive documentation suite:
 
 ---
 
-**Last Updated:** 2025-11-25  
+**Last Updated:** 2025-11-30  
 **Maintained By:** Shawn King  
 **Campaign World:** Jim King's D&D Campaign (30+ years)  
-**System Status:** Production-ready, actively developed
+**System Status:** Production (Phase XIII complete - AIRpg Play Mode)

@@ -20,6 +20,7 @@ from .neo4j_adapter import Neo4jDatabase
 import google.generativeai as genai
 from .broadcaster import broadcaster
 from src.prompts import AuditorPrompts
+from src.personality import OCEANProfile
 
 
 class Contradiction:
@@ -1111,3 +1112,106 @@ class AuditorAgent:
         })
         
         return result is not None and len(result) > 0
+
+    # ==========================================
+    # PERSONALITY CONSISTENCY CHECKING (OCEAN)
+    # ==========================================
+
+    async def check_personality_consistency(
+        self,
+        entity_name: str,
+        old_personality: OCEANProfile,
+        new_behavior_description: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Check if new behavior is consistent with established personality.
+        
+        Args:
+            entity_name: NPC name
+            old_personality: Established OCEAN profile
+            new_behavior_description: Description of new behavior
+            
+        Returns:
+            Contradiction dict if inconsistent, None if consistent
+        """
+        await AuditLogger.log(f"Checking personality consistency for: {entity_name}")
+        
+        prompt = f"""
+An NPC named {entity_name} has an established personality profile:
+- Openness: {old_personality.openness:.1f}
+- Conscientiousness: {old_personality.conscientiousness:.1f}
+- Extraversion: {old_personality.extraversion:.1f}
+- Agreeableness: {old_personality.agreeableness:.1f}
+- Neuroticism: {old_personality.neuroticism:.1f}
+
+Behavioral Summary: {old_personality.get_behavioral_summary()}
+
+New behavior observed: {new_behavior_description}
+
+Is this behavior consistent with their established personality?
+Consider that people can act out of character under stress, but extreme contradictions 
+(reserved person suddenly very chatty, organized person suddenly chaotic) are inconsistent.
+
+Return ONLY valid JSON:
+{{
+  "consistent": true/false,
+  "explanation": "Why this is/isn't consistent"
+}}
+"""
+        
+        try:
+            response = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: self.flash.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.1}
+                )
+            )
+            
+            result = self._parse_json_response(response.text)
+            
+            if not result.get('consistent', True):
+                await AuditLogger.log(f"Personality inconsistency detected for {entity_name}")
+                return {
+                    "type": "personality_inconsistency",
+                    "severity": "MINOR",
+                    "description": f"{entity_name}: {result.get('explanation', 'Personality inconsistency detected')}",
+                    "entity": entity_name
+                }
+        except Exception as e:
+            await AuditLogger.log(f"Personality consistency check failed: {e}", level=logging.ERROR)
+        
+        return None
+
+    async def get_entity_personality(self, entity_name: str) -> Optional[OCEANProfile]:
+        """
+        Retrieve OCEAN personality profile for an entity from Neo4j.
+        
+        Args:
+            entity_name: Name of the entity
+            
+        Returns:
+            OCEANProfile if found, None otherwise
+        """
+        query = """
+        MATCH (e:Character)
+        WHERE toLower(e.name) = toLower($name)
+        AND e.openness IS NOT NULL
+        AND e.conscientiousness IS NOT NULL
+        AND e.extraversion IS NOT NULL
+        AND e.agreeableness IS NOT NULL
+        AND e.neuroticism IS NOT NULL
+        RETURN e.openness AS openness,
+               e.conscientiousness AS conscientiousness,
+               e.extraversion AS extraversion,
+               e.agreeableness AS agreeableness,
+               e.neuroticism AS neuroticism
+        LIMIT 1
+        """
+        
+        result = await self.db.execute(query, {"name": entity_name})
+        
+        if result and len(result) > 0:
+            return OCEANProfile.from_dict(dict(result[0]))
+        
+        return None

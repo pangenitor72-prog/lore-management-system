@@ -56,15 +56,10 @@ You may override player agency ONLY when justified:
 Always provide in-world justification for overrides.
 
 === RESPONSE FORMAT ===
-Respond with engaging narrative.
-If generating new entities, append JSON at end:
-
-{{
-  "narrative": "Your story text here...",
-  "new_entities": [
-    {{"name": "...", "label": "Character|Location|...", "properties": {{...}}}}
-  ]
-}}
+Respond with engaging narrative text only.
+Do NOT wrap your response in JSON.
+Do NOT include a "narrative" key.
+Just write the story directly.
 """
 
     SYSTEM_METADATA = PromptMetadata(
@@ -103,7 +98,7 @@ OUTPUT FORMAT (JSON only):
 
 Generate the entity:"""
 
-    ENTITY_EXTRACTION = """You are an entity extractor for a D&D game.
+    ENTITY_EXTRACTION = """You are an entity extractor for a tabletop RPG.
 
 Extract entities the player is referencing from this input:
 "{player_input}"

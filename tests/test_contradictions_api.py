@@ -4,17 +4,17 @@ from fastapi import status
 import uuid
 from src.models import ContradictionStatus, ContradictionSeverity, EntityType, ApprovalStatus
 
-# The 'api_client' fixture is now provided by 'tests/conftest.py'
+# The 'client' fixture is now provided by 'tests/conftest.py'
 
 @pytest.fixture(scope="function", autouse=True)
-def setup_entities(api_client: TestClient):
+def setup_entities(client: TestClient):
     """A fixture to automatically create entities before each test in this module."""
     # This runs for every test function in this file, thanks to autouse=True
-    resp1 = api_client.post("/entities", json={
+    resp1 = client.post("/entities", json={
         "entity_type": EntityType.CHARACTER.value, "canonical_name": "Entity A",
         "approval_status": ApprovalStatus.APPROVED.value, "confidence_level": "CONFIRMED", "party_knowledge": "KNOWN"
     })
-    resp2 = api_client.post("/entities", json={
+    resp2 = client.post("/entities", json={
         "entity_type": EntityType.CHARACTER.value, "canonical_name": "Entity B",
         "approval_status": ApprovalStatus.APPROVED.value, "confidence_level": "CONFIRMED", "party_knowledge": "KNOWN"
     })
@@ -22,12 +22,12 @@ def setup_entities(api_client: TestClient):
     assert resp2.status_code == status.HTTP_201_CREATED
 
 
-def test_create_and_get_contradiction(api_client: TestClient):
+def test_create_and_get_contradiction(client: TestClient):
     """
     Tests creating a contradiction with severity/status enums and multiple
     involved entities, then retrieving it to check for data integrity.
     """
-    list_entities_resp = api_client.get("/entities")
+    list_entities_resp = client.get("/entities")
     entity_ids = [e['canon_id'] for e in list_entities_resp.json()]
     assert len(entity_ids) >= 2
     
@@ -41,7 +41,7 @@ def test_create_and_get_contradiction(api_client: TestClient):
         "entity_ids": entity_ids
     }
 
-    create_response = api_client.post("/contradictions", json=contradiction_data)
+    create_response = client.post("/api/contradictions", json=contradiction_data)
     assert create_response.status_code == status.HTTP_201_CREATED
     
     created = create_response.json()
@@ -50,8 +50,7 @@ def test_create_and_get_contradiction(api_client: TestClient):
     assert created['status'] == ContradictionStatus.PENDING.value
     assert sorted(created['entity_ids']) == sorted(entity_ids)
     
-    # Verify retrieval
-    get_response = api_client.get(f"/contradictions/{contradiction_id}")
+    get_response = client.get(f"/api/contradictions/{contradiction_id}")
     assert get_response.status_code == status.HTTP_200_OK
     
     retrieved = get_response.json()
@@ -59,7 +58,7 @@ def test_create_and_get_contradiction(api_client: TestClient):
     assert sorted(retrieved['contradiction']['entity_ids']) == sorted(entity_ids)
     assert retrieved['analysis'] is None
 
-def test_add_triage_analysis_and_update_status(api_client: TestClient):
+def test_add_triage_analysis_and_update_status(client: TestClient):
     """
     Tests adding a triage analysis to a contradiction and verifies that
     the contradiction's status is automatically updated to 'IN_REVIEW'.
@@ -74,7 +73,7 @@ def test_add_triage_analysis_and_update_status(api_client: TestClient):
         "evidence": {},
         "entity_ids": []
     }
-    create_resp = api_client.post("/contradictions", json=contradiction_data)
+    create_resp = client.post("/api/contradictions", json=contradiction_data)
     assert create_resp.status_code == status.HTTP_201_CREATED
 
     # 2. Add triage analysis
@@ -85,11 +84,11 @@ def test_add_triage_analysis_and_update_status(api_client: TestClient):
         "recommendation": "Merge the conflicting event records.",
         "confidence": ContradictionSeverity.HIGH.value
     }
-    analysis_response = api_client.post(f"/contradictions/{contradiction_id}/analysis", json=analysis_data)
+    analysis_response = client.post(f"/api/contradictions/{contradiction_id}/analysis", json=analysis_data)
     assert analysis_response.status_code == status.HTTP_201_CREATED
     
     # 3. Verify the analysis was added and the status was updated
-    get_response = api_client.get(f"/contradictions/{contradiction_id}")
+    get_response = client.get(f"/api/contradictions/{contradiction_id}")
     assert get_response.status_code == status.HTTP_200_OK
     
     retrieved = get_response.json()

@@ -44,19 +44,29 @@ class EntityFactory:
             optional_properties=[
                 "species", "age", "alignment", "occupation", "faction",
                 "personality_traits", "goals", "fears", "secrets",
-                "relationships", "background"
+                "relationships", "background",
+                # OCEAN personality traits
+                "openness", "conscientiousness", "extraversion", 
+                "agreeableness", "neuroticism"
             ],
             generation_guidelines="""CHARACTER GENERATION GUIDELINES:
 
-**Universal Character Depth:**
-- Every NPC needs clear motivation: a GOAL (what they want) and a FEAR (what they're avoiding)
+**Motivation & Depth:**
+- Every NPC has a clear motivation: a GOAL (what they want) and a FEAR (what they're avoiding)
 - Include at least ONE secret or hidden agenda (not immediately apparent to players)
 - Align personality with role, but add contradictions for depth
 
+**OCEAN Personality Profile:**
+- Generate OCEAN traits (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism)
+- Each trait: 0.0 to 1.0 scale
+- Align traits with role (e.g., guards: low openness, high conscientiousness)
+- Use personality to drive dialogue style and behavior
+- Extreme traits (< 0.3 or > 0.7) create memorable NPCs
+
 **Personality:**
-- 2-3 distinctive personality traits (not generic)
+- 2-3 distinctive personality traits derived from OCEAN profile
 - One memorable quirk or mannerism (speech pattern, habit, distinctive item)
-- Morally complex - avoid purely good/evil characters
+- Morally complex - avoid purely good/evil NPCs
 
 **Setting Integration:**
 - Use naming conventions consistent with the campaign setting
@@ -74,12 +84,23 @@ class EntityFactory:
 - Make NPCs memorable with unique details
 - Everyone has layers - surface presentation vs hidden truth
 
+**Example Good NPC:**
+Kaela Thornwick - A merchant who sells rare herbs
+- Role: Herbalist merchant
+- Goal: Discover a cure for the Void Corruption affecting her daughter
+- Fear: The Watch discovering her illegal void-touched specimens
+- Secret: She's been experimenting with forbidden alchemy
+- OCEAN: O=0.6 (creative solutions), C=0.8 (meticulous), E=0.5 (professional), A=0.6 (caring), N=0.7 (anxious parent)
+- Personality: Warm and helpful (surface), desperate and morally flexible (hidden)
+- Quirk: Always offers tea, smells faintly of nightshade
+
 **Example Structure:**
 [Name] - [Brief Role Description]
 - Role: [Occupation/Function]
 - Goal: [What they want to achieve]
 - Fear: [What they're trying to avoid]
 - Secret: [Hidden information]
+- OCEAN: O=X.X, C=X.X, E=X.X, A=X.X, N=X.X
 - Personality: [Surface traits] (surface), [Hidden traits] (hidden)
 - Quirk: [Memorable detail]""",
             naming_conventions="Use naming conventions consistent with campaign setting and existing entities"

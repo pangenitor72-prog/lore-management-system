@@ -7,7 +7,6 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import List, Optional, Generator
 import logging
-import sqlite3
 from contextlib import asynccontextmanager
 
 

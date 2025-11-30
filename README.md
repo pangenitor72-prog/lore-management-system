@@ -73,6 +73,19 @@ Built to solve a real problem: managing 30+ years of accumulated lore from a lon
 
 ## Key Features
 
+### 🎮 AIRpg - Play Mode
+- **AI Dungeon Master**: Grounded, ruleset-agnostic narrative DM
+- **Session 0**: Collaborative world/character/tone creation
+- **Save System**: 3 save slots + Continue button
+- **Boundary Enforcement**: Educates players on agency rules
+- **Entity Generation**: NPCs created during play are saved to the graph
+
+### 🧠 NPC Personality (OCEAN Model)
+- **Psychologically-grounded NPCs** using Five-Factor personality model
+- **8 Archetypes**: Merchant, Guard, Scholar, Noble, Criminal, Priest, Warrior, Peasant
+- **Consistent behavior** across sessions driven by personality traits
+- **Dialogue style** adapts to personality (terse vs. talkative, warm vs. blunt)
+
 ### Entity Extraction
 - AI-powered extraction from text files to Neo4j graph
 - Automatic relationship detection
@@ -118,21 +131,26 @@ Universal narrative coherence rules:
 ├── src/
 │   ├── api.py               # FastAPI application
 │   ├── neo4j_adapter.py     # Neo4j database layer
-│   ├── database.py          # SQLite database layer (legacy)
+│   ├── dm_agent.py          # AI Dungeon Master agent
 │   ├── query_agent.py       # RAG-powered query agent
 │   ├── auditor_agent.py     # Contradiction detection
 │   ├── ingestor.py          # Entity extraction to Neo4j
-│   └── models.py            # Pydantic models
+│   ├── boundary_enforcement.py  # Player agency rules
+│   ├── personality.py       # OCEAN personality system
+│   ├── entity_factory.py    # Entity generation templates
+│   ├── models.py            # Pydantic models
+│   └── prompts/             # AI prompt library
+│       ├── dm_prompts.py    # DM system prompts
+│       ├── boundary_prompts.py  # Reframe prompts
+│       └── auditor_prompts.py   # Auditor prompts
 ├── docs/
-│   ├── mantle/              # AIRPG DM engine docs
-│   │   ├── DM PROMPT v2.3   # AI DM personality
-│   │   └── World Logic Charter.txt
-│   ├── meta/
-│   │   └── Roadmap.md       # Development roadmap
-│   └── engineering/         # Technical documentation
+│   ├── NEO4J_SCHEMA.md      # Graph database schema
+│   ├── PLAYER_DM_CONTRACT.md  # Agency rules documentation
+│   ├── ARCHITECTURE.md      # System architecture
+│   └── ...                  # Other documentation
 ├── lore/                    # Source lore files
 ├── tests/                   # Test suite
-├── app.py                   # Streamlit UI
+├── app.py                   # Streamlit UI (Play, Query, Ingest, Audit, Graph)
 └── docker-compose.yml       # Neo4j container setup
 ```
 
@@ -168,23 +186,30 @@ uvicorn src.api:app --reload
 ## Current Status
 
 ### Complete ✅
-- Core database and API (SQLite)
-- Neo4j graph integration
-- Entity extraction pipeline
+- Core database and API (SQLite + Neo4j)
+- Neo4j graph integration with entity relationships
+- Entity extraction pipeline (text → graph)
 - Agentic query retrieval (3-tier strategy)
 - Contradiction detection (rule-based + semantic)
-- WebSocket integration
-- Basic Streamlit UI
+- WebSocket integration for real-time updates
+- **AIRpg Play Mode** with AI Dungeon Master
+- **Session 0** collaborative world setup
+- **Save/Load System** with 3 slots + Continue
+- **Boundary Enforcement** for player agency
+- **OCEAN Personality System** for NPCs
+- **Entity Generation** during gameplay
+- "Haunting Machine" Streamlit UI
 
 ### In Progress 🚧
-- UI polish ("Haunting Machine" aesthetic)
 - React frontend wiring
 - Party knowledge filtering
+- Rules/mechanics integration (optional rulesets)
 
 ### Roadmap 📋
-See `docs/meta/Roadmap.md` for full development plan:
-- **LMS Track**: UI/UX → Charter Law → Campaign Profiles → Pre-AIRPG Bridge
-- **AIRPG Track**: MVP → NPC Personality (OCEAN) → World Simulation → Full DM Agent
+See `ROADMAP.md` for full development plan:
+- **Phase XIII**: Session state management ✅
+- **Phase XIV**: Multi-modal (voice, maps)
+- **Phase XV**: Living world simulation
 
 ## Design Philosophy
 

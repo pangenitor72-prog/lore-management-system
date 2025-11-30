@@ -25,7 +25,9 @@ from src.auditor_agent import AuditorAgent
 from src.models import LoreConfidence
 from src.audit_log import AuditLogger
 from src.entity_factory import EntityFactory, EntityType, EntityTemplate
-from src.prompts import DMPrompts
+from src.prompts import DMPrompts, BoundaryPrompts
+from src.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
+from src.personality import OCEANProfile, PersonalityGenerator, PersonalityTemplates
 
 WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
 
@@ -257,7 +259,83 @@ Do NOT ask questions. Do NOT speak for the player. Describe the scene and STOP.
 
     async def _handle_active_play(self, player_input: str) -> str:
         """
-        Handle active gameplay after Session 0.
+        Handle active gameplay after Session 0 with boundary enforcement.
+        
+        Flow:
+        1. Classify player intent
+        2. If boundary violation → educate and reframe
+        3. If valid → process normally
+        """
+        # 1. Classify intent for boundary violations
+        intent = await PlayerIntent.classify_intent(player_input)
+        
+        # 2. Check for boundary violations
+        if PlayerIntent.is_violation(intent):
+            # Log violation (for metrics/learning)
+            await AuditLogger.log(
+                f"Player boundary violation: {intent.value} - '{player_input}'",
+                level=logging.INFO
+            )
+            
+            # Get appropriate educational reminder
+            violation_type = intent.value.replace("_", " ")
+            reminder = BoundaryPrompts.get_reminder(violation_type)
+            
+            # Reframe as valid player action
+            reframed_response = await self._reframe_invalid_input(
+                player_input,
+                PlayerIntent.get_violation_type_name(intent)
+            )
+            
+            # Return educational message + reframed response
+            return f"""{reminder}
+
+I'll interpret your intent as a question:
+
+{reframed_response}"""
+        
+        # 3. Valid intent - proceed with entity-aware generation
+        return await self._handle_active_play_with_generation(player_input)
+
+    async def _reframe_invalid_input(
+        self,
+        player_input: str,
+        violation_type: str
+    ) -> str:
+        """
+        Reframe boundary violation as valid player action.
+        
+        Uses Gemini to gracefully convert invalid input into valid question/action.
+        
+        Args:
+            player_input: Original invalid input
+            violation_type: Type of violation (for context)
+            
+        Returns:
+            DM response to reframed valid action
+        """
+        # Build reframing prompt
+        reframe_prompt = BoundaryPrompts.build_reframe_prompt(
+            player_input,
+            violation_type
+        )
+        
+        # Call Gemini to reframe and respond
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: self.model.generate_content(
+                reframe_prompt,
+                generation_config={"temperature": 0.7, "max_output_tokens": 500}
+            )
+        )
+        
+        return response.text
+
+    async def _generate_normal_response(self, player_input: str) -> str:
+        """
+        Generate normal DM response (no boundary violations).
+        
+        This is the standard entity extraction + generation logic.
         """
         # Build context from history (last N exchanges)
         history_context = self._format_history(limit=10)
@@ -291,7 +369,8 @@ Tone: {self.session_0_answers.get('tone', 'Unknown')}
 
 === INSTRUCTION ===
 Respond as the DM. Follow the Pacing Formula. Do NOT speak for the player.
-If the action requires a roll, narrate the attempt and outcome.
+You determine all outcomes based on narrative logic, character capabilities, and circumstances.
+Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specified.
 """
         
         response = self.model.generate_content(
@@ -599,7 +678,8 @@ Tone: {self.session_0_answers.get('tone', 'Unknown')}
 
 === INSTRUCTION ===
 Respond as the DM. Follow the Pacing Formula. Do NOT speak for the player.
-If the action requires a roll, narrate the attempt and outcome.
+You determine all outcomes based on narrative logic, character capabilities, and circumstances.
+Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specified.
 """
 
         # 5. Generate response
@@ -661,3 +741,178 @@ If the action requires a roll, narrate the attempt and outcome.
         
         # No valid JSON found - return full response as narrative
         return response_text, []
+
+    # ==========================================
+    # PERSONALITY-AWARE GENERATION (OCEAN Model)
+    # ==========================================
+
+    async def _generate_entity_with_personality(
+        self,
+        entity_name: str,
+        entity_type: EntityType,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Generate entity with personality profile (for Characters).
+        
+        Args:
+            entity_name: Name of the entity to generate
+            entity_type: Type of entity (Character, Location, etc.)
+            context: Additional context including inferred_role, lore_context
+            
+        Returns:
+            Generated entity data with OCEAN traits (for Characters)
+        """
+        # Get template
+        template = EntityFactory.get_template(entity_type)
+        
+        # For Characters, generate OCEAN profile
+        personality_context = ""
+        if entity_type == EntityType.CHARACTER:
+            # Infer role from context or use default
+            role = context.get('inferred_role', 'commoner')
+            
+            # Generate personality from role
+            personality = PersonalityGenerator.generate_from_role(role)
+            
+            # Add personality to context for prompt
+            personality_context = f"""
+
+PERSONALITY PROFILE (OCEAN):
+- Openness: {personality.openness:.1f} ({personality.get_trait_descriptor('openness', personality.openness)})
+- Conscientiousness: {personality.conscientiousness:.1f} ({personality.get_trait_descriptor('conscientiousness', personality.conscientiousness)})
+- Extraversion: {personality.extraversion:.1f} ({personality.get_trait_descriptor('extraversion', personality.extraversion)})
+- Agreeableness: {personality.agreeableness:.1f} ({personality.get_trait_descriptor('agreeableness', personality.agreeableness)})
+- Neuroticism: {personality.neuroticism:.1f} ({personality.get_trait_descriptor('neuroticism', personality.neuroticism)})
+
+Behavioral Summary: {personality.get_behavioral_summary()}
+Dialogue Style: {personality.get_dialogue_style()}
+
+Include these OCEAN values in the entity properties:
+- openness: {personality.openness:.2f}
+- conscientiousness: {personality.conscientiousness:.2f}
+- extraversion: {personality.extraversion:.2f}
+- agreeableness: {personality.agreeableness:.2f}
+- neuroticism: {personality.neuroticism:.2f}
+"""
+        
+        # Build prompt
+        prompt = DMPrompts.build_entity_generation_prompt(
+            entity_type=entity_type.value,
+            entity_name=entity_name,
+            generation_guidelines=template.generation_guidelines,
+            naming_conventions=template.naming_conventions,
+            required_properties=", ".join(template.required_properties),
+            optional_properties=", ".join(template.optional_properties),
+            lore_context=context.get('lore_context', 'No existing context') + personality_context
+        )
+        
+        # Generate entity
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: self.model.generate_content(
+                prompt,
+                generation_config={"temperature": 0.7, "max_output_tokens": 800}
+            )
+        )
+        
+        # Parse response
+        try:
+            cleaned = response.text.strip()
+            cleaned = re.sub(r'^```json\s*', '', cleaned)
+            cleaned = re.sub(r'^```\s*', '', cleaned)
+            cleaned = re.sub(r'\s*```$', '', cleaned)
+            
+            entity_data = json.loads(cleaned)
+            await AuditLogger.log(f"Generated entity with personality: {entity_name}")
+            return entity_data
+        except Exception as e:
+            await AuditLogger.log(f"Entity generation failed: {e}", level=logging.WARNING)
+            return {}
+
+    async def _generate_npc_dialogue(
+        self,
+        npc_name: str,
+        npc_data: Dict[str, Any],
+        player_input: str
+    ) -> str:
+        """
+        Generate NPC dialogue using personality profile.
+        
+        Args:
+            npc_name: NPC name
+            npc_data: NPC entity data (including OCEAN traits)
+            player_input: What player said/did
+            
+        Returns:
+            NPC's response in character
+        """
+        # Extract personality if present
+        properties = npc_data.get('properties', {})
+        
+        personality_guidance = ""
+        ocean_traits = ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism']
+        
+        if all(k in properties for k in ocean_traits):
+            personality = OCEANProfile.from_dict(properties)
+            
+            personality_guidance = f"""
+{npc_name}'s Personality Profile:
+- Behavioral traits: {personality.get_behavioral_summary()}
+- Dialogue style: {personality.get_dialogue_style()}
+
+Respond as {npc_name} would, staying true to their personality.
+Keep responses consistent with their OCEAN profile.
+"""
+        
+        prompt = f"""
+You are roleplaying as {npc_name}.
+
+Description: {properties.get('description', 'An NPC in the world')}
+Role: {properties.get('role', 'Unknown')}
+{personality_guidance}
+
+Player action: {player_input}
+
+Respond in character as {npc_name}. Keep the response concise and in-character.
+Do NOT break character or provide meta-commentary.
+"""
+        
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: self.model.generate_content(
+                prompt,
+                generation_config={"temperature": 0.8, "max_output_tokens": 400}
+            )
+        )
+        
+        return response.text
+
+    def _add_personality_to_entity(
+        self,
+        entity: Dict[str, Any],
+        role: str = "commoner"
+    ) -> Dict[str, Any]:
+        """
+        Add OCEAN personality traits to a Character entity.
+        
+        Args:
+            entity: Entity dict with properties
+            role: Role/occupation for personality inference
+            
+        Returns:
+            Entity dict with OCEAN traits added to properties
+        """
+        if entity.get("label") != "Character":
+            return entity
+        
+        # Generate personality from role
+        personality = PersonalityGenerator.generate_from_role(role)
+        
+        # Add to properties
+        if "properties" not in entity:
+            entity["properties"] = {}
+        
+        entity["properties"].update(personality.to_dict())
+        
+        return entity

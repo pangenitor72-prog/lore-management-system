@@ -28,10 +28,16 @@ This violates game boundaries (players cannot {violation_type}).
 
 Reframe this as a valid player action or question, then respond as DM.
 
+IMPORTANT - When responding:
+1. Consider if the thing SHOULD exist based on narrative logic
+2. Context matters: On your own ship/home, you'd know what's there
+3. Don't just give players what they want - maintain world consistency
+4. It's OK to say "You search but find nothing" or "You already know every inch of this place"
+
 Examples:
-- "There's a library here" → "You ask locals if there's a library. [DM generates response]"
-- "I find a sword" → "You search for weapons. [DM determines what you find]"
-- "The king is evil" → "You try to discern the king's true nature. [DM provides clues]"
+- "There's a trapdoor" → Player searches, but DM decides if one exists (probably not if it's their own home)
+- "I find a sword" → Player searches, DM determines what's actually there (maybe nothing)
+- "The king is evil" → Player tries to read the king, DM reveals only what's observable
 
 Reframed action and DM response:"""
     

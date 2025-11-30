@@ -16,7 +16,7 @@ async def test_entity_creation_mock(client, mock_neo4j_db):
     """Verify entity creation logic (mocked)."""
     # Setup mock return for get_entity check after creation
     mock_neo4j_db.execute.side_effect = [
-        [], # Create result (execute doesn't return much for MERGE usually, but we mocked it)
+        [], # Create result
         [{ # Get Entity result
             "canon_id": "char-123",
             "entity_type": "Character",
@@ -66,4 +66,3 @@ async def test_upload_endpoint(client, mock_neo4j_db):
     # We accept either status as long as the request succeeded
     assert data["status"] in ["queued", "completed"]
     assert len(data["filenames"]) == 1
-

@@ -151,26 +151,21 @@ Example:
 
     async def _generate_node_embedding(self, node: Dict) -> Optional[List[float]]:
         """
-        Generate embedding for a node based on its content.
-        Combines node ID, description, and content into embedding text.
+        Generate embedding for a node using the embedding service.
         """
         if not self.enable_embeddings or not self.embedding_service:
             return None
 
-        node_id = node.get("id", "")
-        props = node.get("properties", {})
-        description = props.get("description", "")
-        content = props.get("content", "")
-
-        # Construct text for embedding
-        embedding_text = f"ID: {node_id}\nDescription: {description}\nContent: {content}"
+        node_id = node.get("id", "Unknown")
         
+        # The AI extraction uses "id" for the node name. Pass the whole node
+        # object to the embedding service for a richer embedding.
+        # The service's method is synchronous, so run it in an executor.
         loop = asyncio.get_event_loop()
         try:
-            # EmbeddingService.embed_text is synchronous, run in executor
             embedding = await loop.run_in_executor(
                 None,
-                lambda: self.embedding_service.embed_text(embedding_text)
+                lambda: self.embedding_service.embed_entity(node)
             )
             return embedding
         except Exception as e:
@@ -220,6 +215,7 @@ Example:
                 embedding_tasks.append(self._generate_node_embedding(node))
             
             if embedding_tasks:
+                # Correctly gather results from embedding_tasks
                 embeddings = await asyncio.gather(*embedding_tasks)
                 
                 # Assign embeddings back to nodes

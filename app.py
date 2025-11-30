@@ -516,13 +516,160 @@ with st.sidebar:
     
     st.divider()
     
-    # Mode Selection
+    # Play AIRpg - Prominent Button
+    if st.button("⚔️ PLAY AIRpg", type="primary", use_container_width=True):
+        st.session_state.selected_mode = "⚔️ Play AIRpg"
+        st.rerun()
+    
+    # Session Controls - New / Continue
+    sess_col1, sess_col2 = st.columns(2)
+    with sess_col1:
+        if st.button("🔄 New", help="Start new session", use_container_width=True, key="sidebar_new"):
+            st.session_state.airpg_session_id = None
+            st.session_state.airpg_history = []
+            st.session_state.airpg_session_0_complete = False
+            st.session_state.airpg_session_0_answers = {}
+            st.session_state.selected_mode = "⚔️ Play AIRpg"
+            st.rerun()
+    with sess_col2:
+        # Continue - load most recent save
+        if st.button("▶️ Continue", help="Resume last session", use_container_width=True, key="sidebar_continue"):
+            if is_connected:
+                try:
+                    recent = run_query(neo4j_driver, """
+                        MATCH (s:GameSession)
+                        WHERE s.history IS NOT NULL
+                        RETURN s.session_id, s.setting, s.character, s.tone,
+                               s.session_0_complete, s.history
+                        ORDER BY s.saved_at DESC LIMIT 1
+                    """)
+                    if recent:
+                        data = recent[0]
+                        st.session_state.airpg_session_id = data['s.session_id']
+                        st.session_state.airpg_session_0_answers = {
+                            "setting": data['s.setting'],
+                            "character": data['s.character'],
+                            "tone": data['s.tone']
+                        }
+                        st.session_state.airpg_session_0_complete = data['s.session_0_complete']
+                        st.session_state.airpg_history = json.loads(data['s.history']) if data['s.history'] else []
+                        st.session_state.selected_mode = "⚔️ Play AIRpg"
+                        st.rerun()
+                    else:
+                        st.warning("No saved sessions")
+                except Exception:
+                    st.error("Load failed")
+    
+    # Save Slots
+    if is_connected:
+        st.markdown("**💾 Save Slots:**")
+        
+        # Get existing saves for slots 1-3
+        slot_data = {}
+        try:
+            slots = run_query(neo4j_driver, """
+                MATCH (s:GameSession)
+                WHERE s.slot IS NOT NULL
+                RETURN s.slot as slot, s.setting as setting, s.turn_count as turns, s.saved_at as saved
+                ORDER BY s.slot
+            """)
+            for s in (slots or []):
+                slot_data[s['slot']] = s
+        except Exception:
+            pass
+        
+        for slot_num in [1, 2, 3]:
+            slot_info = slot_data.get(slot_num)
+            col_load, col_save = st.columns([3, 1])
+            
+            with col_load:
+                if slot_info:
+                    setting_preview = (slot_info['setting'] or "?")[:15]
+                    label = f"Slot {slot_num}: {setting_preview}... ({slot_info['turns'] or 0}t)"
+                else:
+                    label = f"Slot {slot_num}: Empty"
+                
+                if st.button(label, key=f"load_slot_{slot_num}", use_container_width=True, disabled=not slot_info):
+                    # Load from slot
+                    try:
+                        load_result = run_query(neo4j_driver, """
+                            MATCH (s:GameSession {slot: $slot})
+                            RETURN s.session_id, s.setting, s.character, s.tone,
+                                   s.session_0_complete, s.history
+                        """, {"slot": slot_num})
+                        if load_result:
+                            data = load_result[0]
+                            st.session_state.airpg_session_id = data['s.session_id']
+                            st.session_state.airpg_session_0_answers = {
+                                "setting": data['s.setting'],
+                                "character": data['s.character'],
+                                "tone": data['s.tone']
+                            }
+                            st.session_state.airpg_session_0_complete = data['s.session_0_complete']
+                            st.session_state.airpg_history = json.loads(data['s.history']) if data['s.history'] else []
+                            st.session_state.selected_mode = "⚔️ Play AIRpg"
+                            st.rerun()
+                    except Exception:
+                        st.error("Load failed")
+            
+            with col_save:
+                if st.button("💾", key=f"save_slot_{slot_num}", help=f"Save to slot {slot_num}"):
+                    if st.session_state.get("airpg_session_id") and st.session_state.get("airpg_history"):
+                        try:
+                            # Clear old slot if exists
+                            run_query(neo4j_driver, "MATCH (s:GameSession {slot: $slot}) DELETE s", {"slot": slot_num})
+                            # Save to slot
+                            run_query(neo4j_driver, """
+                                CREATE (s:GameSession {
+                                    session_id: $session_id,
+                                    slot: $slot,
+                                    setting: $setting,
+                                    character: $character,
+                                    tone: $tone,
+                                    session_0_complete: $session_0_complete,
+                                    history: $history,
+                                    saved_at: $saved_at,
+                                    turn_count: $turn_count
+                                })
+                            """, {
+                                "session_id": st.session_state.airpg_session_id,
+                                "slot": slot_num,
+                                "setting": st.session_state.airpg_session_0_answers.get("setting", ""),
+                                "character": st.session_state.airpg_session_0_answers.get("character", ""),
+                                "tone": st.session_state.airpg_session_0_answers.get("tone", ""),
+                                "session_0_complete": st.session_state.airpg_session_0_complete,
+                                "history": json.dumps(st.session_state.airpg_history),
+                                "saved_at": datetime.now().isoformat(),
+                                "turn_count": len([h for h in st.session_state.airpg_history if h["role"] == "user"])
+                            })
+                            st.success(f"Slot {slot_num} ✓")
+                            st.rerun()
+                        except Exception as e:
+                            st.error("Save failed")
+                    else:
+                        st.warning("Nothing to save")
+    
+    st.markdown("")  # Spacing
+    
+    # Mode Selection - Other modes
     st.markdown("### 📜 Consult The Archives")
-    mode = st.radio(
+    other_modes = ["🔮 Query The Oracle", "📥 Lore Ingestion", "⚖️ Truth Auditor", "📊 Graph Nexus"]
+    selected_other = st.radio(
         "Choose your path:",
-        ["⚔️ Play AIRpg", "🔮 Query The Oracle", "📥 Lore Ingestion", "⚖️ Truth Auditor", "📊 Graph Nexus"],
-        label_visibility="collapsed"
+        other_modes,
+        label_visibility="collapsed",
+        key="other_mode_radio"
     )
+    
+    # Track mode selection
+    if "selected_mode" not in st.session_state:
+        st.session_state.selected_mode = "🔮 Query The Oracle"
+    
+    # Update mode if radio changed (and not in AIRpg mode)
+    if st.session_state.selected_mode != "⚔️ Play AIRpg":
+        st.session_state.selected_mode = selected_other
+    
+    mode = st.session_state.selected_mode
     
     st.divider()
     
@@ -572,6 +719,25 @@ if mode == "⚔️ Play AIRpg":
     st.markdown("## ⚔️ AIRpg — The Grounded Dungeon Master")
     st.markdown("*Step into the fiction. The Oracle becomes your guide.*")
     
+    # Game Rules in Sidebar
+    with st.sidebar:
+        st.markdown("---")
+        st.subheader("🎲 Game Rules")
+        st.markdown("""
+**You control:**
+- Your character's actions (attempts)
+- What you say and ask
+- Where you try to go
+
+**The DM controls:**
+- What exists in the world
+- Outcomes of your actions
+- All NPCs and enemies
+- Hidden information
+
+*The DM can override agency only with in-world justification (magic, injury, etc.)*
+""")
+    
     st.divider()
     
     # Initialize AIRpg session state
@@ -583,16 +749,6 @@ if mode == "⚔️ Play AIRpg":
         st.session_state.airpg_session_0_complete = False
     if "airpg_session_0_answers" not in st.session_state:
         st.session_state.airpg_session_0_answers = {}
-    
-    # Session Controls
-    col1, col2 = st.columns([3, 1])
-    with col2:
-        if st.button("🔄 New Session", type="secondary"):
-            st.session_state.airpg_session_id = None
-            st.session_state.airpg_history = []
-            st.session_state.airpg_session_0_complete = False
-            st.session_state.airpg_session_0_answers = {}
-            st.rerun()
     
     # Start new session if needed
     if st.session_state.airpg_session_id is None and is_connected:
@@ -689,118 +845,32 @@ elif mode == "🔮 Query The Oracle":
         with st.chat_message("assistant", avatar="🧙"):
             with st.spinner("*The Oracle consults the ancient records...*"):
                 try:
-                    # Use Query Agent (async method wrapped for Streamlit)
-                    # For now, we'll use a direct invocation since QueryAgent is designed for async.
-                    # To keep it simple in Streamlit (sync), we can re-use the logic or adapt QueryAgent.
-                    # Since QueryAgent is async, we'll run it in a loop if possible, or fallback to the synchronous implementation for now to avoid event loop issues.
-                    
-                    # FALLBACK: Synchronous implementation (similar to before, but using the class if we had a sync wrapper)
-                    # Ideally, QueryAgent should have a sync_query method.
-                    # For this step, I'll keep the working logic inline but updated to be cleaner.
-                    
-                    # ... (Keeping existing inline logic for stability until async wrapper is ready) ...
-                    
-                    # 1. Extraction (re-using inline for now)
-                    import google.generativeai as genai
-                    genai.configure(api_key=GEMINI_KEY)
-                    model = genai.GenerativeModel("gemini-2.0-flash")
-                    
-                    extraction_prompt = f"""Extract named entities from this D&D question.
-Return ONLY a JSON array of entity names to search for.
-Examples: ["Vulture Clan", "Kael", "Shadow Realm"]
-If no specific entities, return [""].
-Question: "{prompt}"
-JSON array:"""
-                    
-                    extraction_response = model.generate_content(
-                        extraction_prompt,
-                        generation_config={"temperature": 0.1, "max_output_tokens": 200}
-                    )
-                    
-                    # Parse
-                    try:
-                        extracted_text = extraction_response.text.strip()
-                        extracted_text = re.sub(r'^```json\s*', '', extracted_text)
-                        extracted_text = re.sub(r'^```\s*', '', extracted_text)
-                        extracted_text = re.sub(r'\s*```$', '', extracted_text)
-                        search_entities = json.loads(extracted_text)
-                    except:
-                        search_entities = []
+                    # Define an async function to run the QueryAgent, respecting the app's architecture
+                    async def run_query_agent(user_prompt: str):
+                        # The agent requires an async DB driver
+                        async_db = Neo4jDatabase(DB_URI, (DB_USER, DB_PASSWORD))
+                        await async_db.connect()
+                        try:
+                            agent = QueryAgent(
+                                neo4j_db=async_db,
+                                gemini_api_key=GEMINI_KEY,
+                                enable_vector_search=True
+                            )
+                            # The agent handles the entire RAG pipeline
+                            return await agent.ask(user_prompt)
+                        finally:
+                            await async_db.close()
 
-                    # 2. Retrieval
-                    all_context = []
-                    seen_names = set()
+                    # Run the async agent logic from Streamlit's sync context
+                    response_text = asyncio.run(run_query_agent(prompt))
                     
-                    # 2a. Entity Search
-                    for entity in search_entities:
-                        if entity and len(entity) > 1:
-                            entity_query = """
-                            MATCH (n)
-                            WHERE toLower(n.name) CONTAINS toLower($term)
-                            OPTIONAL MATCH (n)-[r]-(related)
-                            RETURN n.name AS name, labels(n)[0] AS type,
-                                   n.description AS description,
-                                   collect(DISTINCT {rel: type(r), target: related.name, targetType: labels(related)[0]})[0..8] AS relationships
-                            LIMIT 5
-                            """
-                            results = run_query(neo4j_driver, entity_query, {"term": entity})
-                            for r in results:
-                                if r['name'] and r['name'] not in seen_names:
-                                    seen_names.add(r['name'])
-                                    all_context.append(r)
-                                    
-                    # 2b. Keyword Search fallback
-                    if len(all_context) < 3:
-                        keywords = [w for w in prompt.lower().split() if len(w) > 3]
-                        for keyword in keywords[:3]:
-                            keyword_query = """
-                            MATCH (n)
-                            WHERE toLower(n.description) CONTAINS toLower($term)
-                            OPTIONAL MATCH (n)-[r]-(related)
-                            RETURN n.name AS name, labels(n)[0] AS type,
-                                   n.description AS description,
-                                   collect(DISTINCT {rel: type(r), target: related.name, targetType: labels(related)[0]})[0..5] AS relationships
-                            LIMIT 3
-                            """
-                            results = run_query(neo4j_driver, keyword_query, {"term": keyword})
-                            for r in results:
-                                if r['name'] and r['name'] not in seen_names:
-                                    seen_names.add(r['name'])
-                                    all_context.append(r)
+                    st.markdown(response_text)
+                    st.session_state.messages.append({"role": "assistant", "content": response_text})
 
-                    # 3. Format Context
-                    if all_context:
-                        context = "=== LORE CONTEXT ===\n"
-                        for entity in all_context:
-                            context += f"### {entity['name']} ({entity['type']})\n{entity.get('description', '')}\n"
-                            if entity.get('relationships'):
-                                context += "**Connections:**\n"
-                                for rel in entity['relationships'][:6]:
-                                    context += f"- {rel.get('rel')} -> {rel.get('target')}\n"
-                            context += "\n"
-                    else:
-                        context = "No direct lore found."
-
-                    # 4. Generate Answer
-                    oracle_prompt = f"""{context}
-=== QUESTION ===
-{prompt}
-
-Answer as the Lore Oracle (wise, archaic but clear). Use the context provided."""
-                    
-                    response = model.generate_content(oracle_prompt)
-                    
-                    # Show context
-                    if all_context:
-                        with st.expander(f"📚 Context used ({len(all_context)} entities)", expanded=False):
-                            for e in all_context:
-                                st.markdown(f"• **{e['name']}**")
-
-                    st.markdown(response.text)
-                    st.session_state.messages.append({"role": "assistant", "content": response.text})
-                    
                 except Exception as e:
-                    st.error(f"Query failed: {e}")
+                    st.error(f"An error occurred: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
 
     # Clear chat
     if st.session_state.messages:
@@ -910,50 +980,29 @@ elif mode == "⚖️ Truth Auditor":
     submission = st.text_area("📜 New Lore Submission", height=200)
     
     if st.button("⚖️ SUBMIT FOR AUDIT", type="primary", disabled=not submission):
-        with st.spinner("Auditing..."):
-            # Using Auditor Logic directly here for Sync compatibility
-            # (AuditorAgent is async, so we manually implement the flow using AuditorAgent helper methods if they were static, 
-            # or just replicate the flow here for stability)
-            
-            # 1. AuditorAgent Logic Replication (Sync)
-            auditor = AuditorAgent(Neo4jDatabase(DB_URI, (DB_USER, DB_PASSWORD)), GEMINI_KEY)
-            
-            # We need an async loop to run the AuditorAgent methods properly
-            # Or we fallback to the manual implementation we had before which worked reliably.
-            # Given user wants stability, let's stick to the manual implementation for now but cleaner.
-            
-            import google.generativeai as genai
-            genai.configure(api_key=GEMINI_KEY)
-            model = genai.GenerativeModel("gemini-2.0-flash")
-            
-            # 1. Extract Entities from submission
-            extract_prompt = f"Extract entity names from this text as a JSON list. Text: {submission}"
-            resp = model.generate_content(extract_prompt)
+        with st.spinner("Auditing submission against the graph canon..."):
             try:
-                entities = json.loads(re.search(r'\[.*\]', resp.text, re.DOTALL).group())
-            except:
-                entities = []
-            
-            # 2. Fetch Graph Truth
-            truth_context = ""
-            if entities:
-                q = "MATCH (n) WHERE n.name IN $names RETURN n.name, n.description, labels(n)[0] as type"
-                res = run_query(neo4j_driver, q, {"names": entities})
-                for r in res:
-                    truth_context += f"- {r['name']} ({r['type']}): {r['description']}\n"
-            
-            # 3. Audit
-            audit_prompt = f"""EXISTING TRUTH:\n{truth_context}\n\nNEW SUBMISSION:\n{submission}\n\nCheck for contradictions. Return JSON with status (SAFE/CONTRADICTION) and contradictions list."""
-            
-            final_resp = model.generate_content(audit_prompt)
-            try:
-                # Naive parse
-                json_str = re.search(r'\{.*\}', final_resp.text, re.DOTALL).group()
-                result = json.loads(json_str)
-            except:
-                result = {"status": "SAFE", "notes": final_resp.text}
-            
-            st.session_state.audit_result = result
+                # Define an async function to run the AuditorAgent, respecting the app's architecture
+                async def run_audit_agent(submission_text: str):
+                    # The agent requires an async DB driver
+                    async_db = Neo4jDatabase(DB_URI, (DB_USER, DB_PASSWORD))
+                    await async_db.connect()
+                    try:
+                        agent = AuditorAgent(async_db, GEMINI_KEY)
+                        # The agent handles the entire audit pipeline
+                        return await agent.audit_submission(submission_text)
+                    finally:
+                        await async_db.close()
+
+                # Run the async agent logic from Streamlit's sync context
+                result = asyncio.run(run_audit_agent(submission))
+                st.session_state.audit_result = result
+
+            except Exception as e:
+                st.error(f"An error occurred during the audit: {e}")
+                import traceback
+                st.code(traceback.format_exc())
+                st.session_state.audit_result = None
             
     if st.session_state.audit_result:
         st.divider()

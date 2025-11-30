@@ -13,23 +13,28 @@ This document outlines the strategic evolution of the Lore Oracle from a passive
 
 ---
 
-## 🟡 Phase XIII: The Active Session (Next Priority)
+## 🟢 Phase XIII: The Active Session (COMPLETE)
 **Goal:** Transform the tool from a wiki into a live Game Master's assistant.
 
-### 1. Session State Manager
-- [ ] Create a **"Game Session"** mode in the sidebar.
-- [ ] Track **Active Scene Context** (Who is here? Where are we? What time is it?).
-- [ ] Maintain a running "Campaign Log" that updates the graph in real-time.
+### 1. Session State Manager ✅
+- [x] Create a **"Play AIRpg"** mode with prominent button in sidebar.
+- [x] **Session 0** - Collaborative world/character/tone setup.
+- [x] **Save/Load System** - 3 save slots + Continue button.
+- [x] Track session state (history, answers) in Neo4j GameSession nodes.
 
-### 2. Live World Updates
-- [ ] **Natural Language Action Parsing:**
-    - Input: *"The party kills Kael."*
-    - System: Proposes update `SET n.status = 'Dead'` for node `Kael`.
-- [ ] **Quick-Add Entity:** "Generate NPC: Shopkeeper, Gnome, suspicious" -> Instantly adds to graph and displays stats.
+### 2. AI Dungeon Master ✅
+- [x] **DMAgent** - Full AI DM with grounded narrative generation.
+- [x] **Boundary Enforcement** - Detects and educates on player agency violations.
+- [x] **Entity Generation** - NPCs created during play saved to graph.
+- [x] **OCEAN Personality System** - Psychologically-grounded NPC behavior.
 
-### 3. Rules & Mechanics Integration
-- [ ] **Dice Roller:** 3D dice in the UI or simple command `/roll 2d20`.
-- [ ] **Rules Oracle:** Index the SRD (System Reference Document) so the AI can answer rules questions ("Grappling rules") alongside lore questions.
+### 3. Live World Updates (Partial)
+- [x] **Quick-Add Entity:** NPCs generated during play are automatically saved.
+- [ ] **Natural Language Action Parsing:** (Future) "The party kills Kael" → status update.
+
+### 4. Rules & Mechanics Integration (Future)
+- [ ] **Dice Roller:** Optional ruleset integration.
+- [ ] **Rules Oracle:** SRD indexing for rules questions.
 
 ---
 
