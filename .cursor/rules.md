@@ -379,6 +379,25 @@ from src.mantle_runtime import Runtime        # Query → MANTLE ❌
 - Pass data through well-defined interfaces
 - Use dependency injection for flexibility
 
+### 6.4 Subsystem Folder Naming Rule (NEW)
++
++All subsystem directories MUST use snake_case naming and MUST match EXACTLY the
++names defined in subsystem contracts or architecture documents.
++
++Valid subsystem directories include:
++    - smart_ingestor/
++    - decoherence_engine/
++    - query_engine/
++    - mantle_runtime/
++
++Cursor may NOT:
++    - Create new subsystem directories without approval
++    - Rename subsystem directories
++    - Invent alternative spellings or casing (e.g., SmartIngestor, smart-ingestor)
++
++All subsystem work must be performed inside the canonical directory.
++
+
 ---
 
 ## 7. LoreIngestor / EntityFactory / OCEAN Protection
@@ -723,6 +742,25 @@ async def ingest(self, file_path: str) -> IngestionResult:
 - `ERROR`: Error occurred, operation failed
 - `CRITICAL`: Severe error, system may be unstable
 
+### 10.5 Test Creation Rule (NEW)
++
++For each implemented module, Cursor SHOULD generate a corresponding test file
++under:
++
++    tests/<subsystem>/<module>_test.py
++
++Test Requirements:
++    - Import ONLY the module under test (no cross-subsystem imports)
++    - Use deterministic inputs and fixed seeds when applicable
++    - Avoid external calls (Neo4j, LLMs, network) unless mocked
++    - Validate type correctness and required behaviors
++
++Cursor must NOT:
++    - Skip tests for non-trivial modules
++    - Add integration tests unless explicitly instructed
++
++If a test cannot be written due to missing context, Cursor must ask for clarification.
++
 ---
 
 ## 11. Subsystem-Specific Rules
@@ -973,6 +1011,25 @@ If you realize you've violated a rule:
 - Hope human doesn't notice
 - Argue that violation was justified
 - Make excuses
+### 12.4 Refuse Ambiguity Rule (NEW)
++
++If any instruction, architecture reference, subsystem contract,
++or dependency relationship is ambiguous, Cursor MUST:
++
++    1. STOP immediately  
++    2. State the source of ambiguity  
++    3. Request clarification from the human  
++    4. Wait for explicit instruction before proceeding  
++
++Cursor may NOT:
++    - Guess intent  
++    - Invent missing architecture  
++    - Proceed based on assumptions  
++    - "Fill in" gaps creatively  
++
++Ambiguity ALWAYS requires clarification.
++
+
 
 ---
 
@@ -1069,6 +1126,25 @@ Action: Follow 8-pass structure, flag discrepancy to human
 - If still unclear, **ASK HUMAN**
 - Never proceed with ambiguous guidance
 
+### 14.4 Rule: Never Summarize Architectural Documents (NEW)
++
++Cursor MUST treat architecture and governance documents as canonical and immutable.
++
++Cursor may:
++    - Quote them  
++    - Reference them  
++    - Request specific sections  
++
++Cursor may NOT:
++    - Rewrite architecture docs  
++    - Condense or summarize them  
++    - Merge documents  
++    - Modernize them  
++    - Auto-refactor or reorganize them  
++
++Architectural documents are legal-source-of-truth files.
++They must not be altered unless explicitly instructed.
++
 ---
 
 ## 15. Success Criteria
