@@ -1,0 +1,421 @@
+# ARCHITECTURE OVERVIEW v2
+LMS → MANTLE Platform Architecture  
+Last Updated: 2025-12-01  
+Author: Shawn King
+
+---
+
+# PURPOSE OF THIS DOCUMENT
+
+This document defines the **next-generation architecture** of the LMS/MANTLE ecosystem.
+
+Where `ARCHITECTURE.md` documents the *current*, implemented system,  
+**ARCHITECTURE_OVERVIEW_V2.md describes the system that LMS is evolving into**:
+
+- Subsystem-based architecture  
+- AI-governed implementation workflow  
+- Multi-agent orchestration  
+- Temporal resolution engine (Decoherence)  
+- Runtime storytelling engine (MANTLE / AIRPG)  
+- Governance, contracts, and template-driven development  
+
+This document is the *long-term blueprint* for the future of the platform.
+
+---
+
+# 1. HIGH-LEVEL SYSTEM MODEL
+
+```
+ ┌──────────────────────────────────────────────────────────────────┐
+ │                            CLIENT LAYER                           │
+ │   Web UI · Editor · Dashboard · AIRPG Interface                   │
+ └───────────────────────▲──────────────────────────────────────────┘
+                         │ HTTP / WebSocket / Agent API
+                         │
+ ┌───────────────────────┴──────────────────────────────────────────┐
+ │                   APPLICATION / SERVICE LAYER                     │
+ │                                                                  │
+ │  ┌────────────────────────────────────────────────────────────┐  │
+ │  │                      LMS CORE (v1)                         │  │
+ │  │  Entity CRUD · Query Layer · Auditor · Contradictions     │  │
+ │  └────────────────────────────────────────────────────────────┘  │
+ │                                                                  │
+ │  ┌────────────────────────────────────────────────────────────┐  │
+ │  │                   SMART INGESTOR (Subsystem)               │  │
+ │  │  AI document ingestion → normalized graph entities         │  │
+ │  │  Multi-pass pipeline · Neo4j mapping · Canon scoring       │  │
+ │  └────────────────────────────────────────────────────────────┘  │
+ │                                                                  │
+ │  ┌────────────────────────────────────────────────────────────┐  │
+ │  │                DECOHERENCE ENGINE (Subsystem)              │  │
+ │  │  Time/state resolution · Lazy time mechanics               │  │
+ │  └────────────────────────────────────────────────────────────┘  │
+ │                                                                  │
+ │  ┌────────────────────────────────────────────────────────────┐  │
+ │  │                 QUERY ENGINE / FACT ENGINE                  │ │
+ │  │  Semantic search · Filtered truth · Player knowledge layer │ │
+ │  └────────────────────────────────────────────────────────────┘  │
+ │                                                                  │
+ │  ┌────────────────────────────────────────────────────────────┐  │
+ │  │                  AIRPG / MANTLE RUNTIME                    │  │
+ │  │  Persistent world · DM agent · Player state · Simulation   │  │
+ │  └────────────────────────────────────────────────────────────┘  │
+ │
+ └───────────────────────┬──────────────────────────────────────────┘
+                         │
+                         │ Cypher / Async Driver
+                         ▼
+ ┌──────────────────────────────────────────────────────────────────┐
+ │                         NEO4J GRAPH STORE                         │
+ │   Canonical Entity Graph · Relationship Graph · Vector Index      │
+ │   Canon Nodes · Fact Nodes · Event Nodes                          │
+ └──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 2. SUBSYSTEM MODEL – THE NEW ARCHITECTURAL FOUNDATION
+
+v2 architecture reorganizes LMS around **subsystems**.
+
+A subsystem is:
+
+- A folder under `src/<subsystem>/`
+- With its own *orchestrator*
+- Its own *contract document*
+- Its own *module layout*
+- A defined set of allowed imports
+- A defined set of side effects
+- Governed by `.cursor/rules.md`
+- Implemented through the Universal Implementation Template
+
+## 2.1 Examples of Subsystems
+
+### **Smart Ingestor**  
+`src/smart_ingestor/`  
+AI-assisted ingestion pipeline → Neo4j nodes.
+
+### **Decoherence Engine**  
+`src/decoherence_engine/`  
+Time/state resolution for AIRPG.
+
+### **Query Engine**  
+`src/query_engine/`  
+Semantic queries, player-knowledge-filtered truth.
+
+### **Fact Engine** *(future)*  
+`src/fact_engine/`  
+Structured fact extraction, fact conflict resolution.
+
+### **MANTLE Runtime**  
+`src/mantle_runtime/`  
+DM agent, world simulation, player model.
+
+Each subsystem enforces:
+
+- A stable boundary  
+- A single orchestrator  
+- Pure-function modules under it  
+- Minimal, explicit imports  
+- Contract-first development  
+- AI-safe implementation rules  
+
+---
+
+# 3. SUBSYSTEM GOVERNANCE LAYER
+
+This is the biggest addition in v2 and ensures LMS remains maintainable as the system scales.
+
+Subsystems are governed by **three core documents**, all stored in the repo.
+
+---
+
+## 3.1 `.cursor/rules.md`
+**Purpose:** Enforce architecture discipline on Cursor.
+
+Guarantees:
+
+- No cross-subsystem drift  
+- No large rewrites without justification  
+- Minimal diffs  
+- Only orchestrators may call LLMs  
+- Pure-function modules elsewhere  
+- No unapproved context keys  
+- No external imports not explicitly allowed  
+- No changing EntityFactory, OCEAN, or LoreIngestor beyond approved extension points  
+
+This file is effectively a *software constitution* that binds AI agents.
+
+---
+
+## 3.2 Universal Implementation Template
+
+Stored in:
+
+```
+docs/UNIVERSAL_IMPLEMENTATION_PROMPT.md
+```
+
+Defines:
+
+- Subsystem metadata block  
+- Implementation order  
+- Module contracts  
+- First-response rules  
+- Diff-only editing  
+- Handoff Dossier rules  
+- Pipeline context rules  
+- LLM call centralization  
+- Do-nots (hard constraints)  
+
+This template is used whenever building:
+
+- Smart Ingestor modules  
+- Decoherence modules  
+- Query Engine modules  
+- Auditor upgrades  
+- AIRPG runtime components  
+
+It ensures all future development is consistent, governed, and scalable.
+
+---
+
+## 3.3 Subsystem Contract Files
+
+Example location:
+
+```
+src/smart_ingestor/SUBSYSTEM_CONTRACT.md
+src/decoherence_engine/SUBSYSTEM_CONTRACT.md
+src/query_engine/SUBSYSTEM_CONTRACT.md
+```
+
+Each contract defines:
+
+- Purpose  
+- Architecture  
+- Public APIs  
+- Pass order  
+- Integration points  
+- Allowed imports  
+- Forbidden imports  
+- Testing requirements  
+- Hard constraints  
+
+Subsystem orchestrators must follow their contract exactly.
+
+---
+
+# 4. THE CANONICAL DATA FLOW (v2 MODEL)
+
+### 4.1 Ingestion → Graph
+```
+Raw Text
+   ↓
+Smart Ingestor
+   ↓
+Multi-pass pipeline (Extract → Enrich → Relationship → Confidence → Canon)
+   ↓
+Neo4j Mapper
+   ↓
+Canonical Graph Nodes + Relationships
+```
+
+### 4.2 Graph → Validation
+```
+Neo4j Graph
+   ↓
+Auditor (Rules + Gemini)
+   ↓
+Contradictions + Triage + Gospel Decisions
+```
+
+### 4.3 Graph → Simulation (Decoherence)
+```
+Entity Observed
+   ↓
+Decoherence Engine
+   ↓
+Time/state resolution
+   ↓
+Updated entity state
+```
+
+### 4.4 Graph → Runtime (AIRPG)
+```
+Player Action / Query
+   ↓
+Query Engine (filtered truth)
+   ↓
+DM Agent (Narrative logic)
+   ↓
+MANTLE Runtime
+```
+
+---
+
+# 5. NEW SUBSYSTEM: SMART INGESTOR (OVERVIEW)
+
+Smart Ingestor owns:
+
+- Format Detection  
+- Scene Segmentation  
+- Multi-pass extraction  
+- Entity enrichment  
+- OCEAN personality integration  
+- Relationship extraction  
+- Confidence scoring  
+- Canon status assignment  
+- Neo4j mapping  
+
+Governed by:
+
+```
+src/smart_ingestor/SUBSYSTEM_CONTRACT.md
+docs/UNIVERSAL_IMPLEMENTATION_PROMPT.md
+.cursor/rules.md
+```
+
+Orchestrator:  
+`SmartIngestorOrchestrator.ingest(filename, text)`
+
+This is the model for ALL future subsystem designs.
+
+---
+
+# 6. NEW SUBSYSTEM: DECOHERENCE ENGINE (PLANNED)
+
+## 6.1 Purpose
+
+A temporal resolution engine that updates entity states based on:
+
+- Time since last observation  
+- Player interaction  
+- Narrative heuristics  
+- Faction behaviors  
+- World physics / rules  
+
+Inspired by:
+
+- Lazy evaluation  
+- Quantum decoherence  
+- World-state convergence  
+
+## 6.2 Core Concepts (initial)
+
+- **State Vector:** Entity's latent state representation  
+- **Observer Trigger:** Query/interaction forces a state update  
+- **Resolution Passes:** Apply rules to generate the new state  
+- **Convergence Rules:** Ensure state remains consistent with canon  
+- **Event Emission:** Produce simulated events  
+
+This subsystem will follow the same strict architecture as Smart Ingestor.
+
+---
+
+# 7. AGENT LAYER CONSOLIDATION
+
+Agents in v2 operate in three domains:
+
+### 7.1 Analysis Agents
+- AuditorAgent  
+- QueryAgent  
+
+### 7.2 Runtime Agents
+- DMAgent (AIRPG)  
+- Persona models  
+
+### 7.3 System Agents (new category)
+These assist in development:
+
+- Cursor AI (local dev assistant)  
+- Gemini CLI (context-heavy analysis)  
+
+They use:
+
+- `.cursor/rules.md` for behavioral constraints  
+- `UNIVERSAL_IMPLEMENTATION_PROMPT.md` for subsystem construction  
+- Handoff Dossiers for cross-session continuity  
+
+This is how LMS evolves without losing coherence.
+
+---
+
+# 8. DEVELOPER WORKFLOW (AI + HUMAN)
+
+This is new in v2 and critically important.
+
+### Step 1 — Define subsystem contract  
+### Step 2 — Invoke Universal Implementation Template in Cursor  
+### Step 3 — AI produces repo scan + plan (NO CODE)  
+### Step 4 — Approve module 1  
+### Step 5 — AI implements module (diff only)  
+### Step 6 — AI updates Handoff Dossier  
+### Step 7 — Repeat until subsystem complete  
+### Step 8 — Integrate subsystem orchestrator  
+### Step 9 — Add tests  
+### Step 10 — Update this architecture doc if subsystem is major  
+
+This workflow ensures clarity, stability, and zero drift.
+
+---
+
+# 9. DEPENDENCY DIRECTION (THE GOLDEN RULE)
+
+Subsystems must obey:
+
+```
+Low-level → High-level, never the reverse
+```
+
+Examples:
+
+Smart Ingestor may depend on EntityFactory →  
+But EntityFactory may not depend on Smart Ingestor.
+
+Decoherence may depend on Neo4j →  
+But Neo4j adapter may not depend on Decoherence.
+
+AIRPG may depend on Query Engine →  
+But Query Engine may not depend on AIRPG.
+
+This rule guarantees architectural longevity.
+
+---
+
+# 10. THE LONG-TERM VISION — MANTLE
+
+MANTLE is the **runtime simulation and storytelling engine** backed by LMS.
+
+Its purpose:
+
+- Maintain a persistent world  
+- Resolve time + causality  
+- Integrate narrative agents  
+- Provide filtered truth to players  
+- Enable long-form interactive storytelling  
+
+MANTLE is where LMS stops being a database and becomes a **living world**.
+
+v2 architecture is designed with this in mind.
+
+---
+
+# 11. SUMMARY
+
+ARCHITECTURE_OVERVIEW_V2 defines:
+
+- The subsystem model  
+- The Smart Ingestor architecture  
+- How future subsystems (Decoherence, Query, Fact Engine) will be built  
+- Governance tools:
+  - `.cursor/rules.md`
+  - Universal Implementation Template
+  - Subsystem Contracts
+  - Handoff Dossiers  
+
+This document is the north star for scaling LMS from a lore management system into a full simulation engine powering AIRPG.
+
+---
+
+# END OF FILE
