@@ -62,3 +62,6 @@ New Text Document.txt
 # Gemini-specific
 .gemini/
 *.gemini.bak
+
+# Node
+node_modules/
