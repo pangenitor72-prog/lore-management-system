@@ -416,6 +416,235 @@ ARCHITECTURE_OVERVIEW_V2 defines:
 
 This document is the north star for scaling LMS from a lore management system into a full simulation engine powering AIRPG.
 
+ADDENDUM TO ARCHITECTURE_V2.md
+Add this to the end of your ARCHITECTURE_V2.md file, before "END OF FILE":
+12. VERSION HISTORY
+Version
+Date
+Author
+Major Changes
+v2.0
+2025-12-01
+Shawn King
+Subsystem model introduced, governance layer (.cursor/rules.md, Universal Implementation Template, Subsystem Contracts), Smart Ingestor architecture, Decoherence Engine planning, dependency direction rule, developer workflow formalization
+v1.0
+2024-08-15
+Shawn King
+Initial LMS architecture: Neo4j graph database, Entity Factory, OCEAN personality system, Query Agent (3-tier retrieval), Contradiction detection, Basic ingestion pipeline, WebSocket infrastructure
+13. GLOSSARY
+Core Concepts
+Canon
+Truth established by human authority following the Gospel Principle. Canon-locked data overrides all contradictions and cannot be changed by AI inference.
+Decoherence
+The process by which an entity transitions from superposition (unresolved state) to eigenstate (collapsed, canonical state) when observed by players or simulation.
+Eigenstate
+A collapsed, definitive entity state after observation. Stored as versioned snapshots with full provenance.
+OCEAN Model
+Big Five personality framework used for NPC psychological modeling:
+Openness: Creativity, curiosity (0-1)
+Conscientiousness: Discipline, reliability (0-1)
+Extraversion: Sociability, assertiveness (0-1)
+Agreeableness: Compassion, cooperation (0-1)
+Neuroticism: Emotional instability, anxiety (0-1)
+Superposition
+An unresolved entity state before observation. Entity exists with minimal metadata until player interaction triggers collapse.
+Architecture Terms
+Subsystem
+A bounded module under src/<subsystem>/ with its own orchestrator, contract document, governance rules, and defined import boundaries. Examples: Smart Ingestor, Decoherence Engine, Query Engine.
+Orchestrator
+The single entry point for a subsystem. Coordinates module execution, manages context flow, and enforces pipeline order. Only orchestrators may call LLMs.
+Module Contract
+Defines a module's purpose, public API, inputs, outputs, dependencies, and constraints. Ensures AI-safe implementation and prevents architectural drift.
+Subsystem Contract
+Top-level governance document for a subsystem defining architecture, pass order, integration points, allowed/forbidden imports, and testing requirements.
+Handoff Dossier
+Comprehensive state document generated after each implementation session. Contains completed modules, pending work, public APIs, integration rules, and hard constraints.
+Governance Terms
+Gospel Principle
+Humans have final authority on all canonical lore decisions. AI provides suggestions but cannot override human judgment on truth.
+Universal Implementation Template
+Standardized prompt structure for building subsystems. Enforces repo scanning, module-by-module development, diff-only editing, and handoff dossier generation.
+Dependency Direction Rule (Golden Rule)
+Low-level modules may depend on high-level modules, never the reverse. Prevents circular dependencies and ensures architectural scalability.
+Data Terms
+Entity
+A graph node representing a character, location, faction, item, or event. Contains properties, relationships, and metadata.
+Relationship
+A directed edge connecting entities. Examples: LEADS, ALLIED_WITH, CAUSED, AT_LOCATION.
+Canon Status
+Classification of data confidence:
+LOCKED: Immutable, overrides contradictions
+TBD: Placeholder for future human decision
+PLACEHOLDER: Temporary, marked for replacement
+INFERRED: AI-generated from context
+State Vector
+Complete representation of an entity's properties at a point in time. Used by Decoherence Engine for temporal resolution.
+Confidence Score
+0-1 value indicating certainty of inferred properties. Scores below threshold trigger human review.
+Simulation Terms
+Evolution Operator
+Entity-type-specific logic determining how entities change over elapsed time when unobserved. Examples: NPC_EvolutionOperator, Faction_EvolutionOperator.
+Observation Context
+Minimal, deterministic context used during entity collapse. Contains connected entities, environmental state, observer ID, time delta, and collapse seed.
+Observer Cache
+Session-level memory tracking which entities are already collapsed. Prevents redundant resolution and enforces session consistency.
+Collapse Seed
+Deterministic value ensuring same inputs always produce same eigenstate. Critical for reproducibility and debugging.
+14. MIGRATION PATH: V1 → V2
+14.1 Current State (v1)
+Implemented:
+Neo4j graph database with vector search
+Entity Factory with template system
+OCEAN personality integration
+Query Agent (3-tier: Gemini extraction → reverse match → keyword fallback)
+Contradiction detection (rule-based + LLM)
+Basic file ingestion pipeline
+WebSocket infrastructure
+Entity Browser UI ("Haunting Machine" aesthetic)
+Architecture:
+Monolithic src/ directory
+Flat module structure
+No formal subsystem boundaries
+Mixed concerns (ingestion, query, validation)
+Manual dependency management
+14.2 V2 Target State
+New Subsystems:
+src/smart_ingestor/ - AI-powered document ingestion
+src/decoherence_engine/ - Temporal simulation engine
+src/query_engine/ - Semantic search + filtered truth
+src/mantle_runtime/ - AIRPG game master runtime
+Governance Layer:
+.cursor/rules.md - AI behavioral constraints
+docs/UNIVERSAL_IMPLEMENTATION_PROMPT.md - Subsystem build template
+Per-subsystem contract documents
+Handoff dossier system
+Architectural Improvements:
+Clear subsystem boundaries
+Enforced dependency direction
+Orchestrator pattern everywhere
+Contract-first development
+AI-safe implementation workflow
+14.3 Migration Steps
+Phase 1: Governance Foundation (Week 1)
+✅ Create docs/ARCHITECTURE_V2.md
+✅ Create docs/UNIVERSAL_IMPLEMENTATION_PROMPT.md
+✅ Create .cursor/rules.md
+Document existing v1 architecture in docs/ARCHITECTURE.md
+Phase 2: Smart Ingestor Extraction (Weeks 2-3)
+Create src/smart_ingestor/ directory
+Write src/smart_ingestor/SUBSYSTEM_CONTRACT.md
+Extract existing ingestion logic → legacy_ingestor.py
+Build new Smart Ingestor using Universal Template:
+Format detector
+Prompt builder
+Multi-pass extraction pipeline
+Enrichment layer
+Neo4j mapper
+Migrate existing ingestion endpoints to use SmartIngestorOrchestrator
+Deprecate legacy ingestion code
+Update tests
+Phase 3: Decoherence Engine (Weeks 4-6)
+Create src/decoherence_engine/ directory
+Write src/decoherence_engine/SUBSYSTEM_CONTRACT.md
+Implement using Universal Template:
+DecoherenceEngine orchestrator
+ObservationContext builder
+Evolution operators (NPC, Location, Faction, Rumor)
+Eigenstate storage
+ObserverCache (session coherence)
+Add Neo4j schema for temporal states
+Integrate with Query Agent
+Add coordinate system (when Jim's map arrives)
+Update tests
+Phase 4: Query Engine Refactor (Weeks 7-8)
+Create src/query_engine/ directory
+Write src/query_engine/SUBSYSTEM_CONTRACT.md
+Extract existing Query Agent → src/query_engine/orchestrator.py
+Refactor to respect subsystem boundaries
+Add semantic search enhancements
+Integrate with Decoherence Engine (trigger collapses on query)
+Update tests
+Phase 5: MANTLE Runtime (Weeks 9-12)
+Create src/mantle_runtime/ directory
+Write src/mantle_runtime/SUBSYSTEM_CONTRACT.md
+Design DM Agent architecture
+Implement persistent world state
+Integrate Decoherence, Query, and Smart Ingestor
+Build AIRPG interface layer
+Alpha testing with Jim's campaign
+Phase 6: Cleanup & Documentation (Week 13)
+Remove deprecated v1 code
+Update all import statements to respect dependency direction
+Refactor any circular dependencies
+Complete test coverage
+Update docs/ARCHITECTURE.md to reflect final v1 state
+Generate subsystem handoff dossiers
+Performance profiling and optimization
+14.4 Rollback Strategy
+Each phase is independently reversible:
+If Smart Ingestor fails:
+Keep legacy_ingestor.py functional
+Endpoints can route to old ingestion
+No data loss (Neo4j schema unchanged)
+If Decoherence Engine fails:
+System remains functional without temporal simulation
+Queries return static states
+Degraded experience but not broken
+If Query Engine refactor fails:
+Revert to existing Query Agent
+No change to external API
+Subsystem extraction was non-destructive
+Golden Rule: Never break working code until replacement is proven superior.
+14.5 Success Metrics
+Phase 2 (Smart Ingestor):
+✅ Extraction quality ≥85% for Jim's formats
+✅ OCEAN personality inference accuracy ≥80%
+✅ Processing time <30s per document
+✅ Zero data loss vs legacy ingestion
+Phase 3 (Decoherence Engine):
+✅ State collapse deterministic (same seed = same eigenstate)
+✅ Resolution time <5s for typical entity
+✅ Session coherence maintained (no contradictions within session)
+✅ "What happened while we were gone?" produces believable results
+Phase 4 (Query Engine):
+✅ Query response time <2s
+✅ Semantic search accuracy ≥90%
+✅ Zero broken queries after refactor
+✅ Decoherence integration seamless
+Phase 5 (MANTLE Runtime):
+✅ Jim successfully runs 3+ sessions using AIRPG
+✅ DM Agent produces coherent, canon-consistent responses
+✅ World state persists correctly between sessions
+✅ Zero critical bugs in alpha testing
+14.6 Timeline
+Optimistic: 13 weeks (Q1 2025)
+Realistic: 16 weeks (Q1 2025 + buffer)
+Pessimistic: 20 weeks (Q1-Q2 2025)
+Timeline assumes:
+Single developer (Shawn) + AI assistance
+No major architectural surprises
+Jim's map data arrives by Week 5
+No scope creep beyond defined phases
+14.7 Risk Factors
+High Risk:
+Decoherence Engine complexity (novel architecture, no prior art)
+MANTLE Runtime scope (could expand indefinitely)
+Performance at scale (Neo4j query optimization needed)
+Medium Risk:
+Smart Ingestor prompt engineering (iterative tuning required)
+Query Engine refactor (touching working code always risky)
+Jim's availability for testing (campaign schedule dependent)
+Low Risk:
+Governance layer setup (mostly documentation)
+Neo4j schema changes (additive, non-breaking)
+Subsystem extraction (mechanical, well-understood)
+Mitigation:
+Build incrementally, maintain rollback capability
+Test extensively before deprecating v1 code
+Establish success metrics per phase before proceeding
+Regular architecture reviews with AI collaborators
+
+END OF ADDENDUM
 ---
 
 # END OF FILE
