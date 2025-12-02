@@ -40,6 +40,30 @@ class GameSession:
         })
         await AuditLogger.log(f"GameSession: Started new session {self.session_id}")
 
+    async def create_campaign(self, name: str, description: str = None, tone: str = None, setting_theme: str = None):
+        campaign_id = str(uuid.uuid4())
+        metadata = {
+            "campaign_id": campaign_id,
+            "name": name,
+            "description": description,
+            "tone": tone,
+            "setting_theme": setting_theme,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.db.execute(
+            """
+            MERGE (c:Campaign {campaign_id: $campaign_id})
+            SET c += $metadata
+            """,
+            {"campaign_id": campaign_id, "metadata": metadata}
+        )
+
+        self.campaign_id = campaign_id
+        self.campaign_metadata = metadata
+        return campaign_id, metadata
+
+
     async def load_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Retrieve recent chat/action history for this session."""
         query = """

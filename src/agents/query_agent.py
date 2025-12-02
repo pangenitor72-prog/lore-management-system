@@ -68,6 +68,10 @@ class QueryAgent:
         mode = "4-tier (with vector)" if self.vector_search_enabled else "3-tier (no vector)"
         AuditLogger.log_sync(f"QueryAgent: Neo4j + Gemini RAG initialized. Retrieval: {mode}")
 
+    async def search_entities(self, term: str, limit: int = 5, campaign_id: Optional[str] = None):
+        return await self.search_nodes(term, limit=limit, campaign_id=campaign_id)
+
+
     async def extract_search_entities(self, user_query: str) -> List[str]:
         """
         Agentic Entity Extraction: Use Gemini to intelligently extract named entities
@@ -154,13 +158,16 @@ class QueryAgent:
         
         return terms[:5]  # Limit to 5 terms
 
-    async def search_nodes(self, term: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def search_nodes(self, term: str, limit: int = 10, campaign_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Search for nodes in the graph that match the search term.
         Case-insensitive search across name, content, and description properties.
         """
-        cypher = """
-        MATCH (n)
+        cypher = "MATCH (n) "
+        if campaign_id:
+            cypher += "MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) "
+        
+        cypher += \"\"\"
         WHERE toLower(n.name) CONTAINS toLower($term) 
            OR toLower(n.canonical_name) CONTAINS toLower($term)
            OR toLower(n.description) CONTAINS toLower($term)
@@ -170,8 +177,10 @@ class QueryAgent:
                labels(n)[0] AS type,
                properties(n) AS properties
         LIMIT $limit
-        """
+        \"\"\"
         params = {"term": term, "limit": limit}
+        if campaign_id:
+            params["campaign_id"] = campaign_id
         records = await self.db.execute(cypher, params)
         
         results = []
@@ -184,13 +193,16 @@ class QueryAgent:
                 })
         return results
 
-    async def get_node_with_neighbors(self, name: str, depth: int = 1) -> Dict[str, Any]:
+    async def get_node_with_neighbors(self, name: str, depth: int = 1, campaign_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Retrieve a node and its immediate neighbors from the graph.
         Case-insensitive matching for robust lookups.
         """
-        cypher = """
-        MATCH (n)
+        cypher = "MATCH (n) "
+        if campaign_id:
+            cypher += "MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) "
+            
+        cypher += \"\"\"
         WHERE toLower(n.name) = toLower($name) 
            OR toLower(n.canonical_name) = toLower($name)
         OPTIONAL MATCH (n)-[r]-(neighbor)
@@ -203,8 +215,10 @@ class QueryAgent:
                    neighbor_type: labels(neighbor)[0],
                    direction: CASE WHEN startNode(r) = n THEN 'outgoing' ELSE 'incoming' END
                }) AS relationships
-        """
+        \"\"\"
         params = {"name": name}
+        if campaign_id:
+            params["campaign_id"] = campaign_id
         records = await self.db.execute(cypher, params)
         
         if records and len(records) > 0:
@@ -217,7 +231,7 @@ class QueryAgent:
             }
         return {}
 
-    async def reverse_match_entities(self, message: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def reverse_match_entities(self, message: str, limit: int = 10, campaign_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Reverse Match Strategy: Find all nodes whose names appear in the user's message.
         
@@ -227,8 +241,11 @@ class QueryAgent:
         Example: "Tell me about the Vulture Clan" will match node "Vulture Clan"
         because toLower("tell me about the vulture clan") CONTAINS toLower("Vulture Clan")
         """
-        cypher = """
-        MATCH (n)
+        cypher = "MATCH (n) "
+        if campaign_id:
+            cypher += "MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) "
+            
+        cypher += \"\"\"
         WHERE n.name IS NOT NULL 
           AND size(n.name) > 2
           AND toLower($message) CONTAINS toLower(n.name)
@@ -238,8 +255,10 @@ class QueryAgent:
                size(n.name) AS name_length
         ORDER BY name_length DESC
         LIMIT $limit
-        """
+        \"\"\"
         params = {"message": message, "limit": limit}
+        if campaign_id:
+            params["campaign_id"] = campaign_id
         records = await self.db.execute(cypher, params)
         
         results = []
@@ -252,7 +271,7 @@ class QueryAgent:
                 })
         return results
 
-    async def vector_search(self, query: str, limit: int = 5, min_score: float = 0.6) -> List[Dict[str, Any]]:
+    async def vector_search(self, query: str, limit: int = 5, min_score: float = 0.6, campaign_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Vector Similarity Search: Find semantically similar entities.
         
@@ -285,11 +304,35 @@ class QueryAgent:
                 return []
             
             # Search Neo4j vector index
-            results = await self.db.vector_search(
-                query_embedding=query_embedding,
-                limit=limit,
-                min_score=min_score
-            )
+            if campaign_id:
+                cypher = \"\"\"
+                CALL db.index.vector.queryNodes($index_name, $limit, $embedding)
+                YIELD node, score
+                MATCH (node)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id})
+                WHERE score >= $min_score
+                RETURN node.canon_id AS canon_id,
+                       node.name AS name,
+                       labels(node)[0] AS type,
+                       node.description AS description,
+                       properties(node) AS properties,
+                       score
+                ORDER BY score DESC
+                \"\"\"
+                params = {
+                    "index_name": "entity_embeddings",
+                    "limit": limit,
+                    "embedding": query_embedding,
+                    "min_score": min_score,
+                    "campaign_id": campaign_id
+                }
+                records = await self.db.execute(cypher, params)
+                results = [dict(r) for r in records] if records else []
+            else:
+                results = await self.db.vector_search(
+                    query_embedding=query_embedding,
+                    limit=limit,
+                    min_score=min_score
+                )
             
             if results:
                 await AuditLogger.log(f"Vector search found {len(results)} entities (min_score={min_score})")
@@ -300,7 +343,7 @@ class QueryAgent:
             await AuditLogger.log(f"Vector search failed: {e}", level=logging.WARNING)
             return []
 
-    async def retrieve_context(self, query: str) -> str:
+    async def retrieve_context(self, query: str, campaign_id: Optional[str] = None) -> str:
         """
         Retrieves relevant context from the Neo4j graph using a 4-tier strategy:
         
@@ -321,7 +364,7 @@ class QueryAgent:
         async def fetch_entity_context(entity_name: str, source: str = "unknown"):
             if entity_name and entity_name.lower() not in seen_entities:
                 seen_entities.add(entity_name.lower())
-                full_context = await self.get_node_with_neighbors(entity_name)
+                full_context = await self.get_node_with_neighbors(entity_name, campaign_id=campaign_id)
                 if full_context:
                     context_parts.append(self._format_entity_context(full_context))
                     return True
@@ -334,7 +377,7 @@ class QueryAgent:
             return []
         
         extraction_task = self.extract_search_entities(query)
-        vector_task = self.vector_search(query, limit=5, min_score=0.6) if self.vector_search_enabled else noop_vector_search()
+        vector_task = self.vector_search(query, limit=5, min_score=0.6, campaign_id=campaign_id) if self.vector_search_enabled else noop_vector_search()
         
         # Wait for both to complete simultaneously
         extracted_entities, vector_results = await asyncio.gather(
@@ -357,7 +400,7 @@ class QueryAgent:
             strategies_used.append("agentic")
             for entity in extracted_entities:
                 # Search for the extracted entity (handles typos, variations)
-                matches = await self.search_nodes(entity, limit=3)
+                matches = await self.search_nodes(entity, limit=3, campaign_id=campaign_id)
                 for match in matches:
                     await fetch_entity_context(match["name"], "agentic")
         
@@ -378,7 +421,7 @@ class QueryAgent:
         if not context_parts:
             await AuditLogger.log("Strategy 3 (Reverse Match): Checking for node names in query...")
             strategies_used.append("reverse")
-            matches = await self.reverse_match_entities(query, limit=10)
+            matches = await self.reverse_match_entities(query, limit=10, campaign_id=campaign_id)
             await AuditLogger.log(f"Reverse match found {len(matches)} entities")
             
             for match in matches:
@@ -392,7 +435,7 @@ class QueryAgent:
             search_terms = self._extract_search_terms(query)
             
             for term in search_terms:
-                matches = await self.search_nodes(term, limit=5)
+                matches = await self.search_nodes(term, limit=5, campaign_id=campaign_id)
                 for match in matches:
                     await fetch_entity_context(match["name"], "keyword")
         
@@ -428,7 +471,7 @@ class QueryAgent:
         
         return "\n".join(lines)
 
-    async def ask(self, query: str) -> str:
+    async def ask(self, query: str, campaign_id: Optional[str] = None) -> str:
         """
         RAG-powered query: retrieves context from Neo4j, then asks Gemini.
         """
@@ -436,7 +479,7 @@ class QueryAgent:
         
         try:
             # Step 1: Retrieve relevant context from the graph
-            context = await self.retrieve_context(query)
+            context = await self.retrieve_context(query, campaign_id=campaign_id)
             
             # Step 2: Build the augmented prompt
             augmented_prompt = f"{context}\n\n=== USER QUESTION ===\n{query}"

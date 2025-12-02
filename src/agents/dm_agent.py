@@ -83,6 +83,9 @@ class DMAgent:
         self.model = genai.GenerativeModel(self.model_name)
         
         # Load campaign context from config or rules
+        self.campaign_id = None
+        self.campaign_metadata = {}
+
         self.campaign_context = {
             "campaign_name": "Aethermoor",
             "world_tone": "High-magic dark fairy tale",
@@ -174,6 +177,16 @@ class DMAgent:
         elif "tone" not in self.session_0_answers:
             self.session_0_answers["tone"] = player_input
             self.session_0_complete = True
+            campaign_id, metadata = await self.session.create_campaign(
+                name=self.session_0_answers.get("setting", "Unnamed Campaign"),
+                description=self.session_0_answers.get("setting"),
+                tone=self.session_0_answers.get("tone"),
+                setting_theme=None,
+            )
+
+            self.campaign_id = campaign_id
+            self.campaign_metadata = metadata
+
             
             # Generate opening scene
             return await self._generate_opening_scene()
@@ -220,7 +233,7 @@ class DMAgent:
         if self.query_agent:
             # Search for relevant lore based on setting
             try:
-                lore_results = await self.query_agent.search_entities(setting)
+                lore_results = await self.query_agent.search_entities(setting, campaign_id=self.campaign_id)
                 if lore_results:
                     lore_context = "\n\n=== RELEVANT LORE (Use if appropriate) ===\n"
                     for entity in lore_results[:3]:
@@ -562,21 +575,49 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
             result = await self.db.execute(query, {"name": name, "props": props})
             
             if result and len(result) > 0:
-                return dict(result[0])
+                saved = dict(result[0])
+
+                # Link entity to campaign if active
+                if self.campaign_id:
+                    try:
+                        await self.db.execute(
+                            """
+                            MATCH (e:Entity {name: $name})
+                            MATCH (c:Campaign {campaign_id: $campaign_id})
+                            MERGE (e)-[:BELONGS_TO]->(c)
+                            """,
+                            {"name": saved.get("name"), "campaign_id": self.campaign_id}
+                        )
+                    except Exception as e:
+                        await AuditLogger.log(
+                            f"Failed to link entity to campaign: {e}",
+                            level=logging.ERROR
+                        )
+
+                return saved
+
             return None
         except Exception as e:
             await AuditLogger.log(f"Failed to persist entity: {e}", level=logging.ERROR)
             return None
 
     async def _check_entity_exists(self, entity_name: str) -> bool:
-        """Check if an entity with this name exists in the lore."""
-        query = """
-        MATCH (e)
-        WHERE toLower(e.name) = toLower($name)
-        RETURN count(e) > 0 AS exists
-        """
-        result = await self.db.execute(query, {"name": entity_name})
-        return result[0]["exists"] if result else False
+            if self.campaign_id:
+                cypher = """
+                MATCH (e:Entity {name: $name})-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id})
+                RETURN count(e) > 0 AS exists
+                """
+                params = {"name": name, "campaign_id": self.campaign_id}
+            else:
+                cypher = """
+                MATCH (e:Entity {name: $name})
+                RETURN count(e) > 0 AS exists
+                """
+                params = {"name": name}
+
+            records = await self.db.execute(cypher, params)
+            return records[0]["exists"] if records else False
+
 
     async def _handle_active_play_with_generation(self, player_input: str) -> str:
         """
