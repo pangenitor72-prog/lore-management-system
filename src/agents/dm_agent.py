@@ -27,7 +27,7 @@ from src.services.audit_log import AuditLogger
 from src.core.entity_factory import EntityFactory, EntityType, EntityTemplate
 from src.prompts import DMPrompts, BoundaryPrompts
 from src.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
-from src.agents.personality import OCEANProfile, PersonalityGenerator, PersonalityTemplates
+from src.core.models import OCEANProfile, PersonalityGenerator, PersonalityTemplates
 
 WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
 
@@ -74,6 +74,15 @@ class DMAgent:
         model_name: str = "gemini-2.0-flash",
         prompt_version: str = "2.4"
     ):
+        """
+        Initialize the DM Agent.
+        
+        Args:
+            db: Neo4jDatabase instance for database operations.
+            api_key: The Gemini API key.
+            model_name: The name of the Gemini model to use.
+            prompt_version: The version of the DM prompt to use.
+        """
         self.db = db
         self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self.model_name = model_name
@@ -607,7 +616,7 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
                 MATCH (e:Entity {name: $name})-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id})
                 RETURN count(e) > 0 AS exists
                 """
-                params = {"name": name, "campaign_id": self.campaign_id}
+                params = {"name": entity_name, "campaign_id": self.campaign_id}
             else:
                 cypher = """
                 MATCH (e:Entity {name: $name})

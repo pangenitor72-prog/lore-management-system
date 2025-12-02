@@ -124,7 +124,7 @@ class QueryAgent:
                 break  # Only remove one filler phrase
         
         # Remove trailing punctuation
-        cleaned = cleaned.rstrip("?.!")
+        cleaned = cleaned.rstrip("?.!\"")
         
         return cleaned.strip()
 
@@ -163,11 +163,11 @@ class QueryAgent:
         Search for nodes in the graph that match the search term.
         Case-insensitive search across name, content, and description properties.
         """
-        cypher = "MATCH (n) "
+        cypher_parts = ["MATCH (n) "]
         if campaign_id:
-            cypher += "MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) "
+            cypher_parts.append("MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) ")
         
-        cypher += \"\"\"
+        cypher_parts.append("""
         WHERE toLower(n.name) CONTAINS toLower($term) 
            OR toLower(n.canonical_name) CONTAINS toLower($term)
            OR toLower(n.description) CONTAINS toLower($term)
@@ -177,7 +177,8 @@ class QueryAgent:
                labels(n)[0] AS type,
                properties(n) AS properties
         LIMIT $limit
-        \"\"\"
+        """)
+        cypher = "".join(cypher_parts)
         params = {"term": term, "limit": limit}
         if campaign_id:
             params["campaign_id"] = campaign_id
@@ -198,11 +199,11 @@ class QueryAgent:
         Retrieve a node and its immediate neighbors from the graph.
         Case-insensitive matching for robust lookups.
         """
-        cypher = "MATCH (n) "
+        cypher_parts = ["MATCH (n) "]
         if campaign_id:
-            cypher += "MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) "
+            cypher_parts.append("MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) ")
             
-        cypher += \"\"\"
+        cypher_parts.append("""
         WHERE toLower(n.name) = toLower($name) 
            OR toLower(n.canonical_name) = toLower($name)
         OPTIONAL MATCH (n)-[r]-(neighbor)
@@ -215,7 +216,8 @@ class QueryAgent:
                    neighbor_type: labels(neighbor)[0],
                    direction: CASE WHEN startNode(r) = n THEN 'outgoing' ELSE 'incoming' END
                }) AS relationships
-        \"\"\"
+        """ ) 
+        cypher = "".join(cypher_parts)
         params = {"name": name}
         if campaign_id:
             params["campaign_id"] = campaign_id
@@ -241,11 +243,11 @@ class QueryAgent:
         Example: "Tell me about the Vulture Clan" will match node "Vulture Clan"
         because toLower("tell me about the vulture clan") CONTAINS toLower("Vulture Clan")
         """
-        cypher = "MATCH (n) "
+        cypher_parts = ["MATCH (n) "]
         if campaign_id:
-            cypher += "MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) "
+            cypher_parts.append("MATCH (n)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id}) ")
             
-        cypher += \"\"\"
+        cypher_parts.append("""
         WHERE n.name IS NOT NULL 
           AND size(n.name) > 2
           AND toLower($message) CONTAINS toLower(n.name)
@@ -255,7 +257,8 @@ class QueryAgent:
                size(n.name) AS name_length
         ORDER BY name_length DESC
         LIMIT $limit
-        \"\"\"
+        """)
+        cypher = "".join(cypher_parts)
         params = {"message": message, "limit": limit}
         if campaign_id:
             params["campaign_id"] = campaign_id
@@ -273,21 +276,7 @@ class QueryAgent:
 
     async def vector_search(self, query: str, limit: int = 5, min_score: float = 0.6, campaign_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
-        Vector Similarity Search: Find semantically similar entities.
-        
-        Embeds the query and searches the Neo4j vector index for similar entities.
-        This finds conceptually related content even without keyword matches.
-        
-        Example: "Who fought in the great war?" might find "Battle of Ashenvale"
-        even if "great war" isn't mentioned in that entity.
-        
-        Args:
-            query: The user's natural language query
-            limit: Maximum number of results
-            min_score: Minimum cosine similarity threshold (0-1)
-        
-        Returns:
-            List of entities with similarity scores
+        Vector Similarity Search.
         """
         if not self.vector_search_enabled or not self.embedding_service:
             return []
@@ -305,7 +294,8 @@ class QueryAgent:
             
             # Search Neo4j vector index
             if campaign_id:
-                cypher = \"\"\"
+                cypher_parts = []
+                cypher_parts.append("""
                 CALL db.index.vector.queryNodes($index_name, $limit, $embedding)
                 YIELD node, score
                 MATCH (node)-[:BELONGS_TO]->(:Campaign {campaign_id: $campaign_id})
@@ -317,7 +307,8 @@ class QueryAgent:
                        properties(node) AS properties,
                        score
                 ORDER BY score DESC
-                \"\"\"
+                """ ) 
+                cypher = "".join(cypher_parts)
                 params = {
                     "index_name": "entity_embeddings",
                     "limit": limit,
@@ -492,7 +483,7 @@ class QueryAgent:
             await AuditLogger.log(f"QueryAgent failed: {e}", level=logging.ERROR)
             return "An error occurred while processing your query. Please check the API logs."
 
-    # --- HANDLER REQUIRED BY API.PY ---
+    # --- HANDLER REQUIRED BY API.PY --- 
     async def handle_websocket(self, websocket: WebSocket, client_id: str):
         """
         Handles the WebSocket connection for a single client.

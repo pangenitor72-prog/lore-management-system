@@ -20,7 +20,7 @@ from src.db.neo4j_adapter import Neo4jDatabase
 import google.generativeai as genai
 from src.services.broadcaster import broadcaster
 from src.prompts import AuditorPrompts
-from src.agents.personality import OCEANProfile
+from src.core.models import OCEANProfile
 
 
 class Contradiction:

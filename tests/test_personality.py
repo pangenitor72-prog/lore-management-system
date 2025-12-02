@@ -1,7 +1,7 @@
 """Test OCEAN personality system."""
 
 import pytest
-from src.agents.personality import (
+from src.core.models import (
     OCEANProfile, PersonalityArchetype, PersonalityTemplates,
     PersonalityGenerator
 )

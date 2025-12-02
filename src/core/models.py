@@ -238,3 +238,397 @@ class ErrorResponse(BaseModel):
     """Model for error responses."""
     error: str
     detail: Optional[str] = None
+"""
+NPC Personality System - OCEAN (Five-Factor) Model
+
+Implements psychological personality profiles for NPCs:
+- O: Openness (creative vs conventional)
+- C: Conscientiousness (organized vs spontaneous)
+- E: Extraversion (outgoing vs reserved)
+- A: Agreeableness (cooperative vs competitive)
+- N: Neuroticism (anxious vs confident)
+
+Each trait is a float from 0.0 to 1.0.
+"""
+
+from dataclasses import dataclass, asdict
+from typing import Dict, List, Optional
+
+
+class PersonalityArchetype(str, Enum):
+    """Common NPC archetypes with preset OCEAN profiles."""
+    MERCHANT = "merchant"
+    GUARD = "guard"
+    SCHOLAR = "scholar"
+    NOBLE = "noble"
+    CRIMINAL = "criminal"
+    PRIEST = "priest"
+    WARRIOR = "warrior"
+    PEASANT = "peasant"
+
+
+@dataclass
+class OCEANProfile:
+    """
+    Five-Factor personality profile.
+    
+    Each trait ranges from 0.0 to 1.0:
+    - 0.0-0.3: Low (reserved, conventional, anxious, etc.)
+    - 0.4-0.6: Moderate (balanced)
+    - 0.7-1.0: High (creative, organized, outgoing, etc.)
+    """
+    openness: float           # Creative, curious, imaginative (vs conventional, traditional)
+    conscientiousness: float  # Organized, reliable, disciplined (vs spontaneous, careless)
+    extraversion: float       # Outgoing, energetic, talkative (vs reserved, withdrawn)
+    agreeableness: float      # Cooperative, compassionate, trusting (vs competitive, skeptical)
+    neuroticism: float        # Anxious, sensitive, moody (vs confident, stable)
+    
+    def __post_init__(self):
+        """Validate trait values are in range [0.0, 1.0]."""
+        for trait in ['openness', 'conscientiousness', 'extraversion', 
+                      'agreeableness', 'neuroticism']:
+            value = getattr(self, trait)
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{trait} must be between 0.0 and 1.0, got {value}")
+    
+    def to_dict(self) -> Dict[str, float]:
+        """Convert to dictionary for Neo4j storage."""
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, float]) -> 'OCEANProfile':
+        """Create from dictionary (e.g., from Neo4j)."""
+        return cls(
+            openness=data.get('openness', 0.5),
+            conscientiousness=data.get('conscientiousness', 0.5),
+            extraversion=data.get('extraversion', 0.5),
+            agreeableness=data.get('agreeableness', 0.5),
+            neuroticism=data.get('neuroticism', 0.5)
+        )
+    
+    def get_trait_descriptor(self, trait: str, value: float) -> str:
+        """
+        Get human-readable descriptor for a trait value.
+        
+        Args:
+            trait: Trait name (e.g., 'openness')
+            value: Trait value (0.0-1.0)
+            
+        Returns:
+            Descriptor string
+        """
+        descriptors = {
+            'openness': {
+                'low': 'conventional and practical',
+                'moderate': 'balanced between traditional and creative',
+                'high': 'creative and curious'
+            },
+            'conscientiousness': {
+                'low': 'spontaneous and flexible',
+                'moderate': 'moderately organized',
+                'high': 'disciplined and detail-oriented'
+            },
+            'extraversion': {
+                'low': 'reserved and withdrawn',
+                'moderate': 'socially balanced',
+                'high': 'outgoing and energetic'
+            },
+            'agreeableness': {
+                'low': 'skeptical and competitive',
+                'moderate': 'pragmatically cooperative',
+                'high': 'compassionate and trusting'
+            },
+            'neuroticism': {
+                'low': 'confident and emotionally stable',
+                'moderate': 'emotionally balanced',
+                'high': 'anxious and sensitive'
+            }
+        }
+        
+        if value < 0.3:
+            level = 'low'
+        elif value < 0.7:
+            level = 'moderate'
+        else:
+            level = 'high'
+        
+        return descriptors[trait][level]
+    
+    def get_behavioral_summary(self) -> str:
+        """
+        Get comprehensive behavioral description based on OCEAN traits.
+        
+        Returns:
+            Natural language description of personality
+        """
+        traits = []
+        
+        # Focus on extreme traits (< 0.3 or > 0.7) for conciseness
+        if self.openness < 0.3 or self.openness > 0.7:
+            traits.append(self.get_trait_descriptor('openness', self.openness))
+        
+        if self.conscientiousness < 0.3 or self.conscientiousness > 0.7:
+            traits.append(self.get_trait_descriptor('conscientiousness', self.conscientiousness))
+        
+        if self.extraversion < 0.3 or self.extraversion > 0.7:
+            traits.append(self.get_trait_descriptor('extraversion', self.extraversion))
+        
+        if self.agreeableness < 0.3 or self.agreeableness > 0.7:
+            traits.append(self.get_trait_descriptor('agreeableness', self.agreeableness))
+        
+        if self.neuroticism < 0.3 or self.neuroticism > 0.7:
+            traits.append(self.get_trait_descriptor('neuroticism', self.neuroticism))
+        
+        if not traits:
+            return "personality is balanced across all traits"
+        
+        return ", ".join(traits)
+    
+    def get_dialogue_style(self) -> str:
+        """
+        Get dialogue style guidance based on personality.
+        
+        Returns:
+            String describing how this NPC should speak
+        """
+        styles = []
+        
+        # Extraversion affects verbosity
+        if self.extraversion > 0.7:
+            styles.append("talkative and eager to engage")
+        elif self.extraversion < 0.3:
+            styles.append("terse and needs prompting")
+        
+        # Agreeableness affects tone
+        if self.agreeableness > 0.7:
+            styles.append("warm and helpful")
+        elif self.agreeableness < 0.3:
+            styles.append("blunt and skeptical")
+        
+        # Neuroticism affects emotional expression
+        if self.neuroticism > 0.7:
+            styles.append("expresses worry or uncertainty")
+        elif self.neuroticism < 0.3:
+            styles.append("confident and assured")
+        
+        # Conscientiousness affects precision
+        if self.conscientiousness > 0.7:
+            styles.append("precise and detailed")
+        elif self.conscientiousness < 0.3:
+            styles.append("vague and casual")
+        
+        # Openness affects creativity of expression
+        if self.openness > 0.7:
+            styles.append("uses metaphors and colorful language")
+        elif self.openness < 0.3:
+            styles.append("straightforward and literal")
+        
+        return "; ".join(styles) if styles else "neutral conversational style"
+
+
+class PersonalityTemplates:
+    """Preset OCEAN profiles for common NPC archetypes."""
+    
+    TEMPLATES = {
+        PersonalityArchetype.MERCHANT: OCEANProfile(
+            openness=0.5,           # Moderate - open to deals but practical
+            conscientiousness=0.7,  # High - organized, tracks inventory
+            extraversion=0.6,       # Moderate-high - friendly but professional
+            agreeableness=0.5,      # Moderate - fair but profit-motivated
+            neuroticism=0.4         # Low-moderate - stable under pressure
+        ),
+        
+        PersonalityArchetype.GUARD: OCEANProfile(
+            openness=0.3,           # Low - follows rules, traditional
+            conscientiousness=0.8,  # High - disciplined, dutiful
+            extraversion=0.4,       # Low-moderate - professional distance
+            agreeableness=0.5,      # Moderate - fair but authoritative
+            neuroticism=0.3         # Low - calm under pressure
+        ),
+        
+        PersonalityArchetype.SCHOLAR: OCEANProfile(
+            openness=0.8,           # High - curious, loves ideas
+            conscientiousness=0.7,  # High - meticulous, detail-oriented
+            extraversion=0.4,       # Low-moderate - introverted but passionate
+            agreeableness=0.6,      # Moderate-high - collaborative
+            neuroticism=0.5         # Moderate - anxious about accuracy
+        ),
+        
+        PersonalityArchetype.NOBLE: OCEANProfile(
+            openness=0.6,           # Moderate-high - cultured, refined
+            conscientiousness=0.6,  # Moderate-high - proper, maintains image
+            extraversion=0.7,       # High - socially confident
+            agreeableness=0.4,      # Low-moderate - entitled, expects deference
+            neuroticism=0.3         # Low - poised, controlled
+        ),
+        
+        PersonalityArchetype.CRIMINAL: OCEANProfile(
+            openness=0.6,           # Moderate-high - creative problem-solving
+            conscientiousness=0.3,  # Low - flexible morals, opportunistic
+            extraversion=0.5,       # Moderate - adaptable socially
+            agreeableness=0.3,      # Low - self-interested, manipulative
+            neuroticism=0.6         # Moderate-high - paranoid, wary
+        ),
+        
+        PersonalityArchetype.PRIEST: OCEANProfile(
+            openness=0.5,           # Moderate - tradition balanced with compassion
+            conscientiousness=0.7,  # High - devoted, ritualistic
+            extraversion=0.6,       # Moderate-high - comforting presence
+            agreeableness=0.8,      # High - compassionate, serving
+            neuroticism=0.4         # Low-moderate - calm, reassuring
+        ),
+        
+        PersonalityArchetype.WARRIOR: OCEANProfile(
+            openness=0.4,           # Low-moderate - practical, tactical
+            conscientiousness=0.6,  # Moderate-high - disciplined training
+            extraversion=0.6,       # Moderate-high - camaraderie, leadership
+            agreeableness=0.4,      # Low-moderate - competitive, honor-bound
+            neuroticism=0.3         # Low - brave, steady
+        ),
+        
+        PersonalityArchetype.PEASANT: OCEANProfile(
+            openness=0.4,           # Low-moderate - traditional, superstitious
+            conscientiousness=0.6,  # Moderate-high - hardworking, dutiful
+            extraversion=0.5,       # Moderate - community-oriented
+            agreeableness=0.7,      # High - cooperative, humble
+            neuroticism=0.6         # Moderate-high - worried about survival
+        )
+    }
+    
+    @staticmethod
+    def get_template(archetype: PersonalityArchetype) -> OCEANProfile:
+        """Get preset profile for archetype."""
+        return PersonalityTemplates.TEMPLATES[archetype]
+    
+    @staticmethod
+    def get_archetype_from_role(role: str) -> Optional[PersonalityArchetype]:
+        """
+        Infer archetype from role description.
+        
+        Args:
+            role: Role string (e.g., "merchant", "city guard", "scholar")
+            
+        Returns:
+            Matching archetype or None
+        """
+        role_lower = role.lower()
+        
+        # Map role keywords to archetypes
+        mappings = {
+            PersonalityArchetype.MERCHANT: ['merchant', 'trader', 'shopkeeper', 'vendor', 'innkeeper'],
+            PersonalityArchetype.GUARD: ['guard', 'soldier', 'sentry', 'watchman', 'captain'],
+            PersonalityArchetype.SCHOLAR: ['scholar', 'sage', 'researcher', 'academic', 'librarian', 'wizard', 'mage'],
+            PersonalityArchetype.NOBLE: ['noble', 'lord', 'lady', 'aristocrat', 'baron', 'duke', 'count', 'king', 'queen'],
+            PersonalityArchetype.CRIMINAL: ['thief', 'criminal', 'bandit', 'smuggler', 'assassin', 'rogue'],
+            PersonalityArchetype.PRIEST: ['priest', 'cleric', 'monk', 'priestess', 'healer', 'acolyte'],
+            PersonalityArchetype.WARRIOR: ['warrior', 'fighter', 'knight', 'mercenary', 'barbarian', 'paladin'],
+            PersonalityArchetype.PEASANT: ['peasant', 'farmer', 'commoner', 'laborer', 'servant', 'villager']
+        }
+        
+        for archetype, keywords in mappings.items():
+            if any(keyword in role_lower for keyword in keywords):
+                return archetype
+        
+        return None
+
+
+class PersonalityGenerator:
+    """Generates OCEAN profiles for NPCs."""
+    
+    @staticmethod
+    def generate_from_archetype(
+        archetype: PersonalityArchetype,
+        variation: float = 0.1
+    ) -> OCEANProfile:
+        """
+        Generate personality from archetype with slight variation.
+        
+        Args:
+            archetype: Base archetype to start from
+            variation: How much to vary from template (0.0-0.3 recommended)
+            
+        Returns:
+            OCEAN profile with slight random variation
+        """
+        import random
+        
+        base = PersonalityTemplates.get_template(archetype)
+        
+        def vary(value: float, amount: float) -> float:
+            """Apply random variation within bounds."""
+            varied = value + random.uniform(-amount, amount)
+            return max(0.0, min(1.0, varied))  # Clamp to [0.0, 1.0]
+        
+        return OCEANProfile(
+            openness=vary(base.openness, variation),
+            conscientiousness=vary(base.conscientiousness, variation),
+            extraversion=vary(base.extraversion, variation),
+            agreeableness=vary(base.agreeableness, variation),
+            neuroticism=vary(base.neuroticism, variation)
+        )
+    
+    @staticmethod
+    def generate_from_role(role: str, variation: float = 0.1) -> OCEANProfile:
+        """
+        Generate personality from role description.
+        
+        Attempts to infer archetype, falls back to balanced profile.
+        
+        Args:
+            role: Role description (e.g., "cautious merchant")
+            variation: Random variation amount
+            
+        Returns:
+            OCEAN profile
+        """
+        # Try to infer archetype
+        archetype = PersonalityTemplates.get_archetype_from_role(role)
+        
+        if archetype:
+            return PersonalityGenerator.generate_from_archetype(archetype, variation)
+        
+        # Fallback: balanced profile
+        return OCEANProfile(
+            openness=0.5,
+            conscientiousness=0.5,
+            extraversion=0.5,
+            agreeableness=0.5,
+            neuroticism=0.5
+        )
+    
+    @staticmethod
+    def generate_random(
+        min_extreme_traits: int = 1,
+        max_extreme_traits: int = 3
+    ) -> OCEANProfile:
+        """
+        Generate a random personality with some extreme traits for memorability.
+        
+        Args:
+            min_extreme_traits: Minimum number of traits that should be extreme (< 0.3 or > 0.7)
+            max_extreme_traits: Maximum number of traits that should be extreme
+            
+        Returns:
+            OCEAN profile with random values
+        """
+        import random
+        
+        traits = ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism']
+        values = {}
+        
+        # Determine how many traits will be extreme
+        num_extreme = random.randint(min_extreme_traits, max_extreme_traits)
+        extreme_traits = random.sample(traits, num_extreme)
+        
+        for trait in traits:
+            if trait in extreme_traits:
+                # Generate extreme value (< 0.3 or > 0.7)
+                if random.random() < 0.5:
+                    values[trait] = random.uniform(0.0, 0.3)
+                else:
+                    values[trait] = random.uniform(0.7, 1.0)
+            else:
+                # Generate moderate value (0.3-0.7)
+                values[trait] = random.uniform(0.3, 0.7)
+        
+        return OCEANProfile(**values)

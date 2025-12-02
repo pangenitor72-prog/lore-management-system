@@ -5,29 +5,23 @@ Used for semantic similarity search in the Neo4j knowledge graph.
 """
 from __future__ import annotations
 from typing import List, Optional
-import google.generativeai as genai
 from src.services.audit_log import AuditLogger
 import logging
+from src.agents.embedding_orchestrator import EmbeddingOrchestrator
 
 
 class EmbeddingService:
     """
-    Generates text embeddings using Google's Gemini embedding model.
+    Generates text embeddings using Google's Gemini embedding model via EmbeddingOrchestrator.
     
     These embeddings enable semantic similarity search - finding conceptually
     similar entities even when exact keywords don't match.
     """
     
-    # Gemini's text embedding model
-    MODEL_NAME = "models/text-embedding-004"
-    
-    # Embedding dimension for text-embedding-004
-    EMBEDDING_DIMENSION = 768
-    
     def __init__(self, api_key: str):
         """Initialize the embedding service with Gemini API key."""
-        genai.configure(api_key=api_key)
-        AuditLogger.log_sync("EmbeddingService: Initialized with Gemini text-embedding-004")
+        self.orchestrator = EmbeddingOrchestrator(api_key=api_key)
+        AuditLogger.log_sync("EmbeddingService: Initialized with EmbeddingOrchestrator")
     
     def embed_text(self, text: str, task_type: str = "RETRIEVAL_DOCUMENT") -> Optional[List[float]]:
         """
@@ -44,19 +38,7 @@ class EmbeddingService:
         Returns:
             List of floats (768-dimensional vector) or None if failed
         """
-        if not text or not text.strip():
-            return None
-        
-        try:
-            result = genai.embed_content(
-                model=self.MODEL_NAME,
-                content=text,
-                task_type=task_type
-            )
-            return result['embedding']
-        except Exception as e:
-            AuditLogger.log_sync(f"Embedding failed for text: {e}", level=logging.ERROR)
-            return None
+        return self.orchestrator.generate_embedding(text, task_type)
     
     def embed_query(self, query: str) -> Optional[List[float]]:
         """
