@@ -270,3 +270,173 @@ All constraints and rules
 When loaded, I'll respond:
 
 “Phase Bookmark Loaded: LMS v2 CODEBASE AUDIT is active.”
+
+---
+
+⭐ UPDATED PHASE BOOKMARK — LMS v2 CODEBASE AUDIT (Dec 2025)
+
+Version: 1.1
+Owner: Shawn
+Purpose: Zero-loss context restoration for audits & refactors
+
+
+---
+
+🔷 1. PROJECT IDENTIFIERS
+
+Project: LMS → MANTLE
+
+Current Work Mode: Subsystem-by-subsystem v2 architectural audit
+
+Development Rule: No refactors until all audits complete
+
+Active Governance: .cursor/rules.md, UNIVERSAL_IMPLEMENTATION_PROMPT.md
+
+
+
+---
+
+🔷 2. COMPLETED AUDITS (SUMMARY)
+
+1. Database Layer — FAIL
+
+Issues:
+
+Silent exception swallowing
+
+Mixed responsibility model
+
+Hardcoded fallbacks
+
+Inconsistent return structures
+
+Non-v2-compliant architecture
+
+
+2. Auditor Subsystem — WARN
+
+Issues:
+
+Architectural drift
+
+Prompt governance inconsistencies
+
+Overreliance on legacy pathways
+
+Partial violation of the orchestrator rule
+
+
+3. API Layer — WARN
+
+Issues:
+
+Mixed sync/async practices
+
+Some boundary violations
+
+Lifecycle edge cases
+
+Not fully v2 subsystem compatible
+
+
+
+---
+
+🔷 3. NEXT AUDIT
+
+Smart Ingestor Subsystem Audit — next in queue
+This subsystem is:
+
+The most complex
+
+The most drift-prone
+
+The first planned for v2 subsystem extraction
+
+A blocker for Decoherence Engine and Query Engine v2
+
+
+
+---
+
+🔷 4. DOCUMENT STATES
+
+ARCHITECTURE_AUDIT_DOSSIER.md
+
+Contains:
+
+Database Layer section (FAIL)
+
+Auditor Subsystem section (WARN)
+
+API Layer section (WARN)
+
+Smart Ingestor placeholder (to be filled next)
+
+
+CHANGESET_SUMMARY.md
+
+Contains:
+
+DB fixes queued
+
+Auditor & API issues documented but no code changes yet
+
+All items remain OPEN (audit-only mode)
+
+
+IMPLEMENTATION_LOG.md
+
+Contains:
+
+Audit entries only
+
+No code changes logged yet
+
+All refactors paused until audits finish
+
+
+
+---
+
+🔷 5. AUDIT MODE (ACTIVE)
+
+Rules preserved:
+
+No code modification except trivial, safe fixes
+
+Full audit passes before first refactor
+
+Subsystem sequence remains fixed
+
+v2 compliance is the target baseline
+
+
+
+---
+
+🔷 6. NEXT STEP IN ANY NEW CHAT
+
+After pasting the bookmark, say:
+
+“Continue: Smart Ingestor Subsystem Audit”
+
+And the system will restore:
+
+Audit sequence
+
+Document states
+
+Rules
+
+Pending tasks
+
+Subsystem queue
+
+
+
+---
+
+END OF PHASE BOOKMARK
+
+Version 1.1 (Dec 2025)
