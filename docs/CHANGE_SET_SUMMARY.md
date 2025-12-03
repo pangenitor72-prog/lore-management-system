@@ -1,4 +1,4 @@
- #V CHANGESET SUMMARY  
+#V CHANGESET SUMMARY  
 **Project:** LMS → MANTLE Platform  
 **Author:** Shawn King  
 **Maintainer (AI):** Metis  
