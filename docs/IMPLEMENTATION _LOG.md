@@ -23,24 +23,32 @@ This file is structured to be:
 # ------------------------------------------------------------
 
 **Architecture Version:** v2 Migration In Progress  
-**Active Subsystem:** Auditor Subsystem (Audit Phase Complete)  
-**Current Audit Pass:** Subsystem Audit #2 — Auditor Subsystem  
+**Active Subsystem:** API Layer (Audit Phase Complete)  
+**Current Audit Pass:** Subsystem Audit #3 — API Layer  
+
 **Subsystem Status Summary:**
 - Database Layer: **FAIL — Requires Refactor**
 - Auditor Subsystem: **WARN — Needs Corrections**
+- API Layer: **WARN — Needs Corrections**
 
 **Critical Issues Outstanding:**
 - Default Neo4j password fallback (Database Layer)  
 - Error-swallowing in `Neo4jDatabase.execute()`  
 - Broken `check_personality_consistency` in `AuditorAgent` (undefined `self.flash`, missing `_parse_json_response`)  
-- LLM governance drift: `SemanticAuditor` acting as an ungoverned LLM orchestrator  
+- LLM governance drift in Auditor subsystem (multiple classes calling Gemini directly)  
+- Potential API route collision for `/contradictions`  
+- Ingestor + mock DB integration bug (`neo4j_db.driver` access when using `InMemoryMockDatabase`)
 
 **High-Level Next Actions:**
 1. Design V2-compliant Neo4j adapter refactor plan.  
 2. Design V2-compliant Auditor subsystem refactor:
-   - Centralize LLM calls behind a single orchestrator.
+   - Centralize LLM calls in a single orchestrator.
    - Fix or remove broken personality consistency helper.
-3. Begin API Layer audit after Auditor fixes are at least planned.
+3. Design V2-compliant API refactor:
+   - Resolve `/contradictions` route conflict.
+   - Decouple upload endpoint into Smart Ingestor subsystem.
+   - Fix mock DB → ingestor integration.
+4. Continue audits: Smart Ingestor, Query Engine, Decoherence, MANTLE Runtime.
 
 **Last Updated:** 2025-12-03
 
@@ -95,7 +103,7 @@ Core logic is conceptually sound, but several correctness and v2-governance issu
   - Calls `self._parse_json_response` which does not exist.
 - LLM calls are **scattered**:
   - `SemanticAuditor` instantiates and calls Gemini directly.
-  - `AuditorAgent` also contains (broken) Gemini integration.
+  - `AuditorAgent` also contains its own (broken) Gemini integration.
 - `SemanticAuditor.detect_contradictions` is synchronous and may block the event loop under async usage.
 - Some imports and comments are drifted (unused `Neo4jDatabase` in `SemanticAuditor`, outdated model name comments).
 
@@ -107,12 +115,45 @@ Core logic is conceptually sound, but several correctness and v2-governance issu
 **Next Actions:**
 - Schedule refactor to:
   - Either remove or properly implement `check_personality_consistency`.
-  - Centralize LLM usage behind a single Auditor orchestrator.
+  - Centralize LLM usage and enforce v2 rule: only orchestrators call LLMs.
   - Optionally wrap Gemini calls in `run_in_threadpool` or async-safe wrappers.
 - Add unit tests for:
   - `SemanticAuditor._parse_json_array`
   - Failure modes (Gemini errors, malformed JSON)
   - RuleBasedAuditor contradiction types and severity mapping.
+
+---
+
+### **2025-12-03 / 0003 — API Layer Audit Completed (Hybrid)**  
+**Subsystem:** API Layer  
+**Modules (Primary):**  
+- Core FastAPI app module (lifespan, websockets, `/health`, `/upload`, `/entities*`, `/dashboard`, `/contradictions`)  
+**Type:** Audit Result  
+
+**Summary:**  
+Performed a hybrid audit of the API layer: deep on main app file, contract-level on its integration points.  
+API is structurally sound but has several correctness and v2-alignment issues.
+
+**Key Findings:**
+- Potential route collision for `/contradictions`:
+  - Local mock endpoint and `get_contradiction_router()` likely share the same path/method.
+  - Risk of one handler silently shadowing the other.
+- Ingestor + mock DB bug:
+  - `/upload` constructs `LoreIngestor` with `request.app.state.neo4j_db.driver`.
+  - In mock mode (`InMemoryMockDatabase`), `.driver` may not exist → runtime error.
+- `/health` relies on `Neo4jDatabase.execute()` raising on failure, but current adapter swallows errors, making health results over-optimistic.
+- `/upload` is tightly coupled to legacy ingestion logic and raw `neo4j_driver`, not the v2 Smart Ingestor subsystem.
+- WebSocket design is okay and can be left as-is for now.
+
+**Impact:**
+- API Layer marked **WARN — Needs Corrections**.
+- Contradiction UI and ingestion workflows are fragile until these issues are addressed.
+
+**Next Actions:**
+- Resolve `/contradictions` route ownership and prefixes.
+- Fix mock DB + ingestor integration.
+- Migrate upload/ingestion logic toward a V2 Smart Ingestor subsystem API.
+- Align `/health` semantics once DB adapter refactor is complete.
 
 ---
 
@@ -160,7 +201,7 @@ Core logic is conceptually sound, but several correctness and v2-governance issu
 ### **RISK-006 — Event Loop Blocking by SemanticAuditor**
 **Severity:** MEDIUM  
 **Description:** `SemanticAuditor.detect_contradictions` uses synchronous Gemini calls; may block async routes.  
-**Mitigation:** Wrap Gemini calls in executors or dedicated worker layer.
+**Mitigation:** Wrap Gemini calls in executors or a worker layer.
 
 ---
 
@@ -168,6 +209,27 @@ Core logic is conceptually sound, but several correctness and v2-governance issu
 **Severity:** MEDIUM  
 **Description:** Current DB adapter will make temporal state resolution and graph-diff logic difficult.  
 **Mitigation:** Build V2-compliant graph access API.
+
+---
+
+### **RISK-008 — `/contradictions` Route Collision**
+**Severity:** HIGH  
+**Description:** Local mock endpoint and router from `get_contradiction_router()` may share path/method; one shadows the other.  
+**Mitigation:** Decide single source of truth; use prefixes or remove mock route.
+
+---
+
+### **RISK-009 — Ingestor + Mock DB Driver Mismatch**
+**Severity:** HIGH  
+**Description:** `/upload` assumes `neo4j_db` always has `.driver`; mock DB likely does not.  
+**Mitigation:** Special-case mock mode or provide a compatible driver abstraction; or bypass ingest in mock mode.
+
+---
+
+### **RISK-010 — Health Check Over-Optimism**
+**Severity:** MEDIUM  
+**Description:** `/health` assumes DB execute will raise on failure; current adapter hides many errors.  
+**Mitigation:** Fix DB adapter; then re-evaluate `/health` logic.
 
 ---
 
@@ -192,7 +254,7 @@ Core logic is conceptually sound, but several correctness and v2-governance issu
 ---
 
 ## **API LAYER TIMELINE**
-*(Waiting for audit)*
+- **2025-12-03** — API layer hybrid audit completed (status: WARN)  
 
 ---
 
