@@ -1,165 +1,246 @@
-# LMS/MANTLE — MASTER AUDIT DOSSIER  
-**Version:** 1.0  
-**Owner:** Shawn King  
-**Purpose:** Persistent continuity document tracking the full-system audit, refactor, and V2 migration of the LMS/MANTLE platform.
+Subsystems are marked:
+
+- ☐ Not Audited  
+- ➤ Audit In Progress  
+- ☑ Audit Complete  
+- ⚠ Needs Repairs  
+- ★ V2 Compliant  
 
 ---
 
-# 🔷 0. STATUS SUMMARY (Updated Continuously)
+# 3. TOP-LEVEL SUBSYSTEM CHECKLIST (v1 + v2)
 
-**Audit Progress:**  
-- [x] Phase 1 initialized  
-- [ ] Top-Level Application (routes.py) — In progress  
-- [ ] DB Layer (neo4j_adapter)  
-- [ ] Services Layer  
-- [ ] Agents Layer  
-- [ ] Legacy Ingestor  
-- [ ] Core Models  
-- [ ] UI Layer  
-- [ ] Deployment Layer  
-
-**Refactor Progress:**  
-- [ ] V2 Subsystem Extraction  
-- [ ] Smart Ingestor  
-- [ ] Decoherence Engine  
-- [ ] Query Engine V2  
-- [ ] MANTLE Runtime Skeleton  
-
-**System Health (Live Assessment):**  
-- Stability: TBD  
-- Architecture Drift: High  
-- Refactor Urgency: High  
-- Technical Debt: Significant  
-- Code Completeness: ~65%  
-- V2 Conformity: Low  
+Below is the complete audit tree for all subsystem categories.
 
 ---
 
-# 🔷 1. AUDIT METHODOLOGY
+# 3.1 CORE INFRASTRUCTURE (v1)
 
-Each module is reviewed for:
-
-### ✔ Correctness  
-- Logic errors  
-- Async misuse  
-- Concurrency hazards  
-- Exception handling  
-- Query safety & validity  
-- Runtime behavior  
-
-### ✔ Security  
-- Cypher injection  
-- WebSocket exposure  
-- API misuse  
-- Environment safety  
-
-### ✔ Architecture  
-- V2 subsystem alignment  
-- Boundary integrity  
-- Dependency direction  
-- Leak of responsibilities  
-- Side-effect isolation  
-
-### ✔ Performance & Scalability  
-- Query patterns  
-- Index use  
-- Memory churn  
-- Retry logic  
-- Large-file ingestion  
-
-### ✔ MANTLE Compatibility  
-- Temporal extensibility  
-- Entity model stability  
-- Event propagation compatibility  
-- AI-agent integration safety  
+## **Database Layer**
+Status: ☐ Not Audited  
+Modules:
+- Neo4j Adapter  
+  - [ ] Syntax OK  
+  - [ ] Logic OK  
+  - [ ] Security OK  
+  - [ ] Performance OK  
+  - [ ] Architecture Compliance (v2)  
+  - [ ] Integration OK  
+  - [ ] Documentation OK  
+  - [ ] Final Verdict:  
+- Mock/In-Memory Adapter  
+  - [ ] Syntax OK  
+  - [ ] Logic OK  
+  - [ ] Security OK  
+  - [ ] Performance OK  
+  - [ ] Architecture Compliance (v2)  
+  - [ ] Integration OK  
+  - [ ] Documentation OK  
+  - [ ] Final Verdict:  
+- Vector Indexer  
+  - [ ] Syntax OK  
+  - [ ] Logic OK  
+  - [ ] Security OK  
+  - [ ] Performance OK  
+  - [ ] Architecture Compliance (v2)  
+  - [ ] Integration OK  
+  - [ ] Documentation OK  
+  - [ ] Final Verdict:  
 
 ---
 
-# 🔷 2. MODULE-BY-MODULE AUDIT TABLE
-
-Use this to track what has been audited and what remains.
-
-| Module / Subsystem | Status | Issues Found | Severity | Fix Required | Notes |
-|--------------------|--------|--------------|----------|--------------|-------|
-| `src/api/routes.py` | 🔄 In Progress | 10 (see below) | High | Yes | Top-level correctness review begun |
-| `src/db/neo4j_adapter.py` | ⬜ Pending | — | — | — | Next subsystem in queue |
-| `src/agents/auditor_agent.py` | ⬜ Pending | — | — | — | |
-| `src/agents/query_agent.py` | ⬜ Pending | — | — | — | |
-| `src/agents/dm_agent.py` | ⬜ Pending | — | — | — | |
-| `src/services/*` | ⬜ Pending | — | — | — | |
-| `src/ingestion/*` | ⬜ Pending | — | — | — | Requires V2 subsystem extraction |
-| `src/core/models.py` | ⬜ Pending | — | — | — | |
-| `src/ui/*` | ⬜ Pending | — | — | — | |
-| Deployment Config | ⬜ Pending | — | — | — | DO droplets, service files |
-
----
-
-# 🔷 3. TOP-LEVEL FILE AUDIT FINDINGS
-
-## File: `src/api/routes.py`  
-**Status:** Audit In Progress  
-**Severity:** High  
-**Summary:** File contains critical correctness and architectural issues that must be resolved before MANTLE integration.
-
-### 🚩 Critical Issues (must fix)
-1. `Neo4jDatabase.execute()` failures masked (returns None instead of errors)
-2. Mock mode cannot function — agents expect full DB + vector search
-3. WebSocket loops risk task leakage under load
-4. Ingestor instantiated per request → massive performance hit
-5. Ingestor bypasses DB abstraction (`neo4j_db.driver`)
-6. UTF-8 decode without fallback → ingestion drops documents
-7. JSON stored in Neo4j properties → type safety issues
-8. Agent initialization assumes DB always ready
-9. Health checks can mask vector index failures
-10. Entity deserialization fragile; JSON loading unsafe
+## **API Layer**
+Status: ☐ Not Audited  
+Modules:
+- Lifespan Manager  
+  - [ ] Syntax OK  
+  - [ ] Logic OK  
+  - [ ] Security OK  
+  - [ ] Performance OK  
+  - [ ] Architecture Compliance (v2)  
+  - [ ] Integration OK  
+  - [ ] Documentation OK  
+  - [ ] Final Verdict:  
+- Entity Endpoints (CRUD)  
+- Contradiction Endpoints  
+- Ingestion Endpoints  
+- WebSocket Endpoints  
+Each gets the full module checklist pattern.
 
 ---
 
-# 🔷 4. FIX LOG FOR MODULES (Updated Continuously)
-
-### `src/api/routes.py`
-- [ ] Implement safer DB error handling  
-- [ ] Refactor mock mode to fully isolate AI components  
-- [ ] Replace WebSocket loop with cancellation-safe aggregator  
-- [ ] Move Ingestor to subsystem orchestrator; instantiate once  
-- [ ] Add encoding fallback logic  
-- [ ] Add strict property validation in entity CRUD  
-- [ ] Add vector index verification retry  
-- [ ] Add structured logging for ingestion failures  
+## **Auditor System**
+Status: ☐ Not Audited  
+Modules:
+- Rule-Based Auditor  
+- Semantic Auditor  
+- AuditorAgent (Orchestrator)  
+- Event Broadcasting
 
 ---
 
-# 🔷 5. V2 MIGRATION STATUS
-
-### Subsystems
-| Subsystem | Extracted | Contract Written | Implemented | Notes |
-|----------|-----------|------------------|-------------|-------|
-| Smart Ingestor | ⬜ No | ⬜ No | ⬜ No | Highest priority after audits |
-| Decoherence Engine | ⬜ No | ⬜ No | ⬜ No | Requires stable Query Engine |
-| Query Engine V2 | ⬜ No | ⬜ No | ⬜ No | Must include Decoherence triggers |
-| MANTLE Runtime | ⬜ No | ⬜ No | ⬜ No | Depends on all above |
-
----
-
-# 🔷 6. OPEN DECISIONS (Require Shawn)
-
-Track decisions the system cannot proceed without.
-
-| Decision Needed | Options | Status | Notes |
-|-----------------|----------|--------|-------|
-| Mock mode behavior | A) fail closed, B) fallback gracefully | Pending | Must define for V2 |
-| JSON persistence | Keep storing vs. normalize fields | Pending | Impacts Neo4j schema |
-| Embedding options | Recompute vs legacy ingestion | Pending | Impacts search behavior |
+## **QueryAgent (v1 implementation)**
+Status: ☐ Not Audited  
+Modules:
+- Semantic Search Layer  
+- Fallback Keyword Layer  
+- Gemini Retrieval Layer  
+- Player-Knowledge Filtering  
+- WebSocket Integration  
 
 ---
 
-# 🔷 7. NEXT ACTIONS
-
-- Complete correctness audit of `neo4j_adapter.py`
-- Update dossier with findings
-- Patch top-level DB handling
-- Begin controlled refactor toward V2 subsystem boundaries
+## **DMAgent (AIRPG v1 prototype)**
+Status: ☐ Not Audited  
+Modules:
+- Narrative Logic  
+- Query Integration  
+- Auditor Integration  
+- Session State  
 
 ---
 
-# END OF DOSSIER
+## **Legacy Ingestion Pipeline**
+Status: ☐ Not Audited  
+Modules:
+- Format Handling  
+- Entity Extraction  
+- Relationship Extraction  
+- Neo4j Mapping  
+- Error Handling  
+
+---
+
+## **UI Layer (Haunting Machine)**
+Status: ☐ Not Audited  
+Modules:
+- Dashboard  
+- Entity Browser  
+- Contradiction Browser  
+- WebSocket UI Hooks  
+
+---
+
+# 3.2 V2 SUBSYSTEMS (PLANNED / IN PROGRESS)
+
+## **Smart Ingestor Subsystem**
+Status: ☐ Not Audited  
+Modules:
+- Format Detector  
+- Scene Segmentation  
+- Multi-Pass Extraction  
+- Entity Enrichment  
+- Relationship Extraction  
+- Confidence & Canon Scoring  
+- Neo4j Mapper (v2)  
+- Subsystem Orchestrator  
+
+---
+
+## **Decoherence Engine**
+Status: ☐ Not Audited  
+Modules:
+- ObservationContext Builder  
+- State Vector Resolver  
+- Evolution Operators  
+- Collapse Rules  
+- Session-Level Observer Cache  
+- Event Emitters  
+- Orchestrator  
+
+---
+
+## **Query Engine (v2 replacement for QueryAgent)**
+Status: ☐ Not Audited  
+Modules:
+- Query Interpreter  
+- Semantic Layer  
+- Filtered Truth Layer  
+- Decoherence Trigger  
+- Integration with Neo4j  
+
+---
+
+## **Fact Engine**
+Status: ☐ Not Audited  
+Modules:
+- Fact Extraction  
+- Fact Validation  
+- Conflicting Fact Resolution  
+- Canon/Non-Canon Fact Separation  
+
+---
+
+## **MANTLE Runtime**
+Status: ☐ Not Audited  
+Modules:
+- Player Model  
+- World State Manager  
+- DM Agent (v2)  
+- Turn/Action Interpreter  
+- Rule Engine  
+- Persistence Layer  
+
+---
+
+## **Governance Layer**
+Status: ☐ Not Audited  
+Modules:
+- .cursor/rules.md  
+- Subsystem Contracts  
+- Universal Template Usage  
+- Handoff Dossier System  
+
+---
+
+# 4. CURRENT AUDIT PROGRESS (2025-12-02)
+
+| Subsystem | Status | Notes |
+|----------|--------|-------|
+| Database Layer | ☐ | Starting point of audit |
+| API Layer | ☐ | Pending |
+| Auditor | ☐ | Pending |
+| QueryAgent | ☐ | Pending |
+| DMAgent | ☐ | Pending |
+| Legacy Ingestor | ☐ | Pending |
+| UI Layer | ☐ | Pending |
+| Smart Ingestor (v2) | ☐ | Contract exists, no code audited |
+| Decoherence Engine | ☐ | Not implemented yet |
+| Query Engine (v2) | ☐ | Not implemented yet |
+| Fact Engine | ☐ | Not implemented yet |
+| MANTLE Runtime | ☐ | Not implemented yet |
+| Governance Layer | ☐ | Initial rules written, needs verification |
+
+---
+
+# 5. AUDIT FINDINGS SUMMARY  
+*(Empty — to be populated when audits begin)*
+
+Each subsystem will have:
+
+- Summary of issues  
+- Severity  
+- Suggested fixes  
+- V2 compliance score  
+- Upgrade priority  
+
+---
+
+# 6. RISKS & WATCHPOINTS  
+*(Empty — will fill during audit)*
+
+---
+
+# 7. NEXT ACTION
+
+**Begin Subsystem Audit #1: Database Layer → Neo4j Adapter**
+
+- Perform full module checklist  
+- Note deficiencies  
+- Update this dossier  
+- Update logs + changeset plan  
+- Only perform immediate fixes for critical failures  
+
+---
+
+# END OF FILE
