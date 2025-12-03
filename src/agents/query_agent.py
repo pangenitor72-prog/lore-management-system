@@ -19,7 +19,7 @@ import asyncio
 from src.services.broadcaster import broadcaster
 from datetime import datetime
 from src.db.neo4j_adapter import Neo4jDatabase
-from src.agents.embedding_service import EmbeddingService
+from src.services.embedding_service import EmbeddingService
 from src.prompts import QueryPrompts
 
 

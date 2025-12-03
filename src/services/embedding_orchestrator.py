@@ -1,4 +1,4 @@
-# src/agents/embedding_orchestrator.py
+# src/services/embedding_orchestrator.py
 from typing import List, Optional
 import google.generativeai as genai
 from src.services.audit_log import AuditLogger

@@ -46,13 +46,18 @@ from src.core.models import (
 
 # Local Imports - Agents
 from src.agents.auditor_agent import AuditorAgent
+from src.auditor.rule_based_auditor import RuleBasedAuditor
+from src.auditor.semantic_auditor import SemanticAuditor
 from src.agents.query_agent import QueryAgent
 from src.services.broadcaster import broadcaster
 from src.ingestion.ingestor import LoreIngestor
 from src.core.game_session import GameSession
+from src.agents.dm_agent import DMAgent
 
 # Local Imports - Services
 from src.services.contradiction_service import get_router as get_contradiction_router
+from src.services.extraction_service import ExtractionService
+from src.services.embedding_service import EmbeddingService
 
 # ============================================================
 # APP LIFESPAN
@@ -154,11 +159,28 @@ async def lifespan(app: FastAPI):
     if app.state.ai_enabled:
         # For mock mode, we might want to mock agents too, but let's try to init them
         # They will use the mock DB
-        app.state.auditor = AuditorAgent(app.state.neo4j_db, gemini_key)
+        
+        # Instantiate sub-auditors
+        rule_based_auditor = RuleBasedAuditor(app.state.neo4j_db)
+        semantic_auditor = SemanticAuditor(app.state.neo4j_db, gemini_key)
+        
+        app.state.auditor = AuditorAgent(
+            app.state.neo4j_db, 
+            gemini_key,
+            rule_based_auditor=rule_based_auditor,
+            semantic_auditor=semantic_auditor
+        )
         app.state.query_agent = QueryAgent(
             app.state.neo4j_db, 
             gemini_key,
             enable_vector_search=app.state.vector_search_enabled
+        )
+        # Initialize DMAgent with injected dependencies
+        app.state.dm_agent = DMAgent(
+            db=app.state.neo4j_db,
+            query_agent=app.state.query_agent,
+            auditor_agent=app.state.auditor,
+            api_key=gemini_key # DMAgent still uses its own API key for its model calls
         )
         await AuditLogger.log("✅ All agents initialized")
 
@@ -395,13 +417,21 @@ async def upload_files(
     if process_immediately:
         try:
             gemini_key = os.getenv("GEMINI_API_KEY")
-            if not gemini_key:
-                await AuditLogger.log("Skipping processing: GEMINI_API_KEY missing", level=logging.WARNING)
+            if not gemini_key or not app.state.ai_enabled:
+                await AuditLogger.log("Skipping processing: AI features disabled or GEMINI_API_KEY missing", level=logging.WARNING)
             else:
-                # Use the driver from the app state
-                ingestor = LoreIngestor(request.app.state.neo4j_db.driver, gemini_key)
+                # 1. Instantiate services
+                extraction_service = ExtractionService(api_key=gemini_key)
+                embedding_service = EmbeddingService(api_key=gemini_key)
+                
+                # 2. Instantiate ingestor with services
+                ingestor = LoreIngestor(
+                    neo4j_driver=request.app.state.neo4j_db.driver,
+                    extraction_service=extraction_service,
+                    embedding_service=embedding_service
+                )
         except Exception as e:
-             await AuditLogger.log(f"Failed to initialize ingestor: {e}", level=logging.ERROR)
+             await AuditLogger.log(f"Failed to initialize ingestor or its services: {e}", level=logging.ERROR)
 
     for file in files:
         try:

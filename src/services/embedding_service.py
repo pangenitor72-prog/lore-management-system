@@ -1,13 +1,6 @@
-# src/agents/embedding_service.py
-"""
-Embedding Service - Generates vector embeddings using Gemini's embedding API.
-Used for semantic similarity search in the Neo4j knowledge graph.
-"""
-from __future__ import annotations
+# src/services/embedding_service.py
 from typing import List, Optional
-from src.services.audit_log import AuditLogger
-import logging
-from src.agents.embedding_orchestrator import EmbeddingOrchestrator
+from src.services.embedding_orchestrator import EmbeddingOrchestrator
 
 
 class EmbeddingService:

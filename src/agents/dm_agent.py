@@ -70,7 +70,9 @@ class DMAgent:
     def __init__(
         self,
         db: Neo4jDatabase,
-        api_key: Optional[str] = None,
+        query_agent: QueryAgent,
+        auditor_agent: AuditorAgent,
+        api_key: Optional[str] = None, # Still needed for local LLM calls
         model_name: str = "gemini-2.0-flash",
         prompt_version: str = "2.4"
     ):
@@ -79,7 +81,9 @@ class DMAgent:
         
         Args:
             db: Neo4jDatabase instance for database operations.
-            api_key: The Gemini API key.
+            query_agent: Instance of QueryAgent.
+            auditor_agent: Instance of AuditorAgent.
+            api_key: The Gemini API key (only for DMAgent's own LLM calls).
             model_name: The name of the Gemini model to use.
             prompt_version: The version of the DM prompt to use.
         """
@@ -91,30 +95,11 @@ class DMAgent:
         genai.configure(api_key=self.api_key)
         self.model = genai.GenerativeModel(self.model_name)
         
+        # Injected Agents
+        self.query_agent = query_agent
+        self.auditor = auditor_agent
+        
         # Load campaign context from config or rules
-        self.campaign_id = None
-        self.campaign_metadata = {}
-
-        self.campaign_context = {
-            "campaign_name": "Aethermoor",
-            "world_tone": "High-magic dark fairy tale",
-            "setting_description": "Reality is unstable, magic corrupts",
-            "current_date": "Year 1247, Third Age",
-            "naming_conventions": "Celtic/Gaelic inspired"
-        }
-        
-        # Load system prompt from Prompt Library and append rules
-        self.system_prompt = DMPrompts.get_system_prompt(prompt_version, self.campaign_context) + load_worldbuilding_rules()
-        self.prompt_metadata = DMPrompts.SYSTEM_METADATA
-        
-        # Session and Query Agent (initialized per-session)
-        self.session: Optional[GameSession] = None
-        self.query_agent: Optional[QueryAgent] = None
-        
-        # Auditor Agent for contradiction checking
-        self.auditor: Optional[AuditorAgent] = None
-        
-        # Conversation history for context window
         self.history: List[Dict[str, str]] = []
         
         # Session 0 state
@@ -130,11 +115,7 @@ class DMAgent:
         self.session = GameSession(self.db, session_id)
         await self.session.initialize(player_id)
         
-        # Initialize QueryAgent for lore retrieval
-        self.query_agent = QueryAgent(self.db, self.api_key)
-        
-        # Initialize AuditorAgent for contradiction checking
-        self.auditor = AuditorAgent(self.db, self.api_key)
+
         
         # Reset conversation state
         self.history = []

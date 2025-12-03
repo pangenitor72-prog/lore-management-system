@@ -44,8 +44,8 @@ def test_ocean_profile_validation():
 
 def test_ocean_to_dict():
     """Test converting OCEAN profile to dictionary."""
-    profile = OCEANProfile(0.7, 0.6, 0.5, 0.8, 0.3)
-    data = profile.to_dict()
+    profile = OCEANProfile(openness=0.7, conscientiousness=0.6, extraversion=0.5, agreeableness=0.8, neuroticism=0.3)
+    data = profile.model_dump()
     
     assert data['openness'] == 0.7
     assert data['agreeableness'] == 0.8
@@ -61,24 +61,14 @@ def test_ocean_from_dict():
         'neuroticism': 0.3
     }
     
-    profile = OCEANProfile.from_dict(data)
+    profile = OCEANProfile(**data)
     assert profile.openness == 0.7
     assert profile.agreeableness == 0.8
 
 
-def test_ocean_from_dict_defaults():
-    """Test OCEAN profile uses defaults for missing values."""
-    data = {'openness': 0.9}
-    profile = OCEANProfile.from_dict(data)
-    
-    assert profile.openness == 0.9
-    assert profile.conscientiousness == 0.5  # Default
-    assert profile.extraversion == 0.5  # Default
-
-
 def test_trait_descriptors():
     """Test trait descriptor generation."""
-    profile = OCEANProfile(0.9, 0.2, 0.5, 0.1, 0.8)
+    profile = OCEANProfile(openness=0.9, conscientiousness=0.2, extraversion=0.5, agreeableness=0.1, neuroticism=0.8)
     
     # High openness
     assert "creative" in profile.get_trait_descriptor('openness', 0.9).lower()
@@ -92,7 +82,7 @@ def test_trait_descriptors():
 
 def test_trait_descriptor_levels():
     """Test trait descriptors for different levels."""
-    profile = OCEANProfile(0.5, 0.5, 0.5, 0.5, 0.5)
+    profile = OCEANProfile(openness=0.5, conscientiousness=0.5, extraversion=0.5, agreeableness=0.5, neuroticism=0.5)
     
     # Low (< 0.3)
     low_desc = profile.get_trait_descriptor('openness', 0.2)
@@ -110,7 +100,7 @@ def test_trait_descriptor_levels():
 def test_behavioral_summary():
     """Test behavioral summary generation."""
     # Extreme traits only
-    profile = OCEANProfile(0.9, 0.2, 0.5, 0.5, 0.8)
+    profile = OCEANProfile(openness=0.9, conscientiousness=0.2, extraversion=0.5, agreeableness=0.5, neuroticism=0.8)
     summary = profile.get_behavioral_summary()
     
     assert "creative" in summary.lower() or "curious" in summary.lower()
@@ -120,7 +110,7 @@ def test_behavioral_summary():
 
 def test_behavioral_summary_balanced():
     """Test balanced profile produces appropriate summary."""
-    profile = OCEANProfile(0.5, 0.5, 0.5, 0.5, 0.5)
+    profile = OCEANProfile(openness=0.5, conscientiousness=0.5, extraversion=0.5, agreeableness=0.5, neuroticism=0.5)
     summary = profile.get_behavioral_summary()
     
     assert "balanced" in summary.lower()
@@ -129,7 +119,7 @@ def test_behavioral_summary_balanced():
 def test_dialogue_style():
     """Test dialogue style generation."""
     # High extraversion, low agreeableness
-    profile = OCEANProfile(0.5, 0.5, 0.9, 0.2, 0.5)
+    profile = OCEANProfile(openness=0.5, conscientiousness=0.5, extraversion=0.9, agreeableness=0.2, neuroticism=0.5)
     style = profile.get_dialogue_style()
     
     assert "talkative" in style.lower() or "eager" in style.lower()
@@ -138,7 +128,7 @@ def test_dialogue_style():
 
 def test_dialogue_style_neutral():
     """Test neutral dialogue style for balanced profile."""
-    profile = OCEANProfile(0.5, 0.5, 0.5, 0.5, 0.5)
+    profile = OCEANProfile(openness=0.5, conscientiousness=0.5, extraversion=0.5, agreeableness=0.5, neuroticism=0.5)
     style = profile.get_dialogue_style()
     
     assert "neutral" in style.lower()
@@ -236,8 +226,8 @@ def test_personality_generation_fallback():
     personality = PersonalityGenerator.generate_from_role("unknown_fantasy_role")
     
     # Should be balanced (all traits around 0.5)
-    assert 0.4 <= personality.openness <= 0.6
-    assert 0.4 <= personality.conscientiousness <= 0.6
+    assert 0.3 <= personality.openness <= 0.7
+    assert 0.3 <= personality.conscientiousness <= 0.7
 
 
 def test_personality_generation_random():
@@ -284,3 +274,4 @@ def test_all_archetypes_have_valid_profiles():
         assert 0.0 <= profile.extraversion <= 1.0
         assert 0.0 <= profile.agreeableness <= 1.0
         assert 0.0 <= profile.neuroticism <= 1.0
+

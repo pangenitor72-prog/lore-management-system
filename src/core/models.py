@@ -8,6 +8,9 @@ from pydantic.functional_validators import field_validator
 from typing import Optional, Dict, List, Any
 from datetime import datetime
 from enum import Enum
+import random # Added for PersonalityGenerator
+import uuid # Added for Contradiction class
+
 
 # ---------------- ENUMS ---------------- #
 
@@ -49,31 +52,7 @@ class LoreConfidence(str, Enum):
     AI_FLAGGED = "ai_flagged"               # Has contradiction warnings
 
 
-# Confidence rules for entity trust scoring
-CONFIDENCE_RULES = {
-    "human_approved": {
-        "trust_score": 1.0,
-        "can_be_contradicted": False,
-        "requires_review": False
-    },
-    "ai_verified": {
-        "trust_score": 0.8,
-        "can_be_contradicted": True,
-        "requires_review": False,
-        "auto_promote_after_sessions": 5
-    },
-    "ai_generated": {
-        "trust_score": 0.5,
-        "can_be_contradicted": True,
-        "requires_review": False
-    },
-    "ai_flagged": {
-        "trust_score": 0.3,
-        "can_be_contradicted": True,
-        "requires_review": True,
-        "blocks_promotion": True
-    }
-}
+from src.core.config import CONFIDENCE_RULES
 
 class ContradictionSeverity(str, Enum):
     """Severity levels for contradictions."""
@@ -238,22 +217,10 @@ class ErrorResponse(BaseModel):
     """Model for error responses."""
     error: str
     detail: Optional[str] = None
-"""
-NPC Personality System - OCEAN (Five-Factor) Model
 
-Implements psychological personality profiles for NPCs:
-- O: Openness (creative vs conventional)
-- C: Conscientiousness (organized vs spontaneous)
-- E: Extraversion (outgoing vs reserved)
-- A: Agreeableness (cooperative vs competitive)
-- N: Neuroticism (anxious vs confident)
-
-Each trait is a float from 0.0 to 1.0.
-"""
-
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional
-
+#==============================================================================
+# NPC Personality System - OCEAN (Five-Factor) Model
+#==============================================================================
 
 class PersonalityArchetype(str, Enum):
     """Common NPC archetypes with preset OCEAN profiles."""
@@ -267,44 +234,29 @@ class PersonalityArchetype(str, Enum):
     PEASANT = "peasant"
 
 
-@dataclass
-class OCEANProfile:
+class OCEANProfile(BaseModel):
     """
-    Five-Factor personality profile.
+    Five-Factor personality profile using Pydantic for validation.
     
     Each trait ranges from 0.0 to 1.0:
     - 0.0-0.3: Low (reserved, conventional, anxious, etc.)
     - 0.4-0.6: Moderate (balanced)
     - 0.7-1.0: High (creative, organized, outgoing, etc.)
     """
-    openness: float           # Creative, curious, imaginative (vs conventional, traditional)
-    conscientiousness: float  # Organized, reliable, disciplined (vs spontaneous, careless)
-    extraversion: float       # Outgoing, energetic, talkative (vs reserved, withdrawn)
-    agreeableness: float      # Cooperative, compassionate, trusting (vs competitive, skeptical)
-    neuroticism: float        # Anxious, sensitive, moody (vs confident, stable)
+    openness: float = Field(ge=0.0, le=1.0)           # Creative, curious, imaginative (vs conventional, traditional)
+    conscientiousness: float = Field(ge=0.0, le=1.0)  # Organized, reliable, disciplined (vs spontaneous, careless)
+    extraversion: float = Field(ge=0.0, le=1.0)       # Outgoing, energetic, talkative (vs reserved, withdrawn)
+    agreeableness: float = Field(ge=0.0, le=1.0)      # Cooperative, compassionate, trusting (vs competitive, skeptical)
+    neuroticism: float = Field(ge=0.0, le=1.0)        # Anxious, sensitive, moody (vs confident, stable)
     
-    def __post_init__(self):
-        """Validate trait values are in range [0.0, 1.0]."""
-        for trait in ['openness', 'conscientiousness', 'extraversion', 
-                      'agreeableness', 'neuroticism']:
-            value = getattr(self, trait)
-            if not 0.0 <= value <= 1.0:
-                raise ValueError(f"{trait} must be between 0.0 and 1.0, got {value}")
-    
-    def to_dict(self) -> Dict[str, float]:
-        """Convert to dictionary for Neo4j storage."""
-        return asdict(self)
-    
+    model_config = ConfigDict(validate_assignment=True)
+
+    @field_validator('openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism')
     @classmethod
-    def from_dict(cls, data: Dict[str, float]) -> 'OCEANProfile':
-        """Create from dictionary (e.g., from Neo4j)."""
-        return cls(
-            openness=data.get('openness', 0.5),
-            conscientiousness=data.get('conscientiousness', 0.5),
-            extraversion=data.get('extraversion', 0.5),
-            agreeableness=data.get('agreeableness', 0.5),
-            neuroticism=data.get('neuroticism', 0.5)
-        )
+    def validate_trait_range(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError(f"Trait value must be between 0.0 and 1.0, got {v}")
+        return v
     
     def get_trait_descriptor(self, trait: str, value: float) -> str:
         """
@@ -536,67 +488,6 @@ class PersonalityGenerator:
     """Generates OCEAN profiles for NPCs."""
     
     @staticmethod
-    def generate_from_archetype(
-        archetype: PersonalityArchetype,
-        variation: float = 0.1
-    ) -> OCEANProfile:
-        """
-        Generate personality from archetype with slight variation.
-        
-        Args:
-            archetype: Base archetype to start from
-            variation: How much to vary from template (0.0-0.3 recommended)
-            
-        Returns:
-            OCEAN profile with slight random variation
-        """
-        import random
-        
-        base = PersonalityTemplates.get_template(archetype)
-        
-        def vary(value: float, amount: float) -> float:
-            """Apply random variation within bounds."""
-            varied = value + random.uniform(-amount, amount)
-            return max(0.0, min(1.0, varied))  # Clamp to [0.0, 1.0]
-        
-        return OCEANProfile(
-            openness=vary(base.openness, variation),
-            conscientiousness=vary(base.conscientiousness, variation),
-            extraversion=vary(base.extraversion, variation),
-            agreeableness=vary(base.agreeableness, variation),
-            neuroticism=vary(base.neuroticism, variation)
-        )
-    
-    @staticmethod
-    def generate_from_role(role: str, variation: float = 0.1) -> OCEANProfile:
-        """
-        Generate personality from role description.
-        
-        Attempts to infer archetype, falls back to balanced profile.
-        
-        Args:
-            role: Role description (e.g., "cautious merchant")
-            variation: Random variation amount
-            
-        Returns:
-            OCEAN profile
-        """
-        # Try to infer archetype
-        archetype = PersonalityTemplates.get_archetype_from_role(role)
-        
-        if archetype:
-            return PersonalityGenerator.generate_from_archetype(archetype, variation)
-        
-        # Fallback: balanced profile
-        return OCEANProfile(
-            openness=0.5,
-            conscientiousness=0.5,
-            extraversion=0.5,
-            agreeableness=0.5,
-            neuroticism=0.5
-        )
-    
-    @staticmethod
     def generate_random(
         min_extreme_traits: int = 1,
         max_extreme_traits: int = 3
@@ -611,7 +502,6 @@ class PersonalityGenerator:
         Returns:
             OCEAN profile with random values
         """
-        import random
         
         traits = ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism']
         values = {}
@@ -632,3 +522,69 @@ class PersonalityGenerator:
                 values[trait] = random.uniform(0.3, 0.7)
         
         return OCEANProfile(**values)
+
+    @staticmethod
+    def generate_from_archetype(archetype: PersonalityArchetype, variation: float = 0.1) -> OCEANProfile:
+        """
+        Generate personality based on an archetype with random variation.
+        
+        Args:
+            archetype: Base archetype
+            variation: Amount of random variation to apply (0.0-1.0)
+            
+        Returns:
+            Varied OCEAN profile
+        """
+        template = PersonalityTemplates.get_template(archetype)
+        values = {}
+        
+        for trait in ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism']:
+            base_val = getattr(template, trait)
+            # Apply random variation centered on base value
+            delta = random.uniform(-variation, variation)
+            new_val = max(0.0, min(1.0, base_val + delta))
+            values[trait] = new_val
+            
+        return OCEANProfile(**values)
+
+    @staticmethod
+    def generate_from_role(role: str, variation: float = 0.1) -> OCEANProfile:
+        """
+        Generate personality appropriate for a role/occupation.
+        Falls back to balanced/random if role is unknown.
+        """
+        archetype = PersonalityTemplates.get_archetype_from_role(role)
+        
+        if archetype:
+            return PersonalityGenerator.generate_from_archetype(archetype, variation)
+        
+        # Fallback: Generate a somewhat balanced random personality
+        return PersonalityGenerator.generate_random(min_extreme_traits=0, max_extreme_traits=0)
+
+
+class Contradiction:
+    """Represents a detected contradiction."""
+
+    def __init__(
+        self,
+        contradiction_type: str,
+        severity: str,
+        description: str,
+        entity_ids: List[str],
+        evidence: Dict
+    ):
+        self.type = contradiction_type
+        self.severity = severity
+        self.description = description
+        self.entity_ids = entity_ids
+        self.evidence = evidence
+
+    def to_dict(self) -> Dict:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "type": self.type,
+            "severity": self.severity,
+            "description": self.description,
+            "entity_ids": self.entity_ids,
+            "evidence": self.evidence
+        }

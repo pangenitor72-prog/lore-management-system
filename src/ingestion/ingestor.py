@@ -5,9 +5,10 @@ import re
 import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
-import google.generativeai as genai
-from src.agents.embedding_service import EmbeddingService
+
+from src.services.embedding_service import EmbeddingService
 from src.services.audit_log import AuditLogger
+from src.services.extraction_service import ExtractionService
 
 # Configure module logger
 logger = logging.getLogger(__name__)
@@ -24,46 +25,19 @@ class LoreIngestor:
     """
     Handles parsing, AI extraction, and graph ingestion of lore files.
     """
-    
+
     # Configuration constants
     MAX_CHUNK_SIZE = 4000
     CHUNK_OVERLAP = 200
-    
-    EXTRACTION_PROMPT = """You are a Knowledge Graph Extractor for a D&D Campaign.
-Analyze the following text and extract entities and relationships.
 
-**Entities to Extract (Labels):**
-- Character (NPCs, PCs, villains)
-- Location (Places, regions, buildings)
-- Item (Weapons, artifacts, objects)
-- Faction (Organizations, groups, cults)
-- Event (Battles, ceremonies, historical moments)
-- Concept (Abstract ideas, magic types, prophecies, curses)
-
-**Output Format:**
-Return ONLY a valid JSON object with two keys: "nodes" and "relationships".
-Do NOT include markdown code fences or any other text.
-
-Example:
-{"nodes": [{"id": "Kael", "label": "Character", "properties": {"class": "Paladin", "description": "A sworn protector"}}, {"id": "Void Corruption", "label": "Concept", "properties": {"type": "Curse"}}], "relationships": [{"source": "Kael", "target": "Void Corruption", "type": "VULNERABLE_TO"}]}
-
-**Rules:**
-1. Use consistent, simple IDs (e.g., "Kael" not "Kael the Paladin").
-2. Always include a "description" in properties when possible.
-3. Extract relationship types like: LOCATED_IN, MEMBER_OF, OWNS, CREATED, DEFEATED, ALLIED_WITH, ENEMY_OF, KNOWS, WIELDS, etc.
-4. If no entities found, return: {"nodes": [], "relationships": []}
-5. CRITICAL: Return ONLY valid JSON. No markdown, no explanations."""
-
-    def __init__(self, neo4j_driver, api_key: str, enable_embeddings: bool = True):
+    def __init__(self, neo4j_driver, extraction_service: ExtractionService, embedding_service: EmbeddingService):
         """
-        Initialize the ingestor with a Neo4j driver and Gemini API key.
+        Initialize the ingestor with necessary services.
         """
         self.driver = neo4j_driver
-        self.api_key = api_key
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
-        self.enable_embeddings = enable_embeddings
-        self.embedding_service = EmbeddingService(api_key) if enable_embeddings else None
+        self.extraction_service = extraction_service
+        self.embedding_service = embedding_service
+        self.enable_embeddings = embedding_service is not None
 
     @staticmethod
     def sanitize_cypher_identifier(name: str, default: str = "Entity") -> str:
@@ -127,36 +101,6 @@ Example:
         
         return chunks
 
-    def parse_json_response(self, text: str) -> Dict[str, Any]:
-        """Parse JSON from AI response with robust error recovery."""
-        cleaned = text.strip()
-        cleaned = re.sub(r'^```json\s*', '', cleaned)
-        cleaned = re.sub(r'^```\s*', '', cleaned)
-        cleaned = re.sub(r'\s*```$', '', cleaned)
-        cleaned = cleaned.strip()
-        
-        try:
-            return json.loads(cleaned)
-        except json.JSONDecodeError:
-            pass
-        
-        # Regex fallback
-        match = re.search(r'\{[\s\S]*\}', cleaned)
-        if match:
-            try:
-                return json.loads(match.group())
-            except json.JSONDecodeError:
-                pass
-        
-        # Fallback for trailing commas
-        fixed = re.sub(r',(\s*[}\]])', r'\1', cleaned)
-        try:
-            return json.loads(fixed)
-        except json.JSONDecodeError:
-            pass
-            
-        return {"nodes": [], "relationships": []}
-
     def merge_extractions(self, extractions: List[Dict]) -> Dict[str, Any]:
         """Merge multiple chunk extractions."""
         all_nodes = {}
@@ -180,24 +124,6 @@ Example:
             "nodes": list(all_nodes.values()),
             "relationships": all_rels
         }
-
-    async def _extract_chunk(self, chunk: str, index: int) -> Dict[str, Any]:
-        """
-        Extract entities from a single chunk using Gemini in an executor.
-        """
-        loop = asyncio.get_event_loop()
-        try:
-            response = await loop.run_in_executor(
-                None,
-                lambda: self.model.generate_content(
-                    self.EXTRACTION_PROMPT + "\n\nTEXT:\n" + chunk,
-                    generation_config={"temperature": 0.1}
-                )
-            )
-            return self.parse_json_response(response.text)
-        except Exception as e:
-            await AuditLogger.log(f"Chunk {index+1} extraction failed: {str(e)}", level=logging.ERROR)
-            return {"nodes": [], "relationships": []}
 
     async def _generate_node_embedding(self, node: Dict) -> Optional[List[float]]:
         """
@@ -229,12 +155,12 @@ Example:
         """
         chunks = self.chunk_text(content)
         
-        # Concurrent extraction
-        tasks = [self._extract_chunk(chunk, i) for i, chunk in enumerate(chunks)]
+        # Concurrent extraction using the dedicated service
+        tasks = [self.extraction_service.extract_graph_from_chunk(chunk, i) for i, chunk in enumerate(chunks)]
         extractions = await asyncio.gather(*tasks)
         
-        # Check for empty results which might indicate errors (already logged in _extract_chunk)
-        errors = [] # We rely on AuditLogger for details now, but keep list for return compatibility if needed
+        # Check for empty results which might indicate errors (already logged in the service)
+        errors = []
         
         merged_data = self.merge_extractions(extractions)
         return {
