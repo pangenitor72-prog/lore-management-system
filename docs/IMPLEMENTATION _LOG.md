@@ -1,63 +1,136 @@
-# LMS/MANTLE Implementation Log  
-**Owner:** Shawn King  
-**Purpose:** Chronological record of all architectural decisions, audits, refactors, and code changes across sessions.
+# IMPLEMENTATION LOG  
+**Project:** LMS → MANTLE Platform  
+**Author:** Shawn King  
+**Maintainer (AI):** Metis  
+**Version:** 2025-12-02  
+**Status:** ACTIVE  
+**Standard:** V2 Architecture Compliance  
+
+This log records **all decisions, discoveries, risks, and implementation-related actions** made during the modernization and audit of the LMS/MANTLE system.
+
+It is rewritten cleanly each time new implementation work occurs.
 
 ---
 
-# 🕒 Timeline
+# 1. LOGGING RULES
 
-## **2025-12-02 — INIT**
-- Created AUDIT_DOSSIER.md
-- Created IMPLEMENTATION_LOG.md
-- Decided on phased top-down audit approach
-- Committed to V2 subsystem governance architecture
-- Begin full audit with routes.py → neo4j adapter next
+This file tracks:
 
----
+- Architectural decisions  
+- Bugs identified  
+- Fixes applied  
+- Refactors approved  
+- Subsystem upgrades  
+- Engineering constraints  
+- Testing insights  
+- Unexpected interactions  
+- Known limitations  
+- Future considerations  
 
-# 🛠 SESSION LOG (Append chronologically)
-
-## Session: 2025-12-02 (Audit Start)
-- Performed high-level assessment of `routes.py`
-- Identified 10 critical issues:
-  - DB error masking
-  - Mock mode incomplete
-  - WebSocket task leaks
-  - Ingestor overhead
-  - Ingestor bypassing DB layer
-  - Encoding failures
-  - JSON storage concerns
-  - Agent init risks
-  - Vector index assumptions
-  - Entity property parsing risk
-- Prepared plan for subsystem-by-subsystem audit
-- Established continuity framework for cross-chat refactor
+It does **not** contain diff details (see `CHANGESET_SUMMARY.md`).  
+It does **not** contain audit checklists (see `ARCHITECTURE_AUDIT_DOSSIER.md`).
 
 ---
 
-# DECISION LOG
+# 2. GLOBAL STATE (2025-12-02)
 
-## 2025-12-02
-**Decision:** Use Top-Level → Downward audit path  
-**Reason:** Guarantees correctness of foundational components.  
-
-**Decision:** Adopt V2 subsystem architecture as long-term target  
-**Reason:** Prevent architectural collapse as system grows.  
-
-**Decision:** Use new-chat handoff block for continuity  
-**Reason:** Avoid context drift across sessions.
+- V2 architecture has been formally adopted.  
+- Subsystem model (Smart Ingestor, Decoherence, Query Engine, etc.) is now canonical.  
+- Audit phase is starting; no subsystems have been checked yet.  
+- No code changes have been applied at this stage.  
+- System is operational but carries technical debt from v1 monolithic structure.  
+- Governance layer (.cursor/rules.md + Universal Template) is active.
 
 ---
 
-# TODO BACKLOG (High-Level)
+# 3. IMPLEMENTATION EVENTS
 
-- [ ] Patch DB execute error-handling
-- [ ] Replace WebSocket message fan-in loop
-- [ ] Create Smart Ingestor subsystem
-- [ ] Write Smart Ingestor subsystem contract
-- [ ] Extract legacy ingestion into subsystem
-- [ ] Begin Decoherence Engine contract
+## **2025-12-02 — Audit Framework Established**
+Summary:
+- Full architectural audit framework defined.
+- Generated V2-compliant audit dossier structure.
+- Created unified subsystem checklist (v1 + v2).
+- Established multi-dimensional module evaluation rubric.
+- Committed to Option B (module-level deep checks).
+- Standardized ISO date format.
+- Clarified process: audit first, refactor second.
+- Confirmed: AI rewrites this log after each engineering step.
+
+Impact:
+- Provides a stable foundation for a multi-week audit.
+- Ensures consistent tracking across sessions and chats.
+
+Status:
+- ✔ Complete  
+- No code modifications yet.
 
 ---
 
-# END OF LOG
+## **Pending Events (To Be Logged When Completed)**
+
+These items are placeholders — they will be rewritten with full detail when the corresponding actions occur.
+
+### **Neo4j Adapter Audit**
+- Findings  
+- Issues discovered  
+- Required changes  
+- Severity  
+- Upgrade path  
+
+### **API Layer Audit**
+### **Auditor System Audit**
+### **QueryAgent Audit**
+### **DMAgent Audit**
+### **Legacy Ingestor Audit**
+### **UI Layer Audit**
+### **Smart Ingestor Implementation (v2)**
+### **Decoherence Engine Implementation**
+### **Query Engine Implementation (v2)**
+### **Fact Engine Planning**
+### **MANTLE Runtime Construction**
+### **Governance Reinforcement**
+
+---
+
+# 4. RISK REGISTER (EMPTY UNTIL AUDITS BEGIN)
+
+Risks will be logged with:
+
+- ID  
+- Description  
+- Severity  
+- Example impact  
+- Mitigation strategy  
+- Status  
+
+---
+
+# 5. FUTURE LOG STRUCTURE (AUTO-EXPANDS)
+
+Once subsystem work begins, each entry will include:
+
+### **Entry Template**
+
+YYYY-MM-DD — <Event Title>
+
+Subsystem: <Subsystem Name> Module(s): <List> Summary: <What happened>
+
+Issues:
+
+<Issue 1>
+
+<Issue 2>
+
+
+Resolution: <What was done>
+
+Impact: <System-level consequences>
+
+Status: ✔ Completed / ⚠ Partial / ☐ Pending
+
+This ensures clarity and traceability during a multi-month refactor.
+
+---
+
+# END OF FILE
+
