@@ -1,3 +1,4 @@
+from src.db.neo4j_adapter import Neo4jDatabase
 import asyncio
 import os
 import json
