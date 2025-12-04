@@ -9,10 +9,7 @@ from google.api_core.exceptions import GoogleAPIError
 from src.db.neo4j_adapter import Neo4jDatabase
 from src.services.audit_log import AuditLogger
 from src.prompts import AuditorPrompts
-<<<<<<< HEAD
-from src.core.models import Contradiction, OCEANProfile
-=======
->>>>>>> bbf92f6fdfbeead88321067ece7a0af5eb95b7ee
+from src.core.models import OCEANProfile, Contradiction
 
 logger = logging.getLogger(__name__)
 
