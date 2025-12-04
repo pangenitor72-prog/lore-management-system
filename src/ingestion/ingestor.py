@@ -238,7 +238,8 @@ canon_id = node.get("canon_id") or f"ai-{uuid.uuid4().hex[:12]}"
             safe_label = self.sanitize_cypher_identifier(label, "Entity")
             
             # Get existing properties
-            props = node.get("properties", {}).copy()
+            # Inject canon_id for identity consistency
+            props["canon_id"] = canon_id
             
             # === INJECT DEFAULT VALUES IF MISSING ===
             # confidence_level: How much to trust this data
