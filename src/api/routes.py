@@ -5,11 +5,9 @@ import json
 import uuid
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import List, Optional, Generator
+from typing import List, Optional
 import logging
 from contextlib import asynccontextmanager
-
-
 
 # Third Party
 import uvicorn
@@ -59,6 +57,9 @@ from src.services.contradiction_service import get_router as get_contradiction_r
 from src.services.extraction_service import ExtractionService
 from src.services.embedding_service import EmbeddingService
 
+# Configure module logger
+logger = logging.getLogger(__name__)
+
 # ============================================================
 # APP LIFESPAN
 # ============================================================
@@ -92,7 +93,6 @@ async def lifespan(app: FastAPI):
     # On startup
     await AuditLogger.log("Application startup...")
 
-    
     # 1. Validate GEMINI_API_KEY
     gemini_key = os.getenv("GEMINI_API_KEY")
     if not gemini_key or gemini_key in ["YOUR_KEY_HERE", "your-key"]:
@@ -104,10 +104,10 @@ async def lifespan(app: FastAPI):
     else:
         await AuditLogger.log("✅ Gemini API key loaded")
         app.state.ai_enabled = True
-    
+
     # Initialize Neo4j Database (new graph layer)
     use_mock_db = os.getenv("USE_MOCK_DB", "false").lower() == "true"
-    
+
     if use_mock_db:
         await AuditLogger.log("🔶 STARTING IN MOCK MODE (No Neo4j connection)")
         app.state.neo4j_db = InMemoryMockDatabase()
@@ -119,9 +119,9 @@ async def lifespan(app: FastAPI):
         neo4j_user = os.getenv("NEO4J_USER", "neo4j")
         neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
         neo4j_auth = (neo4j_user, neo4j_password)
-        
+
         app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_auth)
-        
+
         # 2. Use connection timeout
         connected = await connect_neo4j_with_timeout(app.state.neo4j_db, timeout=10)
 
@@ -131,19 +131,19 @@ async def lifespan(app: FastAPI):
             level=logging.CRITICAL
         )
         raise RuntimeError("Neo4j connection failed")
-    
+
     # 3. Validate vector index
     try:
         if use_mock_db:
-             app.state.vector_search_enabled = True
-             await AuditLogger.log("✅ Mock Vector index verified")
+            app.state.vector_search_enabled = True
+            await AuditLogger.log("✅ Mock Vector index verified")
         else:
             indexes = await app.state.neo4j_db.list_indexes()
             has_vector_index = any(
-                idx.get("name") == "entity_embeddings" 
+                idx.get("name") == "entity_embeddings"
                 for idx in indexes
             )
-            
+
             if not has_vector_index:
                 await AuditLogger.log("⚠️ Vector index missing - creating...")
                 success = await app.state.neo4j_db.create_vector_index()
@@ -152,26 +152,23 @@ async def lifespan(app: FastAPI):
                 await AuditLogger.log("✅ Vector index verified")
                 app.state.vector_search_enabled = True
     except Exception as e:
-        await AuditLogger.log(f"⚠️ Vector index validation failed: {e}")
+        await AuditLogger.log(f"⚠️ Vector index validation failed: {e}", level=logging.ERROR)
         app.state.vector_search_enabled = False
-    
+
     # 4. Initialize agents only if AI enabled
     if app.state.ai_enabled:
-        # For mock mode, we might want to mock agents too, but let's try to init them
-        # They will use the mock DB
-        
         # Instantiate sub-auditors
         rule_based_auditor = RuleBasedAuditor(app.state.neo4j_db)
         semantic_auditor = SemanticAuditor(app.state.neo4j_db, gemini_key)
-        
+
         app.state.auditor = AuditorAgent(
-            app.state.neo4j_db, 
+            app.state.neo4j_db,
             gemini_key,
             rule_based_auditor=rule_based_auditor,
             semantic_auditor=semantic_auditor
         )
         app.state.query_agent = QueryAgent(
-            app.state.neo4j_db, 
+            app.state.neo4j_db,
             gemini_key,
             enable_vector_search=app.state.vector_search_enabled
         )
@@ -180,7 +177,7 @@ async def lifespan(app: FastAPI):
             db=app.state.neo4j_db,
             query_agent=app.state.query_agent,
             auditor_agent=app.state.auditor,
-            api_key=gemini_key # DMAgent still uses its own API key for its model calls
+            api_key=gemini_key  # DMAgent still uses its own API key for its model calls
         )
         await AuditLogger.log("✅ All agents initialized")
 
@@ -206,14 +203,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"], 
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-
 
 # Initialize Router
 router = APIRouter()
@@ -229,6 +223,10 @@ app.mount(
     name="static"
 )
 
+# ============================================================
+# WEBSOCKET ENDPOINTS
+# ============================================================
+
 @app.websocket("/ws/gemini")
 async def websocket_gemini_endpoint(websocket: WebSocket, client_id: str = Query(...)):
     if not app.state.ai_enabled or not hasattr(app.state, "query_agent"):
@@ -238,6 +236,7 @@ async def websocket_gemini_endpoint(websocket: WebSocket, client_id: str = Query
         return
 
     await app.state.query_agent.handle_websocket(websocket, client_id)
+
 
 @app.websocket("/ws/auditor")
 async def websocket_auditor_endpoint(websocket: WebSocket):
@@ -265,21 +264,21 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
 async def websocket_events_endpoint(websocket: WebSocket, channels: str = Query("query_events")):
     """
     General-purpose WebSocket endpoint for subscribing to multiple event channels.
-    
+
     Args:
         channels: Comma-separated list of channels to subscribe to.
                   Available: query_events, auditor_events, ingestion_events
-    
+
     Example:
         ws://localhost:8000/ws/events?channels=query_events,auditor_events
     """
     await websocket.accept()
-    
+
     # Parse requested channels
     channel_list = [c.strip() for c in channels.split(",") if c.strip()]
     valid_channels = {"query_events", "auditor_events", "ingestion_events"}
     subscribed_channels = [c for c in channel_list if c in valid_channels]
-    
+
     if not subscribed_channels:
         await websocket.send_json({
             "error": "No valid channels specified",
@@ -287,14 +286,14 @@ async def websocket_events_endpoint(websocket: WebSocket, channels: str = Query(
         })
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
-    
+
     await AuditLogger.log(f"Events WebSocket connected to channels: {subscribed_channels}")
-    
+
     # Subscribe to all requested channels
     queues = {}
     for channel in subscribed_channels:
         queues[channel] = await broadcaster.subscribe(channel)
-    
+
     async def read_from_queue(channel: str, queue: asyncio.Queue):
         """Read messages from a single queue and tag with channel name."""
         while True:
@@ -302,25 +301,25 @@ async def websocket_events_endpoint(websocket: WebSocket, channels: str = Query(
             if isinstance(message, dict):
                 message["_channel"] = channel
             return message
-    
+
     try:
         while True:
             # Create tasks for all queues
             tasks = {
-                asyncio.create_task(read_from_queue(ch, q)): ch 
+                asyncio.create_task(read_from_queue(ch, q)): ch
                 for ch, q in queues.items()
             }
-            
+
             # Wait for any queue to have a message
             done, pending = await asyncio.wait(
                 tasks.keys(),
                 return_when=asyncio.FIRST_COMPLETED
             )
-            
+
             # Cancel pending tasks
             for task in pending:
                 task.cancel()
-            
+
             # Send completed messages
             for task in done:
                 try:
@@ -328,7 +327,7 @@ async def websocket_events_endpoint(websocket: WebSocket, channels: str = Query(
                     await websocket.send_json(message)
                 except Exception as e:
                     await AuditLogger.log(f"Error sending event: {e}", level=logging.WARNING)
-                    
+
     except WebSocketDisconnect:
         await AuditLogger.log("Events WebSocket client disconnected.")
     except Exception as e:
@@ -355,6 +354,7 @@ def root():
         "status": "operational"
     }
 
+
 @router.get("/health")
 async def health_check(request: Request):
     """System health check with feature flags."""
@@ -364,14 +364,14 @@ async def health_check(request: Request):
         "checks": {},
         "features": {}
     }
-    
+
     try:
         await request.app.state.neo4j_db.execute("RETURN 1")
         health_status["checks"]["neo4j"] = "connected"
     except Exception as e:
         health_status["checks"]["neo4j"] = f"error: {str(e)}"
         health_status["status"] = "degraded"
-    
+
     try:
         indexes = await request.app.state.neo4j_db.list_indexes()
         has_vector_index = any(idx.get("name") == "entity_embeddings" for idx in indexes)
@@ -381,13 +381,13 @@ async def health_check(request: Request):
     except Exception as e:
         health_status["checks"]["vector_index"] = f"error: {str(e)}"
         health_status["status"] = "degraded"
-    
+
     health_status["checks"]["query_agent"] = "ready" if hasattr(request.app.state, "query_agent") else "not_initialized"
     health_status["checks"]["auditor"] = "ready" if hasattr(request.app.state, "auditor") else "not_initialized"
-    
+
     health_status["features"]["ai_enabled"] = getattr(request.app.state, "ai_enabled", False)
     health_status["features"]["vector_search"] = getattr(request.app.state, "vector_search_enabled", False)
-    
+
     return health_status
 
 
@@ -399,7 +399,8 @@ async def health_check(request: Request):
 async def upload_files(
     request: Request,
     files: List[UploadFile] = File(...),
-    process_immediately: bool = True
+    process_immediately: bool = True,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
 ):
     """
     Accepts a batch of files for processing, saves them to a unique
@@ -407,76 +408,92 @@ async def upload_files(
     """
     batch_id = f"batch-{uuid.uuid4().hex}"
     upload_dir = Path("uploads") / batch_id
-    upload_dir.mkdir(parents=True, exist_ok=True) # Create the batch-specific directory
+    upload_dir.mkdir(parents=True, exist_ok=True)  # Create the batch-specific directory
 
-    saved_files = []
-    processing_results = []
-    
-    # Initialize Ingestor if processing is requested
-    ingestor = None
+    saved_files: List[str] = []
+    processing_results: List[dict] = []
+
+    # Initialize Ingestor if processing is requested and AI is enabled
+    ingestor: Optional[LoreIngestor] = None
     if process_immediately:
         try:
             gemini_key = os.getenv("GEMINI_API_KEY")
-            if not gemini_key or not app.state.ai_enabled:
-                await AuditLogger.log("Skipping processing: AI features disabled or GEMINI_API_KEY missing", level=logging.WARNING)
+            if not gemini_key or not request.app.state.ai_enabled:
+                await AuditLogger.log(
+                    "Skipping processing: AI features disabled or GEMINI_API_KEY missing",
+                    level=logging.WARNING
+                )
             else:
                 # 1. Instantiate services
                 extraction_service = ExtractionService(api_key=gemini_key)
                 embedding_service = EmbeddingService(api_key=gemini_key)
 
-                # 2. Instantiate ingestor with services (use Neo4jDatabase adapter)
+                # 2. Instantiate ingestor with services (use injected Neo4j adapter)
                 ingestor = LoreIngestor(
-                    db=request.app.state.neo4j_db,
+                    db=db,
                     extraction_service=extraction_service,
-                    embedding_service=embedding_service
+                    embedding_service=embedding_service,
                 )
         except Exception as e:
-             await AuditLogger.log(f"Failed to initialize ingestor or its services: {e}", level=logging.ERROR)
+            await AuditLogger.log(f"Failed to initialize ingestor or its services: {e}", level=logging.ERROR)
+            ingestor = None
 
     for file in files:
         try:
             file_path = upload_dir / file.filename
-            
+
             # Use run_in_threadpool for the blocking I/O operation
             content = await file.read()
             await run_in_threadpool(file_path.write_bytes, content)
-            
+
             saved_files.append(file.filename)
-            
+
             # Process immediately if requested and ingestor is ready
             if process_immediately and ingestor:
                 try:
                     # Decode content for processing
                     text_content = content.decode("utf-8")
-                    
+
                     # 1. Process (Extract)
                     result_data = await ingestor.process_file_content(file.filename, text_content)
-                    
+
                     # 2. Save to Neo4j
                     save_stats = await ingestor.save_to_neo4j(result_data["data"], file.filename)
-                    
+
                     processing_results.append({
                         "filename": file.filename,
                         "status": "processed",
                         "nodes_created": save_stats["nodes_saved"],
-                        "relationships_created": save_stats["rels_saved"]
+                        "relationships_created": save_stats["rels_saved"],
                     })
-                    
+
                     await AuditLogger.log(f"Processed {file.filename}: {save_stats}")
-                    
+
                 except UnicodeDecodeError:
-                    await AuditLogger.log(f"Skipping processing for binary file: {file.filename}", level=logging.WARNING)
+                    await AuditLogger.log(
+                        f"Skipping processing for binary file: {file.filename}",
+                        level=logging.WARNING
+                    )
                     processing_results.append({"filename": file.filename, "status": "skipped_binary"})
                 except Exception as proc_e:
-                    await AuditLogger.log(f"Processing failed for {file.filename}: {proc_e}", level=logging.ERROR)
-                    processing_results.append({"filename": file.filename, "status": "failed", "error": str(proc_e)})
+                    await AuditLogger.log(
+                        f"Processing failed for {file.filename}: {proc_e}",
+                        level=logging.ERROR
+                    )
+                    processing_results.append(
+                        {
+                            "filename": file.filename,
+                            "status": "failed",
+                            "error": str(proc_e),
+                        }
+                    )
 
         except Exception as e:
             # Log the error
             await AuditLogger.log(f"Error saving file {file.filename}: {e}", level=logging.ERROR)
             raise HTTPException(
                 status_code=500,
-                detail=f"Could not save file: {file.filename}"
+                detail=f"Could not save file: {file.filename}",
             )
 
     return {
@@ -484,10 +501,8 @@ async def upload_files(
         "files_queued": len(saved_files),
         "status": "completed" if process_immediately else "queued",
         "filenames": saved_files,
-        "processing_results": processing_results if process_immediately else []
+        "processing_results": processing_results if process_immediately else [],
     }
-
-
 
 
 # ============================================================
@@ -499,28 +514,28 @@ async def create_entity(entity_data: EntityCreate, db: Neo4jDatabase = Depends(g
     """Creates a new entity in the Neo4j graph."""
     canon_id = f"{entity_data.entity_type.value.lower()}-{uuid.uuid4().hex[:8]}"
     created_at = datetime.now(timezone.utc).isoformat()
-    
+
     # Prepare properties map
     props = {
         "canon_id": canon_id,
         "entity_type": entity_data.entity_type.value,
-        "name": entity_data.canonical_name, # Standardize on 'name' for graph
+        "name": entity_data.canonical_name,  # Standardize on 'name' for graph
         "canonical_name": entity_data.canonical_name,
         "approval_status": entity_data.approval_status.value,
         "confidence_level": entity_data.confidence_level.value,
         "party_knowledge": entity_data.party_knowledge.value,
         "created_at": created_at,
         "updated_at": created_at,
-        "aliases": entity_data.aliases
+        "aliases": entity_data.aliases,
     }
 
     # Add approved fields to properties
     for key, value in entity_data.approved_fields.items():
         # Neo4j properties must be primitives
         if isinstance(value, (dict, list)) and key != "aliases":
-             props[key] = json.dumps(value)
+            props[key] = json.dumps(value)
         else:
-             props[key] = value
+            props[key] = value
 
     label = entity_data.entity_type.value
     # Sanitize label
@@ -532,10 +547,10 @@ async def create_entity(entity_data: EntityCreate, db: Neo4jDatabase = Depends(g
     SET n:Entity
     RETURN n
     """
-    
+
     try:
         await db.execute(query, {"canon_id": canon_id, "props": props})
-        
+
         # Verify creation and return formatted response
         created_entity = await get_entity(canon_id, db=db)
         return created_entity
@@ -543,6 +558,7 @@ async def create_entity(entity_data: EntityCreate, db: Neo4jDatabase = Depends(g
     except Exception as e:
         await AuditLogger.log(f"Error in create_entity: {e}", level=logging.ERROR)
         raise HTTPException(status_code=500, detail=f"Failed to create entity: {e}")
+
 
 @router.get("/entities/browser", response_class=HTMLResponse)
 async def entities_browser(request: Request, canon_id: Optional[str] = None):
@@ -552,6 +568,7 @@ async def entities_browser(request: Request, canon_id: Optional[str] = None):
         template_name = "entity_detail.html"
         context["canon_id"] = canon_id
     return templates.TemplateResponse(template_name, context)
+
 
 @router.get("/entities/{canon_id}", response_model=EntityResponse)
 async def get_entity(canon_id: str, db: Neo4jDatabase = Depends(get_neo4j_db)):
@@ -570,67 +587,68 @@ async def get_entity(canon_id: str, db: Neo4jDatabase = Depends(get_neo4j_db)):
            properties(n) AS all_props
     """
     results = await db.execute(query, {"canon_id": canon_id})
-    
+
     if not results:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Entity not found: {canon_id}"
         )
-    
+
     record = results[0]
-    
+
     # Extract extra fields from properties
-    all_props = record['all_props']
+    all_props = record["all_props"]
     reserved_keys = {
-        "canon_id", "entity_type", "canonical_name", "aliases", 
-        "approval_status", "confidence_level", "party_knowledge", 
-        "created_at", "updated_at", "name", "embedding"
+        "canon_id", "entity_type", "canonical_name", "aliases",
+        "approval_status", "confidence_level", "party_knowledge",
+        "created_at", "updated_at", "name", "embedding",
     }
-    
+
     approved_fields = {}
     for k, v in all_props.items():
         if k not in reserved_keys:
             try:
                 approved_fields[k] = json.loads(v)
-            except:
+            except Exception:
                 approved_fields[k] = v
 
     return EntityResponse(
-        canon_id=record['canon_id'],
-        entity_type=EntityType(record['entity_type']),
-        canonical_name=record['canonical_name'],
-        aliases=record['aliases'] if record['aliases'] else [],
+        canon_id=record["canon_id"],
+        entity_type=EntityType(record["entity_type"]),
+        canonical_name=record["canonical_name"],
+        aliases=record["aliases"] if record["aliases"] else [],
         approved_fields=approved_fields,
-        approval_status=ApprovalStatus(record['approval_status']),
-        confidence_level=ConfidenceLevel(record['confidence_level']),
-        party_knowledge=PartyKnowledge(record['party_knowledge']),
-        created_at=datetime.fromisoformat(record['created_at']) if record['created_at'] else datetime.now(),
-        updated_at=datetime.fromisoformat(record['updated_at']) if record['updated_at'] else datetime.now()
+        approval_status=ApprovalStatus(record["approval_status"]),
+        confidence_level=ConfidenceLevel(record["confidence_level"]),
+        party_knowledge=PartyKnowledge(record["party_knowledge"]),
+        created_at=datetime.fromisoformat(record["created_at"]) if record["created_at"] else datetime.now(),
+        updated_at=datetime.fromisoformat(record["updated_at"]) if record["updated_at"] else datetime.now(),
     )
+
 
 @router.get("/entities", response_model=List[EntityResponse])
 async def list_entities(
     db: Neo4jDatabase = Depends(get_neo4j_db),
     entity_type: Optional[EntityType] = None,
     approval_status: Optional[ApprovalStatus] = None,
-    limit: int = 100
+    limit: int = 100,
 ):
     """List entities with optional filters using Neo4j."""
     query = "MATCH (n:Entity)"
     where_clauses = []
-    params = {"limit": limit}
-    
+    params: dict = {"limit": limit}
+
     if entity_type:
         where_clauses.append("n.entity_type = $type")
         params["type"] = entity_type.value
-    
+
     if approval_status:
         where_clauses.append("n.approval_status = $status")
         params["status"] = approval_status.value
-        
+
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
-        
+
     query += """
     RETURN n.canon_id AS canon_id,
            n.entity_type AS entity_type,
@@ -645,43 +663,48 @@ async def list_entities(
     ORDER BY n.created_at DESC
     LIMIT $limit
     """
-    
+
     records = await db.execute(query, params)
-    
-    result_entities = []
+
+    result_entities: List[EntityResponse] = []
     reserved_keys = {
-        "canon_id", "entity_type", "canonical_name", "aliases", 
-        "approval_status", "confidence_level", "party_knowledge", 
-        "created_at", "updated_at", "name", "embedding"
+        "canon_id", "entity_type", "canonical_name", "aliases",
+        "approval_status", "confidence_level", "party_knowledge",
+        "created_at", "updated_at", "name", "embedding",
     }
 
     for record in records:
         try:
-             # Extract extra fields
-            all_props = record['all_props']
+            # Extract extra fields
+            all_props = record["all_props"]
             approved_fields = {}
             for k, v in all_props.items():
                 if k not in reserved_keys:
                     try:
                         approved_fields[k] = json.loads(v)
-                    except:
+                    except Exception:
                         approved_fields[k] = v
 
-            result_entities.append(EntityResponse(
-                canon_id=record['canon_id'],
-                entity_type=EntityType(record['entity_type']),
-                canonical_name=record['canonical_name'],
-                aliases=record['aliases'] if record['aliases'] else [],
-                approved_fields=approved_fields,
-                approval_status=ApprovalStatus(record['approval_status']),
-                confidence_level=ConfidenceLevel(record['confidence_level']),
-                party_knowledge=PartyKnowledge(record['party_knowledge']),
-                created_at=datetime.fromisoformat(record['created_at']) if record['created_at'] else datetime.now(),
-                updated_at=datetime.fromisoformat(record['updated_at']) if record['updated_at'] else datetime.now()
-            ))
+            result_entities.append(
+                EntityResponse(
+                    canon_id=record["canon_id"],
+                    entity_type=EntityType(record["entity_type"]),
+                    canonical_name=record["canonical_name"],
+                    aliases=record["aliases"] if record["aliases"] else [],
+                    approved_fields=approved_fields,
+                    approval_status=ApprovalStatus(record["approval_status"]),
+                    confidence_level=ConfidenceLevel(record["confidence_level"]),
+                    party_knowledge=PartyKnowledge(record["party_knowledge"]),
+                    created_at=datetime.fromisoformat(record["created_at"]) if record["created_at"] else datetime.now(),
+                    updated_at=datetime.fromisoformat(record["updated_at"]) if record["updated_at"] else datetime.now(),
+                )
+            )
         except Exception as e:
-             await AuditLogger.log(f"Error parsing entity row {record.get('canon_id')}: {e}", level=logging.WARNING)
-             continue
+            await AuditLogger.log(
+                f"Error parsing entity row {record.get('canon_id')}: {e}",
+                level=logging.WARNING
+            )
+            continue
 
     return result_entities
 
@@ -697,9 +720,11 @@ class DashboardCard(BaseModel):
     severity: str
     source: str
 
+
 @router.get("/dashboard")
 async def read_dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
+
 
 @router.get("/contradictions", response_model=List[DashboardCard])
 async def get_contradictions():
@@ -719,8 +744,13 @@ async def get_contradictions():
             id=103, title="NPC Status: Lady Vengeance",
             description="Status flag is DEAD, but she is currently giving a quest in the Waterdeep module.",
             severity="CRITICAL", source="NPC Tracker"
-        )
+        ),
     ]
+
+
+# ============================================================
+# ROUTER REGISTRATION
+# ============================================================
 
 app.include_router(router)
 app.include_router(get_contradiction_router())
