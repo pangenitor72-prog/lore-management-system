@@ -305,7 +305,7 @@ class LoreIngestor:
                         level=logging.ERROR
                     )
 
-        # 2. Save Relationships (Batch)
+       # 2. Save Relationships (Batch)
         if rel_batch:
             # Group by type
             rels_by_type = {}
@@ -314,21 +314,22 @@ class LoreIngestor:
                 if rtype not in rels_by_type:
                     rels_by_type[rtype] = []
                 rels_by_type[rtype].append(item)
-                
-            async with self.driver.session() as session:
-                for rtype, items in rels_by_type.items():
-                    query = f"""
-                    UNWIND $items AS item
-                    MATCH (a {{name: item.source}})
-                    MATCH (b {{name: item.target}})
-                    MERGE (a)-[r:`{rtype}`]->(b)
-                    """
-                    try:
-                        await session.run(query, {"items": items})
-                        rels_saved += len(items)
-                    except Exception as e:
-                        await AuditLogger.log(f"Error saving rels batch for type {rtype}: {e}", level=logging.ERROR)
 
+            for rtype, items in rels_by_type.items():
+                query = f"""
+                UNWIND $items AS item
+                MATCH (a {{name: item.source}})
+                MATCH (b {{name: item.target}})
+                MERGE (a)-[r:`{rtype}`]->(b)
+                """
+                try:
+                    await self.db.execute(query, {"items": items})
+                    rels_saved += len(items)
+                except Exception as e:
+                    await AuditLogger.log(
+                        f"Error saving rels batch for type {rtype}: {e}",
+                        level=logging.ERROR
+                    )
         # 3. Link File Source
         async with self.driver.session() as session:
             try:
