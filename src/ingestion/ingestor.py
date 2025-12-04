@@ -1,7 +1,6 @@
 from src.db.neo4j_adapter import Neo4jDatabase
 import asyncio
 import uuid
-import json
 import re
 import logging
 from datetime import datetime, timezone
@@ -66,7 +65,7 @@ class LoreIngestor:
             logger.warning(f"Empty identifier provided, using default: {default}")
             return default
 
-        # First, replace spaces and hyphens with underscores
+        # Replace spaces and hyphens with underscores
         sanitized = name.replace(" ", "_").replace("-", "_")
 
         # Remove any other invalid characters
@@ -84,21 +83,24 @@ class LoreIngestor:
         return sanitized
 
     def chunk_text(self, text: str) -> List[str]:
-        """Split large text into overlapping chunks."""
+        """
+        Split large text into overlapping chunks for extraction.
+        """
         if len(text) <= self.MAX_CHUNK_SIZE:
             return [text]
 
-        chunks = []
+        chunks: List[str] = []
         start = 0
+
         while start < len(text):
             end = start + self.MAX_CHUNK_SIZE
             if end < len(text):
                 # Try to break at paragraph or sentence
-                para_break = text.rfind("\n\n", start, end)
+                para_break = text.rfind('\n\n', start, end)
                 if para_break > start + self.MAX_CHUNK_SIZE // 2:
                     end = para_break
                 else:
-                    sentence_break = text.rfind(". ", start, end)
+                    sentence_break = text.rfind('. ', start, end)
                     if sentence_break > start + self.MAX_CHUNK_SIZE // 2:
                         end = sentence_break + 1
 
@@ -107,8 +109,10 @@ class LoreIngestor:
 
         return chunks
 
-    def merge_extractions(self, extractions: List[Dict]) -> Dict[str, Any]:
-        """Merge multiple chunk extractions."""
+    def merge_extractions(self, extractions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Merge multiple chunk extractions into a single node/relationship set.
+        """
         all_nodes: Dict[str, Dict[str, Any]] = {}
         all_rels: List[Dict[str, Any]] = []
 
@@ -121,16 +125,15 @@ class LoreIngestor:
                 if not node_id:
                     continue
 
+                # Normalize properties dict
+                node.setdefault("properties", {})
+                node_props = node["properties"]
+
                 if node_id not in all_nodes:
-                    # Ensure properties exists
-                    if "properties" not in node or node["properties"] is None:
-                        node["properties"] = {}
                     all_nodes[node_id] = node
                 else:
-                    # Merge properties
-                    existing_props = all_nodes[node_id].setdefault("properties", {})
-                    new_props = node.get("properties", {}) or {}
-                    existing_props.update(new_props)
+                    # Merge properties for duplicate IDs across chunks
+                    all_nodes[node_id]["properties"].update(node_props)
 
             all_rels.extend(data.get("relationships", []))
 
@@ -139,7 +142,7 @@ class LoreIngestor:
             "relationships": all_rels
         }
 
-    async def _generate_node_embedding(self, node: Dict) -> Optional[List[float]]:
+    async def _generate_node_embedding(self, node: Dict[str, Any]) -> Optional[List[float]]:
         """
         Generate embedding for a node using the embedding service.
         """
@@ -148,11 +151,9 @@ class LoreIngestor:
 
         node_id = node.get("id", "Unknown")
 
-        # The AI extraction uses "id" for the node name. Pass the whole node
-        # object to the embedding service for a richer embedding.
-        # The service's method is synchronous, so run it in an executor.
         loop = asyncio.get_event_loop()
         try:
+            # Pass the full node object for richer embeddings
             embedding = await loop.run_in_executor(
                 None,
                 lambda: self.embedding_service.embed_entity(node)
@@ -167,8 +168,9 @@ class LoreIngestor:
 
     async def process_file_content(self, filename: str, content: str) -> Dict[str, Any]:
         """
-        Process file content: Chunk -> Extract -> Return Data (does not save yet).
-        Useful for UI preview.
+        Process file content: Chunk -> Extract -> Merge (no DB writes).
+
+        This is used by the UI for previewing what will be ingested.
         """
         chunks = self.chunk_text(content)
 
@@ -179,7 +181,7 @@ class LoreIngestor:
         ]
         extractions = await asyncio.gather(*tasks)
 
-        # Check for empty results which might indicate errors (already logged in the service)
+        # Placeholder for future error reporting; currently handled in ExtractionService
         errors: List[str] = []
 
         merged_data = self.merge_extractions(extractions)
@@ -204,8 +206,9 @@ class LoreIngestor:
 
         Returns counts of saved nodes and relationships.
         """
-        nodes = data.get("nodes", []) or []
-        rels = data.get("relationships", []) or []
+        nodes: List[Dict[str, Any]] = data.get("nodes", []) or []
+        rels: List[Dict[str, Any]] = data.get("relationships", []) or []
+
         nodes_saved = 0
         rels_saved = 0
 
@@ -213,55 +216,167 @@ class LoreIngestor:
         ingestion_timestamp = datetime.now(timezone.utc).isoformat()
 
         # Sanitize filename for use as source reference
-        safe_filename = re.sub(r'[<>:"/\\|?*]', "_", filename) if filename else "unknown_source"
+        safe_filename = re.sub(r'[<>:"/\\|?*]', '_', filename) if filename else "unknown_source"
 
-        # 1. Prepare Nodes with Embeddings
+        # Optional mapping for future canon_id-aware features
+        name_to_canon: Dict[str, str] = {}
+
+        # --------------------------------------------------
+        # 1. Generate embeddings (optional, concurrent)
+        # --------------------------------------------------
         if self.enable_embeddings and self.embedding_service and nodes:
-            embedding_tasks = [self._generate_node_embedding(node) for node in nodes]
-            embeddings = await asyncio.gather(*embedding_tasks)
+            embedding_tasks = []
+            nodes_to_embed = []
 
-            for node, embedding in zip(nodes, embeddings):
-                if embedding:
-                    props = node.setdefault("properties", {})
-                    if props is None:
-                        props = {}
-                        node["properties"] = props
-                    props["embedding"] = embedding
+            for node in nodes:
+                nodes_to_embed.append(node)
+                embedding_tasks.append(self._generate_node_embedding(node))
 
-        # Prepare batch data for nodes with default value injection
+            if embedding_tasks:
+                embeddings = await asyncio.gather(*embedding_tasks)
+
+                for i, node in enumerate(nodes_to_embed):
+                    embedding = embeddings[i]
+                    if embedding:
+                        node.setdefault("properties", {})
+                        node["properties"]["embedding"] = embedding
+
+        # --------------------------------------------------
+        # 2. Prepare node batch with defaults + canon_id
+        # --------------------------------------------------
         node_batch: List[Dict[str, Any]] = []
+
         for node in nodes:
             node_id = node.get("id", "")
             if not node_id:
+                # Skip completely anonymous entities for now
                 continue
 
-            # Sanitize label using the proper identifier sanitizer
+            # Sanitize label
             label = node.get("label", "Entity")
             safe_label = self.sanitize_cypher_identifier(label, "Entity")
 
-            # Get existing properties as a copy so we don't mutate original dict unexpectedly
-            props = dict(node.get("properties", {}) or {})
+            # Ensure properties dict
+            props = dict(node.get("properties") or {})
 
-            # === INJECT DEFAULT VALUES IF MISSING ===
-            # confidence_level: How much to trust this data
+            # Generate stable-ish identity for this ingestion
+            canon_id = props.get("canon_id") or f"ai-{uuid.uuid4().hex[:12]}"
+            props["canon_id"] = canon_id
+            name_to_canon[node_id] = canon_id
+
+            # === Inject default values if missing ===
             if "confidence_level" not in props:
                 props["confidence_level"] = DEFAULT_CONFIDENCE_LEVEL
 
-            # party_knowledge: Who knows about this entity
             if "party_knowledge" not in props:
                 props["party_knowledge"] = DEFAULT_PARTY_KNOWLEDGE
 
-            # source: Where this data came from
             if "source" not in props:
                 props["source"] = safe_filename
 
-            # created_at: When this entity was ingested (don't overwrite if updating)
             if "created_at" not in props:
                 props["created_at"] = ingestion_timestamp
 
-            # updated_at: Always update this timestamp
+            # Always refresh updated_at on ingestion
             props["updated_at"] = ingestion_timestamp
 
-            node_batch.append(
-                {
-                    "name": node_id
+            node_batch.append({
+                "name": node_id,
+                "label": safe_label,
+                "props": props
+            })
+
+        # --------------------------------------------------
+        # 3. Prepare relationship batch with sanitized types
+        #    (still keyed by name for compatibility)
+        # --------------------------------------------------
+        rel_batch: List[Dict[str, Any]] = []
+
+        for rel in rels:
+            source_name = rel.get("source")
+            target_name = rel.get("target")
+            if not source_name or not target_name:
+                continue
+
+            rel_type = rel.get("type", "RELATED_TO").upper()
+            safe_rel_type = self.sanitize_cypher_identifier(rel_type, "RELATED_TO")
+
+            rel_batch.append({
+                "source": source_name,
+                "target": target_name,
+                "type": safe_rel_type
+            })
+
+        # --------------------------------------------------
+        # 4. Save Nodes (batch, grouped by label)
+        # --------------------------------------------------
+        if node_batch:
+            nodes_by_label: Dict[str, List[Dict[str, Any]]] = {}
+            for item in node_batch:
+                lbl = item["label"]
+                nodes_by_label.setdefault(lbl, []).append(item)
+
+            for label, items in nodes_by_label.items():
+                query = f"""
+                UNWIND $items AS item
+                MERGE (n:`{label}` {{name: item.name}})
+                SET n += item.props
+                SET n:Entity
+                """
+                try:
+                    await self.db.execute(query, {"items": items})
+                    nodes_saved += len(items)
+                except Exception as e:
+                    await AuditLogger.log(
+                        f"Error saving nodes batch for label {label}: {e}",
+                        level=logging.ERROR
+                    )
+
+        # --------------------------------------------------
+        # 5. Save Relationships (batch, grouped by type)
+        # --------------------------------------------------
+        if rel_batch:
+            rels_by_type: Dict[str, List[Dict[str, Any]]] = {}
+            for item in rel_batch:
+                rtype = item["type"]
+                rels_by_type.setdefault(rtype, []).append(item)
+
+            for rtype, items in rels_by_type.items():
+                query = f"""
+                UNWIND $items AS item
+                MATCH (a {{name: item.source}})
+                MATCH (b {{name: item.target}})
+                MERGE (a)-[r:`{rtype}`]->(b)
+                """
+                try:
+                    await self.db.execute(query, {"items": items})
+                    rels_saved += len(items)
+                except Exception as e:
+                    await AuditLogger.log(
+                        f"Error saving rels batch for type {rtype}: {e}",
+                        level=logging.ERROR
+                    )
+
+        # --------------------------------------------------
+        # 6. Link File Source node
+        # --------------------------------------------------
+        try:
+            await self.db.execute(
+                "MERGE (f:File {name: $filename})",
+                {"filename": filename}
+            )
+        except Exception as e:
+            await AuditLogger.log(
+                f"Error creating File node: {e}",
+                level=logging.ERROR
+            )
+
+        await AuditLogger.log(
+            f"Ingested file '{filename}': {nodes_saved} nodes, {rels_saved} relationships.",
+            level=logging.INFO
+        )
+
+        return {
+            "nodes_saved": nodes_saved,
+            "relationships_saved": rels_saved
+        }
