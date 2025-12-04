@@ -423,10 +423,10 @@ async def upload_files(
                 # 1. Instantiate services
                 extraction_service = ExtractionService(api_key=gemini_key)
                 embedding_service = EmbeddingService(api_key=gemini_key)
-                
-                # 2. Instantiate ingestor with services
+
+                # 2. Instantiate ingestor with services (use Neo4jDatabase adapter)
                 ingestor = LoreIngestor(
-                    neo4j_driver=request.app.state.neo4j_db.driver,
+                    db=request.app.state.neo4j_db,
                     extraction_service=extraction_service,
                     embedding_service=embedding_service
                 )
