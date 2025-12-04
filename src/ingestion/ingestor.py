@@ -31,11 +31,16 @@ class LoreIngestor:
     MAX_CHUNK_SIZE = 4000
     CHUNK_OVERLAP = 200
 
-    def __init__(self, neo4j_driver, extraction_service: ExtractionService, embedding_service: EmbeddingService):
+    def __init__(
+        self,
+        db: Neo4jDatabase,
+        extraction_service: ExtractionService,
+        embedding_service: EmbeddingService
+    ):
         """
         Initialize the ingestor with necessary services.
         """
-        self.driver = neo4j_driver
+        self.db = db
         self.extraction_service = extraction_service
         self.embedding_service = embedding_service
         self.enable_embeddings = embedding_service is not None
