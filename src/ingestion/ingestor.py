@@ -331,10 +331,13 @@ class LoreIngestor:
                         level=logging.ERROR
                     )
         # 3. Link File Source
-        async with self.driver.session() as session:
-            try:
-                await session.run("MERGE (f:File {name: $filename})", {"filename": filename})
-            except Exception as e:
-                await AuditLogger.log(f"Error creating File node: {e}", level=logging.ERROR)
-
-        return {"nodes_saved": nodes_saved, "rels_saved": rels_saved}
+        try:
+            await self.db.execute(
+                "MERGE (f:File {name: $filename})",
+                {"filename": filename}
+            )
+        except Exception as e:
+            await AuditLogger.log(
+                f"Error creating File node: {e}",
+                level=logging.ERROR
+            )
