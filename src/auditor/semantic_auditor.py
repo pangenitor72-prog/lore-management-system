@@ -1,7 +1,29 @@
-from typing import List, Dict, Any
+"""
+SemanticAuditor
+
+AI-based semantic contradiction detection and personality consistency checks
+using Gemini models.
+
+Responsibilities:
+- Compare two entity records (dicts) and propose contradictions
+- Apply Gospel Principle via confidence/trust weighting
+- Score each contradiction's reliability
+- Suggest possible resolutions when confidence is high enough
+- Check personality consistency for NPC behaviors using OCEAN profiles
+
+NOTE:
+- This class does NOT directly touch Neo4j; it just uses the db reference
+  for potential future extensions and consistency with the rest of the
+  architecture.
+"""
+
+from __future__ import annotations
+
+from typing import List, Dict, Any, Optional
 import json
 import re
 import logging
+import asyncio
 
 import google.generativeai as genai
 from google.api_core.exceptions import GoogleAPIError
@@ -17,35 +39,24 @@ logger = logging.getLogger(__name__)
 class SemanticAuditor:
     """
     Performs AI-based semantic contradiction detection using Gemini.
-
-    Responsibilities:
-    - Compare two entity records (dicts) and propose contradictions
-    - Apply Gospel Principle via confidence/trust weighting
-    - Score each contradiction's reliability
-    - Suggest possible resolutions when confidence is high enough
-
-    NOTE:
-    - This class does NOT directly touch Neo4j; it just uses the db
-      reference for potential future extensions and consistency with
-      the rest of the architecture.
     """
 
     def __init__(self, db: Neo4jDatabase, gemini_api_key: str):
         self.db = db
         genai.configure(api_key=gemini_api_key)
 
-        # Use explicit model handles for clarity
+        # Explicit model handles for clarity
         self.flash_model = genai.GenerativeModel("gemini-2.5-flash")
         self.pro_model = genai.GenerativeModel("gemini-2.5-pro")
 
     # ============================================================
-    # PUBLIC API
+    # PUBLIC API — CONTRADICTION DETECTION
     # ============================================================
 
     def detect_contradictions(
         self,
         entity_a: Dict[str, Any],
-        entity_b: Dict[str, Any]
+        entity_b: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """
         Finds, scores, and suggests resolutions for AI-detected contradictions
@@ -106,9 +117,11 @@ class SemanticAuditor:
             contradictions = self._parse_json_array(raw_text)
 
             final_contradictions: List[Dict[str, Any]] = []
-            for con in contradictions:
-                # Normalize structure a bit before further processing
-                normalized = self._normalize_contradiction(con, entity_a, entity_b)
+            for raw_con in contradictions:
+                # Normalize structure
+                normalized = self._normalize_contradiction(
+                    raw_con, entity_a, entity_b
+                )
 
                 scored_con = self._score_contradiction_confidence(
                     normalized, entity_a, entity_b
@@ -140,7 +153,7 @@ class SemanticAuditor:
             return []
 
     # ============================================================
-    # INTERNAL HELPERS
+    # INTERNAL HELPERS — CONTRADICTION PIPELINE
     # ============================================================
 
     def _parse_json_array(self, text: str) -> List[Dict[str, Any]]:
@@ -205,8 +218,10 @@ class SemanticAuditor:
             entity_ids = []
 
         # Ensure required keys exist with safe defaults
-        normalized = {
-            "type": raw.get("type") or raw.get("contradiction_type") or "SEMANTIC_CONTRADICTION",
+        normalized: Dict[str, Any] = {
+            "type": raw.get("type")
+            or raw.get("contradiction_type")
+            or "SEMANTIC_CONTRADICTION",
             "severity": raw.get("severity") or "MEDIUM",
             "description": raw.get("description")
             or raw.get("message")
@@ -220,11 +235,11 @@ class SemanticAuditor:
             if k not in normalized:
                 normalized[k] = v
 
-        # If entity_ids is empty, fall back to names (for debugging)
+        # If entity_ids is empty, fall back to names/ids (for debugging)
         if not normalized["entity_ids"]:
             a_id = entity_a.get("canon_id") or entity_a.get("id")
             b_id = entity_b.get("canon_id") or entity_b.get("id")
-            ids = [x for x in [a_id, b_id] if x]
+            ids = [x for x in (a_id, b_id) if x]
             normalized["entity_ids"] = ids
 
         return normalized
@@ -391,31 +406,54 @@ class SemanticAuditor:
                 level=logging.ERROR,
             )
             contradiction["possible_resolutions"] = []
-            contradiction["resolution_reasoning"] = f"Unexpected error during resolution suggestion: {e}"
+            contradiction["resolution_reasoning"] = (
+                f"Unexpected error during resolution suggestion: {e}"
+            )
+
         return contradiction
 
+    # ============================================================
+    # SHARED JSON HELPER
+    # ============================================================
+
     def _parse_json_response(self, text: str) -> Dict[str, Any]:
-        """Parses JSON from a string, handling Markdown code blocks."""
-        if not text: return {}
+        """
+        Parses JSON from a string, handling Markdown code blocks.
+        Returns {} on failure.
+        """
+        if not text:
+            return {}
+
         # Try to find JSON block
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             try:
                 return json.loads(match.group())
             except json.JSONDecodeError:
-                pass
+                return {}
+
         return {}
+
+    # ============================================================
+    # PERSONALITY CONSISTENCY CHECK (ASYNC)
+    # ============================================================
 
     async def check_personality_consistency(
         self,
         entity_name: str,
         old_personality: OCEANProfile,
-        new_behavior_description: str
+        new_behavior_description: str,
     ) -> Optional[Dict[str, Any]]:
-        """Check if new behavior is consistent with established personality."""
-        # Use await AuditLogger.log for async method, even if class uses log_sync elsewhere
-        await AuditLogger.log(f"Checking personality consistency for: {entity_name}")
-        
+        """
+        Check if new behavior is consistent with established personality.
+
+        Returns a contradiction-like dict if inconsistent, otherwise None.
+        """
+        # Use async logger for async method
+        await AuditLogger.log(
+            f"Checking personality consistency for: {entity_name}"
+        )
+
         prompt = f"""
 An NPC named {entity_name} has an established personality profile:
 - Openness: {old_personality.openness:.1f}
@@ -438,31 +476,48 @@ Return ONLY valid JSON:
   "explanation": "Why this is/isn't consistent"
 }}
 """
-        
+
         try:
-  response = await asyncio.get_event_loop().run_in_executor(
-    None,
-    lambda: self.pro_model.generate_content(
-        prompt,
-        generation_config={"temperature": 0.1}
-    )
-)
-            
-            result = self._parse_json_response(response.text)
-            
-            if not result.get('consistent', True):
-                await AuditLogger.log(f"Personality inconsistency detected for {entity_name}")
+            # Run pro_model call in a thread so we don't block the event loop
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.pro_model.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.1},
+                ),
+            )
+
+            result = self._parse_json_response(getattr(response, "text", "") or "")
+
+            if not result.get("consistent", True):
+                await AuditLogger.log(
+                    f"Personality inconsistency detected for {entity_name}"
+                )
                 return {
                     "type": "personality_inconsistency",
                     "severity": "MEDIUM",
-                    "description": f"{entity_name}: {result.get('explanation', 'Personality inconsistency detected')}",
-                    "entity": entity_name
+                    "description": (
+                        f"{entity_name}: "
+                        f"{result.get('explanation', 'Personality inconsistency detected')}"
+                    ),
+                    "entity": entity_name,
                 }
+
         except GoogleAPIError as e:
-            await AuditLogger.log(f"Personality consistency Gemini API error: {e}", level=logging.ERROR)
+            await AuditLogger.log(
+                f"Personality consistency Gemini API error: {e}",
+                level=logging.ERROR,
+            )
         except json.JSONDecodeError as e:
-            await AuditLogger.log(f"Personality consistency JSON parsing error: {e}", level=logging.ERROR)
+            await AuditLogger.log(
+                f"Personality consistency JSON parsing error: {e}",
+                level=logging.ERROR,
+            )
         except Exception as e:
-            await AuditLogger.log(f"Personality consistency unexpected error: {e}", level=logging.ERROR)
-        
+            await AuditLogger.log(
+                f"Personality consistency unexpected error: {e}",
+                level=logging.ERROR,
+            )
+
         return None
