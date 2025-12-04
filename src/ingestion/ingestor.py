@@ -1,6 +1,7 @@
 from src.db.neo4j_adapter import Neo4jDatabase
 import asyncio
 import os
+import uuid
 import json
 import re
 import logging
@@ -226,8 +227,11 @@ class LoreIngestor:
         node_batch = []
         for node in nodes:
             node_id = node.get("id", "")
-            if not node_id:
-                continue
+if not node_id:
+    continue
+
+# Generate stable unique identity for ingested entities
+canon_id = node.get("canon_id") or f"ai-{uuid.uuid4().hex[:12]}"
             
             # Sanitize label using the proper identifier sanitizer
             label = node.get("label", "Entity")
