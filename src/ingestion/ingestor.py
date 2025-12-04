@@ -279,7 +279,7 @@ class LoreIngestor:
                     "type": safe_rel_type
                 })
 
-        # 1. Save Nodes (Batch)
+      # 1. Save Nodes (Batch)
         if node_batch:
             # Group by label to optimize MERGE
             nodes_by_label = {}
@@ -288,20 +288,22 @@ class LoreIngestor:
                 if lbl not in nodes_by_label:
                     nodes_by_label[lbl] = []
                 nodes_by_label[lbl].append(item)
-            
-            async with self.driver.session() as session:
-                for label, items in nodes_by_label.items():
-                    query = f"""
-                    UNWIND $items AS item
-                    MERGE (n:`{label}` {{name: item.name}})
-                    SET n += item.props
-                    SET n:Entity
-                    """
-                    try:
-                        await session.run(query, {"items": items})
-                        nodes_saved += len(items)
-                    except Exception as e:
-                        await AuditLogger.log(f"Error saving nodes batch for label {label}: {e}", level=logging.ERROR)
+
+            for label, items in nodes_by_label.items():
+                query = f"""
+                UNWIND $items AS item
+                MERGE (n:`{label}` {{name: item.name}})
+                SET n += item.props
+                SET n:Entity
+                """
+                try:
+                    await self.db.execute(query, {"items": items})
+                    nodes_saved += len(items)
+                except Exception as e:
+                    await AuditLogger.log(
+                        f"Error saving nodes batch for label {label}: {e}",
+                        level=logging.ERROR
+                    )
 
         # 2. Save Relationships (Batch)
         if rel_batch:
