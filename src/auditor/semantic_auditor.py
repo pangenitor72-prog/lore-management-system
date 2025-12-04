@@ -440,14 +440,13 @@ Return ONLY valid JSON:
 """
         
         try:
-            # Use self.pro as requested (pro_model)
-            response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.pro.generate_content(
-                    prompt,
-                    generation_config={"temperature": 0.1}
-                )
-            )
+  response = await asyncio.get_event_loop().run_in_executor(
+    None,
+    lambda: self.pro_model.generate_content(
+        prompt,
+        generation_config={"temperature": 0.1}
+    )
+)
             
             result = self._parse_json_response(response.text)
             
