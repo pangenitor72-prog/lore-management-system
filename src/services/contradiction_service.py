@@ -1,164 +1,165 @@
-# src/services/embedding_service.py
-from typing import List, Optional
+# src/services/contradiction_service.py
 
-from src.services.embedding_orchestrator import EmbeddingOrchestrator
+import logging
+from typing import List, Dict, Any, Optional
+
+from src.auditor.auditor_agent import AuditorAgent
+from src.core.models import Contradiction
 from src.services.audit_log import AuditLogger
+from src.services.broadcaster import broadcaster
+
+logger = logging.getLogger(__name__)
 
 
-class EmbeddingService:
+class ContradictionService:
     """
-    Generates text embeddings using Google's Gemini embedding model via
-    EmbeddingOrchestrator.
+    High-level façade that coordinates contradiction detection and resolution
+    across the RuleBasedAuditor and SemanticAuditor via the AuditorAgent.
 
-    These embeddings enable semantic similarity search - finding conceptually
-    similar entities even when exact keywords don't match.
+    Responsibilities:
+    - Trigger full audits
+    - Trigger pairwise semantic contradiction checks
+    - Format results for API/UI
+    - Forward events to WebSocket broadcaster
+    - Wrap AuditorAgent to keep API layer clean
     """
 
-    def __init__(self, api_key: str):
-        """Initialize the embedding service with Gemini API key."""
-        self.orchestrator = EmbeddingOrchestrator(api_key=api_key)
+    def __init__(self, auditor_agent: AuditorAgent):
+        self.auditor = auditor_agent
+        AuditLogger.log_sync("ContradictionService initialized.")
+
+    # ----------------------------------------------------------------------
+    # FULL AUDIT (Rule-Based)
+    # ----------------------------------------------------------------------
+    async def run_full_audit(self) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Run the rule-based audit, return the dictionary of categorized
+        contradictions, and publish the result over WebSockets.
+        """
+        AuditLogger.log_sync("ContradictionService: Starting full audit.")
+        results = await self.auditor.run_full_audit()
+
+        # Broadcast summary to UI dashboard
+        summary = self.auditor.rule_based_auditor.get_summary(results)
+        await broadcaster.publish("auditor_events", {
+            "type": "audit_complete",
+            "summary": summary,
+        })
+
+        AuditLogger.log_sync("ContradictionService: Full audit complete.")
+        return results
+
+    # ----------------------------------------------------------------------
+    # SEMANTIC CONTRADICTION CHECK
+    # ----------------------------------------------------------------------
+    async def check_entities_for_semantic_contradictions(
+        self,
+        entity_a: Dict[str, Any],
+        entity_b: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """
+        Runs the AI semantic contradiction detector between two entities.
+
+        Returns a list of contradiction dicts, NOT Contradiction objects,
+        because UI/API expects JSON-serializable dicts.
+        """
+        a_name = entity_a.get("name", "?")
+        b_name = entity_b.get("name", "?")
+
         AuditLogger.log_sync(
-            "EmbeddingService: Initialized with EmbeddingOrchestrator"
+            f"ContradictionService: Checking semantic contradictions "
+            f"between '{a_name}' and '{b_name}'."
         )
 
-    def embed_text(
+        contradictions = self.auditor.detect_contradictions(entity_a, entity_b)
+
+        # Broadcast live update for dashboard (semantic scan)
+        if contradictions:
+            await broadcaster.publish("auditor_events", {
+                "type": "semantic_contradictions_found",
+                "entity_a": a_name,
+                "entity_b": b_name,
+                "count": len(contradictions),
+            })
+
+        return contradictions
+
+    # ----------------------------------------------------------------------
+    # ENTITY CREATION AUDIT (PRE-CHECK)
+    # ----------------------------------------------------------------------
+    async def audit_new_entity_before_creation(
         self,
-        text: str,
-        task_type: str = "RETRIEVAL_DOCUMENT",
-    ) -> Optional[List[float]]:
+        entity_data: Dict[str, Any],
+        session_id: str
+    ) -> Dict[str, Any]:
         """
-        Generate an embedding vector for a single text string.
-
-        Args:
-            text: The text to embed (entity description, lore content, etc.)
-            task_type: The type of task - affects how embeddings are optimized
-                - RETRIEVAL_DOCUMENT: For documents/entities being stored
-                - RETRIEVAL_QUERY: For search queries
-                - SEMANTIC_SIMILARITY: For comparing two texts
-                - CLASSIFICATION: For text classification
-
-        Returns:
-            List of floats (768-dimensional vector) or None if failed
+        Check contradictions BEFORE inserting a new entity into Neo4j.
+        This enforces Gospel Principle constraints for world consistency.
         """
-        return self.orchestrator.generate_embedding(text, task_type)
+        name = entity_data.get("name", "Unknown")
 
-    def embed_query(self, query: str) -> Optional[List[float]]:
-        """
-        Generate an embedding for a search query.
-        Uses RETRIEVAL_QUERY task type for optimal query matching.
-        """
-        return self.embed_text(query, task_type="RETRIEVAL_QUERY")
-
-    def embed_entity(self, entity: dict) -> Optional[List[float]]:
-        """
-        Generate an embedding for an entity based on its combined text content.
-
-        This is designed to work with the shape produced by the Smart Ingestor:
-            {
-                "id": "...",
-                "label": "Character",
-                "properties": {
-                    "description": "...",
-                    "content": "...",
-                    "aliases": [...],
-                    ...
-                }
-            }
-
-        It also degrades gracefully if called with a flatter dict.
-        """
-        parts: List[str] = []
-
-        # Neo4j / ingestor pattern: entity["properties"] holds the actual data
-        props = entity.get("properties") or {}
-
-        # Name is critical
-        name = (
-            entity.get("name")
-            or entity.get("canonical_name")
-            or props.get("name")
-            or props.get("canonical_name")
+        AuditLogger.log_sync(
+            f"ContradictionService: Auditing new entity before creation: {name}"
         )
-        if name:
-            parts.append(f"Name: {name}")
 
-        # Type/label provides context
-        entity_type = (
-            entity.get("type")
-            or entity.get("label")
-            or props.get("entity_type")
-            or props.get("label")
-        )
-        if entity_type:
-            parts.append(f"Type: {entity_type}")
+        result = await self.auditor.audit_new_entity(entity_data)
 
-        # Description is the main content
-        description = entity.get("description") or props.get("description")
-        if description:
-            parts.append(f"Description: {description}")
+        # If blocked, queue for human review
+        if not result["approved"]:
+            await self.auditor.queue_blocked_entity(entity_data, result, session_id)
 
-        # Additional content if present
-        content = entity.get("content") or props.get("content")
-        if content:
-            parts.append(f"Content: {content}")
+            await broadcaster.publish("auditor_events", {
+                "type": "entity_creation_blocked",
+                "entity": name,
+                "action": result["action"],
+                "reason": (
+                    result["contradictions"][0]["conflict"]
+                    if result["contradictions"]
+                    else "Unknown"
+                ),
+            })
 
-        # Aliases provide alternative names
-        aliases = entity.get("aliases") or props.get("aliases")
-        if aliases:
-            if isinstance(aliases, list):
-                parts.append(f"Also known as: {', '.join(aliases)}")
-            else:
-                parts.append(f"Also known as: {aliases}")
+        return result
 
-        if not parts:
-            # Nothing meaningful to embed
-            return None
+    # ----------------------------------------------------------------------
+    # REVIEW QUEUE OPERATIONS
+    # ----------------------------------------------------------------------
+    async def get_pending_reviews(self) -> List[Dict[str, Any]]:
+        """Return all queued contradictions awaiting human review."""
+        return await self.auditor.get_pending_reviews()
 
-        combined_text = "\n".join(parts)
+    async def approve_review(self, review_id: str, approver: str = "Human") -> bool:
+        """Approve a contradiction resolution from the review queue."""
+        AuditLogger.log_sync(f"ContradictionService: Approving review {review_id}.")
+        result = await self.auditor.approve_queued_entity(review_id, approver)
 
-        # Weak-signal logging (for later diagnostics)
-        if len(combined_text) < 20:
-            AuditLogger.log_sync(
-                f"EmbeddingService: Weak embedding source for entity "
-                f"'{name or 'UNKNOWN'}'. Combined text too short.",
-                level="WARNING",
-            )
+        if result:
+            await broadcaster.publish("auditor_events", {
+                "type": "review_approved",
+                "review_id": review_id,
+                "approved_by": approver,
+            })
 
-        return self.embed_text(combined_text, task_type="RETRIEVAL_DOCUMENT")
+        return result
 
-    def embed_batch(
+    async def reject_review(
         self,
-        texts: List[str],
-        task_type: str = "RETRIEVAL_DOCUMENT",
-    ) -> List[Optional[List[float]]]:
-        """
-        Generate embeddings for multiple texts.
+        review_id: str,
+        rejector: str = "Human",
+        reason: str = ""
+    ) -> bool:
+        """Reject a queued contradiction resolution."""
+        AuditLogger.log_sync(
+            f"ContradictionService: Rejecting review {review_id} (reason: {reason})"
+        )
+        result = await self.auditor.reject_queued_entity(review_id, rejector, reason)
 
-        Note: Currently processes sequentially. Gemini's batch API could be
-        used for higher throughput if needed.
-        """
-        embeddings: List[Optional[List[float]]] = []
-        for text in texts:
-            embedding = self.embed_text(text, task_type)
-            embeddings.append(embedding)
-        return embeddings
+        if result:
+            await broadcaster.publish("auditor_events", {
+                "type": "review_rejected",
+                "review_id": review_id,
+                "rejected_by": rejector,
+                "reason": reason,
+            })
 
-    @staticmethod
-    def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
-        """
-        Calculate cosine similarity between two vectors.
-
-        Returns value between -1 and 1, where 1 = identical direction.
-        For normalized embeddings, this is equivalent to dot product.
-        """
-        if not vec_a or not vec_b or len(vec_a) != len(vec_b):
-            return 0.0
-
-        dot_product = sum(a * b for a, b in zip(vec_a, vec_b))
-        magnitude_a = sum(a * a for a in vec_a) ** 0.5
-        magnitude_b = sum(b * b for b in vec_b) ** 0.5
-
-        if magnitude_a == 0 or magnitude_b == 0:
-            return 0.0
-
-        return dot_product / (magnitude_a * magnitude_b)
+        return result
