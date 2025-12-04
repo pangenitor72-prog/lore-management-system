@@ -10,7 +10,7 @@ from neo4j.exceptions import Neo4jError
 from src.db.neo4j_adapter import Neo4jDatabase
 from src.services.audit_log import AuditLogger
 from src.prompts import AuditorPrompts
-from src.core.models import Contradiction
+from src.core.models import Contradiction, OCEANProfile
 
 logger = logging.getLogger(__name__)
 
@@ -208,3 +208,77 @@ class SemanticAuditor:
             contradiction["possible_resolutions"] = []
             contradiction["resolution_reasoning"] = f"Unexpected error during resolution suggestion: {e}"
         return contradiction
+
+    def _parse_json_response(self, text: str) -> Dict[str, Any]:
+        """Parses JSON from a string, handling Markdown code blocks."""
+        if not text: return {}
+        # Try to find JSON block
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+        return {}
+
+    async def check_personality_consistency(
+        self,
+        entity_name: str,
+        old_personality: OCEANProfile,
+        new_behavior_description: str
+    ) -> Optional[Dict[str, Any]]:
+        """Check if new behavior is consistent with established personality."""
+        # Use await AuditLogger.log for async method, even if class uses log_sync elsewhere
+        await AuditLogger.log(f"Checking personality consistency for: {entity_name}")
+        
+        prompt = f"""
+An NPC named {entity_name} has an established personality profile:
+- Openness: {old_personality.openness:.1f}
+- Conscientiousness: {old_personality.conscientiousness:.1f}
+- Extraversion: {old_personality.extraversion:.1f}
+- Agreeableness: {old_personality.agreeableness:.1f}
+- Neuroticism: {old_personality.neuroticism:.1f}
+
+Behavioral Summary: {old_personality.get_behavioral_summary()}
+
+New behavior observed: {new_behavior_description}
+
+Is this behavior consistent with their established personality?
+Consider that people can act out of character under stress, but extreme contradictions 
+(reserved person suddenly very chatty, organized person suddenly chaotic) are inconsistent.
+
+Return ONLY valid JSON:
+{{
+  "consistent": true/false,
+  "explanation": "Why this is/isn't consistent"
+}}
+"""
+        
+        try:
+            # Use self.pro as requested (pro_model)
+            response = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: self.pro.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.1}
+                )
+            )
+            
+            result = self._parse_json_response(response.text)
+            
+            if not result.get('consistent', True):
+                await AuditLogger.log(f"Personality inconsistency detected for {entity_name}")
+                return {
+                    "type": "personality_inconsistency",
+                    "severity": "MEDIUM",
+                    "description": f"{entity_name}: {result.get('explanation', 'Personality inconsistency detected')}",
+                    "entity": entity_name
+                }
+        except GoogleAPIError as e:
+            await AuditLogger.log(f"Personality consistency Gemini API error: {e}", level=logging.ERROR)
+        except json.JSONDecodeError as e:
+            await AuditLogger.log(f"Personality consistency JSON parsing error: {e}", level=logging.ERROR)
+        except Exception as e:
+            await AuditLogger.log(f"Personality consistency unexpected error: {e}", level=logging.ERROR)
+        
+        return None

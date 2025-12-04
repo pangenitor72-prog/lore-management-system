@@ -17,8 +17,6 @@ from src.services.audit_log import AuditLogger
 import logging
 import asyncio
 from src.db.neo4j_adapter import Neo4jDatabase
-import google.generativeai as genai
-from google.api_core.exceptions import GoogleAPIError # Added for specific error handling
 from neo4j.exceptions import Neo4jError # Added for specific error handling
 from src.services.broadcaster import broadcaster
 from src.prompts import AuditorPrompts
@@ -282,59 +280,10 @@ class AuditorAgent:
         old_personality: OCEANProfile,
         new_behavior_description: str
     ) -> Optional[Dict[str, Any]]:
-        """Check if new behavior is consistent with established personality."""
-        await AuditLogger.log(f"Checking personality consistency for: {entity_name}")
-        
-        prompt = f"""
-An NPC named {entity_name} has an established personality profile:
-- Openness: {old_personality.openness:.1f}
-- Conscientiousness: {old_personality.conscientiousness:.1f}
-- Extraversion: {old_personality.extraversion:.1f}
-- Agreeableness: {old_personality.agreeableness:.1f}
-- Neuroticism: {old_personality.neuroticism:.1f}
-
-Behavioral Summary: {old_personality.get_behavioral_summary()}
-
-New behavior observed: {new_behavior_description}
-
-Is this behavior consistent with their established personality?
-Consider that people can act out of character under stress, but extreme contradictions 
-(reserved person suddenly very chatty, organized person suddenly chaotic) are inconsistent.
-
-Return ONLY valid JSON:
-{{
-  "consistent": true/false,
-  "explanation": "Why this is/isn't consistent"
-}}
-"""
-        
-        try:
-            response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.flash.generate_content(
-                    prompt,
-                    generation_config={"temperature": 0.1}
-                )
-            )
-            
-            result = self._parse_json_response(response.text)
-            
-            if not result.get('consistent', True):
-                await AuditLogger.log(f"Personality inconsistency detected for {entity_name}")
-                return {
-                    "type": "personality_inconsistency",
-                    "severity": "MINOR",
-                    "description": f"{entity_name}: {result.get('explanation', 'Personality inconsistency detected')}",
-                    "entity": entity_name
-                }
-        except GoogleAPIError as e:
-            await AuditLogger.log(f"Personality consistency Gemini API error: {e}", level=logging.ERROR)
-        except json.JSONDecodeError as e:
-            await AuditLogger.log(f"Personality consistency JSON parsing error: {e}", level=logging.ERROR)
-        except Exception as e:
-            await AuditLogger.log(f"Personality consistency unexpected error: {e}", level=logging.ERROR)
-        
-        return None
+        """Delegates personality consistency check to SemanticAuditor."""
+        return await self.semantic_auditor.check_personality_consistency(
+            entity_name, old_personality, new_behavior_description
+        )
 
     async def get_entity_personality(self, entity_name: str) -> Optional[OCEANProfile]:
         """Retrieve OCEAN personality profile for an entity from Neo4j."""
