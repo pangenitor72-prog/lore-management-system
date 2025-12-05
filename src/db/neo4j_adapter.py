@@ -40,6 +40,11 @@ class Neo4jDatabase:
         """
         Execute a read/write Cypher query safely.
         Ensures sessions are always closed.
+        
+        HARDENING PHASE FIX:
+        - No silent failures.
+        - Structured error logs.
+        - Exceptions are re-raised with context.
         """
         params = params or {}
 
@@ -48,19 +53,45 @@ class Neo4jDatabase:
                 result = tx.run(cypher, params)
                 return [record.data() for record in result]
 
-            # Open + close session safely
-            return await asyncio.to_thread(
-                lambda: self._driver.session(database=self.database).execute_write(_run)
-            )
+            # Use a context-managed session to guarantee closure
+            def _execute():
+                with self._driver.session(database=self.database) as session:
+                    return session.execute_write(_run)
+
+            return await asyncio.to_thread(_execute)
 
         except ServiceUnavailable as e:
-            logger.error(f"Neo4j unavailable: {e}")
-            return []
+            logger.error(
+                "Neo4j ServiceUnavailable",
+                exc_info=True,
+                extra={
+                    "cypher": cypher,
+                    "params": params,
+                    "database": self.database,
+                },
+            )
+            raise
 
         except Neo4jError as e:
-            logger.error(f"Neo4j error: {e}")
-            return []
+            logger.error(
+                "Neo4jError occurred",
+                exc_info=True,
+                extra={
+                    "cypher": cypher,
+                    "params": params,
+                    "database": self.database,
+                },
+            )
+            raise
 
         except Exception as e:
-            logger.error(f"Unexpected Neo4j error: {e}")
-            return []
+            logger.error(
+                "Unexpected Neo4j exception",
+                exc_info=True,
+                extra={
+                    "cypher": cypher,
+                    "params": params,
+                    "database": self.database,
+                },
+            )
+            raise
