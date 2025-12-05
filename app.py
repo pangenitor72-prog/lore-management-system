@@ -1,30 +1,16 @@
 import streamlit as st
 import os
-import sys
-import asyncio
 import json
-import re
+import uuid
 from datetime import datetime
 from dotenv import load_dotenv
-from neo4j import GraphDatabase, AsyncGraphDatabase  # Use sync driver for Streamlit
 from streamlit_agraph import agraph, Node, Edge, Config
+import requests
 
-# Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from src.ingestor import LoreIngestor
-from src.auditor_agent import AuditorAgent
-from src.query_agent import QueryAgent
-from src.neo4j_adapter import Neo4jDatabase
-
-# Load Environment
+# Load environment
 load_dotenv()
 
-# Config from environment
-DB_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-DB_USER = os.getenv("NEO4J_USER", "neo4j")
-DB_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
-GEMINI_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+API_BASE = os.getenv("LMS_API_BASE", "http://127.0.0.1:8000")
 
 # Page Config
 st.set_page_config(
@@ -451,7 +437,28 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize Session State
+# ==========================================
+# SIMPLE API HELPERS
+# ==========================================
+
+def api_get(path: str, params: dict | None = None, timeout: int = 10):
+    url = f"{API_BASE}{path}"
+    resp = requests.get(url, params=params, timeout=timeout)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def api_post(path: str, payload: dict | None = None, timeout: int = 30):
+    url = f"{API_BASE}{path}"
+    resp = requests.post(url, json=payload or {}, timeout=timeout)
+    resp.raise_for_status()
+    return resp.json()
+
+
+# ==========================================
+# SESSION STATE
+# ==========================================
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "audit_result" not in st.session_state:
@@ -463,32 +470,29 @@ if "ingestion_errors" not in st.session_state:
 if "ingestion_totals" not in st.session_state:
     st.session_state.ingestion_totals = None
 
-# Database Connection (Cached) - Using SYNC driver for Streamlit
-@st.cache_resource
-def get_sync_driver():
-    """Create a synchronous Neo4j driver for Streamlit compatibility."""
-    driver = GraphDatabase.driver(DB_URI, auth=(DB_USER, DB_PASSWORD))
-    # Verify connectivity
-    driver.verify_connectivity()
-    return driver
+# AIRpg state
+if "airpg_session_id" not in st.session_state:
+    st.session_state.airpg_session_id = None
+if "airpg_history" not in st.session_state:
+    st.session_state.airpg_history = []
+if "airpg_session_0_complete" not in st.session_state:
+    st.session_state.airpg_session_0_complete = False
+if "airpg_session_0_answers" not in st.session_state:
+    st.session_state.airpg_session_0_answers = {}
+if "selected_mode" not in st.session_state:
+    st.session_state.selected_mode = "🔮 Query The Oracle"
 
-def run_query(driver, query, params=None):
-    """Run a Cypher query synchronously."""
-    if params is None:
-        params = {}
-    with driver.session() as session:
-        result = session.run(query, params)
-        return [record.data() for record in result]
+# ==========================================
+# BACKEND CONNECTION STATUS (via /health)
+# ==========================================
 
-# Initialize connections
 try:
-    neo4j_driver = get_sync_driver()
-    is_connected = True
-    connection_error = None
+    health = api_get("/health", timeout=5)
+    is_connected = health.get("status") in ("healthy", "degraded")
+    connection_error = None if is_connected else str(health)
 except Exception as e:
     is_connected = False
     connection_error = str(e)
-    neo4j_driver = None
 
 # ==========================================
 # SIDEBAR - The Oracle's Sanctum
@@ -496,9 +500,9 @@ except Exception as e:
 with st.sidebar:
     st.markdown("# ⚗️ THE ORACLE")
     st.caption("*Keeper of Ancient Lore*")
-    
+
     st.divider()
-    
+
     # Connection Status
     if is_connected:
         st.markdown("""
@@ -512,15 +516,16 @@ with st.sidebar:
             ◎ ORACLE DORMANT
         </div>
         """, unsafe_allow_html=True)
-        st.error(f"Connection failed: {connection_error}")
-    
+        if connection_error:
+            st.error(f"Connection failed: {connection_error}")
+
     st.divider()
-    
+
     # Play AIRpg - Prominent Button
     if st.button("⚔️ PLAY AIRpg", type="primary", use_container_width=True):
         st.session_state.selected_mode = "⚔️ Play AIRpg"
         st.rerun()
-    
+
     # Session Controls - New / Continue
     sess_col1, sess_col2 = st.columns(2)
     with sess_col1:
@@ -532,125 +537,86 @@ with st.sidebar:
             st.session_state.selected_mode = "⚔️ Play AIRpg"
             st.rerun()
     with sess_col2:
-        # Continue - load most recent save
         if st.button("▶️ Continue", help="Resume last session", use_container_width=True, key="sidebar_continue"):
             if is_connected:
                 try:
-                    recent = run_query(neo4j_driver, """
-                        MATCH (s:GameSession)
-                        WHERE s.history IS NOT NULL
-                        RETURN s.session_id, s.setting, s.character, s.tone,
-                               s.session_0_complete, s.history
-                        ORDER BY s.saved_at DESC LIMIT 1
-                    """)
-                    if recent:
-                        data = recent[0]
-                        st.session_state.airpg_session_id = data['s.session_id']
+                    data = api_get("/airpg/session/latest")
+                    if data:
+                        st.session_state.airpg_session_id = data["session_id"]
                         st.session_state.airpg_session_0_answers = {
-                            "setting": data['s.setting'],
-                            "character": data['s.character'],
-                            "tone": data['s.tone']
+                            "setting": data.get("setting", ""),
+                            "character": data.get("character", ""),
+                            "tone": data.get("tone", ""),
                         }
-                        st.session_state.airpg_session_0_complete = data['s.session_0_complete']
-                        st.session_state.airpg_history = json.loads(data['s.history']) if data['s.history'] else []
+                        st.session_state.airpg_session_0_complete = data.get("session_0_complete", False)
+                        history_raw = data.get("history") or "[]"
+                        st.session_state.airpg_history = json.loads(history_raw)
                         st.session_state.selected_mode = "⚔️ Play AIRpg"
                         st.rerun()
                     else:
                         st.warning("No saved sessions")
                 except Exception:
                     st.error("Load failed")
-    
+
     # Save Slots
     if is_connected:
         st.markdown("**💾 Save Slots:**")
-        
-        # Get existing saves for slots 1-3
         slot_data = {}
         try:
-            slots = run_query(neo4j_driver, """
-                MATCH (s:GameSession)
-                WHERE s.slot IS NOT NULL
-                RETURN s.slot as slot, s.setting as setting, s.turn_count as turns, s.saved_at as saved
-                ORDER BY s.slot
-            """)
-            for s in (slots or []):
-                slot_data[s['slot']] = s
+            slots = api_get("/airpg/slots")
+            for s in slots or []:
+                slot_data[s["slot"]] = s
         except Exception:
             pass
-        
+
         for slot_num in [1, 2, 3]:
             slot_info = slot_data.get(slot_num)
             col_load, col_save = st.columns([3, 1])
-            
+
             with col_load:
                 if slot_info:
-                    setting_preview = (slot_info['setting'] or "?")[:15]
-                    label = f"Slot {slot_num}: {setting_preview}... ({slot_info['turns'] or 0}t)"
+                    setting_preview = (slot_info.get("setting") or "?")[:15]
+                    label = f"Slot {slot_num}: {setting_preview}... ({slot_info.get('turns') or 0}t)"
                 else:
                     label = f"Slot {slot_num}: Empty"
-                
+
                 if st.button(label, key=f"load_slot_{slot_num}", use_container_width=True, disabled=not slot_info):
-                    # Load from slot
                     try:
-                        load_result = run_query(neo4j_driver, """
-                            MATCH (s:GameSession {slot: $slot})
-                            RETURN s.session_id, s.setting, s.character, s.tone,
-                                   s.session_0_complete, s.history
-                        """, {"slot": slot_num})
-                        if load_result:
-                            data = load_result[0]
-                            st.session_state.airpg_session_id = data['s.session_id']
-                            st.session_state.airpg_session_0_answers = {
-                                "setting": data['s.setting'],
-                                "character": data['s.character'],
-                                "tone": data['s.tone']
-                            }
-                            st.session_state.airpg_session_0_complete = data['s.session_0_complete']
-                            st.session_state.airpg_history = json.loads(data['s.history']) if data['s.history'] else []
-                            st.session_state.selected_mode = "⚔️ Play AIRpg"
-                            st.rerun()
+                        data = api_get(f"/airpg/slot/{slot_num}")
+                        st.session_state.airpg_session_id = data["session_id"]
+                        st.session_state.airpg_session_0_answers = {
+                            "setting": data.get("setting", ""),
+                            "character": data.get("character", ""),
+                            "tone": data.get("tone", ""),
+                        }
+                        st.session_state.airpg_session_0_complete = data.get("session_0_complete", False)
+                        history_raw = data.get("history") or "[]"
+                        st.session_state.airpg_history = json.loads(history_raw)
+                        st.session_state.selected_mode = "⚔️ Play AIRpg"
+                        st.rerun()
                     except Exception:
                         st.error("Load failed")
-            
+
             with col_save:
                 if st.button("💾", key=f"save_slot_{slot_num}", help=f"Save to slot {slot_num}"):
                     if st.session_state.get("airpg_session_id") and st.session_state.get("airpg_history"):
                         try:
-                            # Clear old slot if exists
-                            run_query(neo4j_driver, "MATCH (s:GameSession {slot: $slot}) DELETE s", {"slot": slot_num})
-                            # Save to slot
-                            run_query(neo4j_driver, """
-                                CREATE (s:GameSession {
-                                    session_id: $session_id,
-                                    slot: $slot,
-                                    setting: $setting,
-                                    character: $character,
-                                    tone: $tone,
-                                    session_0_complete: $session_0_complete,
-                                    history: $history,
-                                    saved_at: $saved_at,
-                                    turn_count: $turn_count
-                                })
-                            """, {
+                            payload = {
                                 "session_id": st.session_state.airpg_session_id,
-                                "slot": slot_num,
-                                "setting": st.session_state.airpg_session_0_answers.get("setting", ""),
-                                "character": st.session_state.airpg_session_0_answers.get("character", ""),
-                                "tone": st.session_state.airpg_session_0_answers.get("tone", ""),
+                                "session_0_answers": st.session_state.airpg_session_0_answers,
                                 "session_0_complete": st.session_state.airpg_session_0_complete,
-                                "history": json.dumps(st.session_state.airpg_history),
-                                "saved_at": datetime.now().isoformat(),
-                                "turn_count": len([h for h in st.session_state.airpg_history if h["role"] == "user"])
-                            })
+                                "history": st.session_state.airpg_history,
+                            }
+                            api_post(f"/airpg/slot/{slot_num}", payload)
                             st.success(f"Slot {slot_num} ✓")
                             st.rerun()
-                        except Exception as e:
+                        except Exception:
                             st.error("Save failed")
                     else:
                         st.warning("Nothing to save")
-    
+
     st.markdown("")  # Spacing
-    
+
     # Mode Selection - Other modes
     st.markdown("### 📜 Consult The Archives")
     other_modes = ["🔮 Query The Oracle", "📥 Lore Ingestion", "⚖️ Truth Auditor", "📊 Graph Nexus"]
@@ -660,40 +626,29 @@ with st.sidebar:
         label_visibility="collapsed",
         key="other_mode_radio"
     )
-    
-    # Track mode selection
-    if "selected_mode" not in st.session_state:
-        st.session_state.selected_mode = "🔮 Query The Oracle"
-    
-    # Update mode if radio changed (and not in AIRpg mode)
+
     if st.session_state.selected_mode != "⚔️ Play AIRpg":
         st.session_state.selected_mode = selected_other
-    
+
     mode = st.session_state.selected_mode
-    
+
     st.divider()
-    
+
     # Lore Integrity Monitor (Review Queue)
     if is_connected:
         try:
-            # Check for pending reviews
-            review_query = """
-            MATCH (r:ReviewQueue {status: 'PENDING'})
-            RETURN count(r) AS pending_count
-            """
-            review_result = run_query(neo4j_driver, review_query)
-            pending_count = review_result[0]['pending_count'] if review_result else 0
-            
+            pending = api_get("/review/pending", params={"limit": 10})
+            pending_count = len(pending)
             if pending_count > 0:
                 st.markdown("### 🔍 Lore Integrity")
                 st.warning(f"⚠️ {pending_count} blocked entities need review")
                 if st.button("📋 Open Review Queue"):
                     st.session_state['show_review_queue'] = True
         except Exception:
-            pass  # Silently fail if query doesn't work
-    
+            pass
+
     st.divider()
-    
+
     # Oracle wisdom
     st.markdown("""
     <div class="oracle-quote">
@@ -702,7 +657,7 @@ with st.sidebar:
         who dare to look."
     </div>
     """, unsafe_allow_html=True)
-    
+
     # Version info
     st.caption("v1.0.0 — AIRpg Phase I")
 
@@ -712,14 +667,15 @@ with st.sidebar:
 st.markdown("# ⚗️ The Lore Oracle")
 st.caption("*30 years of memory. One source of truth.*")
 
+mode = st.session_state.selected_mode
+
 # ==========================================
 # MODE: PLAY AIRPG
 # ==========================================
 if mode == "⚔️ Play AIRpg":
     st.markdown("## ⚔️ AIRpg — The Grounded Dungeon Master")
     st.markdown("*Step into the fiction. The Oracle becomes your guide.*")
-    
-    # Game Rules in Sidebar
+
     with st.sidebar:
         st.markdown("---")
         st.subheader("🎲 Game Rules")
@@ -737,26 +693,11 @@ if mode == "⚔️ Play AIRpg":
 
 *The DM can override agency only with in-world justification (magic, injury, etc.)*
 """)
-    
+
     st.divider()
-    
-    # Initialize AIRpg session state
-    if "airpg_session_id" not in st.session_state:
-        st.session_state.airpg_session_id = None
-    if "airpg_history" not in st.session_state:
-        st.session_state.airpg_history = []
-    if "airpg_session_0_complete" not in st.session_state:
-        st.session_state.airpg_session_0_complete = False
-    if "airpg_session_0_answers" not in st.session_state:
-        st.session_state.airpg_session_0_answers = {}
-    
-    # Start new session if needed
+
     if st.session_state.airpg_session_id is None and is_connected:
-        # Create new session
-        import uuid
         st.session_state.airpg_session_id = str(uuid.uuid4())
-        
-        # Show Session 0 intro
         intro_msg = (
             "*The Oracle stirs...*\n\n"
             "Before we begin, I need to understand the shape of our story.\n\n"
@@ -765,60 +706,42 @@ if mode == "⚔️ Play AIRpg":
             "a haunted forest, a quiet monastery...*"
         )
         st.session_state.airpg_history.append({"role": "assistant", "content": intro_msg})
-    
-    # Display conversation history
+
+    # Display history
     for msg in st.session_state.airpg_history:
         avatar = "🎭" if msg["role"] == "assistant" else "⚔️"
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(msg["content"])
-    
-    # Chat input
+
     if is_connected and (player_input := st.chat_input("What do you do?")):
-        # Add player message
         st.session_state.airpg_history.append({"role": "user", "content": player_input})
         with st.chat_message("user", avatar="⚔️"):
             st.markdown(player_input)
-        
-        # Generate DM response
+
         with st.chat_message("assistant", avatar="🎭"):
             with st.spinner("*The DM considers...*"):
                 try:
-                    # Import and run DM Agent
-                    from src.dm_agent import DMAgent
-                    
-                    async def get_dm_response():
-                        async_driver = AsyncGraphDatabase.driver(DB_URI, auth=(DB_USER, DB_PASSWORD))
-                        db = Neo4jDatabase(DB_URI, (DB_USER, DB_PASSWORD))
-                        await db.connect()
-                        
-                        try:
-                            dm = DMAgent(db, GEMINI_KEY)
-                            await dm.start_session(st.session_state.airpg_session_id)
-                            
-                            # Restore session state
-                            dm.session_0_complete = st.session_state.airpg_session_0_complete
-                            dm.session_0_answers = st.session_state.airpg_session_0_answers.copy()
-                            dm.history = [h.copy() for h in st.session_state.airpg_history[:-1]]  # Exclude current input
-                            
-                            # Process input
-                            response = await dm.process_input(player_input)
-                            
-                            # Save session state back
-                            st.session_state.airpg_session_0_complete = dm.session_0_complete
-                            st.session_state.airpg_session_0_answers = dm.session_0_answers.copy()
-                            
-                            return response
-                        finally:
-                            await db.close()
-                    
-                    response = asyncio.run(get_dm_response())
+                    payload = {
+                        "session_id": st.session_state.airpg_session_id,
+                        "history": st.session_state.airpg_history[:-1],
+                        "session_0_complete": st.session_state.airpg_session_0_complete,
+                        "session_0_answers": st.session_state.airpg_session_0_answers,
+                        "player_input": player_input,
+                    }
+                    data = api_post("/dm/next", payload, timeout=60)
+                    response = data.get("response", "")
+                    st.session_state.airpg_session_0_complete = data.get(
+                        "session_0_complete",
+                        st.session_state.airpg_session_0_complete
+                    )
+                    st.session_state.airpg_session_0_answers = data.get(
+                        "session_0_answers",
+                        st.session_state.airpg_session_0_answers
+                    )
                     st.markdown(response)
                     st.session_state.airpg_history.append({"role": "assistant", "content": response})
-                    
                 except Exception as e:
                     st.error(f"DM Error: {e}")
-                    import traceback
-                    st.code(traceback.format_exc())
 
 # ==========================================
 # MODE: QUERY THE ORACLE
@@ -826,53 +749,27 @@ if mode == "⚔️ Play AIRpg":
 elif mode == "🔮 Query The Oracle":
     st.markdown("## 🔮 Query The Oracle")
     st.markdown("*Speak your question, and the Oracle shall search the depths of recorded lore...*")
-    
     st.divider()
-    
-    # Display Chat History
+
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"], avatar="🧙" if msg["role"] == "assistant" else "⚔️"):
             st.markdown(msg["content"])
-    
-    # Chat Input
+
     if is_connected and (prompt := st.chat_input("What secrets do you seek from the archives?")):
-        # Add user message
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user", avatar="⚔️"):
             st.markdown(prompt)
-        
-        # Generate response
+
         with st.chat_message("assistant", avatar="🧙"):
             with st.spinner("*The Oracle consults the ancient records...*"):
                 try:
-                    # Define an async function to run the QueryAgent, respecting the app's architecture
-                    async def run_query_agent(user_prompt: str):
-                        # The agent requires an async DB driver
-                        async_db = Neo4jDatabase(DB_URI, (DB_USER, DB_PASSWORD))
-                        await async_db.connect()
-                        try:
-                            agent = QueryAgent(
-                                neo4j_db=async_db,
-                                gemini_api_key=GEMINI_KEY,
-                                enable_vector_search=True
-                            )
-                            # The agent handles the entire RAG pipeline
-                            return await agent.ask(user_prompt)
-                        finally:
-                            await async_db.close()
-
-                    # Run the async agent logic from Streamlit's sync context
-                    response_text = asyncio.run(run_query_agent(prompt))
-                    
+                    data = api_post("/oracle/query", {"query": prompt})
+                    response_text = data.get("response", "")
                     st.markdown(response_text)
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
-
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
-                    import traceback
-                    st.code(traceback.format_exc())
 
-    # Clear chat
     if st.session_state.messages:
         st.divider()
         if st.button("🗑️ Clear Communion"):
@@ -885,82 +782,66 @@ elif mode == "🔮 Query The Oracle":
 elif mode == "📥 Lore Ingestion":
     st.markdown("## 📥 Lore Ingestion")
     st.markdown("*Feed the Oracle new knowledge from your campaign files.*")
-    
-    # Initialize Ingestor
-    # ingestor = LoreIngestor(neo4j_driver, GEMINI_KEY) # OLD SYNC WAY
-    
     st.divider()
-    
+
     uploaded_files = st.file_uploader(
         "Drop files here",
         type=["txt", "md", "json"],
         accept_multiple_files=True
     )
-    
+
     if uploaded_files:
         st.success(f"✅ {len(uploaded_files)} file(s) selected")
-        
+
         if st.button("⚗️ BEGIN EXTRACTION", type="primary", disabled=not is_connected):
             st.divider()
-            progress_bar = st.progress(0, text="Starting...")
-            
-            all_results = []
-            total_nodes = 0
-            total_rels = 0
-            errors = []
-            
-            for idx, file in enumerate(uploaded_files):
-                filename = file.name
-                progress_bar.progress((idx) / len(uploaded_files), text=f"Processing {filename}...")
-                
-                content = file.getvalue().decode("utf-8")
-                
+            with st.spinner("Uploading and processing..."):
                 try:
-                    # 1. Process (Extract) - Async wrapper
-                    async def run_ingestion():
-                         async_driver = AsyncGraphDatabase.driver(DB_URI, auth=(DB_USER, DB_PASSWORD))
-                         local_ingestor = LoreIngestor(async_driver, GEMINI_KEY)
-                         try:
-                             # Process
-                             r_data = await local_ingestor.process_file_content(filename, content)
-                             # Save
-                             s_stats = await local_ingestor.save_to_neo4j(r_data["data"], filename)
-                             return r_data, s_stats
-                         finally:
-                             await async_driver.close()
+                    files_payload = []
+                    for f in uploaded_files:
+                        content = f.getvalue()
+                        mime = "text/plain"
+                        if f.name.endswith(".json"):
+                            mime = "application/json"
+                        files_payload.append(
+                            ("files", (f.name, content, mime))
+                        )
 
-                    result_data, save_stats = asyncio.run(run_ingestion())
-                    
-                    total_nodes += save_stats["nodes_saved"]
-                    total_rels += save_stats["rels_saved"]
-                    
-                    all_results.append({
-                        "filename": filename,
-                        "stats": save_stats,
-                        "data": result_data["data"],
-                        "status": "success"
-                    })
-                    
+                    url = f"{API_BASE}/upload"
+                    resp = requests.post(
+                        url,
+                        files=files_payload,
+                        data={"process_immediately": "true"},
+                        timeout=120,
+                    )
+                    resp.raise_for_status()
+                    result = resp.json()
+
+                    st.session_state.ingestion_results = result.get("processing_results", [])
+                    totals_nodes = sum(r.get("nodes_created", 0) for r in st.session_state.ingestion_results if r.get("status") == "processed")
+                    totals_rels = sum(r.get("relationships_created", 0) for r in st.session_state.ingestion_results if r.get("status") == "processed")
+                    st.session_state.ingestion_totals = {"nodes": totals_nodes, "rels": totals_rels}
+                    st.session_state.ingestion_errors = [
+                        f"{r.get('filename')}: {r.get('error')}"
+                        for r in st.session_state.ingestion_results
+                        if r.get("status") == "failed"
+                    ]
+                    st.rerun()
                 except Exception as e:
-                    errors.append(f"{filename}: {e}")
-            
-            progress_bar.progress(1.0, text="Complete!")
-            
-            st.session_state.ingestion_results = all_results
-            st.session_state.ingestion_totals = {"nodes": total_nodes, "rels": total_rels}
-            st.session_state.ingestion_errors = errors
-            st.rerun()
+                    st.error(f"Ingestion failed: {e}")
 
-    # Display Results
     if st.session_state.ingestion_results:
         st.divider()
-        totals = st.session_state.ingestion_totals
-        st.success(f"### ✅ INGESTION COMPLETE\n**{totals['nodes']} entities** and **{totals['rels']} relationships** saved.")
-        
+        totals = st.session_state.ingestion_totals or {"nodes": 0, "rels": 0}
+        st.success(
+            f"### ✅ INGESTION COMPLETE\n"
+            f"**{totals['nodes']} entities** and **{totals['rels']} relationships** saved."
+        )
+
         if st.session_state.ingestion_errors:
-             for err in st.session_state.ingestion_errors:
-                 st.warning(err)
-                 
+            for err in st.session_state.ingestion_errors:
+                st.warning(err)
+
         if st.button("🗑️ Clear & Upload More"):
             st.session_state.ingestion_results = None
             st.rerun()
@@ -971,39 +852,19 @@ elif mode == "📥 Lore Ingestion":
 elif mode == "⚖️ Truth Auditor":
     st.markdown("## ⚖️ The Truth Auditor")
     st.markdown("*Submit new lore for verification against the sacred canon.*")
-    
     st.divider()
-    
-    # Initialize Auditor (using async bridge if needed, but for now direct Gemini call via Auditor logic logic re-implementation for sync)
-    # We will use the AuditorAgent class structure but adapt it for sync Streamlit execution
-    
+
     submission = st.text_area("📜 New Lore Submission", height=200)
-    
-    if st.button("⚖️ SUBMIT FOR AUDIT", type="primary", disabled=not submission):
+
+    if st.button("⚖️ SUBMIT FOR AUDIT", type="primary", disabled=not submission or not is_connected):
         with st.spinner("Auditing submission against the graph canon..."):
             try:
-                # Define an async function to run the AuditorAgent, respecting the app's architecture
-                async def run_audit_agent(submission_text: str):
-                    # The agent requires an async DB driver
-                    async_db = Neo4jDatabase(DB_URI, (DB_USER, DB_PASSWORD))
-                    await async_db.connect()
-                    try:
-                        agent = AuditorAgent(async_db, GEMINI_KEY)
-                        # The agent handles the entire audit pipeline
-                        return await agent.audit_submission(submission_text)
-                    finally:
-                        await async_db.close()
-
-                # Run the async agent logic from Streamlit's sync context
-                result = asyncio.run(run_audit_agent(submission))
+                result = api_post("/audit", {"submission": submission}, timeout=60)
                 st.session_state.audit_result = result
-
             except Exception as e:
                 st.error(f"An error occurred during the audit: {e}")
-                import traceback
-                st.code(traceback.format_exc())
                 st.session_state.audit_result = None
-            
+
     if st.session_state.audit_result:
         st.divider()
         res = st.session_state.audit_result
@@ -1012,7 +873,7 @@ elif mode == "⚖️ Truth Auditor":
         else:
             st.error("🚨 **CONTRADICTION DETECTED**")
             st.json(res.get("contradictions"))
-            
+
         if st.button("🗑️ Clear Audit"):
             st.session_state.audit_result = None
             st.rerun()
@@ -1024,38 +885,37 @@ elif mode == "📊 Graph Nexus":
     st.markdown("## 📊 The Graph Nexus")
     st.markdown("*Behold the structure of recorded memory.*")
     st.divider()
-    
+
     if is_connected:
         col1, col2 = st.columns([3, 1])
         with col2:
             limit = st.number_input("Node Limit", 10, 200, 50)
             if st.button("🔄 Refresh"):
                 st.rerun()
-                
+
         with col1:
-            query = f"""
-            MATCH (n)-[r]->(m)
-            RETURN n.name AS source, labels(n)[0] AS source_label, 
-                   m.name AS target, labels(m)[0] AS target_label, 
-                   type(r) AS type
-            LIMIT {limit}
-            """
-            data = run_query(neo4j_driver, query)
-            
+            try:
+                data = api_get("/graph/basic", params={"limit": limit})
+            except Exception as e:
+                st.error(f"Graph fetch failed: {e}")
+                data = []
+
             if data:
                 nodes = []
                 edges = []
                 seen = set()
-                
+
                 for row in data:
-                    if row['source'] not in seen:
-                        nodes.append(Node(id=row['source'], label=row['source'], size=20, color="#ff6b6b"))
-                        seen.add(row['source'])
-                    if row['target'] not in seen:
-                        nodes.append(Node(id=row['target'], label=row['target'], size=20, color="#00ccff"))
-                        seen.add(row['target'])
-                    edges.append(Edge(source=row['source'], target=row['target'], label=row['type']))
-                
+                    source = row["source"]
+                    target = row["target"]
+                    if source not in seen:
+                        nodes.append(Node(id=source, label=source, size=20, color="#ff6b6b"))
+                        seen.add(source)
+                    if target not in seen:
+                        nodes.append(Node(id=target, label=target, size=20, color="#00ccff"))
+                        seen.add(target)
+                    edges.append(Edge(source=source, target=target, label=row["type"]))
+
                 config = Config(width="100%", height=600, directed=True, physics=True)
                 agraph(nodes=nodes, edges=edges, config=config)
             else:
@@ -1068,65 +928,44 @@ if st.session_state.get('show_review_queue') and is_connected:
     st.markdown("---")
     st.markdown("## 📋 Lore Review Queue")
     st.markdown("*Entities blocked due to contradictions with existing canon.*")
-    
-    # Fetch pending reviews
-    review_query = """
-    MATCH (r:ReviewQueue {status: 'PENDING'})
-    RETURN r.review_id AS id,
-           r.entity_name AS entity_name,
-           r.entity_type AS entity_type,
-           r.contradiction AS contradiction,
-           r.severity AS severity,
-           r.session_id AS session_id,
-           r.created_at AS created_at
-    ORDER BY r.created_at DESC
-    LIMIT 10
-    """
-    pending_reviews = run_query(neo4j_driver, review_query)
-    
+
+    try:
+        pending_reviews = api_get("/review/pending", params={"limit": 10})
+    except Exception as e:
+        st.error(f"Failed to fetch review queue: {e}")
+        pending_reviews = []
+
     if pending_reviews:
         for review in pending_reviews:
             with st.container():
                 col1, col2 = st.columns([3, 1])
-                
+
                 with col1:
                     st.markdown(f"### {review['entity_name']} ({review['entity_type']})")
                     st.caption(f"**Conflict:** {review['contradiction']}")
                     st.caption(f"Severity: `{review['severity']}` | Session: `{review['session_id'][:8]}...`")
-                
+
                 with col2:
                     if st.button("✅ Approve", key=f"approve_{review['id']}"):
-                        approve_query = """
-                        MATCH (r:ReviewQueue {review_id: $review_id})
-                        SET r.status = 'APPROVED',
-                            r.approved_at = $now
-                        RETURN r.entity_name AS name
-                        """
-                        run_query(neo4j_driver, approve_query, {
-                            "review_id": review['id'],
-                            "now": datetime.now().isoformat()
-                        })
-                        st.success(f"Approved: {review['entity_name']}")
-                        st.rerun()
-                    
+                        try:
+                            api_post(f"/review/{review['id']}/approve", {})
+                            st.success(f"Approved: {review['entity_name']}")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Approve failed: {e}")
+
                     if st.button("❌ Reject", key=f"reject_{review['id']}"):
-                        reject_query = """
-                        MATCH (r:ReviewQueue {review_id: $review_id})
-                        SET r.status = 'REJECTED',
-                            r.rejected_at = $now
-                        RETURN r.entity_name AS name
-                        """
-                        run_query(neo4j_driver, reject_query, {
-                            "review_id": review['id'],
-                            "now": datetime.now().isoformat()
-                        })
-                        st.info(f"Rejected: {review['entity_name']}")
-                        st.rerun()
-                
+                        try:
+                            api_post(f"/review/{review['id']}/reject", {})
+                            st.info(f"Rejected: {review['entity_name']}")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Reject failed: {e}")
+
                 st.markdown("---")
     else:
         st.success("✨ No pending reviews. All clear!")
-    
+
     if st.button("Close Review Queue"):
         st.session_state['show_review_queue'] = False
         st.rerun()
