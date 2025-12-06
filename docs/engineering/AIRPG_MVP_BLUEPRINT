@@ -1,0 +1,649 @@
+# LMS / AIRPG MVP Architecture Blueprint
+
+**Project:** Lore Management System (LMS) + AIRPG  
+**Target:** Playtest-ready, production-grade MVP  
+**Owner:** Shawn King  
+**Status:** Draft v1.0  
+**Stack:** FastAPI, WebSockets, React/Vite (or similar), Neo4j AuraDB, Fly.io
+
+---
+
+## 1. High-Level Goals
+
+1. Provide a **single, hosted web app** where users can:
+   - Upload or input lore
+   - Store and query world entities (characters, factions, locations, etc.)
+   - Run AIRPG sessions driven by an AI DM
+
+2. Ensure **stability and trust** in the system:
+   - One canonical project directory
+   - One authoritative GitHub repo
+   - One production deployment target (Fly.io)
+   - One managed graph database (Neo4j AuraDB)
+
+3. Make the system **ready for serious playtesting**:
+   - Smart Ingestor generates structurally sound entities with OCEAN profiles
+   - Runtime-generated NPCs are persisted with OCEAN
+   - AIRPG DM uses that data for personality-driven behavior
+   - UI good enough to play, even if not pretty/perfect yet
+
+4. Keep architecture **simple but extensible**:
+   - Single Fly app for MVP
+   - Neo4j AuraDB as managed DB
+   - No full auth system yet, only basic protection where needed
+   - Future-ready for microservices and real user auth
+
+---
+
+## 2. System Overview
+
+**Single Fly.io App** hosting:
+
+- **Backend API (FastAPI)**
+  - REST endpoints for ingestion, entity CRUD, audits, health checks
+  - WebSocket endpoints for events and DM interactions
+
+- **AIRPG Engine**
+  - DM Agent, QueryAgent, Auditor, and support services
+  - Runs inside the same FastAPI process
+
+- **Smart Ingestor**
+  - Lore ingestion + extraction + normalization
+  - Uses LLMs + EntityFactory + OCEAN enforcement
+
+- **Frontend UI**
+  - Single page app (SPA) bundled by Vite/React (or similar)
+  - Served as static assets by the backend app
+
+**Persistent Storage:**
+
+- **Neo4j AuraDB**
+  - Primary world data store
+  - Nodes: Character, Location, Faction, Item, Event, Concept, etc.
+  - Relationships: relationships between entities, events, history, etc.
+  - Vector index for embeddings (`entity_embeddings`)
+
+**External AI Services:**
+
+- OpenAI / Gemini (for now):
+  - Extraction and summarization (Smart Ingestor)
+  - Narrative generation (AIRPG DM)
+  - Contradiction detection (Auditor’s semantic checks)
+
+---
+
+## 3. Logical Components
+
+### 3.1 Backend API (FastAPI)
+
+**Responsibilities:**
+
+- HTTP endpoints:
+  - `/health`
+  - `/upload` (file-based ingestion)
+  - `/upload/text` (raw text ingestion)
+  - `/entities` (CRUD + search)
+  - `/contradictions` (list, resolve)
+  - `/debug` endpoints for internal testing (MVP only)
+- WebSocket endpoints:
+  - `/ws/events` (system events, ingest/audit notifications)
+  - `/ws/dm` (AIRPG DM session stream)
+- Integration with:
+  - Neo4j AuraDB (via `Neo4jDatabase` adapter)
+  - Smart Ingestor pipeline
+  - AIRPG DM Agent
+  - Auditor system
+
+### 3.2 Smart Ingestor
+
+**Pipeline:**
+
+1. Input:
+   - File upload via `/upload` (PDF, TXT, etc.)
+   - Raw text via `/upload/text`
+
+2. Processing:
+   - Chunking content
+   - ExtractionService calls LLM → graph-like JSON (nodes + edges)
+   - EntityFactory validation/enrichment:
+     - Enforces entity templates
+     - Ensures OCEAN profile for Character nodes
+     - Sanitizes properties, normalizes fields
+
+3. Storage:
+   - Writes entities and relationships to Neo4j AuraDB
+   - Creates / verifies embedding entries
+   - Ensures `entity_embeddings` vector index exists and is healthy
+
+**Key guarantees:**
+
+- Every Character ingested has OCEAN:
+  - `ocean: { O, C, E, A, N }` in [0.0, 1.0]
+- Entities are structurally valid according to templates
+- Ingestion doesn’t silently fail (errors logged and raised)
+
+### 3.3 AIRPG Engine
+
+**Core components:**
+
+- **DM Agent**
+  - Orchestrates sessions (Session 0, scenes, encounters)
+  - Generates narrative, dialogue, descriptions
+  - Adapts behavior based on entity OCEAN and relationships
+
+- **QueryAgent**
+  - Bridges between DM logic and Neo4j
+  - Resolves entities, locations, factions, histories
+  - Uses vector search for semantic lookup (via Neo4j embeddings)
+
+- **Auditor**
+  - Smart contradiction detector (rule-based + semantic)
+  - Flags illogical world states for later resolution
+
+**Runtime behavior:**
+
+- Player interacts through `/ws/dm`
+- DM Agent:
+  - Queries Neo4j for relevant entities, context
+  - Uses OCEAN to influence NPC behavior and dialogue
+  - Streams responses over WebSocket
+
+### 3.4 Frontend UI (MVP)
+
+**Main views:**
+
+- **Dashboard**
+  - Basic system status: health, Neo4j connected, embeddings index present
+  - Quick links to Ingestion, Entity Browser, AIRPG console
+
+- **Ingestion View**
+  - Upload file
+  - Paste text
+  - See ingestion status (events via `/ws/events`)
+
+- **Entity Browser**
+  - List/search entities (characters, factions, locations, etc.)
+  - View entity details, including OCEAN for characters
+
+- **AIRPG Console**
+  - Chat-style interface for interacting with DM Agent
+  - Shows narrative, NPC dialogue, and system messages
+  - Eventually supports multiple sessions, but MVP can be single-session
+
+---
+
+## 4. Deployment Topology (Fly.io)
+
+### 4.1 Single App Layout
+
+- **Single Fly app** with:
+  - One process: `web`
+  - Runs Uvicorn or Gunicorn + Uvicorn worker
+  - Serves:
+    - `/api/*` → FastAPI routes
+    - `/ws/*` → WebSockets
+    - `/` → Frontend SPA (static assets)
+
+### 4.2 Process Command (example)
+
+```toml
+# fly.toml (simplified sketch)
+[build]
+  # Docker or builder settings here
+
+[env]
+  APP_ENV = "production"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+
+[processes]
+  web = "uvicorn src.api:app --host 0.0.0.0 --port 8000"
+
+(Exact fly.toml will be fleshed out later.)
+
+4.3 Static Frontend
+
+Frontend built into a dist/ folder (Vite or similar)
+
+Backend serves static files:
+
+GET / and other non-API routes → index.html
+
+GET /assets/* → built JS/CSS files
+
+
+
+
+---
+
+5. Database: Neo4j AuraDB
+
+5.1 Rationale
+
+Managed graph DB → zero ops
+
+Independent from Fly app lifecycle
+
+Survives redeploys, restarts, scaling
+
+Free tier sufficient for early playtesting
+
+Native support for vectors and similarity search (Neo4j 5+)
+
+
+5.2 Connection
+
+NEO4J_URI (bolt+s or bolt)
+
+NEO4J_USER
+
+NEO4J_PASSWORD
+
+NEO4J_DATABASE (often neo4j by default)
+
+
+Backend connects via Neo4jDatabase adapter and uses:
+
+Node CRUD
+
+Relationship CRUD
+
+Vector index for entity_embeddings
+
+
+
+---
+
+6. Configuration & Environment
+
+6.1 .env (Local)
+
+Local development only.
+Not committed to Git.
+Backed up in a secure folder and password manager.
+
+Example keys (names only):
+
+APP_ENV=
+DEBUG=
+SECRET_KEY=
+
+NEO4J_URI=
+NEO4J_USER=
+NEO4J_PASSWORD=
+NEO4J_DATABASE=
+
+EMBEDDING_DIMENSION=
+EMBEDDING_MODEL_NAME=
+
+OPENAI_API_KEY=
+GOOGLE_API_KEY=
+
+BACKEND_URL=
+FRONTEND_URL=
+
+FLY_API_TOKEN= # (not needed in prod env at runtime, only for deploy)
+ADMIN_API_KEY= # Simple admin protection for critical endpoints
+
+6.2 .env.template (Committed)
+
+A template file listing all required environment variables without secrets.
+New environments are created by copying this file to .env and filling in real values.
+
+
+---
+
+7. Core Data Model (High-Level)
+
+7.1 Entities (Nodes)
+
+Typical labels:
+
+Character
+
+Location
+
+Faction
+
+Item
+
+Event
+
+Concept
+
+
+Each with:
+
+Required properties (id, name, description, etc.)
+
+Optional properties (depending on templates)
+
+Provenance metadata (source text, confidence, timestamps)
+
+
+Special properties:
+
+Character:
+
+ocean: { O, C, E, A, N }
+
+Potential additional personality metadata later
+
+
+
+7.2 Relationships
+
+Examples:
+
+(:Character)-[:MEMBER_OF]->(:Faction)
+
+(:Character)-[:LOCATED_IN]->(:Location)
+
+(:Faction)-[:ENEMY_OF]->(:Faction)
+
+(:Event)-[:OCCURS_AT]->(:Location)
+
+(:Character)-[:PARTICIPATED_IN]->(:Event)
+
+
+7.3 Embeddings
+
+Vector representation of entities for semantic search
+
+Stored in a vector index (e.g., entity_embeddings)
+
+Allows QueryAgent to find relevant entities by meaning, not exact string match
+
+
+
+---
+
+8. Request / Data Flows
+
+8.1 Ingestion Flow (Smart Ingestor)
+
+1. User uploads file or text
+
+
+2. Backend:
+
+Chunks content
+
+Sends chunks to ExtractionService (LLM)
+
+Receives nodes + edges JSON
+
+
+
+3. EntityFactory:
+
+Validates entities against templates
+
+Ensures Character entities have valid OCEAN
+
+
+
+4. Neo4j:
+
+Writes nodes and relationships
+
+Creates or updates embeddings
+
+
+
+5. UI:
+
+Shows ingestion status (via /ws/events)
+
+
+
+
+8.2 AIRPG Session Flow
+
+1. Player opens AIRPG console in UI
+
+
+2. UI connects to /ws/dm
+
+
+3. Player sends messages (intent, actions)
+
+
+4. DM Agent:
+
+Queries Neo4j for relevant entities (QueryAgent)
+
+Reads NPC OCEAN profiles
+
+Generates responses (narrative + dialogue)
+
+Streams output back via WebSocket
+
+
+
+5. UI displays narrative, NPC speech, and system prompts
+
+
+
+8.3 Contradiction Detection Flow
+
+1. Triggered:
+
+Manually via API
+
+Automatically after ingestion
+
+
+
+2. Auditor:
+
+Rule-based checks (timeline, duplication, conflicts)
+
+Semantic checks via LLM
+
+
+
+3. Neo4j:
+
+Stores contradiction records
+
+
+
+4. UI:
+
+Displays contradiction list for later resolution (MVP can be basic)
+
+
+
+
+
+---
+
+9. MVP Scope vs Non-Goals
+
+In-scope for MVP:
+
+Single Fly app
+
+Neo4j AuraDB integration
+
+Stable ingestion with OCEAN for characters
+
+Runtime NPC creation with OCEAN (where applicable)
+
+Basic entity browser
+
+AIRPG console with DM Agent
+
+WebSockets for events and DM
+
+Health checks (/health)
+
+Simple ADMIN_API_KEY for protecting sensitive admin endpoints
+
+
+Out of scope (for now):
+
+Full user authentication / account system
+
+Multi-tenant architecture
+
+Payment/billing
+
+Robust role-based access control
+
+Fancy UI/UX polish
+
+Horizontal Fly scaling / multi-region setup
+
+Heavy-duty observability stack (Prometheus/Grafana/etc.)
+
+
+
+---
+
+10. Implementation Phases (Code / Dev)
+
+These phases align with your recovery and build-out plan.
+
+Phase 0 — Local Recovery & Hardening
+
+Clean local environment
+
+Single canonical directory:
+
+C:\projects\lore-management-system
+
+
+Fresh clone from GitHub
+
+One venv, one .env
+
+Fix silent Neo4j errors (no bare except Exception: return [])
+
+Pass import checks
+
+Pass /health locally
+
+
+Phase 1 — API & Persistence Fixes
+
+Implement /upload/text endpoint matching UI contract
+
+Remove duplicate HTTP helpers in app.py, use api_client.py
+
+Verify runtime-generated NPCs persist correctly to Neo4j
+
+Confirm WebSockets for events are functional
+
+
+Phase 2 — Smart Ingestor Completion (OCEAN Integration)
+
+Update ExtractionService prompt to require OCEAN in Character nodes
+
+Implement OCEAN validation and defaults in EntityFactory
+
+Integrate EntityFactory into LoreIngestor save pipeline
+
+Verify all new Characters have a valid OCEAN profile
+
+
+Phase 3 — AIRPG DM Integration
+
+Confirm DM Agent pulls OCEAN data for NPCs
+
+Confirm QueryAgent can query by semantics + OCEAN filters
+
+Implement minimal personality-influenced behavior in DM prompts
+
+
+Phase 4 — Frontend MVP
+
+Hook up ingestion UI to /upload and /upload/text
+
+Implement simple entity browser
+
+Implement AIRPG console with /ws/dm connection
+
+Basic status indicators for health and Neo4j connection
+
+
+Phase 5 — Fly.io Deployment
+
+Create Dockerfile
+
+Create fly.toml
+
+Configure Neo4j AuraDB env vars
+
+Deploy single app to Fly
+
+Bind UI to hosted API URL
+
+Smoke test: ingestion, entity browser, DM console
+
+
+
+---
+
+11. Operational Notes
+
+Error Handling
+
+No silent failures on DB or LLM calls
+
+Log tracebacks with clear messages
+
+Fail fast in critical paths
+
+
+Logging
+
+Minimal but structured logging for:
+
+Ingestion events
+
+DM session starts/ends
+
+Neo4j connection issues
+
+Auditor runs
+
+
+
+Health Checks
+
+/health should verify:
+
+App is running
+
+Neo4j reachable
+
+Vector index exists or is created
+
+DM/Auditor initialized
+
+
+
+Security (MVP)
+
+No public link distribution
+
+Use ADMIN_API_KEY for admin-only operations
+
+Keep .env outside repo; use Fly secrets for production
+
+
+
+
+---
+
+This document is intended to live in the repo (e.g., docs/architecture/lms_airpg_mvp_blueprint.md) and act as the reference for:
+
+Future AI agents (Cursor/Gemini/GPT) working on the codebase
+
+Human collaborators
+
+Deployment and maintenance decisions
