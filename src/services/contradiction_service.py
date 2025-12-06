@@ -3,7 +3,7 @@
 import logging
 from typing import List, Dict, Any, Optional
 
-from src.auditor.auditor_agent import AuditorAgent
+from src.agents.auditor_agent import AuditorAgent
 from src.core.models import Contradiction
 from src.services.audit_log import AuditLogger
 from src.services.broadcaster import broadcaster

@@ -15,10 +15,6 @@ import re
 import uuid
 import logging
 import asyncio
-<<<<<<< HEAD
-from src.db.neo4j_adapter import Neo4jDatabase
-from neo4j.exceptions import Neo4jError # Added for specific error handling
-=======
 
 import google.generativeai as genai
 from google.api_core.exceptions import GoogleAPIError
@@ -26,7 +22,6 @@ from neo4j.exceptions import Neo4jError
 
 from src.services.audit_log import AuditLogger
 from src.db.neo4j_adapter import Neo4jDatabase
->>>>>>> bbf92f6fdfbeead88321067ece7a0af5eb95b7ee
 from src.services.broadcaster import broadcaster
 from src.prompts import AuditorPrompts
 from src.core.models import OCEANProfile, Contradiction
@@ -447,12 +442,6 @@ class AuditorAgent:
         old_personality: OCEANProfile,
         new_behavior_description: str,
     ) -> Optional[Dict[str, Any]]:
-<<<<<<< HEAD
-        """Delegates personality consistency check to SemanticAuditor."""
-        return await self.semantic_auditor.check_personality_consistency(
-            entity_name, old_personality, new_behavior_description
-        )
-=======
         """
         Check if new behavior is consistent with established personality.
 
@@ -535,7 +524,7 @@ Return ONLY valid JSON:
             )
 
         return None
->>>>>>> bbf92f6fdfbeead88321067ece7a0af5eb95b7ee
+
 
     async def get_entity_personality(
         self,

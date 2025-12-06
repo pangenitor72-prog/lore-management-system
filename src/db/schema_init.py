@@ -16,7 +16,7 @@ import logging
 from typing import List, Tuple, Optional
 from dotenv import load_dotenv
 
-from src.db.neo4j_adapter import Neo4jDatabase, EMBEDDING_DIMENSION
+from src.db.neo4j_adapter import Neo4jDatabase
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -123,7 +123,7 @@ VECTOR_INDEX_CONFIG = {
     "index_name": "entity_embeddings",
     "label": "Entity",
     "property_name": "embedding",
-    "dimensions": EMBEDDING_DIMENSION,  # 768 for Gemini text-embedding-004
+    "dimensions": 768,   # Gemini text-embedding-004 uses 768-dim vectors
     "similarity_function": "cosine"
 }
 
