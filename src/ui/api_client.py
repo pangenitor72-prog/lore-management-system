@@ -13,7 +13,7 @@ from requests import Response
 logger = logging.getLogger(__name__)
 
 # CONFIGURATION
-BASE_URL: str = "http://localhost:8000"
+BASE_URL = "http://localhost:9000"
 DEFAULT_TIMEOUT: int = 30  # Increased for slow LLM generation
 
 class APIClientError(Exception):

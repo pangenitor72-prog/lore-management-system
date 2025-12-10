@@ -359,9 +359,12 @@ async def initialize_schema(
         Dict with initialization results
     """
     # Get connection details from environment if not provided
-    uri = uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    uri = uri or os.getenv("NEO4J_URI")
     user = user or os.getenv("NEO4J_USER", "neo4j")
     password = password or os.getenv("NEO4J_PASSWORD", "password")
+
+    if not uri:
+        raise ValueError("NEO4J_URI is required for schema initialization.")
     
     logger.info("=" * 60)
     logger.info("LMS Neo4j Schema Initialization")

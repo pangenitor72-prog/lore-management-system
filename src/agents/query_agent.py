@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # src/agents/query_agent.py - Refactored for Neo4j with Vector Search
 """
 Query Agent - RAG-powered Q&A over the Neo4j knowledge graph.
@@ -7,13 +9,14 @@ Uses 4-tier retrieval strategy:
   3. Reverse Match (node names in query)
   4. Keyword Search (fallback)
 """
-from __future__ import annotations
+
 from typing import Dict, List, Any, Optional
 import json
 import google.generativeai as genai
 from src.services.audit_log import AuditLogger
 import logging
 from fastapi import WebSocket, WebSocketDisconnect
+from starlette.websockets import WebSocketState
 from starlette.concurrency import run_in_threadpool
 import asyncio
 from src.services.broadcaster import broadcaster
@@ -22,6 +25,9 @@ from src.db.neo4j_adapter import Neo4jDatabase
 from src.services.vector_service import VectorService
 from src.services.embedding_orchestrator import EmbeddingOrchestrator
 from src.prompts import QueryPrompts
+
+BROADCAST_EVENTS = False  # TEMP: disable broadcaster during early dev
+logger = logging.getLogger(__name__)
 
 
 class QueryAgent:
@@ -49,6 +55,8 @@ class QueryAgent:
         
         # Vector search configuration
         self.vector_search_enabled = enable_vector_search
+        # For compatibility with external callers/prompts expecting this name
+        self.enable_vector_search = enable_vector_search
         self.vector_service = vector_service
         
         if enable_vector_search and not self.vector_service:
@@ -77,6 +85,23 @@ class QueryAgent:
         )
         mode = "4-tier (with vector)" if self.vector_search_enabled else "3-tier (no vector)"
         AuditLogger.log_sync(f"QueryAgent: Neo4j + Gemini RAG initialized. Retrieval: {mode}")
+
+        # Quick Neo4j connectivity check at startup
+        try:
+            async def _test_db():
+                try:
+                    result = await self.db.execute("MATCH (n) RETURN count(n) as total")
+                    print(f"[QueryAgent] Neo4j connection test: {result}", flush=True)
+                except Exception as e:
+                    print(f"[QueryAgent] Neo4j connection FAILED: {e}", flush=True)
+
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(_test_db())
+            else:
+                loop.run_until_complete(_test_db())
+        except Exception as e:
+            print(f"[QueryAgent] Neo4j connection test scheduling failed: {e}", flush=True)
 
     async def search_entities(self, term: str, limit: int = 5, campaign_id: Optional[str] = None):
         return await self.search_nodes(term, limit=limit, campaign_id=campaign_id)
@@ -192,7 +217,9 @@ class QueryAgent:
         params = {"term": term, "limit": limit}
         if campaign_id:
             params["campaign_id"] = campaign_id
+        await AuditLogger.log(f"[Neo4j] search_nodes cypher: {cypher} params={params}")
         records = await self.db.execute(cypher, params)
+        await AuditLogger.log(f"[Neo4j] search_nodes returned {len(records) if records else 0} rows")
         
         results = []
         if records:
@@ -231,7 +258,9 @@ class QueryAgent:
         params = {"name": name}
         if campaign_id:
             params["campaign_id"] = campaign_id
+        await AuditLogger.log(f"[Neo4j] get_node_with_neighbors cypher: {cypher} params={params}")
         records = await self.db.execute(cypher, params)
+        await AuditLogger.log(f"[Neo4j] get_node_with_neighbors returned {len(records) if records else 0} rows")
         
         if records and len(records) > 0:
             record = records[0]
@@ -272,7 +301,9 @@ class QueryAgent:
         params = {"message": message, "limit": limit}
         if campaign_id:
             params["campaign_id"] = campaign_id
+        await AuditLogger.log(f"[Neo4j] reverse_match_entities cypher: {cypher} params={params}")
         records = await self.db.execute(cypher, params)
+        await AuditLogger.log(f"[Neo4j] reverse_match_entities returned {len(records) if records else 0} rows")
         
         results = []
         if records:
@@ -348,6 +379,7 @@ class QueryAgent:
         
         Strategies 1 and 2 run in PARALLEL using asyncio.gather for better latency.
         """
+        print("[RETRIEVE] Entered retrieve_context with query:", query, flush=True)
         await AuditLogger.log(f"Retrieving context for: '{query}'")
         
         context_parts = []
@@ -358,6 +390,7 @@ class QueryAgent:
         async def fetch_entity_context(entity_name: str, source: str = "unknown"):
             if entity_name and entity_name.lower() not in seen_entities:
                 seen_entities.add(entity_name.lower())
+                print("[RETRIEVE] About to query Neo4j", flush=True)
                 full_context = await self.get_node_with_neighbors(entity_name, campaign_id=campaign_id)
                 if full_context:
                     context_parts.append(self._format_entity_context(full_context))
@@ -384,9 +417,11 @@ class QueryAgent:
         if isinstance(extracted_entities, Exception):
             await AuditLogger.log(f"Agentic extraction failed: {extracted_entities}", level=logging.WARNING)
             extracted_entities = []
+            print("[RETRIEVE] Passed condition: extracted_entities exception handled", flush=True)
         if isinstance(vector_results, Exception):
             await AuditLogger.log(f"Vector search failed: {vector_results}", level=logging.WARNING)
             vector_results = []
+            print("[RETRIEVE] Passed condition: vector_results exception handled", flush=True)
         
         # === PROCESS STRATEGY 1 RESULTS: Agentic Entity Extraction ===
         if extracted_entities:
@@ -397,6 +432,7 @@ class QueryAgent:
                 matches = await self.search_nodes(entity, limit=3, campaign_id=campaign_id)
                 for match in matches:
                     await fetch_entity_context(match["name"], "agentic")
+            print("[RETRIEVE] Passed condition: processed extracted_entities", flush=True)
         
         # === PROCESS STRATEGY 2 RESULTS: Vector Similarity Search ===
         if vector_results and len(context_parts) < 5:
@@ -409,6 +445,7 @@ class QueryAgent:
                     added = await fetch_entity_context(name, "vector")
                     if added:
                         await AuditLogger.log(f"  Vector match: {name} (score={score:.3f})")
+            print("[RETRIEVE] Passed condition: processed vector_results", flush=True)
         
         # === STRATEGY 3: Reverse Match (if still need more context) ===
         # Find nodes whose names appear within the raw query string
@@ -420,6 +457,7 @@ class QueryAgent:
             
             for match in matches:
                 await fetch_entity_context(match["name"], "reverse")
+            print("[RETRIEVE] Passed condition: reverse match executed", flush=True)
         
         # === STRATEGY 4: Keyword Search (Last Resort) ===
         # Traditional keyword extraction and search
@@ -432,6 +470,7 @@ class QueryAgent:
                 matches = await self.search_nodes(term, limit=5, campaign_id=campaign_id)
                 for match in matches:
                     await fetch_entity_context(match["name"], "keyword")
+            print("[RETRIEVE] Passed condition: keyword search executed", flush=True)
         
         if context_parts:
             context = "=== LORE CONTEXT FROM KNOWLEDGE GRAPH ===\n\n" + "\n\n".join(context_parts)
@@ -442,6 +481,7 @@ class QueryAgent:
             f"Retrieved {len(context_parts)} context entries for {len(seen_entities)} unique entities. "
             f"Strategies: {', '.join(strategies_used) or 'none'}"
         )
+        print(f"[RETRIEVE] Final context length: {len(context_parts)} parts, strategies: {strategies_used}", flush=True)
         return context
 
     def _format_entity_context(self, entity: Dict[str, Any]) -> str:
@@ -469,54 +509,134 @@ class QueryAgent:
         """
         RAG-powered query: retrieves context from Neo4j, then asks Gemini.
         """
+        print("[ASK] Entered ask() with query:", query, flush=True)
         await AuditLogger.log(f"QueryAgent received: '{query}'")
-        
         try:
             # Step 1: Retrieve relevant context from the graph
             context = await self.retrieve_context(query, campaign_id=campaign_id)
-            
+
             # Step 2: Build the augmented prompt
             augmented_prompt = f"{context}\n\n=== USER QUESTION ===\n{query}"
-            
+
             # Step 3: Send to Gemini (wrap blocking call in threadpool)
             response = await run_in_threadpool(self.chat.send_message, augmented_prompt)
             return response.text
-            
+
         except Exception as e:
+            logger.error("ASK ERROR", exc_info=True)
             await AuditLogger.log(f"QueryAgent failed: {e}", level=logging.ERROR)
             return "An error occurred while processing your query. Please check the API logs."
 
-    # --- HANDLER REQUIRED BY API.PY --- 
     async def handle_websocket(self, websocket: WebSocket, client_id: str):
-        """
-        Handles the WebSocket connection for a single client.
-        Now uses async RAG-powered ask method.
-        """
-        await websocket.accept()
-        await AuditLogger.log(f"Client {client_id} connected.")
-        
-        try:
-            while True:
-                # Wait for a message from the client
-                query = await websocket.receive_text()
-                
-                # Use the async ask method (now with RAG)
-                response = await self.ask(query)
-                
-                # Publish event for query completion
-                event_data = {
-                    "type": "query_completed",
-                    "query": query,
-                    "response_snippet": response[:200] + "..." if len(response) > 200 else response,
-                    "timestamp": datetime.now().isoformat()
-                }
-                asyncio.create_task(broadcaster.publish("query_events", event_data))
+        from datetime import timezone
 
-                # Send the response back to the client
-                await websocket.send_text(response)
-                
-        except WebSocketDisconnect:
-            await AuditLogger.log(f"Client {client_id} disconnected.")
+        while True:
+            try:
+                data = await websocket.receive_json()
+                print("[QueryAgent] RAW WS IN:", data)
+            except WebSocketDisconnect:
+                print("[QueryAgent] WebSocket disconnected")
+                break
+            except Exception as e:
+                print("[QueryAgent] Client disconnected during receive_json:", e)
+                break
+
+            if data is None:
+                print("[QueryAgent] Received None payload; treating as disconnect.")
+                break
+
+            query = None
+            if isinstance(data, dict):
+                query = data.get("query") or data.get("message")
+            elif isinstance(data, str):
+                query = data
+
+            if not query:
+                print("[QueryAgent] No query in payload; ignoring.")
+                continue
+
+            if BROADCAST_EVENTS:
+                try:
+                    await broadcaster.publish("query_events", {
+                        "client_id": client_id,
+                        "query": query,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
+                except Exception as e:
+                    print("[QueryAgent] Fatal WebSocket error during publish:", e)
+
+            try:
+                response = await self.ask(query)
+            except Exception as e:
+                print("[QueryAgent] ERROR inside ask():", e)
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    await websocket.send_json({
+                        "error": "internal_error",
+                        "detail": str(e)
+                    })
+                continue
+
+            if websocket.client_state == WebSocketState.CONNECTED:
+                try:
+                    await websocket.send_json({
+                        "client_id": client_id,
+                        "query": query,
+                        "response": response,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
+                except Exception as e:
+                    print("[QueryAgent] Fatal WebSocket error during send_json:", e)
+                    break
+
+        if websocket.client_state == WebSocketState.CONNECTED:
+            try:
+                await websocket.close()
+            except Exception:
+                pass
+        return
+
+    async def answer_lore_question(self, query: str, client_id: str):
+        """
+        Handles vector search → semantic reasoning workflow.
+        Returns a string answer to the lore question.
+        """
+        # 1. Vector search (if available)
+        vector_results = None
+        try:
+            if self.enable_vector_search:
+                vector_results = await self.search_similar_entities(query)
         except Exception as e:
-            await AuditLogger.log(f"Error for client {client_id}: {e}", level=logging.ERROR)
-            await websocket.close(code=1011, reason="Internal error")
+            vector_results = None
+            await AuditLogger.log(f"[QueryAgent] Vector search failed: {e}", level="WARNING")
+
+        # 2. Semantic answer generation (Gemini or GPT)
+        try:
+            semantic_answer = await self.semantic_answer(query, vector_results)
+            if semantic_answer:
+                return semantic_answer
+        except Exception as e:
+            await AuditLogger.log(f"[QueryAgent] semantic_answer error: {e}", level="ERROR")
+
+        # 3. Fallback
+        return "No relevant lore found in the world archive."
+
+    # --- Utility stubs to ensure websocket loop functions even if implementations are missing ---
+    async def search_similar_entities(self, query: str):
+        """
+        Wrapper around vector_search or other retrieval logic.
+        """
+        try:
+            return await self.vector_search(query, limit=5, min_score=0.6)
+        except Exception:
+            return None
+
+    async def semantic_answer(self, query: str, vector_hits=None):
+        """
+        Generate a semantic answer using available context.
+        Placeholder implementation that falls back to existing ask pipeline if needed.
+        """
+        try:
+            # Reuse ask to leverage full RAG pipeline if available
+            return await self.ask(query)
+        except Exception:
+            return f"(placeholder) You asked: {query}"

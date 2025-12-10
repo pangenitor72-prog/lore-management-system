@@ -7,11 +7,11 @@ import './styles/globals.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <WebSocketProvider>
+    <WebSocketProvider>
+      <BrowserRouter>
         <App />
-      </WebSocketProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </WebSocketProvider>
   </React.StrictMode>
 )
 

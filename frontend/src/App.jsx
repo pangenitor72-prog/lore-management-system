@@ -2,6 +2,7 @@ import { Routes, Route, NavLink } from 'react-router-dom'
 import { useWebSocket, ConnectionState } from './contexts/WebSocketContext'
 import ChatInterface from './components/ChatInterface'
 import Dashboard from './components/Dashboard'
+import LoreUpload from './components/LoreUpload'
 import { useAuditor } from './hooks/useAuditor'
 import './App.css'
 
@@ -43,6 +44,14 @@ function App() {
               <span className="nav-link__badge">{newCount}</span>
             )}
           </NavLink>
+
+          <NavLink 
+            to="/upload" 
+            className={({ isActive }) => `nav-link ${isActive ? 'nav-link--active' : ''}`}
+          >
+            <span className="nav-link__icon">📤</span>
+            <span className="nav-link__text">Upload Lore</span>
+          </NavLink>
         </div>
 
         <div className="app-nav__footer">
@@ -70,6 +79,7 @@ function App() {
         <Routes>
           <Route path="/" element={<ChatInterface />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/upload" element={<LoreUpload />} />
         </Routes>
       </main>
     </div>

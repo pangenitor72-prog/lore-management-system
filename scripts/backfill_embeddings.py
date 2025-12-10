@@ -30,10 +30,14 @@ from embedding_service import EmbeddingService
 load_dotenv()
 
 # Configuration
-DB_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+DB_URI = os.getenv("NEO4J_URI")
 DB_USER = os.getenv("NEO4J_USER", "neo4j")
 DB_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+
+if not DB_URI:
+    DB_URI = "bolt://localhost:7687"
+    print("⚠️  NEO4J_URI not set; defaulting to bolt://localhost:7687 for local development.")
 
 
 async def create_vector_index(db: Neo4jDatabase) -> bool:

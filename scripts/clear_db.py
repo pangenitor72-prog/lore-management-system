@@ -22,9 +22,13 @@ from neo4j_adapter import Neo4jDatabase
 load_dotenv()
 
 # Configuration
-DB_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+DB_URI = os.getenv("NEO4J_URI")
 DB_USER = os.getenv("NEO4J_USER", "neo4j")
 DB_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
+
+if not DB_URI:
+    DB_URI = "bolt://localhost:7687"
+    print("⚠️  NEO4J_URI not set; defaulting to bolt://localhost:7687 for local development.")
 
 
 async def clear_database(db: Neo4jDatabase):

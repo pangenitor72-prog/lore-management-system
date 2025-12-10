@@ -9,6 +9,7 @@ from src.services.audit_log import AuditLogger
 from src.services.broadcaster import broadcaster
 
 logger = logging.getLogger(__name__)
+BROADCAST_EVENTS = False  # TEMP: disable broadcaster during early dev
 
 
 class ContradictionService:
@@ -41,10 +42,11 @@ class ContradictionService:
 
         # Broadcast summary to UI dashboard
         summary = self.auditor.rule_based_auditor.get_summary(results)
-        await broadcaster.publish("auditor_events", {
-            "type": "audit_complete",
-            "summary": summary,
-        })
+        if BROADCAST_EVENTS:
+            await broadcaster.publish("auditor_events", {
+                "type": "audit_complete",
+                "summary": summary,
+            })
 
         AuditLogger.log_sync("ContradictionService: Full audit complete.")
         return results
@@ -74,7 +76,7 @@ class ContradictionService:
         contradictions = self.auditor.detect_contradictions(entity_a, entity_b)
 
         # Broadcast live update for dashboard (semantic scan)
-        if contradictions:
+        if contradictions and BROADCAST_EVENTS:
             await broadcaster.publish("auditor_events", {
                 "type": "semantic_contradictions_found",
                 "entity_a": a_name,
@@ -108,16 +110,17 @@ class ContradictionService:
         if not result["approved"]:
             await self.auditor.queue_blocked_entity(entity_data, result, session_id)
 
-            await broadcaster.publish("auditor_events", {
-                "type": "entity_creation_blocked",
-                "entity": name,
-                "action": result["action"],
-                "reason": (
-                    result["contradictions"][0]["conflict"]
-                    if result["contradictions"]
-                    else "Unknown"
-                ),
-            })
+            if BROADCAST_EVENTS:
+                await broadcaster.publish("auditor_events", {
+                    "type": "entity_creation_blocked",
+                    "entity": name,
+                    "action": result["action"],
+                    "reason": (
+                        result["contradictions"][0]["conflict"]
+                        if result["contradictions"]
+                        else "Unknown"
+                    ),
+                })
 
         return result
 
@@ -133,7 +136,7 @@ class ContradictionService:
         AuditLogger.log_sync(f"ContradictionService: Approving review {review_id}.")
         result = await self.auditor.approve_queued_entity(review_id, approver)
 
-        if result:
+        if result and BROADCAST_EVENTS:
             await broadcaster.publish("auditor_events", {
                 "type": "review_approved",
                 "review_id": review_id,
@@ -154,7 +157,7 @@ class ContradictionService:
         )
         result = await self.auditor.reject_queued_entity(review_id, rejector, reason)
 
-        if result:
+        if result and BROADCAST_EVENTS:
             await broadcaster.publish("auditor_events", {
                 "type": "review_rejected",
                 "review_id": review_id,

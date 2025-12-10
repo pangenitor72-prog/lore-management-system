@@ -22,9 +22,15 @@ from fastapi.templating import Jinja2Templates
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from src.ingestion.ingestor import LoreIngestor
+from src.services.extraction_service import ExtractionService
+from src.services.embedding_service import EmbeddingService
 
 # Local Imports - Audit
+from src.services.contradiction_service import ContradictionService
+
 from src.services.audit_log import AuditLogger
+from src.services.broadcaster import broadcaster
 
 # Local Imports - Database (New Neo4j adapter)
 from src.db.neo4j_adapter import Neo4jDatabase
@@ -47,18 +53,40 @@ from src.agents.auditor_agent import AuditorAgent
 from src.auditor.rule_based_auditor import RuleBasedAuditor
 from src.auditor.semantic_auditor import SemanticAuditor
 from src.agents.query_agent import QueryAgent
-from src.services.broadcaster import broadcaster
-from src.ingestion.ingestor import LoreIngestor
-from src.core.game_session import GameSession
-from src.agents.dm_agent import DMAgent
 
-# Local Imports - Services
-from src.services.contradiction_service import get_router as get_contradiction_router
-from src.services.extraction_service import ExtractionService
-from src.services.embedding_service import EmbeddingService
+def get_contradiction_router(neo4j_db = Depends(get_neo4j_db)):
+    router = APIRouter()
+
+    gemini_api_key = os.getenv("GEMINI_API_KEY") or ""
+    if not gemini_api_key:
+        raise RuntimeError("GEMINI_API_KEY environment variable is not set.")
+
+    # Rule-based auditor (DB only)
+    rule_based = RuleBasedAuditor(neo4j_db)
+
+    # Semantic auditor (DB + Gemini key)
+    semantic = SemanticAuditor(neo4j_db, gemini_api_key)
+
+    # AuditorAgent
+    auditor_agent = AuditorAgent(
+        neo4j_db=neo4j_db,
+        gemini_api_key=gemini_api_key,
+        rule_based_auditor=rule_based,
+        semantic_auditor=semantic,
+    )
+
+    service = ContradictionService(auditor_agent)
+
+    @router.get("/audit/full")
+    async def run_full_audit():
+        return await service.run_full_audit()
+
+    return router
+
 
 # Configure module logger
 logger = logging.getLogger(__name__)
+logger.warning("[GeminiWS] routes.py module imported")
 
 # ============================================================
 # APP LIFESPAN
@@ -82,22 +110,23 @@ async def connect_neo4j_with_timeout(
         return False
     except Exception as e:
         await AuditLogger.log(
-            f"❌ Neo4j connection failed: {e}",
+            f"❌ Neo4j connection failed during startup: {e}",
             level=logging.ERROR
         )
         return False
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # On startup
+
     await AuditLogger.log("Application startup...")
 
-    # 1. Validate GEMINI_API_KEY
+    # ------------------------
+    # 1. GEMINI KEY / AI FLAG
+    # ------------------------
     gemini_key = os.getenv("GEMINI_API_KEY")
     if not gemini_key or gemini_key in ["YOUR_KEY_HERE", "your-key"]:
         await AuditLogger.log(
-            "⚠️ GEMINI_API_KEY missing or invalid - AI features disabled",
+            "⚠️ GEMINI_API_KEY missing or invalid - AI features disabled; QueryAgent will not start",
             level=logging.WARNING
         )
         app.state.ai_enabled = False
@@ -105,85 +134,98 @@ async def lifespan(app: FastAPI):
         await AuditLogger.log("✅ Gemini API key loaded")
         app.state.ai_enabled = True
 
-    # Initialize Neo4j Database (new graph layer)
-    use_mock_db = os.getenv("USE_MOCK_DB", "false").lower() == "true"
+    # ------------------------
+    # 2. INIT NEO4J
+    # ------------------------
+    neo4j_uri = os.getenv("NEO4J_URI")
+    neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+    neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
 
-    if use_mock_db:
-        await AuditLogger.log("🔶 STARTING IN MOCK MODE (No Neo4j connection)")
-        app.state.neo4j_db = InMemoryMockDatabase()
-        # Mock database doesn't need connecting, but we simulate it
-        await AuditLogger.log("✅ Mock Database ready")
-        connected = True
-    else:
-        neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-        neo4j_user = os.getenv("NEO4J_USER", "neo4j")
-        neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
-        neo4j_auth = (neo4j_user, neo4j_password)
+    await AuditLogger.log(
+        f"Neo4j config loaded: uri={'SET' if neo4j_uri else 'MISSING'}, user={neo4j_user}, password_set={bool(neo4j_password)}"
+    )
 
-        app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_auth)
+    if not neo4j_uri:
+        await AuditLogger.log(
+            "❌ NEO4J_URI not set. Aborting startup to avoid connecting to the wrong database.",
+            level=logging.ERROR,
+        )
+        raise RuntimeError("NEO4J_URI is required but not set.")
 
-        # 2. Use connection timeout
-        connected = await connect_neo4j_with_timeout(app.state.neo4j_db, timeout=10)
+    app.state.neo4j_db = Neo4jDatabase(
+        uri=neo4j_uri,
+        user=neo4j_user,
+        password=neo4j_password
+    )
 
+    connected = await connect_neo4j_with_timeout(app.state.neo4j_db)
     if not connected:
         await AuditLogger.log(
-            "🔴 FATAL: Cannot start without Neo4j",
-            level=logging.CRITICAL
+            "❌ Neo4j unavailable - aborting startup (mock DB disabled)",
+            level=logging.ERROR
         )
-        raise RuntimeError("Neo4j connection failed")
+        raise RuntimeError("Neo4j connection failed; mock DB is disabled.")
 
-    # 3. Validate vector index
+    # ------------------------
+    # 3. VECTOR INDEX
+    # ------------------------
     try:
-        if use_mock_db:
-            app.state.vector_search_enabled = True
-            await AuditLogger.log("✅ Mock Vector index verified")
-        else:
+        if connected:
             indexes = await app.state.neo4j_db.list_indexes()
-            has_vector_index = any(
-                idx.get("name") == "entity_embeddings"
-                for idx in indexes
-            )
+            has_vector = any(i.get("name") == "entity_embeddings" for i in indexes)
 
-            if not has_vector_index:
+            if not has_vector:
                 await AuditLogger.log("⚠️ Vector index missing - creating...")
-                success = await app.state.neo4j_db.create_vector_index()
-                app.state.vector_search_enabled = success
+                created = await app.state.neo4j_db.create_vector_index()
+                app.state.vector_search_enabled = created
             else:
-                await AuditLogger.log("✅ Vector index verified")
                 app.state.vector_search_enabled = True
+        else:
+            app.state.vector_search_enabled = False
     except Exception as e:
-        await AuditLogger.log(f"⚠️ Vector index validation failed: {e}", level=logging.ERROR)
+        await AuditLogger.log(f"Vector index error: {e}", level=logging.ERROR)
         app.state.vector_search_enabled = False
 
-    # 4. Initialize agents only if AI enabled
-    if app.state.ai_enabled:
-        # Instantiate sub-auditors
-        rule_based_auditor = RuleBasedAuditor(app.state.neo4j_db)
-        semantic_auditor = SemanticAuditor(app.state.neo4j_db, gemini_key)
+    # ------------------------
+    # 4. INIT AGENTS
+    # ------------------------
+    if app.state.ai_enabled and connected:
+        try:
+            rule_based_auditor = RuleBasedAuditor(app.state.neo4j_db)
+            semantic_auditor = SemanticAuditor(app.state.neo4j_db, gemini_key)
 
-        app.state.auditor = AuditorAgent(
-            app.state.neo4j_db,
-            gemini_key,
-            rule_based_auditor=rule_based_auditor,
-            semantic_auditor=semantic_auditor
-        )
-        app.state.query_agent = QueryAgent(
-            app.state.neo4j_db,
-            gemini_key,
-            enable_vector_search=app.state.vector_search_enabled
-        )
-        # Initialize DMAgent with injected dependencies
-        app.state.dm_agent = DMAgent(
-            db=app.state.neo4j_db,
-            query_agent=app.state.query_agent,
-            auditor_agent=app.state.auditor,
-            api_key=gemini_key  # DMAgent still uses its own API key for its model calls
-        )
-        await AuditLogger.log("✅ All agents initialized")
+            app.state.auditor = AuditorAgent(
+                app.state.neo4j_db,
+                gemini_key,
+                rule_based_auditor=rule_based_auditor,
+                semantic_auditor=semantic_auditor
+            )
 
+            app.state.query_agent = QueryAgent(
+                app.state.neo4j_db,
+                gemini_key,
+                enable_vector_search=app.state.vector_search_enabled
+            )
+
+            await AuditLogger.log("✅ QueryAgent + Auditor initialized")
+        except Exception as e:
+            await AuditLogger.log(f"❌ Failed to initialize agents: {e}", level=logging.ERROR)
+            app.state.query_agent = None
+            app.state.auditor = None
+
+    # ------------------------
+    # 🌟 NOW THE ONE AND ONLY YIELD
+    # ------------------------
     yield
-    # On shutdown
-    await app.state.neo4j_db.close()
+
+    # ------------------------
+    # SHUTDOWN
+    # ------------------------
+    try:
+        await app.state.neo4j_db.close()
+    except:
+        pass
+
     await AuditLogger.log("Application shutdown...")
 
 # ============================================================
@@ -227,16 +269,73 @@ app.mount(
 # WEBSOCKET ENDPOINTS
 # ============================================================
 
+print("[GeminiWS] DEBUG: about to register @app.websocket('/ws/gemini')")
 @app.websocket("/ws/gemini")
 async def websocket_gemini_endpoint(websocket: WebSocket, client_id: str = Query(...)):
-    if not app.state.ai_enabled or not hasattr(app.state, "query_agent"):
+    """
+    WebSocket endpoint for the Lore Oracle (Gemini-backed).
+    - Always accepts the socket immediately (before any send).
+    - Waits briefly for QueryAgent to be initialized.
+    - Delegates the loop to QueryAgent.handle_websocket once ready.
+    """
+
+    logger.warning("[GeminiWS] ENTERED handler before accept()")
+    # Accept immediately to avoid ASGI "websocket.send before accept" errors.
+    try:
         await websocket.accept()
-        await websocket.send_json({"error": "AI features are not enabled or QueryAgent not initialized."})
-        await websocket.close(code=status.WS_1013_UNEXPECTED_CONDITION)
+        await AuditLogger.log("[GeminiWS] ACCEPTED socket", level=logging.INFO)
+    except Exception as e:
+        await AuditLogger.log(f"[GeminiWS] accept failed: {e}", level=logging.ERROR)
         return
 
-    await app.state.query_agent.handle_websocket(websocket, client_id)
+    try:
+        await AuditLogger.log(
+            f"[GeminiWS] query_agent exists? {hasattr(app.state, 'query_agent')}",
+            level=logging.INFO,
+        )
 
+        # If QueryAgent is not yet initialized, wait a bit for startup to finish
+        if not hasattr(app.state, "query_agent"):
+            await AuditLogger.log("[GeminiWS] Entered initializing-wait loop", level=logging.INFO)
+            await websocket.send_json({
+                "status": "initializing",
+                "message": "QueryAgent is still starting up…"
+            })
+
+            # Poll for up to 3 seconds (30 * 100ms) for QueryAgent to appear
+            for _ in range(30):
+                await asyncio.sleep(0.1)
+                if hasattr(app.state, "query_agent"):
+                    break
+
+            if not hasattr(app.state, "query_agent"):
+                # Still not ready. Keep the socket open but inform the client.
+                await AuditLogger.log(
+                    "[GeminiWS] query_agent still missing after wait → closing",
+                    level=logging.WARNING,
+                )
+                await websocket.send_json({
+                    "error": "QueryAgent is not available yet. Try again in a few seconds."
+                })
+                code = status.WS_1011_INTERNAL_ERROR
+                await AuditLogger.log(f"[GeminiWS] Closing socket with code {code}", level=logging.WARNING)
+                # Let the client decide to reconnect; close cleanly to avoid 1006.
+                await websocket.close(code=code)
+                return
+
+        # At this point, QueryAgent should be ready; hand off control.
+        await AuditLogger.log("[GeminiWS] Handing off to QueryAgent.handle_websocket", level=logging.INFO)
+        await app.state.query_agent.handle_websocket(websocket, client_id)
+    except Exception as e:
+        await AuditLogger.log(f"[GeminiWS] Fatal exception in endpoint: {e}", level=logging.ERROR)
+        try:
+            await websocket.send_json({"error": "internal_error", "detail": str(e)})
+            code = status.WS_1011_INTERNAL_ERROR
+            await AuditLogger.log(f"[GeminiWS] Closing socket with code {code}", level=logging.WARNING)
+            await websocket.close(code=code)
+        except Exception:
+            pass
+print("[GeminiWS] DEBUG: websocket_gemini_endpoint function defined successfully")
 
 @app.websocket("/ws/auditor")
 async def websocket_auditor_endpoint(websocket: WebSocket):
@@ -260,86 +359,29 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
             pass  # Connection may already be closed
 
 
-@app.websocket("/ws/events")
-async def websocket_events_endpoint(websocket: WebSocket, channels: str = Query("query_events")):
-    """
-    General-purpose WebSocket endpoint for subscribing to multiple event channels.
-
-    Args:
-        channels: Comma-separated list of channels to subscribe to.
-                  Available: query_events, auditor_events, ingestion_events
-
-    Example:
-        ws://localhost:8000/ws/events?channels=query_events,auditor_events
-    """
-    await websocket.accept()
-
-    # Parse requested channels
-    channel_list = [c.strip() for c in channels.split(",") if c.strip()]
-    valid_channels = {"query_events", "auditor_events", "ingestion_events"}
-    subscribed_channels = [c for c in channel_list if c in valid_channels]
-
-    if not subscribed_channels:
-        await websocket.send_json({
-            "error": "No valid channels specified",
-            "valid_channels": list(valid_channels)
-        })
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
-
-    await AuditLogger.log(f"Events WebSocket connected to channels: {subscribed_channels}")
-
-    # Subscribe to all requested channels
-    queues = {}
-    for channel in subscribed_channels:
-        queues[channel] = await broadcaster.subscribe(channel)
-
-    async def read_from_queue(channel: str, queue: asyncio.Queue):
-        """Read messages from a single queue and tag with channel name."""
-        while True:
-            message = await queue.get()
-            if isinstance(message, dict):
-                message["_channel"] = channel
-            return message
-
-    try:
-        while True:
-            # Create tasks for all queues
-            tasks = {
-                asyncio.create_task(read_from_queue(ch, q)): ch
-                for ch, q in queues.items()
-            }
-
-            # Wait for any queue to have a message
-            done, pending = await asyncio.wait(
-                tasks.keys(),
-                return_when=asyncio.FIRST_COMPLETED
-            )
-
-            # Cancel pending tasks
-            for task in pending:
-                task.cancel()
-
-            # Send completed messages
-            for task in done:
-                try:
-                    message = task.result()
-                    await websocket.send_json(message)
-                except Exception as e:
-                    await AuditLogger.log(f"Error sending event: {e}", level=logging.WARNING)
-
-    except WebSocketDisconnect:
-        await AuditLogger.log("Events WebSocket client disconnected.")
-    except Exception as e:
-        await AuditLogger.log(f"Events WebSocket error: {e}", level=logging.ERROR)
-    finally:
-        # Unsubscribe from all channels
-        for channel, queue in queues.items():
-            broadcaster.unsubscribe(channel, queue)
-        try:
-            await websocket.close()
-        except Exception:
-            pass
+# TEMP: /ws/events disabled (no broadcaster during early dev).
+# @app.websocket("/ws/events")
+# async def websocket_events_endpoint(websocket: WebSocket, channels: str = Query("query_events")):
+#     """
+#     Persistent websocket that stays open and streams events from the broadcaster.
+#     Frontend subscribes to this for query logs, audit logs, ingestion logs, etc.
+#     """
+#     await websocket.accept()
+#
+#     channel_list = channels.split(",")
+#
+#     # Open subscriptions for each channel
+#     async with broadcaster.subscribe(channel_list) as subscriber:
+#         try:
+#             async for event in subscriber:
+#                 # Each event.value is already JSON-serializable
+#                 await websocket.send_json(event.message)
+#         except WebSocketDisconnect:
+#             print("[EventsWS] Client disconnected")
+#         except Exception as e:
+#             print("[EventsWS] ERROR:", e)
+#         finally:
+#             await websocket.close()
 
 # ============================================================
 # ROOT & INFO ENDPOINTS
@@ -391,6 +433,81 @@ async def health_check(request: Request):
     return health_status
 
 
+@app.get("/debug/status")
+async def debug_status(request: Request):
+    import os
+    from urllib.parse import urlparse
+
+    neo4j_uri = os.getenv("NEO4J_URI", "NOT SET")
+    parsed = urlparse(neo4j_uri) if neo4j_uri != "NOT SET" else None
+
+    # Test Neo4j connection
+    neo4j_ok = False
+    try:
+        if hasattr(request.app.state, "neo4j_db"):
+            neo4j_ok = request.app.state.neo4j_db.test_connection()
+    except Exception:
+        pass
+
+    return {
+        "environment": os.getenv("APP_ENV", "development"),
+        "ai_enabled": getattr(request.app.state, "ai_enabled", False),
+        "gemini_key_present": bool(os.getenv("GEMINI_API_KEY")),
+        "neo4j_uri_host": parsed.hostname if parsed else "NOT SET",
+        "neo4j_uri_scheme": parsed.scheme if parsed else "NOT SET",
+        "neo4j_uses_ssl": neo4j_uri.startswith("neo4j+s://") if neo4j_uri else False,
+        "neo4j_connected": neo4j_ok,
+    }
+
+
+@app.get("/debug/neo4j-stats")
+async def neo4j_stats():
+    """Temporary endpoint to check what's in Neo4j"""
+    try:
+        db = app.state.query_agent.db
+
+        counts = await db.execute("""
+            MATCH (n) 
+            RETURN labels(n)[0] AS type, count(*) AS count 
+            ORDER BY count DESC
+        """)
+
+        samples = await db.execute("""
+            MATCH (n) 
+            WHERE n.name IS NOT NULL 
+            RETURN labels(n)[0] AS type, n.name AS name 
+            LIMIT 20
+        """)
+
+        return {"counts": counts, "samples": samples}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/debug/neo4j-stats")
+async def neo4j_stats():
+    """Temporary endpoint to check what's in Neo4j"""
+    try:
+        db = app.state.query_agent.db
+
+        counts = await db.execute("""
+            MATCH (n) 
+            RETURN labels(n)[0] AS type, count(*) AS count 
+            ORDER BY count DESC
+        """)
+
+        samples = await db.execute("""
+            MATCH (n) 
+            WHERE n.name IS NOT NULL 
+            RETURN labels(n)[0] AS type, n.name AS name 
+            LIMIT 20
+        """)
+
+        return {"counts": counts, "samples": samples}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 # ============================================================
 # INGESTION ENDPOINTS
 # ============================================================
@@ -418,12 +535,17 @@ async def upload_files(
     if process_immediately:
         try:
             gemini_key = os.getenv("GEMINI_API_KEY")
+            print(f"[UPLOAD] process_immediately={process_immediately}", flush=True)
+            print(f"[UPLOAD] gemini_key present={bool(os.getenv('GEMINI_API_KEY'))}", flush=True)
+            print(f"[UPLOAD] ai_enabled={request.app.state.ai_enabled}", flush=True)
             if not gemini_key or not request.app.state.ai_enabled:
+                print(f"[UPLOAD] SKIPPED: gemini_key={bool(gemini_key)}, ai_enabled={request.app.state.ai_enabled}", flush=True)
                 await AuditLogger.log(
                     "Skipping processing: AI features disabled or GEMINI_API_KEY missing",
                     level=logging.WARNING
                 )
             else:
+                print("[UPLOAD] Creating ingestor...", flush=True)
                 # 1. Instantiate services
                 extraction_service = ExtractionService(api_key=gemini_key)
                 embedding_service = EmbeddingService(api_key=gemini_key)
@@ -435,11 +557,17 @@ async def upload_files(
                     embedding_service=embedding_service,
                 )
         except Exception as e:
+            print(f"[UPLOAD] EXCEPTION creating ingestor: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
             await AuditLogger.log(f"Failed to initialize ingestor or its services: {e}", level=logging.ERROR)
             ingestor = None
 
+    print(f"[UPLOAD] ingestor is None: {ingestor is None}", flush=True)
+
     for file in files:
         try:
+            print("[UPLOAD] Received file:", file.filename, flush=True)
             file_path = upload_dir / file.filename
 
             # Use run_in_threadpool for the blocking I/O operation
@@ -451,6 +579,7 @@ async def upload_files(
             # Process immediately if requested and ingestor is ready
             if process_immediately and ingestor:
                 try:
+                    print("[UPLOAD] Calling ingestor", flush=True)
                     # Decode content for processing
                     text_content = content.decode("utf-8")
 
@@ -459,6 +588,7 @@ async def upload_files(
 
                     # 2. Save to Neo4j
                     save_stats = await ingestor.save_to_neo4j(result_data["data"], file.filename)
+                    print("[UPLOAD] Ingestor returned:", save_stats, flush=True)
 
                     processing_results.append({
                         "filename": file.filename,
@@ -752,8 +882,30 @@ async def get_contradictions():
 # ROUTER REGISTRATION
 # ============================================================
 
+def _debug_log_gemini_route(app_instance):
+    from fastapi.routing import APIRoute
+    try:
+        from fastapi.routing import WebSocketRoute
+    except ImportError:
+        from starlette.routing import WebSocketRoute
+    print("[GeminiWS] DEBUG: scanning app.router.routes for /ws/gemini …")
+    for route in app_instance.router.routes:
+        path = getattr(route, "path", None)
+        if path == "/ws/gemini":
+            endpoint = getattr(route, "endpoint", None)
+            module = getattr(endpoint, "__module__", None)
+            qualname = getattr(endpoint, "__qualname__", None)
+            print(
+                "[GeminiWS] DEBUG: FOUND /ws/gemini route →",
+                "type:", type(route).__name__,
+                "module:", module,
+                "qualname:", qualname,
+            )
+
 app.include_router(router)
+logger.warning("[GeminiWS] routes.py: router included into app")
 app.include_router(get_contradiction_router())
+_debug_log_gemini_route(app)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=9000)

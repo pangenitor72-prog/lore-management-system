@@ -206,6 +206,7 @@ class LoreIngestor:
 
         Returns counts of saved nodes and relationships.
         """
+        print("[INGEST] save_to_neo4j called", flush=True)
         nodes: List[Dict[str, Any]] = data.get("nodes", []) or []
         rels: List[Dict[str, Any]] = data.get("relationships", []) or []
 
@@ -324,7 +325,9 @@ class LoreIngestor:
                 SET n:Entity
                 """
                 try:
+                    print("[INGEST] About to write to Neo4j", flush=True)
                     await self.db.execute(query, {"items": items})
+                    print("[INGEST] Neo4j write complete", flush=True)
                     nodes_saved += len(items)
                 except Exception as e:
                     await AuditLogger.log(
@@ -349,7 +352,9 @@ class LoreIngestor:
                 MERGE (a)-[r:`{rtype}`]->(b)
                 """
                 try:
+                    print("[INGEST] About to write to Neo4j", flush=True)
                     await self.db.execute(query, {"items": items})
+                    print("[INGEST] Neo4j write complete", flush=True)
                     rels_saved += len(items)
                 except Exception as e:
                     await AuditLogger.log(

@@ -1,15 +1,14 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 
 /**
- * WebSocket Context - The Nervous System
- * 
- * Manages a single, persistent WebSocket connection that multiplexes channels:
- * - query_events: Chat/query responses from the QueryAgent
- * - auditor_events: Contradiction detection and audit events
- * - ingestion_events: File processing progress
+ * Gemini WebSocket Context - single socket for chat
  */
 
-const WebSocketContext = createContext(null)
+const WebSocketContext = createContext({
+  messages: [],
+  sendMessage: () => false,
+  connectionState: 'disconnected',
+})
 
 // Connection states for UI feedback
 export const ConnectionState = {
@@ -20,186 +19,62 @@ export const ConnectionState = {
   ERROR: 'error',
 }
 
-// WebSocket URL configuration
-const WS_BASE_URL = 'ws://localhost:8000'
-const DEFAULT_CHANNELS = ['query_events', 'auditor_events', 'ingestion_events']
+// WebSocket URL configuration (env override for deploy)
+const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:9000'
 
 export function WebSocketProvider({ children }) {
   const wsRef = useRef(null)
-  const reconnectTimeoutRef = useRef(null)
-  const reconnectAttempts = useRef(0)
-  
+  const hasConnectedRef = useRef(false)
+  const clientIdRef = useRef(crypto.randomUUID())
+  const clientId = clientIdRef.current
+  const [messages, setMessages] = useState([])
   const [connectionState, setConnectionState] = useState(ConnectionState.DISCONNECTED)
-  const [lastError, setLastError] = useState(null)
-  
-  // Channel-specific message handlers (set by consumers)
-  const queryHandlersRef = useRef(new Set())
-  const auditorHandlersRef = useRef(new Set())
-  const ingestionHandlersRef = useRef(new Set())
 
-  /**
-   * Route incoming messages to appropriate handlers based on _channel
-   */
-  const routeMessage = useCallback((message) => {
-    const { _channel, ...payload } = message
-    
-    switch (_channel) {
-      case 'query_events':
-        queryHandlersRef.current.forEach(handler => handler(payload))
-        break
-      case 'auditor_events':
-        auditorHandlersRef.current.forEach(handler => handler(payload))
-        break
-      case 'ingestion_events':
-        ingestionHandlersRef.current.forEach(handler => handler(payload))
-        break
-      default:
-        console.warn('[WS] Unknown channel:', _channel, payload)
-    }
-  }, [])
-
-  /**
-   * Establish WebSocket connection with auto-reconnect
-   */
-  const connect = useCallback(() => {
-    // Don't reconnect if already connected
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      return
-    }
+  useEffect(() => {
+    if (hasConnectedRef.current) return
+    hasConnectedRef.current = true
 
     setConnectionState(ConnectionState.CONNECTING)
-    
-    const channelParams = DEFAULT_CHANNELS.join(',')
-    const wsUrl = `${WS_BASE_URL}/ws/events?channels=${channelParams}`
-    
-    console.log('[WS] Connecting to:', wsUrl)
-    
-    try {
-      const ws = new WebSocket(wsUrl)
-      wsRef.current = ws
+    const ws = new WebSocket(`${WS_BASE_URL}/ws/gemini?client_id=${clientId}`)
+    wsRef.current = ws
 
-      ws.onopen = () => {
-        console.log('[WS] Connected successfully')
-        setConnectionState(ConnectionState.CONNECTED)
-        setLastError(null)
-        reconnectAttempts.current = 0
-      }
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data)
-          routeMessage(message)
-        } catch (err) {
-          console.error('[WS] Failed to parse message:', err, event.data)
-        }
-      }
-
-      ws.onerror = (error) => {
-        console.error('[WS] WebSocket error:', error)
-        setLastError('Connection error')
-        setConnectionState(ConnectionState.ERROR)
-      }
-
-      ws.onclose = (event) => {
-        console.log('[WS] Connection closed:', event.code, event.reason)
-        wsRef.current = null
-        
-        if (event.code !== 1000) {
-          // Abnormal closure - attempt reconnect with exponential backoff
-          setConnectionState(ConnectionState.RECONNECTING)
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000)
-          reconnectAttempts.current++
-          
-          console.log(`[WS] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current})`)
-          reconnectTimeoutRef.current = setTimeout(connect, delay)
-        } else {
-          setConnectionState(ConnectionState.DISCONNECTED)
-        }
-      }
-    } catch (err) {
-      console.error('[WS] Failed to create WebSocket:', err)
-      setLastError(err.message)
-      setConnectionState(ConnectionState.ERROR)
+    ws.onopen = () => setConnectionState(ConnectionState.CONNECTED)
+    ws.onclose = () => setConnectionState(ConnectionState.DISCONNECTED)
+    ws.onerror = () => setConnectionState(ConnectionState.ERROR)
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      setMessages((prev) => [...prev, data])
     }
-  }, [routeMessage])
 
-  /**
-   * Disconnect and cleanup
-   */
-  const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-    
-    if (wsRef.current) {
-      wsRef.current.close(1000, 'Client disconnecting')
-      wsRef.current = null
-    }
-    
-    setConnectionState(ConnectionState.DISCONNECTED)
-  }, [])
+    // Explicitly keep the socket open during StrictMode remounts
+    return () => {}
+  }, [clientId])
+
+  // Legacy API compatibility: return a no-op unsubscribe
+  const subscribeToChannel = useCallback(() => () => {}, [])
 
   /**
    * Send a message to a specific channel
    */
   const sendMessage = useCallback((channel, payload) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error('[WS] Cannot send - not connected')
-      return false
-    }
-
-    const message = {
-      _channel: channel,
-      ...payload,
-    }
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return false
+    if (channel !== 'query') return false
+    if (!payload || typeof payload !== 'object') return false
+    if (!payload.query) return false
 
     try {
-      wsRef.current.send(JSON.stringify(message))
+      wsRef.current.send(JSON.stringify({ query: payload.query }))
       return true
-    } catch (err) {
-      console.error('[WS] Failed to send message:', err)
+    } catch {
       return false
     }
   }, [])
 
-  /**
-   * Subscribe to a specific channel's messages
-   */
-  const subscribeToChannel = useCallback((channel, handler) => {
-    const handlersRef = {
-      query_events: queryHandlersRef,
-      auditor_events: auditorHandlersRef,
-      ingestion_events: ingestionHandlersRef,
-    }[channel]
-
-    if (!handlersRef) {
-      console.error('[WS] Unknown channel:', channel)
-      return () => {}
-    }
-
-    handlersRef.current.add(handler)
-    
-    // Return unsubscribe function
-    return () => {
-      handlersRef.current.delete(handler)
-    }
-  }, [])
-
-  // Auto-connect on mount
-  useEffect(() => {
-    connect()
-    return () => disconnect()
-  }, [connect, disconnect])
-
   const contextValue = {
-    connectionState,
-    lastError,
+    messages,
     sendMessage,
+    connectionState,
     subscribeToChannel,
-    connect,
-    disconnect,
-    isConnected: connectionState === ConnectionState.CONNECTED,
   }
 
   return (

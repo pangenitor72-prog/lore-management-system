@@ -1,8 +1,13 @@
+import os
 from neo4j import GraphDatabase
 
 # Config
-URI = "bolt://localhost:7687"
-AUTH = ("neo4j", "password")
+URI = os.getenv("NEO4J_URI")
+AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "password"))
+
+if not URI:
+    URI = "bolt://localhost:7687"
+    print("⚠️  NEO4J_URI not set; defaulting to bolt://localhost:7687 for local development.")
 
 def seed_graph():
     query = """

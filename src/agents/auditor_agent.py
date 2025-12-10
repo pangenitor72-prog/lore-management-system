@@ -30,6 +30,7 @@ from src.auditor.semantic_auditor import SemanticAuditor
 
 
 logger = logging.getLogger(__name__)
+BROADCAST_EVENTS = False  # TEMP: disable broadcaster during early dev
 
 
 class AuditorAgent:
@@ -175,14 +176,15 @@ class AuditorAgent:
 
         # Publish event for audit completion
         summary = self.rule_based_auditor.get_summary(results)
-        await broadcaster.publish(
-            "auditor_events",
-            {
-                "type": "audit_progress",
-                "message": "Rule-based audit complete.",
-                "summary": summary,
-            },
-        )
+        if BROADCAST_EVENTS:
+            await broadcaster.publish(
+                "auditor_events",
+                {
+                    "type": "audit_progress",
+                    "message": "Rule-based audit complete.",
+                    "summary": summary,
+                },
+            )
         return results
 
     def review(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -346,14 +348,15 @@ class AuditorAgent:
 
         await self.db.execute(query, params)
 
-        await broadcaster.publish(
-            "auditor_events",
-            {
-                "type": "entity_blocked",
-                "entity_name": entity.get("name"),
-                "reason": params["contradiction"],
-            },
-        )
+        if BROADCAST_EVENTS:
+            await broadcaster.publish(
+                "auditor_events",
+                {
+                    "type": "entity_blocked",
+                    "entity_name": entity.get("name"),
+                    "reason": params["contradiction"],
+                },
+            )
 
     async def get_pending_reviews(self) -> List[Dict[str, Any]]:
         """Get all entities pending human review."""

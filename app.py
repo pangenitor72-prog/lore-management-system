@@ -1,6 +1,18 @@
 # app.py (ROOT DIRECTORY)
 
 import streamlit as st
+import requests
+
+API_URL = "https://lore-management-system.fly.dev/query"
+
+st.title("Lore Management Dashboard")
+
+try:
+    r = requests.post(API_URL, json={"input": "ping"})
+    st.success(f"API Response: {r.text}")
+except Exception as e:
+    st.error(f"Failed to reach API: {e}")
+
 import logging
 from typing import Dict, Any
 
