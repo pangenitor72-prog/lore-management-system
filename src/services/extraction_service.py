@@ -141,6 +141,7 @@ class ExtractionService:
         Extract entities and relationships from a single text chunk.
         Uses thread pool to avoid blocking FastAPI's event loop.
         """
+        logger.info(f"[EXTRACT] Starting extraction for chunk {index}, length={len(chunk)}")
 
         prompt = f"{self.EXTRACTION_PROMPT}\n\nTEXT:\n{chunk}"
 
@@ -159,6 +160,7 @@ class ExtractionService:
                 )
             )
 
+            logger.info(f"[EXTRACT] Gemini response for chunk {index}: {response.text}")
             return self._parse_json_response(response.text)
 
         except GoogleAPIError as e:

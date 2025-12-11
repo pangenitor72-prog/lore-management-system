@@ -164,8 +164,8 @@ export function Dashboard() {
                   </div>
                   {contradiction.entity_ids?.length > 0 && (
                     <div className="contradiction-card__entities">
-                      {contradiction.entity_ids.map((id, i) => (
-                        <span key={i} className="entity-tag">{id}</span>
+                      {contradiction.entity_ids.map((id) => (
+                        <span key={id} className="entity-tag">{id}</span>
                       ))}
                     </div>
                   )}
@@ -233,9 +233,9 @@ export function Dashboard() {
               {selectedContradiction.entity_ids?.length > 0 && (
                 <div className="detail-field">
                   <label>Affected Entities</label>
-                  <div className="entity-list">
-                    {selectedContradiction.entity_ids.map((id, i) => (
-                      <span key={i} className="entity-tag entity-tag--large">{id}</span>
+                <div className="entity-list">
+                    {selectedContradiction.entity_ids.map((id) => (
+                      <span key={id} className="entity-tag entity-tag--large">{id}</span>
                     ))}
                   </div>
                 </div>

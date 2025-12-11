@@ -96,11 +96,21 @@ export function ChatInterface() {
           </div>
         ) : (
           <>
-            {safeMessages.map((message, index) => (
-              <pre key={index} className="chat-debug-message">
-                {JSON.stringify(message, null, 2)}
-              </pre>
-            ))}
+            {safeMessages.map((message, index) => {
+              const text =
+                message?.response ??
+                message?.error ??
+                message?.status ??
+                JSON.stringify(message, null, 2)
+              return (
+                <div
+                  key={message?.timestamp || message?.client_id || `msg-${index}`}
+                  className="chat-message"
+                >
+                  {text}
+                </div>
+              )
+            })}
             <div ref={messagesEndRef} />
           </>
         )}

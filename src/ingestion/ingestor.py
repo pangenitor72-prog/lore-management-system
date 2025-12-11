@@ -172,6 +172,7 @@ class LoreIngestor:
 
         This is used by the UI for previewing what will be ingested.
         """
+        logger.info(f"[INGEST] Processing file: {filename}, content length: {len(content)}")
         chunks = self.chunk_text(content)
 
         # Concurrent extraction using the dedicated service
@@ -180,6 +181,7 @@ class LoreIngestor:
             for i, chunk in enumerate(chunks)
         ]
         extractions = await asyncio.gather(*tasks)
+        logger.info(f"[INGEST] Extraction returned {len(extractions)} chunks: {extractions}")
 
         # Placeholder for future error reporting; currently handled in ExtractionService
         errors: List[str] = []
@@ -207,6 +209,12 @@ class LoreIngestor:
         Returns counts of saved nodes and relationships.
         """
         print("[INGEST] save_to_neo4j called", flush=True)
+        logger.info(f"[SAVE] Received data structure: {type(data)}")
+        if isinstance(data, dict):
+            logger.info(f"[SAVE] Data keys: {list(data.keys())}")
+            entities = data.get("nodes", []) or []
+            relationships = data.get("relationships", []) or []
+            logger.info(f"[SAVE] Found {len(entities)} nodes, {len(relationships)} relationships")
         nodes: List[Dict[str, Any]] = data.get("nodes", []) or []
         rels: List[Dict[str, Any]] = data.get("relationships", []) or []
 

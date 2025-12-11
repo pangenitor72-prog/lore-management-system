@@ -204,11 +204,9 @@ class QueryAgent:
         
         cypher_parts.append("""
         WHERE toLower(n.name) CONTAINS toLower($term) 
-           OR toLower(n.canonical_name) CONTAINS toLower($term)
            OR toLower(n.description) CONTAINS toLower($term)
            OR toLower(n.content) CONTAINS toLower($term)
         RETURN n.name AS name,
-               n.canonical_name AS canonical_name,
                labels(n)[0] AS type,
                properties(n) AS properties
         LIMIT $limit
@@ -225,7 +223,7 @@ class QueryAgent:
         if records:
             for record in records:
                 results.append({
-                    "name": record["name"] or record["canonical_name"],
+                    "name": record["name"],
                     "type": record["type"],
                     "properties": record["properties"]
                 })
@@ -242,7 +240,6 @@ class QueryAgent:
             
         cypher_parts.append("""
         WHERE toLower(n.name) = toLower($name) 
-           OR toLower(n.canonical_name) = toLower($name)
         OPTIONAL MATCH (n)-[r]-(neighbor)
         RETURN n.name AS name,
                labels(n)[0] AS type,

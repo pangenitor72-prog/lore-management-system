@@ -20,7 +20,12 @@ export const ConnectionState = {
 }
 
 // WebSocket URL configuration (env override for deploy)
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:9000'
+const getWebSocketBaseUrl = () => {
+  if (import.meta.env.VITE_WS_BASE_URL) return import.meta.env.VITE_WS_BASE_URL
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const host = window.location.host
+  return `${protocol}//${host}`
+}
 
 export function WebSocketProvider({ children }) {
   const wsRef = useRef(null)
@@ -35,7 +40,8 @@ export function WebSocketProvider({ children }) {
     hasConnectedRef.current = true
 
     setConnectionState(ConnectionState.CONNECTING)
-    const ws = new WebSocket(`${WS_BASE_URL}/ws/gemini?client_id=${clientId}`)
+    const wsBase = getWebSocketBaseUrl()
+    const ws = new WebSocket(`${wsBase}/ws/gemini?client_id=${clientId}`)
     wsRef.current = ws
 
     ws.onopen = () => setConnectionState(ConnectionState.CONNECTED)

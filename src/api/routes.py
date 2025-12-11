@@ -16,7 +16,8 @@ from fastapi import (
     FastAPI, HTTPException, Query, Body, Request,
     WebSocket, WebSocketDisconnect, status, APIRouter, Depends, File, UploadFile
 )
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.concurrency import run_in_threadpool
@@ -78,8 +79,12 @@ def get_contradiction_router(neo4j_db = Depends(get_neo4j_db)):
     service = ContradictionService(auditor_agent)
 
     @router.get("/audit/full")
-    async def run_full_audit():
-        return await service.run_full_audit()
+    async def run_full_audit(request: Request):
+        auditor_agent = getattr(request.app.state, "auditor", None)
+        if not auditor_agent:
+            raise HTTPException(status_code=503, detail="Auditor not initialized")
+        local_service = ContradictionService(auditor_agent)
+        return await local_service.run_full_audit()
 
     return router
 
@@ -258,6 +263,15 @@ router = APIRouter()
 BASE_DIR = Path(__file__).resolve().parent.parent  # Points to src/
 templates = Jinja2Templates(directory=str(BASE_DIR / 'ui' / 'templates'))
 
+# Frontend assets mount (built React app)
+frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+if frontend_dist.exists() and (frontend_dist / "assets").exists():
+    app.mount(
+        "/assets",
+        StaticFiles(directory=str(frontend_dist / "assets")),
+        name="frontend-assets"
+    )
+
 # Mount Static Files - Updated for new structure
 app.mount(
     "/static",
@@ -389,7 +403,11 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
 
 @router.get("/")
 def root():
-    """Root endpoint."""
+    """Serve frontend index if built; fallback to API JSON."""
+    frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+    index_path = frontend_dist / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
     return {
         "message": "Lore Management System API",
         "version": "1.0.0",
