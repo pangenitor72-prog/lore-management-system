@@ -1,2 +1,36 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Fly.io
 fly.toml
+
+# Python
 .venv
+venv/
+*.pyc
+__pycache__/
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# Node
+frontend/node_modules
+frontend/dist
+.npm
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+!.env.example
+!./.env.production.template

@@ -21,7 +21,7 @@ primary_region = "ewr"
     timeout = "5s"
     grace_period = "20s"
     method = "get"
-    path = "/"
+    path = "/health"
     tls_skip_verify = false
 
 [[vm]]
