@@ -1,21 +1,25 @@
-# Stage 1: Build Frontend
+# ===============================
+# Stage 1: Frontend Build
+# ===============================
 FROM node:18-alpine AS frontend-builder
 
 WORKDIR /frontend
+
 COPY frontend/package*.json ./
 RUN npm ci
+
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Python Backend
+
+# ===============================
+# Stage 2: Backend + Final Image
+# ===============================
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y build-essential curl
 
 # Install Python dependencies
 COPY requirements.txt .
@@ -24,8 +28,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy frontend build from stage 1
-COPY --from=frontend-builder /frontend/dist /app/frontend/dist
+# Copy frontend build → to the folder FastAPI actually serves
+COPY --from=frontend-builder /frontend/dist /app/src/ui/static
+
+# Ensure templates folder exists (FastAPI will crash otherwise)
+# Your repo uses: src/ui/templates
+# So no change needed IF that folder exists in repo.
 
 EXPOSE 9000
 
