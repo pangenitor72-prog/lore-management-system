@@ -641,7 +641,6 @@ async def entities_browser(request: Request, canon_id: Optional[str] = None):
 
 class DashboardCard(BaseModel):
     id: int
-.
     title: str
     description: Optional[str]
     severity: str
