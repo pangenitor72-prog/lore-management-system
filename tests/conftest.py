@@ -1,4 +1,5 @@
 import pytest
+import os
 from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from datetime import datetime, timezone
@@ -6,6 +7,33 @@ from src.api.routes import app
 from src.db.neo4j_adapter import Neo4jDatabase
 from src.db.mock_adapter import InMemoryMockDatabase
 from src.api.dependencies import get_neo4j_db
+
+
+# Set test environment variables before importing app
+@pytest.fixture(scope="session", autouse=True)
+def set_test_env_vars():
+    """Set test environment variables for all tests."""
+    test_env = {
+        "NEO4J_URI": "bolt://test-localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASSWORD": "test_password",
+        "GEMINI_API_KEY": "",  # Optional, not set for tests
+    }
+    
+    # Store original values
+    original_env = {}
+    for key, value in test_env.items():
+        original_env[key] = os.environ.get(key)
+        os.environ[key] = value
+    
+    yield
+    
+    # Restore original values
+    for key, original_value in original_env.items():
+        if original_value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = original_value
 
 
 # Mock Neo4j Database
