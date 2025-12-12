@@ -31,6 +31,10 @@ class Neo4jDatabase:
         connection_timeout: int = 30,
         max_connection_pool_size: int = 50,
     ):
+        # Validate URI
+        if not uri or not uri.strip():
+            raise ValueError("Neo4j URI cannot be empty")
+        
         # Allow both (user, password) tuple or separate args
         if auth:
             self.auth = auth
@@ -38,8 +42,18 @@ class Neo4jDatabase:
             self.auth = user
         else:
             self.auth = (user, password)
+        
+        # Validate auth credentials
+        if not self.auth or len(self.auth) != 2:
+            raise ValueError("Neo4j auth must be a tuple of (username, password)")
+        
+        if not self.auth[0] or not self.auth[0].strip():
+            raise ValueError("Neo4j username cannot be empty")
+        
+        if not self.auth[1] or not self.auth[1].strip():
+            raise ValueError("Neo4j password cannot be empty")
 
-        self.uri = uri
+        self.uri = uri.strip()
         self.database = database
         self.connection_timeout = connection_timeout
         self.max_connection_pool_size = max_connection_pool_size
