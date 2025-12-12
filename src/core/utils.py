@@ -9,16 +9,18 @@ These functions are intentionally:
 - Safe to call from agents, services, and API layers
 
 They are meant to centralize common patterns:
-- String sanitization
+- String sanitization and validation
 - Property normalization
 - Recursive null/empty pruning
 - JSON-safe serialization
+- Security input validation and environment variable checking
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, MutableMapping, Iterable, Union
+from typing import Any, Dict, Mapping, MutableMapping, Iterable, Union, Optional
 import json
+import re
 
 
 def sanitize_string(value: Any) -> str:
@@ -165,3 +167,95 @@ def safe_json(data: Any) -> str:
             return str(data)
         except Exception:
             return "<unserializable>"
+
+
+# ============================================================
+# SECURITY FUNCTIONS
+# ============================================================
+
+
+def sanitize_user_input(value: str, max_length: int = 500, allow_special: bool = False) -> str:
+    """
+    Sanitize user input strings to prevent injection attacks.
+    
+    This is a stricter version of sanitize_string for user-provided input
+    that will be used in queries or displayed in responses.
+    
+    Args:
+        value: The input string to sanitize
+        max_length: Maximum allowed length (default: 500)
+        allow_special: Whether to allow special characters beyond alphanumeric (default: False)
+    
+    Returns:
+        Sanitized string
+    
+    Raises:
+        ValueError: If input is too long or contains disallowed characters
+    """
+    if not value:
+        return ""
+    
+    value = value.strip()
+    
+    if len(value) > max_length:
+        raise ValueError(f"Input too long: maximum {max_length} characters")
+    
+    if not allow_special:
+        # Allow alphanumeric, spaces, and basic punctuation only
+        if not re.match(r'^[a-zA-Z0-9\s\-_.,!?()\'"]+$', value):
+            raise ValueError("Input contains disallowed special characters")
+    
+    return value
+
+
+def validate_canon_id(canon_id: str) -> str:
+    """
+    Validate and sanitize a canonical entity ID.
+    
+    Canon IDs should be safe for use in URLs, database queries, and file paths.
+    
+    Args:
+        canon_id: The ID to validate
+        
+    Returns:
+        Validated and sanitized ID
+        
+    Raises:
+        ValueError: If ID format is invalid
+    """
+    if not canon_id or not isinstance(canon_id, str):
+        raise ValueError("Canon ID must be a non-empty string")
+    
+    canon_id = canon_id.strip()
+    
+    # IDs should be alphanumeric with hyphens/underscores only
+    if not re.match(r'^[a-zA-Z0-9\-_]+$', canon_id):
+        raise ValueError("Canon ID contains invalid characters (only alphanumeric, hyphen, and underscore allowed)")
+    
+    if len(canon_id) > 100:
+        raise ValueError("Canon ID too long (maximum 100 characters)")
+    
+    return canon_id
+
+
+def validate_env_var(var_name: str, value: Optional[str], required: bool = True) -> Optional[str]:
+    """
+    Validate an environment variable.
+    
+    Args:
+        var_name: Name of the environment variable (for error messages)
+        value: The value to validate
+        required: Whether this variable is required (default: True)
+        
+    Returns:
+        The validated value (stripped of whitespace) or None if optional and not set
+        
+    Raises:
+        ValueError: If a required variable is missing or invalid
+    """
+    if not value or not value.strip():
+        if required:
+            raise ValueError(f"Required environment variable {var_name} is not set or is empty")
+        return None
+    
+    return value.strip()

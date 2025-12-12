@@ -13,7 +13,13 @@ build/
 
 # Environment & Secrets
 .env
+.env.*
+!.env.*.template
+*.env
 .env.local
+.env.production
+.env.development
+.env.test
 *.key
 *.pem
 

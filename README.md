@@ -128,16 +128,21 @@ Universal narrative coherence rules:
 ```
 .
 ├── src/
-│   ├── api.py               # FastAPI application
-│   ├── neo4j_adapter.py     # Neo4j database layer
-│   ├── dm_agent.py          # AI Dungeon Master agent
-│   ├── query_agent.py       # RAG-powered query agent
-│   ├── auditor_agent.py     # Contradiction detection
-│   ├── ingestor.py          # Entity extraction to Neo4j
-│   ├── boundary_enforcement.py  # Player agency rules
-│   ├── personality.py       # OCEAN personality system
-│   ├── entity_factory.py    # Entity generation templates
-│   ├── models.py            # Pydantic models
+│   ├── api/
+│   │   └── routes.py        # FastAPI application (main entry point)
+│   ├── db/
+│   │   └── neo4j_adapter.py # Neo4j database layer
+│   ├── agents/
+│   │   ├── dm_agent.py      # AI Dungeon Master agent
+│   │   ├── query_agent.py   # RAG-powered query agent
+│   │   └── auditor_agent.py # Contradiction detection
+│   ├── ingestion/
+│   │   └── ingestor.py      # Entity extraction to Neo4j
+│   ├── services/            # Business logic services
+│   ├── core/
+│   │   ├── models.py        # Pydantic models
+│   │   ├── entity_factory.py # Entity generation templates
+│   │   └── utils.py         # Security and validation utilities
 │   └── prompts/             # AI prompt library
 │       ├── dm_prompts.py    # DM system prompts
 │       ├── boundary_prompts.py  # Reframe prompts
@@ -146,10 +151,12 @@ Universal narrative coherence rules:
 │   ├── NEO4J_SCHEMA.md      # Graph database schema
 │   ├── PLAYER_DM_CONTRACT.md  # Agency rules documentation
 │   ├── ARCHITECTURE.md      # System architecture
+│   ├── SECURITY.md          # Security best practices
 │   └── ...                  # Other documentation
 ├── lore/                    # Source lore files
 ├── tests/                   # Test suite
-├── app.py                   # Streamlit UI (Play, Query, Ingest, Audit, Graph)
+├── backups/                 # Legacy/backup files
+│   └── app.py.legacy        # Old Streamlit UI (deprecated)
 └── docker-compose.yml       # Neo4j container setup
 ```
 
@@ -169,18 +176,18 @@ pip install -r requirements.txt
 docker-compose up -d
 
 # Set up environment
-cp .env.example .env
-# Add: GEMINI_API_KEY, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
+cp .env.production.template .env
+# Edit .env and replace ALL placeholder values with your actual credentials:
+#   - NEO4J_URI (e.g., bolt://localhost:7687 or neo4j+s://your-aura-instance)
+#   - NEO4J_USER (default: neo4j)
+#   - NEO4J_PASSWORD (your secure password)
+#   - GEMINI_API_KEY (your Google Gemini API key)
 
-# Ingest lore files
-python src/ingestor.py
-
-# Run Streamlit UI
-streamlit run app.py
-
-# Or run FastAPI server
-uvicorn src.api:app --reload
+# Run FastAPI server (main application entry point)
+uvicorn src.api.routes:app --reload --host 0.0.0.0 --port 8000
 ```
+
+**Important**: The application entry point is `src/api/routes.py`. The old `app.py` Streamlit UI has been deprecated and moved to `backups/app.py.legacy`.
 
 ## Current Status
 

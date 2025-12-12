@@ -129,21 +129,35 @@ async def lifespan(app: FastAPI):
     await AuditLogger.log("Application startup…")
 
     # -------------------------
-    # GEMINI KEY
+    # VALIDATE ENVIRONMENT VARIABLES
     # -------------------------
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    app.state.ai_enabled = bool(gemini_key)
+    from src.core.utils import validate_env_var
+    
+    try:
+        # Validate required Neo4j credentials
+        neo4j_uri = validate_env_var("NEO4J_URI", os.getenv("NEO4J_URI"))
+        neo4j_user = validate_env_var("NEO4J_USER", os.getenv("NEO4J_USER", "neo4j"))
+        neo4j_password = validate_env_var("NEO4J_PASSWORD", os.getenv("NEO4J_PASSWORD"))
+        
+        await AuditLogger.log("✅ Required environment variables validated")
+        
+        # Optional but recommended variables
+        gemini_key = validate_env_var("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"), required=False)
+        if not gemini_key:
+            logger.warning("GEMINI_API_KEY not set - AI features will be disabled")
+            app.state.ai_enabled = False
+        else:
+            app.state.ai_enabled = True
+            await AuditLogger.log("✅ GEMINI_API_KEY configured - AI features enabled")
+            
+    except ValueError as e:
+        logger.error(f"Environment validation failed: {e}")
+        await AuditLogger.log(f"❌ Environment validation failed: {e}", level=logging.ERROR)
+        raise RuntimeError(f"Environment validation failed: {e}")
 
     # -------------------------
     # INIT NEO4J
     # -------------------------
-    neo4j_uri = os.getenv("NEO4J_URI")
-    neo4j_user = os.getenv("NEO4J_USER", "neo4j")
-    neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
-
-    if not neo4j_uri:
-        raise RuntimeError("NEO4J_URI is required but not set")
-
     app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_user, neo4j_password)
 
     connected = await connect_neo4j_with_timeout(app.state.neo4j_db)
