@@ -195,7 +195,13 @@ def sanitize_user_input(value: str, max_length: int = 500, allow_special: bool =
     if not value:
         return ""
     
+    if not isinstance(value, str):
+        value = str(value)
+    
     value = value.strip()
+    
+    if not value:
+        return ""
     
     if len(value) > max_length:
         raise ValueError(f"Input too long: maximum {max_length} characters")
@@ -227,6 +233,9 @@ def validate_canon_id(canon_id: str) -> str:
         raise ValueError("Canon ID must be a non-empty string")
     
     canon_id = canon_id.strip()
+    
+    if not canon_id:
+        raise ValueError("Canon ID must be a non-empty string")
     
     # IDs should be alphanumeric with hyphens/underscores only
     if not re.match(r'^[a-zA-Z0-9\-_]+$', canon_id):
