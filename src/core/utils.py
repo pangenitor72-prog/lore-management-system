@@ -208,7 +208,8 @@ def sanitize_user_input(value: str, max_length: int = 500, allow_special: bool =
     
     if not allow_special:
         # Allow alphanumeric, spaces, and basic punctuation only
-        if not re.match(r'^[a-zA-Z0-9\s\-_.,!?()\'"]+$', value):
+        # Note: Quotes are excluded to prevent injection attacks
+        if not re.match(r'^[a-zA-Z0-9\s\-_.,!?()]+$', value):
             raise ValueError("Input contains disallowed special characters")
     
     return value

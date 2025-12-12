@@ -40,11 +40,16 @@ class Neo4jDatabase:
             self.auth = auth
         elif isinstance(user, tuple):
             self.auth = user
-        else:
+        elif user is not None:
             self.auth = (user, password)
+        else:
+            self.auth = None
         
         # Validate auth credentials
-        if not self.auth or len(self.auth) != 2:
+        if not self.auth:
+            raise ValueError("Neo4j auth must be a tuple of (username, password)")
+        
+        if not isinstance(self.auth, tuple) or len(self.auth) != 2:
             raise ValueError("Neo4j auth must be a tuple of (username, password)")
         
         if not self.auth[0] or not self.auth[0].strip():
