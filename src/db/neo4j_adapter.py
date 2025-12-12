@@ -47,7 +47,7 @@ class Neo4jDatabase:
         
         # Validate auth credentials
         if not self.auth:
-            raise ValueError("Neo4j auth must be a tuple of (username, password)")
+            raise ValueError("Neo4j authentication credentials are required")
         
         if not isinstance(self.auth, tuple) or len(self.auth) != 2:
             raise ValueError("Neo4j auth must be a tuple of (username, password)")

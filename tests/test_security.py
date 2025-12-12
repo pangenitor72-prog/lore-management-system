@@ -44,7 +44,7 @@ def test_neo4j_credential_validation():
         Neo4jDatabase("bolt://localhost:7687", auth=("neo4j", ""))
     
     # None credentials via user/password should raise ValueError
-    with pytest.raises(ValueError, match="Neo4j auth must be a tuple"):
+    with pytest.raises(ValueError, match="Neo4j authentication credentials are required"):
         Neo4jDatabase("bolt://localhost:7687", user=None, password=None)
     
     # Invalid auth tuple length should raise ValueError
