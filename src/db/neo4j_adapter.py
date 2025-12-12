@@ -40,7 +40,7 @@ class Neo4jDatabase:
             self.auth = auth
         elif isinstance(user, tuple):
             self.auth = user
-        elif user is not None:
+        elif user is not None and password is not None:
             self.auth = (user, password)
         else:
             self.auth = None

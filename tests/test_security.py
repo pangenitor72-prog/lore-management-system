@@ -74,6 +74,10 @@ def test_sanitize_user_input():
     with pytest.raises(ValueError, match="disallowed special characters"):
         sanitize_user_input("DROP TABLE users;")
     
+    # Parentheses should be disallowed to prevent injection
+    with pytest.raises(ValueError, match="disallowed special characters"):
+        sanitize_user_input("test()")
+    
     # Special characters with allow_special=True should work
     result = sanitize_user_input("Hello<world>", allow_special=True)
     assert result == "Hello<world>"

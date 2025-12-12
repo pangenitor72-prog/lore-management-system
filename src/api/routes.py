@@ -136,7 +136,14 @@ async def lifespan(app: FastAPI):
     try:
         # Validate required Neo4j credentials
         neo4j_uri = validate_env_var("NEO4J_URI", os.getenv("NEO4J_URI"))
-        neo4j_user = validate_env_var("NEO4J_USER", os.getenv("NEO4J_USER", "neo4j"))
+        
+        # For NEO4J_USER, check if explicitly set; if not, use default but don't validate as required
+        neo4j_user_env = os.getenv("NEO4J_USER")
+        if neo4j_user_env:
+            neo4j_user = validate_env_var("NEO4J_USER", neo4j_user_env)
+        else:
+            neo4j_user = "neo4j"  # Default value if not set
+            
         neo4j_password = validate_env_var("NEO4J_PASSWORD", os.getenv("NEO4J_PASSWORD"))
         
         await AuditLogger.log("✅ Required environment variables validated")
