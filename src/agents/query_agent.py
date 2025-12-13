@@ -71,7 +71,7 @@ class QueryAgent:
              AuditLogger.log_sync("QueryAgent: Vector search ENABLED (Service injected)")
         
         # Use Flash for fast Q&A
-        self.pro_model = genai.GenerativeModel("gemini-2.5-flash")
+        self.pro_model = genai.GenerativeModel("gemini-2.0-flash-exp")
         
         # Define the system prompt for the chat
         self.system_prompt = QueryPrompts.get_system_prompt()
@@ -516,8 +516,14 @@ class QueryAgent:
             augmented_prompt = f"{context}\n\n=== USER QUESTION ===\n{query}"
 
             # Step 3: Send to Gemini (wrap blocking call in threadpool)
-            response = await run_in_threadpool(self.chat.send_message, augmented_prompt)
-            return response.text
+            print("[ASK] Calling Gemini...", flush=True)
+            try:
+                response = await run_in_threadpool(self.chat.send_message, augmented_prompt)
+                print("[ASK] Gemini response received", flush=True)
+                return response.text
+            except Exception as gemini_err:
+                print(f"[ASK] Gemini call failed: {gemini_err}", flush=True)
+                raise gemini_err
 
         except Exception as e:
             logger.error("ASK ERROR", exc_info=True)
