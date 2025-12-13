@@ -249,11 +249,14 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 # Frontend assets mount (built React app)
 frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists() and (frontend_dist / "assets").exists():
+    logger.info(f"Mounting frontend assets from {frontend_dist / 'assets'}")
     app.mount(
         "/assets",
         StaticFiles(directory=str(frontend_dist / "assets")),
         name="frontend-assets"
     )
+else:
+    logger.warning(f"Frontend assets NOT found at {frontend_dist / 'assets'}. UI may be broken.")
 
 # Mount Static Files - Updated for new structure
 app.mount(
@@ -334,13 +337,37 @@ def root():
     """Serve frontend index if built; fallback to API JSON."""
     frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
     index_path = frontend_dist / "index.html"
+    
     if index_path.exists():
         return FileResponse(str(index_path))
+    
+    logger.warning(f"Frontend index not found at {index_path}. Serving API status.")
     return {
         "message": "Lore Management System API",
         "version": "1.0.0",
         "status": "operational"
     }
+
+
+# Catch-all for SPA (must be last)
+@router.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    """
+    Catch-all route for SPA client-side routing.
+    Returns index.html for any non-API path.
+    """
+    # Allow API and WS paths to 404 naturally if not found
+    if full_path.startswith("api/") or full_path.startswith("ws/") or full_path.startswith("static/") or full_path.startswith("assets/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+    index_path = frontend_dist / "index.html"
+
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    
+    raise HTTPException(status_code=404, detail="Frontend not built")
+
 
 
 @router.get("/health")
