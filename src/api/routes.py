@@ -141,30 +141,36 @@ async def lifespan(app: FastAPI):
     neo4j_user = os.getenv("NEO4J_USER", "neo4j")
     neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
 
+    # Default to None to prevent AttributeError in endpoints
+    app.state.neo4j_db = None
+    connected = False
+
     if not neo4j_uri:
-        raise RuntimeError("NEO4J_URI is required but not set")
-
-    app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_user, neo4j_password)
-
-    connected = await connect_neo4j_with_timeout(app.state.neo4j_db)
-    if not connected:
-        raise RuntimeError("Neo4j connection failed")
+        logger.error("NEO4J_URI missing — application cannot start fully")
+    else:
+        app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_user, neo4j_password)
+        connected = await connect_neo4j_with_timeout(app.state.neo4j_db)
+        if not connected:
+            logger.error("Neo4j connection failed — application starting in degraded mode")
 
     # -------------------------
     # VECTOR INDEX
     # -------------------------
-    try:
-        indexes = await app.state.neo4j_db.list_indexes()
-        has_vector = any(i.get("name") == "entity_embeddings" for i in indexes)
+    if connected:
+        try:
+            indexes = await app.state.neo4j_db.list_indexes()
+            has_vector = any(i.get("name") == "entity_embeddings" for i in indexes)
 
-        if not has_vector:
-            created = await app.state.neo4j_db.create_vector_index()
-            app.state.vector_search_enabled = created
-        else:
-            app.state.vector_search_enabled = True
+            if not has_vector:
+                created = await app.state.neo4j_db.create_vector_index()
+                app.state.vector_search_enabled = created
+            else:
+                app.state.vector_search_enabled = True
 
-    except Exception as e:
-        await AuditLogger.log(f"Vector index error: {e}", level=logging.ERROR)
+        except Exception as e:
+            await AuditLogger.log(f"Vector index error: {e}", level=logging.ERROR)
+            app.state.vector_search_enabled = False
+    else:
         app.state.vector_search_enabled = False
 
     # -------------------------
@@ -234,7 +240,7 @@ app.add_middleware(
 router = APIRouter()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "ui" / "templates"))
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Frontend assets mount (built React app)
 frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
@@ -297,8 +303,12 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
 
     try:
         while True:
-            msg = await queue.get()
-            await websocket.send_json(msg)
+            try:
+                # Wait for message with timeout to send keepalive
+                msg = await asyncio.wait_for(queue.get(), timeout=25.0)
+                await websocket.send_json(msg)
+            except asyncio.TimeoutError:
+                await websocket.send_json({"type": "heartbeat"})
 
     except WebSocketDisconnect:
         pass

@@ -20,7 +20,7 @@ app = "lore-management-system"
   # MUST be an array, NOT an object
   [[services.http_checks]]
     interval = "10s"
-    timeout = "2s"
+  timeout = "5s"
     method = "GET"
     path = "/health"
     protocol = "http"
