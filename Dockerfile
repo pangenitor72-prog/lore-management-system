@@ -28,12 +28,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy frontend build → to the folder FastAPI actually serves
-COPY --from=frontend-builder /frontend/dist /app/src/ui/static
-
-# Ensure templates folder exists (FastAPI will crash otherwise)
-# Your repo uses: src/ui/templates
-# So no change needed IF that folder exists in repo.
+# Copy frontend build from stage 1
+COPY --from=frontend-builder /frontend/dist /app/frontend/dist
 
 EXPOSE 9000
 
