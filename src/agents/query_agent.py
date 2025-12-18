@@ -29,6 +29,7 @@ from src.prompts import QueryPrompts
 BROADCAST_EVENTS = False  # TEMP: disable broadcaster during early dev
 logger = logging.getLogger(__name__)
 
+LEADERSHIP_PATTERNS = [] # Deprecated: replaced by generic relationship retrieval
 
 class QueryAgent:
     """RAG-powered query agent using Neo4j for context retrieval with vector search."""
@@ -42,6 +43,16 @@ class QueryAgent:
         "summary of", "details about", "details on", "info on", "info about"
     ]
     
+    # Allowed relationship types per entity type for context injection
+    RELATIONSHIP_ALLOWLIST = {
+        "Faction": ["LEADS", "COMMANDS", "MEMBER_OF", "ALLIED_WITH", "ENEMY_OF", "CONTROLS", "FOUNDED_BY"],
+        "Character": ["MEMBER_OF", "LEADS", "COMMANDS", "CREATED", "WIELDS", "ENEMY_OF", "FOUNDER_OF", "FOUNDED"],
+        "Location": ["LOCATED_IN", "CONTROLS", "HOSTS", "RULED_BY"],
+        "Item": ["CREATED_BY", "WIELDS", "OWNED_BY"],
+        "Event": ["INVOLVED_IN", "CAUSED_BY", "RESULT_OF"],
+        "Concept": ["BELIEVED_IN", "PRACTICED_BY"]
+    }
+
     def __init__(
         self, 
         neo4j_db: Neo4jDatabase, 
@@ -365,6 +376,87 @@ class QueryAgent:
             await AuditLogger.log(f"Vector search failed: {e}", level=logging.WARNING)
             return []
 
+    async def retrieve_relationship_facts(self, canon_id: str, entity_type: str, limit: int = 15) -> List[str]:
+        """
+        Retrieve first-order relationship facts for an entity, filtered by type.
+        """
+        allowed_types = self.RELATIONSHIP_ALLOWLIST.get(entity_type, [])
+        if not allowed_types:
+            # Fallback for unknown types - get generic relations
+            allowed_types = ["RELATED_TO", "ASSOCIATED_WITH"]
+            
+        cypher = """
+        MATCH (n:Entity {canon_id: $canon_id})-[r]-(other:Entity)
+        RETURN 
+            type(r) as rel_type, 
+            other.name as other_name, 
+            startNode(r) = n as is_outgoing
+        LIMIT $limit
+        """
+        
+        results = await self.db.execute(cypher, {"canon_id": canon_id, "limit": limit})
+        
+        facts = []
+        for row in results or []:
+            rel_type = row["rel_type"]
+            other_name = row["other_name"]
+            is_outgoing = row["is_outgoing"]
+            
+            # Filter by allowed types
+            if rel_type not in allowed_types:
+                continue
+                
+            # Convert to natural language fact
+            # Format: Subject Verb Object
+            verb = rel_type.replace("_", " ").lower()
+            
+            if is_outgoing:
+                # n -> other
+                # e.g. "Bullet-Lord leads Lead Corps"
+                # Need name of n? We don't have it here, but we can construct the partial fact
+                # or better, return the full sentence.
+                # Ideally we want: "Subject leads Object"
+                # We can't easily get 'n.name' from just canon_id inside loop without passing it or querying it.
+                # Actually, context injection appends these facts TO the entity block.
+                # So "Leads Lead Corps" is okay?
+                # The user requirement: "Bullet-Lord leads the Lead Corps."
+                # We should probably pass the entity name or query it.
+                # Let's update the query to return n.name too.
+                pass 
+            else:
+                pass
+
+        # optimized query to get subject name too
+        cypher_full = """
+        MATCH (n:Entity {canon_id: $canon_id})-[r]-(other:Entity)
+        RETURN 
+            n.name as entity_name,
+            type(r) as rel_type, 
+            other.name as other_name, 
+            startNode(r) = n as is_outgoing
+        LIMIT $limit
+        """
+        results = await self.db.execute(cypher_full, {"canon_id": canon_id, "limit": limit})
+        
+        facts = []
+        for row in results or []:
+            if row["rel_type"] not in allowed_types:
+                continue
+                
+            subject = row["entity_name"]
+            obj = row["other_name"]
+            verb = row["rel_type"].replace("_", " ").lower()
+            
+            if row["is_outgoing"]:
+                fact = f"{subject} {verb} {obj}."
+            else:
+                # incoming: other -> n
+                fact = f"{obj} {verb} {subject}."
+                
+            facts.append(fact)
+            
+        return facts
+
     async def retrieve_context(self, query: str, campaign_id: Optional[str] = None) -> str:
         """
         Retrieves relevant context from the Neo4j graph using a 4-tier strategy:
@@ -390,7 +482,22 @@ class QueryAgent:
                 print("[RETRIEVE] About to query Neo4j", flush=True)
                 full_context = await self.get_node_with_neighbors(entity_name, campaign_id=campaign_id)
                 if full_context:
+                    # Append node properties context
                     context_parts.append(self._format_entity_context(full_context))
+                    
+                    # 🔥 RELATIONSHIP-AWARE CONTEXT EXPANSION
+                    # Fetch first-order relationship facts for ALL resolved entities
+                    props = full_context.get("properties", {})
+                    canon_id = props.get("canon_id")
+                    entity_type = full_context.get("type", "Entity")
+                    
+                    if canon_id:
+                        facts = await self.retrieve_relationship_facts(canon_id, entity_type)
+                        if facts:
+                            context_parts.append(f"RELATIONSHIPS for {full_context.get('name')}:")
+                            context_parts.extend(facts)
+                            await AuditLogger.log(f"  + Added {len(facts)} relationship facts for {entity_name}")
+                                
                     return True
             return False
         

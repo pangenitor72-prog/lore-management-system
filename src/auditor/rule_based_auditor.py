@@ -54,6 +54,7 @@ class RuleBasedAuditor:
             "self_referential_relationships": [],
             "circular_relationships": [],
             "unparseable_dates": [],
+            "canonical_collisions": [],
         }
 
         # NOTE: Each check is isolated and defensive.
@@ -67,6 +68,7 @@ class RuleBasedAuditor:
             ("self_referential_relationships", self.check_self_referential),
             ("circular_relationships", self.check_circular_relationships),
             ("unparseable_dates", self.check_unparseable_dates),
+            ("canonical_collisions", self.check_canonical_collisions),
         ]
 
         for key, check_fn in checks:
@@ -545,6 +547,57 @@ class RuleBasedAuditor:
                     )
                 )
 
+        return contradictions
+
+    async def check_canonical_collisions(self) -> List[Contradiction]:
+        """
+        Check for entities that have duplicate normalized names (violation of Canonical Identity Policy).
+        
+        This detects when multiple entities of the same type share the same normalized name,
+        indicating a failure of the ingestion canonicalization logic or legacy data issues.
+        """
+        contradictions: List[Contradiction] = []
+        
+        # Check for multiple entities with same (entity_type, normalized_name)
+        # We rely on normalized_name being populated.
+        
+        cypher = """
+        MATCH (e:Entity)
+        WHERE e.normalized_name IS NOT NULL
+        WITH e.entity_type as etype, e.normalized_name as norm, collect(e) as nodes
+        WHERE size(nodes) > 1
+        RETURN 
+            etype, 
+            norm, 
+            nodes
+        """
+        
+        records = await self.db.execute(cypher)
+        
+        for row in records or []:
+             nodes = row['nodes']
+             # Extract IDs and names
+             ids = [n.get('canon_id') for n in nodes]
+             names = [n.get('name') for n in nodes]
+             
+             contradictions.append(
+                Contradiction(
+                    contradiction_type="CANONICAL_COLLISION",
+                    severity="HIGH",
+                    description=(
+                        f"Canonical Identity Violation: Multiple {row['etype']} entities "
+                        f"share normalized name '{row['norm']}': {names}. "
+                        f"IDs: {ids}"
+                    ),
+                    entity_ids=ids,
+                    evidence={
+                        "normalized_name": row['norm'],
+                        "entity_type": row['etype'],
+                        "conflicting_names": names
+                    }
+                )
+             )
+             
         return contradictions
 
     # ============================================================

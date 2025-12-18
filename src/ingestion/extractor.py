@@ -58,7 +58,90 @@ TITLES = [
     "Archmage"
 ]
 
+LEADERSHIP_PATTERNS = [
+    (r"led by ([A-Z][a-z\-]+(?: [A-Z][a-z\-]+)*)", "LEADS"),
+    (r"commanded by ([A-Z][a-z\-]+(?: [A-Z][a-z\-]+)*)", "COMMANDS"),
+    (r"ruled by ([A-Z][a-z\-]+(?: [A-Z][a-z\-]+)*)", "LEADS"),
+    (r"under the command of ([A-Z][a-z\-]+(?: [A-Z][a-z\-]+)*)", "COMMANDS"),
+    (r"([A-Z][a-z\-]+(?: [A-Z][a-z\-]+)*) leads (?:the )?", "LEADS"),
+    (r"([A-Z][a-z\-]+(?: [A-Z][a-z\-]+)*) commands (?:the )?", "COMMANDS"),
+]
+
+OFFICER_TITLES = [
+    "Commander", "Captain", "General", "Brigadier", "Lieutenant", "Admiral", "Colonel", "Major"
+]
+
 # --- Helper Functions ---
+
+def _extract_leadership_entities(segment: str, faction_name: str) -> List[ExtractedProperties]:
+    """
+    Extract leadership figures from a faction segment.
+    """
+    leadership_entities = []
+    seen_names = set()
+    
+    # 1. Regex Extraction (Explicit relationships)
+    for pattern, rel_type in LEADERSHIP_PATTERNS:
+        matches = re.finditer(pattern, segment)
+        for match in matches:
+            char_name = match.group(1).strip()
+            
+            if char_name in ["The", "A", "He", "She", "It", "They"]: continue
+            if faction_name and char_name == faction_name: continue
+            if char_name in seen_names: continue
+            
+            # Check for title to refine relationship
+            has_title = any(t in char_name for t in OFFICER_TITLES)
+            final_rel = "COMMANDS" if has_title else rel_type
+            
+            props = ExtractedProperties(
+                name=char_name,
+                aliases=[],
+                description=f"Leader within {faction_name or 'the faction'}.",
+                entity_type="character",
+                tags=["leader"] + (["officer"] if has_title else []),
+                traits=[],
+                temporal_cues=[],
+                relationship_candidates=[{
+                    "source": char_name,
+                    "target": faction_name,
+                    "relationship_type": final_rel,
+                    "is_explicit": True
+                }]
+            )
+            leadership_entities.append(props)
+            seen_names.add(char_name)
+            
+    # 2. Title-based extraction (Implicit/Fallback)
+    for title in OFFICER_TITLES:
+        # Pattern: Title Name (e.g. Captain Remington)
+        pattern = r"\b" + title + r" ([A-Z][a-z\-]+)\b"
+        matches = re.finditer(pattern, segment)
+        for match in matches:
+            char_name = f"{title} {match.group(1)}"
+            
+            if char_name in seen_names: continue
+            if faction_name and char_name == faction_name: continue
+            
+            props = ExtractedProperties(
+                name=char_name,
+                aliases=[],
+                description=f"{title} of {faction_name or 'the faction'}.",
+                entity_type="character",
+                tags=[title.lower(), "officer"],
+                traits=[],
+                temporal_cues=[],
+                relationship_candidates=[{
+                    "source": char_name,
+                    "target": faction_name,
+                    "relationship_type": "COMMANDS",
+                    "is_explicit": True
+                }]
+            )
+            leadership_entities.append(props)
+            seen_names.add(char_name)
+
+    return leadership_entities
 
 def _extract_name(result: LoreDetectionResult) -> Optional[str]:
     """
@@ -209,9 +292,10 @@ def _extract_traits(trait_cues: List[Any]) -> List[str]:
 
 # --- Main API ---
 
-def extract_properties(result: LoreDetectionResult) -> ExtractedProperties:
+def extract_properties(result: LoreDetectionResult) -> List[ExtractedProperties]:
     """
-    Convert a LoreDetectionResult into canonical properties for EntityBuilder.
+    Convert a LoreDetectionResult into a list of canonical properties for EntityBuilder.
+    Returns a list because faction modules may yield multiple entities.
     """
     
     # 1. Name Extraction
@@ -249,7 +333,7 @@ def extract_properties(result: LoreDetectionResult) -> ExtractedProperties:
     # 6. Traits
     traits = _extract_traits(result.trait_cues)
     
-    return ExtractedProperties(
+    main_entity = ExtractedProperties(
         name=name,
         aliases=aliases,
         description=description,
@@ -259,12 +343,26 @@ def extract_properties(result: LoreDetectionResult) -> ExtractedProperties:
         temporal_cues=temporal_cues_dicts,
         relationship_candidates=relationship_candidates
     )
+    
+    entities = [main_entity]
+    
+    # If Faction, attempt to extract leadership figures
+    if entity_type and entity_type.lower() == "faction":
+        # We need the faction name to link them
+        faction_name = name
+        # If no name detected for faction, use alias? Or skip?
+        if faction_name:
+            leadership = _extract_leadership_entities(result.segment, faction_name)
+            entities.extend(leadership)
+            
+    return entities
 
 def extract_many(results: List[LoreDetectionResult]) -> List[ExtractedProperties]:
     """Batch version."""
     extracted = []
     logger.debug(f"Extracting properties for {len(results)} detection results.")
     for res in results:
-        extracted.append(extract_properties(res))
+        props_list = extract_properties(res)
+        extracted.extend(props_list)
     return extracted
 

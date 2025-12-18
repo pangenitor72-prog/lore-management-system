@@ -150,13 +150,22 @@ class LoreIngestor:
             return None
 
         node_id = node.get("id", "Unknown")
+        props = node.get("properties", {})
+
+        # Flatten for embedding service to ensure it sees 'content' and 'name'
+        # node has 'id' but embedding service looks for 'name'
+        entity_data = {
+            "name": node_id,
+            "label": node.get("label"),
+            **props
+        }
 
         loop = asyncio.get_event_loop()
         try:
-            # Pass the full node object for richer embeddings
+            # Pass the flattened object for richer embeddings
             embedding = await loop.run_in_executor(
                 None,
-                lambda: self.embedding_service.embed_entity(node)
+                lambda: self.embedding_service.embed_entity(entity_data)
             )
             return embedding
         except Exception as e:
@@ -217,6 +226,23 @@ class LoreIngestor:
             logger.info(f"[SAVE] Found {len(entities)} nodes, {len(relationships)} relationships")
         nodes: List[Dict[str, Any]] = data.get("nodes", []) or []
         rels: List[Dict[str, Any]] = data.get("relationships", []) or []
+
+        # GUARDRAIL: Filter out nodes without narrative content
+        valid_nodes = []
+        for node in nodes:
+            props = node.get("properties", {})
+            content = props.get("content")
+            if not content or not str(content).strip():
+                node_id = node.get("id", "Unknown")
+                error_msg = f"Skipping entity '{node_id}': Missing narrative content."
+                logger.error(f"[INGEST] {error_msg}")
+                # Log to audit log asynchronously? save_to_neo4j is async.
+                # But we don't want to slow down the loop too much.
+                # Just keeping it in valid_nodes list.
+                continue
+            valid_nodes.append(node)
+        
+        nodes = valid_nodes
 
         nodes_saved = 0
         rels_saved = 0

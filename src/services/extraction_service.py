@@ -33,11 +33,14 @@ class ExtractionService:
         "No markdown. No explanation. No commentary.\n\n"
         "**Rules:**\n"
         "1. IDs must be short and simple (e.g., \"Kael\").\n"
-        "2. Always include a 'description' property when possible.\n"
-        "3. Relationship types may include: LOCATED_IN, MEMBER_OF, OWNS, CREATED,\n"
+        "2. Every entity MUST have a 'content' field containing the VERBATIM narrative text that describes it.\n"
+        "   - Do not summarize. Copy the exact sentences from the text.\n"
+        "   - If an entity is mentioned but has no narrative text, do NOT create it.\n"
+        "3. Include a 'description' property (summary) if possible, but 'content' is mandatory.\n"
+        "4. Relationship types may include: LOCATED_IN, MEMBER_OF, OWNS, CREATED,\n"
         "   DEFEATED, ALLIED_WITH, ENEMY_OF, KNOWS, WIELDS, etc.\n"
-        "4. If nothing is found, return: {\"nodes\": [], \"relationships\": []}\n"
-        "5. CRITICAL: Output MUST be valid JSON.\n"
+        "5. If nothing is found, return: {\"nodes\": [], \"relationships\": []}\n"
+        "6. CRITICAL: Output MUST be valid JSON.\n"
     )
 
     def __init__(self, api_key: str):
@@ -80,14 +83,26 @@ class ExtractionService:
 
             nid = node.get("id")
             label = node.get("label")
+            
+            # Check properties dict
             props = node.get("properties", {})
+            if not isinstance(props, dict):
+                props = {}
 
+            # Look for 'content' in top-level node OR properties
+            content = node.get("content") or props.get("content")
+            
             if not isinstance(nid, str) or not nid.strip():
                 continue
             if not isinstance(label, str) or not label.strip():
                 continue
-            if not isinstance(props, dict):
-                props = {}
+                
+            # STRICT: Content is mandatory
+            if not content or not isinstance(content, str) or not content.strip():
+                 continue
+
+            # Ensure content is in properties
+            props["content"] = content.strip()
 
             clean_nodes.append({"id": nid.strip(), "label": label.strip(), "properties": props})
 
