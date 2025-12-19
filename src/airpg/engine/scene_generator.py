@@ -1,12 +1,9 @@
+# This file exists solely as a Phase 1 validation artifact and is not part of
+# the runtime engine.
+#
 # src/airpg/engine/scene_generator.py
-"""
-Generates a single, hardcoded narrative scene to demonstrate consistent NPC
-personality based on a predefined OCEAN profile, as per Phase 0 requirements.
-"""
 
 def generate_scene() -> str:
-    """
-
     # --- Hardcoded Data ---
 
     npc_name = "Kaelen"
