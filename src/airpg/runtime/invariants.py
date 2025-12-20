@@ -1,6 +1,7 @@
 # src/airpg/runtime/invariants.py
 from __future__ import annotations
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable
+from .runtime import MinimalRuntime
 
 def check_non_corruption_invariant(
     bare_trace: List[Tuple[Optional[str], str, str]],
@@ -18,6 +19,63 @@ def check_non_corruption_invariant(
         raise AssertionError(
             "INVARIANT VIOLATION:\n"
             "MinimalRuntime altered propagation.\n\n"
-            f"Bare trace:\n{bare_trace}\n\n"
-            f"Runtime trace:\n{runtime_trace}"
+            f"Bare trace:\\n{bare_trace}\\n\\n"
+            f"Runtime trace:\\n{runtime_trace}"
         )
+
+def assert_equivalent_propagation(
+    *,
+    agent_ids: Tuple[str, ...],
+    deliver_fn: Callable[..., List[Tuple[str, str]]],
+    initial_sender: Optional[str],
+    initial_receiver: str,
+    initial_message: str,
+    max_steps: int = 200,
+) -> None:
+    """
+    Structural guardrail.
+    Invariant: Wrapping an interaction in MinimalRuntime must not change:
+    - propagation order
+    - recipients
+    - messages
+    This function OWNS the entire trace generation (bare + runtime), so it
+    cannot be bypassed by passing "prepared" traces.
+    """
+    # ---- Bare execution (old behavior) ----
+    bare_trace: List[Tuple[Optional[str], str, str]] = []
+    queue: List[Tuple[Optional[str], str, str]] = [
+        (initial_sender, initial_receiver, initial_message)
+    ]
+    steps = 0
+    while queue and steps < max_steps:
+        sender, receiver, message = queue.pop(0)
+        bare_trace.append((sender, receiver, message))
+        forwards = deliver_fn(
+            receiver=receiver,
+            sender=sender,
+            message=message,
+        )
+        for next_receiver, next_message in forwards:
+            queue.append((receiver, next_receiver, next_message))
+        steps += 1
+        
+    # ---- Reset stateful logic if present ----
+    owner = getattr(deliver_fn, "__self__", None)
+    if owner is not None and hasattr(owner, "reset") and callable(owner.reset):
+        owner.reset()
+        
+    # ---- Runtime execution (wrapped behavior) ----
+    runtime = MinimalRuntime()
+    runtime_events = runtime.run_interaction(
+        agent_ids=agent_ids,
+        deliver_fn=deliver_fn,
+        initial_sender=initial_sender,
+        initial_receiver=initial_receiver,
+        initial_message=initial_message,
+        max_steps=max_steps,
+    )
+    runtime_trace: List[Tuple[Optional[str], str, str]] = [
+        (e.sender, e.receiver, e.message) for e in runtime_events
+    ]
+    # ---- Enforce ----
+    check_non_corruption_invariant(bare_trace, runtime_trace)
