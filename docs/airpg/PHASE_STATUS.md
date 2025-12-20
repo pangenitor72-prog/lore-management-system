@@ -83,3 +83,7 @@ The following capabilities were proven:
 This proves that belief behavior can appear cumulative even when the system has no memory of prior runs, using only present-time inputs.
 
 Phase 6C is complete.
+
+## Phase 6E — Repetition Susceptibility (SELECTED / SPEC-PENDING)
+**Intent:** Repetition may bias belief outcomes selectively via topology and receiver personality, without counters, memory, accumulation, or internal state. This does NOT introduce learning, reinforcement, or persistence. It models heterogeneous susceptibility: some receivers are influenced by repetition, others re-evaluate each exposure.
+**Ontology:** This is documentation of intent, not proof. No mechanisms, no validation claims, no results are included at this stage.

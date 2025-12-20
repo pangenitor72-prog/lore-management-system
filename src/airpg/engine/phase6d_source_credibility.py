@@ -90,7 +90,7 @@ def propagate(sender: str, claim: str):
 
         for existing_claim in held_claims[receiver][:]:
             if conflicts(existing_claim, claim):
-                receiver_dominant = dominant_trait(receiver_profile)
+                receiver_dominant = dominant_trait(NPCS[receiver])
                 outcome = TRAIT_TO_OUTCOME[receiver_dominant]
 
                 if outcome == "RETAIN":
