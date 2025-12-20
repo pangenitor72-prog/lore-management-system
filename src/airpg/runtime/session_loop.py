@@ -5,6 +5,7 @@ import copy
 
 from .runtime import MinimalRuntime, TraceEvent
 from .session_state import SessionState
+from .gameplay_rules import GameplayRule
 
 def run_session_step(
     *,
@@ -13,21 +14,39 @@ def run_session_step(
     agent_ids: Tuple[str, ...],
     deliver_fn: Callable[..., List[Tuple[str, str]]],
     runtime: MinimalRuntime,
+    rules: Optional[List[GameplayRule]] = None,
 ) -> Tuple[SessionState, List[TraceEvent]]:
     """
     Runs a single, deterministic step of a session loop.
 
-    1. Derives interaction input ONLY from the current state and player input.
+    1. Applies gameplay rules to the initial message.
     2. Runs one full interaction via MinimalRuntime.
     3. Extracts a handoff payload from the resulting trace.
     4. Returns a NEW SessionState and the trace. Does not mutate inputs.
     """
-    # Use last handoff as context if available, otherwise use player input directly
-    initial_message = state.last_handoff_message or player_input
+    # The message for this turn is ALWAYS the player's direct input.
+    message = player_input
 
-    # For this simple loop, the player always initiates contact with the first agent
+    # Apply gameplay rules to the player's current input before interaction
+    if rules:
+        for rule in rules:
+            transformed_message = rule(message, state)
+            if transformed_message is None:
+                # Rule blocked propagation entirely
+                next_state = SessionState(
+                    turn_index=state.turn_index + 1,
+                    last_player_message=player_input,
+                    last_handoff_message="[Action blocked by rule]",
+                )
+                return next_state, []
+            message = transformed_message
+
+    initial_message = message
+
+    # The player's action is injected into the world by targeting themselves.
+    # The deliver_fn then determines propagation to other agents.
     initial_sender = "Player"
-    initial_receiver = agent_ids[1] if len(agent_ids) > 1 else agent_ids[0]
+    initial_receiver = "Player"
 
     trace = runtime.run_interaction(
         agent_ids=agent_ids,
