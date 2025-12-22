@@ -42,6 +42,16 @@ Content may not decide behavior.
 
 ---
 
+## Foundational Axioms
+
+> **"A savegame contains one reality and many experiences of it."**
+
+- "Reality" refers to savegame-scoped canon.
+- "Experiences" refer to pressure and non-canon memory.
+- Disagreement and contradiction are allowed; reality is enforced.
+
+---
+
 ## Explicit Permissions (Content MAY)
 
 Content may:

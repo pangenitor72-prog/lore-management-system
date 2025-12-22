@@ -29,3 +29,28 @@ The engine's responsibility is to respect the topological and personality constr
 - Determinism must be verified by re-running the scenario.
 
 This doctrine ensures that information flow is shaped by the graph and the agents, not by a desire to ensure global saturation.
+
+## Player-Facing Canon Commit Warnings (Design)
+
+This section defines the design contract for warning players when an action may write canon.
+
+### When Warnings Are Required
+
+The system MUST warn the player before any action that:
+- Writes irreversible world-state (e.g., character death, faction destruction)
+- Locks a previously ambiguous claim into canon
+- Resolves a contradiction by selecting one version as real
+- Commits a player choice that constrains future possibility
+
+### Canon Commit Rules
+
+- Canon writes are explicit and opt-in.
+- Canon writes are savegame-scoped.
+- Once written, canon constrains all future interactions within that savegame.
+- Rewinding past a canon commit creates a new savegame branch, not an undo.
+
+### Warning Requirements
+
+- The warning MUST be clear and unambiguous.
+- The player MUST explicitly confirm the commit.
+- Declining the commit MUST preserve ambiguity; no canon is written.
