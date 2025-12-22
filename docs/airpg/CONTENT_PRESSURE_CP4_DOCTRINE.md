@@ -54,3 +54,51 @@ The system MUST warn the player before any action that:
 - The warning MUST be clear and unambiguous.
 - The player MUST explicitly confirm the commit.
 - Declining the commit MUST preserve ambiguity; no canon is written.
+
+## Lore Ingestion Interface Contract (Design)
+
+This section defines the required properties that any lore ingestion system must satisfy to remain compatible with AIRPG's epistemic constraints.
+
+### Claim Nature
+
+- Lore MUST be ingested as claims, not facts.
+- No ingestion path may assert objective truth.
+- All lore enters as pressure, not authority.
+
+### Source Attribution
+
+- Lore MUST retain source context (e.g., myth, record, testimony).
+- Source attribution is metadata; it does NOT imply authority or correctness.
+- Source type does not affect propagation priority.
+
+### Scope Declaration
+
+- Lore MUST be explicitly scoped to the current savegame.
+- No global lore is permitted.
+- No cross-save lore is permitted.
+
+### Canon Awareness
+
+- Ingestion MUST respect existing savegame canon.
+- Lore that contradicts canon MUST be routed through canon conflict handling.
+- Lore ingestion MUST NOT write canon.
+- Only explicit player confirmation may commit canon.
+
+### Contradiction Tolerance
+
+- Multiple incompatible lore entries MUST be allowed to coexist.
+- No normalization is permitted.
+- No reconciliation is permitted.
+- No prioritization is permitted.
+
+### Memory Separation
+
+- Ingesting lore MUST NOT automatically write memory.
+- Memory formation is optional and downstream.
+- Lore and memory are distinct systems.
+
+### Killability
+
+- The engine MUST remain valid if all ingested lore is removed.
+- Lore ingestion MUST NOT become structurally required.
+- No lore entry may be load-bearing.
