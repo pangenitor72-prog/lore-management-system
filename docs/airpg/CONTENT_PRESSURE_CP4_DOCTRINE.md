@@ -102,3 +102,61 @@ This section defines the required properties that any lore ingestion system must
 - The engine MUST remain valid if all ingested lore is removed.
 - Lore ingestion MUST NOT become structurally required.
 - No lore entry may be load-bearing.
+
+## Memory Interface Contract (Design)
+
+This section defines the required properties that any memory system must satisfy to remain compatible with AIRPG's epistemic constraints.
+
+### Memory Scope
+
+- Memory is local to an agent, session, or explicit context.
+- No global memory is permitted.
+- Memory is savegame-scoped and branch-isolated.
+
+### Permitted Memory Writes
+
+Memory MAY record:
+- Exposure markers (encountered, repeated)
+- Salience or intensity
+- Unresolved contradiction markers
+- Emotional or cognitive impact
+- Confusion, surprise, instability
+
+Memory MUST NOT record:
+- Facts
+- Propositions
+- Resolved outcomes
+- Causal explanations
+- Truth assertions
+
+### Memory Write Semantics
+
+- Writing to memory is explicit.
+- Lore ingestion does NOT auto-write memory.
+- Runtime logic does NOT infer memory writes.
+- Memory writes are optional and removable.
+
+### Memory Read Semantics
+
+- Memory may influence tendency or bias only.
+- Memory MUST NOT constrain possibility.
+- Memory MUST NOT override personality or canon.
+- Memory reads MUST tolerate contradiction.
+
+### Canon Separation
+
+- Memory MUST NOT write canon.
+- Memory MUST NOT weaken canon.
+- Memory MUST NOT resolve canon conflicts.
+
+### Determinism and Killability
+
+- Memory MUST be fully disable-able.
+- The engine MUST operate correctly with memory absent.
+- Removing memory MUST NOT alter CP-1 through CP-4 behavior.
+
+### Branching Interaction
+
+- Memory does not survive rewind by default.
+- Branches begin with empty or explicitly seeded memory.
+- No cross-branch memory leakage is permitted.
