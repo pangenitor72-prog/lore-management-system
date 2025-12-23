@@ -160,3 +160,28 @@ Memory MUST NOT record:
 - Memory does not survive rewind by default.
 - Branches begin with empty or explicitly seeded memory.
 - No cross-branch memory leakage is permitted.
+
+## MP-1 — MEMORY INTEGRATION PRESSURE (SEALED)
+
+### What MP-1 IS
+
+- Memory may bias ordering among already-legal options.
+- Bias is deterministic and explicit.
+- Bias is optional and killable.
+
+### What MP-1 IS NOT
+
+- Memory does not create options.
+- Memory does not remove options.
+- Memory does not resolve contradictions.
+- Memory does not override personality.
+- Memory does not write or modify canon.
+
+### Stability Guarantees
+
+- Removing or disabling memory restores baseline behavior with no residual effects.
+- Identical inputs combined with identical memory state yield identical outputs.
+- Fresh state objects produce identical results when seeded with the same memory markers.
+- MP-1 introduces no randomness, timing dependence, or probabilistic behavior.
+- MP-1 does not alter option legality, availability, or underlying decision rules.
+- MP-1 cannot introduce non-determinism into the runtime under any configuration.
