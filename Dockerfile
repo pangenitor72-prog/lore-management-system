@@ -1,36 +1,40 @@
 # ===============================
-# Stage 1: Frontend Build
+# LMS API Dockerfile
 # ===============================
-FROM node:18-alpine AS frontend-builder
+# Simplified for MVP deployment - API only
+# Frontend can be added back later
 
-WORKDIR /frontend
-
-COPY frontend/package*.json ./
-RUN npm ci
-
-COPY frontend/ ./
-RUN npm run build
-
-
-# ===============================
-# Stage 2: Backend + Final Image
-# ===============================
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY src/ ./src/
+COPY docs/ ./docs/
+COPY CLAUDE.md ./
 
-# Copy frontend build from stage 1
-COPY --from=frontend-builder /frontend/dist /app/frontend/dist
+# Copy data directory (lore bases, etc.)
+COPY data/ ./data/
+
+# Copy frontend dist (self-contained HTML UI)
+COPY frontend/dist/ ./frontend/dist/
 
 EXPOSE 9000
 
-CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "9000", "--proxy-headers"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:9000/health')" || exit 1
+
+CMD ["uvicorn", "src.lms.api.routes:app", "--host", "0.0.0.0", "--port", "9000", "--proxy-headers"]

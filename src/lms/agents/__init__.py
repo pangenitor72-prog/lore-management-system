@@ -1,16 +1,18 @@
-"""AI agent modules - DM, Query, Auditor, etc."""
+"""AI agent modules - DM, Query, Auditor, LoreParsing, etc."""
 
-from src.agents.query_agent import QueryAgent
-from src.agents.dm_agent import DMAgent
-from src.agents.auditor_agent import AuditorAgent
-from src.services.embedding_service import EmbeddingService
-from src.core.models import OCEANProfile, PersonalityGenerator, PersonalityTemplates
-from src.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
+from src.lms.agents.query_agent import QueryAgent
+from src.lms.agents.dm_agent import DMAgent
+from src.lms.agents.auditor_agent import AuditorAgent
+from src.lms.agents.lore_parsing_agent import LoreParsingAgent
+from src.lms.services.embedding_service import EmbeddingService
+from src.lms.core.models import OCEANProfile, PersonalityGenerator, PersonalityTemplates
+from src.lms.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
 
 __all__ = [
     "QueryAgent",
     "DMAgent",
     "AuditorAgent",
+    "LoreParsingAgent",
     "EmbeddingService",
     "OCEANProfile",
     "PersonalityGenerator",
