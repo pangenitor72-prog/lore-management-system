@@ -32,20 +32,21 @@ from src.lms.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
 logger = logging.getLogger(__name__)
 
-# Initialize Gemini once at module load
-_gemini_model = None
+# Gemini configuration - same model as LoreParsingAgent
+GEMINI_MODEL = "gemini-2.0-flash-exp"  # This works for lore parsing
+
 
 def get_gemini_model():
-    """Get or initialize the Gemini model singleton."""
-    global _gemini_model
-    if _gemini_model is None:
-        import google.generativeai as genai
-        api_key = os.getenv("GEMINI_API_KEY")
-        if api_key:
-            genai.configure(api_key=api_key)
-            _gemini_model = genai.GenerativeModel("gemini-2.0-flash-exp")
-            logger.info("Gemini model initialized")
-    return _gemini_model
+    """Get a fresh Gemini model instance for each request."""
+    import google.generativeai as genai
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return None
+
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(GEMINI_MODEL)
+    logger.info(f"Gemini model created: {GEMINI_MODEL}")
+    return model
 
 router = APIRouter(prefix="/game", tags=["Game"])
 
@@ -151,13 +152,18 @@ async def protected_ai_call(
     Raises:
         HTTPException: If budget exceeded, rate limited, or circuit open
     """
+    logger.info(f"[PROTECTED] Entering protected_ai_call for session {session_id}")
+
     # Estimate tokens
     input_tokens = estimate_tokens(prompt)
     output_tokens = max_output_tokens  # Conservative estimate
+    logger.info(f"[PROTECTED] Estimated tokens: input={input_tokens}, output={output_tokens}")
 
     # Check budget
+    logger.info(f"[PROTECTED] Checking token budget...")
     try:
         _token_tracker.check_budget(session_id, input_tokens, output_tokens)
+        logger.info(f"[PROTECTED] Budget check passed")
     except BudgetExceeded as e:
         logger.warning(f"Budget exceeded for session {session_id}: {e}")
         raise HTTPException(
@@ -171,8 +177,10 @@ async def protected_ai_call(
         )
 
     # Check circuit breaker
+    logger.info(f"[PROTECTED] Checking circuit breaker...")
     try:
         _gemini_breaker.allow_request()
+        logger.info(f"[PROTECTED] Circuit breaker check passed")
     except CircuitOpen as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -182,24 +190,27 @@ async def protected_ai_call(
     # Make the call in a thread pool to avoid blocking the event loop
     def _sync_generate():
         try:
-            logger.info(f"Starting Gemini call for session {session_id}")
+            logger.info(f"[GEMINI] Starting generate_content for session {session_id}")
+            logger.info(f"[GEMINI] Prompt length: {len(prompt)} chars")
             result = model.generate_content(
                 prompt,
                 generation_config={"temperature": temperature, "max_output_tokens": max_output_tokens}
             )
-            logger.info(f"Gemini call completed for session {session_id}")
+            logger.info(f"[GEMINI] Call completed for session {session_id}")
             return result
         except Exception as e:
-            logger.error(f"Gemini sync call failed: {e}")
+            logger.error(f"[GEMINI] Sync call failed: {e}")
             raise
 
     try:
+        logger.info(f"[GEMINI] Submitting to executor for session {session_id}")
         loop = asyncio.get_event_loop()
         # Add 45-second timeout to prevent infinite hangs
         response = await asyncio.wait_for(
             loop.run_in_executor(_executor, _sync_generate),
             timeout=45.0
         )
+        logger.info(f"[GEMINI] Executor returned for session {session_id}")
 
         # Record success
         _gemini_breaker.record_success()
@@ -691,12 +702,16 @@ someone you're hoping to see?" Weave their answers into the story.""",
 
 async def _generate_opening(session: Dict[str, Any], model) -> str:
     """Generate an opening that matches the user's genre, tone, and style."""
+    logger.info(f"[OPENING] Starting _generate_opening for session {session.get('session_id', 'unknown')}")
+
     answers = session.get("session_0_answers", {})
     genre = session.get("genre", "fantasy")
     tone = session.get("tone_preference", answers.get("tone", "dramatic"))
     style = session.get("storytelling_style", "guided")
     setting = session.get("setting_preference", answers.get("setting", ""))
     character = session.get("character_concept", answers.get("character", ""))
+
+    logger.info(f"[OPENING] genre={genre}, tone={tone}, style={style}")
 
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
@@ -723,6 +738,8 @@ Write an opening that:
 
 Length: 2-3 paragraphs. Write ONLY the narrative, no meta-commentary.
 Make it feel personal - this is THEIR story beginning."""
+
+    logger.info(f"[OPENING] Calling protected_ai_call with prompt of {len(prompt)} chars")
 
     # Use protected AI call with guardrails
     return await protected_ai_call(
