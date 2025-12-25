@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Storyweaver - Your Personal Mythology</title>
+    <!-- vis.js for graph visualization -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
         :root {
             /* Warm, inviting palette */
@@ -575,6 +577,45 @@
             font-weight: normal;
         }
 
+        /* Graph Visualization */
+        #graph-container {
+            width: 100%;
+            height: 500px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .graph-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .graph-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
         /* Footer */
         footer {
             text-align: center;
@@ -844,7 +885,36 @@
 
             <div class="btn-group" style="margin-top: 30px;">
                 <button class="btn btn-primary" id="continue-to-story" style="display: none;" onclick="showScreen('welcome')">Continue to Story Setup</button>
+                <button class="btn btn-secondary" onclick="showScreen('graph')">View Lore Graph</button>
                 <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+            </div>
+        </div>
+
+        <!-- Graph Visualization Screen -->
+        <div id="graph" class="screen">
+            <h2 style="color: var(--accent-warm); margin-bottom: 10px; font-weight: normal;">Lore Knowledge Graph</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Visual map of all entities and their relationships in the database.
+            </p>
+
+            <div class="graph-legend">
+                <div class="legend-item"><span class="legend-dot" style="background: #c98b8b;"></span> Character</div>
+                <div class="legend-item"><span class="legend-dot" style="background: #8ba88b;"></span> Location</div>
+                <div class="legend-item"><span class="legend-dot" style="background: #a08bc9;"></span> Faction</div>
+                <div class="legend-item"><span class="legend-dot" style="background: #e8c47c;"></span> Item</div>
+                <div class="legend-item"><span class="legend-dot" style="background: #8b9fc9;"></span> Event</div>
+                <div class="legend-item"><span class="legend-dot" style="background: #d4a574;"></span> Concept</div>
+            </div>
+
+            <div class="graph-stats" id="graph-stats">
+                Loading graph data...
+            </div>
+
+            <div id="graph-container"></div>
+
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="loadGraphData()">Refresh</button>
+                <button class="btn btn-secondary" onclick="showScreen('ingest')">Back to Lore</button>
             </div>
         </div>
 
@@ -1368,7 +1438,100 @@
                 await loadSaveSlots();
                 renderSaveSlots('save-slots-container', false);
             }
+            if (screenId === 'graph') {
+                loadGraphData();
+            }
         };
+
+        // ==========================================
+        // GRAPH VISUALIZATION
+        // ==========================================
+
+        let graphNetwork = null;
+
+        async function loadGraphData() {
+            const container = document.getElementById('graph-container');
+            const statsEl = document.getElementById('graph-stats');
+
+            statsEl.innerHTML = '<span class="loading"></span> Loading graph data...';
+
+            try {
+                const response = await fetch(API_BASE + '/game/graph?limit=150');
+                if (!response.ok) throw new Error('Failed to load graph');
+
+                const data = await response.json();
+
+                if (data.error) {
+                    statsEl.innerHTML = 'Error: ' + data.error;
+                    return;
+                }
+
+                statsEl.innerHTML = `<span>Entities: ${data.stats.node_count}</span><span>Relationships: ${data.stats.edge_count}</span>`;
+
+                renderGraph(data.nodes, data.edges);
+
+            } catch (err) {
+                statsEl.innerHTML = 'Error loading graph: ' + err.message;
+            }
+        }
+
+        function renderGraph(nodes, edges) {
+            const container = document.getElementById('graph-container');
+
+            // Create vis.js datasets
+            const nodesDataset = new vis.DataSet(nodes.map(n => ({
+                id: n.id,
+                label: n.label,
+                group: n.group,
+                title: n.title,
+                color: {
+                    background: n.color,
+                    border: n.color,
+                    highlight: { background: '#f5f0eb', border: n.color }
+                },
+                font: { color: '#f5f0eb' }
+            })));
+
+            const edgesDataset = new vis.DataSet(edges.map(e => ({
+                from: e.from,
+                to: e.to,
+                label: e.label,
+                arrows: 'to',
+                color: { color: '#5a4d42', highlight: '#d4a574' },
+                font: { color: '#8a7d70', size: 10 }
+            })));
+
+            const options = {
+                nodes: {
+                    shape: 'dot',
+                    size: 16,
+                    font: { size: 12 },
+                    borderWidth: 2
+                },
+                edges: {
+                    width: 1,
+                    smooth: { type: 'continuous' }
+                },
+                physics: {
+                    stabilization: { iterations: 100 },
+                    barnesHut: {
+                        gravitationalConstant: -3000,
+                        springLength: 150
+                    }
+                },
+                interaction: {
+                    hover: true,
+                    tooltipDelay: 100
+                }
+            };
+
+            // Destroy old network if exists
+            if (graphNetwork) {
+                graphNetwork.destroy();
+            }
+
+            graphNetwork = new vis.Network(container, { nodes: nodesDataset, edges: edgesDataset }, options);
+        }
 
         // Health check
         fetch(API_BASE.replace('/api', '') + '/health')

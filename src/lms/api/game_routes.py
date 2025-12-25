@@ -1477,3 +1477,97 @@ async def delete_save(slot: int):
     del _save_slots[slot]
 
     return {"success": True, "message": f"Save slot {slot} cleared"}
+
+
+# ============================================================
+# GRAPH VISUALIZATION
+# ============================================================
+
+@router.get("/graph")
+async def get_graph_data(
+    request: Request,
+    limit: int = 100,
+):
+    """
+    Get graph data for visualization.
+
+    Returns nodes and edges in a format suitable for vis.js or similar libraries.
+    """
+    db = get_optional_neo4j_db(request)
+    if not db:
+        return {"nodes": [], "edges": []}
+
+    try:
+        # Get all entities (nodes)
+        node_query = """
+        MATCH (n)
+        WHERE n.canon_id IS NOT NULL OR n.name IS NOT NULL
+        RETURN
+            COALESCE(n.canon_id, id(n)) AS id,
+            COALESCE(n.name, n.canonical_name, 'Unknown') AS label,
+            labels(n)[0] AS type,
+            n.entity_type AS entity_type,
+            n.openness AS openness,
+            n.description AS description
+        LIMIT $limit
+        """
+        nodes_result = await db.execute(node_query, {"limit": limit})
+
+        # Get all relationships (edges)
+        edge_query = """
+        MATCH (a)-[r]->(b)
+        WHERE (a.canon_id IS NOT NULL OR a.name IS NOT NULL)
+          AND (b.canon_id IS NOT NULL OR b.name IS NOT NULL)
+        RETURN
+            COALESCE(a.canon_id, id(a)) AS from,
+            COALESCE(b.canon_id, id(b)) AS to,
+            type(r) AS label
+        LIMIT $limit
+        """
+        edges_result = await db.execute(edge_query, {"limit": limit * 2})
+
+        # Format for vis.js
+        nodes = []
+        for row in nodes_result:
+            node_type = row.get("entity_type") or row.get("type") or "Entity"
+
+            # Color by type
+            colors = {
+                "Character": "#c98b8b",
+                "Location": "#8ba88b",
+                "Faction": "#a08bc9",
+                "Item": "#e8c47c",
+                "Event": "#8b9fc9",
+                "Concept": "#d4a574",
+            }
+            color = colors.get(node_type, "#b8a99a")
+
+            nodes.append({
+                "id": row["id"],
+                "label": row["label"],
+                "group": node_type,
+                "color": color,
+                "title": row.get("description", "")[:200] if row.get("description") else node_type,
+            })
+
+        edges = []
+        for row in edges_result:
+            edges.append({
+                "from": row["from"],
+                "to": row["to"],
+                "label": row["label"],
+                "arrows": "to",
+            })
+
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "stats": {
+                "node_count": len(nodes),
+                "edge_count": len(edges),
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Graph query failed: {e}")
+        return {"nodes": [], "edges": [], "error": str(e)}
