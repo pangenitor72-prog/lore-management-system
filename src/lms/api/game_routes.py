@@ -27,10 +27,61 @@ from src.lms.db.neo4j_adapter import Neo4jDatabase
 from src.lms.api.dependencies import get_neo4j_db
 from src.lms.agents.query_agent import QueryAgent
 from src.lms.agents.auditor_agent import AuditorAgent
+from src.lms.agents.lore_parsing_agent import LoreParsingAgent
 from src.lms.guardrails.token_budget import TokenTracker, BudgetExceeded, RateLimitExceeded, estimate_tokens
 from src.lms.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
 logger = logging.getLogger(__name__)
+
+# Shared lore parsing agent for extracting entities from gameplay
+_lore_parser: Optional[LoreParsingAgent] = None
+
+
+def get_lore_parser() -> LoreParsingAgent:
+    """Get or create the shared lore parsing agent."""
+    global _lore_parser
+    if _lore_parser is None:
+        _lore_parser = LoreParsingAgent()
+    return _lore_parser
+
+
+async def extract_and_store_gameplay_lore(
+    narrative: str,
+    session_id: str,
+    db: Optional[Neo4jDatabase],
+) -> None:
+    """
+    Extract entities from gameplay narrative and store them in Neo4j.
+
+    This runs asynchronously after the narrative is returned to the player,
+    so it doesn't slow down the gameplay experience.
+    """
+    if not db:
+        logger.debug("No database available for lore extraction")
+        return
+
+    if len(narrative) < 100:
+        # Too short to contain meaningful entities
+        return
+
+    try:
+        parser = get_lore_parser()
+
+        # Parse the narrative for entities
+        result = await parser.parse_and_store(
+            text=narrative,
+            db=db,
+            source_name=f"session:{session_id}",
+        )
+
+        if result.entities_stored > 0:
+            logger.info(
+                f"[LORE] Extracted {result.entities_stored} entities from session {session_id} "
+                f"({result.characters_with_ocean} with OCEAN profiles)"
+            )
+    except Exception as e:
+        # Don't let extraction failures affect gameplay
+        logger.warning(f"[LORE] Entity extraction failed for session {session_id}: {e}")
 
 # Gemini configuration - same model as LoreParsingAgent
 GEMINI_MODEL = "gemini-2.0-flash-exp"  # This works for lore parsing
@@ -573,6 +624,12 @@ async def process_action(
 
     # Add response to history
     session["history"].append({"role": "assistant", "content": response_text})
+
+    # Extract and store lore entities from the narrative (fire-and-forget)
+    # This runs in the background so it doesn't slow down the response
+    asyncio.create_task(
+        extract_and_store_gameplay_lore(response_text, session_id, db)
+    )
 
     return DMResponse(
         narrative=response_text,

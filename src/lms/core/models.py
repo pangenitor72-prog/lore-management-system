@@ -35,6 +35,7 @@ class ConfidenceLevel(str, Enum):
     PROBABLE = "PROBABLE"
     SPECULATIVE = "SPECULATIVE"
     UNCERTAIN = "UNCERTAIN"
+    AI_GENERATED = "AI_GENERATED"  # For entities created by AI during gameplay/ingestion
 
 class PartyKnowledge(str, Enum):
     """Party knowledge level values."""
@@ -52,7 +53,7 @@ class LoreConfidence(str, Enum):
     AI_FLAGGED = "ai_flagged"               # Has contradiction warnings
 
 
-from src.core.config import CONFIDENCE_RULES
+from src.lms.core.config import CONFIDENCE_RULES
 
 class ContradictionSeverity(str, Enum):
     """Severity levels for contradictions."""

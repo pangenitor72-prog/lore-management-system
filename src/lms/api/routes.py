@@ -11,7 +11,7 @@ import json
 import uuid
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import logging
 from contextlib import asynccontextmanager
 
@@ -29,28 +29,28 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # --------------------------
 # Local Imports — Ingest / Services
 # --------------------------
-from src.ingestion.ingestor import LoreIngestor
-from src.services.extraction_service import ExtractionService
-from src.services.embedding_service import EmbeddingService
-from src.services.contradiction_service import ContradictionService
-from src.services.audit_log import AuditLogger
-from src.services.broadcaster import broadcaster
+from src.lms.ingestion.ingestor import LoreIngestor
+from src.lms.services.extraction_service import ExtractionService
+from src.lms.services.embedding_service import EmbeddingService
+from src.lms.services.contradiction_service import ContradictionService
+from src.lms.services.audit_log import AuditLogger
+from src.lms.services.broadcaster import broadcaster
 
 # --------------------------
 # Local Imports — Database
 # --------------------------
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.api.dependencies import get_neo4j_db
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.api.dependencies import get_neo4j_db
 
 # --------------------------
 # Local Imports — Models
 # --------------------------
-from src.core.models import (
+from src.lms.core.models import (
     EntityCreate, EntityResponse, RelationshipCreate,
     ErrorResponse, ContradictionResponse, ContradictionCreate,
     ContradictionStatus, RelationshipResponse, ContradictionSeverity,
@@ -63,10 +63,20 @@ from src.core.models import (
 # --------------------------
 # Local Imports — Agents
 # --------------------------
-from src.agents.auditor_agent import AuditorAgent
-from src.auditor.rule_based_auditor import RuleBasedAuditor
-from src.auditor.semantic_auditor import SemanticAuditor
-from src.agents.query_agent import QueryAgent
+from src.lms.agents.auditor_agent import AuditorAgent
+from src.lms.auditor.rule_based_auditor import RuleBasedAuditor
+from src.lms.auditor.semantic_auditor import SemanticAuditor
+from src.lms.agents.query_agent import QueryAgent
+
+# --------------------------
+# Local Imports — Orchestrator
+# --------------------------
+from src.lms.orchestrator import Orchestrator
+
+# --------------------------
+# Local Imports — Memory System
+# --------------------------
+from src.lms.memory import MemoryManager, ExperientialMemory
 
 
 # ============================================================
@@ -205,6 +215,35 @@ async def lifespan(app: FastAPI):
             app.state.query_agent = None
 
     # -------------------------
+    # INIT ORCHESTRATOR
+    # -------------------------
+    try:
+        project_root = str(Path(__file__).resolve().parent.parent.parent.parent)
+        app.state.orchestrator = Orchestrator(
+            project_root=project_root,
+            gemini_api_key=gemini_key,
+            neo4j_db=app.state.neo4j_db if connected else None,
+        )
+        await AuditLogger.log("✅ Orchestrator initialized")
+    except Exception as e:
+        await AuditLogger.log(f"❌ Failed to initialize Orchestrator: {e}", level=logging.ERROR)
+        app.state.orchestrator = None
+
+    # -------------------------
+    # INIT MEMORY SYSTEM
+    # -------------------------
+    try:
+        experiential = ExperientialMemory(db_path="data/experiential_memory.db")
+        app.state.memory_manager = MemoryManager(
+            neo4j_db=app.state.neo4j_db if connected else None,
+            experiential=experiential,
+        )
+        await AuditLogger.log("✅ Memory System initialized (Experiential Memory active)")
+    except Exception as e:
+        await AuditLogger.log(f"❌ Failed to initialize Memory System: {e}", level=logging.ERROR)
+        app.state.memory_manager = None
+
+    # -------------------------
     # YIELD
     # -------------------------
     yield
@@ -247,7 +286,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Frontend assets mount (built React app)
-frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+frontend_dist = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists() and (frontend_dist / "assets").exists():
     logger.info(f"Mounting frontend assets from {frontend_dist / 'assets'}")
     app.mount(
@@ -335,7 +374,7 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
 @router.get("/")
 def root():
     """Serve frontend index if built; fallback to API JSON."""
-    frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+    frontend_dist = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "dist"
     index_path = frontend_dist / "index.html"
     
     if index_path.exists():
@@ -349,31 +388,8 @@ def root():
     }
 
 
-# Catch-all for SPA (must be last)
-@router.get("/{full_path:path}")
-async def catch_all(full_path: str):
-    """
-    Catch-all route for SPA client-side routing.
-    Returns index.html for any non-API path.
-    """
-    # Allow API and WS paths to 404 naturally if not found
-    if full_path.startswith("api/") or full_path.startswith("ws/") or full_path.startswith("static/") or full_path.startswith("assets/"):
-        raise HTTPException(status_code=404, detail="Not Found")
-
-    frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
-    index_path = frontend_dist / "index.html"
-
-    if index_path.exists():
-        return FileResponse(str(index_path))
-    
-    raise HTTPException(status_code=404, detail="Frontend not built")
-
-
-
 @router.get("/health")
 async def health_check(request: Request):
-    db = request.app.state.neo4j_db
-
     out = {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -381,28 +397,34 @@ async def health_check(request: Request):
         "features": {}
     }
 
-    # Neo4j check
-    try:
-        await db.execute("RETURN 1")
-        out["checks"]["neo4j"] = "connected"
-    except Exception as e:
-        out["checks"]["neo4j"] = f"error: {e}"
+    # Neo4j check - use getattr for resilience
+    db = getattr(request.app.state, "neo4j_db", None)
+    if db is None:
+        out["checks"]["neo4j"] = "not_configured"
         out["status"] = "degraded"
+    else:
+        try:
+            await db.execute("RETURN 1")
+            out["checks"]["neo4j"] = "connected"
+        except Exception as e:
+            out["checks"]["neo4j"] = f"error: {str(e)[:50]}"
+            out["status"] = "degraded"
 
-    # Vector index check
-    try:
-        indexes = await db.list_indexes()
-        has_vec = any(i.get("name") == "entity_embeddings" for i in indexes)
-        out["checks"]["vector_index"] = "exists" if has_vec else "missing"
-    except Exception as e:
-        out["checks"]["vector_index"] = f"error: {e}"
-        out["status"] = "degraded"
+        # Vector index check
+        try:
+            indexes = await db.list_indexes()
+            has_vec = any(i.get("name") == "entity_embeddings" for i in indexes)
+            out["checks"]["vector_index"] = "exists" if has_vec else "missing"
+        except Exception as e:
+            out["checks"]["vector_index"] = f"error: {str(e)[:50]}"
 
-    out["checks"]["query_agent"] = "ready" if request.app.state.query_agent else "not_ready"
-    out["checks"]["auditor"] = "ready" if request.app.state.auditor else "not_ready"
+    # Agent checks - use getattr for resilience
+    out["checks"]["query_agent"] = "ready" if getattr(request.app.state, "query_agent", None) else "not_ready"
+    out["checks"]["auditor"] = "ready" if getattr(request.app.state, "auditor", None) else "not_ready"
+    out["checks"]["orchestrator"] = "ready" if getattr(request.app.state, "orchestrator", None) else "not_ready"
 
-    out["features"]["ai_enabled"] = request.app.state.ai_enabled
-    out["features"]["vector_search"] = request.app.state.vector_search_enabled
+    out["features"]["ai_enabled"] = getattr(request.app.state, "ai_enabled", False)
+    out["features"]["vector_search"] = getattr(request.app.state, "vector_search_enabled", False)
 
     return out
 
@@ -515,7 +537,7 @@ async def get_entity(canon_id: str, db: Neo4jDatabase = Depends(get_neo4j_db)):
         approved_fields=approved_fields,
         approval_status=ApprovalStatus(row["approval_status"]),
         confidence_level=ConfidenceLevel(row["confidence_level"]),
-        party_knowledge=PartyKnowledge(row["party_knowledge"]),
+        party_knowledge=PartyKnowledge(row["party_knowledge"]) if row.get("party_knowledge") else PartyKnowledge.KNOWN,
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
     )
@@ -547,13 +569,13 @@ async def list_entities(
     query += """
     RETURN n.canon_id AS canon_id,
            n.entity_type AS entity_type,
-           n.canonical_name AS canonical_name,
-           n.aliases AS aliases,
-           n.approval_status AS approval_status,
-           n.confidence_level AS confidence_level,
+           COALESCE(n.canonical_name, n.name) AS canonical_name,
+           COALESCE(n.aliases, []) AS aliases,
+           COALESCE(n.approval_status, 'PENDING') AS approval_status,
+           COALESCE(n.confidence_level, 'AI_GENERATED') AS confidence_level,
            n.party_knowledge AS party_knowledge,
-           n.created_at AS created_at,
-           n.updated_at AS updated_at,
+           COALESCE(n.created_at, datetime().epochMillis) AS created_at,
+           COALESCE(n.updated_at, n.created_at, datetime().epochMillis) AS updated_at,
            properties(n) AS all_props
     ORDER BY n.created_at DESC
     LIMIT $limit
@@ -579,18 +601,28 @@ async def list_entities(
                 except:
                     approved_fields[k] = v
 
+        # Handle date parsing - may be ISO string or Neo4j datetime
+        def parse_date(val):
+            if val is None:
+                return datetime.now(timezone.utc)
+            if isinstance(val, str):
+                return datetime.fromisoformat(val.replace('Z', '+00:00'))
+            if isinstance(val, (int, float)):
+                return datetime.fromtimestamp(val / 1000, tz=timezone.utc)
+            return datetime.now(timezone.utc)
+
         out.append(
             EntityResponse(
                 canon_id=row["canon_id"],
                 entity_type=EntityType(row["entity_type"]),
-                canonical_name=row["canonical_name"],
+                canonical_name=row["canonical_name"] or "Unknown",
                 aliases=row["aliases"] or [],
                 approved_fields=approved_fields,
                 approval_status=ApprovalStatus(row["approval_status"]),
                 confidence_level=ConfidenceLevel(row["confidence_level"]),
-                party_knowledge=PartyKnowledge(row["party_knowledge"]),
-                created_at=datetime.fromisoformat(row["created_at"]),
-                updated_at=datetime.fromisoformat(row["updated_at"]),
+                party_knowledge=PartyKnowledge(row["party_knowledge"]) if row.get("party_knowledge") else PartyKnowledge.KNOWN,
+                created_at=parse_date(row.get("created_at")),
+                updated_at=parse_date(row.get("updated_at")),
             )
         )
 
@@ -643,7 +675,7 @@ async def upload_files(
                         "filename": file.filename,
                         "status": "processed",
                         "nodes_created": result["nodes_saved"],
-                        "relationships_created": result["rels_saved"],
+                        "relationships_created": result["relationships_saved"],
                     })
                 except UnicodeDecodeError:
                     processing_results.append({"filename": file.filename, "status": "skipped_binary"})
@@ -661,6 +693,82 @@ async def upload_files(
         "filenames": saved_files,
         "processing_results": processing_results if process_immediately else [],
     }
+
+
+class IngestTextRequest(BaseModel):
+    """Request to ingest text content directly."""
+    content: str = Field(..., min_length=10, description="Lore text to ingest")
+    source_name: Optional[str] = Field(default="direct_input", description="Source identifier")
+
+
+class IngestTextResponse(BaseModel):
+    """Response from text ingestion."""
+    status: str
+    source_name: str
+    nodes_created: int
+    relationships_created: int
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+
+
+@router.post("/ingest", response_model=IngestTextResponse)
+async def ingest_text_endpoint(
+    request: Request,
+    ingest_req: IngestTextRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Ingest lore text directly without file upload.
+
+    Uses the full Smart Ingestor pipeline which includes:
+    - Text segmentation
+    - Entity detection
+    - Property extraction
+    - OCEAN personality generation (for Characters)
+    - Relationship inference
+    - Neo4j persistence
+    """
+    from src.lms.ingestion.smart_ingestor import ingest_text as smart_ingest
+
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key or not getattr(request.app.state, "ai_enabled", False):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service not configured"
+        )
+
+    try:
+        # Use the full Smart Ingestor pipeline (includes OCEAN personality)
+        result = await smart_ingest(ingest_req.content, db)
+
+        # Extract info for response
+        entity_ids = result.get("entity_ids", [])
+        extracted = result.get("extracted", [])
+
+        # Format entities for response
+        entities = []
+        for ext in extracted:
+            entities.append({
+                "name": ext.name if hasattr(ext, 'name') else str(ext),
+                "type": ext.entity_type if hasattr(ext, 'entity_type') else "Entity",
+                "content": ext.description[:200] if hasattr(ext, 'description') and ext.description else ""
+            })
+
+        return IngestTextResponse(
+            status="success",
+            source_name=ingest_req.source_name or "direct_input",
+            nodes_created=len(entity_ids),
+            relationships_created=0,  # Relationships counted separately in smart_ingestor
+            entities=entities,
+            relationships=[],  # Smart ingestor handles relationships internally
+        )
+
+    except Exception as e:
+        logger.error(f"Text ingestion failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ingestion failed: {str(e)}"
+        )
 
 
 # ============================================================
@@ -712,6 +820,37 @@ async def get_contradictions_mock():
 
 app.include_router(router)
 app.include_router(get_contradiction_router())
+
+# Orchestrator routes
+from src.lms.api.orchestrator_routes import router as orchestrator_router
+app.include_router(orchestrator_router, prefix="/api")
+
+# Game session routes
+from src.lms.api.game_routes import router as game_router
+app.include_router(game_router, prefix="/api")
+
+# Memory system routes
+from src.lms.api.memory_routes import router as memory_router
+app.include_router(memory_router, prefix="/api")
+
+
+# ============================================================
+# CATCH-ALL FOR SPA (must be registered LAST)
+# ============================================================
+
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    """
+    Catch-all route for SPA client-side routing.
+    Returns index.html for any path not matched by other routes.
+    """
+    frontend_dist = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "dist"
+    index_path = frontend_dist / "index.html"
+
+    if index_path.exists():
+        return FileResponse(str(index_path))
+
+    raise HTTPException(status_code=404, detail="Not Found")
 
 
 # ============================================================
