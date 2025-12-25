@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storyweaver - Your Personal Mythology</title>
+    <style>
+        :root {
+            /* Warm, inviting palette */
+            --bg-primary: #1a1612;
+            --bg-secondary: #2a2420;
+            --bg-card: #352f2a;
+            --bg-hover: #453d36;
+
+            --text-primary: #f5f0eb;
+            --text-secondary: #b8a99a;
+            --text-muted: #8a7d70;
+
+            --accent-warm: #d4a574;
+            --accent-gold: #e8c47c;
+            --accent-rose: #c98b8b;
+            --accent-sage: #8ba88b;
+            --accent-lavender: #a08bc9;
+
+            --border-subtle: #3d3530;
+            --border-accent: #5a4d42;
+
+            /* Genre-specific accents (applied via class) */
+            --genre-fantasy: #a08bc9;
+            --genre-romance: #c98b8b;
+            --genre-mystery: #8b9fc9;
+            --genre-horror: #8b3d3d;
+            --genre-adventure: #8ba88b;
+            --genre-drama: #c9a08b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1f1a17 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 0 30px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.2rem;
+            font-weight: normal;
+            letter-spacing: 0.1em;
+            color: var(--accent-gold);
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-style: italic;
+            font-size: 1.1rem;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Welcome Screen */
+        #welcome {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .welcome-intro {
+            max-width: 500px;
+            margin-bottom: 40px;
+        }
+
+        .welcome-intro h2 {
+            font-size: 1.5rem;
+            font-weight: normal;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .welcome-intro p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        /* Genre Cards */
+        .genre-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .genre-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .genre-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+            transform: translateY(-2px);
+        }
+
+        .genre-card.selected {
+            border-color: var(--accent-gold);
+            background: var(--bg-hover);
+            box-shadow: 0 0 20px rgba(232, 196, 124, 0.15);
+        }
+
+        .genre-card .icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .genre-card .label {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .genre-card.selected .label {
+            color: var(--accent-gold);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-family: inherit;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 165, 116, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-accent);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Setup Screen */
+        #setup {
+            padding: 20px 0;
+        }
+
+        .setup-section {
+            margin-bottom: 35px;
+        }
+
+        .setup-section h3 {
+            font-size: 1.1rem;
+            font-weight: normal;
+            color: var(--accent-warm);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .tone-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tone-chip {
+            padding: 10px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .tone-chip:hover {
+            border-color: var(--accent-warm);
+        }
+
+        .tone-chip.selected {
+            background: var(--bg-hover);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        textarea {
+            min-height: 100px;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-warm);
+        }
+
+        textarea::placeholder, input::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        /* Story Screen */
+        #story {
+            padding: 10px 0;
+        }
+
+        .story-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+        }
+
+        .story-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .story-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: 300px;
+            max-height: 55vh;
+        }
+
+        .passage {
+            padding: 20px;
+            border-radius: 12px;
+            line-height: 1.8;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .passage.narrator {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border-left: 3px solid var(--accent-warm);
+            font-size: 1.05rem;
+        }
+
+        .passage.player {
+            background: var(--bg-hover);
+            margin-left: 10%;
+            border-right: 3px solid var(--accent-sage);
+        }
+
+        .passage.system {
+            background: transparent;
+            border: 1px dashed var(--border-accent);
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            padding: 15px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px 0;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: auto;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-row input {
+            flex: 1;
+        }
+
+        .input-row .btn {
+            padding: 14px 24px;
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-accent);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Messages */
+        .status {
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .status.error {
+            background: rgba(201, 139, 139, 0.15);
+            border: 1px solid var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        .status.success {
+            background: rgba(139, 168, 139, 0.15);
+            border: 1px solid var(--accent-sage);
+            color: var(--accent-sage);
+        }
+
+        .status.info {
+            background: rgba(160, 139, 201, 0.15);
+            border: 1px solid var(--accent-lavender);
+            color: var(--accent-lavender);
+        }
+
+        /* Ingest Screen */
+        #ingest {
+            padding: 20px 0;
+        }
+
+        .ingest-results {
+            margin-top: 25px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            display: none;
+        }
+
+        .ingest-results.visible {
+            display: block;
+        }
+
+        .entity-item {
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .entity-name {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .entity-type {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-left: 8px;
+        }
+
+        .lore-base-card:hover {
+            background: var(--bg-hover) !important;
+            border-color: var(--accent-warm) !important;
+            transform: translateY(-2px);
+        }
+
+        .lore-base-card.selected {
+            border-color: var(--accent-gold) !important;
+            box-shadow: 0 0 20px rgba(232, 196, 124, 0.2);
+        }
+
+        /* Save Slots */
+        .save-slots {
+            display: grid;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .save-slot {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .save-slot:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+        }
+
+        .save-slot.empty {
+            opacity: 0.6;
+            border-style: dashed;
+        }
+
+        .save-slot-info {
+            flex: 1;
+        }
+
+        .save-slot-name {
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .save-slot-meta {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .save-slot-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .save-slot-btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-accent);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .save-slot-btn:hover {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .save-slot-btn.danger:hover {
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        /* Save Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid var(--border-accent);
+        }
+
+        .modal h3 {
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 30px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
+            .logo { font-size: 1.8rem; }
+            .container { padding: 15px; }
+            .genre-grid { grid-template-columns: repeat(2, 1fr); }
+            .btn { padding: 12px 24px; }
+            .passage { padding: 15px; }
+            .passage.player { margin-left: 5%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="logo">Storyweaver</h1>
+            <p class="tagline">Where your personal mythology begins</p>
+        </header>
+
+        <!-- Onboarding Screen -->
+        <div id="onboarding" class="screen active">
+            <div class="welcome-intro" style="max-width: 550px;">
+                <h2>Welcome to Storyweaver</h2>
+                <p style="margin-bottom: 25px;">
+                    This is your personal mythology engine. Whether you're a tabletop gamer,
+                    a romance reader, a mystery lover, or simply someone who craves story&mdash;
+                    this is for you.
+                </p>
+                <div style="text-align: left; background: var(--bg-card); padding: 25px; border-radius: 12px; margin-bottom: 30px;">
+                    <p style="color: var(--accent-gold); margin-bottom: 15px; font-weight: 600;">How it works:</p>
+                    <p style="margin-bottom: 12px;"><span style="color: var(--accent-warm);">1.</span> Choose your genre and tone</p>
+                    <p style="margin-bottom: 12px;"><span style="color: var(--accent-warm);">2.</span> Describe your world (or pick a starting point)</p>
+                    <p style="margin-bottom: 12px;"><span style="color: var(--accent-warm);">3.</span> Enter a character to become</p>
+                    <p><span style="color: var(--accent-warm);">4.</span> The story unfolds based on your choices</p>
+                </div>
+                <p style="color: var(--text-muted); font-style: italic; margin-bottom: 25px;">
+                    The world remembers. Characters form impressions of you.
+                    Your deeds become legend. This is your mythology.
+                </p>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="showScreen('welcome')">Begin</button>
+            </div>
+        </div>
+
+        <!-- Welcome Screen -->
+        <div id="welcome" class="screen">
+            <div class="welcome-intro">
+                <h2>What kind of story calls to you?</h2>
+                <p>Select the genre that speaks to your soul.</p>
+            </div>
+
+            <div class="genre-grid">
+                <div class="genre-card" data-genre="fantasy" onclick="selectGenre('fantasy')">
+                    <span class="icon">&#9733;</span>
+                    <span class="label">Fantasy</span>
+                </div>
+                <div class="genre-card" data-genre="romance" onclick="selectGenre('romance')">
+                    <span class="icon">&#10084;</span>
+                    <span class="label">Romance</span>
+                </div>
+                <div class="genre-card" data-genre="mystery" onclick="selectGenre('mystery')">
+                    <span class="icon">&#128270;</span>
+                    <span class="label">Mystery</span>
+                </div>
+                <div class="genre-card" data-genre="horror" onclick="selectGenre('horror')">
+                    <span class="icon">&#127769;</span>
+                    <span class="label">Horror</span>
+                </div>
+                <div class="genre-card" data-genre="adventure" onclick="selectGenre('adventure')">
+                    <span class="icon">&#9992;</span>
+                    <span class="label">Adventure</span>
+                </div>
+                <div class="genre-card" data-genre="drama" onclick="selectGenre('drama')">
+                    <span class="icon">&#127917;</span>
+                    <span class="label">Drama</span>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="begin-btn" onclick="showScreen('setup')" disabled>Continue</button>
+            </div>
+
+            <div class="btn-group" style="margin-top: 25px;">
+                <button class="btn btn-secondary" onclick="showScreen('saves')">Load Saved Game</button>
+                <button class="btn btn-secondary" onclick="showScreen('ingest')">Import Lore</button>
+            </div>
+
+            <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
+                <a href="#" onclick="showScreen('onboarding'); return false;" style="color: var(--text-muted);">How does this work?</a>
+            </p>
+        </div>
+
+        <!-- Saves Screen -->
+        <div id="saves" class="screen">
+            <h2 style="color: var(--accent-warm); margin-bottom: 10px; font-weight: normal;">Your Saved Stories</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                Continue a previous adventure or start fresh.
+            </p>
+
+            <div id="saves-status"></div>
+
+            <div id="save-slots-container" class="save-slots">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <div class="btn-group" style="margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+            </div>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setup" class="screen">
+            <div class="setup-section">
+                <h3>The Tone of Your Tale</h3>
+                <div class="tone-options">
+                    <span class="tone-chip" data-tone="epic" onclick="selectTone('epic')">Epic & Sweeping</span>
+                    <span class="tone-chip" data-tone="intimate" onclick="selectTone('intimate')">Intimate & Personal</span>
+                    <span class="tone-chip" data-tone="dark" onclick="selectTone('dark')">Dark & Gritty</span>
+                    <span class="tone-chip" data-tone="whimsical" onclick="selectTone('whimsical')">Whimsical & Light</span>
+                    <span class="tone-chip" data-tone="dramatic" onclick="selectTone('dramatic')">Dramatic & Intense</span>
+                    <span class="tone-chip" data-tone="cozy" onclick="selectTone('cozy')">Cozy & Comforting</span>
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h3>Your World</h3>
+                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                    Choose a starting point, or describe your own:
+                </p>
+                <div class="tone-options" style="margin-bottom: 15px;">
+                    <span class="tone-chip world-preset" data-world="A quiet coastal town where secrets wash ashore with every tide" onclick="selectWorldPreset(this)">Coastal Mystery</span>
+                    <span class="tone-chip world-preset" data-world="A glittering royal court where whispered alliances matter more than swords" onclick="selectWorldPreset(this)">Royal Intrigue</span>
+                    <span class="tone-chip world-preset" data-world="A sprawling fantasy realm where ancient magic is awakening" onclick="selectWorldPreset(this)">Epic Fantasy</span>
+                    <span class="tone-chip world-preset" data-world="A small town where everyone knows everyone, and old flames never quite die" onclick="selectWorldPreset(this)">Small Town Romance</span>
+                    <span class="tone-chip world-preset" data-world="A haunted manor with a dark history and darker secrets" onclick="selectWorldPreset(this)">Gothic Horror</span>
+                    <span class="tone-chip world-preset" data-world="" onclick="selectWorldPreset(this)">Surprise Me</span>
+                </div>
+                <div class="form-group">
+                    <label for="world-seed">Or describe your own world:</label>
+                    <textarea id="world-seed" placeholder="Leave blank to let the story surprise you, or describe a setting that calls to you..."></textarea>
+                    <p class="hint">The more detail you give, the more personalized your story. Or leave it blank for a fresh adventure.</p>
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h3>Your Character</h3>
+                <div class="form-group">
+                    <label for="character-concept">Who are you in this story?</label>
+                    <textarea id="character-concept" placeholder="A widow returning to her childhood home... A scholar who discovered something forbidden... A stranger who arrived in town the same night as the storm... Or leave blank and discover who you are."></textarea>
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h3>Storytelling Style</h3>
+                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                    How much structure do you want?
+                </p>
+                <div class="tone-options">
+                    <span class="tone-chip style-chip selected" data-style="guided" onclick="selectStyle('guided')">Guided Journey</span>
+                    <span class="tone-chip style-chip" data-style="freeform" onclick="selectStyle('freeform')">Freeform Exploration</span>
+                    <span class="tone-chip style-chip" data-style="collaborative" onclick="selectStyle('collaborative')">Collaborative</span>
+                </div>
+                <p class="hint" style="margin-top: 10px;">
+                    <strong>Guided:</strong> Clear story beats and direction &nbsp;|&nbsp;
+                    <strong>Freeform:</strong> Pure sandbox, you lead &nbsp;|&nbsp;
+                    <strong>Collaborative:</strong> We build together
+                </p>
+            </div>
+
+            <div id="setup-status"></div>
+
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="beginStory()">Begin My Story</button>
+                <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+            </div>
+        </div>
+
+        <!-- Story Screen -->
+        <div id="story" class="screen">
+            <div class="story-header">
+                <span class="story-info" id="story-info">Chapter One</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">Save</button>
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="endStory()">End</button>
+                </div>
+            </div>
+            <div class="story-container" id="story-container"></div>
+            <div class="input-area">
+                <div class="input-row">
+                    <input type="text" id="player-input" placeholder="What do you do?" onkeypress="handleKeyPress(event)">
+                    <button class="btn btn-primary" onclick="sendAction()">Continue</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingest Screen -->
+        <div id="ingest" class="screen">
+            <h2 style="color: var(--accent-warm); margin-bottom: 20px; font-weight: normal;">Choose Your World</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                Every great story needs a foundation. Choose from our curated worlds, or bring your own
+                universe to life.
+            </p>
+
+            <div id="ingest-status"></div>
+
+            <!-- Pre-made Lore Bases -->
+            <div class="setup-section">
+                <h3>Curated Worlds</h3>
+                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                    Rich, detailed settings ready for your story:
+                </p>
+                <div class="lore-bases" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div class="lore-base-card" onclick="selectLoreBase('shattered_kingdoms')" data-lore="shattered_kingdoms" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
+                        <span style="font-size: 1.5rem;">&#9876;</span>
+                        <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">The Shattered Kingdoms</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">A realm fractured by an ancient war. Noble houses vie for power while darker forces stir in the shadows. Deeply detailed political intrigue and high fantasy.</p>
+                    </div>
+                    <div class="lore-base-card" onclick="selectLoreBase('thornwood')" data-lore="thornwood" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
+                        <span style="font-size: 1.5rem;">&#127795;</span>
+                        <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">Thornwood Chronicles</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">A mystical forest where fey courts hold sway. Ancient pacts, forbidden love, and the boundaries between worlds. Perfect for romance, mystery, or dark fairy tales.</p>
+                    </div>
+                    <div class="lore-base-card" onclick="selectLoreBase('empty')" data-lore="empty" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
+                        <span style="font-size: 1.5rem;">&#10024;</span>
+                        <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">Fresh Canvas</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Start with nothing. Let the world emerge from your story. The AI will create lore as you play, building a unique mythology together.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Import -->
+            <div class="setup-section">
+                <h3>Import Your Own</h3>
+                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                    Have your own world-building notes? Bring them here.
+                </p>
+                <div class="form-group">
+                    <label for="lore-content">Paste Your Lore</label>
+                    <textarea id="lore-content" style="min-height: 150px;" placeholder="Paste character backgrounds, faction descriptions, world history, or any narrative content..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="source-name">Give it a name (optional)</label>
+                    <input type="text" id="source-name" placeholder="e.g., my_campaign_setting">
+                </div>
+
+                <div class="btn-group" style="justify-content: flex-start;">
+                    <button class="btn btn-primary" onclick="ingestLore()">Import This Lore</button>
+                </div>
+            </div>
+
+            <div id="ingest-results" class="ingest-results">
+                <h4 style="color: var(--accent-warm); margin-bottom: 15px;">What We Learned</h4>
+                <div id="entities-list"></div>
+                <div id="relationships-list" style="margin-top: 15px;"></div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 30px;">
+                <button class="btn btn-primary" id="continue-to-story" style="display: none;" onclick="showScreen('welcome')">Continue to Story Setup</button>
+                <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+            </div>
+        </div>
+
+        <!-- Save Modal -->
+        <div id="save-modal" class="modal-overlay" onclick="closeSaveModal(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <h3>Save Your Story</h3>
+                <div class="form-group">
+                    <label for="save-name">Give it a name (optional)</label>
+                    <input type="text" id="save-name" placeholder="My Adventure...">
+                </div>
+                <div class="form-group">
+                    <label>Choose a slot:</label>
+                    <div id="modal-save-slots" class="save-slots" style="margin-top: 10px;">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="btn-group" style="justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="closeSaveModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Storyweaver &middot; Powered by AI &middot; Your story, your mythology
+        </footer>
+    </div>
+
+    <script>
+        // State
+        let selectedGenre = null;
+        let selectedTone = null;
+        let selectedStyle = 'guided';
+        let selectedLoreBase = null;
+        let currentSessionId = null;
+        let currentPhase = null;
+        const API_BASE = window.location.origin + '/api';
+
+        // Pre-made lore bases (placeholders - will be loaded from backend)
+        const loreBases = {
+            'shattered_kingdoms': {
+                name: 'The Shattered Kingdoms',
+                description: 'A realm fractured by an ancient war between divine forces...'
+            },
+            'thornwood': {
+                name: 'Thornwood Chronicles',
+                description: 'A mystical forest where the boundaries between worlds grow thin...'
+            },
+            'empty': {
+                name: 'Fresh Canvas',
+                description: 'Begin with a blank slate and let the world emerge.'
+            }
+        };
+
+        // Lore Base Selection
+        function selectLoreBase(loreId) {
+            selectedLoreBase = loreId;
+            document.querySelectorAll('.lore-base-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.lore === loreId);
+            });
+
+            if (loreId === 'empty') {
+                showStatus('ingest-status', 'You\'ve chosen a fresh canvas. Your world will emerge as you play.', 'success');
+                document.getElementById('continue-to-story').style.display = 'inline-block';
+            } else if (loreBases[loreId]) {
+                showStatus('ingest-status', `Loading ${loreBases[loreId].name}...`, 'info');
+                loadLoreBase(loreId);
+            }
+        }
+
+        async function loadLoreBase(loreId) {
+            try {
+                // Try to load pre-made lore from backend
+                const response = await fetch(API_BASE + '/game/lore-bases/' + loreId);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Store the lore base data for use in story setup
+                    loreBases[loreId] = data;
+
+                    showStatus('ingest-status',
+                        `${data.name} selected. ${data.entities_count > 0 ? data.entities_count + ' entities ready.' : 'Ready to begin.'}`,
+                        'success'
+                    );
+
+                    // Auto-fill the world seed on the setup page
+                    if (data.seed_prompt) {
+                        document.getElementById('world-seed').value = data.seed_prompt;
+                    }
+                } else {
+                    // For now, show placeholder message
+                    showStatus('ingest-status',
+                        `${loreBases[loreId].name} selected. Ready to begin.`,
+                        'success'
+                    );
+                }
+                document.getElementById('continue-to-story').style.display = 'inline-block';
+            } catch (err) {
+                // Graceful fallback
+                showStatus('ingest-status',
+                    `${loreBases[loreId].name} selected. Ready to begin.`,
+                    'success'
+                );
+                document.getElementById('continue-to-story').style.display = 'inline-block';
+            }
+        }
+
+        // Genre Selection
+        function selectGenre(genre) {
+            selectedGenre = genre;
+            document.querySelectorAll('.genre-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.genre === genre);
+            });
+            document.getElementById('begin-btn').disabled = false;
+        }
+
+        // Tone Selection
+        function selectTone(tone) {
+            selectedTone = tone;
+            document.querySelectorAll('.tone-chip[data-tone]').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.tone === tone);
+            });
+        }
+
+        // World Preset Selection
+        function selectWorldPreset(el) {
+            document.querySelectorAll('.world-preset').forEach(chip => {
+                chip.classList.remove('selected');
+            });
+            el.classList.add('selected');
+            const worldText = el.dataset.world;
+            document.getElementById('world-seed').value = worldText;
+        }
+
+        // Storytelling Style Selection
+        function selectStyle(style) {
+            selectedStyle = style;
+            document.querySelectorAll('.style-chip').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.style === style);
+            });
+        }
+
+        // Screen Navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Status Messages
+        function showStatus(elementId, message, type = 'info') {
+            const el = document.getElementById(elementId);
+            el.innerHTML = '<div class="status ' + type + '">' + message + '</div>';
+        }
+
+        function clearStatus(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        // Story Passages
+        function addPassage(content, type) {
+            const container = document.getElementById('story-container');
+            const passage = document.createElement('div');
+            passage.className = 'passage ' + type;
+            passage.innerHTML = content.replace(/\n/g, '<br>');
+            container.appendChild(passage);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showLoading() {
+            const container = document.getElementById('story-container');
+            const loading = document.createElement('div');
+            loading.id = 'loading-passage';
+            loading.className = 'passage system';
+            loading.innerHTML = '<span class="loading"></span> The story unfolds...';
+            container.appendChild(loading);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function hideLoading() {
+            const el = document.getElementById('loading-passage');
+            if (el) el.remove();
+        }
+
+        // Begin Story
+        async function beginStory() {
+            const worldSeed = document.getElementById('world-seed').value.trim();
+            const characterConcept = document.getElementById('character-concept').value.trim();
+
+            // Default tone if not selected
+            if (!selectedTone) {
+                selectedTone = 'dramatic';
+            }
+
+            clearStatus('setup-status');
+            showStatus('setup-status', '<span class="loading"></span> Preparing your world...', 'info');
+
+            try {
+                // Create session
+                const sessionRes = await fetch(API_BASE + '/game/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        character_concept: characterConcept,
+                        setting_preference: worldSeed,
+                        tone_preference: selectedTone,
+                        genre: selectedGenre,
+                        storytelling_style: selectedStyle
+                    })
+                });
+
+                if (!sessionRes.ok) throw new Error('Failed to create session');
+                const sessionData = await sessionRes.json();
+                currentSessionId = sessionData.session_id;
+                currentPhase = sessionData.phase;
+
+                showScreen('story');
+                document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
+
+                // Build opening context
+                let openingPrompt = buildOpeningPrompt(worldSeed, characterConcept, selectedGenre, selectedTone);
+
+                addPassage('Your story begins...', 'system');
+
+                // Send opening to get first narrative
+                await sendActionText(openingPrompt);
+
+            } catch (err) {
+                showStatus('setup-status', 'Error: ' + err.message, 'error');
+            }
+        }
+
+        function buildOpeningPrompt(world, character, genre, tone) {
+            // Keep it simple - the backend has all the genre/tone/style info
+            // This is just the player's first "action" to begin
+            let prompt = "Begin my story";
+
+            if (world && character) {
+                prompt = `I arrive in ${world}. I am ${character}.`;
+            } else if (world) {
+                prompt = `I find myself in ${world}.`;
+            } else if (character) {
+                prompt = `I am ${character}, and my story begins.`;
+            } else {
+                prompt = "My story begins.";
+            }
+
+            return prompt;
+        }
+
+        // Send Player Action
+        async function sendAction() {
+            const input = document.getElementById('player-input');
+            const action = input.value.trim();
+            if (!action) return;
+            input.value = '';
+            await sendActionText(action);
+        }
+
+        async function sendActionText(action) {
+            addPassage(action, 'player');
+            showLoading();
+
+            try {
+                const response = await fetch(API_BASE + '/game/session/' + currentSessionId + '/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action })
+                });
+
+                hideLoading();
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to continue story');
+                }
+
+                const data = await response.json();
+                currentPhase = data.phase;
+                addPassage(data.narrative, 'narrator');
+
+            } catch (err) {
+                hideLoading();
+                addPassage('Something went wrong: ' + err.message, 'system');
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendAction();
+        }
+
+        function endStory() {
+            if (confirm('End this session? Your story will be saved in memory.')) {
+                currentSessionId = null;
+                currentPhase = null;
+                document.getElementById('story-container').innerHTML = '';
+                showScreen('welcome');
+            }
+        }
+
+        // Lore Ingestion
+        async function ingestLore() {
+            const content = document.getElementById('lore-content').value.trim();
+            const sourceName = document.getElementById('source-name').value.trim() || 'imported_lore';
+
+            if (content.length < 20) {
+                showStatus('ingest-status', 'Please provide more content to import.', 'error');
+                return;
+            }
+
+            clearStatus('ingest-status');
+            showStatus('ingest-status', '<span class="loading"></span> Learning from your lore...', 'info');
+            document.getElementById('ingest-results').classList.remove('visible');
+
+            try {
+                const response = await fetch(API_BASE + '/ingest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: content,
+                        source_name: sourceName
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Import failed');
+                }
+
+                const data = await response.json();
+                showStatus('ingest-status',
+                    'Successfully learned ' + data.nodes_created + ' entities from your lore.',
+                    'success'
+                );
+
+                // Display results
+                const resultsDiv = document.getElementById('ingest-results');
+                const entitiesList = document.getElementById('entities-list');
+
+                if (data.entities && data.entities.length > 0) {
+                    entitiesList.innerHTML = data.entities.map(e =>
+                        '<div class="entity-item">' +
+                        '<span class="entity-name">' + (e.name || 'Unknown') + '</span>' +
+                        '<span class="entity-type">' + (e.type || 'Entity') + '</span>' +
+                        (e.content ? '<p style="margin-top: 8px; color: var(--text-muted); font-size: 0.9rem;">' + e.content + '</p>' : '') +
+                        '</div>'
+                    ).join('');
+                } else {
+                    entitiesList.innerHTML = '<p style="color: var(--text-muted);">No entities extracted yet.</p>';
+                }
+
+                resultsDiv.classList.add('visible');
+
+            } catch (err) {
+                showStatus('ingest-status', 'Error: ' + err.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // SAVE/LOAD SYSTEM
+        // ==========================================
+
+        let saveSlots = [];
+
+        async function loadSaveSlots() {
+            try {
+                const response = await fetch(API_BASE + '/game/saves');
+                if (response.ok) {
+                    saveSlots = await response.json();
+                } else {
+                    saveSlots = Array.from({length: 5}, (_, i) => ({
+                        slot: i + 1,
+                        is_empty: true
+                    }));
+                }
+            } catch (err) {
+                console.warn('Could not load save slots:', err);
+                saveSlots = Array.from({length: 5}, (_, i) => ({
+                    slot: i + 1,
+                    is_empty: true
+                }));
+            }
+            return saveSlots;
+        }
+
+        function renderSaveSlots(containerId, forSaving = false) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.innerHTML = saveSlots.map(slot => {
+                if (slot.is_empty) {
+                    return `
+                        <div class="save-slot empty" onclick="${forSaving ? `saveToSlot(${slot.slot})` : ''}">
+                            <div class="save-slot-info">
+                                <div class="save-slot-name">Slot ${slot.slot} - Empty</div>
+                                <div class="save-slot-meta">No save data</div>
+                            </div>
+                            ${forSaving ? '<span style="color: var(--text-muted);">Click to save here</span>' : ''}
+                        </div>
+                    `;
+                } else {
+                    const savedDate = slot.saved_at ? new Date(slot.saved_at).toLocaleDateString() : 'Unknown';
+                    return `
+                        <div class="save-slot">
+                            <div class="save-slot-info">
+                                <div class="save-slot-name">${slot.session_name || 'Slot ' + slot.slot}</div>
+                                <div class="save-slot-meta">
+                                    ${slot.genre || 'Fantasy'} · ${slot.turn_count || 0} turns · Saved ${savedDate}
+                                </div>
+                            </div>
+                            <div class="save-slot-actions">
+                                ${forSaving ?
+                                    `<button class="save-slot-btn" onclick="saveToSlot(${slot.slot}); event.stopPropagation();">Overwrite</button>` :
+                                    `<button class="save-slot-btn" onclick="loadFromSlot(${slot.slot}); event.stopPropagation();">Load</button>
+                                     <button class="save-slot-btn danger" onclick="deleteSlot(${slot.slot}); event.stopPropagation();">Delete</button>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        async function showSaveModal() {
+            await loadSaveSlots();
+            renderSaveSlots('modal-save-slots', true);
+            document.getElementById('save-modal').classList.add('active');
+        }
+
+        function closeSaveModal(event) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
+                document.getElementById('save-modal').classList.remove('active');
+            }
+        }
+
+        async function saveToSlot(slot) {
+            if (!currentSessionId) {
+                alert('No active session to save');
+                return;
+            }
+
+            const saveName = document.getElementById('save-name').value.trim() || `Adventure ${slot}`;
+
+            try {
+                const response = await fetch(API_BASE + `/game/saves/${slot}?session_id=${currentSessionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        slot: slot,
+                        session_name: saveName
+                    })
+                });
+
+                if (response.ok) {
+                    closeSaveModal();
+                    showStatus('story-info', 'Game saved!', 'success');
+                    setTimeout(() => {
+                        document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
+                    }, 2000);
+                } else {
+                    const err = await response.json();
+                    alert('Save failed: ' + (err.detail || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Save failed: ' + err.message);
+            }
+        }
+
+        async function loadFromSlot(slot) {
+            showStatus('saves-status', '<span class="loading"></span> Loading your adventure...', 'info');
+
+            try {
+                const response = await fetch(API_BASE + `/game/saves/${slot}/load`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentSessionId = data.session_id;
+                    currentPhase = data.phase;
+
+                    showScreen('story');
+                    document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
+                    document.getElementById('story-container').innerHTML = '';
+
+                    addPassage('Your adventure continues...', 'system');
+                    addPassage(data.narrative, 'narrator');
+
+                    clearStatus('saves-status');
+                } else {
+                    const err = await response.json();
+                    showStatus('saves-status', 'Load failed: ' + (err.detail || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showStatus('saves-status', 'Load failed: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteSlot(slot) {
+            if (!confirm(`Delete save in slot ${slot}?`)) return;
+
+            try {
+                const response = await fetch(API_BASE + `/game/saves/${slot}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    await loadSaveSlots();
+                    renderSaveSlots('save-slots-container', false);
+                    showStatus('saves-status', 'Save deleted.', 'info');
+                } else {
+                    const err = await response.json();
+                    showStatus('saves-status', 'Delete failed: ' + (err.detail || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showStatus('saves-status', 'Delete failed: ' + err.message, 'error');
+            }
+        }
+
+        // Load save slots when viewing saves screen
+        const originalShowScreen = showScreen;
+        showScreen = async function(screenId) {
+            originalShowScreen(screenId);
+            if (screenId === 'saves') {
+                await loadSaveSlots();
+                renderSaveSlots('save-slots-container', false);
+            }
+        };
+
+        // Health check
+        fetch(API_BASE.replace('/api', '') + '/health')
+            .then(r => r.json())
+            .then(data => console.log('API Status:', data))
+            .catch(err => console.warn('API check:', err));
+    </script>
+</body>
+</html>

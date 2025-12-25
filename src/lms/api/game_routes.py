@@ -1272,3 +1272,208 @@ async def list_sessions():
         )
         for sid, data in _active_sessions.items()
     ]
+
+
+# ============================================================
+# SAVE/LOAD SYSTEM (5 slots)
+# ============================================================
+
+# In-memory save slots (replace with persistent storage for production)
+_save_slots: Dict[int, Dict[str, Any]] = {}
+MAX_SAVE_SLOTS = 5
+
+
+class SaveSlotInfo(BaseModel):
+    """Information about a save slot."""
+    slot: int
+    is_empty: bool
+    session_name: Optional[str] = None
+    character_concept: Optional[str] = None
+    genre: Optional[str] = None
+    phase: Optional[str] = None
+    turn_count: Optional[int] = None
+    saved_at: Optional[datetime] = None
+
+
+class SaveGameRequest(BaseModel):
+    """Request to save a game to a slot."""
+    slot: int = Field(..., ge=1, le=MAX_SAVE_SLOTS)
+    session_name: Optional[str] = Field(default=None, max_length=50)
+
+
+class SaveGameResponse(BaseModel):
+    """Response after saving a game."""
+    success: bool
+    slot: int
+    session_id: str
+    message: str
+
+
+class LoadGameResponse(BaseModel):
+    """Response after loading a game."""
+    success: bool
+    session_id: str
+    phase: str
+    narrative: str
+    message: str
+
+
+@router.get("/saves", response_model=List[SaveSlotInfo])
+async def list_save_slots():
+    """List all save slots and their contents."""
+    slots = []
+    for slot_num in range(1, MAX_SAVE_SLOTS + 1):
+        if slot_num in _save_slots:
+            save_data = _save_slots[slot_num]
+            slots.append(SaveSlotInfo(
+                slot=slot_num,
+                is_empty=False,
+                session_name=save_data.get("session_name", f"Save {slot_num}"),
+                character_concept=save_data.get("character_concept"),
+                genre=save_data.get("genre"),
+                phase=save_data.get("phase"),
+                turn_count=len(save_data.get("history", [])) // 2,
+                saved_at=save_data.get("saved_at"),
+            ))
+        else:
+            slots.append(SaveSlotInfo(
+                slot=slot_num,
+                is_empty=True,
+            ))
+    return slots
+
+
+@router.post("/saves/{slot}", response_model=SaveGameResponse)
+async def save_game(
+    slot: int,
+    session_id: str,
+    save_req: SaveGameRequest,
+):
+    """
+    Save a game session to a slot.
+
+    Saves all session state including history, preferences, and phase.
+    """
+    if slot < 1 or slot > MAX_SAVE_SLOTS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Slot must be between 1 and {MAX_SAVE_SLOTS}"
+        )
+
+    if session_id not in _active_sessions:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Session {session_id} not found"
+        )
+
+    session = _active_sessions[session_id]
+
+    # Create save data
+    save_data = {
+        "session_id": session_id,
+        "session_name": save_req.session_name or f"Save {slot}",
+        "character_concept": session.get("character_concept"),
+        "genre": session.get("genre"),
+        "tone_preference": session.get("tone_preference"),
+        "setting_preference": session.get("setting_preference"),
+        "storytelling_style": session.get("storytelling_style"),
+        "phase": session.get("phase"),
+        "history": session.get("history", []),
+        "session_0_answers": session.get("session_0_answers", {}),
+        "world_id": session.get("world_id"),
+        "saved_at": datetime.now(timezone.utc),
+        "created_at": session.get("created_at"),
+    }
+
+    _save_slots[slot] = save_data
+
+    logger.info(f"Saved session {session_id} to slot {slot}")
+
+    return SaveGameResponse(
+        success=True,
+        slot=slot,
+        session_id=session_id,
+        message=f"Game saved to slot {slot}"
+    )
+
+
+@router.get("/saves/{slot}/load", response_model=LoadGameResponse)
+async def load_game(slot: int):
+    """
+    Load a game from a save slot.
+
+    Restores the session and returns the last narrative.
+    """
+    if slot < 1 or slot > MAX_SAVE_SLOTS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Slot must be between 1 and {MAX_SAVE_SLOTS}"
+        )
+
+    if slot not in _save_slots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No save found in slot {slot}"
+        )
+
+    save_data = _save_slots[slot]
+
+    # Create a new session ID for the loaded game
+    new_session_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+
+    # Restore session data
+    session_data = {
+        "session_id": new_session_id,
+        "world_id": save_data.get("world_id"),
+        "character_concept": save_data.get("character_concept"),
+        "setting_preference": save_data.get("setting_preference"),
+        "tone_preference": save_data.get("tone_preference"),
+        "genre": save_data.get("genre", "fantasy"),
+        "storytelling_style": save_data.get("storytelling_style", "guided"),
+        "phase": save_data.get("phase", "active_play"),
+        "status": "active",
+        "created_at": now,
+        "history": save_data.get("history", []),
+        "session_0_answers": save_data.get("session_0_answers", {}),
+    }
+
+    _active_sessions[new_session_id] = session_data
+
+    # Get the last narrative to show the player where they left off
+    history = save_data.get("history", [])
+    last_narrative = "Your adventure continues..."
+    for entry in reversed(history):
+        if entry.get("role") == "assistant":
+            last_narrative = entry.get("content", last_narrative)
+            break
+
+    logger.info(f"Loaded save from slot {slot} as new session {new_session_id}")
+
+    return LoadGameResponse(
+        success=True,
+        session_id=new_session_id,
+        phase=session_data["phase"],
+        narrative=last_narrative,
+        message=f"Game loaded from slot {slot}"
+    )
+
+
+@router.delete("/saves/{slot}")
+async def delete_save(slot: int):
+    """Delete a save from a slot."""
+    if slot < 1 or slot > MAX_SAVE_SLOTS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Slot must be between 1 and {MAX_SAVE_SLOTS}"
+        )
+
+    if slot not in _save_slots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No save found in slot {slot}"
+        )
+
+    del _save_slots[slot]
+
+    return {"success": True, "message": f"Save slot {slot} cleared"}
