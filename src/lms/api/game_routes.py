@@ -685,17 +685,17 @@ def _get_style_instructions(style: str) -> str:
     """Get storytelling instructions based on user's preferred style."""
     styles = {
         "guided": """
-Provide clear narrative direction. After describing the scene, gently suggest
-2-3 possible paths without being prescriptive. Help the reader feel oriented
-while leaving meaningful choice.""",
+Provide clear narrative direction with vivid description. Help the reader feel
+oriented in the world. End scenes at natural pause points, letting the reader
+decide what to do next. NEVER suggest specific choices or ask questions.""",
         "freeform": """
 Create a rich sandbox. Describe the environment with enough detail to spark
-curiosity. Let the reader discover what catches their interest. Respond to
-their choices rather than steering them.""",
+curiosity. Let the reader discover what catches their interest. End naturally
+without prompting. NEVER suggest specific choices or ask questions.""",
         "collaborative": """
-Build the story together. Occasionally ask brief, in-world questions that
-help shape the narrative: "What draws your attention first?" or "Is there
-someone you're hoping to see?" Weave their answers into the story.""",
+Build the story together through natural narrative flow. Describe the world
+vividly and let moments breathe. End at natural pause points, trusting the
+reader to respond. NEVER suggest specific choices or ask direct questions.""",
     }
     return styles.get(style, styles["guided"])
 
@@ -734,10 +734,11 @@ Write an opening that:
 2. Engages the senses - what do they see, hear, feel?
 3. Creates immediate intrigue using: {genre_info['hooks']}
 4. Makes them feel like they belong in this world
-5. Ends with something that invites their response
+5. Ends at a natural pause - DO NOT suggest choices or ask questions
 
 Length: 2-3 paragraphs. Write ONLY the narrative, no meta-commentary.
-Make it feel personal - this is THEIR story beginning."""
+Make it feel personal - this is THEIR story beginning.
+IMPORTANT: End the scene naturally. Do NOT list options, ask what they want to do, or suggest choices."""
 
     logger.info(f"[OPENING] Calling protected_ai_call with prompt of {len(prompt)} chars")
 
@@ -824,7 +825,10 @@ Continue the narrative:
 - If they're exploring, reward their curiosity with interesting details
 - If they're taking action, show meaningful consequences
 - Keep response 2-3 short paragraphs
-- End in a way that invites their next response
+- End at a natural pause point
+
+IMPORTANT: Do NOT suggest choices, list options, or ask what they want to do.
+Just describe what happens and let the scene breathe. Trust the reader to respond.
 
 Write ONLY the narrative:"""
 
