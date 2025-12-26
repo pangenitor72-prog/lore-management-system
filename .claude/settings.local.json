@@ -24,7 +24,8 @@
       "Bash(taskkill //F //PID 3144)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "WebSearch"
     ]
   }
 }

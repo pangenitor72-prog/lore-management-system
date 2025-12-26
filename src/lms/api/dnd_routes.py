@@ -6,7 +6,14 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
 # Genre system
-from ..dnd5e.genre import GenreConfig, get_genre, get_available_genres
+from ..dnd5e.genre import (
+    GenreConfig,
+    get_genre,
+    get_available_genres,
+    get_genre_categories,
+    create_custom_genre,
+    delete_custom_genre,
+)
 
 # Models (generic with backward-compatible aliases)
 from ..dnd5e.models import (
@@ -144,10 +151,73 @@ _visibility_settings: Dict[str, RulesVisibility] = {}
 # GENRE ENDPOINTS
 # =============================================================================
 
+class CustomGenreRequest(BaseModel):
+    """Request to create a custom genre."""
+    genre_id: str
+    name: str
+    description: str
+    icon: str = "🎭"
+    has_magic: bool = True
+    gritty_mode: bool = False
+    sanity_system: bool = False
+    origin_term: str = "Origin"
+    archetype_term: str = "Archetype"
+    ability_term: str = "Ability"
+    power_source: str = "Power"
+    example_origins: List[str] = []
+    example_archetypes: List[str] = []
+
+
 @router.get("/genres")
 async def list_genres():
     """Get all available genres with their descriptions."""
     return get_available_genres()
+
+
+@router.get("/genres/categories")
+async def get_genres_by_category():
+    """Get genres organized by category for UI display."""
+    return get_genre_categories()
+
+
+@router.post("/genres/custom")
+async def add_custom_genre(request: CustomGenreRequest):
+    """Create a new custom genre."""
+    try:
+        genre = create_custom_genre(
+            genre_id=request.genre_id,
+            name=request.name,
+            description=request.description,
+            icon=request.icon,
+            has_magic=request.has_magic,
+            gritty_mode=request.gritty_mode,
+            sanity_system=request.sanity_system,
+            origin_term=request.origin_term,
+            archetype_term=request.archetype_term,
+            ability_term=request.ability_term,
+            power_source=request.power_source,
+            example_origins=request.example_origins,
+            example_archetypes=request.example_archetypes,
+        )
+        return {
+            "success": True,
+            "genre": {
+                "id": genre.id,
+                "name": genre.name,
+                "description": genre.description,
+                "icon": genre.icon,
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/genres/custom/{genre_id}")
+async def remove_custom_genre(genre_id: str):
+    """Delete a custom genre."""
+    if delete_custom_genre(genre_id):
+        return {"success": True}
+    raise HTTPException(status_code=404, detail="Custom genre not found")
 
 
 @router.get("/genres/{genre_id}")
@@ -155,15 +225,17 @@ async def get_genre_details(genre_id: str):
     """Get detailed information about a specific genre."""
     genre = get_genre(genre_id)
     return {
-        "id": genre.id.value,
+        "id": genre.id,
         "name": genre.name,
         "description": genre.description,
+        "icon": genre.icon,
         "terminology": genre.terminology.model_dump(),
         "example_origins": genre.example_origins,
         "example_archetypes": genre.example_archetypes,
         "has_magic": genre.has_magic,
         "gritty_mode": genre.gritty_mode,
         "sanity_system": genre.sanity_system,
+        "is_custom": genre.is_custom,
     }
 
 
