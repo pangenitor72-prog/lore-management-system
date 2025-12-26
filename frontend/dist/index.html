@@ -782,6 +782,150 @@
             margin-top: 30px;
         }
 
+        /* Character Creation Modal */
+        .creation-step {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .creation-step.active {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .creation-step.completed {
+            background: var(--accent-sage);
+            border-color: var(--accent-sage);
+            color: var(--bg-primary);
+        }
+
+        .origin-grid, .archetype-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .origin-card, .archetype-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .origin-card:hover, .archetype-card:hover {
+            border-color: var(--accent-warm);
+            background: var(--bg-hover);
+        }
+
+        .origin-card.selected, .archetype-card.selected {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(232, 196, 124, 0.15);
+        }
+
+        .origin-card .origin-name, .archetype-card .archetype-name {
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .origin-card .origin-desc, .archetype-card .archetype-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .ability-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ability-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .ability-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .ability-score {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+        }
+
+        .ability-mod {
+            font-size: 0.85rem;
+            color: var(--accent-warm);
+        }
+
+        .skill-option {
+            display: inline-block;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            margin: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .skill-option:hover {
+            border-color: var(--accent-warm);
+        }
+
+        .skill-option.selected {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .char-summary {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .summary-name {
+            font-size: 1.3rem;
+            color: var(--accent-gold);
+        }
+
+        .summary-class {
+            color: var(--text-secondary);
+        }
+
         /* Mobile Responsive */
         @media (max-width: 600px) {
             .logo { font-size: 1.8rem; }
@@ -790,6 +934,8 @@
             .btn { padding: 12px 24px; }
             .passage { padding: 15px; }
             .passage.player { margin-left: 5%; }
+            .origin-grid, .archetype-grid { grid-template-columns: 1fr; }
+            .ability-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -830,35 +976,66 @@
         <div id="welcome" class="screen">
             <div class="welcome-intro">
                 <h2>What kind of story calls to you?</h2>
-                <p>Select the genre that speaks to your soul.</p>
+                <p>Select one or more genres to blend together.</p>
             </div>
 
-            <div class="genre-grid">
-                <div class="genre-card" data-genre="fantasy" onclick="selectGenre('fantasy')">
-                    <span class="icon">&#9733;</span>
-                    <span class="label">Fantasy</span>
-                </div>
+            <div class="genre-grid" style="max-width: 600px;">
+                <!-- Story-Focused Genres -->
                 <div class="genre-card" data-genre="romance" onclick="selectGenre('romance')">
-                    <span class="icon">&#10084;</span>
+                    <span class="icon">💕</span>
                     <span class="label">Romance</span>
                 </div>
                 <div class="genre-card" data-genre="mystery" onclick="selectGenre('mystery')">
-                    <span class="icon">&#128270;</span>
+                    <span class="icon">🔍</span>
                     <span class="label">Mystery</span>
                 </div>
-                <div class="genre-card" data-genre="horror" onclick="selectGenre('horror')">
-                    <span class="icon">&#127769;</span>
-                    <span class="label">Horror</span>
-                </div>
-                <div class="genre-card" data-genre="adventure" onclick="selectGenre('adventure')">
-                    <span class="icon">&#9992;</span>
-                    <span class="label">Adventure</span>
-                </div>
                 <div class="genre-card" data-genre="drama" onclick="selectGenre('drama')">
-                    <span class="icon">&#127917;</span>
+                    <span class="icon">🎭</span>
                     <span class="label">Drama</span>
                 </div>
+                <div class="genre-card" data-genre="fantasy" onclick="selectGenre('fantasy')">
+                    <span class="icon">⚔️</span>
+                    <span class="label">Fantasy</span>
+                </div>
+                <!-- Classic Genres -->
+                <div class="genre-card" data-genre="scifi" onclick="selectGenre('scifi')">
+                    <span class="icon">🚀</span>
+                    <span class="label">Sci-Fi</span>
+                </div>
+                <div class="genre-card" data-genre="horror" onclick="selectGenre('horror')">
+                    <span class="icon">👻</span>
+                    <span class="label">Horror</span>
+                </div>
+                <div class="genre-card" data-genre="western" onclick="selectGenre('western')">
+                    <span class="icon">🤠</span>
+                    <span class="label">Western</span>
+                </div>
+                <div class="genre-card" data-genre="noir" onclick="selectGenre('noir')">
+                    <span class="icon">🕵️</span>
+                    <span class="label">Noir</span>
+                </div>
+                <!-- Speculative & Cultural -->
+                <div class="genre-card" data-genre="mythology" onclick="selectGenre('mythology')">
+                    <span class="icon">🏛️</span>
+                    <span class="label">Mythology</span>
+                </div>
+                <div class="genre-card" data-genre="wuxia" onclick="selectGenre('wuxia')">
+                    <span class="icon">🥋</span>
+                    <span class="label">Wuxia</span>
+                </div>
+                <div class="genre-card" data-genre="cyberpunk" onclick="selectGenre('cyberpunk')">
+                    <span class="icon">🌃</span>
+                    <span class="label">Cyberpunk</span>
+                </div>
+                <div class="genre-card" data-genre="superhero" onclick="selectGenre('superhero')">
+                    <span class="icon">🦸</span>
+                    <span class="label">Superhero</span>
+                </div>
             </div>
+
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 15px; max-width: 500px; text-align: center;">
+                More genres: <a href="#" onclick="showMoreGenres(); return false;" style="color: var(--accent-warm);">Steampunk, Post-Apocalyptic, Modern, Adventure...</a>
+            </p>
 
             <div class="btn-group">
                 <button class="btn btn-primary" id="begin-btn" onclick="showScreen('setup')" disabled>Continue</button>
@@ -1412,6 +1589,46 @@
             </div>
         </div>
 
+        <!-- Character Creation Modal -->
+        <div id="char-creation-modal" class="modal-overlay" onclick="closeCharCreation(event)">
+            <div class="modal" onclick="event.stopPropagation()" style="max-width: 550px; max-height: 90vh; overflow-y: auto;">
+                <h3 id="char-creation-title">Create Your Character</h3>
+                <p id="char-creation-subtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;"></p>
+
+                <!-- Step Indicator -->
+                <div id="char-creation-steps" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 25px;">
+                    <span class="creation-step active" data-step="0">1</span>
+                    <span class="creation-step" data-step="1">2</span>
+                    <span class="creation-step" data-step="2">3</span>
+                    <span class="creation-step" data-step="3">4</span>
+                    <span class="creation-step" data-step="4">5</span>
+                </div>
+
+                <!-- Creation Content (dynamic) -->
+                <div id="char-creation-content">
+                    <!-- Populated by JavaScript based on mode and step -->
+                </div>
+
+                <!-- Character Preview (shown alongside choices) -->
+                <div id="char-preview" style="display: none; margin-top: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border-subtle);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span id="preview-name" style="color: var(--accent-gold); font-size: 1.1rem;">Character</span>
+                            <span id="preview-class" style="color: var(--text-secondary); margin-left: 10px;"></span>
+                        </div>
+                        <span id="preview-hp" style="color: var(--accent-rose);"></span>
+                    </div>
+                    <div id="preview-stats" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;"></div>
+                </div>
+
+                <div class="btn-group" style="justify-content: space-between; margin-top: 25px;">
+                    <button id="char-prev-btn" class="btn btn-secondary" onclick="charCreationPrev()" style="display: none;">Back</button>
+                    <div style="flex: 1;"></div>
+                    <button id="char-next-btn" class="btn btn-primary" onclick="charCreationNext()">Next</button>
+                </div>
+            </div>
+        </div>
+
         <footer>
             Storyweaver &middot; Powered by AI &middot; Your story, your mythology
         </footer>
@@ -1419,7 +1636,8 @@
 
     <script>
         // State
-        let selectedGenre = null;
+        let selectedGenres = [];  // Array of selected genres for mixing
+        let selectedGenre = null;  // Primary genre (first selected)
         let selectedTone = null;
         let selectedStyle = 'guided';
         let selectedLoreBase = null;
@@ -1443,6 +1661,20 @@
         let actionHistory = [];  // Stack of {playerInput, aiResponse} pairs
         let lastPlayerInput = null;
         const MAX_HISTORY = 10;
+
+        // Character Creation State
+        let charCreationStep = 0;
+        let charCreationData = {
+            name: '',
+            origin: null,
+            archetype: null,
+            abilityPriority: null,
+            selectedSkills: [],
+            concept: ''
+        };
+        let availableOrigins = [];
+        let availableArchetypes = [];
+        let genreTerminology = { origin: 'Origin', archetype: 'Archetype' };
 
         // Initialize Voice Recognition
         function initVoiceRecognition() {
@@ -1676,13 +1908,50 @@
             }
         }
 
-        // Genre Selection
+        // Genre Selection (supports mixing multiple genres)
         function selectGenre(genre) {
-            selectedGenre = genre;
+            const idx = selectedGenres.indexOf(genre);
+            if (idx >= 0) {
+                // Deselect if already selected
+                selectedGenres.splice(idx, 1);
+            } else {
+                // Add to selection (max 3 for blending)
+                if (selectedGenres.length < 3) {
+                    selectedGenres.push(genre);
+                }
+            }
+
+            // Primary genre is the first selected
+            selectedGenre = selectedGenres.length > 0 ? selectedGenres[0] : null;
+
+            // Update UI
             document.querySelectorAll('.genre-card').forEach(card => {
-                card.classList.toggle('selected', card.dataset.genre === genre);
+                card.classList.toggle('selected', selectedGenres.includes(card.dataset.genre));
             });
-            document.getElementById('begin-btn').disabled = false;
+            document.getElementById('begin-btn').disabled = selectedGenres.length === 0;
+
+            // Show genre blend hint
+            updateGenreBlendHint();
+        }
+
+        function updateGenreBlendHint() {
+            let hintEl = document.getElementById('genre-blend-hint');
+            if (!hintEl) {
+                const grid = document.querySelector('.genre-grid');
+                hintEl = document.createElement('p');
+                hintEl.id = 'genre-blend-hint';
+                hintEl.style.cssText = 'color: var(--accent-gold); font-size: 0.9rem; margin-top: 10px; text-align: center; min-height: 1.5em;';
+                grid.insertAdjacentElement('afterend', hintEl);
+            }
+
+            if (selectedGenres.length === 0) {
+                hintEl.textContent = '';
+            } else if (selectedGenres.length === 1) {
+                hintEl.textContent = `Pure ${selectedGenres[0].charAt(0).toUpperCase() + selectedGenres[0].slice(1)} story`;
+            } else {
+                const genreNames = selectedGenres.map(g => g.charAt(0).toUpperCase() + g.slice(1));
+                hintEl.textContent = `Blending: ${genreNames.join(' + ')}`;
+            }
         }
 
         // Tone Selection
@@ -1855,6 +2124,535 @@
             }
         }
 
+        // ============================================================
+        // CHARACTER CREATION FLOW
+        // ============================================================
+
+        async function startCharacterCreation(concept) {
+            charCreationStep = 0;
+            charCreationData = {
+                name: '',
+                origin: null,
+                archetype: null,
+                abilityPriority: null,
+                selectedSkills: [],
+                concept: concept || ''
+            };
+
+            // Fetch genre data
+            try {
+                const genreRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre);
+                if (genreRes.ok) {
+                    const genreData = await genreRes.json();
+                    genreTerminology = {
+                        origin: genreData.terminology?.origin || 'Origin',
+                        archetype: genreData.terminology?.archetype || 'Archetype',
+                        ability: genreData.terminology?.ability_power || 'Ability'
+                    };
+                }
+
+                // Fetch origins for this genre
+                const originsRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/origins');
+                if (originsRes.ok) {
+                    availableOrigins = await originsRes.json();
+                }
+
+                // Fetch archetypes for this genre
+                const archRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/archetypes');
+                if (archRes.ok) {
+                    availableArchetypes = await archRes.json();
+                }
+            } catch (e) {
+                console.error('Failed to fetch genre data:', e);
+                // Use defaults
+                availableOrigins = [
+                    { id: 'human', display_name: 'Human', description: 'Versatile and adaptable' },
+                    { id: 'elf', display_name: 'Elf', description: 'Graceful and perceptive' },
+                    { id: 'dwarf', display_name: 'Dwarf', description: 'Tough and resilient' },
+                    { id: 'halfling', display_name: 'Halfling', description: 'Lucky and nimble' }
+                ];
+                availableArchetypes = [
+                    { id: 'fighter', display_name: 'Fighter', description: 'Master of martial combat', skill_choices: ['athletics', 'acrobatics', 'intimidation', 'perception'] },
+                    { id: 'rogue', display_name: 'Rogue', description: 'Cunning and precise', skill_choices: ['stealth', 'acrobatics', 'sleight_of_hand', 'deception'] },
+                    { id: 'cleric', display_name: 'Cleric', description: 'Divine power and healing', skill_choices: ['religion', 'medicine', 'insight', 'persuasion'] },
+                    { id: 'wizard', display_name: 'Wizard', description: 'Arcane knowledge and power', skill_choices: ['arcana', 'history', 'investigation', 'insight'] }
+                ];
+            }
+
+            // Determine number of steps based on mode
+            updateCreationSteps();
+            renderCreationStep();
+            document.getElementById('char-creation-modal').style.display = 'flex';
+        }
+
+        function updateCreationSteps() {
+            const stepsContainer = document.getElementById('char-creation-steps');
+            let numSteps = 5; // Default for guided/classic
+
+            if (creationMode === 'concept') {
+                numSteps = 3; // Concept: name/concept, review AI suggestion, confirm/adjust
+            }
+
+            let stepsHtml = '';
+            for (let i = 0; i < numSteps; i++) {
+                const isActive = i === charCreationStep;
+                const isCompleted = i < charCreationStep;
+                stepsHtml += `<span class="creation-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}" data-step="${i}">${i + 1}</span>`;
+            }
+            stepsContainer.innerHTML = stepsHtml;
+        }
+
+        function renderCreationStep() {
+            const content = document.getElementById('char-creation-content');
+            const title = document.getElementById('char-creation-title');
+            const subtitle = document.getElementById('char-creation-subtitle');
+            const prevBtn = document.getElementById('char-prev-btn');
+            const nextBtn = document.getElementById('char-next-btn');
+            const preview = document.getElementById('char-preview');
+
+            prevBtn.style.display = charCreationStep > 0 ? 'inline-block' : 'none';
+            preview.style.display = 'none';
+            updateCreationSteps();
+
+            if (creationMode === 'concept') {
+                renderConceptModeStep(content, title, subtitle, nextBtn, preview);
+            } else {
+                renderGuidedModeStep(content, title, subtitle, nextBtn, preview);
+            }
+        }
+
+        function renderConceptModeStep(content, title, subtitle, nextBtn, preview) {
+            switch (charCreationStep) {
+                case 0: // Name and concept description
+                    title.textContent = 'Describe Your Character';
+                    subtitle.textContent = 'Tell us about who you want to be in this story.';
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label for="char-name-input">Character Name</label>
+                            <input type="text" id="char-name-input" value="${charCreationData.name}"
+                                   placeholder="Enter a name or leave blank for a suggestion"
+                                   style="margin-bottom: 15px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="char-concept-input">Character Concept</label>
+                            <textarea id="char-concept-input" placeholder="A battle-scarred warrior seeking redemption... A cunning thief with a heart of gold... A scholar who stumbled upon forbidden knowledge..."
+                                      style="min-height: 120px;">${charCreationData.concept}</textarea>
+                            <p class="hint">The more detail you provide, the better we can generate your character. Include personality, background, or goals.</p>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">Quick Archetype:</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${availableArchetypes.map(a => `
+                                    <span class="tone-chip archetype-hint" data-archetype="${a.id}" onclick="selectArchetypeHint('${a.id}')">${a.display_name}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Generate Character';
+                    break;
+
+                case 1: // Review AI-generated character
+                    title.textContent = 'Your Character';
+                    subtitle.textContent = 'We generated a character based on your description. Review and adjust as needed.';
+
+                    const abilities = charCreationData.generatedChar?.ability_scores || {};
+                    const abilityNames = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+                    const abilityLabels = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+
+                    content.innerHTML = `
+                        <div class="char-summary">
+                            <div class="summary-header">
+                                <div>
+                                    <div class="summary-name" id="gen-char-name">${charCreationData.generatedChar?.name || 'Character'}</div>
+                                    <div class="summary-class">${charCreationData.generatedChar?.race || charCreationData.generatedChar?.origin || ''} ${charCreationData.generatedChar?.character_class || charCreationData.generatedChar?.archetype || ''}</div>
+                                </div>
+                                <div style="color: var(--accent-rose); font-size: 1.1rem;">
+                                    ${charCreationData.generatedChar?.max_hit_points || 10} HP
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">Abilities</div>
+                                <div class="ability-grid">
+                                    ${abilityNames.map((ab, i) => {
+                                        const score = abilities[ab] || 10;
+                                        const mod = Math.floor((score - 10) / 2);
+                                        const modStr = mod >= 0 ? '+' + mod : mod.toString();
+                                        return `
+                                            <div class="ability-card">
+                                                <div class="ability-name">${abilityLabels[i]}</div>
+                                                <div class="ability-score">${score}</div>
+                                                <div class="ability-mod">${modStr}</div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">Skills</div>
+                                <div>${(charCreationData.generatedChar?.skill_proficiencies || []).map(s =>
+                                    `<span class="skill-option selected" style="cursor: default;">${s.replace(/_/g, ' ')}</span>`
+                                ).join('')}</div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-card); padding: 15px; border-radius: 10px;">
+                            <p style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.9rem;">Want to adjust anything?</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="charCreationStep = 0; renderCreationStep();">Change Concept</button>
+                                <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="switchToGuidedMode();">Manual Adjustments</button>
+                            </div>
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Accept & Begin';
+                    break;
+
+                case 2: // Finalize
+                    finalizeCharacter();
+                    return;
+            }
+        }
+
+        function renderGuidedModeStep(content, title, subtitle, nextBtn, preview) {
+            switch (charCreationStep) {
+                case 0: // Name
+                    title.textContent = 'What is your name?';
+                    subtitle.textContent = 'Choose a name for your character.';
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <input type="text" id="char-name-input" value="${charCreationData.name}"
+                                   placeholder="Enter your character's name"
+                                   style="font-size: 1.2rem; text-align: center;">
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Next';
+                    break;
+
+                case 1: // Origin
+                    title.textContent = `Choose Your ${genreTerminology.origin}`;
+                    subtitle.textContent = `Your ${genreTerminology.origin.toLowerCase()} shapes your natural abilities and heritage.`;
+                    content.innerHTML = `
+                        <div class="origin-grid">
+                            ${availableOrigins.map(origin => `
+                                <div class="origin-card ${charCreationData.origin === origin.id ? 'selected' : ''}"
+                                     onclick="selectOrigin('${origin.id}')">
+                                    <div class="origin-name">${origin.display_name}</div>
+                                    <div class="origin-desc">${origin.description || ''}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Next';
+                    nextBtn.disabled = !charCreationData.origin;
+                    break;
+
+                case 2: // Archetype
+                    title.textContent = `Choose Your ${genreTerminology.archetype}`;
+                    subtitle.textContent = 'How do you face the challenges ahead?';
+                    content.innerHTML = `
+                        <div class="archetype-grid">
+                            ${availableArchetypes.map(arch => `
+                                <div class="archetype-card ${charCreationData.archetype === arch.id ? 'selected' : ''}"
+                                     onclick="selectArchetype('${arch.id}')">
+                                    <div class="archetype-name">${arch.display_name}</div>
+                                    <div class="archetype-desc">${arch.description || ''}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Next';
+                    nextBtn.disabled = !charCreationData.archetype;
+                    break;
+
+                case 3: // Ability Priority
+                    title.textContent = 'What is Your Greatest Strength?';
+                    subtitle.textContent = 'This determines how we distribute your abilities.';
+                    const priorities = [
+                        { id: 'physical', name: 'Physical Power', desc: 'Strong and tough - face challenges head-on' },
+                        { id: 'agility', name: 'Quick Reflexes', desc: 'Fast and precise - dodge danger and strike true' },
+                        { id: 'intellect', name: 'Sharp Mind', desc: 'Clever and perceptive - knowledge is power' },
+                        { id: 'presence', name: 'Force of Personality', desc: 'Charismatic and insightful - people listen when you speak' }
+                    ];
+                    content.innerHTML = `
+                        <div class="archetype-grid">
+                            ${priorities.map(p => `
+                                <div class="archetype-card ${charCreationData.abilityPriority === p.id ? 'selected' : ''}"
+                                     onclick="selectPriority('${p.id}')">
+                                    <div class="archetype-name">${p.name}</div>
+                                    <div class="archetype-desc">${p.desc}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Next';
+                    nextBtn.disabled = !charCreationData.abilityPriority;
+                    break;
+
+                case 4: // Skills and Review
+                    title.textContent = 'Review Your Character';
+                    subtitle.textContent = 'Make any final adjustments before your adventure begins.';
+
+                    const selectedArch = availableArchetypes.find(a => a.id === charCreationData.archetype);
+                    const skillChoices = selectedArch?.skill_choices || ['athletics', 'perception', 'stealth', 'persuasion'];
+                    const numSkills = selectedArch?.num_skill_choices || 2;
+
+                    content.innerHTML = `
+                        <div class="char-summary">
+                            <div class="summary-header">
+                                <div>
+                                    <div class="summary-name">${charCreationData.name || 'Unnamed Hero'}</div>
+                                    <div class="summary-class">${getOriginName(charCreationData.origin)} ${getArchetypeName(charCreationData.archetype)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">Choose ${numSkills} Skills:</div>
+                            <div>
+                                ${skillChoices.map(skill => `
+                                    <span class="skill-option ${charCreationData.selectedSkills.includes(skill) ? 'selected' : ''}"
+                                          onclick="toggleSkill('${skill}', ${numSkills})">${skill.replace(/_/g, ' ')}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Create Character';
+                    nextBtn.disabled = charCreationData.selectedSkills.length !== numSkills;
+                    break;
+            }
+        }
+
+        function selectArchetypeHint(archId) {
+            document.querySelectorAll('.archetype-hint').forEach(el => {
+                el.classList.toggle('selected', el.dataset.archetype === archId);
+            });
+            const conceptInput = document.getElementById('char-concept-input');
+            const arch = availableArchetypes.find(a => a.id === archId);
+            if (arch && conceptInput && !conceptInput.value.trim()) {
+                conceptInput.placeholder = `A ${arch.display_name.toLowerCase()} with...`;
+            }
+        }
+
+        function selectOrigin(originId) {
+            charCreationData.origin = originId;
+            document.querySelectorAll('.origin-card').forEach(card => {
+                card.classList.toggle('selected', card.querySelector('.origin-name')?.textContent === getOriginName(originId));
+            });
+            document.getElementById('char-next-btn').disabled = false;
+            renderCreationStep();
+        }
+
+        function selectArchetype(archId) {
+            charCreationData.archetype = archId;
+            charCreationData.selectedSkills = []; // Reset skills when archetype changes
+            document.querySelectorAll('.archetype-card').forEach(card => {
+                card.classList.toggle('selected', card.querySelector('.archetype-name')?.textContent === getArchetypeName(archId));
+            });
+            document.getElementById('char-next-btn').disabled = false;
+            renderCreationStep();
+        }
+
+        function selectPriority(priorityId) {
+            charCreationData.abilityPriority = priorityId;
+            document.getElementById('char-next-btn').disabled = false;
+            renderCreationStep();
+        }
+
+        function toggleSkill(skill, maxSkills) {
+            const idx = charCreationData.selectedSkills.indexOf(skill);
+            if (idx >= 0) {
+                charCreationData.selectedSkills.splice(idx, 1);
+            } else if (charCreationData.selectedSkills.length < maxSkills) {
+                charCreationData.selectedSkills.push(skill);
+            }
+            renderCreationStep();
+        }
+
+        function getOriginName(originId) {
+            const origin = availableOrigins.find(o => o.id === originId);
+            return origin?.display_name || originId || 'Unknown';
+        }
+
+        function getArchetypeName(archId) {
+            const arch = availableArchetypes.find(a => a.id === archId);
+            return arch?.display_name || archId || 'Unknown';
+        }
+
+        function switchToGuidedMode() {
+            creationMode = 'guided';
+            charCreationStep = 0;
+            // Pre-fill from generated character
+            if (charCreationData.generatedChar) {
+                charCreationData.name = charCreationData.generatedChar.name || '';
+                charCreationData.origin = charCreationData.generatedChar.race || charCreationData.generatedChar.origin;
+                charCreationData.archetype = charCreationData.generatedChar.character_class || charCreationData.generatedChar.archetype;
+            }
+            renderCreationStep();
+        }
+
+        async function charCreationNext() {
+            if (creationMode === 'concept') {
+                await handleConceptModeNext();
+            } else {
+                await handleGuidedModeNext();
+            }
+        }
+
+        async function handleConceptModeNext() {
+            if (charCreationStep === 0) {
+                // Get name and concept
+                charCreationData.name = document.getElementById('char-name-input')?.value.trim() || '';
+                charCreationData.concept = document.getElementById('char-concept-input')?.value.trim() || '';
+
+                // Generate character from concept
+                document.getElementById('char-next-btn').disabled = true;
+                document.getElementById('char-next-btn').innerHTML = '<span class="loading"></span> Generating...';
+
+                try {
+                    const response = await fetch(API_BASE + '/dnd/characters/concept', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            genre: rulesGenre,
+                            concept: charCreationData.concept || 'A brave adventurer',
+                            player_id: currentSessionId,
+                            name: charCreationData.name || undefined
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Get full character details
+                        const detailRes = await fetch(API_BASE + '/dnd/characters/' + data.character_id);
+                        if (detailRes.ok) {
+                            const detail = await detailRes.json();
+                            charCreationData.generatedChar = detail.character;
+                            charCreationData.characterId = data.character_id;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to generate character:', e);
+                }
+
+                document.getElementById('char-next-btn').disabled = false;
+                document.getElementById('char-next-btn').textContent = 'Accept & Begin';
+                charCreationStep = 1;
+                renderCreationStep();
+
+            } else if (charCreationStep === 1) {
+                // Accept generated character
+                finalizeCharacter();
+            }
+        }
+
+        async function handleGuidedModeNext() {
+            const maxSteps = 5;
+
+            if (charCreationStep === 0) {
+                charCreationData.name = document.getElementById('char-name-input')?.value.trim() || 'Adventurer';
+            }
+
+            if (charCreationStep < maxSteps - 1) {
+                charCreationStep++;
+                renderCreationStep();
+            } else {
+                // Final step - create character
+                await createGuidedCharacter();
+            }
+        }
+
+        async function createGuidedCharacter() {
+            document.getElementById('char-next-btn').disabled = true;
+            document.getElementById('char-next-btn').innerHTML = '<span class="loading"></span> Creating...';
+
+            try {
+                // Use the guided flow API
+                const startRes = await fetch(API_BASE + '/dnd/characters/guided/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ genre: rulesGenre })
+                });
+
+                if (startRes.ok) {
+                    const flowData = await startRes.json();
+                    const flowId = flowData.flow_id;
+
+                    // Submit each step
+                    await submitGuidedStep(flowId, 'name', charCreationData.name);
+                    await submitGuidedStep(flowId, 'race', charCreationData.origin);
+                    await submitGuidedStep(flowId, 'class', charCreationData.archetype);
+                    await submitGuidedStep(flowId, 'priority', charCreationData.abilityPriority);
+                    await submitGuidedStep(flowId, 'skills', charCreationData.selectedSkills);
+
+                    // Finalize
+                    const finalRes = await fetch(API_BASE + `/dnd/characters/guided/${flowId}/finalize`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ player_id: currentSessionId })
+                    });
+
+                    if (finalRes.ok) {
+                        const finalData = await finalRes.json();
+                        charCreationData.characterId = finalData.character_id;
+                        charCreationData.generatedChar = finalData.character;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to create guided character:', e);
+            }
+
+            finalizeCharacter();
+        }
+
+        async function submitGuidedStep(flowId, stepType, value) {
+            try {
+                await fetch(API_BASE + `/dnd/characters/guided/${flowId}/step`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ step_type: stepType, value: value })
+                });
+            } catch (e) {
+                console.error('Failed to submit step:', stepType, e);
+            }
+        }
+
+        async function finalizeCharacter() {
+            if (charCreationData.generatedChar) {
+                dndCharacter = charCreationData.generatedChar;
+            } else if (charCreationData.characterId) {
+                try {
+                    const res = await fetch(API_BASE + '/dnd/characters/' + charCreationData.characterId);
+                    if (res.ok) {
+                        const data = await res.json();
+                        dndCharacter = data.character;
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch character:', e);
+                }
+            }
+
+            closeCharCreation();
+            continueToStory();
+        }
+
+        function charCreationPrev() {
+            if (charCreationStep > 0) {
+                charCreationStep--;
+                renderCreationStep();
+            }
+        }
+
+        function closeCharCreation(event) {
+            if (!event || event.target === event.currentTarget) {
+                document.getElementById('char-creation-modal').style.display = 'none';
+            }
+        }
+
+        // ============================================================
+        // END CHARACTER CREATION
+        // ============================================================
+
         // Create D&D character from concept
         async function createDnDCharacter(concept) {
             try {
@@ -1947,7 +2745,7 @@
             showStatus('setup-status', '<span class="loading"></span> Preparing your world...', 'info');
 
             try {
-                // Create session
+                // Create session with genre blend
                 const sessionRes = await fetch(API_BASE + '/game/session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1955,7 +2753,8 @@
                         character_concept: characterConcept,
                         setting_preference: worldSeed,
                         tone_preference: selectedTone,
-                        genre: selectedGenre,
+                        genre: selectedGenre,  // Primary genre
+                        genres: selectedGenres,  // All selected genres for blending
                         storytelling_style: selectedStyle
                     })
                 });
@@ -1967,65 +2766,85 @@
                 playerInventory = [];  // Reset inventory for new story
                 dndCharacter = null;   // Reset D&D character
 
-                // Create D&D character if rules mode is enabled
+                // If D&D mode, show character creation modal
                 if (rulesMode === 'dnd') {
-                    showStatus('setup-status', '<span class="loading"></span> Creating your character...', 'info');
-                    await createDnDCharacter(characterConcept);
-
-                    // Update visibility setting on server
-                    await fetch(API_BASE + '/dnd/settings/visibility', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ rules_visibility: rulesVisibility })
-                    });
+                    clearStatus('setup-status');
+                    await startCharacterCreation(characterConcept);
+                    return; // Character creation modal will call continueToStory when done
                 }
 
-                showScreen('story');
-
-                // Update header with character info if D&D mode
-                if (dndCharacter) {
-                    document.getElementById('story-info').textContent = dndCharacter.name + ' - Level ' + dndCharacter.level + ' ' + dndCharacter.character_class;
-                    // Show the Character Sheet button
-                    document.getElementById('char-sheet-btn').style.display = 'inline-block';
-                    // Add starting equipment to inventory
-                    if (dndCharacter.equipment && dndCharacter.equipment.length > 0) {
-                        dndCharacter.equipment.forEach(item => {
-                            addToInventory({ name: item, description: 'Starting equipment' });
-                        });
-                    }
-                } else {
-                    document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
-                    document.getElementById('char-sheet-btn').style.display = 'none';
-                }
-
-                // Build opening context
-                let openingPrompt = buildOpeningPrompt(worldSeed, characterConcept, selectedGenre, selectedTone);
-
-                addPassage('Your story begins...', 'system');
-
-                // If D&D mode, add character summary to opening
-                if (dndCharacter && rulesVisibility !== 'storyteller') {
-                    const charSummary = `<em>You are ${dndCharacter.name}, a ${dndCharacter.race} ${dndCharacter.character_class}.</em>`;
-                    addPassage(charSummary, 'system');
-                }
-
-                // Update the character HUD
-                updateCharacterHUD();
-
-                // Show quick actions
-                showQuickActions(true);
-
-                // Reset action history for new story
-                actionHistory = [];
-                lastPlayerInput = null;
-                updateActionBar();
-
-                // Send opening to get first narrative
-                await sendActionText(openingPrompt);
+                // For narrative mode, continue directly to story
+                await continueToStory();
 
             } catch (err) {
                 showStatus('setup-status', 'Error: ' + err.message, 'error');
             }
+        }
+
+        // Continue to story after session and character are ready
+        async function continueToStory() {
+            const worldSeed = document.getElementById('world-seed').value.trim();
+            const characterConcept = document.getElementById('character-concept').value.trim();
+
+            showScreen('story');
+
+            // Update header with character info if D&D mode
+            if (dndCharacter) {
+                const origin = dndCharacter.race || dndCharacter.origin || '';
+                const archetype = dndCharacter.character_class || dndCharacter.archetype || '';
+                document.getElementById('story-info').textContent = `${dndCharacter.name} - Level ${dndCharacter.level} ${archetype}`;
+                // Show the Character Sheet button
+                document.getElementById('char-sheet-btn').style.display = 'inline-block';
+                // Add starting equipment to inventory
+                if (dndCharacter.equipment && dndCharacter.equipment.length > 0) {
+                    dndCharacter.equipment.forEach(item => {
+                        addToInventory({ name: item, description: 'Starting equipment' });
+                    });
+                }
+
+                // Update visibility setting on server
+                await fetch(API_BASE + '/dnd/settings/visibility', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rules_visibility: rulesVisibility })
+                });
+            } else {
+                document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
+                document.getElementById('char-sheet-btn').style.display = 'none';
+            }
+
+            // Build opening context
+            let openingPrompt = buildOpeningPrompt(worldSeed, characterConcept, selectedGenre, selectedTone);
+
+            addPassage('Your story begins...', 'system');
+
+            // If D&D mode, add character summary to opening
+            if (dndCharacter && rulesVisibility !== 'storyteller') {
+                const origin = dndCharacter.race || dndCharacter.origin || '';
+                const archetype = dndCharacter.character_class || dndCharacter.archetype || '';
+                const charSummary = `<em>You are ${dndCharacter.name}, a ${origin} ${archetype}.</em>`;
+                addPassage(charSummary, 'system');
+            }
+
+            // Update the character HUD
+            updateCharacterHUD();
+
+            // Show quick actions
+            showQuickActions(true);
+
+            // Reset action history for new story
+            actionHistory = [];
+            lastPlayerInput = null;
+            updateActionBar();
+
+            // Send opening to get first narrative
+            await sendActionText(openingPrompt);
+        }
+
+        // Show more genres modal
+        function showMoreGenres() {
+            // For now, just reveal hidden genres in a modal-like way
+            alert('More genres coming soon! Currently available: Steampunk, Post-Apocalyptic, Modern, Adventure, and Custom genres through the API.');
         }
 
         function buildOpeningPrompt(world, character, genre, tone) {
