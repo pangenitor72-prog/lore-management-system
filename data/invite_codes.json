@@ -1,0 +1,25 @@
+{
+  "max_testers": 20,
+  "codes": [
+    {"code": "TESTER-ALPHA01", "name": "Tester 1", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA02", "name": "Tester 2", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA03", "name": "Tester 3", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA04", "name": "Tester 4", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA05", "name": "Tester 5", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA06", "name": "Tester 6", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA07", "name": "Tester 7", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA08", "name": "Tester 8", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA09", "name": "Tester 9", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA10", "name": "Tester 10", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA11", "name": "Tester 11", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA12", "name": "Tester 12", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA13", "name": "Tester 13", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA14", "name": "Tester 14", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA15", "name": "Tester 15", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA16", "name": "Tester 16", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA17", "name": "Tester 17", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA18", "name": "Tester 18", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA19", "name": "Tester 19", "activated": false, "activated_at": null},
+    {"code": "TESTER-ALPHA20", "name": "Tester 20", "activated": false, "activated_at": null}
+  ]
+}
