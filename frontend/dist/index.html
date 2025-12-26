@@ -3448,7 +3448,14 @@
             passage.className = 'passage ' + type;
             passage.innerHTML = content.replace(/\n/g, '<br>');
             container.appendChild(passage);
-            container.scrollTop = container.scrollHeight;
+
+            if (type === 'player') {
+                // Scroll to show player's input at bottom
+                container.scrollTop = container.scrollHeight;
+            } else if (type === 'narrator') {
+                // Scroll to show TOP of narrator response so user can read from beginning
+                passage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         function showLoading() {
@@ -3458,6 +3465,7 @@
             loading.className = 'passage system';
             loading.innerHTML = '<span class="loading"></span> The story unfolds...';
             container.appendChild(loading);
+            // Scroll to show loading indicator
             container.scrollTop = container.scrollHeight;
         }
 
