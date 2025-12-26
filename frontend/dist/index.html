@@ -98,6 +98,95 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Invite Code Screen */
+        #invite-code {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .invite-box {
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .invite-box h2 {
+            color: var(--accent-gold);
+            font-size: 1.6rem;
+            font-weight: normal;
+            margin-bottom: 15px;
+        }
+
+        .invite-box p {
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
+
+        .invite-input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 1.1rem;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-accent);
+            border-radius: 10px;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .invite-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(232, 196, 124, 0.2);
+        }
+
+        .invite-input::placeholder {
+            color: var(--text-muted);
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        #invite-status {
+            min-height: 50px;
+            margin-top: 10px;
+        }
+
+        #invite-status .status.success {
+            color: var(--accent-sage);
+            background: rgba(139, 168, 139, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        #invite-status .status.error {
+            color: var(--accent-rose);
+            background: rgba(201, 139, 139, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .alpha-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
+            color: var(--bg-primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+        }
+
         /* Welcome Screen */
         #welcome {
             justify-content: center;
@@ -417,6 +506,54 @@
         .example-chip:hover {
             border-color: var(--accent-warm);
             color: var(--accent-warm);
+        }
+
+        /* Suggested Actions Panel (Guided Mode) */
+        #suggested-actions-panel {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #suggested-actions-panel.visible {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .suggested-actions-header {
+            color: var(--accent-gold);
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .suggested-actions-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .suggested-action-chip {
+            padding: 8px 16px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggested-action-chip:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: var(--bg-hover);
+            transform: translateY(-1px);
         }
 
         .tutorial-mode-badge {
@@ -1165,6 +1302,31 @@
             <p class="tagline">AI-Powered Roleplaying Games</p>
         </header>
 
+        <!-- Invite Code Screen (Alpha Testing) - Disabled for now -->
+        <div id="invite-code" class="screen">
+            <div class="invite-box">
+                <span class="alpha-badge">Alpha Test</span>
+                <h2>Welcome to the Alpha</h2>
+                <p>
+                    Thanks for being an early tester! Enter your invite code to begin your adventure.
+                </p>
+                <input type="text"
+                       id="invite-code-input"
+                       class="invite-input"
+                       placeholder="Enter your invite code"
+                       maxlength="20"
+                       autocomplete="off"
+                       onkeydown="if(event.key === 'Enter') validateInviteCode()">
+                <button class="btn btn-primary" style="width: 100%;" onclick="validateInviteCode()">
+                    Enter
+                </button>
+                <div id="invite-status"></div>
+            </div>
+            <p style="margin-top: 30px; color: var(--text-muted); font-size: 0.85rem;">
+                Don't have a code? Ask a friend who's testing, or check back later!
+            </p>
+        </div>
+
         <!-- Onboarding Screen -->
         <div id="onboarding" class="screen active">
             <div class="welcome-intro" style="max-width: 500px;">
@@ -1352,18 +1514,21 @@
             <div class="setup-section">
                 <h3>Storytelling Style</h3>
                 <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    How much structure do you want?
+                    How much help do you want?
                 </p>
                 <div class="tone-options">
                     <span class="tone-chip style-chip selected" data-style="guided" onclick="selectStyle('guided')">Guided Journey</span>
                     <span class="tone-chip style-chip" data-style="freeform" onclick="selectStyle('freeform')">Freeform Exploration</span>
                     <span class="tone-chip style-chip" data-style="collaborative" onclick="selectStyle('collaborative')">Collaborative</span>
                 </div>
-                <p class="hint" style="margin-top: 10px;">
-                    <strong>Guided:</strong> Clear story beats and direction &nbsp;|&nbsp;
-                    <strong>Freeform:</strong> Pure sandbox, you lead &nbsp;|&nbsp;
-                    <strong>Collaborative:</strong> We build together
-                </p>
+                <div id="style-description" style="margin-top: 15px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; font-size: 0.9rem;">
+                    <strong style="color: var(--accent-gold);">Guided Journey</strong>
+                    <span style="color: var(--accent-sage); font-size: 0.8rem; margin-left: 8px;">Recommended for new players</span>
+                    <p style="color: var(--text-secondary); margin-top: 8px; line-height: 1.6;">
+                        The story provides clear direction and <strong style="color: var(--text-primary);">suggests possible actions</strong> after each scene.
+                        Great if you want help figuring out what to do next!
+                    </p>
+                </div>
             </div>
 
             <div class="setup-section">
@@ -1480,6 +1645,16 @@
                     </div>
                     <div class="example-prompt-chips" id="example-chips">
                         <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Suggested Actions (shows in guided mode) -->
+                <div id="suggested-actions-panel">
+                    <div class="suggested-actions-header">
+                        <span>💡</span> <span>Try one of these:</span>
+                    </div>
+                    <div class="suggested-actions-chips" id="suggested-actions-chips">
+                        <!-- Populated by JS from API response -->
                     </div>
                 </div>
 
@@ -1947,6 +2122,73 @@
         let availableArchetypes = [];
         let genreTerminology = { origin: 'Origin', archetype: 'Archetype' };
 
+        // Invite Code State (disabled for now - enable later for controlled access)
+        let validatedTester = null;  // Tester name if validated
+        const REQUIRE_INVITE_CODE = false;  // Set to true to enable invite code requirement
+
+        // Check for existing valid invite code on page load
+        (function checkInviteCode() {
+            if (!REQUIRE_INVITE_CODE) return;  // Skip if not requiring codes
+
+            const savedCode = localStorage.getItem('airpg_invite_code');
+            const savedTester = localStorage.getItem('airpg_tester_name');
+            if (savedCode && savedTester) {
+                validatedTester = savedTester;
+                // Skip invite screen, show onboarding
+                setTimeout(() => {
+                    showScreen('onboarding');
+                }, 100);
+            } else {
+                // Show invite code screen
+                setTimeout(() => {
+                    showScreen('invite-code');
+                }, 100);
+            }
+        })();
+
+        async function validateInviteCode() {
+            const codeInput = document.getElementById('invite-code-input');
+            const statusEl = document.getElementById('invite-status');
+            const code = codeInput.value.trim();
+
+            if (!code) {
+                statusEl.innerHTML = '<div class="status error">Please enter your invite code.</div>';
+                return;
+            }
+
+            statusEl.innerHTML = '<div class="status"><span class="loading"></span> Checking...</div>';
+
+            try {
+                const response = await fetch(API_BASE + '/game/invite/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+
+                const data = await response.json();
+
+                if (data.valid) {
+                    // Save to localStorage
+                    localStorage.setItem('airpg_invite_code', code);
+                    localStorage.setItem('airpg_tester_name', data.tester_name || 'Tester');
+                    validatedTester = data.tester_name;
+
+                    statusEl.innerHTML = '<div class="status success">' + data.message + '</div>';
+
+                    // Proceed to onboarding after a brief moment
+                    setTimeout(() => {
+                        showScreen('onboarding');
+                    }, 1500);
+                } else {
+                    statusEl.innerHTML = '<div class="status error">' + data.message + '</div>';
+                    codeInput.focus();
+                }
+            } catch (err) {
+                statusEl.innerHTML = '<div class="status error">Connection error. Please try again.</div>';
+                console.error('Invite code validation failed:', err);
+            }
+        }
+
         // Tutorial State
         let tutorialMode = false;
         let tutorialStep = 0;
@@ -2397,11 +2639,39 @@
         }
 
         // Storytelling Style Selection
+        const styleDescriptions = {
+            guided: {
+                title: 'Guided Journey',
+                badge: 'Recommended for new players',
+                text: 'The story provides clear direction and <strong style="color: var(--text-primary);">suggests possible actions</strong> after each scene. Great if you want help figuring out what to do next!'
+            },
+            freeform: {
+                title: 'Freeform Exploration',
+                badge: 'For experienced players',
+                text: 'Pure sandbox storytelling. You lead the way - type anything and the world responds. No prompts, no hand-holding, just your imagination.'
+            },
+            collaborative: {
+                title: 'Collaborative',
+                badge: 'Best of both worlds',
+                text: 'We build the story together. Light guidance when helpful, but you\'re always in control. Action suggestions appear <strong style="color: var(--text-primary);">only when you ask</strong>.'
+            }
+        };
+
         function selectStyle(style) {
             selectedStyle = style;
             document.querySelectorAll('.style-chip').forEach(chip => {
                 chip.classList.toggle('selected', chip.dataset.style === style);
             });
+
+            // Update description
+            const desc = styleDescriptions[style];
+            if (desc) {
+                document.getElementById('style-description').innerHTML = `
+                    <strong style="color: var(--accent-gold);">${desc.title}</strong>
+                    <span style="color: var(--accent-sage); font-size: 0.8rem; margin-left: 8px;">${desc.badge}</span>
+                    <p style="color: var(--text-secondary); margin-top: 8px; line-height: 1.6;">${desc.text}</p>
+                `;
+            }
         }
 
         // Rules Mode Selection
@@ -3135,6 +3405,32 @@
             if (panel) panel.style.display = 'none';
         }
 
+        // Suggested Actions (from AI response in guided mode)
+        function showSuggestedActions(actions) {
+            const panel = document.getElementById('suggested-actions-panel');
+            const chips = document.getElementById('suggested-actions-chips');
+            if (!panel || !chips) return;
+
+            chips.innerHTML = actions.map(action =>
+                `<span class="suggested-action-chip" onclick="useSuggestedAction('${action.replace(/'/g, "\\'")}')">${action}</span>`
+            ).join('');
+
+            panel.classList.add('visible');
+        }
+
+        function hideSuggestedActions() {
+            const panel = document.getElementById('suggested-actions-panel');
+            if (panel) panel.classList.remove('visible');
+        }
+
+        function useSuggestedAction(action) {
+            const input = document.getElementById('player-input');
+            input.value = action;
+            input.focus();
+            hideSuggestedActions();  // Hide after selecting
+            sendAction();  // Auto-send the action
+        }
+
         // Status Messages
         function showStatus(elementId, message, type = 'info') {
             const el = document.getElementById(elementId);
@@ -3347,6 +3643,13 @@
                 const data = await response.json();
                 currentPhase = data.phase;
                 addPassage(data.narrative, 'narrator');
+
+                // Display suggested actions if available (guided mode)
+                if (data.suggested_actions && data.suggested_actions.length > 0) {
+                    showSuggestedActions(data.suggested_actions);
+                } else {
+                    hideSuggestedActions();
+                }
 
                 // Parse narrative for inventory changes
                 parseInventoryChanges(data.narrative);

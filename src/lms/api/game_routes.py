@@ -118,6 +118,136 @@ router = APIRouter(prefix="/game", tags=["Game"])
 
 
 # ============================================================
+# INVITE CODE SYSTEM (for controlled alpha testing)
+# ============================================================
+
+# Path to invite codes configuration
+INVITE_CODES_FILE = Path(__file__).parent.parent.parent.parent / "data" / "invite_codes.json"
+
+# In-memory cache of invite codes (loaded from file)
+_invite_codes_cache: Optional[Dict[str, Any]] = None
+
+
+def _load_invite_codes() -> Dict[str, Any]:
+    """Load invite codes from file."""
+    global _invite_codes_cache
+    if _invite_codes_cache is None:
+        try:
+            if INVITE_CODES_FILE.exists():
+                with open(INVITE_CODES_FILE, "r", encoding="utf-8") as f:
+                    _invite_codes_cache = json.load(f)
+            else:
+                _invite_codes_cache = {"max_testers": 20, "codes": []}
+        except Exception as e:
+            logger.error(f"Failed to load invite codes: {e}")
+            _invite_codes_cache = {"max_testers": 20, "codes": []}
+    return _invite_codes_cache
+
+
+def _save_invite_codes() -> None:
+    """Save invite codes to file."""
+    if _invite_codes_cache:
+        try:
+            INVITE_CODES_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(INVITE_CODES_FILE, "w", encoding="utf-8") as f:
+                json.dump(_invite_codes_cache, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save invite codes: {e}")
+
+
+class InviteCodeRequest(BaseModel):
+    """Request to validate an invite code."""
+    code: str = Field(..., min_length=5, max_length=50, description="The invite code to validate")
+
+
+class InviteCodeResponse(BaseModel):
+    """Response from invite code validation."""
+    valid: bool
+    message: str
+    tester_name: Optional[str] = None
+    testers_remaining: Optional[int] = None
+
+
+@router.post("/invite/validate", response_model=InviteCodeResponse)
+async def validate_invite_code(request: InviteCodeRequest):
+    """
+    Validate an invite code for alpha testing access.
+
+    Returns success if the code is valid and not yet at max capacity.
+    Codes are single-use per tester slot.
+    """
+    codes_data = _load_invite_codes()
+    max_testers = codes_data.get("max_testers", 20)
+    codes = codes_data.get("codes", [])
+
+    # Count active testers
+    active_count = sum(1 for c in codes if c.get("activated", False))
+
+    # Check if at capacity
+    if active_count >= max_testers:
+        return InviteCodeResponse(
+            valid=False,
+            message="Sorry, we've reached capacity for alpha testers. Please check back later!",
+            testers_remaining=0
+        )
+
+    # Find the code
+    code_upper = request.code.strip().upper()
+    for code_entry in codes:
+        if code_entry.get("code", "").upper() == code_upper:
+            if code_entry.get("activated", False):
+                # Already activated - still valid (same tester returning)
+                return InviteCodeResponse(
+                    valid=True,
+                    message=f"Welcome back, {code_entry.get('name', 'Tester')}!",
+                    tester_name=code_entry.get("name"),
+                    testers_remaining=max_testers - active_count
+                )
+            else:
+                # Activate the code
+                code_entry["activated"] = True
+                code_entry["activated_at"] = datetime.now(timezone.utc).isoformat()
+                _save_invite_codes()
+
+                logger.info(f"Invite code activated: {code_entry.get('name', 'unknown')}")
+
+                return InviteCodeResponse(
+                    valid=True,
+                    message=f"Welcome to the alpha test, {code_entry.get('name', 'Tester')}!",
+                    tester_name=code_entry.get("name"),
+                    testers_remaining=max_testers - active_count - 1
+                )
+
+    # Code not found
+    return InviteCodeResponse(
+        valid=False,
+        message="Invalid invite code. Please check your code and try again.",
+        testers_remaining=max_testers - active_count
+    )
+
+
+@router.get("/invite/status")
+async def get_invite_status():
+    """
+    Get current alpha testing status.
+
+    Returns capacity information for display.
+    """
+    codes_data = _load_invite_codes()
+    max_testers = codes_data.get("max_testers", 20)
+    codes = codes_data.get("codes", [])
+
+    active_count = sum(1 for c in codes if c.get("activated", False))
+
+    return {
+        "accepting_testers": active_count < max_testers,
+        "testers_active": active_count,
+        "testers_max": max_testers,
+        "testers_remaining": max_testers - active_count
+    }
+
+
+# ============================================================
 # REQUEST/RESPONSE MODELS
 # ============================================================
 
@@ -839,12 +969,20 @@ async def process_action(
         )
     )
 
+    # Generate suggested actions for guided mode
+    suggested_actions = _generate_suggested_actions(
+        response_text,
+        session.get("genre", "fantasy"),
+        session.get("storytelling_style", "guided"),
+    )
+
     return DMResponse(
         narrative=response_text,
         session_id=session_id,
         phase=session["phase"],
         mechanical_result=mechanical_result,
         character_update=character_update,
+        suggested_actions=suggested_actions,
     )
 
 
@@ -909,6 +1047,116 @@ async def _handle_session_0(
         return opening, "active_play"
 
     return "Session 0 complete. Begin your adventure.", "active_play"
+
+
+def _generate_suggested_actions(
+    narrative: str,
+    genre: str,
+    style: str,
+) -> Optional[List[str]]:
+    """
+    Generate contextual action suggestions based on narrative and genre.
+
+    Returns 3 suggested actions for 'guided' style, None for other styles.
+    """
+    if style != "guided":
+        return None
+
+    # Genre-specific action templates
+    genre_actions = {
+        "fantasy": [
+            "Look for magical signs",
+            "Speak with a local",
+            "Examine my surroundings",
+            "Draw my weapon",
+            "Search for clues",
+            "Ask about the legends",
+        ],
+        "romance": [
+            "Make eye contact",
+            "Start a conversation",
+            "Ask about their day",
+            "Offer to help",
+            "Share something personal",
+            "Take a deep breath",
+        ],
+        "mystery": [
+            "Search for clues",
+            "Question a witness",
+            "Examine the evidence",
+            "Follow the lead",
+            "Check my notes",
+            "Look for something out of place",
+        ],
+        "horror": [
+            "Listen carefully",
+            "Check behind me",
+            "Look for an exit",
+            "Investigate cautiously",
+            "Stay calm",
+            "Find a light source",
+        ],
+        "adventure": [
+            "Explore further",
+            "Check my equipment",
+            "Look for a path",
+            "Ask the guide",
+            "Take point",
+            "Search for supplies",
+        ],
+        "drama": [
+            "Speak my mind",
+            "Listen quietly",
+            "Ask what happened",
+            "Offer support",
+            "Walk away",
+            "Take a moment",
+        ],
+        "scifi": [
+            "Scan the area",
+            "Check the systems",
+            "Hail the station",
+            "Analyze the data",
+            "Prepare for departure",
+            "Access the terminal",
+        ],
+    }
+
+    # Get genre-specific actions or default
+    base_actions = genre_actions.get(genre, [
+        "Look around",
+        "Talk to someone nearby",
+        "Investigate further",
+        "Wait and observe",
+        "Move cautiously",
+        "Ask a question",
+    ])
+
+    # Context-aware suggestions based on narrative keywords
+    suggestions = []
+
+    narrative_lower = narrative.lower()
+
+    # Add contextual suggestions
+    if any(word in narrative_lower for word in ["person", "figure", "man", "woman", "stranger"]):
+        suggestions.append("Approach and introduce myself")
+    if any(word in narrative_lower for word in ["door", "entrance", "gate"]):
+        suggestions.append("Try the door")
+    if any(word in narrative_lower for word in ["letter", "note", "paper", "book"]):
+        suggestions.append("Read it carefully")
+    if any(word in narrative_lower for word in ["sound", "noise", "voice"]):
+        suggestions.append("Listen more closely")
+    if any(word in narrative_lower for word in ["dark", "shadow", "night"]):
+        suggestions.append("Look for a light source")
+
+    # Fill remaining slots with genre actions
+    import random
+    while len(suggestions) < 3:
+        action = random.choice(base_actions)
+        if action not in suggestions:
+            suggestions.append(action)
+
+    return suggestions[:3]
 
 
 def _get_genre_guidance(genre: str) -> Dict[str, str]:
