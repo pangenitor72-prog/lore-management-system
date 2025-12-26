@@ -197,7 +197,7 @@ class SessionResponse(BaseModel):
 
 class PlayerActionRequest(BaseModel):
     """Player action input."""
-    action: str = Field(..., min_length=1, description="What the player does or says")
+    action: str = Field(..., min_length=1, max_length=2000, description="What the player does or says")
 
 
 class DMResponse(BaseModel):
