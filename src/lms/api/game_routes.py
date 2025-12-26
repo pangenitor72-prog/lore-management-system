@@ -1295,12 +1295,13 @@ IMPORTANT: End the scene naturally. Do NOT list options, ask what they want to d
     logger.info(f"[OPENING] Calling protected_ai_call with prompt of {len(prompt)} chars")
 
     # Use protected AI call with guardrails
+    # 900 tokens for opening to allow rich scene-setting without truncation
     return await protected_ai_call(
         model,
         prompt,
         session_id=session.get("session_id", "unknown"),
         temperature=0.85,
-        max_output_tokens=600,
+        max_output_tokens=900,
     )
 
 
@@ -1435,12 +1436,13 @@ Do NOT introduce new scenes or locations unless the player's action explicitly m
 Write ONLY the narrative:"""
 
     # Use protected AI call with guardrails
+    # 800 tokens allows for complete 2-3 paragraph responses without truncation
     return await protected_ai_call(
         model,
         prompt,
         session_id=session.get("session_id", "unknown"),
         temperature=0.85,
-        max_output_tokens=500,
+        max_output_tokens=800,
     )
 
 
