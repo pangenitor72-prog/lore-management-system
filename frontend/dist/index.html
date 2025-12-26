@@ -218,6 +218,225 @@
             justify-content: center;
         }
 
+        /* Tutorial System */
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tutorial-overlay.active {
+            display: flex;
+        }
+
+        .tutorial-card {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 550px;
+            width: 90%;
+            border: 2px solid var(--accent-gold);
+            text-align: center;
+            position: relative;
+        }
+
+        .tutorial-step-indicator {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .tutorial-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border-subtle);
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-dot.active {
+            background: var(--accent-gold);
+            transform: scale(1.2);
+        }
+
+        .tutorial-dot.completed {
+            background: var(--accent-sage);
+        }
+
+        .tutorial-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .tutorial-title {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+            font-weight: normal;
+        }
+
+        .tutorial-text {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 25px;
+            font-size: 1.05rem;
+        }
+
+        .tutorial-example {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            border-left: 3px solid var(--accent-warm);
+        }
+
+        .tutorial-example-label {
+            color: var(--accent-warm);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .tutorial-example-text {
+            color: var(--text-primary);
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        .tutorial-nav {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .tutorial-skip {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .tutorial-skip:hover {
+            color: var(--text-secondary);
+        }
+
+        /* Contextual Help Tooltips */
+        .help-tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 8px;
+            cursor: help;
+        }
+
+        .help-icon {
+            width: 18px;
+            height: 18px;
+            background: var(--border-subtle);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .help-tooltip:hover .help-bubble {
+            display: block;
+        }
+
+        .help-bubble {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            padding: 12px 15px;
+            min-width: 220px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            z-index: 50;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        /* Example Prompts Panel */
+        .example-prompts {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .example-prompts-header {
+            color: var(--accent-warm);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .example-prompt-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .example-chip {
+            padding: 8px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .example-chip:hover {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .tutorial-mode-badge {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 100;
+            cursor: pointer;
+        }
+
+        .tutorial-mode-badge:hover {
+            opacity: 0.9;
+        }
+
         /* Setup Screen */
         #setup {
             padding: 20px 0;
@@ -948,27 +1167,31 @@
 
         <!-- Onboarding Screen -->
         <div id="onboarding" class="screen active">
-            <div class="welcome-intro" style="max-width: 550px;">
-                <h2>Welcome to Storyweaver</h2>
-                <p style="margin-bottom: 25px;">
-                    This is your personal mythology engine. Whether you're a tabletop gamer,
-                    a romance reader, a mystery lover, or simply someone who craves story&mdash;
-                    this is for you.
+            <div class="welcome-intro" style="max-width: 500px;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">📖✨</div>
+                <h2 style="font-size: 1.8rem; margin-bottom: 20px;">Welcome, Storyteller</h2>
+                <p style="margin-bottom: 30px; font-size: 1.1rem;">
+                    You're about to enter a world where <em>you</em> are the hero.
+                    Tell the AI what you want to do, and watch your story unfold.
                 </p>
-                <div style="text-align: left; background: var(--bg-card); padding: 25px; border-radius: 12px; margin-bottom: 30px;">
-                    <p style="color: var(--accent-gold); margin-bottom: 15px; font-weight: 600;">How it works:</p>
-                    <p style="margin-bottom: 12px;"><span style="color: var(--accent-warm);">1.</span> Choose your genre and tone</p>
-                    <p style="margin-bottom: 12px;"><span style="color: var(--accent-warm);">2.</span> Describe your world (or pick a starting point)</p>
-                    <p style="margin-bottom: 12px;"><span style="color: var(--accent-warm);">3.</span> Enter a character to become</p>
-                    <p><span style="color: var(--accent-warm);">4.</span> The story unfolds based on your choices</p>
+                <div style="background: var(--bg-card); padding: 25px; border-radius: 16px; margin-bottom: 35px;">
+                    <p style="color: var(--text-primary); font-size: 1.05rem; line-height: 1.8;">
+                        <strong style="color: var(--accent-gold);">It's simple:</strong><br>
+                        Pick a genre you love. Describe your character.<br>
+                        Then just type what you want to do!
+                    </p>
                 </div>
-                <p style="color: var(--text-muted); font-style: italic; margin-bottom: 25px;">
-                    The world remembers. Characters form impressions of you.
-                    Your deeds become legend. This is your mythology.
+                <p style="color: var(--text-muted); margin-bottom: 30px;">
+                    First time here? We'll walk you through it step by step.
                 </p>
             </div>
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="showScreen('welcome')">Begin</button>
+            <div class="btn-group" style="flex-direction: column; gap: 15px;">
+                <button class="btn btn-primary" style="padding: 18px 40px; font-size: 1.1rem;" onclick="startTutorial()">
+                    ✨ Show Me How (Recommended)
+                </button>
+                <button class="btn btn-secondary" onclick="skipTutorial(); showScreen('welcome')">
+                    I'll Figure It Out
+                </button>
             </div>
         </div>
 
@@ -1250,9 +1473,19 @@
                     <button class="quick-action-btn" onclick="quickAction('continue')">Continue</button>
                 </div>
 
+                <!-- Example Prompts (shows in tutorial mode) -->
+                <div id="example-prompts-panel" class="example-prompts" style="display: none;">
+                    <div class="example-prompts-header">
+                        <span>💡</span> Not sure what to type? Try one of these:
+                    </div>
+                    <div class="example-prompt-chips" id="example-chips">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
                 <div class="input-row">
                     <button id="voice-btn" class="voice-btn" onclick="toggleVoiceInput()" title="Voice input (click to speak)">🎤</button>
-                    <input type="text" id="player-input" placeholder="What do you do?" onkeypress="handleKeyPress(event)">
+                    <input type="text" id="player-input" placeholder="What do you do? (e.g., 'look around' or 'talk to the stranger')" onkeypress="handleKeyPress(event)">
                     <button class="btn btn-primary" onclick="sendAction()">Continue</button>
                 </div>
 
@@ -1647,6 +1880,31 @@
         </footer>
     </div>
 
+    <!-- Tutorial Mode Badge -->
+    <div id="tutorial-badge" class="tutorial-mode-badge" style="display: none;" onclick="showTutorialHelp()">
+        💡 Need Help?
+    </div>
+
+    <!-- Tutorial Overlay -->
+    <div id="tutorial-overlay" class="tutorial-overlay">
+        <div class="tutorial-card">
+            <button class="tutorial-skip" onclick="skipTutorial()">Skip Tutorial</button>
+
+            <div class="tutorial-step-indicator" id="tutorial-dots">
+                <!-- Dots added by JS -->
+            </div>
+
+            <div id="tutorial-content">
+                <!-- Content added by JS -->
+            </div>
+
+            <div class="tutorial-nav">
+                <button class="btn btn-secondary" id="tutorial-back" onclick="tutorialBack()" style="display: none;">Back</button>
+                <button class="btn btn-primary" id="tutorial-next" onclick="tutorialNext()">Next</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // State
         let selectedGenres = [];  // Array of selected genres for mixing
@@ -1688,6 +1946,159 @@
         let availableOrigins = [];
         let availableArchetypes = [];
         let genreTerminology = { origin: 'Origin', archetype: 'Archetype' };
+
+        // Tutorial State
+        let tutorialMode = false;
+        let tutorialStep = 0;
+        const tutorialSteps = [
+            {
+                icon: '👋',
+                title: "Let's Get Started!",
+                text: "This is an interactive story game. You'll create a character and then tell the AI what you want to do. The AI will respond and the story unfolds!",
+                example: null
+            },
+            {
+                icon: '🎭',
+                title: "Step 1: Pick a Genre",
+                text: "First, choose what kind of story you want. Love romance? Pick Romance. Want adventure? Pick Fantasy or Sci-Fi. You can even mix up to 3 genres!",
+                example: { label: "Example", text: "Romance + Mystery = A love story with secrets to uncover!" }
+            },
+            {
+                icon: '🌍',
+                title: "Step 2: Choose a World",
+                text: "Next, you'll pick a world to play in. Each world has its own characters, places, and secrets. Or you can describe your own world!",
+                example: { label: "Tip", text: "Don't worry about getting it 'right' - just pick what sounds interesting!" }
+            },
+            {
+                icon: '🧙',
+                title: "Step 3: Create Your Character",
+                text: "Now the fun part - who do you want to be? You can describe your character in your own words, like 'a shy librarian with a secret past' or 'a brave knight seeking redemption'.",
+                example: { label: "Example", text: "\"A curious journalist investigating strange disappearances\"" }
+            },
+            {
+                icon: '✍️',
+                title: "Step 4: Play!",
+                text: "Once you're in the story, just type what you want to do. Talk to characters, explore places, make choices. The AI responds to whatever you try!",
+                example: { label: "Things you can type", text: "\"Look around the room\" • \"Talk to the bartender\" • \"Ask about the missing person\" • \"Search for clues\"" }
+            },
+            {
+                icon: '💡',
+                title: "Helpful Tips",
+                text: "• There's no wrong way to play - try anything!<br>• You can save your game anytime<br>• If you get stuck, just ask a character for help<br>• The '💡 Need Help?' button is always there",
+                example: null
+            },
+            {
+                icon: '🎉',
+                title: "You're Ready!",
+                text: "That's all you need to know! Pick a genre and let's start your adventure. Remember: this is YOUR story. Have fun!",
+                example: null
+            }
+        ];
+
+        // Tutorial Functions
+        function startTutorial() {
+            tutorialMode = true;
+            tutorialStep = 0;
+            localStorage.setItem('tutorialMode', 'true');
+            showTutorialOverlay();
+        }
+
+        function skipTutorial() {
+            tutorialMode = false;
+            tutorialStep = 0;
+            localStorage.setItem('tutorialMode', 'false');
+            hideTutorialOverlay();
+            document.getElementById('tutorial-badge').style.display = 'block';
+        }
+
+        function showTutorialOverlay() {
+            document.getElementById('tutorial-overlay').classList.add('active');
+            renderTutorialStep();
+        }
+
+        function hideTutorialOverlay() {
+            document.getElementById('tutorial-overlay').classList.remove('active');
+        }
+
+        function renderTutorialStep() {
+            const step = tutorialSteps[tutorialStep];
+            const dotsHtml = tutorialSteps.map((_, i) =>
+                `<div class="tutorial-dot ${i < tutorialStep ? 'completed' : ''} ${i === tutorialStep ? 'active' : ''}"></div>`
+            ).join('');
+
+            document.getElementById('tutorial-dots').innerHTML = dotsHtml;
+
+            let contentHtml = `
+                <div class="tutorial-icon">${step.icon}</div>
+                <h3 class="tutorial-title">${step.title}</h3>
+                <p class="tutorial-text">${step.text}</p>
+            `;
+
+            if (step.example) {
+                contentHtml += `
+                    <div class="tutorial-example">
+                        <div class="tutorial-example-label">${step.example.label}</div>
+                        <div class="tutorial-example-text">${step.example.text}</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('tutorial-content').innerHTML = contentHtml;
+
+            // Show/hide back button
+            document.getElementById('tutorial-back').style.display = tutorialStep > 0 ? 'inline-block' : 'none';
+
+            // Update next button text
+            const nextBtn = document.getElementById('tutorial-next');
+            if (tutorialStep === tutorialSteps.length - 1) {
+                nextBtn.textContent = "Let's Go!";
+            } else {
+                nextBtn.textContent = 'Next';
+            }
+        }
+
+        function tutorialNext() {
+            if (tutorialStep < tutorialSteps.length - 1) {
+                tutorialStep++;
+                renderTutorialStep();
+            } else {
+                // Tutorial complete
+                hideTutorialOverlay();
+                showScreen('welcome');
+                document.getElementById('tutorial-badge').style.display = 'block';
+            }
+        }
+
+        function tutorialBack() {
+            if (tutorialStep > 0) {
+                tutorialStep--;
+                renderTutorialStep();
+            }
+        }
+
+        function showTutorialHelp() {
+            tutorialStep = 0;
+            showTutorialOverlay();
+        }
+
+        // Example prompts by genre
+        const examplePromptsByGenre = {
+            fantasy: ["Look around", "Talk to the innkeeper", "Draw my sword", "Search for clues", "Cast a spell"],
+            romance: ["Introduce myself", "Ask about their day", "Offer to help", "Share my feelings", "Take a walk together"],
+            mystery: ["Examine the room", "Question the witness", "Look for evidence", "Follow the suspect", "Review the case files"],
+            horror: ["Listen carefully", "Hide in the shadows", "Check behind the door", "Run away", "Investigate the noise"],
+            scifi: ["Scan the area", "Hack the terminal", "Contact the ship", "Analyze the sample", "Check my equipment"],
+            default: ["Look around", "Talk to someone", "Ask for help", "Explore further", "Wait and observe"]
+        };
+
+        function getExamplePrompts() {
+            return examplePromptsByGenre[selectedGenre] || examplePromptsByGenre.default;
+        }
+
+        function useExamplePrompt(prompt) {
+            document.getElementById('player-input').value = prompt;
+            document.getElementById('player-input').focus();
+        }
 
         // Initialize Voice Recognition
         function initVoiceRecognition() {
@@ -2700,6 +3111,28 @@
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
+
+            // Show example prompts in tutorial mode when entering gameplay
+            if (screenId === 'game' && tutorialMode) {
+                showExamplePrompts();
+            }
+        }
+
+        function showExamplePrompts() {
+            const panel = document.getElementById('example-prompts-panel');
+            const chips = document.getElementById('example-chips');
+            if (!panel || !chips) return;
+
+            const prompts = getExamplePrompts();
+            chips.innerHTML = prompts.map(p =>
+                `<span class="example-chip" onclick="useExamplePrompt('${p}')">${p}</span>`
+            ).join('');
+            panel.style.display = 'block';
+        }
+
+        function hideExamplePrompts() {
+            const panel = document.getElementById('example-prompts-panel');
+            if (panel) panel.style.display = 'none';
         }
 
         // Status Messages

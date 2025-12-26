@@ -1,0 +1,28 @@
+Requirement already satisfied: filelock in c:\users\pange\appdata\local\programs\python\python311\lib\site-packages (3.20.0)
+Collecting filelock
+  Downloading filelock-3.20.1-py3-none-any.whl.metadata (2.1 kB)
+Requirement already satisfied: setuptools in c:\users\pange\appdata\local\programs\python\python311\lib\site-packages (65.5.0)
+Collecting setuptools
+  Downloading setuptools-80.9.0-py3-none-any.whl.metadata (6.6 kB)
+Requirement already satisfied: urllib3 in c:\users\pange\appdata\local\programs\python\python311\lib\site-packages (2.5.0)
+Collecting urllib3
+  Using cached urllib3-2.6.2-py3-none-any.whl.metadata (6.6 kB)
+Downloading filelock-3.20.1-py3-none-any.whl (16 kB)
+Downloading setuptools-80.9.0-py3-none-any.whl (1.2 MB)
+   ---------------------------------------- 1.2/1.2 MB 20.0 MB/s  0:00:00
+Downloading urllib3-2.6.2-py3-none-any.whl (131 kB)
+Installing collected packages: urllib3, setuptools, filelock
+  Attempting uninstall: urllib3
+    Found existing installation: urllib3 2.5.0
+    Uninstalling urllib3-2.5.0:
+      Successfully uninstalled urllib3-2.5.0
+  Attempting uninstall: setuptools
+    Found existing installation: setuptools 65.5.0
+    Uninstalling setuptools-65.5.0:
+      Successfully uninstalled setuptools-65.5.0
+  Attempting uninstall: filelock
+    Found existing installation: filelock 3.20.0
+    Uninstalling filelock-3.20.0:
+      Successfully uninstalled filelock-3.20.0
+
+Successfully installed filelock-3.20.1 setuptools-80.9.0 urllib3-2.6.2
