@@ -1558,7 +1558,7 @@ async def list_sessions():
 
 # In-memory save slots (replace with persistent storage for production)
 _save_slots: Dict[int, Dict[str, Any]] = {}
-MAX_SAVE_SLOTS = 5
+MAX_SAVE_SLOTS = 20  # Plenty of room for multiple stories
 
 
 class SaveSlotInfo(BaseModel):

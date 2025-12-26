@@ -1437,11 +1437,11 @@
         <div id="story" class="screen">
             <div class="story-header">
                 <span class="story-info" id="story-info">Chapter One</span>
-                <div style="display: flex; gap: 8px;">
-                    <button id="char-sheet-btn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem; display: none;" onclick="showCharacterSheet()">Character</button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button id="char-sheet-btn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showCharacterSheet()">Character</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showInventory()">Inventory</button>
-                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">Save</button>
-                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="endStory()">End</button>
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">💾 Save</button>
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="confirmStartOver()">🔄 New Story</button>
                 </div>
             </div>
 
@@ -3324,13 +3324,19 @@
             addPassage(action, 'player');
             showLoading();
 
+            // Create timeout controller
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
             try {
                 const response = await fetch(API_BASE + '/game/session/' + currentSessionId + '/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action })
+                    body: JSON.stringify({ action: action }),
+                    signal: controller.signal
                 });
 
+                clearTimeout(timeoutId);
                 hideLoading();
 
                 if (!response.ok) {
@@ -3355,8 +3361,13 @@
                 }
 
             } catch (err) {
+                clearTimeout(timeoutId);
                 hideLoading();
-                addPassage('Something went wrong: ' + err.message, 'system');
+                if (err.name === 'AbortError') {
+                    addPassage('The story is taking a while to unfold... Please try again or try a simpler action.', 'system');
+                } else {
+                    addPassage('Something went wrong: ' + err.message + '. Try again?', 'system');
+                }
             }
         }
 
@@ -3370,6 +3381,28 @@
                 currentPhase = null;
                 document.getElementById('story-container').innerHTML = '';
                 showScreen('welcome');
+            }
+        }
+
+        function confirmStartOver() {
+            if (confirm('Start a completely new story? This will reset everything.\n\nTip: Use "Save" first if you want to keep this story!')) {
+                // Reset all state
+                currentSessionId = null;
+                currentPhase = null;
+                selectedGenres = [];
+                selectedGenre = null;
+                selectedTone = null;
+                selectedLoreBase = null;
+                dndCharacter = null;
+                charCreationData = { name: '', origin: null, archetype: null, abilityPriority: null, selectedSkills: [], concept: '' };
+                document.getElementById('story-container').innerHTML = '';
+
+                // Clear genre selections visually
+                document.querySelectorAll('.genre-card').forEach(c => c.classList.remove('selected'));
+                document.getElementById('begin-btn').disabled = true;
+
+                // Go back to onboarding
+                showScreen('onboarding');
             }
         }
 
