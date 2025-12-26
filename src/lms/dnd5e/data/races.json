@@ -1,0 +1,69 @@
+{
+  "human": {
+    "name": "human",
+    "display_name": "Human",
+    "description": "Versatile and ambitious, humans are the most adaptable of all races.",
+    "ability_bonuses": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 1,
+      "intelligence": 1,
+      "wisdom": 1,
+      "charisma": 1
+    },
+    "speed": 30,
+    "size": "Medium",
+    "traits": ["Versatile (+1 to all abilities)", "Extra Language"],
+    "languages": ["Common", "One extra language"]
+  },
+  "elf": {
+    "name": "elf",
+    "display_name": "Elf",
+    "description": "Graceful and long-lived, elves possess keen senses and a deep connection to magic.",
+    "ability_bonuses": {
+      "dexterity": 2
+    },
+    "speed": 30,
+    "size": "Medium",
+    "traits": [
+      "Darkvision (60 ft)",
+      "Keen Senses (Perception proficiency)",
+      "Fey Ancestry (advantage vs charm, immune to sleep)",
+      "Trance (4 hours of meditation instead of 8 hours sleep)"
+    ],
+    "languages": ["Common", "Elvish"]
+  },
+  "dwarf": {
+    "name": "dwarf",
+    "display_name": "Dwarf",
+    "description": "Stout and resilient, dwarves are master craftsmen with an affinity for stone and metal.",
+    "ability_bonuses": {
+      "constitution": 2
+    },
+    "speed": 25,
+    "size": "Medium",
+    "traits": [
+      "Darkvision (60 ft)",
+      "Dwarven Resilience (advantage vs poison, resistance to poison damage)",
+      "Stonecunning (History bonus for stonework)",
+      "Tool Proficiency (smith's, brewer's, or mason's tools)"
+    ],
+    "languages": ["Common", "Dwarvish"]
+  },
+  "halfling": {
+    "name": "halfling",
+    "display_name": "Halfling",
+    "description": "Small but nimble, halflings are cheerful folk known for their luck and courage.",
+    "ability_bonuses": {
+      "dexterity": 2
+    },
+    "speed": 25,
+    "size": "Small",
+    "traits": [
+      "Lucky (reroll 1s on attacks, checks, saves)",
+      "Brave (advantage vs frightened)",
+      "Halfling Nimbleness (move through larger creatures' spaces)"
+    ],
+    "languages": ["Common", "Halfling"]
+  }
+}

@@ -797,6 +797,39 @@
                 </p>
             </div>
 
+            <div class="setup-section">
+                <h3>Game Rules</h3>
+                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                    Would you like D&D 5e mechanics to power your adventure?
+                </p>
+                <div class="tone-options" style="margin-bottom: 15px;">
+                    <span class="tone-chip rules-chip selected" data-rules="narrative" onclick="selectRulesMode('narrative')">Pure Narrative</span>
+                    <span class="tone-chip rules-chip" data-rules="dnd" onclick="selectRulesMode('dnd')">D&D 5e Rules</span>
+                </div>
+                <div id="dnd-options" style="display: none; margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Rules Visibility:</label>
+                        <select id="rules-visibility" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
+                            <option value="storyteller">Storyteller - Pure narrative, no numbers</option>
+                            <option value="guided" selected>Guided - Light hints when rolls matter</option>
+                            <option value="classic">Classic - See important rolls and results</option>
+                            <option value="tactician">Tactician - Full mechanical breakdown</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Character Creation:</label>
+                        <select id="creation-mode" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
+                            <option value="concept" selected>Quick Start - AI generates from your description</option>
+                            <option value="guided">Guided - Step-by-step with explanations</option>
+                            <option value="classic">Classic - Traditional D&D creation</option>
+                        </select>
+                    </div>
+                    <p class="hint" style="margin-top: 10px; font-size: 0.85rem;">
+                        Your character description above will be used to generate a D&D character. You can view your character sheet anytime during play.
+                    </p>
+                </div>
+            </div>
+
             <div id="setup-status"></div>
 
             <div class="btn-group" style="margin-top: 20px;">
@@ -810,6 +843,7 @@
             <div class="story-header">
                 <span class="story-info" id="story-info">Chapter One</span>
                 <div style="display: flex; gap: 8px;">
+                    <button id="char-sheet-btn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem; display: none;" onclick="showCharacterSheet()">Character</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showInventory()">Inventory</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">Save</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="endStory()">End</button>
@@ -1008,6 +1042,84 @@
             </div>
         </div>
 
+        <!-- Character Sheet Modal -->
+        <div id="character-sheet-modal" class="modal-overlay" onclick="closeCharacterSheet(event)">
+            <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px;">
+                <h3 style="color: var(--accent-gold); margin-bottom: 5px;">Character Sheet</h3>
+                <p id="char-visibility-hint" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;"></p>
+
+                <div id="character-sheet-content">
+                    <!-- Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color);">
+                        <div>
+                            <div id="char-sheet-name" style="font-size: 1.3rem; color: var(--text-primary);"></div>
+                            <div id="char-sheet-race-class" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
+                        </div>
+                        <div id="char-sheet-hp" style="text-align: right;">
+                            <div style="color: var(--accent-rose); font-size: 1.1rem; font-weight: bold;"></div>
+                            <div style="color: var(--text-muted); font-size: 0.8rem;">Hit Points</div>
+                        </div>
+                    </div>
+
+                    <!-- Ability Scores (shown based on visibility) -->
+                    <div id="char-abilities-section" style="display: none; margin-bottom: 20px;">
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Abilities</div>
+                        <div id="char-abilities-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Combat Stats -->
+                    <div id="char-combat-section" style="display: none; margin-bottom: 20px;">
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Combat</div>
+                        <div style="display: flex; gap: 20px;">
+                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px;">
+                                <div id="char-ac" style="font-size: 1.2rem; color: var(--accent-warm);"></div>
+                                <div style="color: var(--text-muted); font-size: 0.75rem;">AC</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px;">
+                                <div id="char-init" style="font-size: 1.2rem; color: var(--accent-warm);"></div>
+                                <div style="color: var(--text-muted); font-size: 0.75rem;">Initiative</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px;">
+                                <div id="char-prof" style="font-size: 1.2rem; color: var(--accent-warm);"></div>
+                                <div style="color: var(--text-muted); font-size: 0.75rem;">Proficiency</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div id="char-skills-section" style="display: none; margin-bottom: 20px;">
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Proficient Skills</div>
+                        <div id="char-skills-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Spells (for casters) -->
+                    <div id="char-spells-section" style="display: none; margin-bottom: 20px;">
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Spells</div>
+                        <div id="char-spell-slots" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px;"></div>
+                        <div id="char-spells-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Equipment -->
+                    <div id="char-equipment-section" style="display: none;">
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Equipment</div>
+                        <div id="char-equipment-list" style="color: var(--text-muted); font-size: 0.9rem;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="closeCharacterSheet()">Close</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Inventory Modal -->
         <div id="inventory-modal" class="modal-overlay" onclick="closeInventory(event)">
             <div class="modal" onclick="event.stopPropagation()" style="max-width: 450px;">
@@ -1099,6 +1211,12 @@
         let currentPhase = null;
         let playerInventory = [];  // Track player's inventory items
         const API_BASE = window.location.origin + '/api';
+
+        // D&D 5e State
+        let rulesMode = 'narrative';  // 'narrative' or 'dnd'
+        let rulesVisibility = 'guided';  // storyteller, guided, classic, tactician
+        let creationMode = 'concept';  // concept, guided, classic
+        let dndCharacter = null;  // Current D&D character sheet
 
         // Pre-made lore bases (placeholders - will be loaded from backend)
         const loreBases = {
@@ -1203,6 +1321,179 @@
             });
         }
 
+        // Rules Mode Selection
+        function selectRulesMode(mode) {
+            rulesMode = mode;
+            document.querySelectorAll('.rules-chip').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.rules === mode);
+            });
+            // Show/hide D&D options
+            const dndOptions = document.getElementById('dnd-options');
+            dndOptions.style.display = mode === 'dnd' ? 'block' : 'none';
+        }
+
+        // D&D Character Sheet Modal
+        function showCharacterSheet() {
+            if (!dndCharacter) {
+                alert('No character created yet.');
+                return;
+            }
+
+            const modal = document.getElementById('character-sheet-modal');
+            const abilities = dndCharacter.ability_scores || {};
+
+            // Set basic info (always visible)
+            document.getElementById('char-sheet-name').textContent = dndCharacter.name || 'Character';
+            document.getElementById('char-sheet-race-class').textContent =
+                `${dndCharacter.race || 'Unknown'} ${dndCharacter.character_class || ''} Level ${dndCharacter.level || 1}`;
+
+            // Set visibility hint
+            const visibilityHints = {
+                'storyteller': 'Narrative focus - mechanics are handled behind the scenes.',
+                'guided': 'Light mechanical hints to guide your decisions.',
+                'classic': 'Standard D&D 5e display.',
+                'tactician': 'Full mechanical breakdown for tactical play.'
+            };
+            document.getElementById('char-visibility-hint').textContent = visibilityHints[rulesVisibility] || '';
+
+            // HP display (scales with visibility)
+            const hpContainer = document.getElementById('char-sheet-hp').querySelector('div:first-child');
+            if (rulesVisibility === 'storyteller') {
+                const hpPercent = (dndCharacter.current_hit_points || 0) / (dndCharacter.max_hit_points || 1);
+                if (hpPercent > 0.75) hpContainer.textContent = 'Healthy';
+                else if (hpPercent > 0.5) hpContainer.textContent = 'Scratched';
+                else if (hpPercent > 0.25) hpContainer.textContent = 'Wounded';
+                else if (hpPercent > 0) hpContainer.textContent = 'Bloodied';
+                else hpContainer.textContent = 'Down';
+            } else {
+                hpContainer.textContent = `${dndCharacter.current_hit_points || 0}/${dndCharacter.max_hit_points || 0}`;
+            }
+
+            // Abilities section (hidden for storyteller)
+            const abilitiesSection = document.getElementById('char-abilities-section');
+            if (rulesVisibility !== 'storyteller') {
+                abilitiesSection.style.display = 'block';
+                const grid = document.getElementById('char-abilities-grid');
+                grid.innerHTML = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].map(stat => {
+                    const fullKey = {STR:'strength',DEX:'dexterity',CON:'constitution',INT:'intelligence',WIS:'wisdom',CHA:'charisma'}[stat];
+                    const score = abilities[fullKey] || 10;
+                    const mod = Math.floor((score - 10) / 2);
+                    const modStr = mod >= 0 ? '+' + mod : mod.toString();
+
+                    if (rulesVisibility === 'guided') {
+                        // Show only modifier
+                        return `<div style="text-align: center; padding: 8px; background: var(--bg-tertiary); border-radius: 6px;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${stat}</div>
+                            <div style="font-size: 1.1rem; color: var(--accent-warm);">${modStr}</div>
+                        </div>`;
+                    } else {
+                        // Show score and modifier
+                        return `<div style="text-align: center; padding: 8px; background: var(--bg-tertiary); border-radius: 6px;">
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">${stat}</div>
+                            <div style="font-size: 1.2rem;">${score}</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-warm);">${modStr}</div>
+                        </div>`;
+                    }
+                }).join('');
+            } else {
+                abilitiesSection.style.display = 'none';
+            }
+
+            // Combat stats (hidden for storyteller, partial for guided)
+            const combatSection = document.getElementById('char-combat-section');
+            if (rulesVisibility !== 'storyteller') {
+                combatSection.style.display = 'block';
+                document.getElementById('char-ac').textContent = dndCharacter.armor_class || 10;
+                const initMod = Math.floor(((abilities.dexterity || 10) - 10) / 2);
+                document.getElementById('char-init').textContent = (initMod >= 0 ? '+' : '') + initMod;
+                document.getElementById('char-prof').textContent = '+' + (dndCharacter.proficiency_bonus || 2);
+            } else {
+                combatSection.style.display = 'none';
+            }
+
+            // Skills section (guided and up)
+            const skillsSection = document.getElementById('char-skills-section');
+            const skills = dndCharacter.skill_proficiencies || [];
+            if (skills.length > 0 && rulesVisibility !== 'storyteller') {
+                skillsSection.style.display = 'block';
+                document.getElementById('char-skills-list').innerHTML = skills.map(s =>
+                    `<span style="padding: 4px 10px; background: var(--bg-tertiary); border-radius: 4px; font-size: 0.85rem;">${s.replace(/_/g, ' ')}</span>`
+                ).join('');
+            } else {
+                skillsSection.style.display = 'none';
+            }
+
+            // Spells section (for casters)
+            const spellsSection = document.getElementById('char-spells-section');
+            const spells = dndCharacter.spells_known || [];
+            const spellSlots = dndCharacter.spell_slots || {};
+            if (spells.length > 0 && rulesVisibility !== 'storyteller') {
+                spellsSection.style.display = 'block';
+                if (rulesVisibility !== 'guided') {
+                    const slotsText = Object.entries(spellSlots).map(([level, slots]) =>
+                        `Lvl ${level}: ${slots}`
+                    ).join(' | ');
+                    document.getElementById('char-spell-slots').textContent = slotsText || 'No spell slots';
+                } else {
+                    document.getElementById('char-spell-slots').textContent = '';
+                }
+                document.getElementById('char-spells-list').innerHTML = spells.map(s =>
+                    `<span style="padding: 4px 10px; background: var(--accent-lavender); color: #fff; border-radius: 4px; font-size: 0.85rem;">${s}</span>`
+                ).join('');
+            } else {
+                spellsSection.style.display = 'none';
+            }
+
+            // Equipment section (classic and tactician)
+            const equipmentSection = document.getElementById('char-equipment-section');
+            const equipment = dndCharacter.equipment || [];
+            if (equipment.length > 0 && (rulesVisibility === 'classic' || rulesVisibility === 'tactician')) {
+                equipmentSection.style.display = 'block';
+                document.getElementById('char-equipment-list').innerHTML = equipment.map(e =>
+                    `<div style="padding: 4px 0; border-bottom: 1px solid var(--border-color);">${e}</div>`
+                ).join('');
+            } else {
+                equipmentSection.style.display = 'none';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeCharacterSheet(event) {
+            if (!event || event.target === event.currentTarget) {
+                document.getElementById('character-sheet-modal').style.display = 'none';
+            }
+        }
+
+        // Create D&D character from concept
+        async function createDnDCharacter(concept) {
+            try {
+                const response = await fetch(API_BASE + '/dnd/characters/concept', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mode: creationMode,
+                        concept: concept || 'A brave adventurer seeking glory',
+                        player_id: currentSessionId
+                    })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    // Fetch full character details
+                    const detailRes = await fetch(API_BASE + '/dnd/characters/' + data.character_id);
+                    if (detailRes.ok) {
+                        const detail = await detailRes.json();
+                        dndCharacter = detail.character;
+                        console.log('D&D character created:', dndCharacter);
+                        return dndCharacter;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to create D&D character:', err);
+            }
+            return null;
+        }
+
         // Screen Navigation
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1254,6 +1545,12 @@
                 selectedTone = 'dramatic';
             }
 
+            // Get D&D settings if enabled
+            if (rulesMode === 'dnd') {
+                rulesVisibility = document.getElementById('rules-visibility').value;
+                creationMode = document.getElementById('creation-mode').value;
+            }
+
             clearStatus('setup-status');
             showStatus('setup-status', '<span class="loading"></span> Preparing your world...', 'info');
 
@@ -1276,14 +1573,43 @@
                 currentSessionId = sessionData.session_id;
                 currentPhase = sessionData.phase;
                 playerInventory = [];  // Reset inventory for new story
+                dndCharacter = null;   // Reset D&D character
+
+                // Create D&D character if rules mode is enabled
+                if (rulesMode === 'dnd') {
+                    showStatus('setup-status', '<span class="loading"></span> Creating your character...', 'info');
+                    await createDnDCharacter(characterConcept);
+
+                    // Update visibility setting on server
+                    await fetch(API_BASE + '/dnd/settings/visibility', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ rules_visibility: rulesVisibility })
+                    });
+                }
 
                 showScreen('story');
-                document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
+
+                // Update header with character info if D&D mode
+                if (dndCharacter) {
+                    document.getElementById('story-info').textContent = dndCharacter.name + ' - Level ' + dndCharacter.level + ' ' + dndCharacter.character_class;
+                    // Show the Character Sheet button
+                    document.getElementById('char-sheet-btn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
+                    document.getElementById('char-sheet-btn').style.display = 'none';
+                }
 
                 // Build opening context
                 let openingPrompt = buildOpeningPrompt(worldSeed, characterConcept, selectedGenre, selectedTone);
 
                 addPassage('Your story begins...', 'system');
+
+                // If D&D mode, add character summary to opening
+                if (dndCharacter && rulesVisibility !== 'storyteller') {
+                    const charSummary = `<em>You are ${dndCharacter.name}, a ${dndCharacter.race} ${dndCharacter.character_class}.</em>`;
+                    addPassage(charSummary, 'system');
+                }
 
                 // Send opening to get first narrative
                 await sendActionText(openingPrompt);

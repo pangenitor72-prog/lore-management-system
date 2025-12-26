@@ -1008,6 +1008,10 @@ app.include_router(game_router, prefix="/api")
 from src.lms.api.memory_routes import router as memory_router
 app.include_router(memory_router, prefix="/api")
 
+# D&D 5e rules system routes
+from src.lms.api.dnd_routes import router as dnd_router
+app.include_router(dnd_router, prefix="/api")
+
 
 # ============================================================
 # CATCH-ALL FOR SPA (must be registered LAST)

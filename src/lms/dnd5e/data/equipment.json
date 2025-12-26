@@ -1,0 +1,172 @@
+{
+  "weapons": {
+    "longsword": {
+      "name": "Longsword",
+      "type": "martial",
+      "damage": "1d8",
+      "damage_type": "slashing",
+      "properties": ["versatile (1d10)"],
+      "weight": 3,
+      "cost": 15
+    },
+    "shortsword": {
+      "name": "Shortsword",
+      "type": "martial",
+      "damage": "1d6",
+      "damage_type": "piercing",
+      "properties": ["finesse", "light"],
+      "weight": 2,
+      "cost": 10
+    },
+    "rapier": {
+      "name": "Rapier",
+      "type": "martial",
+      "damage": "1d8",
+      "damage_type": "piercing",
+      "properties": ["finesse"],
+      "weight": 2,
+      "cost": 25
+    },
+    "dagger": {
+      "name": "Dagger",
+      "type": "simple",
+      "damage": "1d4",
+      "damage_type": "piercing",
+      "properties": ["finesse", "light", "thrown (20/60)"],
+      "weight": 1,
+      "cost": 2
+    },
+    "quarterstaff": {
+      "name": "Quarterstaff",
+      "type": "simple",
+      "damage": "1d6",
+      "damage_type": "bludgeoning",
+      "properties": ["versatile (1d8)"],
+      "weight": 4,
+      "cost": 0.2
+    },
+    "mace": {
+      "name": "Mace",
+      "type": "simple",
+      "damage": "1d6",
+      "damage_type": "bludgeoning",
+      "properties": [],
+      "weight": 4,
+      "cost": 5
+    },
+    "shortbow": {
+      "name": "Shortbow",
+      "type": "simple",
+      "damage": "1d6",
+      "damage_type": "piercing",
+      "properties": ["ammunition (80/320)", "two-handed"],
+      "weight": 2,
+      "cost": 25
+    },
+    "light_crossbow": {
+      "name": "Light Crossbow",
+      "type": "simple",
+      "damage": "1d8",
+      "damage_type": "piercing",
+      "properties": ["ammunition (80/320)", "loading", "two-handed"],
+      "weight": 5,
+      "cost": 25
+    }
+  },
+  "armor": {
+    "leather": {
+      "name": "Leather Armor",
+      "type": "light",
+      "ac": 11,
+      "ac_bonus": "DEX",
+      "stealth_disadvantage": false,
+      "weight": 10,
+      "cost": 10
+    },
+    "chain_shirt": {
+      "name": "Chain Shirt",
+      "type": "medium",
+      "ac": 13,
+      "ac_bonus": "DEX (max 2)",
+      "stealth_disadvantage": false,
+      "weight": 20,
+      "cost": 50
+    },
+    "scale_mail": {
+      "name": "Scale Mail",
+      "type": "medium",
+      "ac": 14,
+      "ac_bonus": "DEX (max 2)",
+      "stealth_disadvantage": true,
+      "weight": 45,
+      "cost": 50
+    },
+    "chain_mail": {
+      "name": "Chain Mail",
+      "type": "heavy",
+      "ac": 16,
+      "ac_bonus": null,
+      "str_requirement": 13,
+      "stealth_disadvantage": true,
+      "weight": 55,
+      "cost": 75
+    },
+    "shield": {
+      "name": "Shield",
+      "type": "shield",
+      "ac": 2,
+      "weight": 6,
+      "cost": 10
+    }
+  },
+  "starter_packs": {
+    "fighter": {
+      "name": "Fighter's Pack",
+      "equipment": [
+        "chain_mail OR leather + longbow + 20 arrows",
+        "longsword + shield OR two martial weapons",
+        "light_crossbow + 20 bolts OR two handaxes",
+        "explorer's pack"
+      ],
+      "default_equipment": ["chain_mail", "longsword", "shield", "light_crossbow", "20 bolts", "explorer's pack"],
+      "gold": 0
+    },
+    "rogue": {
+      "name": "Rogue's Pack",
+      "equipment": [
+        "rapier OR shortsword",
+        "shortbow + quiver of 20 arrows OR shortsword",
+        "burglar's pack OR dungeoneer's pack OR explorer's pack",
+        "leather armor",
+        "two daggers",
+        "thieves' tools"
+      ],
+      "default_equipment": ["rapier", "shortbow", "20 arrows", "leather", "dagger", "dagger", "thieves' tools", "burglar's pack"],
+      "gold": 0
+    },
+    "cleric": {
+      "name": "Cleric's Pack",
+      "equipment": [
+        "mace OR warhammer (if proficient)",
+        "scale_mail OR leather OR chain_mail (if proficient)",
+        "light_crossbow + 20 bolts OR any simple weapon",
+        "priest's pack OR explorer's pack",
+        "shield",
+        "holy symbol"
+      ],
+      "default_equipment": ["mace", "scale_mail", "shield", "light_crossbow", "20 bolts", "holy symbol", "priest's pack"],
+      "gold": 0
+    },
+    "wizard": {
+      "name": "Wizard's Pack",
+      "equipment": [
+        "quarterstaff OR dagger",
+        "component pouch OR arcane focus",
+        "scholar's pack OR explorer's pack",
+        "spellbook"
+      ],
+      "default_equipment": ["quarterstaff", "arcane focus", "spellbook", "scholar's pack"],
+      "gold": 0
+    }
+  }
+}
