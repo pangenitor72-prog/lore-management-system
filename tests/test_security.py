@@ -1,6 +1,6 @@
 import pytest
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.services.audit_log import redact_credentials
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.audit_log import redact_credentials
 
 def test_cypher_identifier_sanitization():
     """Test that Cypher identifiers are properly sanitized."""

@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Callable, List, Dict, Any
 import asyncio
-from src.services.audit_log import AuditLogger
+from src.lms.services.audit_log import AuditLogger
 import logging # For level constants
 
 

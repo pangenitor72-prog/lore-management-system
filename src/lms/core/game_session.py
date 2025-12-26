@@ -2,8 +2,8 @@ import uuid
 import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.services.audit_log import AuditLogger
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.audit_log import AuditLogger
 
 class GameSession:
     """

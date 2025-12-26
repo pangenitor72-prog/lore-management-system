@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from fastapi import status
 import uuid
-from src.core.models import ContradictionStatus, ContradictionSeverity, EntityType, ApprovalStatus
+from src.lms.core.models import ContradictionStatus, ContradictionSeverity, EntityType, ApprovalStatus
 
 # The 'client' fixture is now provided by 'tests/conftest.py'
 

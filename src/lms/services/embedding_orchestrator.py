@@ -3,7 +3,7 @@ from typing import List, Optional
 import logging
 
 import google.generativeai as genai
-from src.services.audit_log import AuditLogger
+from src.lms.services.audit_log import AuditLogger
 
 logger = logging.getLogger(__name__)
 

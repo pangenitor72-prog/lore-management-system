@@ -16,7 +16,7 @@ import re
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
-from src.ingestion.detector import LoreDetectionResult, DetectedEntity, DetectedRelationship
+from src.lms.ingestion.detector import LoreDetectionResult, DetectedEntity, DetectedRelationship
 
 logger = logging.getLogger(__name__)
 

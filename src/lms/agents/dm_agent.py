@@ -18,16 +18,24 @@ from typing import Optional, Dict, Any, List
 from pathlib import Path
 import google.generativeai as genai
 
-from src.core.game_session import GameSession
-from src.agents.query_agent import QueryAgent
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.agents.auditor_agent import AuditorAgent
-from src.core.models import LoreConfidence
-from src.services.audit_log import AuditLogger
-from src.core.entity_factory import EntityFactory, EntityType, EntityTemplate
-from src.prompts import DMPrompts, BoundaryPrompts
-from src.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
-from src.core.models import OCEANProfile, PersonalityGenerator, PersonalityTemplates
+from src.lms.core.game_session import GameSession
+from src.lms.agents.query_agent import QueryAgent
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.agents.auditor_agent import AuditorAgent
+from src.lms.core.models import LoreConfidence
+from src.lms.services.audit_log import AuditLogger
+from src.lms.core.entity_factory import EntityFactory, EntityType, EntityTemplate
+from src.lms.prompts import DMPrompts, BoundaryPrompts
+from src.lms.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
+from src.lms.core.models import OCEANProfile, PersonalityGenerator, PersonalityTemplates
+
+# Arc Engine for narrative structure (optional - graceful fallback if not available)
+try:
+    from src.lms.arc import ArcEngine, StoryPhase, BeatType
+    ARC_ENGINE_AVAILABLE = True
+except ImportError:
+    ARC_ENGINE_AVAILABLE = False
+    ArcEngine = None
 
 WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
 
@@ -110,20 +118,83 @@ class DMAgent:
         self.entities_generated: List[str] = []
         self.entities_blocked: List[Dict[str, Any]] = []
 
+        # Campaign tracking
+        self.campaign_id: Optional[str] = None
+        self.campaign_metadata: Optional[Dict[str, Any]] = None
+
+        # Session reference
+        self.session: Optional[GameSession] = None
+
+        # Prompt version
+        self._prompt_version = prompt_version
+
+        # Arc Engine for narrative structure and pacing
+        self._arc_engine: Optional[ArcEngine] = None
+        if ARC_ENGINE_AVAILABLE:
+            self._arc_engine = ArcEngine()
+
+    @property
+    def arc_engine(self) -> Optional[ArcEngine]:
+        """Get the Arc Engine instance (if available)."""
+        return self._arc_engine
+
+    def get_arc_context(self) -> str:
+        """
+        Get arc context for prompt injection.
+
+        Returns empty string if Arc Engine not available.
+        """
+        if not self._arc_engine:
+            return ""
+        return self._arc_engine.get_dm_context_injection()
+
+    def get_arc_status(self) -> Optional[Dict[str, Any]]:
+        """Get current arc status for external inspection."""
+        if not self._arc_engine:
+            return None
+        return self._arc_engine.get_status()
+
+    @property
+    def system_prompt(self) -> str:
+        """
+        Get the DM system prompt with current campaign context.
+
+        Dynamically generates the prompt based on Session 0 answers
+        or uses defaults if Session 0 is not complete.
+        """
+        # Build context from session 0 answers or use defaults
+        context = {
+            "campaign_name": self.session_0_answers.get("setting", "Fantasy Campaign"),
+            "world_tone": self.session_0_answers.get("tone", "High Adventure"),
+            "setting_description": self.session_0_answers.get("setting", "A magical world of adventure"),
+            "current_date": "Unknown Era",
+            "naming_conventions": "Standard Fantasy (evocative but pronounceable)",
+        }
+
+        # Get base system prompt
+        base_prompt = DMPrompts.get_system_prompt(version=self._prompt_version, context=context)
+
+        # Append worldbuilding rules if available
+        worldbuilding_rules = load_worldbuilding_rules()
+
+        return base_prompt + worldbuilding_rules
+
     async def start_session(self, session_id: Optional[str] = None, player_id: str = "player_1"):
         """Initialize a new game session."""
         self.session = GameSession(self.db, session_id)
         await self.session.initialize(player_id)
-        
 
-        
         # Reset conversation state
         self.history = []
         self.session_0_complete = False
         self.session_0_answers = {}
         self.entities_generated = []
         self.entities_blocked = []
-        
+
+        # Initialize Arc Engine with session ID
+        if ARC_ENGINE_AVAILABLE:
+            self._arc_engine = ArcEngine(session_id=self.session.session_id)
+
         return self.session.session_id
 
     async def process_input(self, player_input: str) -> str:
@@ -337,19 +408,23 @@ I'll interpret your intent as a question:
     async def _generate_normal_response(self, player_input: str) -> str:
         """
         Generate normal DM response (no boundary violations).
-        
+
         This is the standard entity extraction + generation logic.
+        Integrates with Arc Engine for narrative structure awareness.
         """
         # Build context from history (last N exchanges)
         history_context = self._format_history(limit=10)
-        
+
         # Retrieve relevant lore
         lore_context = await self._retrieve_lore_context(player_input)
-        
+
         # Get current session state
         state = await self.session.get_state()
         state_context = self._format_state(state)
-        
+
+        # Get arc context for narrative structure (if available)
+        arc_context = self.get_arc_context()
+
         # Build the full prompt
         prompt = f"""{self.system_prompt}
 
@@ -366,7 +441,7 @@ Tone: {self.session_0_answers.get('tone', 'Unknown')}
 
 === LORE CONTEXT (Canon - Use if relevant) ===
 {lore_context}
-
+{arc_context}
 === PLAYER'S ACTION ===
 {player_input}
 
@@ -375,7 +450,7 @@ Respond as the DM. Follow the Pacing Formula. Do NOT speak for the player.
 You determine all outcomes based on narrative logic, character capabilities, and circumstances.
 Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specified.
 """
-        
+
         response = self.model.generate_content(
             prompt,
             generation_config={
@@ -383,8 +458,17 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
                 "max_output_tokens": 600
             }
         )
-        
-        return response.text
+
+        response_text = response.text
+
+        # Process response through Arc Engine for state updates
+        if self._arc_engine:
+            self._arc_engine.process_narrative(
+                narrative_text=response_text,
+                player_action=player_input,
+            )
+
+        return response_text
 
     async def _retrieve_lore_context(self, query: str) -> str:
         """Use QueryAgent to find relevant lore for the current action."""

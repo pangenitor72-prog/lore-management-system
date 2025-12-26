@@ -4,8 +4,8 @@ import logging
 import asyncio
 from typing import List, Optional, Dict, Any
 
-from src.services.embedding_orchestrator import EmbeddingOrchestrator
-from src.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.embedding_orchestrator import EmbeddingOrchestrator
+from src.lms.db.neo4j_adapter import Neo4jDatabase
 
 logger = logging.getLogger(__name__)
 

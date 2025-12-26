@@ -4,7 +4,7 @@ Tests for Phase I-B: Generative Worldbuilding with Contradiction Checking
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.core.models import LoreConfidence, CONFIDENCE_RULES
+from src.lms.core.models import LoreConfidence, CONFIDENCE_RULES
 
 
 class TestLoreConfidence:
@@ -41,7 +41,7 @@ class TestAuditorEntityAudit:
     @pytest.fixture
     def mock_auditor(self):
         """Create a mock AuditorAgent."""
-        from src.agents.auditor_agent import AuditorAgent
+        from src.lms.agents.auditor_agent import AuditorAgent
         
         mock_db = AsyncMock()
         mock_db.execute = AsyncMock(return_value=[])
@@ -129,7 +129,7 @@ class TestDMAgentEntityExtraction:
     @pytest.fixture
     def mock_dm_agent(self):
         """Create a mock DMAgent."""
-        from src.agents.dm_agent import DMAgent
+        from src.lms.agents.dm_agent import DMAgent
         
         mock_db = AsyncMock()
         
@@ -184,7 +184,7 @@ class TestWorldbuildingRules:
     
     def test_load_worldbuilding_rules(self):
         """Test that worldbuilding rules can be loaded."""
-        from src.agents.dm_agent import load_worldbuilding_rules
+        from src.lms.agents.dm_agent import load_worldbuilding_rules
         
         rules = load_worldbuilding_rules()
         
@@ -194,7 +194,7 @@ class TestWorldbuildingRules:
     def test_rules_disabled_via_env(self):
         """Test that rules can be disabled via environment variable."""
         import os
-        from src.agents.dm_agent import load_worldbuilding_rules
+        from src.lms.agents.dm_agent import load_worldbuilding_rules
         
         original = os.environ.get("ENABLE_WORLDBUILDING_RULES")
         

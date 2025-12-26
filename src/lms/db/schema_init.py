@@ -6,7 +6,7 @@ Usage:
     python -m src.db.schema_init
     
 Or import and call:
-    from src.db.schema_init import initialize_schema
+    from src.lms.db.schema_init import initialize_schema
     await initialize_schema()
 """
 
@@ -16,7 +16,7 @@ import logging
 from typing import List, Tuple, Optional
 from dotenv import load_dotenv
 
-from src.db.neo4j_adapter import Neo4jDatabase
+from src.lms.db.neo4j_adapter import Neo4jDatabase
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

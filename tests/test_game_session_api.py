@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from fastapi import status
 from unittest.mock import AsyncMock, patch
 from datetime import datetime, timezone
-from src.core.models import GameSessionResponse, InstanceResponse
+from src.lms.core.models import GameSessionResponse, InstanceResponse
 
 # The 'client' fixture is provided by 'tests/conftest.py'
 

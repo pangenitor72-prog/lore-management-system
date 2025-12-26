@@ -1,7 +1,11 @@
 import pytest
 from unittest.mock import AsyncMock, patch
 
-from src.db.neo4j_adapter import Neo4jDatabase, EMBEDDING_DIMENSION
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.embedding_orchestrator import EmbeddingOrchestrator
+
+# Use the standard embedding dimension
+EMBEDDING_DIMENSION = EmbeddingOrchestrator.EMBEDDING_DIMENSION
 
 # Mark all tests in this file as async
 pytestmark = pytest.mark.asyncio
@@ -19,7 +23,7 @@ def mock_driver():
 @pytest.fixture
 async def db_adapter(mock_driver):
     """Fixture to create a Neo4jDatabase instance with a mocked driver."""
-    with patch('src.db.neo4j_adapter.AsyncGraphDatabase.driver') as mock_async_driver:
+    with patch('src.lms.db.neo4j_adapter.AsyncGraphDatabase.driver') as mock_async_driver:
         # Prevent the actual driver from being created
         mock_async_driver.return_value = mock_driver
         
@@ -38,7 +42,7 @@ async def test_connect(db_adapter, mock_driver):
     # Reset to simulate initial state
     db_adapter.driver = None 
     
-    with patch('src.db.neo4j_adapter.AsyncGraphDatabase.driver') as mock_async_driver:
+    with patch('src.lms.db.neo4j_adapter.AsyncGraphDatabase.driver') as mock_async_driver:
         mock_async_driver.return_value = mock_driver
         
         await db_adapter.connect()

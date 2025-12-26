@@ -1,9 +1,9 @@
 from typing import List, Dict, Any
 import logging
 
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.services.audit_log import AuditLogger
-from src.core.models import Contradiction  # Pydantic model with .to_dict()
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.audit_log import AuditLogger
+from src.lms.core.models import Contradiction  # Pydantic model with .to_dict()
 
 logger = logging.getLogger(__name__)
 

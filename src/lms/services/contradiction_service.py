@@ -3,10 +3,10 @@
 import logging
 from typing import List, Dict, Any, Optional
 
-from src.agents.auditor_agent import AuditorAgent
-from src.core.models import Contradiction
-from src.services.audit_log import AuditLogger
-from src.services.broadcaster import broadcaster
+from src.lms.agents.auditor_agent import AuditorAgent
+from src.lms.core.models import Contradiction
+from src.lms.services.audit_log import AuditLogger
+from src.lms.services.broadcaster import broadcaster
 
 logger = logging.getLogger(__name__)
 BROADCAST_EVENTS = False  # TEMP: disable broadcaster during early dev

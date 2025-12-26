@@ -11,7 +11,7 @@ import logging
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 
-from src.core.models import (
+from src.lms.core.models import (
     EntityCreate, EntityType, OCEANProfile, 
     ApprovalStatus, ConfidenceLevel, PartyKnowledge
 )

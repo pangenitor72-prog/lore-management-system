@@ -49,12 +49,19 @@ async def extract_and_store_gameplay_lore(
     narrative: str,
     session_id: str,
     db: Optional[Neo4jDatabase],
+    world_id: Optional[str] = None,
 ) -> None:
     """
     Extract entities from gameplay narrative and store them in Neo4j.
 
     This runs asynchronously after the narrative is returned to the player,
     so it doesn't slow down the gameplay experience.
+
+    Args:
+        narrative: The narrative text to extract entities from
+        session_id: The session ID for source tracking
+        db: Neo4j database instance
+        world_id: The world/lore base ID to associate entities with
     """
     if not db:
         logger.debug("No database available for lore extraction")
@@ -67,17 +74,18 @@ async def extract_and_store_gameplay_lore(
     try:
         parser = get_lore_parser()
 
-        # Parse the narrative for entities
+        # Parse the narrative for entities, associating with the session's world
         result = await parser.parse_and_store(
             text=narrative,
             db=db,
             source_name=f"session:{session_id}",
+            world_id=world_id,
         )
 
         if result.entities_stored > 0:
             logger.info(
                 f"[LORE] Extracted {result.entities_stored} entities from session {session_id} "
-                f"({result.characters_with_ocean} with OCEAN profiles)"
+                f"(world: {world_id or 'none'}, {result.characters_with_ocean} with OCEAN profiles)"
             )
     except Exception as e:
         # Don't let extraction failures affect gameplay
@@ -394,6 +402,7 @@ Return ONLY valid JSON in this exact format:
                 text=full_narrative,
                 db=db,
                 source_name=f"world:{world_id}",
+                world_id=world_id,
             )
 
             # Map parsed entities back to response
@@ -627,8 +636,14 @@ async def process_action(
 
     # Extract and store lore entities from the narrative (fire-and-forget)
     # This runs in the background so it doesn't slow down the response
+    # Link entities to the session's world if one is set
     asyncio.create_task(
-        extract_and_store_gameplay_lore(response_text, session_id, db)
+        extract_and_store_gameplay_lore(
+            response_text,
+            session_id,
+            db,
+            world_id=session.get("world_id"),
+        )
     )
 
     return DMResponse(
@@ -1089,6 +1104,7 @@ async def ingest_lore_base(
             text=lore_content,
             db=db,
             source_name=f"lore_base:{lore_id}",
+            world_id=lore_id,  # Use lore base ID as the world_id
         )
 
         # Update lore base status
@@ -1295,10 +1311,19 @@ class SaveSlotInfo(BaseModel):
     saved_at: Optional[datetime] = None
 
 
+class InventoryItem(BaseModel):
+    """An item in the player's inventory."""
+    name: str
+    description: Optional[str] = ""
+    icon: Optional[str] = "📦"
+    quantity: int = 1
+
+
 class SaveGameRequest(BaseModel):
     """Request to save a game to a slot."""
     slot: int = Field(..., ge=1, le=MAX_SAVE_SLOTS)
     session_name: Optional[str] = Field(default=None, max_length=50)
+    inventory: Optional[List[dict]] = Field(default_factory=list)
 
 
 class SaveGameResponse(BaseModel):
@@ -1316,6 +1341,7 @@ class LoadGameResponse(BaseModel):
     phase: str
     narrative: str
     message: str
+    inventory: List[dict] = Field(default_factory=list)
 
 
 @router.get("/saves", response_model=List[SaveSlotInfo])
@@ -1381,6 +1407,7 @@ async def save_game(
         "history": session.get("history", []),
         "session_0_answers": session.get("session_0_answers", {}),
         "world_id": session.get("world_id"),
+        "inventory": save_req.inventory or [],  # Save player inventory
         "saved_at": datetime.now(timezone.utc),
         "created_at": session.get("created_at"),
     }
@@ -1455,7 +1482,8 @@ async def load_game(slot: int):
         session_id=new_session_id,
         phase=session_data["phase"],
         narrative=last_narrative,
-        message=f"Game loaded from slot {slot}"
+        message=f"Game loaded from slot {slot}",
+        inventory=save_data.get("inventory", [])  # Restore player inventory
     )
 
 
@@ -1486,45 +1514,67 @@ async def delete_save(slot: int):
 @router.get("/graph")
 async def get_graph_data(
     request: Request,
+    world_id: Optional[str] = None,
     limit: int = 100,
 ):
     """
     Get graph data for visualization.
 
     Returns nodes and edges in a format suitable for vis.js or similar libraries.
+
+    Args:
+        world_id: Optional filter to show only entities from a specific world/lore base
+        limit: Maximum number of nodes to return
     """
     db = get_optional_neo4j_db(request)
     if not db:
         return {"nodes": [], "edges": []}
 
     try:
+        # Build world filter clause
+        world_filter = ""
+        params = {"limit": limit}
+        if world_id:
+            world_filter = "AND n.world_id = $world_id"
+            params["world_id"] = world_id
+
         # Get all entities (nodes)
-        node_query = """
+        node_query = f"""
         MATCH (n)
-        WHERE n.canon_id IS NOT NULL OR n.name IS NOT NULL
+        WHERE (n.canon_id IS NOT NULL OR n.name IS NOT NULL)
+        {world_filter}
         RETURN
             COALESCE(n.canon_id, id(n)) AS id,
             COALESCE(n.name, n.canonical_name, 'Unknown') AS label,
             labels(n)[0] AS type,
             n.entity_type AS entity_type,
             n.openness AS openness,
-            n.description AS description
+            n.description AS description,
+            n.world_id AS world_id
         LIMIT $limit
         """
-        nodes_result = await db.execute(node_query, {"limit": limit})
+        nodes_result = await db.execute(node_query, params)
+
+        # Build edge world filter
+        edge_world_filter = ""
+        edge_params = {"limit": limit * 2}
+        if world_id:
+            edge_world_filter = "AND (a.world_id = $world_id OR b.world_id = $world_id)"
+            edge_params["world_id"] = world_id
 
         # Get all relationships (edges)
-        edge_query = """
+        edge_query = f"""
         MATCH (a)-[r]->(b)
         WHERE (a.canon_id IS NOT NULL OR a.name IS NOT NULL)
           AND (b.canon_id IS NOT NULL OR b.name IS NOT NULL)
+        {edge_world_filter}
         RETURN
             COALESCE(a.canon_id, id(a)) AS from,
             COALESCE(b.canon_id, id(b)) AS to,
             type(r) AS label
         LIMIT $limit
         """
-        edges_result = await db.execute(edge_query, {"limit": limit * 2})
+        edges_result = await db.execute(edge_query, edge_params)
 
         # Format for vis.js
         nodes = []

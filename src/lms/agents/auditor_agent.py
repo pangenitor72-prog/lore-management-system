@@ -20,13 +20,13 @@ import google.generativeai as genai
 from google.api_core.exceptions import GoogleAPIError
 from neo4j.exceptions import Neo4jError
 
-from src.services.audit_log import AuditLogger
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.services.broadcaster import broadcaster
-from src.prompts import AuditorPrompts
-from src.core.models import OCEANProfile, Contradiction
-from src.auditor.rule_based_auditor import RuleBasedAuditor
-from src.auditor.semantic_auditor import SemanticAuditor
+from src.lms.services.audit_log import AuditLogger
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.broadcaster import broadcaster
+from src.lms.prompts import AuditorPrompts
+from src.lms.core.models import OCEANProfile, Contradiction
+from src.lms.auditor.rule_based_auditor import RuleBasedAuditor
+from src.lms.auditor.semantic_auditor import SemanticAuditor
 
 
 logger = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 import google.generativeai as genai
 from google.api_core.exceptions import GoogleAPIError
 
-from src.services.audit_log import AuditLogger
+from src.lms.services.audit_log import AuditLogger
 
 logger = logging.getLogger(__name__)
 

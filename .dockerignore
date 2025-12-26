@@ -18,8 +18,8 @@ dist/
 
 # Node
 frontend/node_modules
-frontend/dist
 .npm
+# Note: frontend/dist is included - it contains the game UI
 
 # IDE / Editor
 .vscode/

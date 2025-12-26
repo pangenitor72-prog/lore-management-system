@@ -2,10 +2,10 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from datetime import datetime, timezone
-from src.api.routes import app
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.db.mock_adapter import InMemoryMockDatabase
-from src.api.dependencies import get_neo4j_db
+from src.lms.api.routes import app
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.db.mock_adapter import InMemoryMockDatabase
+from src.lms.api.dependencies import get_neo4j_db
 
 
 # Mock Neo4j Database
@@ -22,8 +22,8 @@ def client(mock_neo4j_db):
 
     # Patch the connect_neo4j_with_timeout within src.api.routes to avoid real connection attempts
     # Also patch Neo4jDatabase to prevent any real database instantiation
-    with patch("src.api.routes.connect_neo4j_with_timeout", AsyncMock(return_value=True)), \
-         patch("src.api.routes.Neo4jDatabase", return_value=mock_neo4j_db):
+    with patch("src.lms.api.routes.connect_neo4j_with_timeout", AsyncMock(return_value=True)), \
+         patch("src.lms.api.routes.Neo4jDatabase", return_value=mock_neo4j_db):
         # Pre-set all app.state attributes that the lifespan would normally set
         # This ensures health checks pass even if lifespan partially runs
         app.state.neo4j_db = mock_neo4j_db

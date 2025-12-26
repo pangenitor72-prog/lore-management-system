@@ -548,6 +548,7 @@ async def list_entities(
     db: Neo4jDatabase = Depends(get_neo4j_db),
     entity_type: Optional[EntityType] = None,
     approval_status: Optional[ApprovalStatus] = None,
+    world_id: Optional[str] = Query(default=None, description="Filter by world/lore base ID"),
     limit: int = 100,
 ):
 
@@ -562,6 +563,10 @@ async def list_entities(
     if approval_status:
         where.append("n.approval_status = $status")
         params["status"] = approval_status.value
+
+    if world_id:
+        where.append("n.world_id = $world_id")
+        params["world_id"] = world_id
 
     if where:
         query += " WHERE " + " AND ".join(where)
@@ -711,6 +716,28 @@ class IngestTextResponse(BaseModel):
     relationships: List[Dict[str, Any]]
 
 
+class AdminResetRequest(BaseModel):
+    """Request to reset database."""
+    confirm: str
+
+
+class AdminPinRequest(BaseModel):
+    """Request to verify admin PIN."""
+    pin: str
+
+
+class AdminStatsResponse(BaseModel):
+    """Database statistics."""
+    total_nodes: int
+    total_relationships: int
+    characters: int
+    locations: int
+    factions: int
+    items: int
+    events: int
+    concepts: int
+
+
 @router.post("/ingest", response_model=IngestTextResponse)
 async def ingest_text_endpoint(
     request: Request,
@@ -720,47 +747,59 @@ async def ingest_text_endpoint(
     """
     Ingest lore text directly without file upload.
 
-    Uses the full Smart Ingestor pipeline which includes:
-    - Text segmentation
-    - Entity detection
-    - Property extraction
-    - OCEAN personality generation (for Characters)
+    Uses the LoreParsingAgent which includes:
+    - AI-powered entity extraction (Character, Location, Faction, Item, Event, Concept)
+    - Personality trait detection for characters
+    - OCEAN personality profile generation
     - Relationship inference
-    - Neo4j persistence
+    - Neo4j persistence with proper labels
     """
-    from src.lms.ingestion.smart_ingestor import ingest_text as smart_ingest
+    from src.lms.agents.lore_parsing_agent import LoreParsingAgent
 
     gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key or not getattr(request.app.state, "ai_enabled", False):
+    if not gemini_key:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI service not configured"
+            detail="AI service not configured (GEMINI_API_KEY missing)"
         )
 
     try:
-        # Use the full Smart Ingestor pipeline (includes OCEAN personality)
-        result = await smart_ingest(ingest_req.content, db)
+        # Use LoreParsingAgent for proper AI-based entity extraction
+        agent = LoreParsingAgent(api_key=gemini_key)
+        source_name = ingest_req.source_name or "direct_input"
 
-        # Extract info for response
-        entity_ids = result.get("entity_ids", [])
-        extracted = result.get("extracted", [])
+        result = await agent.parse_and_store(
+            text=ingest_req.content,
+            db=db,
+            source_name=source_name,
+            world_id=source_name,  # Use source name as world_id for filtering
+        )
 
         # Format entities for response
         entities = []
-        for ext in extracted:
+        for entity in result.entities:
             entities.append({
-                "name": ext.name if hasattr(ext, 'name') else str(ext),
-                "type": ext.entity_type if hasattr(ext, 'entity_type') else "Entity",
-                "content": ext.description[:200] if hasattr(ext, 'description') and ext.description else ""
+                "name": entity.name,
+                "type": entity.entity_type,
+                "content": entity.description[:200] if entity.description else ""
+            })
+
+        # Format relationships for response
+        relationships = []
+        for rel in result.relationships:
+            relationships.append({
+                "source": rel.source,
+                "target": rel.target,
+                "type": rel.relationship_type
             })
 
         return IngestTextResponse(
             status="success",
-            source_name=ingest_req.source_name or "direct_input",
-            nodes_created=len(entity_ids),
-            relationships_created=0,  # Relationships counted separately in smart_ingestor
+            source_name=source_name,
+            nodes_created=result.entities_stored,
+            relationships_created=result.relationships_stored,
             entities=entities,
-            relationships=[],  # Smart ingestor handles relationships internally
+            relationships=relationships,
         )
 
     except Exception as e:
@@ -812,6 +851,142 @@ async def get_contradictions_mock():
             source="Session Log"
         )
     ]
+
+
+# ============================================================
+# ADMIN ENDPOINTS
+# ============================================================
+
+# Default admin PIN - can be overridden via ADMIN_PIN environment variable
+ADMIN_PIN = os.getenv("ADMIN_PIN", "1234")
+
+# Server-side rate limiting for PIN attempts
+_pin_attempts: Dict[str, list] = {}  # IP -> list of attempt timestamps
+MAX_PIN_ATTEMPTS = 5
+PIN_LOCKOUT_SECONDS = 300  # 5 minutes
+
+
+@app.post("/admin/verify-pin")
+async def verify_admin_pin(pin_req: AdminPinRequest, request: Request):
+    """
+    Verify admin PIN for access to admin panel.
+
+    The PIN is read from the ADMIN_PIN environment variable.
+    Default PIN is "1234" if not configured.
+
+    Rate limited: 5 attempts per 5 minutes per IP.
+    """
+    # Get client IP
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Check rate limit
+    now = datetime.now(timezone.utc).timestamp()
+    if client_ip in _pin_attempts:
+        # Clean old attempts
+        _pin_attempts[client_ip] = [
+            t for t in _pin_attempts[client_ip]
+            if now - t < PIN_LOCKOUT_SECONDS
+        ]
+
+        if len(_pin_attempts[client_ip]) >= MAX_PIN_ATTEMPTS:
+            logger.warning(f"Admin PIN rate limit exceeded for IP: {client_ip}")
+            raise HTTPException(
+                status_code=429,
+                detail="Too many attempts. Try again later."
+            )
+
+    # Verify PIN
+    if pin_req.pin == ADMIN_PIN:
+        # Clear attempts on success
+        _pin_attempts.pop(client_ip, None)
+        logger.info(f"Admin access granted from IP: {client_ip}")
+        return {"status": "success", "message": "PIN verified"}
+    else:
+        # Record failed attempt
+        if client_ip not in _pin_attempts:
+            _pin_attempts[client_ip] = []
+        _pin_attempts[client_ip].append(now)
+
+        remaining = MAX_PIN_ATTEMPTS - len(_pin_attempts[client_ip])
+        logger.warning(f"Failed admin PIN attempt from IP: {client_ip} ({remaining} remaining)")
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid PIN"
+        )
+
+
+@app.get("/admin/stats", response_model=AdminStatsResponse)
+async def get_admin_stats(db: Neo4jDatabase = Depends(get_neo4j_db)):
+    """Get database statistics for admin panel."""
+    try:
+        # Get total node count
+        total_result = await db.execute("MATCH (n) RETURN count(n) as total")
+        total_nodes = total_result[0]["total"] if total_result else 0
+
+        # Get total relationship count
+        rel_result = await db.execute("MATCH ()-[r]->() RETURN count(r) as total")
+        total_relationships = rel_result[0]["total"] if rel_result else 0
+
+        # Get counts by entity type
+        type_result = await db.execute("""
+            MATCH (n)
+            WHERE n.entity_type IS NOT NULL
+            RETURN n.entity_type as type, count(n) as count
+        """)
+
+        type_counts = {row["type"]: row["count"] for row in type_result}
+
+        return AdminStatsResponse(
+            total_nodes=total_nodes,
+            total_relationships=total_relationships,
+            characters=type_counts.get("Character", 0),
+            locations=type_counts.get("Location", 0),
+            factions=type_counts.get("Faction", 0),
+            items=type_counts.get("Item", 0),
+            events=type_counts.get("Event", 0),
+            concepts=type_counts.get("Concept", 0),
+        )
+    except Exception as e:
+        logger.error(f"Failed to get admin stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/admin/reset-database")
+async def reset_database(
+    reset_req: AdminResetRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Reset the database by deleting all nodes and relationships.
+
+    DANGER: This is a destructive operation that cannot be undone.
+    Requires confirm="RESET" in the request body.
+    """
+    if reset_req.confirm != "RESET":
+        raise HTTPException(
+            status_code=400,
+            detail="Confirmation required. Send confirm='RESET' to proceed."
+        )
+
+    try:
+        # Get count before deletion
+        count_result = await db.execute("MATCH (n) RETURN count(n) as total")
+        node_count = count_result[0]["total"] if count_result else 0
+
+        # Delete all nodes and relationships
+        await db.execute("MATCH (n) DETACH DELETE n")
+
+        logger.warning(f"Database reset by admin. Deleted {node_count} nodes.")
+
+        return {
+            "status": "success",
+            "message": f"Deleted {node_count} nodes and all relationships.",
+            "nodes_deleted": node_count
+        }
+    except Exception as e:
+        logger.error(f"Database reset failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
 
 
 # ============================================================

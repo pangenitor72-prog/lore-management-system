@@ -716,6 +716,8 @@
             <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
                 <a href="#" onclick="showScreen('onboarding'); return false;" style="color: var(--text-muted);">How does this work?</a>
             </p>
+
+            <!-- Admin access: Ctrl+Shift+A -->
         </div>
 
         <!-- Saves Screen -->
@@ -808,6 +810,7 @@
             <div class="story-header">
                 <span class="story-info" id="story-info">Chapter One</span>
                 <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showInventory()">Inventory</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">Save</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="endStory()">End</button>
                 </div>
@@ -860,8 +863,24 @@
             <div class="setup-section">
                 <h3>Import Your Own</h3>
                 <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    Have your own world-building notes? Bring them here.
+                    Have your own world-building notes? Upload a file or paste text.
                 </p>
+
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label>Upload Files</label>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="file" id="lore-file" accept=".txt,.md,.json" multiple style="display: none;" onchange="handleFileSelect(event)">
+                        <button class="btn btn-secondary" onclick="document.getElementById('lore-file').click()" style="padding: 12px 20px;">
+                            Choose Files
+                        </button>
+                        <span id="file-name" style="color: var(--text-muted); font-size: 0.9rem;">No files selected</span>
+                    </div>
+                    <p class="hint">Supported: .txt, .md, .json files (select multiple with Ctrl+click)</p>
+                </div>
+
+                <div style="text-align: center; color: var(--text-muted); margin: 15px 0;">— or —</div>
+
                 <div class="form-group">
                     <label for="lore-content">Paste Your Lore</label>
                     <textarea id="lore-content" style="min-height: 150px;" placeholder="Paste character backgrounds, faction descriptions, world history, or any narrative content..."></textarea>
@@ -897,6 +916,22 @@
                 Visual map of all entities and their relationships in the database.
             </p>
 
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                <label style="color: var(--text-secondary); font-size: 0.9rem;">Filter by World:</label>
+                <select id="world-filter" onchange="loadGraphData()" style="
+                    padding: 10px 15px;
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-subtle);
+                    border-radius: 8px;
+                    color: var(--text-primary);
+                    font-size: 0.9rem;
+                    min-width: 180px;
+                    cursor: pointer;
+                ">
+                    <option value="">All Worlds</option>
+                </select>
+            </div>
+
             <div class="graph-legend">
                 <div class="legend-item"><span class="legend-dot" style="background: #c98b8b;"></span> Character</div>
                 <div class="legend-item"><span class="legend-dot" style="background: #8ba88b;"></span> Location</div>
@@ -915,6 +950,117 @@
             <div class="btn-group" style="margin-top: 20px;">
                 <button class="btn btn-secondary" onclick="loadGraphData()">Refresh</button>
                 <button class="btn btn-secondary" onclick="showScreen('ingest')">Back to Lore</button>
+            </div>
+        </div>
+
+        <!-- Admin Screen -->
+        <div id="admin" class="screen">
+            <h2 style="color: var(--accent-rose); margin-bottom: 10px; font-weight: normal;">Admin Panel</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                System administration and database management.
+            </p>
+
+            <div id="admin-status"></div>
+
+            <!-- Database Stats -->
+            <div class="setup-section">
+                <h3>Database Status</h3>
+                <div id="db-stats" style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <span class="loading"></span> Loading...
+                </div>
+                <button class="btn btn-secondary" onclick="loadDbStats()">Refresh Stats</button>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="setup-section" style="border: 1px solid var(--accent-rose); border-radius: 12px; padding: 20px; margin-top: 30px;">
+                <h3 style="color: var(--accent-rose);">Danger Zone</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                    These actions are destructive and cannot be undone. Use with caution.
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Reset Database -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div>
+                            <strong style="color: var(--text-primary);">Reset Database</strong>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 5px 0 0;">Delete all entities, relationships, and lore from the database.</p>
+                        </div>
+                        <button class="btn" onclick="showResetConfirm()" style="background: var(--accent-rose); color: white; padding: 10px 20px;">
+                            Reset
+                        </button>
+                    </div>
+
+                    <!-- Clear Save Slots -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div>
+                            <strong style="color: var(--text-primary);">Clear All Saves</strong>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 5px 0 0;">Delete all saved game slots.</p>
+                        </div>
+                        <button class="btn" onclick="clearAllSaves()" style="background: var(--accent-rose); color: white; padding: 10px 20px;">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')">Back to Home</button>
+            </div>
+        </div>
+
+        <!-- Inventory Modal -->
+        <div id="inventory-modal" class="modal-overlay" onclick="closeInventory(event)">
+            <div class="modal" onclick="event.stopPropagation()" style="max-width: 450px;">
+                <h3 style="color: var(--accent-gold); margin-bottom: 5px;">Your Inventory</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Items you've collected on your journey.</p>
+
+                <div id="inventory-list" style="max-height: 350px; overflow-y: auto;">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <div class="btn-group" style="justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="closeInventory()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PIN Entry Modal -->
+        <div id="pin-modal" class="modal-overlay" onclick="closePinModal(event)">
+            <div class="modal" onclick="event.stopPropagation()" style="max-width: 320px;">
+                <h3 style="color: var(--accent-warm);">Admin Access</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                    Enter your admin PIN to continue.
+                </p>
+                <div id="pin-error" style="display: none; color: var(--accent-rose); margin-bottom: 15px; font-size: 0.9rem;"></div>
+                <div class="form-group">
+                    <input type="password" id="admin-pin" placeholder="Enter PIN" maxlength="10"
+                           style="text-align: center; font-size: 1.2rem; letter-spacing: 0.3em;"
+                           onkeypress="if(event.key === 'Enter') verifyPin()">
+                </div>
+                <div class="btn-group" style="justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="closePinModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="verifyPin()">Enter</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Confirmation Modal -->
+        <div id="reset-modal" class="modal-overlay" onclick="closeResetModal(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <h3 style="color: var(--accent-rose);">Confirm Database Reset</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    This will permanently delete <strong>ALL</strong> entities, relationships, and lore from the database. This action cannot be undone.
+                </p>
+                <div class="form-group">
+                    <label for="reset-confirm-text">Type <strong style="color: var(--accent-rose);">RESET</strong> to confirm:</label>
+                    <input type="text" id="reset-confirm-text" placeholder="Type RESET here" autocomplete="off">
+                </div>
+                <div class="btn-group" style="justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="closeResetModal()">Cancel</button>
+                    <button class="btn" id="confirm-reset-btn" onclick="executeReset()" disabled style="background: var(--accent-rose); color: white;">
+                        Delete Everything
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -951,6 +1097,7 @@
         let selectedLoreBase = null;
         let currentSessionId = null;
         let currentPhase = null;
+        let playerInventory = [];  // Track player's inventory items
         const API_BASE = window.location.origin + '/api';
 
         // Pre-made lore bases (placeholders - will be loaded from backend)
@@ -1128,6 +1275,7 @@
                 const sessionData = await sessionRes.json();
                 currentSessionId = sessionData.session_id;
                 currentPhase = sessionData.phase;
+                playerInventory = [];  // Reset inventory for new story
 
                 showScreen('story');
                 document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
@@ -1194,6 +1342,9 @@
                 currentPhase = data.phase;
                 addPassage(data.narrative, 'narrator');
 
+                // Parse narrative for inventory changes
+                parseInventoryChanges(data.narrative);
+
             } catch (err) {
                 hideLoading();
                 addPassage('Something went wrong: ' + err.message, 'system');
@@ -1213,6 +1364,87 @@
             }
         }
 
+        // File Upload Handler
+        let selectedFiles = [];
+
+        async function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            if (!files.length) {
+                selectedFiles = [];
+                document.getElementById('file-name').textContent = 'No files selected';
+                return;
+            }
+
+            selectedFiles = files;
+
+            if (files.length === 1) {
+                document.getElementById('file-name').textContent = files[0].name;
+            } else {
+                document.getElementById('file-name').textContent = `${files.length} files selected`;
+            }
+
+            showStatus('ingest-status', '<span class="loading"></span> Reading files...', 'info');
+
+            // Read all files
+            const fileContents = await Promise.all(files.map(file => readFileContent(file)));
+
+            // Combine all content with separators
+            let combinedContent = '';
+            let sourceName = '';
+
+            fileContents.forEach((result, index) => {
+                if (index > 0) {
+                    combinedContent += '\n\n---\n\n';  // Separator between files
+                }
+                combinedContent += `[Source: ${result.name}]\n\n${result.content}`;
+
+                // Use first file's name as source if not set
+                if (index === 0) {
+                    sourceName = result.sourceName;
+                }
+            });
+
+            document.getElementById('lore-content').value = combinedContent;
+
+            if (!document.getElementById('source-name').value) {
+                document.getElementById('source-name').value = files.length > 1 ? 'multi_import' : sourceName;
+            }
+
+            const fileNames = files.map(f => f.name).join(', ');
+            showStatus('ingest-status', `Loaded ${files.length} file(s): ${fileNames}. Click "Import This Lore" to process.`, 'success');
+        }
+
+        function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    let content = e.target.result;
+                    let sourceName = file.name.replace(/\.[^/.]+$/, '').replace(/\s+/g, '_').toLowerCase();
+
+                    // For JSON files, try to extract lore_content field
+                    if (file.name.endsWith('.json')) {
+                        try {
+                            const data = JSON.parse(content);
+                            if (data.lore_content) {
+                                content = data.lore_content;
+                            }
+                            if (data.id || data.name) {
+                                sourceName = data.id || data.name.toLowerCase().replace(/\s+/g, '_');
+                            }
+                        } catch (err) {
+                            // Use raw content if JSON parsing fails
+                        }
+                    }
+
+                    resolve({ name: file.name, content, sourceName });
+                };
+
+                reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+                reader.readAsText(file);
+            });
+        }
+
         // Lore Ingestion
         async function ingestLore() {
             const content = document.getElementById('lore-content').value.trim();
@@ -1228,7 +1460,8 @@
             document.getElementById('ingest-results').classList.remove('visible');
 
             try {
-                const response = await fetch(API_BASE + '/ingest', {
+                // Note: /ingest endpoint is not under /api prefix
+                const response = await fetch(window.location.origin + '/ingest', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1348,6 +1581,143 @@
             }
         }
 
+        // ==========================================
+        // INVENTORY SYSTEM
+        // ==========================================
+
+        function showInventory() {
+            const listEl = document.getElementById('inventory-list');
+
+            if (playerInventory.length === 0) {
+                listEl.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <p style="font-size: 1.2rem; margin-bottom: 10px;">Your pack is empty</p>
+                        <p style="font-size: 0.9rem; font-style: italic;">Items you find or receive will appear here.</p>
+                    </div>
+                `;
+            } else {
+                listEl.innerHTML = playerInventory.map((item, index) => `
+                    <div class="inventory-item" style="
+                        display: flex;
+                        align-items: center;
+                        padding: 12px 15px;
+                        background: var(--bg-card);
+                        border: 1px solid var(--border-subtle);
+                        border-radius: 8px;
+                        margin-bottom: 10px;
+                    ">
+                        <span style="font-size: 1.3rem; margin-right: 12px;">${item.icon || '📦'}</span>
+                        <div style="flex: 1;">
+                            <div style="color: var(--accent-gold); font-weight: 600;">${item.name}</div>
+                            ${item.description ? `<div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">${item.description}</div>` : ''}
+                        </div>
+                        ${item.quantity > 1 ? `<span style="color: var(--text-secondary); font-size: 0.9rem;">x${item.quantity}</span>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('inventory-modal').classList.add('active');
+        }
+
+        function closeInventory(event) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
+                document.getElementById('inventory-modal').classList.remove('active');
+            }
+        }
+
+        function addToInventory(item) {
+            // Check if item already exists
+            const existing = playerInventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+            if (existing) {
+                existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+            } else {
+                playerInventory.push({
+                    name: item.name,
+                    description: item.description || '',
+                    icon: item.icon || getItemIcon(item.name),
+                    quantity: item.quantity || 1
+                });
+            }
+        }
+
+        function removeFromInventory(itemName) {
+            const index = playerInventory.findIndex(i => i.name.toLowerCase() === itemName.toLowerCase());
+            if (index !== -1) {
+                if (playerInventory[index].quantity > 1) {
+                    playerInventory[index].quantity--;
+                } else {
+                    playerInventory.splice(index, 1);
+                }
+            }
+        }
+
+        function getItemIcon(name) {
+            const n = name.toLowerCase();
+            if (n.includes('sword') || n.includes('blade')) return '⚔️';
+            if (n.includes('shield')) return '🛡️';
+            if (n.includes('bow') || n.includes('arrow')) return '🏹';
+            if (n.includes('staff') || n.includes('wand')) return '🪄';
+            if (n.includes('potion') || n.includes('elixir')) return '🧪';
+            if (n.includes('key')) return '🔑';
+            if (n.includes('coin') || n.includes('gold') || n.includes('money')) return '💰';
+            if (n.includes('gem') || n.includes('jewel') || n.includes('ruby') || n.includes('diamond')) return '💎';
+            if (n.includes('scroll') || n.includes('letter') || n.includes('note') || n.includes('map')) return '📜';
+            if (n.includes('book') || n.includes('tome')) return '📖';
+            if (n.includes('ring')) return '💍';
+            if (n.includes('amulet') || n.includes('necklace') || n.includes('pendant')) return '📿';
+            if (n.includes('cloak') || n.includes('robe') || n.includes('armor')) return '🧥';
+            if (n.includes('helmet') || n.includes('helm')) return '⛑️';
+            if (n.includes('boots') || n.includes('shoes')) return '👢';
+            if (n.includes('gloves') || n.includes('gauntlet')) return '🧤';
+            if (n.includes('food') || n.includes('bread') || n.includes('ration')) return '🍞';
+            if (n.includes('torch') || n.includes('lantern')) return '🔦';
+            if (n.includes('rope')) return '🪢';
+            if (n.includes('herb') || n.includes('flower') || n.includes('plant')) return '🌿';
+            return '📦';
+        }
+
+        // Parse narrative for inventory changes
+        function parseInventoryChanges(text) {
+            // Look for patterns like "You receive...", "You find...", "You pick up..."
+            const gainPatterns = [
+                /you (?:receive|find|pick up|take|grab|obtain|acquire|get|gain|collect|pocket|claim)\s+(?:a\s+|an\s+|the\s+|some\s+)?([^.!?\n]+)/gi,
+                /(?:gives?|hands?|offers?)\s+you\s+(?:a\s+|an\s+|the\s+|some\s+)?([^.!?\n]+)/gi,
+                /you (?:now have|are given)\s+(?:a\s+|an\s+|the\s+|some\s+)?([^.!?\n]+)/gi
+            ];
+
+            const losePatterns = [
+                /you (?:give|hand|drop|lose|use|consume|spend)\s+(?:a\s+|an\s+|the\s+|some\s+)?([^.!?\n]+)/gi,
+                /(?:takes?|removes?)\s+(?:the\s+|your\s+)?([^.!?\n]+)\s+from you/gi
+            ];
+
+            // Extract gained items
+            gainPatterns.forEach(pattern => {
+                let match;
+                while ((match = pattern.exec(text)) !== null) {
+                    let itemName = match[1].trim();
+                    // Clean up the item name
+                    itemName = itemName.replace(/[,;].*$/, '').trim();
+                    itemName = itemName.replace(/\s+(and|which|that|from|to|in|on|with).*$/i, '').trim();
+                    if (itemName.length > 2 && itemName.length < 50) {
+                        addToInventory({ name: itemName });
+                    }
+                }
+            });
+
+            // Extract lost items
+            losePatterns.forEach(pattern => {
+                let match;
+                while ((match = pattern.exec(text)) !== null) {
+                    let itemName = match[1].trim();
+                    itemName = itemName.replace(/[,;].*$/, '').trim();
+                    itemName = itemName.replace(/\s+(and|which|that|from|to|in|on|with).*$/i, '').trim();
+                    if (itemName.length > 2 && itemName.length < 50) {
+                        removeFromInventory(itemName);
+                    }
+                }
+            });
+        }
+
         async function saveToSlot(slot) {
             if (!currentSessionId) {
                 alert('No active session to save');
@@ -1362,7 +1732,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         slot: slot,
-                        session_name: saveName
+                        session_name: saveName,
+                        inventory: playerInventory  // Save inventory with the game
                     })
                 });
 
@@ -1391,6 +1762,7 @@
                     const data = await response.json();
                     currentSessionId = data.session_id;
                     currentPhase = data.phase;
+                    playerInventory = data.inventory || [];  // Restore inventory
 
                     showScreen('story');
                     document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
@@ -1439,6 +1811,7 @@
                 renderSaveSlots('save-slots-container', false);
             }
             if (screenId === 'graph') {
+                await loadAvailableWorlds();
                 loadGraphData();
             }
         };
@@ -1448,15 +1821,53 @@
         // ==========================================
 
         let graphNetwork = null;
+        let availableWorlds = [];
+
+        async function loadAvailableWorlds() {
+            const select = document.getElementById('world-filter');
+            if (!select) return;
+
+            try {
+                // Load lore bases as available worlds
+                const response = await fetch(API_BASE + '/game/lore-bases');
+                if (response.ok) {
+                    const loreBases = await response.json();
+
+                    // Clear existing options except "All Worlds"
+                    select.innerHTML = '<option value="">All Worlds</option>';
+
+                    // Add lore bases
+                    loreBases.forEach(lb => {
+                        if (lb.id !== 'empty') {
+                            const option = document.createElement('option');
+                            option.value = lb.id;
+                            option.textContent = lb.name;
+                            select.appendChild(option);
+                        }
+                    });
+
+                    availableWorlds = loreBases;
+                }
+            } catch (err) {
+                console.warn('Could not load worlds:', err);
+            }
+        }
 
         async function loadGraphData() {
             const container = document.getElementById('graph-container');
             const statsEl = document.getElementById('graph-stats');
+            const worldFilter = document.getElementById('world-filter');
 
             statsEl.innerHTML = '<span class="loading"></span> Loading graph data...';
 
+            // Build URL with optional world filter
+            let url = API_BASE + '/game/graph?limit=150';
+            if (worldFilter && worldFilter.value) {
+                url += '&world_id=' + encodeURIComponent(worldFilter.value);
+            }
+
             try {
-                const response = await fetch(API_BASE + '/game/graph?limit=150');
+                const response = await fetch(url);
                 if (!response.ok) throw new Error('Failed to load graph');
 
                 const data = await response.json();
@@ -1466,7 +1877,11 @@
                     return;
                 }
 
-                statsEl.innerHTML = `<span>Entities: ${data.stats.node_count}</span><span>Relationships: ${data.stats.edge_count}</span>`;
+                const worldName = worldFilter && worldFilter.value ?
+                    worldFilter.options[worldFilter.selectedIndex].text :
+                    'All Worlds';
+
+                statsEl.innerHTML = `<span>Showing: ${worldName}</span><span>Entities: ${data.stats.node_count}</span><span>Relationships: ${data.stats.edge_count}</span>`;
 
                 renderGraph(data.nodes, data.edges);
 
@@ -1532,6 +1947,206 @@
 
             graphNetwork = new vis.Network(container, { nodes: nodesDataset, edges: edgesDataset }, options);
         }
+
+        // ==========================================
+        // ADMIN PANEL
+        // ==========================================
+
+        let adminAuthenticated = false;
+        let pinAttempts = 0;
+        let lockoutUntil = 0;
+        const MAX_ATTEMPTS = 3;
+        const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // Secret keyboard shortcut: Ctrl+Shift+A
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+                e.preventDefault();
+                showPinModal();
+            }
+        });
+
+        function showPinModal() {
+            // Check if locked out
+            if (Date.now() < lockoutUntil) {
+                const remainingMins = Math.ceil((lockoutUntil - Date.now()) / 60000);
+                alert(`Too many failed attempts. Try again in ${remainingMins} minute(s).`);
+                return;
+            }
+
+            document.getElementById('admin-pin').value = '';
+            document.getElementById('pin-error').style.display = 'none';
+            document.getElementById('pin-modal').classList.add('active');
+            setTimeout(() => document.getElementById('admin-pin').focus(), 100);
+        }
+
+        function closePinModal(event) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
+                document.getElementById('pin-modal').classList.remove('active');
+            }
+        }
+
+        async function verifyPin() {
+            const pin = document.getElementById('admin-pin').value;
+            const errorEl = document.getElementById('pin-error');
+
+            // Check lockout
+            if (Date.now() < lockoutUntil) {
+                const remainingMins = Math.ceil((lockoutUntil - Date.now()) / 60000);
+                errorEl.textContent = `Locked out. Try again in ${remainingMins} minute(s).`;
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (!pin) {
+                errorEl.textContent = 'Please enter a PIN';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                // Admin routes are at root level, not under /api
+                const response = await fetch(window.location.origin + '/admin/verify-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin: pin })
+                });
+
+                if (response.ok) {
+                    adminAuthenticated = true;
+                    pinAttempts = 0; // Reset on success
+                    closePinModal();
+                    showScreen('admin');
+                } else {
+                    pinAttempts++;
+
+                    if (pinAttempts >= MAX_ATTEMPTS) {
+                        lockoutUntil = Date.now() + LOCKOUT_DURATION;
+                        errorEl.textContent = `Too many attempts. Locked for 5 minutes.`;
+                        closePinModal();
+                        alert('Too many failed PIN attempts. Admin access locked for 5 minutes.');
+                    } else {
+                        const remaining = MAX_ATTEMPTS - pinAttempts;
+                        errorEl.textContent = `Invalid PIN. ${remaining} attempt(s) remaining.`;
+                    }
+
+                    errorEl.style.display = 'block';
+                    document.getElementById('admin-pin').value = '';
+                    document.getElementById('admin-pin').focus();
+                }
+            } catch (err) {
+                errorEl.textContent = 'Connection error';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        async function loadDbStats() {
+            const statsEl = document.getElementById('db-stats');
+            statsEl.innerHTML = '<span class="loading"></span> Loading...';
+
+            try {
+                const response = await fetch(window.location.origin + '/admin/stats');
+                if (response.ok) {
+                    const data = await response.json();
+                    statsEl.innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.8rem; color: var(--accent-gold);">${data.total_nodes || 0}</div>
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">Total Entities</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.8rem; color: var(--accent-sage);">${data.total_relationships || 0}</div>
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">Relationships</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.8rem; color: var(--accent-rose);">${data.characters || 0}</div>
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">Characters</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.8rem; color: var(--accent-lavender);">${data.locations || 0}</div>
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">Locations</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statsEl.innerHTML = '<span style="color: var(--accent-rose);">Failed to load stats</span>';
+                }
+            } catch (err) {
+                statsEl.innerHTML = '<span style="color: var(--accent-rose);">Error: ' + err.message + '</span>';
+            }
+        }
+
+        function showResetConfirm() {
+            document.getElementById('reset-confirm-text').value = '';
+            document.getElementById('confirm-reset-btn').disabled = true;
+            document.getElementById('reset-modal').classList.add('active');
+
+            // Listen for input to enable button (case-insensitive)
+            document.getElementById('reset-confirm-text').addEventListener('input', function() {
+                document.getElementById('confirm-reset-btn').disabled = this.value.toUpperCase() !== 'RESET';
+            });
+        }
+
+        function closeResetModal(event) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
+                document.getElementById('reset-modal').classList.remove('active');
+            }
+        }
+
+        async function executeReset() {
+            const confirmText = document.getElementById('reset-confirm-text').value.toUpperCase();
+            if (confirmText !== 'RESET') {
+                alert('Please type RESET to confirm');
+                return;
+            }
+
+            showStatus('admin-status', '<span class="loading"></span> Resetting database...', 'info');
+            closeResetModal();
+
+            try {
+                const response = await fetch(window.location.origin + '/admin/reset-database', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ confirm: 'RESET' })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('admin-status', 'Database reset complete. ' + data.message, 'success');
+                    loadDbStats();
+                } else {
+                    const err = await response.json();
+                    showStatus('admin-status', 'Reset failed: ' + (err.detail || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showStatus('admin-status', 'Reset failed: ' + err.message, 'error');
+            }
+        }
+
+        async function clearAllSaves() {
+            if (!confirm('Delete ALL saved games? This cannot be undone.')) return;
+
+            showStatus('admin-status', '<span class="loading"></span> Clearing saves...', 'info');
+
+            try {
+                // Delete each slot
+                for (let i = 1; i <= 5; i++) {
+                    await fetch(API_BASE + `/game/saves/${i}`, { method: 'DELETE' });
+                }
+                showStatus('admin-status', 'All save slots cleared.', 'success');
+            } catch (err) {
+                showStatus('admin-status', 'Error clearing saves: ' + err.message, 'error');
+            }
+        }
+
+        // Load admin stats when showing admin screen
+        const adminShowScreen = showScreen;
+        showScreen = async function(screenId) {
+            await adminShowScreen(screenId);
+            if (screenId === 'admin') {
+                loadDbStats();
+            }
+        };
 
         // Health check
         fetch(API_BASE.replace('/api', '') + '/health')

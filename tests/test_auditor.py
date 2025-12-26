@@ -1,8 +1,8 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.agents.auditor_agent import AuditorAgent
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.agents.auditor_agent import AuditorAgent
 
 load_dotenv()
 

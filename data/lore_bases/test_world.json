@@ -1,0 +1,15 @@
+{
+  "id": "test_world",
+  "name": "Test World",
+  "description": "A test world for verifying world_id filtering",
+  "genre_hints": [
+    "fantasy"
+  ],
+  "tone_hints": [
+    "epic"
+  ],
+  "entities_count": 0,
+  "seed_prompt": "",
+  "lore_content": "Lord Aldric is a brave and calculating noble. Lady Sera is kind but cunning. They rule the Kingdom of Aldoria together.",
+  "ingested": false
+}

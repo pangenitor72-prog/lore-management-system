@@ -1,9 +1,9 @@
-
 from fastapi import Request, HTTPException
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.agents.auditor_agent import AuditorAgent
-from src.agents.query_agent import QueryAgent
-from src.agents.dm_agent import DMAgent
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.agents.auditor_agent import AuditorAgent
+from src.lms.agents.query_agent import QueryAgent
+from src.lms.agents.dm_agent import DMAgent
+from src.lms.orchestrator import Orchestrator
 
 
 async def get_neo4j_db(request: Request) -> Neo4jDatabase:
@@ -33,3 +33,11 @@ async def get_dm_agent(request: Request) -> DMAgent:
     if dm_agent is None:
         raise HTTPException(status_code=503, detail="DM agent not available")
     return dm_agent
+
+
+async def get_orchestrator(request: Request) -> Orchestrator:
+    """Dependency to get the Orchestrator from app state."""
+    orchestrator = getattr(request.app.state, "orchestrator", None)
+    if orchestrator is None:
+        raise HTTPException(status_code=503, detail="Orchestrator not available")
+    return orchestrator

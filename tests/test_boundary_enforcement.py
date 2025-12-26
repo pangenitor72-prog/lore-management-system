@@ -1,7 +1,7 @@
 """Test boundary enforcement system."""
 
 import pytest
-from src.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
+from src.lms.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
 
 
 @pytest.mark.asyncio

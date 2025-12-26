@@ -1,6 +1,6 @@
 """Core models, constants, and domain logic."""
 
-from src.core.models import (
+from src.lms.core.models import (
     EntityCreate,
     EntityResponse,
     RelationshipCreate,
@@ -22,12 +22,12 @@ from src.core.models import (
     GameSessionResponse,
     InstanceResponse,
 )
-from src.core.constants import (
+from src.lms.core.constants import (
     VALID_ENTITY_TYPES,
     VALID_RELATIONSHIP_TYPES,
 )
-from src.core.game_session import GameSession
-from src.core.entity_factory import EntityFactory, EntityTemplate
+from src.lms.core.game_session import GameSession
+from src.lms.core.entity_factory import EntityFactory, EntityTemplate
 
 __all__ = [
     # Models

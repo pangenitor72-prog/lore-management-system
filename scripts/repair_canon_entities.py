@@ -2,8 +2,8 @@ import asyncio
 import os
 import logging
 from dotenv import load_dotenv
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.core.normalization import normalize_entity_name
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.core.normalization import normalize_entity_name
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)

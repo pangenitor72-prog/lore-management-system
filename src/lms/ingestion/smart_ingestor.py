@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Dict, Any, List
 
-from src.db.neo4j_adapter import Neo4jDatabase
+from src.lms.db.neo4j_adapter import Neo4jDatabase
 
 from .segmenter import segment_text
 from .detector import detect_many
@@ -17,8 +17,8 @@ from .extractor import extract_many
 from .personality_pipeline import generate_many
 from .entity_builder import build_many
 from .neo4j_mapper import save_many
-from src.ingestion.personality_drift import PersonalityDriftEngine
-from src.ingestion.relationship_inference import RelationshipInferenceEngine
+from src.lms.ingestion.personality_drift import PersonalityDriftEngine
+from src.lms.ingestion.relationship_inference import RelationshipInferenceEngine
 
 logger = logging.getLogger(__name__)
 

@@ -342,6 +342,7 @@ TEXT TO ANALYZE:
         text: str,
         db,  # Neo4jDatabase
         source_name: str = "lore_upload",
+        world_id: str = None,
     ) -> ParsedLoreResult:
         """
         Parse lore text and store entities in Neo4j with OCEAN profiles.
@@ -350,6 +351,7 @@ TEXT TO ANALYZE:
             text: Raw lore text
             db: Neo4j database instance
             source_name: Source identifier for tracking
+            world_id: World/lore base ID for separation (extracted from source if not provided)
 
         Returns:
             ParsedLoreResult with storage counts
@@ -363,6 +365,14 @@ TEXT TO ANALYZE:
         entities_stored = 0
         characters_with_ocean = 0
 
+        # Extract world_id from source if not provided
+        if not world_id and source_name:
+            if source_name.startswith("lore_base:"):
+                world_id = source_name.split("lore_base:")[1]
+            elif source_name.startswith("session:"):
+                # For sessions, world_id should be passed explicitly
+                world_id = None
+
         # Store entities
         for entity in result.entities:
             canon_id = f"lore-{uuid.uuid4().hex[:12]}"
@@ -374,6 +384,7 @@ TEXT TO ANALYZE:
                 "description": entity.description,
                 "content": entity.verbatim_text or entity.description,
                 "source": source_name,
+                "world_id": world_id,  # Explicit world association
                 "confidence_level": "AI_GENERATED",
                 "approval_status": "PENDING",
                 "created_at": timestamp,

@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import status
 from datetime import datetime, timezone
-from src.core.models import EntityType, ApprovalStatus
+from src.lms.core.models import EntityType, ApprovalStatus
 
 # The 'client' fixture is now provided by 'tests/conftest.py'
 

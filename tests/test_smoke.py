@@ -1,5 +1,5 @@
 import pytest
-from src.core.models import EntityType, ApprovalStatus, ConfidenceLevel, PartyKnowledge
+from src.lms.core.models import EntityType, ApprovalStatus, ConfidenceLevel, PartyKnowledge
 
 @pytest.mark.asyncio
 async def test_health_check(client):

@@ -1,7 +1,7 @@
 # src/services/embedding_service.py
 from typing import List, Optional
-from src.services.embedding_orchestrator import EmbeddingOrchestrator
-from src.services.audit_log import AuditLogger
+from src.lms.services.embedding_orchestrator import EmbeddingOrchestrator
+from src.lms.services.audit_log import AuditLogger
 
 
 class EmbeddingService:

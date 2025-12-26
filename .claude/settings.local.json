@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(python:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)",
+      "Bash(flyctl version:*)",
+      "Bash(fly auth:*)",
+      "Bash(fly secrets:*)",
+      "Bash(fly deploy:*)",
+      "Bash(fly status:*)",
+      "Bash(fly logs:*)",
+      "Bash(curl:*)",
+      "Bash(fly ssh console:*)",
+      "Bash(fly machine start:*)",
+      "Bash(timeout 10 fly logs:*)",
+      "Bash(fly machine restart:*)",
+      "Bash(timeout 15 fly logs:*)",
+      "Bash(taskkill //F //PID 25416)",
+      "Bash(taskkill //F //PID 25728)",
+      "Bash(taskkill //F //PID 3144)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}

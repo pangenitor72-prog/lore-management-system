@@ -1,4 +1,4 @@
-from src.db.neo4j_adapter import Neo4jDatabase
+from src.lms.db.neo4j_adapter import Neo4jDatabase
 import asyncio
 import uuid
 import re
@@ -6,9 +6,9 @@ import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
-from src.services.embedding_service import EmbeddingService
-from src.services.audit_log import AuditLogger
-from src.services.extraction_service import ExtractionService
+from src.lms.services.embedding_service import EmbeddingService
+from src.lms.services.audit_log import AuditLogger
+from src.lms.services.extraction_service import ExtractionService
 
 # Configure module logger
 logger = logging.getLogger(__name__)

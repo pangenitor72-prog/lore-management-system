@@ -12,8 +12,8 @@ import logging
 from dataclasses import dataclass
 from typing import List, Optional, Dict
 
-from src.core.models import OCEANProfile, PersonalityGenerator, PersonalityTemplates
-from src.ingestion.extractor import ExtractedProperties
+from src.lms.core.models import OCEANProfile, PersonalityGenerator, PersonalityTemplates
+from src.lms.ingestion.extractor import ExtractedProperties
 
 logger = logging.getLogger(__name__)
 

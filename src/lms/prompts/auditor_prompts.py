@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, Optional
 
 # Import CONFIDENCE_RULES for trust scoring
-from src.core.models import CONFIDENCE_RULES
+from src.lms.core.models import CONFIDENCE_RULES
 
 @dataclass
 class PromptMetadata:

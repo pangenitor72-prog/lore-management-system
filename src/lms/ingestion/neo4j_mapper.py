@@ -10,10 +10,10 @@ import uuid
 import json
 from typing import List, Dict, Any, Optional
 
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.ingestion.entity_builder import BuiltEntity
-from src.core.models import OCEANProfile
-from src.core.normalization import normalize_entity_name
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.ingestion.entity_builder import BuiltEntity
+from src.lms.core.models import OCEANProfile
+from src.lms.core.normalization import normalize_entity_name
 
 logger = logging.getLogger(__name__)
 

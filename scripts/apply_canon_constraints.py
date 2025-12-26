@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from src.db.neo4j_adapter import Neo4jDatabase
+from src.lms.db.neo4j_adapter import Neo4jDatabase
 
 load_dotenv()
 

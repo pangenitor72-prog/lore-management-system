@@ -1,0 +1,389 @@
+# src/lms/arc/arc_engine.py
+"""
+Arc Engine - Unified narrative structure and pacing system.
+
+Combines story phase tracking, tension management, beat suggestions,
+and episode pacing into a single coherent interface for the DM.
+"""
+
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timezone
+from typing import Optional, List, Dict, Any
+
+from .models import (
+    StoryPhase,
+    StoryAct,
+    TensionLevel,
+    ArcState,
+    NarrativeBeat,
+    EpisodeBoundary,
+    StoryContext,
+    BeatType,
+)
+from .story_phase import StoryPhaseManager
+from .tension_tracker import TensionTracker
+from .beat_suggester import BeatSuggester
+from .episode_manager import EpisodeManager, EpisodeConfig
+
+logger = logging.getLogger(__name__)
+
+
+class ArcEngine:
+    """
+    Main interface for the narrative arc system.
+
+    Integrates:
+    - Story Phase Manager (Campbell's 12 stages)
+    - Tension Tracker (rising/falling action)
+    - Beat Suggester (narrative guidance)
+    - Episode Manager (pacing and boundaries)
+
+    The Arc Engine whispers to the DM - it suggests, never commands.
+    Player agency and DM creativity remain paramount.
+    """
+
+    def __init__(
+        self,
+        session_id: Optional[str] = None,
+        episode_config: Optional[EpisodeConfig] = None,
+    ):
+        """
+        Initialize the Arc Engine.
+
+        Args:
+            session_id: Optional session ID for tracking
+            episode_config: Optional episode configuration
+        """
+        self._session_id = session_id
+        self._phase_manager = StoryPhaseManager()
+        self._tension_tracker = TensionTracker()
+        self._beat_suggester = BeatSuggester()
+        self._episode_manager = EpisodeManager(config=episode_config)
+
+        # Link session ID to arc state
+        if session_id:
+            self._phase_manager._state.session_id = session_id
+
+        logger.info(f"ArcEngine initialized for session {session_id or 'anonymous'}")
+
+    # === PROPERTIES ===
+
+    @property
+    def current_phase(self) -> StoryPhase:
+        """Get current story phase."""
+        return self._phase_manager.current_phase
+
+    @property
+    def current_act(self) -> StoryAct:
+        """Get current act (Departure/Initiation/Return)."""
+        return self._phase_manager.current_act
+
+    @property
+    def current_tension(self) -> float:
+        """Get current tension level (0.0-1.0)."""
+        return self._tension_tracker.current_tension
+
+    @property
+    def tension_level(self) -> TensionLevel:
+        """Get qualitative tension level."""
+        return self._tension_tracker.tension_level
+
+    @property
+    def episode_number(self) -> int:
+        """Get current episode number."""
+        return self._episode_manager.episode_number
+
+    @property
+    def journey_progress(self) -> float:
+        """Get overall progress through the Hero's Journey (0.0-1.0)."""
+        return self._phase_manager.state.get_journey_progress()
+
+    # === MAIN INTERFACE ===
+
+    def process_narrative(
+        self,
+        narrative_text: str,
+        player_action: Optional[str] = None,
+    ) -> StoryContext:
+        """
+        Process a narrative segment and return updated context.
+
+        This is the main method called after each DM response.
+        It analyzes the narrative, updates state, and generates
+        suggestions for the next beat.
+
+        Args:
+            narrative_text: The DM's narrative response
+            player_action: Optional player action that preceded it
+
+        Returns:
+            Updated StoryContext with suggestions
+        """
+        # Analyze and update tension
+        self._tension_tracker.apply_text_analysis(narrative_text)
+
+        # Check for phase transition signals
+        transition = self._phase_manager.suggest_transition(narrative_text)
+        if transition:
+            phase, confidence, reason = transition
+            if confidence > 0.5:
+                self._phase_manager.transition_to(phase, reason, confidence)
+        else:
+            # Advance progress within current phase
+            self._phase_manager.advance_progress(0.1)
+
+        # Align tension toward phase expectation (gentle pull)
+        self._tension_tracker.align_to_phase(self.current_phase, strength=0.1)
+
+        # Detect episode boundary opportunities
+        boundary = self._episode_manager.detect_boundary(
+            current_phase=self.current_phase,
+            current_tension=self.current_tension,
+        )
+
+        # Generate beat suggestions
+        suggested_beats = self._beat_suggester.suggest_beats(
+            phase=self.current_phase,
+            current_tension=self.current_tension,
+            count=3,
+        )
+
+        # Build and return context
+        return StoryContext(
+            arc_state=self._phase_manager.state,
+            recent_events=self._episode_manager._key_events[-3:],
+            suggested_beats=suggested_beats,
+            potential_boundaries=[boundary] if boundary else [],
+            phase_guidance=self._phase_manager.get_phase_guidance(),
+            tension_guidance=self._tension_tracker.get_pacing_guidance(self.current_phase),
+            pacing_note=self._get_pacing_note(),
+        )
+
+    def record_beat(
+        self,
+        beat_type: BeatType,
+        description: str,
+    ) -> None:
+        """
+        Record that a narrative beat occurred.
+
+        Call this after significant story moments to track pacing.
+
+        Args:
+            beat_type: Type of beat that occurred
+            description: Brief description
+        """
+        self._beat_suggester.record_beat_used(beat_type)
+        self._episode_manager.record_beat(
+            beat_type=beat_type,
+            description=description,
+            tension_after=self.current_tension,
+        )
+
+    def force_phase_transition(
+        self,
+        target_phase: StoryPhase,
+        reason: str = "Manual transition",
+    ) -> bool:
+        """
+        Force a transition to a specific phase.
+
+        Use sparingly - prefer letting transitions happen naturally.
+
+        Args:
+            target_phase: Phase to transition to
+            reason: Why the transition is happening
+
+        Returns:
+            True if transition succeeded
+        """
+        success, error = self._phase_manager.transition_to(
+            target_phase,
+            trigger=reason,
+            force=True,
+        )
+        return success
+
+    def set_tension(self, value: float) -> None:
+        """
+        Manually set tension to a specific value.
+
+        Args:
+            value: Tension level (0.0-1.0)
+        """
+        self._tension_tracker.set_tension(value)
+
+    # === EPISODE MANAGEMENT ===
+
+    def check_episode_boundary(self) -> Optional[EpisodeBoundary]:
+        """
+        Check if we're at a good episode boundary.
+
+        Returns:
+            EpisodeBoundary if a stopping point is detected
+        """
+        return self._episode_manager.detect_boundary(
+            current_phase=self.current_phase,
+            current_tension=self.current_tension,
+        )
+
+    def end_episode(self) -> Dict[str, Any]:
+        """
+        End the current episode and prepare for the next.
+
+        Returns:
+            Episode summary including recap
+        """
+        recap = self._episode_manager.generate_recap()
+        pacing = self._episode_manager.get_pacing_status()
+
+        summary = {
+            "episode_number": self.episode_number,
+            "recap": recap,
+            "pacing": pacing,
+            "phase_at_end": self.current_phase.value,
+            "tension_at_end": self.current_tension,
+        }
+
+        self._episode_manager.start_new_episode()
+
+        return summary
+
+    def get_cliffhanger_prompt(self) -> str:
+        """Get guidance for creating a cliffhanger ending."""
+        return self._episode_manager.generate_cliffhanger_prompt(self.current_phase)
+
+    def get_recap(self) -> str:
+        """Get a recap of the current episode so far."""
+        return self._episode_manager.generate_recap()
+
+    # === DM GUIDANCE ===
+
+    def get_dm_context_injection(self) -> str:
+        """
+        Get text to inject into the DM's prompt for arc awareness.
+
+        This provides the DM with phase-appropriate guidance without
+        being overly prescriptive.
+
+        Returns:
+            Context string for prompt injection
+        """
+        phase = self.current_phase
+        tension = self.current_tension
+        trend = self._tension_tracker.trend
+
+        lines = [
+            f"\n=== NARRATIVE ARC CONTEXT ===",
+            f"Current Phase: {phase.value.replace('_', ' ').title()}",
+            f"Act: {phase.act.value.title()}",
+            f"Tension: {tension:.0%} ({self.tension_level.value}), {trend}",
+            f"",
+            f"Phase Guidance: {phase.description}",
+            f"",
+        ]
+
+        # Add expected beats
+        expected_beats = self._phase_manager.get_expected_beats()
+        if expected_beats:
+            lines.append("Expected Story Elements:")
+            for beat in expected_beats[:3]:
+                lines.append(f"  - {beat}")
+            lines.append("")
+
+        # Add pacing guidance
+        pacing_note = self._tension_tracker.get_pacing_guidance(phase)
+        if pacing_note:
+            lines.append(f"Pacing: {pacing_note}")
+
+        return "\n".join(lines)
+
+    def get_next_beat_suggestions(self, count: int = 3) -> List[NarrativeBeat]:
+        """
+        Get suggested next beats.
+
+        Args:
+            count: Number of suggestions to return
+
+        Returns:
+            List of suggested narrative beats
+        """
+        return self._beat_suggester.suggest_beats(
+            phase=self.current_phase,
+            current_tension=self.current_tension,
+            count=count,
+        )
+
+    # === INTERNAL HELPERS ===
+
+    def _get_pacing_note(self) -> str:
+        """Generate a brief pacing note for the context."""
+        status = self._episode_manager.get_pacing_status()
+        beats = status["beats_count"]
+        min_beats = self._episode_manager.config.min_beats_per_episode
+        max_beats = self._episode_manager.config.max_beats_per_episode
+
+        if beats < min_beats:
+            return f"Episode building ({beats}/{min_beats} beats minimum)"
+        elif beats < max_beats:
+            return f"Episode in progress ({beats} beats) - watch for natural pauses"
+        else:
+            return f"Episode at maximum ({beats} beats) - find a stopping point"
+
+    # === PERSISTENCE ===
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Export full state for persistence."""
+        return {
+            "session_id": self._session_id,
+            "phase_manager": self._phase_manager.to_dict(),
+            "tension_tracker": self._tension_tracker.to_dict(),
+            "beat_suggester": self._beat_suggester.to_dict(),
+            "episode_manager": self._episode_manager.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ArcEngine":
+        """Restore from dictionary."""
+        engine = cls(session_id=data.get("session_id"))
+        engine._phase_manager = StoryPhaseManager.from_dict(
+            data.get("phase_manager", {})
+        )
+        engine._tension_tracker = TensionTracker.from_dict(
+            data.get("tension_tracker", {})
+        )
+        engine._beat_suggester = BeatSuggester.from_dict(
+            data.get("beat_suggester", {})
+        )
+        engine._episode_manager = EpisodeManager.from_dict(
+            data.get("episode_manager", {})
+        )
+        return engine
+
+    # === STATUS ===
+
+    def get_status(self) -> Dict[str, Any]:
+        """Get comprehensive status of the arc engine."""
+        return {
+            "session_id": self._session_id,
+            "phase": {
+                "current": self.current_phase.value,
+                "act": self.current_act.value,
+                "progress": self._phase_manager.state.phase_progress,
+                "journey_progress": self.journey_progress,
+            },
+            "tension": {
+                "value": self.current_tension,
+                "level": self.tension_level.value,
+                "trend": self._tension_tracker.trend,
+                "expected_for_phase": self.current_phase.expected_tension,
+            },
+            "episode": self._episode_manager.get_pacing_status(),
+            "milestones": {
+                "mentor_introduced": self._phase_manager.state.mentor_introduced,
+                "threshold_crossed": self._phase_manager.state.threshold_crossed,
+                "ordeal_faced": self._phase_manager.state.ordeal_faced,
+            },
+        }

@@ -28,10 +28,10 @@ import asyncio
 import google.generativeai as genai
 from google.api_core.exceptions import GoogleAPIError
 
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.services.audit_log import AuditLogger
-from src.prompts import AuditorPrompts
-from src.core.models import OCEANProfile, Contradiction
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.audit_log import AuditLogger
+from src.lms.prompts import AuditorPrompts
+from src.lms.core.models import OCEANProfile, Contradiction
 
 logger = logging.getLogger(__name__)
 

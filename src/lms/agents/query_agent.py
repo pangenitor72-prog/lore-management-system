@@ -13,18 +13,18 @@ Uses 4-tier retrieval strategy:
 from typing import Dict, List, Any, Optional
 import json
 import google.generativeai as genai
-from src.services.audit_log import AuditLogger
+from src.lms.services.audit_log import AuditLogger
 import logging
 from fastapi import WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 from starlette.concurrency import run_in_threadpool
 import asyncio
-from src.services.broadcaster import broadcaster
+from src.lms.services.broadcaster import broadcaster
 from datetime import datetime
-from src.db.neo4j_adapter import Neo4jDatabase
-from src.services.vector_service import VectorService
-from src.services.embedding_orchestrator import EmbeddingOrchestrator
-from src.prompts import QueryPrompts
+from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.vector_service import VectorService
+from src.lms.services.embedding_orchestrator import EmbeddingOrchestrator
+from src.lms.prompts import QueryPrompts
 
 BROADCAST_EVENTS = False  # TEMP: disable broadcaster during early dev
 logger = logging.getLogger(__name__)
