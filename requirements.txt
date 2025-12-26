@@ -12,3 +12,8 @@ networkx==3.3
 protobuf==5.29.5
 watchdog==6.0.0
 markdown-it-py==3.0.0
+
+# Security: minimum versions for transitive dependencies
+urllib3>=2.6.0
+setuptools>=78.1.1
+filelock>=3.20.1
