@@ -127,11 +127,11 @@
         /* Genre Cards */
         .genre-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
             width: 100%;
-            max-width: 500px;
+            max-width: 650px;
         }
 
         .genre-card {
@@ -979,7 +979,7 @@
                 <p>Select one or more genres to blend together.</p>
             </div>
 
-            <div class="genre-grid" style="max-width: 600px;">
+            <div class="genre-grid" style="max-width: 650px;">
                 <!-- Story-Focused Genres -->
                 <div class="genre-card" data-genre="romance" onclick="selectGenre('romance')">
                     <span class="icon">💕</span>
@@ -993,11 +993,15 @@
                     <span class="icon">🎭</span>
                     <span class="label">Drama</span>
                 </div>
+                <div class="genre-card" data-genre="adventure" onclick="selectGenre('adventure')">
+                    <span class="icon">🗺️</span>
+                    <span class="label">Adventure</span>
+                </div>
+                <!-- Classic Genres -->
                 <div class="genre-card" data-genre="fantasy" onclick="selectGenre('fantasy')">
                     <span class="icon">⚔️</span>
                     <span class="label">Fantasy</span>
                 </div>
-                <!-- Classic Genres -->
                 <div class="genre-card" data-genre="scifi" onclick="selectGenre('scifi')">
                     <span class="icon">🚀</span>
                     <span class="label">Sci-Fi</span>
@@ -1006,6 +1010,11 @@
                     <span class="icon">👻</span>
                     <span class="label">Horror</span>
                 </div>
+                <div class="genre-card" data-genre="modern" onclick="selectGenre('modern')">
+                    <span class="icon">🏙️</span>
+                    <span class="label">Modern</span>
+                </div>
+                <!-- Historical & Cultural -->
                 <div class="genre-card" data-genre="western" onclick="selectGenre('western')">
                     <span class="icon">🤠</span>
                     <span class="label">Western</span>
@@ -1014,7 +1023,6 @@
                     <span class="icon">🕵️</span>
                     <span class="label">Noir</span>
                 </div>
-                <!-- Speculative & Cultural -->
                 <div class="genre-card" data-genre="mythology" onclick="selectGenre('mythology')">
                     <span class="icon">🏛️</span>
                     <span class="label">Mythology</span>
@@ -1023,19 +1031,24 @@
                     <span class="icon">🥋</span>
                     <span class="label">Wuxia</span>
                 </div>
+                <!-- Speculative Genres -->
                 <div class="genre-card" data-genre="cyberpunk" onclick="selectGenre('cyberpunk')">
                     <span class="icon">🌃</span>
                     <span class="label">Cyberpunk</span>
+                </div>
+                <div class="genre-card" data-genre="steampunk" onclick="selectGenre('steampunk')">
+                    <span class="icon">⚙️</span>
+                    <span class="label">Steampunk</span>
+                </div>
+                <div class="genre-card" data-genre="postapoc" onclick="selectGenre('postapoc')">
+                    <span class="icon">☢️</span>
+                    <span class="label">Post-Apoc</span>
                 </div>
                 <div class="genre-card" data-genre="superhero" onclick="selectGenre('superhero')">
                     <span class="icon">🦸</span>
                     <span class="label">Superhero</span>
                 </div>
             </div>
-
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 15px; max-width: 500px; text-align: center;">
-                More genres: <a href="#" onclick="showMoreGenres(); return false;" style="color: var(--accent-warm);">Steampunk, Post-Apocalyptic, Modern, Adventure...</a>
-            </p>
 
             <div class="btn-group">
                 <button class="btn btn-primary" id="begin-btn" onclick="showScreen('setup')" disabled>Continue</button>

@@ -25,7 +25,10 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(pytest:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)"
     ]
   }
 }
