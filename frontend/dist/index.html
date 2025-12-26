@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Storyweaver - Your Personal Mythology</title>
+    <title>AIRPG - AI-Powered Roleplaying</title>
     <!-- vis.js for graph visualization -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
@@ -387,6 +387,162 @@
             padding: 14px 24px;
         }
 
+        /* Voice Input Button */
+        .voice-btn {
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .voice-btn:hover {
+            border-color: var(--accent-warm);
+            background: var(--bg-hover);
+        }
+
+        .voice-btn.listening {
+            border-color: var(--accent-rose);
+            background: rgba(201, 139, 139, 0.2);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Character HUD */
+        .character-hud {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .character-hud.visible {
+            display: block;
+        }
+
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .hud-name {
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+        }
+
+        .hud-class {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .hud-hp-bar {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            height: 24px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .hud-hp-fill {
+            background: linear-gradient(90deg, var(--accent-rose), #e88b8b);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .hud-hp-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .hud-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .hud-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hud-stat-value {
+            color: var(--accent-warm);
+            font-weight: bold;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .quick-action-btn {
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+            background: var(--bg-hover);
+        }
+
+        /* Undo/Retry Bar */
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .action-bar-btn {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-bar-btn:hover {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .action-bar-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         /* Loading */
         .loading {
             display: inline-block;
@@ -640,8 +796,8 @@
 <body>
     <div class="container">
         <header>
-            <h1 class="logo">Storyweaver</h1>
-            <p class="tagline">Where your personal mythology begins</p>
+            <h1 class="logo">AIRPG</h1>
+            <p class="tagline">AI-Powered Roleplaying Games</p>
         </header>
 
         <!-- Onboarding Screen -->
@@ -875,11 +1031,45 @@
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="endStory()">End</button>
                 </div>
             </div>
+
+            <!-- Character HUD (visible when d20 rules active) -->
+            <div id="character-hud" class="character-hud">
+                <div class="hud-header">
+                    <span class="hud-name" id="hud-name">Character</span>
+                    <span class="hud-class" id="hud-class">Fighter 1</span>
+                </div>
+                <div class="hud-hp-bar">
+                    <div class="hud-hp-fill" id="hud-hp-fill" style="width: 100%;"></div>
+                    <span class="hud-hp-text" id="hud-hp-text">10/10 HP</span>
+                </div>
+                <div class="hud-stats">
+                    <div class="hud-stat">AC: <span class="hud-stat-value" id="hud-ac">15</span></div>
+                    <div class="hud-stat">Init: <span class="hud-stat-value" id="hud-init">+2</span></div>
+                    <div class="hud-stat">Prof: <span class="hud-stat-value" id="hud-prof">+2</span></div>
+                </div>
+            </div>
+
             <div class="story-container" id="story-container"></div>
+
             <div class="input-area">
+                <!-- Quick Actions -->
+                <div id="quick-actions" class="quick-actions" style="display: none;">
+                    <button class="quick-action-btn" onclick="quickAction('look around')">Look around</button>
+                    <button class="quick-action-btn" onclick="quickAction('talk')">Talk</button>
+                    <button class="quick-action-btn" onclick="quickAction('investigate')">Investigate</button>
+                    <button class="quick-action-btn" onclick="quickAction('continue')">Continue</button>
+                </div>
+
                 <div class="input-row">
+                    <button id="voice-btn" class="voice-btn" onclick="toggleVoiceInput()" title="Voice input (click to speak)">🎤</button>
                     <input type="text" id="player-input" placeholder="What do you do?" onkeypress="handleKeyPress(event)">
                     <button class="btn btn-primary" onclick="sendAction()">Continue</button>
+                </div>
+
+                <!-- Undo/Retry Bar -->
+                <div id="action-bar" class="action-bar" style="display: none;">
+                    <button id="undo-btn" class="action-bar-btn" onclick="undoAction()" disabled>↩ Undo</button>
+                    <button id="retry-btn" class="action-bar-btn" onclick="retryAction()" disabled>🔄 Retry</button>
                 </div>
             </div>
         </div>
@@ -1244,6 +1434,179 @@
         let rulesVisibility = 'guided';  // storyteller, guided, classic, tactician
         let creationMode = 'concept';  // concept, guided, classic
         let dndCharacter = null;  // Current D&D character sheet
+
+        // Voice Input State
+        let speechRecognition = null;
+        let isListening = false;
+
+        // Undo/Retry State
+        let actionHistory = [];  // Stack of {playerInput, aiResponse} pairs
+        let lastPlayerInput = null;
+        const MAX_HISTORY = 10;
+
+        // Initialize Voice Recognition
+        function initVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                speechRecognition = new SpeechRecognition();
+                speechRecognition.continuous = false;
+                speechRecognition.interimResults = false;
+                speechRecognition.lang = 'en-US';
+
+                speechRecognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('player-input').value = transcript;
+                    stopListening();
+                };
+
+                speechRecognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    stopListening();
+                };
+
+                speechRecognition.onend = () => {
+                    stopListening();
+                };
+            } else {
+                // Hide voice button if not supported
+                const voiceBtn = document.getElementById('voice-btn');
+                if (voiceBtn) voiceBtn.style.display = 'none';
+            }
+        }
+
+        function toggleVoiceInput() {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        }
+
+        function startListening() {
+            if (speechRecognition) {
+                isListening = true;
+                speechRecognition.start();
+                document.getElementById('voice-btn').classList.add('listening');
+                document.getElementById('voice-btn').textContent = '🔴';
+            }
+        }
+
+        function stopListening() {
+            if (speechRecognition) {
+                isListening = false;
+                try { speechRecognition.stop(); } catch(e) {}
+                document.getElementById('voice-btn').classList.remove('listening');
+                document.getElementById('voice-btn').textContent = '🎤';
+            }
+        }
+
+        // Character HUD Functions
+        function updateCharacterHUD() {
+            if (!dndCharacter || rulesMode !== 'dnd') {
+                document.getElementById('character-hud').classList.remove('visible');
+                return;
+            }
+
+            // Only show HUD for non-storyteller visibility
+            if (rulesVisibility === 'storyteller') {
+                document.getElementById('character-hud').classList.remove('visible');
+                return;
+            }
+
+            document.getElementById('character-hud').classList.add('visible');
+            document.getElementById('hud-name').textContent = dndCharacter.name || 'Character';
+
+            // Get display names based on genre
+            const origin = dndCharacter.race || dndCharacter.origin || '';
+            const archetype = dndCharacter.character_class || dndCharacter.archetype || '';
+            document.getElementById('hud-class').textContent = `${origin} ${archetype} ${dndCharacter.level || 1}`;
+
+            // HP bar
+            const currentHP = dndCharacter.current_hit_points || dndCharacter.hit_points || 10;
+            const maxHP = dndCharacter.max_hit_points || 10;
+            const hpPercent = Math.max(0, Math.min(100, (currentHP / maxHP) * 100));
+            document.getElementById('hud-hp-fill').style.width = hpPercent + '%';
+            document.getElementById('hud-hp-text').textContent = `${currentHP}/${maxHP} HP`;
+
+            // Change HP bar color based on health
+            const hpFill = document.getElementById('hud-hp-fill');
+            if (hpPercent <= 25) {
+                hpFill.style.background = 'linear-gradient(90deg, #8b3d3d, #c94444)';
+            } else if (hpPercent <= 50) {
+                hpFill.style.background = 'linear-gradient(90deg, #c9a044, #e8c47c)';
+            } else {
+                hpFill.style.background = 'linear-gradient(90deg, var(--accent-sage), #a8c9a8)';
+            }
+
+            // Stats
+            document.getElementById('hud-ac').textContent = dndCharacter.armor_class || 10;
+            const initMod = dndCharacter.initiative_modifier || 0;
+            document.getElementById('hud-init').textContent = (initMod >= 0 ? '+' : '') + initMod;
+            document.getElementById('hud-prof').textContent = '+' + (dndCharacter.proficiency_bonus || 2);
+        }
+
+        // Quick Actions
+        function quickAction(action) {
+            document.getElementById('player-input').value = action;
+            sendAction();
+        }
+
+        function showQuickActions(show = true) {
+            document.getElementById('quick-actions').style.display = show ? 'flex' : 'none';
+        }
+
+        // Undo/Retry Functions
+        function saveToHistory(playerInput, aiResponse) {
+            actionHistory.push({ playerInput, aiResponse });
+            if (actionHistory.length > MAX_HISTORY) {
+                actionHistory.shift();
+            }
+            lastPlayerInput = playerInput;
+            updateActionBar();
+        }
+
+        function updateActionBar() {
+            const actionBar = document.getElementById('action-bar');
+            const undoBtn = document.getElementById('undo-btn');
+            const retryBtn = document.getElementById('retry-btn');
+
+            actionBar.style.display = actionHistory.length > 0 ? 'flex' : 'none';
+            undoBtn.disabled = actionHistory.length < 2;
+            retryBtn.disabled = !lastPlayerInput;
+        }
+
+        function undoAction() {
+            if (actionHistory.length < 2) return;
+
+            // Remove current and previous passage
+            const storyContainer = document.getElementById('story-container');
+            const passages = storyContainer.querySelectorAll('.passage');
+            if (passages.length >= 2) {
+                passages[passages.length - 1].remove();  // Remove AI response
+                passages[passages.length - 2].remove();  // Remove player input
+            }
+
+            actionHistory.pop();  // Remove last action
+            updateActionBar();
+        }
+
+        async function retryAction() {
+            if (!lastPlayerInput) return;
+
+            // Remove last AI response
+            const storyContainer = document.getElementById('story-container');
+            const passages = storyContainer.querySelectorAll('.passage');
+            if (passages.length >= 1) {
+                const lastPassage = passages[passages.length - 1];
+                if (lastPassage.classList.contains('narrator')) {
+                    lastPassage.remove();
+                }
+            }
+
+            // Replay the action
+            document.getElementById('player-input').value = lastPlayerInput;
+            await sendAction();
+        }
 
         // Pre-made lore bases (placeholders - will be loaded from backend)
         const loreBases = {
@@ -1646,6 +2009,17 @@
                     addPassage(charSummary, 'system');
                 }
 
+                // Update the character HUD
+                updateCharacterHUD();
+
+                // Show quick actions
+                showQuickActions(true);
+
+                // Reset action history for new story
+                actionHistory = [];
+                lastPlayerInput = null;
+                updateActionBar();
+
                 // Send opening to get first narrative
                 await sendActionText(openingPrompt);
 
@@ -1705,6 +2079,15 @@
 
                 // Parse narrative for inventory changes
                 parseInventoryChanges(data.narrative);
+
+                // Save to history for undo/retry
+                saveToHistory(action, data.narrative);
+
+                // Update HUD if character data changed
+                if (data.character) {
+                    dndCharacter = data.character;
+                    updateCharacterHUD();
+                }
 
             } catch (err) {
                 hideLoading();
@@ -2514,6 +2897,9 @@
             .then(r => r.json())
             .then(data => console.log('API Status:', data))
             .catch(err => console.warn('API check:', err));
+
+        // Initialize features
+        initVoiceRecognition();
     </script>
 </body>
 </html>
