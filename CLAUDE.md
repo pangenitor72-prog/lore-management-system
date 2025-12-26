@@ -9,7 +9,8 @@ The Lore Management System (LMS) is a knowledge management system for maintainin
 **Core Architecture:**
 - **Backend:** Python 3.11+ / FastAPI / Neo4j graph database
 - **AI Integration:** Google Gemini API for contradiction detection, queries, and DM agent
-- **Frontend:** Streamlit UI (`app.py`) + React frontend in development (`frontend/`)
+- **Frontend:** React (served from `frontend/dist/index.html`)
+- **Rules Engine:** D&D 5e mechanics with visibility scaling (Storyteller → Tactician)
 
 ## Commands
 
@@ -21,10 +22,7 @@ pip install -r requirements.txt
 # Start Neo4j (required)
 docker-compose up -d
 
-# Run Streamlit UI
-streamlit run app.py
-
-# Run FastAPI server
+# Run FastAPI server (serves React frontend at http://localhost:8000)
 uvicorn src.api:app --reload
 ```
 
@@ -64,6 +62,12 @@ npm run dev
    - `engine/` - Scene generation, belief propagation, information flow
    - `runtime/` - Session management, gameplay rules, orchestration
    - Follows strict "Pressure-First Development" doctrine (see `docs/airpg/AIRPG_DEV_DOCTRINE.md`)
+
+3. **D&D 5e Rules (src/lms/dnd5e/)** - Mechanical rules layer
+   - `models/` - Character sheets, abilities, races, classes, archetypes
+   - `engine/` - Dice rolling, skill checks, combat resolution
+   - `creation/` - Character creation flows (Concept, Guided, Classic)
+   - `presentation/` - Visibility filtering (Storyteller → Tactician)
 
 ### Key Patterns
 

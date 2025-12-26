@@ -1,237 +1,164 @@
-# Lore Management System (LMS)
+# Lore Management System (LMS) + AIRPG
 
-A production-ready knowledge management system for maintaining narrative coherence in complex fictional worlds. Built as the **memory layer** for AIRPG - an AI-powered text-based RPG engine.
+A production-ready knowledge management system for maintaining narrative coherence in complex fictional worlds, with an integrated **AI-powered RPG engine** supporting any genre.
 
-## The Vision
+## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        AIRPG                                │
-│        (AI Dungeon Master - Text-Based RPG Game)            │
-│                                                             │
-│    Uses MANTLE engine for DM personality & rules            │
-│    Uses LMS as its "memory" for canonical lore              │
+│                     AIRPG RUNTIME                           │
+│     Genre-Agnostic AI RPG Engine (16+ Genres)               │
+│     React Frontend • FastAPI Backend • Neo4j Graph          │
 └─────────────────────────────────────────────────────────────┘
                               ↑
 ┌─────────────────────────────────────────────────────────────┐
-│                      MANTLE ENGINE                          │
-│    • Grounded DM personality (DM Prompt v2.3)               │
-│    • PC Sanctity - Never controls player character          │
-│    • Soft Corralling - Guides without blocking              │
-│    • Modified Rule of Cool - Rewards audacity               │
+│                   D&D 5e RULES ENGINE                       │
+│     • Runs under the hood (always consistent)               │
+│     • Visibility scales: Storyteller → Tactician            │
+│     • Genre-adapted terminology                             │
 └─────────────────────────────────────────────────────────────┘
                               ↑
 ┌─────────────────────────────────────────────────────────────┐
-│                    LMS (This Project)                       │
-│    • Neo4j Graph Database for relationship-aware queries    │
-│    • World Logic Charter (11 Laws of narrative coherence)   │
-│    • Gospel Principle (AI detects, humans decide)           │
-│    • Agentic Query System (natural language → lore)         │
+│                 LMS (Lore Management)                       │
+│     • Neo4j Graph Database (relationships + vectors)        │
+│     • Gospel Principle (AI detects, humans decide)          │
+│     • Contradiction detection & resolution                  │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-## Origin Story
-
-Built to solve a real problem: managing 30+ years of accumulated lore from a long-running D&D campaign. When you have decades of session notes, character backstories, and world history, maintaining consistency becomes impossible without systematic tooling.
-
-**The Challenge**: After 30 years of weekly D&D sessions, you have:
-- Thousands of NPCs, locations, and events
-- Conflicting accounts of the same events
-- Characters who may or may not be dead
-- Relationships that contradict each other
-- No single source of truth
-
-**The Solution**: LMS provides AI-assisted extraction, validation, and contradiction management to maintain narrative coherence at scale - and eventually powers an AI DM that can run games in this world.
-
-## Architecture
-
-### Data Layer: Neo4j Graph Database
-- **Nodes**: Entities (Characters, Factions, Locations, Items, Events, etc.)
-- **Edges**: Relationships (ally_of, enemy_of, located_in, member_of, etc.)
-- **Why Graph?**: Relationship traversal is natural - "Who are the Vulture Clan's allies?" is a simple graph query, not complex SQL JOINs.
-
-### Entity System (8 Types)
-- **CHARACTER**: Named individuals (PCs, NPCs)
-- **CREATURE**: Species, races, monster types
-- **DEITY**: Gods, cosmic entities
-- **LOCATION**: Places, regions, buildings
-- **FACTION**: Organizations, kingdoms, orders
-- **ITEM**: Weapons, artifacts, magical objects
-- **SPELL**: Incantations, rituals, magical effects
-- **EVENT**: Battles, ceremonies, historical moments
-
-### Multi-Agent AI System
-- **Ingestor**: Extracts entities and relationships from text files using Gemini
-- **QueryAgent**: RAG-powered natural language queries with agentic entity extraction
-- **AuditorAgent**: Contradiction detection and semantic analysis
-- **Gemini Integration**: AI-powered analysis and suggestions
-
-### Agentic Query Retrieval (3-Tier Strategy)
-1. **Agentic Extraction**: Gemini extracts entities from complex queries ("What happened when the dark one attacked?")
-2. **Reverse Match**: Find nodes whose names appear in the user's message
-3. **Keyword Search**: Traditional fallback for edge cases
 
 ## Key Features
 
-### 🎮 AIRpg - Play Mode
-- **AI Dungeon Master**: Grounded, ruleset-agnostic narrative DM
-- **Session 0**: Collaborative world/character/tone creation
-- **Save System**: 3 save slots + Continue button
-- **Boundary Enforcement**: Educates players on agency rules
-- **Entity Generation**: NPCs created during play are saved to the graph
+### Genre System (16 Genres)
+Mix up to 3 genres for unique narrative blends:
 
-### 🧠 NPC Personality (OCEAN Model)
-- **Psychologically-grounded NPCs** using Five-Factor personality model
-- **8 Archetypes**: Merchant, Guard, Scholar, Noble, Criminal, Priest, Warrior, Peasant
-- **Consistent behavior** across sessions driven by personality traits
-- **Dialogue style** adapts to personality (terse vs. talkative, warm vs. blunt)
+| Category | Genres |
+|----------|--------|
+| **Adventure** | Fantasy, Sci-Fi, Western, Superhero |
+| **Tension** | Horror, Mystery, Thriller, Post-Apocalyptic |
+| **Drama** | Romance, Drama, Historical, Steampunk |
+| **Speculative** | Cosmic Horror, Wuxia, Cyberpunk, Urban Fantasy |
 
-### Entity Extraction
-- AI-powered extraction from text files to Neo4j graph
-- Automatic relationship detection
-- Source file tracking for provenance
+Each genre has curated seed lore for immediate play.
 
-### Contradiction Management
-- Semantic contradiction detection using Gemini
-- AI-suggested reconciliation strategies
-- Gospel Principle enforcement (humans decide canon)
-- Full audit trail
+### Character Creation (3 Modes)
+- **Concept Mode**: Describe your character, AI generates the sheet
+- **Guided Mode**: Step-by-step with plain language explanations
+- **Classic Mode**: Full PHB-style manual control
 
-### World Logic Charter (11 Laws)
-Universal narrative coherence rules:
-1. **Conservation of Consequence** - No deus ex machina without setup
-2. **Limited Exception** - Magic has cost/consequence
-3. **Local Truth** - Exceptions must be consistent within scope
-4. **Reconcilable Conflict** - Contradictions resolvable via narrative
-5. **Persistent Identity** - Can't be alive AND dead without explanation
-6. **Temporal Ordering** - Cause before effect (usually)
-7. **Bounded Knowledge** - Characters know only what they could learn
-8. **Material Permanence** - Objects don't appear/vanish without mechanism
-9. **Proportional Power** - Abilities match background/training
-10. **Geographical Coherence** - Distance and travel time matter
-11. **Social Consistency** - Cultures operate by internal logic
+### Rules Visibility (4 Levels)
+The D&D 5e engine always runs, but presentation scales:
 
-## Technical Stack
+| Mode | Example Attack |
+|------|----------------|
+| **Storyteller** | "You strike true, your blade finding its mark." |
+| **Guided** | "You strike true (your training paid off here)." |
+| **Classic** | "You hit! [18 vs AC 15]" |
+| **Tactician** | "Hit! d20(14) + 4 = 18 vs AC 15. Damage: 2d6+3 = 11 slashing" |
 
-### Backend
-- **Python 3.11+** with FastAPI
-- **Neo4j** Graph Database (relationship-aware queries)
-- **Pydantic v2** for validation
-- **Google Gemini API** for AI features
+### AI Dungeon Master
+- MANTLE personality engine (grounded, consistent DM behavior)
+- Boundary enforcement (PC Sanctity - never controls player character)
+- Entity generation (NPCs created during play saved to graph)
+- OCEAN personality model for psychologically-grounded NPCs
 
-### Frontend Options
-- **Streamlit** UI (functional, basic)
-- **React** UI (in development)
-- "Haunting Machine" aesthetic (phosphor green terminal theme)
+### Lore Management
+- Neo4j graph database with 768-dim vector embeddings
+- Contradiction detection (semantic + rule-based)
+- Agentic query retrieval (natural language → lore)
+- World Logic Charter (11 laws of narrative coherence)
 
-## Project Structure
-```
-.
-├── src/
-│   ├── api.py               # FastAPI application
-│   ├── neo4j_adapter.py     # Neo4j database layer
-│   ├── dm_agent.py          # AI Dungeon Master agent
-│   ├── query_agent.py       # RAG-powered query agent
-│   ├── auditor_agent.py     # Contradiction detection
-│   ├── ingestor.py          # Entity extraction to Neo4j
-│   ├── boundary_enforcement.py  # Player agency rules
-│   ├── personality.py       # OCEAN personality system
-│   ├── entity_factory.py    # Entity generation templates
-│   ├── models.py            # Pydantic models
-│   └── prompts/             # AI prompt library
-│       ├── dm_prompts.py    # DM system prompts
-│       ├── boundary_prompts.py  # Reframe prompts
-│       └── auditor_prompts.py   # Auditor prompts
-├── docs/
-│   ├── NEO4J_SCHEMA.md      # Graph database schema
-│   ├── PLAYER_DM_CONTRACT.md  # Agency rules documentation
-│   ├── ARCHITECTURE.md      # System architecture
-│   └── ...                  # Other documentation
-├── lore/                    # Source lore files
-├── tests/                   # Test suite
-├── app.py                   # Streamlit UI (Play, Query, Ingest, Audit, Graph)
-└── docker-compose.yml       # Neo4j container setup
-```
+## Quick Start
 
-## Getting Started
-
-### Prerequisites
-- Python 3.11+
-- Neo4j (via Docker or local install)
-- Google Gemini API key
-
-### Setup
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Start Neo4j (via Docker)
+# Start Neo4j
 docker-compose up -d
 
-# Set up environment
+# Configure environment
 cp .env.example .env
 # Add: GEMINI_API_KEY, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 
-# Ingest lore files
-python src/ingestor.py
-
-# Run Streamlit UI
-streamlit run app.py
-
-# Or run FastAPI server
+# Run the server
 uvicorn src.api:app --reload
+
+# Open browser to http://localhost:8000
 ```
 
-## Current Status
+## Project Structure
 
-### Complete ✅
-- Fully migrated to a pure Neo4j graph database backend.
-- Legacy SQLite code and obsolete files removed.
-- Test suite stabilized and passing (74 passed, 1 skipped).
-- Neo4j graph integration with entity relationships
-- Entity extraction pipeline (text → graph)
-- Agentic query retrieval (3-tier strategy)
-- Contradiction detection (rule-based + semantic)
-- WebSocket integration for real-time updates
-- **AIRpg Play Mode** with AI Dungeon Master
-- **Session 0** collaborative world setup
-- **Save/Load System** with 3 slots + Continue
-- **Boundary Enforcement** for player agency
-- **OCEAN Personality System** for NPCs
-- **Entity Generation** during gameplay
-- "Haunting Machine" Streamlit UI
+```
+src/
+├── lms/                    # Lore Management System
+│   ├── api/                # FastAPI routes
+│   │   ├── routes.py       # Main API + frontend serving
+│   │   ├── game_routes.py  # Game session endpoints
+│   │   └── dnd_routes.py   # Character creation API
+│   ├── agents/             # AI agents (DM, Query, Auditor)
+│   ├── dnd5e/              # D&D 5e rules engine
+│   │   ├── models/         # Character sheets, abilities, etc.
+│   │   ├── engine/         # Dice, checks, combat resolution
+│   │   ├── creation/       # Character creation flows
+│   │   └── presentation/   # Visibility filtering
+│   ├── db/                 # Neo4j database layer
+│   └── services/           # Business logic
+├── airpg/                  # AI RPG engine
+│   ├── engine/             # Scene generation, belief propagation
+│   └── runtime/            # Session management, orchestration
+frontend/
+├── dist/                   # Production React build
+│   └── index.html          # Single-page app
+data/
+└── lore_bases/
+    └── seeds/              # Curated genre lore (16 genres)
+```
 
-### In Progress 🚧
-- React frontend wiring
-- Party knowledge filtering
-- Rules/mechanics integration (optional rulesets)
+## Technical Stack
 
-### Roadmap 📋
-See `ROADMAP.md` for full development plan:
-- **Phase XIII**: Session state management ✅
-- **Phase XIV**: Multi-modal (voice, maps)
-- **Phase XV**: Living world simulation
+- **Backend**: Python 3.11+ / FastAPI / Pydantic v2
+- **Database**: Neo4j (graph + vector search)
+- **AI**: Google Gemini API
+- **Frontend**: React (dist/index.html)
+- **Theme**: "Haunting Machine" (phosphor green terminal aesthetic)
 
-## Design Philosophy
+## Development
 
-### The Gospel Principle
-**"AI detects, humans decide"** - The system provides analysis and suggestions, but all canonical decisions are made by humans. No automatic changes to lore.
+```bash
+# Run tests
+pytest
 
-### Context Bleed Prevention
-The system explicitly prevents AI from injecting knowledge from training data. Only entities explicitly present in source documents are extracted.
+# Run with verbose output
+pytest -v
 
-### Three-Tier Validation
-1. **Universal Charter** (applies to all worlds)
-2. **Campaign Settings** (world-specific rules)
-3. **Local Truth** (location-specific exceptions)
+# Frontend development (if modifying React source)
+cd frontend && npm run dev
+```
+
+## Documentation
+
+- `CLAUDE.md` - AI assistant guidance
+- `docs/airpg/` - AIRPG architecture and doctrine
+- `docs/engineering/` - Technical guides
+- `docs/API_CONTRACT.md` - API documentation
+
+## Design Principles
+
+### Gospel Principle
+**"AI detects, humans decide"** - All canonical lore decisions require explicit human approval.
+
+### Rules Always Run
+D&D 5e mechanics resolve every action consistently. Only the *presentation* changes based on visibility mode.
+
+### Genre Agnostic
+The rules engine uses genre-adapted terminology (Origin/Archetype vs Race/Class) to support any narrative genre.
 
 ## Credits
 
-Created by: **Shawn King**  
-Campaign World: **Jim King's D&D Campaign** (30+ years)  
+Created by: **Shawn King**
+Campaign World: **Jim King's D&D Campaign** (30+ years)
 AI Architecture: Multi-agent coordination (Claude, Gemini)
 
-*"Managing decades of lore so the cosmic horrors stay consistent."* 🐙
-
 ## License
-[MIT License]
+
+MIT License

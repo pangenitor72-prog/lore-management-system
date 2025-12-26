@@ -1,71 +1,64 @@
-# 🗺️ The Lore Oracle Roadmap
+# AIRPG Development Roadmap
 
-This document outlines the strategic evolution of the Lore Oracle from a passive knowledge base to an active AI Dungeon Master system.
+## Current Status: Phase XVI Complete
 
-## 🟢 Phase XII: The Foundation (Current Status)
-**Goal:** Establish a robust memory layer and query interface.
-- [x] **Neo4j Graph Database:** Entities and relationships stored natively.
-- [x] **"Haunting Machine" UI:** Streamlit interface with thematic styling.
-- [x] **AI Ingestion:** Upload text/lore files -> Auto-extract entities to graph.
-- [x] **The Oracle (RAG):** Natural language Q&A using 4-tier retrieval strategy.
-- [x] **Graph Nexus:** Interactive visualization of the knowledge graph.
-- [x] **Truth Auditor:** Verify new lore against established canon.
+The system has evolved from a lore management tool into a full genre-agnostic AI RPG engine.
 
 ---
 
-## 🟢 Phase XIII: The Active Session (COMPLETE)
-**Goal:** Transform the tool from a wiki into a live Game Master's assistant.
+## Phase XII-XIII: Foundation (Complete)
+- Neo4j graph database with vector embeddings
+- AI ingestion pipeline (text → entities)
+- Query agent with 4-tier retrieval
+- AI Dungeon Master with MANTLE personality
+- Save/Load system
+- OCEAN personality model for NPCs
 
-### 1. Session State Manager ✅
-- [x] Create a **"Play AIRpg"** mode with prominent button in sidebar.
-- [x] **Session 0** - Collaborative world/character/tone setup.
-- [x] **Save/Load System** - 3 save slots + Continue button.
-- [x] Track session state (history, answers) in Neo4j GameSession nodes.
+## Phase XIV: Genre & Rules (Complete)
+- **16 Genre System** with mixing (up to 3 genres)
+- **D&D 5e Rules Engine** running under the hood
+- **Visibility Scaling** (Storyteller → Tactician)
+- **Character Creation** (Concept, Guided, Classic modes)
+- **Genre-Adapted Terminology** (Origin/Archetype)
+- **Curated Seed Lore** per genre
+- **React Frontend** as primary UI
 
-### 2. AI Dungeon Master ✅
-- [x] **DMAgent** - Full AI DM with grounded narrative generation.
-- [x] **Boundary Enforcement** - Detects and educates on player agency violations.
-- [x] **Entity Generation** - NPCs created during play saved to graph.
-- [x] **OCEAN Personality System** - Psychologically-grounded NPC behavior.
-
-### 3. Live World Updates (Partial)
-- [x] **Quick-Add Entity:** NPCs generated during play are automatically saved.
-- [ ] **Natural Language Action Parsing:** (Future) "The party kills Kael" → status update.
-
-### 4. Rules & Mechanics Integration (Future)
-- [ ] **Dice Roller:** Optional ruleset integration.
-- [ ] **Rules Oracle:** SRD indexing for rules questions.
-
----
-
-## 🔵 Phase XIV: The Senses (Multi-Modal)
-**Goal:** Expand input/output capabilities beyond text.
-
-### 1. Voice of the Oracle
-- [ ] **Text-to-Speech (TTS):** The Oracle reads lore descriptions aloud in a distinct, haunting voice.
-- [ ] **Speech-to-Text (STT):** Dictate notes or dialogue directly to the system.
-
-### 2. The Cartographer's Eye
-- [ ] **Map Analysis:** Upload an image of a fantasy map.
-- [ ] **Visual Extraction:** AI identifies "Forest," "Castle," "Road" and creates Location nodes with spatial relationships.
+## Phase XV: Polish (Current)
+- [ ] Documentation consolidation
+- [ ] Streamlit UI deprecation
+- [ ] Test coverage expansion
+- [ ] Performance optimization
 
 ---
 
-## 🟣 Phase XV: The Living World (Simulation)
-**Goal:** The world acts on its own when players aren't looking.
+## Future Phases
 
-### 1. Faction Turns
-- [ ] **Background Simulation:** Between sessions, the AI reviews Faction goals.
-- [ ] **Event Generation:** "The Vulture Clan attacks the Iron Brotherhood." -> Generates `Event` nodes and updates relationships.
+### Phase XVI: Multi-Modal
+- Voice input/output (TTS/STT)
+- Map image analysis
+- Visual scene generation
 
-### 2. Quest Generator
-- [ ] **Loose End Detector:** Scan graph for unresolved plot hooks.
-- [ ] **Procedural Missions:** Generate quest prompts based on players' current location and enemies.
+### Phase XVII: Living World
+- Faction turn simulation
+- Background event generation
+- Quest generation from loose ends
+
+### Phase XVIII: Multiplayer
+- Multiple player sessions
+- Shared world state
+- Async play support
+
+### Phase XIX: VTT Integration
+- Battle grid/map canvas
+- Token positioning
+- Line-of-sight calculations
+- Integration with Roll20/Foundry
 
 ---
 
-## ☁️ Deployment Strategy
-- **Database:** Neo4j AuraDB (Cloud Managed)
-- **Application:** Streamlit Community Cloud
-- **Access:** Shared URL for DM (and potentially players with restricted view).
+## Design Constraints
 
+1. **Gospel Principle**: AI detects, humans decide
+2. **Rules Always Run**: Mechanics consistent, only presentation scales
+3. **Genre Agnostic**: Support any narrative genre
+4. **Theater of Mind**: Text-first, VTT optional future
