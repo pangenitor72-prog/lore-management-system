@@ -1,13 +1,22 @@
-"""D&D 5e API Routes."""
+"""d20 Rules Engine API Routes (genre-agnostic with D&D 5e compatibility)."""
 
 import logging
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
-from ..dnd5e.models.races import RaceName, RACES, get_all_races
-from ..dnd5e.models.classes import ClassName, CLASSES, get_all_classes
-from ..dnd5e.models.character_sheet import CharacterSheet
+# Genre system
+from ..dnd5e.genre import GenreConfig, get_genre, get_available_genres
+
+# Models (generic with backward-compatible aliases)
+from ..dnd5e.models import (
+    get_origin, get_origins_for_genre,
+    get_archetype, get_archetypes_for_genre,
+    get_ability, get_abilities_for_genre,
+    CharacterSheet,
+    # Backward compatible
+    RACES, CLASSES, get_all_races, get_all_classes,
+)
 from ..dnd5e.creation.modes import (
     CreationMode, RulesVisibility, DEFAULT_VISIBILITY,
     get_mode_description, get_visibility_description
@@ -21,7 +30,7 @@ from ..dnd5e.presentation.visibility import VisibilityFilter
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/dnd", tags=["D&D 5e"])
+router = APIRouter(prefix="/dnd", tags=["d20 Rules Engine"])
 
 
 # Request/Response Models
@@ -29,21 +38,37 @@ router = APIRouter(prefix="/dnd", tags=["D&D 5e"])
 class CharacterCreateRequest(BaseModel):
     """Request to create a character."""
     mode: CreationMode = CreationMode.GUIDED
+    genre: str = "fantasy"  # fantasy, scifi, modern, horror
     concept: Optional[str] = None  # For CONCEPT mode
     name: Optional[str] = None
+    origin: Optional[str] = None  # Generic term (race in fantasy)
+    archetype: Optional[str] = None  # Generic term (class in fantasy)
+    # Backward compatible aliases
     race: Optional[str] = None
     character_class: Optional[str] = None
     ability_assignments: Optional[Dict[str, int]] = None  # For CLASSIC mode
     skill_proficiencies: Optional[List[str]] = None
     player_id: str = ""
 
+    def get_origin(self) -> Optional[str]:
+        """Get origin, preferring new field over legacy."""
+        return self.origin or self.race
+
+    def get_archetype(self) -> Optional[str]:
+        """Get archetype, preferring new field over legacy."""
+        return self.archetype or self.character_class
+
 
 class CharacterResponse(BaseModel):
     """Summary response for a character."""
     character_id: str
     name: str
-    race: str
-    character_class: str
+    genre: str = "fantasy"
+    origin: str  # Generic term
+    archetype: str  # Generic term
+    # Backward compatible aliases
+    race: str = ""
+    character_class: str = ""
     level: int
     hit_points: int
     max_hit_points: int
@@ -115,36 +140,114 @@ _visibility_settings: Dict[str, RulesVisibility] = {}
 
 # Endpoints
 
+# =============================================================================
+# GENRE ENDPOINTS
+# =============================================================================
+
+@router.get("/genres")
+async def list_genres():
+    """Get all available genres with their descriptions."""
+    return get_available_genres()
+
+
+@router.get("/genres/{genre_id}")
+async def get_genre_details(genre_id: str):
+    """Get detailed information about a specific genre."""
+    genre = get_genre(genre_id)
+    return {
+        "id": genre.id.value,
+        "name": genre.name,
+        "description": genre.description,
+        "terminology": genre.terminology.model_dump(),
+        "example_origins": genre.example_origins,
+        "example_archetypes": genre.example_archetypes,
+        "has_magic": genre.has_magic,
+        "gritty_mode": genre.gritty_mode,
+        "sanity_system": genre.sanity_system,
+    }
+
+
+@router.get("/genres/{genre_id}/origins")
+async def list_origins_for_genre(genre_id: str):
+    """Get all available origins for a genre."""
+    origins = get_origins_for_genre(genre_id)
+    genre = get_genre(genre_id)
+    return {
+        "genre": genre_id,
+        "term": genre.terminology.origin,
+        "term_plural": genre.terminology.origin_plural,
+        "origins": [
+            {
+                "id": origin.id,
+                "name": origin.display_name,
+                "description": origin.description,
+                "ability_bonuses": origin.ability_bonuses,
+                "traits": origin.traits,
+                "speed": origin.speed,
+            }
+            for origin in origins
+        ]
+    }
+
+
+@router.get("/genres/{genre_id}/archetypes")
+async def list_archetypes_for_genre(genre_id: str):
+    """Get all available archetypes for a genre."""
+    archetypes = get_archetypes_for_genre(genre_id)
+    genre = get_genre(genre_id)
+    return {
+        "genre": genre_id,
+        "term": genre.terminology.archetype,
+        "term_plural": genre.terminology.archetype_plural,
+        "archetypes": [
+            {
+                "id": arch.id,
+                "name": arch.display_name,
+                "description": arch.description,
+                "hit_die": arch.hit_die.value,
+                "primary_ability": arch.primary_ability,
+                "features": arch.features_by_level.get(1, []),
+                "has_powers": arch.has_powers,
+            }
+            for arch in archetypes
+        ]
+    }
+
+
+# =============================================================================
+# BACKWARD COMPATIBLE REFERENCE ENDPOINTS (Fantasy/D&D 5e)
+# =============================================================================
+
 @router.get("/reference/races", response_model=List[RaceResponse])
 async def list_races():
-    """Get all available races with their details."""
+    """Get all available races (fantasy origins). Backward compatible."""
     return [
         RaceResponse(
-            id=race.name.value,
-            name=race.display_name,
-            description=race.description,
-            ability_bonuses=race.ability_bonuses,
-            traits=race.traits,
-            speed=race.speed,
+            id=origin.id,
+            name=origin.display_name,
+            description=origin.description,
+            ability_bonuses=origin.ability_bonuses,
+            traits=origin.traits,
+            speed=origin.speed,
         )
-        for race in get_all_races()
+        for origin in get_origins_for_genre("fantasy")
     ]
 
 
 @router.get("/reference/classes", response_model=List[ClassResponse])
 async def list_classes():
-    """Get all available classes with their details."""
+    """Get all available classes (fantasy archetypes). Backward compatible."""
     return [
         ClassResponse(
-            id=cls.name.value,
-            name=cls.display_name,
-            description=cls.description,
-            hit_die=cls.hit_die.value,
-            primary_ability=cls.primary_ability,
-            features=cls.features_by_level.get(1, []),
-            spellcasting=cls.spellcasting,
+            id=arch.id,
+            name=arch.display_name,
+            description=arch.description,
+            hit_die=arch.hit_die.value,
+            primary_ability=arch.primary_ability,
+            features=arch.features_by_level.get(1, []),
+            spellcasting=arch.has_powers,
         )
-        for cls in get_all_classes()
+        for arch in get_archetypes_for_genre("fantasy")
     ]
 
 
@@ -194,24 +297,34 @@ async def create_character_from_concept(request: CharacterCreateRequest):
     Create a character from a natural language concept.
 
     Example: "A gruff dwarf blacksmith who became an adventurer"
+    Supports all genres - concept will be interpreted in genre context.
     """
     if not request.concept:
         raise HTTPException(status_code=400, detail="Concept is required for concept mode")
 
-    generator = ConceptGenerator()
+    genre = request.genre or "fantasy"
+    generator = ConceptGenerator(genre=genre)
     character = generator.generate_from_concept_sync(
         request.concept,
         player_id=request.player_id,
     )
 
     _characters[character.character_id] = character
-    logger.info(f"Created character from concept: {character.name}")
+    logger.info(f"Created {genre} character from concept: {character.name}")
+
+    # Get display names using genre-aware lookups
+    origin_data = get_origin(character.origin, genre)
+    archetype_data = get_archetype(character.archetype, genre)
 
     return CharacterResponse(
         character_id=character.character_id,
         name=character.name,
-        race=RACES[character.race].display_name,
-        character_class=CLASSES[character.character_class].display_name,
+        genre=genre,
+        origin=origin_data.display_name if origin_data else character.origin,
+        archetype=archetype_data.display_name if archetype_data else character.archetype,
+        # Backward compatible
+        race=origin_data.display_name if origin_data else character.origin,
+        character_class=archetype_data.display_name if archetype_data else character.archetype,
         level=character.level,
         hit_points=character.current_hit_points,
         max_hit_points=character.max_hit_points,

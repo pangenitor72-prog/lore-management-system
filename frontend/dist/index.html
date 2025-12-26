@@ -804,9 +804,18 @@
                 </p>
                 <div class="tone-options" style="margin-bottom: 15px;">
                     <span class="tone-chip rules-chip selected" data-rules="narrative" onclick="selectRulesMode('narrative')">Pure Narrative</span>
-                    <span class="tone-chip rules-chip" data-rules="dnd" onclick="selectRulesMode('dnd')">D&D 5e Rules</span>
+                    <span class="tone-chip rules-chip" data-rules="dnd" onclick="selectRulesMode('dnd')">d20 RPG Rules</span>
                 </div>
                 <div id="dnd-options" style="display: none; margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Genre:</label>
+                        <select id="rules-genre" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
+                            <option value="fantasy" selected>Fantasy - Swords, sorcery, mythical creatures</option>
+                            <option value="scifi">Sci-Fi - Space, technology, alien species</option>
+                            <option value="modern">Modern - Contemporary setting, realistic skills</option>
+                            <option value="horror">Horror - Dark mysteries, supernatural threats</option>
+                        </select>
+                    </div>
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Rules Visibility:</label>
                         <select id="rules-visibility" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
@@ -821,11 +830,11 @@
                         <select id="creation-mode" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
                             <option value="concept" selected>Quick Start - AI generates from your description</option>
                             <option value="guided">Guided - Step-by-step with explanations</option>
-                            <option value="classic">Classic - Traditional D&D creation</option>
+                            <option value="classic">Classic - Traditional character creation</option>
                         </select>
                     </div>
                     <p class="hint" style="margin-top: 10px; font-size: 0.85rem;">
-                        Your character description above will be used to generate a D&D character. You can view your character sheet anytime during play.
+                        Your character description will be interpreted in the selected genre. You can view your character sheet anytime during play.
                     </p>
                 </div>
             </div>
@@ -1214,6 +1223,7 @@
 
         // D&D 5e State
         let rulesMode = 'narrative';  // 'narrative' or 'dnd'
+        let rulesGenre = 'fantasy';  // 'fantasy', 'scifi', 'modern', 'horror'
         let rulesVisibility = 'guided';  // storyteller, guided, classic, tactician
         let creationMode = 'concept';  // concept, guided, classic
         let dndCharacter = null;  // Current D&D character sheet
@@ -1473,6 +1483,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         mode: creationMode,
+                        genre: rulesGenre,
                         concept: concept || 'A brave adventurer seeking glory',
                         player_id: currentSessionId
                     })
@@ -1547,6 +1558,7 @@
 
             // Get D&D settings if enabled
             if (rulesMode === 'dnd') {
+                rulesGenre = document.getElementById('rules-genre').value;
                 rulesVisibility = document.getElementById('rules-visibility').value;
                 creationMode = document.getElementById('creation-mode').value;
             }
@@ -1595,6 +1607,12 @@
                     document.getElementById('story-info').textContent = dndCharacter.name + ' - Level ' + dndCharacter.level + ' ' + dndCharacter.character_class;
                     // Show the Character Sheet button
                     document.getElementById('char-sheet-btn').style.display = 'inline-block';
+                    // Add starting equipment to inventory
+                    if (dndCharacter.equipment && dndCharacter.equipment.length > 0) {
+                        dndCharacter.equipment.forEach(item => {
+                            addToInventory({ name: item, description: 'Starting equipment' });
+                        });
+                    }
                 } else {
                     document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
                     document.getElementById('char-sheet-btn').style.display = 'none';
