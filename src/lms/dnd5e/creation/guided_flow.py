@@ -42,8 +42,9 @@ class GuidedCreationFlow:
         "leadership": ["charisma", "wisdom"],
     }
 
-    def __init__(self):
+    def __init__(self, genre: str = "fantasy"):
         self.state = GuidedCreationState()
+        self.genre = genre  # Store for future genre-specific content
 
     def get_current_step(self) -> int:
         return self.state.step

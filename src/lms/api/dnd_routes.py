@@ -404,15 +404,29 @@ async def create_character_from_concept(request: CharacterCreateRequest):
     )
 
 
+class GuidedStartRequest(BaseModel):
+    """Request to start guided creation."""
+    genre: str = "fantasy"
+    player_id: str = ""
+
+
 @router.post("/characters/guided/start")
-async def start_guided_creation(player_id: str = ""):
+async def start_guided_creation(request: GuidedStartRequest = None, player_id: str = "", genre: str = "fantasy"):
     """Start a guided character creation flow."""
-    flow = GuidedCreationFlow()
-    flow_id = f"guided_{player_id or 'anon'}_{len(_creation_flows)}"
-    _creation_flows[flow_id] = flow
+    # Handle both body and query params
+    actual_genre = request.genre if request else genre
+    actual_player_id = request.player_id if request else player_id
+
+    flow = GuidedCreationFlow(genre=actual_genre)
+    flow_id = f"guided_{actual_player_id or 'anon'}_{len(_creation_flows)}"
+    _creation_flows[flow_id] = {
+        "flow": flow,
+        "genre": actual_genre,
+    }
 
     return {
         "flow_id": flow_id,
+        "genre": actual_genre,
         "step": flow.get_current_step(),
         "content": flow.get_step_content(),
     }
@@ -421,9 +435,17 @@ async def start_guided_creation(player_id: str = ""):
 @router.post("/characters/guided/{flow_id}/step")
 async def guided_creation_step(flow_id: str, request: GuidedStepRequest):
     """Submit a choice for the current guided creation step."""
-    flow = _creation_flows.get(flow_id)
-    if not flow:
+    flow_data = _creation_flows.get(flow_id)
+    if not flow_data:
         raise HTTPException(status_code=404, detail="Creation flow not found")
+
+    # Handle both old (direct flow) and new (dict with flow+genre) format
+    if isinstance(flow_data, dict):
+        flow = flow_data.get("flow")
+        genre = flow_data.get("genre", "fantasy")
+    else:
+        flow = flow_data
+        genre = "fantasy"
 
     step = flow.get_current_step()
 
@@ -449,6 +471,7 @@ async def guided_creation_step(flow_id: str, request: GuidedStepRequest):
     if flow.get_current_step() == 5:
         return {
             "flow_id": flow_id,
+            "genre": genre,
             "step": flow.get_current_step(),
             "content": flow.get_step_content(),
             "ready_to_finalize": True,
@@ -456,20 +479,36 @@ async def guided_creation_step(flow_id: str, request: GuidedStepRequest):
 
     return {
         "flow_id": flow_id,
+        "genre": genre,
         "step": flow.get_current_step(),
         "content": flow.get_step_content(),
     }
 
 
+class GuidedFinalizeRequest(BaseModel):
+    """Request to finalize guided creation."""
+    player_id: str = ""
+
+
 @router.post("/characters/guided/{flow_id}/finalize", response_model=CharacterResponse)
-async def finalize_guided_creation(flow_id: str, player_id: str = ""):
+async def finalize_guided_creation(flow_id: str, request: GuidedFinalizeRequest = None, player_id: str = ""):
     """Finalize the guided creation and create the character."""
-    flow = _creation_flows.get(flow_id)
-    if not flow:
+    flow_data = _creation_flows.get(flow_id)
+    if not flow_data:
         raise HTTPException(status_code=404, detail="Creation flow not found")
 
+    # Handle both old (direct flow) and new (dict with flow+genre) format
+    if isinstance(flow_data, dict):
+        flow = flow_data.get("flow")
+        genre = flow_data.get("genre", "fantasy")
+    else:
+        flow = flow_data
+        genre = "fantasy"
+
+    actual_player_id = request.player_id if request else player_id
+
     try:
-        character = flow.finalize(player_id)
+        character = flow.finalize(actual_player_id)
         _characters[character.character_id] = character
 
         # Clean up flow
@@ -477,11 +516,19 @@ async def finalize_guided_creation(flow_id: str, player_id: str = ""):
 
         logger.info(f"Finalized guided character: {character.name}")
 
+        # Get display names using genre-aware lookups
+        origin_data = get_origin(character.origin, genre)
+        archetype_data = get_archetype(character.archetype, genre)
+
         return CharacterResponse(
             character_id=character.character_id,
             name=character.name,
-            race=RACES[character.race].display_name,
-            character_class=CLASSES[character.character_class].display_name,
+            genre=genre,
+            origin=origin_data.display_name if origin_data else character.origin,
+            archetype=archetype_data.display_name if archetype_data else character.archetype,
+            # Backward compatible
+            race=origin_data.display_name if origin_data else character.origin,
+            character_class=archetype_data.display_name if archetype_data else character.archetype,
             level=character.level,
             hit_points=character.current_hit_points,
             max_hit_points=character.max_hit_points,

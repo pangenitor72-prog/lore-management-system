@@ -31,6 +31,13 @@ from src.lms.agents.lore_parsing_agent import LoreParsingAgent
 from src.lms.guardrails.token_budget import TokenTracker, BudgetExceeded, RateLimitExceeded, estimate_tokens
 from src.lms.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
+# D&D Rules Integration
+from src.lms.api.dnd_routes import _characters
+from src.lms.dnd5e.engine.checks import CheckEngine, SKILL_TO_ABILITY
+from src.lms.dnd5e.engine.combat_resolver import CombatResolver
+from src.lms.dnd5e.presentation.visibility import VisibilityFilter
+from src.lms.dnd5e.creation.modes import RulesVisibility
+
 logger = logging.getLogger(__name__)
 
 # Shared lore parsing agent for extracting entities from gameplay
@@ -156,9 +163,26 @@ class SessionCreateRequest(BaseModel):
         default="fantasy",
         description="Story genre (fantasy, romance, mystery, horror, adventure, drama)"
     )
+    genres: Optional[List[str]] = Field(
+        default=None,
+        description="Multiple genres for blending (e.g., ['romance', 'mystery'])"
+    )
     storytelling_style: Optional[str] = Field(
         default="guided",
         description="How structured: guided, freeform, or collaborative"
+    )
+    # D&D Rules Integration
+    character_id: Optional[str] = Field(
+        default=None,
+        description="D&D character ID for rules-based play"
+    )
+    rules_mode: Optional[str] = Field(
+        default="narrative",
+        description="'narrative' for story-only, 'dnd' for d20 rules"
+    )
+    rules_visibility: Optional[str] = Field(
+        default="guided",
+        description="How much mechanical info to show: storyteller, guided, classic, tactician"
     )
 
 
@@ -184,6 +208,9 @@ class DMResponse(BaseModel):
     arc_context: Optional[Dict[str, Any]] = None
     suggested_actions: Optional[List[str]] = None
     episode_status: Optional[Dict[str, Any]] = None
+    # D&D Rules Integration
+    mechanical_result: Optional[Dict[str, Any]] = None  # Roll results, damage, etc.
+    character_update: Optional[Dict[str, Any]] = None  # HP changes, conditions, etc.
 
 
 # ============================================================
@@ -301,6 +328,128 @@ def get_dm_agent(request: Request):
     if not hasattr(request.app.state, "dm_agent") or request.app.state.dm_agent is None:
         return None
     return request.app.state.dm_agent
+
+
+# ============================================================
+# D&D RULES INTEGRATION
+# ============================================================
+
+# Action keywords for detecting mechanical intent
+ATTACK_KEYWORDS = ["attack", "strike", "hit", "slash", "stab", "shoot", "punch", "kick", "swing at", "fire at"]
+SKILL_KEYWORDS = {
+    "stealth": ["sneak", "hide", "stealth", "creep", "silently", "quietly"],
+    "perception": ["look", "search", "notice", "spot", "see", "watch", "observe", "listen"],
+    "athletics": ["climb", "jump", "swim", "push", "pull", "lift", "run", "sprint"],
+    "acrobatics": ["flip", "tumble", "balance", "dodge", "roll"],
+    "persuasion": ["convince", "persuade", "charm", "negotiate", "talk", "reason with"],
+    "deception": ["lie", "bluff", "deceive", "trick", "mislead"],
+    "intimidation": ["threaten", "intimidate", "scare", "frighten", "menace"],
+    "insight": ["read", "sense motive", "tell if", "detect lie", "understand intention"],
+    "investigation": ["investigate", "examine", "analyze", "deduce", "figure out", "search for clues"],
+    "arcana": ["identify magic", "recall arcane", "recognize spell"],
+    "history": ["remember", "recall history", "know about"],
+    "nature": ["identify plant", "track", "forage", "identify animal"],
+    "medicine": ["heal", "stabilize", "diagnose", "treat wound"],
+    "survival": ["track", "hunt", "find food", "navigate", "make camp"],
+}
+
+
+def detect_mechanical_action(action: str) -> Optional[Dict[str, Any]]:
+    """
+    Detect if player action requires mechanical resolution.
+
+    Returns:
+        Dict with action_type and details, or None if purely narrative
+    """
+    action_lower = action.lower()
+
+    # Check for attack intent
+    for keyword in ATTACK_KEYWORDS:
+        if keyword in action_lower:
+            return {
+                "action_type": "attack",
+                "keyword": keyword,
+                "raw_action": action,
+            }
+
+    # Check for skill check intent
+    for skill, keywords in SKILL_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in action_lower:
+                return {
+                    "action_type": "skill_check",
+                    "skill": skill,
+                    "keyword": keyword,
+                    "raw_action": action,
+                }
+
+    return None
+
+
+def resolve_mechanical_action(
+    action_info: Dict[str, Any],
+    character,
+    visibility: RulesVisibility,
+) -> Dict[str, Any]:
+    """
+    Resolve a mechanical action using the D&D 5e engine.
+
+    Returns:
+        Dict with roll result, narrative description, and any state changes
+    """
+    result = {
+        "action_type": action_info["action_type"],
+        "rolls": [],
+        "narrative_hint": "",
+        "character_update": None,
+    }
+
+    if action_info["action_type"] == "attack":
+        # Resolve attack against default AC (will be refined with actual targets)
+        target_ac = 13  # Default moderate difficulty
+        attack = CombatResolver.resolve_attack(character, target_ac)
+        filtered = VisibilityFilter.filter_attack_result(attack, visibility)
+
+        result["rolls"].append({
+            "type": "attack",
+            "roll": attack.attack_roll,
+            "modifier": attack.attack_modifier,
+            "total": attack.attack_total,
+            "is_hit": attack.is_hit,
+            "is_critical": attack.is_critical,
+            "display": filtered.get("display", ""),
+        })
+
+        if attack.is_hit and attack.damage_roll:
+            result["rolls"].append({
+                "type": "damage",
+                "damage": attack.damage_total,
+                "damage_type": attack.damage_type,
+            })
+
+        result["narrative_hint"] = filtered.get("description", attack.narrative_outcome)
+
+    elif action_info["action_type"] == "skill_check":
+        skill = action_info["skill"]
+        dc = 15  # Default moderate difficulty
+
+        check = CheckEngine.skill_check(character, skill, dc)
+        filtered = VisibilityFilter.filter_check_result(check, visibility)
+
+        result["rolls"].append({
+            "type": "skill",
+            "skill": skill,
+            "roll": check.roll,
+            "modifier": check.modifier,
+            "total": check.total,
+            "dc": dc,
+            "success": check.success,
+            "display": filtered.get("display", ""),
+        })
+
+        result["narrative_hint"] = filtered.get("description", check.narrative_outcome)
+
+    return result
 
 
 # ============================================================
@@ -517,6 +666,11 @@ async def create_session(
     # Determine initial phase
     phase = "session_0" if not session_req.world_id else "active_play"
 
+    # Build genre blend string for storytelling
+    genre_blend = session_req.genre or "fantasy"
+    if session_req.genres and len(session_req.genres) > 1:
+        genre_blend = " + ".join(session_req.genres)
+
     session_data = {
         "session_id": session_id,
         "world_id": session_req.world_id,
@@ -524,12 +678,18 @@ async def create_session(
         "setting_preference": session_req.setting_preference,
         "tone_preference": session_req.tone_preference,
         "genre": session_req.genre or "fantasy",
+        "genres": session_req.genres or [session_req.genre or "fantasy"],
+        "genre_blend": genre_blend,
         "storytelling_style": session_req.storytelling_style or "guided",
         "phase": phase,
         "status": "active",
         "created_at": now,
         "history": [],
         "session_0_answers": {},
+        # D&D Rules Integration
+        "character_id": session_req.character_id,
+        "rules_mode": session_req.rules_mode or "narrative",
+        "rules_visibility": session_req.rules_visibility or "guided",
     }
 
     _active_sessions[session_id] = session_data
@@ -593,6 +753,7 @@ async def process_action(
     Process a player action and return the DM's response.
 
     Handles both Session 0 (world-building) and active play.
+    Integrates D&D 5e rules when a character is present.
     """
     logger.info(f"Action request received for session {session_id}")
 
@@ -616,6 +777,40 @@ async def process_action(
     # Get optional database
     db = get_optional_neo4j_db(request)
 
+    # D&D Rules Integration - detect and resolve mechanical actions
+    mechanical_result = None
+    character_update = None
+    mechanical_context = ""
+
+    if session.get("rules_mode") == "dnd" and session.get("character_id"):
+        character = _characters.get(session["character_id"])
+        if character:
+            # Detect mechanical action
+            action_info = detect_mechanical_action(action.action)
+            if action_info:
+                try:
+                    visibility = RulesVisibility(session.get("rules_visibility", "guided"))
+                    mechanical_result = resolve_mechanical_action(action_info, character, visibility)
+
+                    # Build context for AI narrative
+                    if mechanical_result.get("rolls"):
+                        roll = mechanical_result["rolls"][0]
+                        if roll.get("type") == "attack":
+                            if roll.get("is_hit"):
+                                dmg = mechanical_result["rolls"][1]["damage"] if len(mechanical_result["rolls"]) > 1 else 0
+                                mechanical_context = f"[MECHANICAL: Attack HIT for {dmg} damage. Incorporate this success into your narrative.]"
+                            else:
+                                mechanical_context = "[MECHANICAL: Attack MISSED. Describe the miss narratively.]"
+                        elif roll.get("type") == "skill":
+                            if roll.get("success"):
+                                mechanical_context = f"[MECHANICAL: {roll['skill'].title()} check SUCCEEDED. The character accomplishes their goal.]"
+                            else:
+                                mechanical_context = f"[MECHANICAL: {roll['skill'].title()} check FAILED. Describe a complication or setback.]"
+
+                    logger.info(f"Mechanical action resolved: {mechanical_result['action_type']}")
+                except Exception as e:
+                    logger.warning(f"Failed to resolve mechanical action: {e}")
+
     # Add action to history
     session["history"].append({"role": "user", "content": action.action})
 
@@ -626,17 +821,15 @@ async def process_action(
         )
         session["phase"] = new_phase
     else:
-        # Active play - generate DM response
+        # Active play - generate DM response (with mechanical context if applicable)
         response_text = await _handle_active_play(
-            session, action.action, model, db
+            session, action.action, model, db, mechanical_context
         )
 
     # Add response to history
     session["history"].append({"role": "assistant", "content": response_text})
 
     # Extract and store lore entities from the narrative (fire-and-forget)
-    # This runs in the background so it doesn't slow down the response
-    # Link entities to the session's world if one is set
     asyncio.create_task(
         extract_and_store_gameplay_lore(
             response_text,
@@ -650,6 +843,8 @@ async def process_action(
         narrative=response_text,
         session_id=session_id,
         phase=session["phase"],
+        mechanical_result=mechanical_result,
+        character_update=character_update,
     )
 
 
@@ -829,6 +1024,7 @@ async def _handle_active_play(
     player_input: str,
     model,
     db: Optional[Neo4jDatabase],
+    mechanical_context: str = "",
 ) -> str:
     """Handle active gameplay with genre-aware storytelling."""
     answers = session.get("session_0_answers", {})
@@ -868,9 +1064,22 @@ async def _handle_active_play(
         except Exception:
             pass
 
+    # Build character context if D&D character exists
+    char_context = ""
+    if session.get("character_id"):
+        dnd_char = _characters.get(session["character_id"])
+        if dnd_char:
+            char_context = f"""
+CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
+- Level {dnd_char.level}, {dnd_char.current_hit_points}/{dnd_char.max_hit_points} HP
+- Skills: {', '.join(dnd_char.skill_proficiencies[:4])}"""
+
+    # Handle genre blending
+    genre_display = session.get("genre_blend", genre)
+
     prompt = f"""You are a master storyteller continuing someone's personal mythology.
 
-GENRE: {genre.upper()}
+GENRE: {genre_display.upper()}
 Genre elements: {genre_info['elements']}
 Narrative voice: {genre_info['voice']}
 
@@ -880,6 +1089,7 @@ STORYTELLING STYLE: {style}
 
 SETTING: {setting if setting else 'an evocative world'}
 PROTAGONIST: {character if character else 'the protagonist'}
+{char_context}
 
 STORY SO FAR:
 {history_text if history_text else 'The story is just beginning.'}
@@ -888,10 +1098,11 @@ WORLD KNOWLEDGE:
 {lore_context if lore_context else 'Let the world reveal itself naturally.'}
 
 PLAYER'S ACTION: {player_input}
+{mechanical_context}
 
 Continue the narrative:
 - React naturally to what the player did or said
-- Use sensory details that fit the {genre} genre
+- Use sensory details that fit the {genre_display} genre
 - Maintain the {tone} tone throughout
 - Never speak for the player or assume their thoughts
 - If they're exploring, reward their curiosity with interesting details
@@ -920,49 +1131,66 @@ Write ONLY the narrative:"""
 
 # Directory for lore base JSON files
 LORE_BASES_DIR = Path(__file__).parent.parent.parent.parent / "data" / "lore_bases"
+SEEDS_DIR = LORE_BASES_DIR / "seeds"
 
 
 def _load_lore_bases_from_files() -> Dict[str, Dict[str, Any]]:
     """
-    Load all lore bases from JSON files in data/lore_bases/.
+    Load all lore bases from JSON files in data/lore_bases/ and data/lore_bases/seeds/.
 
     Each JSON file should contain:
     - id: unique identifier
     - name: display name
     - description: brief description for UI
-    - genre_hints: list of genres
+    - genre_hints: list of genres (or 'genre' for single genre)
     - tone_hints: list of tone descriptors
     - seed_prompt: prompt used for AI generation
     - lore_content: full text to ingest for entities/NPCs (optional)
     """
     bases = {}
 
-    if not LORE_BASES_DIR.exists():
-        logger.warning(f"Lore bases directory not found: {LORE_BASES_DIR}")
-        return bases
+    # Load from main directory
+    if LORE_BASES_DIR.exists():
+        for json_file in LORE_BASES_DIR.glob("*.json"):
+            _load_single_lore_file(json_file, bases)
 
-    for json_file in LORE_BASES_DIR.glob("*.json"):
-        try:
-            with open(json_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            lore_id = data.get("id", json_file.stem)
-            bases[lore_id] = {
-                "id": lore_id,
-                "name": data.get("name", lore_id.replace("_", " ").title()),
-                "description": data.get("description", ""),
-                "genre_hints": data.get("genre_hints", []),
-                "tone_hints": data.get("tone_hints", []),
-                "entities_count": 0,  # Updated after ingestion
-                "seed_prompt": data.get("seed_prompt", ""),
-                "lore_content": data.get("lore_content", ""),  # Full text for NPC/entity extraction
-                "ingested": False,  # Track if lore has been processed
-            }
-            logger.info(f"Loaded lore base from file: {lore_id}")
-        except Exception as e:
-            logger.error(f"Failed to load lore base {json_file}: {e}")
+    # Load from seeds directory (curated genre-specific lore)
+    if SEEDS_DIR.exists():
+        for json_file in SEEDS_DIR.glob("*.json"):
+            _load_single_lore_file(json_file, bases, is_seed=True)
 
     return bases
+
+
+def _load_single_lore_file(json_file: Path, bases: Dict, is_seed: bool = False) -> None:
+    """Load a single lore base JSON file."""
+    try:
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        lore_id = data.get("id", json_file.stem)
+
+        # Handle both 'genre' (single) and 'genre_hints' (list)
+        genre_hints = data.get("genre_hints", [])
+        if not genre_hints and data.get("genre"):
+            genre_hints = [data.get("genre")]
+
+        bases[lore_id] = {
+            "id": lore_id,
+            "name": data.get("name", lore_id.replace("_", " ").title()),
+            "description": data.get("description", ""),
+            "genre": data.get("genre", genre_hints[0] if genre_hints else "fantasy"),
+            "genre_hints": genre_hints,
+            "tone_hints": data.get("tone_hints", []),
+            "entities_count": 0,
+            "seed_prompt": data.get("seed_prompt", ""),
+            "lore_content": data.get("lore_content", ""),
+            "ingested": False,
+            "is_seed": is_seed,  # Mark as curated seed lore
+        }
+        logger.info(f"Loaded {'seed' if is_seed else 'lore base'} from file: {lore_id}")
+    except Exception as e:
+        logger.error(f"Failed to load lore file {json_file}: {e}")
 
 
 # Load from files, then add built-in defaults
@@ -1014,16 +1242,50 @@ class LoreBaseResponse(BaseModel):
     id: str
     name: str
     description: str
+    genre: Optional[str] = None
     genre_hints: List[str]
     tone_hints: List[str]
     entities_count: int
     seed_prompt: str
+    is_seed: bool = False
 
 
 @router.get("/lore-bases", response_model=List[LoreBaseResponse])
-async def list_lore_bases():
-    """List all available pre-made lore bases."""
-    return [LoreBaseResponse(**base) for base in LORE_BASES.values()]
+async def list_lore_bases(genre: Optional[str] = None):
+    """
+    List all available pre-made lore bases.
+
+    Args:
+        genre: Optional filter to show only lore bases matching this genre
+    """
+    bases = []
+    for base in LORE_BASES.values():
+        # Filter by genre if specified
+        if genre:
+            base_genre = base.get("genre", "")
+            base_genres = base.get("genre_hints", [])
+            if genre.lower() != base_genre.lower() and genre.lower() not in [g.lower() for g in base_genres]:
+                continue
+
+        bases.append(LoreBaseResponse(
+            id=base["id"],
+            name=base["name"],
+            description=base["description"],
+            genre=base.get("genre"),
+            genre_hints=base.get("genre_hints", []),
+            tone_hints=base.get("tone_hints", []),
+            entities_count=base.get("entities_count", 0),
+            seed_prompt=base.get("seed_prompt", ""),
+            is_seed=base.get("is_seed", False),
+        ))
+
+    return bases
+
+
+@router.get("/lore-bases/by-genre/{genre}", response_model=List[LoreBaseResponse])
+async def get_lore_bases_for_genre(genre: str):
+    """Get curated lore bases for a specific genre."""
+    return await list_lore_bases(genre=genre)
 
 
 @router.get("/lore-bases/{lore_id}", response_model=LoreBaseResponse)
