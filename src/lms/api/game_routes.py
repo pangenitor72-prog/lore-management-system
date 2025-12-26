@@ -801,9 +801,22 @@ async def create_session(
     if session_req.genres and len(session_req.genres) > 1:
         genre_blend = " + ".join(session_req.genres)
 
+    # Fetch lore_content from selected world (if any)
+    world_lore_content = ""
+    world_name = ""
+    if session_req.world_id:
+        lore_bases = _get_all_lore_bases()
+        if session_req.world_id in lore_bases:
+            world_data = lore_bases[session_req.world_id]
+            world_lore_content = world_data.get("lore_content", "")
+            world_name = world_data.get("name", "")
+            logger.info(f"Loaded lore_content for world '{session_req.world_id}': {len(world_lore_content)} chars")
+
     session_data = {
         "session_id": session_id,
         "world_id": session_req.world_id,
+        "world_name": world_name,
+        "world_lore_content": world_lore_content,  # Store the full lore content!
         "character_concept": session_req.character_concept,
         "setting_preference": session_req.setting_preference,
         "tone_preference": session_req.tone_preference,
@@ -1225,11 +1238,26 @@ async def _generate_opening(session: Dict[str, Any], model) -> str:
     style = session.get("storytelling_style", "guided")
     setting = session.get("setting_preference", answers.get("setting", ""))
     character = session.get("character_concept", answers.get("character", ""))
+    world_lore = session.get("world_lore_content", "")
+    world_name = session.get("world_name", "")
 
-    logger.info(f"[OPENING] genre={genre}, tone={tone}, style={style}")
+    logger.info(f"[OPENING] genre={genre}, tone={tone}, style={style}, world_lore_len={len(world_lore)}")
 
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
+
+    # Build world context from lore_content if available
+    world_context = ""
+    if world_lore:
+        # Truncate if too long, but include substantial context
+        lore_excerpt = world_lore[:3000] if len(world_lore) > 3000 else world_lore
+        world_context = f"""
+WORLD: {world_name}
+The following is the established lore for this world. Use these characters, locations, and details:
+
+{lore_excerpt}
+
+IMPORTANT: Stay true to these characters and this setting. The player is entering THIS world with THESE people."""
 
     prompt = f"""You are a master storyteller, welcoming someone into their personal mythology.
 
@@ -1240,16 +1268,18 @@ Narrative voice: {genre_info['voice']}
 TONE: {tone}
 STORYTELLING STYLE: {style}
 {style_instructions}
+{world_context}
 
-SETTING: {setting if setting else f"Create an evocative {genre} setting that immediately draws the reader in"}
-CHARACTER: {character if character else "Introduce them gently - let them discover who they are through the scene"}
+SETTING: {setting if setting else f"Use the world lore above, or create an evocative {genre} setting"}
+CHARACTER: {character if character else "Introduce the player gently - let them discover who they are through the scene"}
 
 Write an opening that:
 1. Begins IN THE MOMENT - no preamble, drop them right into a scene
-2. Engages the senses - what do they see, hear, feel?
-3. Creates immediate intrigue using: {genre_info['hooks']}
-4. Makes them feel like they belong in this world
-5. Ends at a natural pause - DO NOT suggest choices or ask questions
+2. Uses characters and locations from the world lore above (if provided)
+3. Engages the senses - what do they see, hear, feel?
+4. Creates immediate intrigue using: {genre_info['hooks']}
+5. Makes them feel like they belong in this world
+6. Ends at a natural pause - DO NOT suggest choices or ask questions
 
 Length: 2-3 paragraphs. Write ONLY the narrative, no meta-commentary.
 Make it feel personal - this is THEIR story beginning.
@@ -1281,6 +1311,8 @@ async def _handle_active_play(
     style = session.get("storytelling_style", "guided")
     setting = session.get("setting_preference", answers.get("setting", ""))
     character = session.get("character_concept", answers.get("character", ""))
+    world_lore = session.get("world_lore_content", "")
+    world_name = session.get("world_name", "")
 
     history = session.get("history", [])[-10:]  # Last 10 exchanges
 
@@ -1293,20 +1325,31 @@ async def _handle_active_play(
         for h in history[:-1]  # Exclude current action
     ])
 
-    # Query for relevant lore (if database available)
-    lore_context = ""
+    # Build world lore context (primary source of truth)
+    world_context = ""
+    if world_lore:
+        # Include substantial lore for consistency
+        lore_excerpt = world_lore[:2500] if len(world_lore) > 2500 else world_lore
+        world_context = f"""
+WORLD: {world_name}
+ESTABLISHED LORE (stay true to these characters and details):
+{lore_excerpt}
+"""
+
+    # Query for additional entities from database (supplementary)
+    db_context = ""
     if db:
         try:
             results = await db.execute("""
                 MATCH (e:Entity)
-                WHERE e.world_id = $world_id OR e.world_id IS NULL
+                WHERE e.world_id = $world_id
                 RETURN e.name as name, e.description as description, e.entity_type as type
                 LIMIT 5
             """, {"world_id": session.get("world_id", "")})
 
             if results:
-                lore_context = "\n".join([
-                    f"- {r['name']} ({r['type']}): {r['description'][:150]}"
+                db_context = "\nAdditional discovered lore:\n" + "\n".join([
+                    f"- {r['name']} ({r['type']}): {r['description'][:100]}"
                     for r in results if r.get('description')
                 ])
         except Exception:
@@ -1334,22 +1377,22 @@ Narrative voice: {genre_info['voice']}
 TONE: {tone}
 STORYTELLING STYLE: {style}
 {style_instructions}
+{world_context}
+{db_context}
 
-SETTING: {setting if setting else 'an evocative world'}
+SETTING: {setting if setting else 'the world described above'}
 PROTAGONIST: {character if character else 'the protagonist'}
 {char_context}
 
 STORY SO FAR:
 {history_text if history_text else 'The story is just beginning.'}
 
-WORLD KNOWLEDGE:
-{lore_context if lore_context else 'Let the world reveal itself naturally.'}
-
 PLAYER'S ACTION: {player_input}
 {mechanical_context}
 
 Continue the narrative:
 - React naturally to what the player did or said
+- USE THE CHARACTERS AND LOCATIONS FROM THE WORLD LORE ABOVE - stay consistent!
 - Use sensory details that fit the {genre_display} genre
 - Maintain the {tone} tone throughout
 - Never speak for the player or assume their thoughts
