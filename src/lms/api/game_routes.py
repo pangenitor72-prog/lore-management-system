@@ -812,9 +812,15 @@ async def create_session(
             world_name = world_data.get("name", "")
             logger.info(f"Loaded lore_content for world '{session_req.world_id}': {len(world_lore_content)} chars")
 
+    # Create a unique session-scoped world ID for entity isolation
+    # This ensures each game has its own lore space, even if using the same base world
+    base_world_id = session_req.world_id or "custom"
+    session_world_id = f"{base_world_id}_{session_id[:8]}"
+
     session_data = {
         "session_id": session_id,
-        "world_id": session_req.world_id,
+        "world_id": session_req.world_id,  # Original lore base ID (for loading seed lore)
+        "session_world_id": session_world_id,  # Unique ID for this session's entities
         "world_name": world_name,
         "world_lore_content": world_lore_content,  # Store the full lore content!
         "character_concept": session_req.character_concept,
@@ -973,12 +979,13 @@ async def process_action(
     session["history"].append({"role": "assistant", "content": response_text})
 
     # Extract and store lore entities from the narrative (fire-and-forget)
+    # Use session_world_id for isolation - each game gets its own entity space
     asyncio.create_task(
         extract_and_store_gameplay_lore(
             response_text,
             session_id,
             db,
-            world_id=session.get("world_id"),
+            world_id=session.get("session_world_id"),  # Session-scoped, not shared!
         )
     )
 
@@ -1319,11 +1326,28 @@ async def _handle_active_play(
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
 
-    # Format history for context
-    history_text = "\n".join([
-        f"{'Player' if h['role'] == 'user' else 'Narrator'}: {h['content'][:300]}"
-        for h in history[:-1]  # Exclude current action
-    ])
+    # Format history for context with tiered detail:
+    # - Most recent exchanges get full context (crucial for continuity)
+    # - Older exchanges get summaries
+    history_lines = []
+    recent_history = history[:-1] if history else []  # Exclude current action
+
+    for i, h in enumerate(recent_history):
+        role_label = "Player" if h["role"] == "user" else "Narrator"
+        content = h.get("content", "")
+
+        # Last 2 exchanges get full text (up to 800 chars) for tight continuity
+        # Older entries get abbreviated (400 chars)
+        if i >= len(recent_history) - 2:
+            # Recent: keep more detail for continuity
+            excerpt = content[:800] if len(content) > 800 else content
+        else:
+            # Older: abbreviated but still meaningful
+            excerpt = content[:400] if len(content) > 400 else content
+
+        history_lines.append(f"{role_label}: {excerpt}")
+
+    history_text = "\n\n".join(history_lines)
 
     # Build world lore context (primary source of truth)
     world_context = ""
@@ -1337,15 +1361,16 @@ ESTABLISHED LORE (stay true to these characters and details):
 """
 
     # Query for additional entities from database (supplementary)
+    # Use session_world_id for isolation - only get entities from THIS game
     db_context = ""
     if db:
         try:
             results = await db.execute("""
                 MATCH (e:Entity)
-                WHERE e.world_id = $world_id
+                WHERE e.world_id = $session_world_id
                 RETURN e.name as name, e.description as description, e.entity_type as type
                 LIMIT 5
-            """, {"world_id": session.get("world_id", "")})
+            """, {"session_world_id": session.get("session_world_id", "")})
 
             if results:
                 db_context = "\nAdditional discovered lore:\n" + "\n".join([
@@ -1391,7 +1416,9 @@ PLAYER'S ACTION: {player_input}
 {mechanical_context}
 
 Continue the narrative:
-- React naturally to what the player did or said
+- CRITICAL: Pick up EXACTLY where the last scene left off. If the Narrator just described a location, characters, or situation - respond to the player's action within THAT scene.
+- React naturally and immediately to what the player did or said
+- Maintain the same characters, location, and situation from the previous exchange - do NOT jump to a new scene
 - USE THE CHARACTERS AND LOCATIONS FROM THE WORLD LORE ABOVE - stay consistent!
 - Use sensory details that fit the {genre_display} genre
 - Maintain the {tone} tone throughout
@@ -1403,6 +1430,7 @@ Continue the narrative:
 
 IMPORTANT: Do NOT suggest choices, list options, or ask what they want to do.
 Just describe what happens and let the scene breathe. Trust the reader to respond.
+Do NOT introduce new scenes or locations unless the player's action explicitly moves them there.
 
 Write ONLY the narrative:"""
 
@@ -1947,12 +1975,14 @@ async def save_game(
 
     session = _active_sessions[session_id]
 
-    # Create save data
+    # Create save data - include everything needed for full session isolation
     save_data = {
         "session_id": session_id,
         "session_name": save_req.session_name or f"Save {slot}",
         "character_concept": session.get("character_concept"),
         "genre": session.get("genre"),
+        "genres": session.get("genres"),
+        "genre_blend": session.get("genre_blend"),
         "tone_preference": session.get("tone_preference"),
         "setting_preference": session.get("setting_preference"),
         "storytelling_style": session.get("storytelling_style"),
@@ -1960,9 +1990,16 @@ async def save_game(
         "history": session.get("history", []),
         "session_0_answers": session.get("session_0_answers", {}),
         "world_id": session.get("world_id"),
+        "session_world_id": session.get("session_world_id"),  # For entity isolation
+        "world_name": session.get("world_name"),
+        "world_lore_content": session.get("world_lore_content"),  # Full lore for consistency
         "inventory": save_req.inventory or [],  # Save player inventory
         "saved_at": datetime.now(timezone.utc),
         "created_at": session.get("created_at"),
+        # D&D state
+        "character_id": session.get("character_id"),
+        "rules_mode": session.get("rules_mode"),
+        "rules_visibility": session.get("rules_visibility"),
     }
 
     _save_slots[slot] = save_data
@@ -2002,20 +2039,29 @@ async def load_game(slot: int):
     new_session_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
 
-    # Restore session data
+    # Restore session data with all isolation and context fields
     session_data = {
         "session_id": new_session_id,
         "world_id": save_data.get("world_id"),
+        "session_world_id": save_data.get("session_world_id"),  # For entity isolation
+        "world_name": save_data.get("world_name"),
+        "world_lore_content": save_data.get("world_lore_content"),  # Full lore for consistency
         "character_concept": save_data.get("character_concept"),
         "setting_preference": save_data.get("setting_preference"),
         "tone_preference": save_data.get("tone_preference"),
         "genre": save_data.get("genre", "fantasy"),
+        "genres": save_data.get("genres"),  # Multi-genre support
+        "genre_blend": save_data.get("genre_blend"),
         "storytelling_style": save_data.get("storytelling_style", "guided"),
         "phase": save_data.get("phase", "active_play"),
         "status": "active",
         "created_at": now,
         "history": save_data.get("history", []),
         "session_0_answers": save_data.get("session_0_answers", {}),
+        # D&D 5e state
+        "character_id": save_data.get("character_id"),
+        "rules_mode": save_data.get("rules_mode"),
+        "rules_visibility": save_data.get("rules_visibility"),
     }
 
     _active_sessions[new_session_id] = session_data
