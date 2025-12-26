@@ -1819,6 +1819,95 @@
                 <button class="btn btn-secondary" onclick="loadDbStats()">Refresh Stats</button>
             </div>
 
+            <!-- World Creator (for Jim) -->
+            <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+                <h3 style="color: var(--accent-gold); margin-bottom: 5px;">World Creator</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                    Create a new curated world for players to explore.
+                </p>
+
+                <div id="world-creator-status"></div>
+
+                <!-- World Name -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">World Name</label>
+                    <input type="text" id="wc-name" placeholder="e.g., The Shattered Isles"
+                           style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 1rem;">
+                </div>
+
+                <!-- World ID (auto-generated but editable) -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">World ID <span style="color: var(--text-muted);">(lowercase, no spaces)</span></label>
+                    <input type="text" id="wc-id" placeholder="auto-generated from name"
+                           style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-family: monospace;">
+                </div>
+
+                <!-- Short Description -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">Short Description <span style="color: var(--text-muted);">(what players see when browsing)</span></label>
+                    <textarea id="wc-description" rows="2" placeholder="A brief, enticing description of this world..."
+                              style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 1rem; resize: vertical;"></textarea>
+                </div>
+
+                <!-- Genre Selection -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9rem;">Genre(s)</label>
+                    <div id="wc-genres" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <span class="tone-chip wc-genre-chip" data-genre="fantasy" onclick="toggleWorldGenre('fantasy')">Fantasy</span>
+                        <span class="tone-chip wc-genre-chip" data-genre="romance" onclick="toggleWorldGenre('romance')">Romance</span>
+                        <span class="tone-chip wc-genre-chip" data-genre="mystery" onclick="toggleWorldGenre('mystery')">Mystery</span>
+                        <span class="tone-chip wc-genre-chip" data-genre="horror" onclick="toggleWorldGenre('horror')">Horror</span>
+                        <span class="tone-chip wc-genre-chip" data-genre="adventure" onclick="toggleWorldGenre('adventure')">Adventure</span>
+                        <span class="tone-chip wc-genre-chip" data-genre="drama" onclick="toggleWorldGenre('drama')">Drama</span>
+                        <span class="tone-chip wc-genre-chip" data-genre="scifi" onclick="toggleWorldGenre('scifi')">Sci-Fi</span>
+                        <span class="tone-chip wc-genre-chip" data-genre="historical" onclick="toggleWorldGenre('historical')">Historical</span>
+                    </div>
+                </div>
+
+                <!-- Tone Selection -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9rem;">Tone(s)</label>
+                    <div id="wc-tones" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <span class="tone-chip wc-tone-chip" data-tone="epic" onclick="toggleWorldTone('epic')">Epic</span>
+                        <span class="tone-chip wc-tone-chip" data-tone="intimate" onclick="toggleWorldTone('intimate')">Intimate</span>
+                        <span class="tone-chip wc-tone-chip" data-tone="dark" onclick="toggleWorldTone('dark')">Dark</span>
+                        <span class="tone-chip wc-tone-chip" data-tone="whimsical" onclick="toggleWorldTone('whimsical')">Whimsical</span>
+                        <span class="tone-chip wc-tone-chip" data-tone="dramatic" onclick="toggleWorldTone('dramatic')">Dramatic</span>
+                        <span class="tone-chip wc-tone-chip" data-tone="gritty" onclick="toggleWorldTone('gritty')">Gritty</span>
+                        <span class="tone-chip wc-tone-chip" data-tone="hopeful" onclick="toggleWorldTone('hopeful')">Hopeful</span>
+                        <span class="tone-chip wc-tone-chip" data-tone="mysterious" onclick="toggleWorldTone('mysterious')">Mysterious</span>
+                    </div>
+                </div>
+
+                <!-- The Lore Content -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">
+                        The Lore <span style="color: var(--text-muted);">(characters, locations, history, plot hooks - be creative!)</span>
+                    </label>
+                    <textarea id="wc-lore" rows="12" placeholder="Write your world here...
+
+Include:
+• Key characters with personalities (brave, cunning, mysterious, warm, etc.)
+• Important locations and their atmosphere
+• Factions or groups and their relationships
+• History and secrets
+• Plot hooks to draw players in
+
+Example:
+'Lady Moira is the cunning matriarch of House Varell, known for her sharp wit and hidden kindness. She rules from the Obsidian Tower, a fortress built on secrets...'"
+                              style="width: 100%; padding: 15px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.95rem; line-height: 1.6; resize: vertical; min-height: 250px;"></textarea>
+                </div>
+
+                <!-- Create Button -->
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <button class="btn btn-primary" onclick="createWorld()" style="padding: 14px 30px;">
+                        Create World
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearWorldForm()">Clear Form</button>
+                    <span id="wc-char-count" style="color: var(--text-muted); font-size: 0.85rem; margin-left: auto;">0 characters</span>
+                </div>
+            </div>
+
             <!-- Danger Zone -->
             <div class="setup-section" style="border: 1px solid var(--accent-rose); border-radius: 12px; padding: 20px; margin-top: 30px;">
                 <h3 style="color: var(--accent-rose);">Danger Zone</h3>
@@ -4473,6 +4562,152 @@
                 }
             } catch (err) {
                 showStatus('admin-status', 'Reset failed: ' + err.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // WORLD CREATOR (for Jim and other content creators)
+        // ============================================================
+
+        let wcSelectedGenres = [];
+        let wcSelectedTones = [];
+
+        // Auto-generate ID from name
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('wc-name');
+            const idInput = document.getElementById('wc-id');
+            const loreInput = document.getElementById('wc-lore');
+            const charCount = document.getElementById('wc-char-count');
+
+            if (nameInput && idInput) {
+                nameInput.addEventListener('input', function() {
+                    // Auto-generate ID from name
+                    const id = this.value.toLowerCase()
+                        .replace(/[^a-z0-9\s]/g, '')
+                        .replace(/\s+/g, '_')
+                        .substring(0, 30);
+                    idInput.value = id;
+                });
+            }
+
+            if (loreInput && charCount) {
+                loreInput.addEventListener('input', function() {
+                    charCount.textContent = this.value.length + ' characters';
+                });
+            }
+        });
+
+        function toggleWorldGenre(genre) {
+            const chip = document.querySelector(`.wc-genre-chip[data-genre="${genre}"]`);
+            const idx = wcSelectedGenres.indexOf(genre);
+
+            if (idx > -1) {
+                wcSelectedGenres.splice(idx, 1);
+                chip.classList.remove('selected');
+            } else {
+                wcSelectedGenres.push(genre);
+                chip.classList.add('selected');
+            }
+        }
+
+        function toggleWorldTone(tone) {
+            const chip = document.querySelector(`.wc-tone-chip[data-tone="${tone}"]`);
+            const idx = wcSelectedTones.indexOf(tone);
+
+            if (idx > -1) {
+                wcSelectedTones.splice(idx, 1);
+                chip.classList.remove('selected');
+            } else {
+                wcSelectedTones.push(tone);
+                chip.classList.add('selected');
+            }
+        }
+
+        function clearWorldForm() {
+            document.getElementById('wc-name').value = '';
+            document.getElementById('wc-id').value = '';
+            document.getElementById('wc-description').value = '';
+            document.getElementById('wc-lore').value = '';
+            document.getElementById('wc-char-count').textContent = '0 characters';
+
+            wcSelectedGenres = [];
+            wcSelectedTones = [];
+            document.querySelectorAll('.wc-genre-chip, .wc-tone-chip').forEach(chip => {
+                chip.classList.remove('selected');
+            });
+
+            clearStatus('world-creator-status');
+        }
+
+        async function createWorld() {
+            const name = document.getElementById('wc-name').value.trim();
+            const id = document.getElementById('wc-id').value.trim();
+            const description = document.getElementById('wc-description').value.trim();
+            const loreContent = document.getElementById('wc-lore').value.trim();
+
+            // Validation
+            if (!name) {
+                showStatus('world-creator-status', 'Please enter a world name.', 'error');
+                return;
+            }
+            if (!id) {
+                showStatus('world-creator-status', 'Please enter a world ID.', 'error');
+                return;
+            }
+            if (!description || description.length < 10) {
+                showStatus('world-creator-status', 'Please enter a description (at least 10 characters).', 'error');
+                return;
+            }
+            if (wcSelectedGenres.length === 0) {
+                showStatus('world-creator-status', 'Please select at least one genre.', 'error');
+                return;
+            }
+            if (!loreContent || loreContent.length < 100) {
+                showStatus('world-creator-status', 'Please add more lore content (at least 100 characters).', 'error');
+                return;
+            }
+
+            showStatus('world-creator-status', '<span class="loading"></span> Creating world...', 'info');
+
+            try {
+                const response = await fetch(API_BASE + '/game/lore-bases', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: id,
+                        name: name,
+                        description: description,
+                        genre_hints: wcSelectedGenres,
+                        tone_hints: wcSelectedTones,
+                        seed_prompt: description,  // Use description as seed prompt
+                        lore_content: loreContent
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('world-creator-status',
+                        `<strong style="color: var(--accent-sage);">World "${name}" created successfully!</strong><br>` +
+                        `<span style="color: var(--text-muted);">ID: ${id} | Players can now find it when selecting "${wcSelectedGenres[0]}" genre.</span>`,
+                        'success'
+                    );
+
+                    // Clear form after success
+                    setTimeout(() => {
+                        if (confirm('World created! Would you like to create another?')) {
+                            clearWorldForm();
+                        }
+                    }, 1500);
+                } else {
+                    const err = await response.json();
+                    if (err.detail && err.detail.includes('already exists')) {
+                        showStatus('world-creator-status', `A world with ID "${id}" already exists. Try a different name.`, 'error');
+                    } else {
+                        showStatus('world-creator-status', 'Error: ' + (err.detail || 'Unknown error'), 'error');
+                    }
+                }
+            } catch (err) {
+                showStatus('world-creator-status', 'Connection error: ' + err.message, 'error');
             }
         }
 
