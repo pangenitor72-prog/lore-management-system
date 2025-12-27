@@ -4045,14 +4045,30 @@ Example:
         }
 
         // Screen Navigation
-        function showScreen(screenId) {
+        async function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
 
-            // Show example prompts in tutorial mode when entering gameplay
-            if (screenId === 'game' && tutorialMode) {
-                showExamplePrompts();
+            // Screen-specific hooks (consolidated)
+            switch (screenId) {
+                case 'game':
+                    if (tutorialMode) showExamplePrompts();
+                    break;
+                case 'saves':
+                    await loadSaveSlots();
+                    renderSaveSlots('save-slots-container', false);
+                    break;
+                case 'graph':
+                    await loadAvailableWorlds();
+                    loadGraphData();
+                    break;
+                case 'admin':
+                    loadDbStats();
+                    break;
             }
+
+            // Update mobile navigation visibility
+            updateMobileNavVisibility();
         }
 
         function showExamplePrompts() {
@@ -4822,19 +4838,6 @@ Example:
             }
         }
 
-        // Load save slots when viewing saves screen
-        const originalShowScreen = showScreen;
-        showScreen = async function(screenId) {
-            originalShowScreen(screenId);
-            if (screenId === 'saves') {
-                await loadSaveSlots();
-                renderSaveSlots('save-slots-container', false);
-            }
-            if (screenId === 'graph') {
-                await loadAvailableWorlds();
-                loadGraphData();
-            }
-        };
 
         // ==========================================
         // GRAPH VISUALIZATION
@@ -5323,14 +5326,6 @@ Example:
             }
         }
 
-        // Load admin stats when showing admin screen
-        const adminShowScreen = showScreen;
-        showScreen = async function(screenId) {
-            await adminShowScreen(screenId);
-            if (screenId === 'admin') {
-                loadDbStats();
-            }
-        };
 
         // Health check
         fetch(API_BASE.replace('/api', '') + '/health')
@@ -5356,14 +5351,8 @@ Example:
             }
         }
 
-        // Hook into showScreen to update mobile nav (after page load to avoid conflicts)
+        // Initial mobile nav visibility check on page load
         window.addEventListener('load', function() {
-            const wrappedShowScreen = showScreen;
-            showScreen = async function(screenId) {
-                await wrappedShowScreen(screenId);
-                updateMobileNavVisibility();
-            };
-            // Initial check
             updateMobileNavVisibility();
         });
 
