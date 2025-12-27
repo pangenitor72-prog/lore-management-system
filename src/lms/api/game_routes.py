@@ -344,10 +344,83 @@ class DMResponse(BaseModel):
 
 
 # ============================================================
-# IN-MEMORY SESSION STORE (for MVP - replace with Neo4j later)
+# SESSION STORE (in-memory + Neo4j persistence for continuity)
 # ============================================================
 
 _active_sessions: Dict[str, Dict[str, Any]] = {}
+
+
+async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -> bool:
+    """
+    Persist active session to Neo4j for continuity across server restarts.
+
+    Stores the full session state as JSON so it can be recovered.
+    """
+    if not db:
+        return False
+
+    try:
+        # Convert datetime to ISO string for JSON serialization
+        created_at = session.get("created_at")
+        if hasattr(created_at, 'isoformat'):
+            created_at_str = created_at.isoformat()
+        else:
+            created_at_str = str(created_at) if created_at else None
+
+        session_copy = {**session, "created_at": created_at_str}
+
+        await db.execute("""
+            MERGE (s:ActiveSession {session_id: $session_id})
+            SET s.session_data = $session_json,
+                s.updated_at = datetime(),
+                s.phase = $phase,
+                s.character_concept = $character_concept
+        """, {
+            "session_id": session_id,
+            "session_json": json.dumps(session_copy),
+            "phase": session.get("phase", "active_play"),
+            "character_concept": session.get("character_concept", ""),
+        })
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to persist session {session_id} to Neo4j: {e}")
+        return False
+
+
+async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, Any]]:
+    """
+    Recover a session from Neo4j if it's not in memory.
+
+    Returns the session dict if found, None otherwise.
+    """
+    if not db:
+        return None
+
+    try:
+        results = await db.execute("""
+            MATCH (s:ActiveSession {session_id: $session_id})
+            RETURN s.session_data as session_json
+        """, {"session_id": session_id})
+
+        if not results:
+            return None
+
+        session_data = json.loads(results[0]["session_json"])
+
+        # Convert ISO string back to datetime
+        if session_data.get("created_at"):
+            try:
+                session_data["created_at"] = datetime.fromisoformat(session_data["created_at"])
+            except (ValueError, TypeError):
+                session_data["created_at"] = datetime.now(timezone.utc)
+
+        logger.info(f"Recovered session {session_id} from Neo4j database")
+        return session_data
+
+    except Exception as e:
+        logger.warning(f"Failed to recover session {session_id} from Neo4j: {e}")
+        return None
+
 
 # Global guardrails
 _token_tracker = TokenTracker()
@@ -844,8 +917,13 @@ async def create_session(
     _active_sessions[session_id] = session_data
 
     # Store in Neo4j for persistence (if available)
+    # This ensures story continuity even if server restarts
     db = get_optional_neo4j_db(request)
     if db:
+        # Persist full session data for recovery
+        await _persist_session_to_db(session_id, session_data, db)
+
+        # Also create minimal GameSession node for querying
         try:
             await db.execute("""
                 CREATE (s:GameSession {
@@ -861,7 +939,7 @@ async def create_session(
                 "phase": phase,
             })
         except Exception as e:
-            logger.warning(f"Failed to persist session to Neo4j: {e}")
+            logger.warning(f"Failed to create GameSession node: {e}")
 
     logger.info(f"Created session {session_id} in phase {phase}")
 
@@ -874,19 +952,26 @@ async def create_session(
 
 
 @router.get("/session/{session_id}", response_model=SessionResponse)
-async def get_session(session_id: str):
-    """Get session status and information."""
-    if session_id not in _active_sessions:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Session {session_id} not found"
-        )
+async def get_session(request: Request, session_id: str):
+    """Get session status and information. Recovers from database if needed."""
+    session = _active_sessions.get(session_id)
 
-    session = _active_sessions[session_id]
+    if not session:
+        # Try to recover from database
+        db = get_optional_neo4j_db(request)
+        session = await _recover_session_from_db(session_id, db)
+
+        if session:
+            _active_sessions[session_id] = session
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session {session_id} not found"
+            )
 
     return SessionResponse(
         session_id=session_id,
-        status=session["status"],
+        status=session.get("status", "active"),
         phase=session["phase"],
         created_at=session["created_at"],
     )
@@ -903,16 +988,33 @@ async def process_action(
 
     Handles both Session 0 (world-building) and active play.
     Integrates D&D 5e rules when a character is present.
+
+    Session Recovery: If session is not in memory (e.g., after server restart),
+    attempts to recover from Neo4j database to maintain story continuity.
     """
     logger.info(f"Action request received for session {session_id}")
 
-    if session_id not in _active_sessions:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Session {session_id} not found"
-        )
+    # Get database connection first (needed for session recovery)
+    db = get_optional_neo4j_db(request)
 
-    session = _active_sessions[session_id]
+    # Try to get session from memory, or recover from database
+    session = _active_sessions.get(session_id)
+
+    if not session:
+        # Session not in memory - try to recover from Neo4j
+        logger.info(f"Session {session_id} not in memory, attempting recovery from database...")
+        session = await _recover_session_from_db(session_id, db)
+
+        if session:
+            # Successfully recovered - restore to memory
+            _active_sessions[session_id] = session
+            logger.info(f"Session {session_id} recovered successfully - story continuity maintained")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session {session_id} not found. Please start a new story or load a saved game."
+            )
+
     model = get_gemini_model()
 
     if not model:
@@ -922,9 +1024,6 @@ async def process_action(
         )
 
     logger.info(f"Processing action for session {session_id}: {action.action[:50]}...")
-
-    # Get optional database
-    db = get_optional_neo4j_db(request)
 
     # D&D Rules Integration - detect and resolve mechanical actions
     mechanical_result = None
@@ -995,6 +1094,10 @@ async def process_action(
         session.get("genre", "fantasy"),
         session.get("storytelling_style", "guided"),
     )
+
+    # Persist session to database for continuity across server restarts
+    # This ensures the story is never lost
+    asyncio.create_task(_persist_session_to_db(session_id, session, db))
 
     return DMResponse(
         narrative=response_text,
