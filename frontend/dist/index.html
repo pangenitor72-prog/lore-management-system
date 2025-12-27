@@ -5272,24 +5272,31 @@ Example:
             }
         }
 
-        // Hook into showScreen to update mobile nav
-        const originalShowScreen = showScreen;
-        showScreen = async function(screenId) {
-            await originalShowScreen(screenId);
+        // Hook into showScreen to update mobile nav (after page load to avoid conflicts)
+        window.addEventListener('load', function() {
+            const wrappedShowScreen = showScreen;
+            showScreen = async function(screenId) {
+                await wrappedShowScreen(screenId);
+                updateMobileNavVisibility();
+            };
+            // Initial check
             updateMobileNavVisibility();
-        };
+        });
 
         function toggleMobileMenu() {
             const overlay = document.getElementById('mobile-menu-overlay');
-            if (overlay.classList.contains('visible')) {
+            if (overlay && overlay.classList.contains('visible')) {
                 closeMobileMenu();
-            } else {
+            } else if (overlay) {
                 overlay.classList.add('visible');
             }
         }
 
         function closeMobileMenu() {
-            document.getElementById('mobile-menu-overlay').classList.remove('visible');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (overlay) {
+                overlay.classList.remove('visible');
+            }
         }
 
         function mobileMenuAction(action) {
@@ -5309,17 +5316,6 @@ Example:
                     break;
             }
         }
-
-        // Close menu when clicking overlay background
-        document.addEventListener('click', function(e) {
-            const overlay = document.getElementById('mobile-menu-overlay');
-            if (e.target === overlay) {
-                closeMobileMenu();
-            }
-        });
-
-        // Initialize mobile nav visibility
-        updateMobileNavVisibility();
     </script>
 
     <!-- Mobile Bottom Navigation -->
