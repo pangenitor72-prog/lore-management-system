@@ -1322,29 +1322,33 @@ async def _handle_active_play(
     world_lore = session.get("world_lore_content", "")
     world_name = session.get("world_name", "")
 
-    history = session.get("history", [])[-10:]  # Last 10 exchanges
+    history = session.get("history", [])[-20:]  # Last 20 messages for better continuity
 
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
 
     # Format history for context with tiered detail:
     # - Most recent exchanges get full context (crucial for continuity)
-    # - Older exchanges get summaries
+    # - Middle exchanges get moderate detail
+    # - Older exchanges get abbreviated summaries
     history_lines = []
     recent_history = history[:-1] if history else []  # Exclude current action
+    history_len = len(recent_history)
 
     for i, h in enumerate(recent_history):
         role_label = "Player" if h["role"] == "user" else "Narrator"
         content = h.get("content", "")
 
-        # Last 2 exchanges get full text (up to 800 chars) for tight continuity
-        # Older entries get abbreviated (400 chars)
-        if i >= len(recent_history) - 2:
-            # Recent: keep more detail for continuity
-            excerpt = content[:800] if len(content) > 800 else content
+        # Tiered context: more recent = more detail
+        if i >= history_len - 4:
+            # Last 4 messages: full context (up to 1000 chars) for tight continuity
+            excerpt = content[:1000] if len(content) > 1000 else content
+        elif i >= history_len - 10:
+            # Middle 6 messages: moderate detail (600 chars)
+            excerpt = content[:600] if len(content) > 600 else content
         else:
-            # Older: abbreviated but still meaningful
-            excerpt = content[:400] if len(content) > 400 else content
+            # Older messages: abbreviated (300 chars)
+            excerpt = content[:300] if len(content) > 300 else content
 
         history_lines.append(f"{role_label}: {excerpt}")
 
