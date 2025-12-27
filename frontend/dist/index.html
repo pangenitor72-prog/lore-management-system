@@ -4986,6 +4986,24 @@ Example:
             }
         });
 
+        // Mobile secret: Tap logo 5 times quickly
+        let logoTapCount = 0;
+        let logoTapTimer = null;
+        document.querySelector('.logo').addEventListener('click', function() {
+            logoTapCount++;
+
+            // Reset timer on each tap
+            if (logoTapTimer) clearTimeout(logoTapTimer);
+
+            if (logoTapCount >= 5) {
+                logoTapCount = 0;
+                showPinModal();
+            } else {
+                // Reset count after 2 seconds of no taps
+                logoTapTimer = setTimeout(() => { logoTapCount = 0; }, 2000);
+            }
+        });
+
         function showPinModal() {
             // Check if locked out
             if (Date.now() < lockoutUntil) {
