@@ -20,7 +20,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
-from fastapi import APIRouter, HTTPException, Request, status, Depends, File, UploadFile
+from fastapi import APIRouter, HTTPException, Request, status, Depends, File, UploadFile, Query
 from pydantic import BaseModel, Field
 
 from src.lms.db.neo4j_adapter import Neo4jDatabase
