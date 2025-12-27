@@ -685,6 +685,12 @@
             margin-bottom: 20px;
         }
 
+        /* Hidden on desktop - only shown on mobile */
+        .story-menu-btn,
+        .story-menu-overlay {
+            display: none;
+        }
+
         .story-info {
             font-size: 0.85rem;
             color: var(--text-muted);
@@ -1422,16 +1428,9 @@
            PHONE BREAKPOINT (max-width: 428px)
            ============================================ */
         @media (max-width: 428px) {
-            /* Show mobile nav during gameplay - override the !important */
-            body.in-gameplay .mobile-nav {
-                display: flex !important;
-                visibility: visible;
-                pointer-events: auto;
-            }
-
-            /* Add bottom padding when mobile nav is visible */
-            body.in-gameplay .container {
-                padding-bottom: calc(var(--mobile-nav-height) + var(--safe-area-bottom) + 20px);
+            /* NO bottom nav on mobile - use hamburger menu instead (AI Dungeon style) */
+            .mobile-nav {
+                display: none !important;
             }
 
             /* Compact header */
@@ -1540,28 +1539,141 @@
                 padding: 0;
             }
 
-            /* Compact story header on mobile */
+            /* Compact story header on mobile - AI Dungeon style */
             .story-header {
                 position: sticky;
                 top: 0;
                 z-index: 50;
-                padding: 10px 12px;
+                padding: 12px 16px;
+                padding-top: calc(12px + var(--safe-area-top));
                 background: var(--bg-primary);
                 border-bottom: 1px solid var(--border-subtle);
                 flex-shrink: 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
             }
 
-            /* Hide desktop header buttons on mobile (moved to bottom nav/menu) */
+            /* Hide desktop header buttons on mobile */
             .story-header > div[style*="display: flex"] {
                 display: none !important;
             }
 
-            /* Story container - scrollable, room for input and nav */
+            /* Show hamburger menu button on mobile */
+            .story-menu-btn {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 44px;
+                height: 44px;
+                background: none;
+                border: none;
+                color: var(--text-primary);
+                font-size: 1.5rem;
+                cursor: pointer;
+                border-radius: 8px;
+            }
+
+            .story-menu-btn:active {
+                background: var(--bg-hover);
+            }
+
+            /* Story menu overlay */
+            .story-menu-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 200;
+            }
+
+            .story-menu-overlay.visible {
+                display: flex;
+                justify-content: flex-end;
+            }
+
+            .story-menu-panel {
+                width: 280px;
+                max-width: 80vw;
+                height: 100%;
+                background: var(--bg-secondary);
+                padding: 20px;
+                padding-top: calc(20px + var(--safe-area-top));
+                animation: slideInRight 0.2s ease;
+            }
+
+            @keyframes slideInRight {
+                from { transform: translateX(100%); }
+                to { transform: translateX(0); }
+            }
+
+            .story-menu-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 24px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid var(--border-subtle);
+            }
+
+            .story-menu-title {
+                font-size: 1.1rem;
+                color: var(--accent-gold);
+            }
+
+            .story-menu-close {
+                width: 36px;
+                height: 36px;
+                background: none;
+                border: none;
+                color: var(--text-secondary);
+                font-size: 1.5rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .story-menu-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .story-menu-action {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 16px;
+                background: var(--bg-card);
+                border: 1px solid var(--border-subtle);
+                border-radius: 12px;
+                color: var(--text-primary);
+                font-family: inherit;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: background 0.2s ease;
+            }
+
+            .story-menu-action:active {
+                background: var(--bg-hover);
+            }
+
+            .story-menu-action .action-icon {
+                font-size: 1.3rem;
+                width: 28px;
+                text-align: center;
+            }
+
+            /* Story container - scrollable, room for fixed input */
             .story-container {
                 flex: 1;
                 overflow-y: auto;
                 padding: 16px 12px;
-                padding-bottom: 20px;
+                padding-bottom: 100px; /* Space for fixed input area */
                 max-height: none !important;
             }
 
@@ -1579,13 +1691,14 @@
                 margin-right: 0;
             }
 
-            /* Fixed input area above bottom nav - ONLY in story screen */
+            /* Fixed input area at bottom - ONLY in story screen */
             #story .input-area {
                 position: fixed;
-                bottom: calc(var(--mobile-nav-height) + var(--safe-area-bottom));
+                bottom: 0;
                 left: 0;
                 right: 0;
                 padding: 10px 12px;
+                padding-bottom: calc(10px + var(--safe-area-bottom));
                 background: var(--bg-primary);
                 border-top: 1px solid var(--border-subtle);
                 z-index: 100;
@@ -2180,12 +2293,15 @@
         <div id="story" class="screen">
             <div class="story-header">
                 <span class="story-info" id="story-info">Chapter One</span>
+                <!-- Desktop buttons -->
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button id="char-sheet-btn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showCharacterSheet()">Character</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showInventory()">Inventory</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">💾 Save</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="confirmStartOver()">🔄 New Story</button>
                 </div>
+                <!-- Mobile hamburger menu button -->
+                <button class="story-menu-btn" onclick="toggleStoryMenu()">☰</button>
             </div>
 
             <!-- Character HUD (visible when d20 rules active) -->
@@ -5411,22 +5527,61 @@ Example:
         </button>
     </nav>
 
-    <!-- Mobile Menu Overlay -->
-    <div class="mobile-menu-overlay" id="mobile-menu-overlay">
-        <div class="mobile-menu">
-            <button class="mobile-menu-item" onclick="mobileMenuAction('save')">
-                <span class="menu-icon">💾</span>
-                <span>Save Game</span>
-            </button>
-            <button class="mobile-menu-item" onclick="mobileMenuAction('new')">
-                <span class="menu-icon">🔄</span>
-                <span>New Story</span>
-            </button>
-            <button class="mobile-menu-item" onclick="closeMobileMenu()">
-                <span class="menu-icon">✕</span>
-                <span>Close</span>
-            </button>
+    <!-- Story Menu Overlay (Mobile slide-out menu) -->
+    <div class="story-menu-overlay" id="story-menu-overlay" onclick="closeStoryMenu(event)">
+        <div class="story-menu-panel" onclick="event.stopPropagation()">
+            <div class="story-menu-header">
+                <span class="story-menu-title">Menu</span>
+                <button class="story-menu-close" onclick="closeStoryMenu()">✕</button>
+            </div>
+            <div class="story-menu-actions">
+                <button class="story-menu-action" onclick="storyMenuAction('character')">
+                    <span class="action-icon">🧙</span>
+                    <span>Character Sheet</span>
+                </button>
+                <button class="story-menu-action" onclick="storyMenuAction('inventory')">
+                    <span class="action-icon">🎒</span>
+                    <span>Inventory</span>
+                </button>
+                <button class="story-menu-action" onclick="storyMenuAction('save')">
+                    <span class="action-icon">💾</span>
+                    <span>Save Game</span>
+                </button>
+                <button class="story-menu-action" onclick="storyMenuAction('new')">
+                    <span class="action-icon">🔄</span>
+                    <span>New Story</span>
+                </button>
+            </div>
         </div>
     </div>
+
+    <script>
+        // Story menu functions for mobile
+        function toggleStoryMenu() {
+            document.getElementById('story-menu-overlay').classList.add('visible');
+        }
+
+        function closeStoryMenu(event) {
+            document.getElementById('story-menu-overlay').classList.remove('visible');
+        }
+
+        function storyMenuAction(action) {
+            closeStoryMenu();
+            switch(action) {
+                case 'character':
+                    showCharacterSheet();
+                    break;
+                case 'inventory':
+                    showInventory();
+                    break;
+                case 'save':
+                    showSaveModal();
+                    break;
+                case 'new':
+                    confirmStartOver();
+                    break;
+            }
+        }
+    </script>
 </body>
 </html>
