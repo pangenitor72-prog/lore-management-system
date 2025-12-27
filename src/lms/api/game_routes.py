@@ -1889,12 +1889,11 @@ async def list_sessions():
 
 
 # ============================================================
-# SAVE/LOAD SYSTEM (5 slots)
+# SAVE/LOAD SYSTEM (Neo4j persistent, browser-isolated)
 # ============================================================
 
-# In-memory save slots (replace with persistent storage for production)
-_save_slots: Dict[int, Dict[str, Any]] = {}
-MAX_SAVE_SLOTS = 20  # Plenty of room for multiple stories
+# Max saves per browser (generous limit)
+MAX_SAVES_PER_BROWSER = 50
 
 
 class SaveSlotInfo(BaseModel):
@@ -1907,6 +1906,7 @@ class SaveSlotInfo(BaseModel):
     phase: Optional[str] = None
     turn_count: Optional[int] = None
     saved_at: Optional[datetime] = None
+    world_name: Optional[str] = None
 
 
 class InventoryItem(BaseModel):
@@ -1919,9 +1919,10 @@ class InventoryItem(BaseModel):
 
 class SaveGameRequest(BaseModel):
     """Request to save a game to a slot."""
-    slot: int = Field(..., ge=1, le=MAX_SAVE_SLOTS)
+    slot: int = Field(..., ge=1, le=MAX_SAVES_PER_BROWSER)
     session_name: Optional[str] = Field(default=None, max_length=50)
     inventory: Optional[List[dict]] = Field(default_factory=list)
+    browser_id: str = Field(..., min_length=1, max_length=100)
 
 
 class SaveGameResponse(BaseModel):
@@ -1943,32 +1944,70 @@ class LoadGameResponse(BaseModel):
 
 
 @router.get("/saves", response_model=List[SaveSlotInfo])
-async def list_save_slots():
-    """List all save slots and their contents."""
+async def list_save_slots(
+    request: Request,
+    browser_id: str = Query(..., min_length=1, description="Unique browser identifier"),
+):
+    """
+    List all save slots for a specific browser.
+
+    Each browser has its own isolated save slots - saves from one browser
+    are completely invisible to other browsers.
+    """
+    db = get_optional_neo4j_db(request)
     slots = []
-    for slot_num in range(1, MAX_SAVE_SLOTS + 1):
-        if slot_num in _save_slots:
-            save_data = _save_slots[slot_num]
-            slots.append(SaveSlotInfo(
-                slot=slot_num,
-                is_empty=False,
-                session_name=save_data.get("session_name", f"Save {slot_num}"),
-                character_concept=save_data.get("character_concept"),
-                genre=save_data.get("genre"),
-                phase=save_data.get("phase"),
-                turn_count=len(save_data.get("history", [])) // 2,
-                saved_at=save_data.get("saved_at"),
-            ))
-        else:
-            slots.append(SaveSlotInfo(
-                slot=slot_num,
-                is_empty=True,
-            ))
+
+    if db:
+        try:
+            # Query Neo4j for this browser's saves
+            results = await db.execute("""
+                MATCH (s:GameSave {browser_id: $browser_id})
+                RETURN s.slot as slot, s.session_name as session_name,
+                       s.character_concept as character_concept, s.genre as genre,
+                       s.phase as phase, s.turn_count as turn_count,
+                       s.saved_at as saved_at, s.world_name as world_name
+                ORDER BY s.slot
+            """, {"browser_id": browser_id})
+
+            # Build a map of existing saves
+            existing_saves = {}
+            for record in results:
+                existing_saves[record["slot"]] = record
+
+            # Return slots 1-10 (show first 10, more created on demand)
+            for slot_num in range(1, 11):
+                if slot_num in existing_saves:
+                    save = existing_saves[slot_num]
+                    slots.append(SaveSlotInfo(
+                        slot=slot_num,
+                        is_empty=False,
+                        session_name=save["session_name"],
+                        character_concept=save["character_concept"],
+                        genre=save["genre"],
+                        phase=save["phase"],
+                        turn_count=save["turn_count"],
+                        saved_at=save["saved_at"],
+                        world_name=save["world_name"],
+                    ))
+                else:
+                    slots.append(SaveSlotInfo(slot=slot_num, is_empty=True))
+
+        except Exception as e:
+            logger.error(f"Failed to list saves from Neo4j: {e}")
+            # Return empty slots on error
+            for slot_num in range(1, 11):
+                slots.append(SaveSlotInfo(slot=slot_num, is_empty=True))
+    else:
+        # No database - return empty slots
+        for slot_num in range(1, 11):
+            slots.append(SaveSlotInfo(slot=slot_num, is_empty=True))
+
     return slots
 
 
 @router.post("/saves/{slot}", response_model=SaveGameResponse)
 async def save_game(
+    request: Request,
     slot: int,
     session_id: str,
     save_req: SaveGameRequest,
@@ -1976,12 +2015,13 @@ async def save_game(
     """
     Save a game session to a slot.
 
-    Saves all session state including history, preferences, and phase.
+    Saves are isolated by browser_id - each browser has its own save slots.
+    All session state including history, preferences, and phase is persisted to Neo4j.
     """
-    if slot < 1 or slot > MAX_SAVE_SLOTS:
+    if slot < 1 or slot > MAX_SAVES_PER_BROWSER:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Slot must be between 1 and {MAX_SAVE_SLOTS}"
+            detail=f"Slot must be between 1 and {MAX_SAVES_PER_BROWSER}"
         )
 
     if session_id not in _active_sessions:
@@ -1991,6 +2031,8 @@ async def save_game(
         )
 
     session = _active_sessions[session_id]
+    browser_id = save_req.browser_id
+    now = datetime.now(timezone.utc)
 
     # Create save data - include everything needed for full session isolation
     save_data = {
@@ -2007,21 +2049,58 @@ async def save_game(
         "history": session.get("history", []),
         "session_0_answers": session.get("session_0_answers", {}),
         "world_id": session.get("world_id"),
-        "session_world_id": session.get("session_world_id"),  # For entity isolation
+        "session_world_id": session.get("session_world_id"),
         "world_name": session.get("world_name"),
-        "world_lore_content": session.get("world_lore_content"),  # Full lore for consistency
-        "inventory": save_req.inventory or [],  # Save player inventory
-        "saved_at": datetime.now(timezone.utc),
-        "created_at": session.get("created_at"),
+        "world_lore_content": session.get("world_lore_content"),
+        "inventory": save_req.inventory or [],
+        "saved_at": now.isoformat(),
+        "created_at": session.get("created_at").isoformat() if session.get("created_at") else now.isoformat(),
         # D&D state
         "character_id": session.get("character_id"),
         "rules_mode": session.get("rules_mode"),
         "rules_visibility": session.get("rules_visibility"),
     }
 
-    _save_slots[slot] = save_data
-
-    logger.info(f"Saved session {session_id} to slot {slot}")
+    db = get_optional_neo4j_db(request)
+    if db:
+        try:
+            # Store the full save data as JSON in Neo4j
+            # MERGE to update existing or create new
+            await db.execute("""
+                MERGE (s:GameSave {browser_id: $browser_id, slot: $slot})
+                SET s.session_id = $session_id,
+                    s.session_name = $session_name,
+                    s.character_concept = $character_concept,
+                    s.genre = $genre,
+                    s.phase = $phase,
+                    s.turn_count = $turn_count,
+                    s.saved_at = datetime(),
+                    s.world_name = $world_name,
+                    s.save_data = $save_data_json
+            """, {
+                "browser_id": browser_id,
+                "slot": slot,
+                "session_id": session_id,
+                "session_name": save_data["session_name"],
+                "character_concept": save_data.get("character_concept", ""),
+                "genre": save_data.get("genre", "fantasy"),
+                "phase": save_data.get("phase", "active_play"),
+                "turn_count": len(save_data.get("history", [])) // 2,
+                "world_name": save_data.get("world_name", ""),
+                "save_data_json": json.dumps(save_data),
+            })
+            logger.info(f"Saved session {session_id} to Neo4j slot {slot} for browser {browser_id[:8]}...")
+        except Exception as e:
+            logger.error(f"Failed to save to Neo4j: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save game to database"
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database not available for saving"
+        )
 
     return SaveGameResponse(
         success=True,
@@ -2032,25 +2111,53 @@ async def save_game(
 
 
 @router.get("/saves/{slot}/load", response_model=LoadGameResponse)
-async def load_game(slot: int):
+async def load_game(
+    request: Request,
+    slot: int,
+    browser_id: str = Query(..., min_length=1, description="Unique browser identifier"),
+):
     """
     Load a game from a save slot.
 
     Restores the session and returns the last narrative.
+    Only loads saves belonging to the specified browser_id.
     """
-    if slot < 1 or slot > MAX_SAVE_SLOTS:
+    if slot < 1 or slot > MAX_SAVES_PER_BROWSER:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Slot must be between 1 and {MAX_SAVE_SLOTS}"
+            detail=f"Slot must be between 1 and {MAX_SAVES_PER_BROWSER}"
         )
 
-    if slot not in _save_slots:
+    db = get_optional_neo4j_db(request)
+    if not db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No save found in slot {slot}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database not available"
         )
 
-    save_data = _save_slots[slot]
+    try:
+        # Load save from Neo4j
+        results = await db.execute("""
+            MATCH (s:GameSave {browser_id: $browser_id, slot: $slot})
+            RETURN s.save_data as save_data_json
+        """, {"browser_id": browser_id, "slot": slot})
+
+        if not results:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No save found in slot {slot}"
+            )
+
+        save_data = json.loads(results[0]["save_data_json"])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to load from Neo4j: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load game from database"
+        )
 
     # Create a new session ID for the loaded game
     new_session_id = str(uuid.uuid4())
@@ -2060,14 +2167,14 @@ async def load_game(slot: int):
     session_data = {
         "session_id": new_session_id,
         "world_id": save_data.get("world_id"),
-        "session_world_id": save_data.get("session_world_id"),  # For entity isolation
+        "session_world_id": save_data.get("session_world_id"),
         "world_name": save_data.get("world_name"),
-        "world_lore_content": save_data.get("world_lore_content"),  # Full lore for consistency
+        "world_lore_content": save_data.get("world_lore_content"),
         "character_concept": save_data.get("character_concept"),
         "setting_preference": save_data.get("setting_preference"),
         "tone_preference": save_data.get("tone_preference"),
         "genre": save_data.get("genre", "fantasy"),
-        "genres": save_data.get("genres"),  # Multi-genre support
+        "genres": save_data.get("genres"),
         "genre_blend": save_data.get("genre_blend"),
         "storytelling_style": save_data.get("storytelling_style", "guided"),
         "phase": save_data.get("phase", "active_play"),
@@ -2091,7 +2198,7 @@ async def load_game(slot: int):
             last_narrative = entry.get("content", last_narrative)
             break
 
-    logger.info(f"Loaded save from slot {slot} as new session {new_session_id}")
+    logger.info(f"Loaded save from slot {slot} for browser {browser_id[:8]}... as session {new_session_id}")
 
     return LoadGameResponse(
         success=True,
@@ -2099,26 +2206,54 @@ async def load_game(slot: int):
         phase=session_data["phase"],
         narrative=last_narrative,
         message=f"Game loaded from slot {slot}",
-        inventory=save_data.get("inventory", [])  # Restore player inventory
+        inventory=save_data.get("inventory", [])
     )
 
 
 @router.delete("/saves/{slot}")
-async def delete_save(slot: int):
-    """Delete a save from a slot."""
-    if slot < 1 or slot > MAX_SAVE_SLOTS:
+async def delete_save(
+    request: Request,
+    slot: int,
+    browser_id: str = Query(..., min_length=1, description="Unique browser identifier"),
+):
+    """Delete a save from a slot. Only deletes saves belonging to the specified browser_id."""
+    if slot < 1 or slot > MAX_SAVES_PER_BROWSER:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Slot must be between 1 and {MAX_SAVE_SLOTS}"
+            detail=f"Slot must be between 1 and {MAX_SAVES_PER_BROWSER}"
         )
 
-    if slot not in _save_slots:
+    db = get_optional_neo4j_db(request)
+    if not db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No save found in slot {slot}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database not available"
         )
 
-    del _save_slots[slot]
+    try:
+        # Delete from Neo4j - only if it belongs to this browser
+        result = await db.execute("""
+            MATCH (s:GameSave {browser_id: $browser_id, slot: $slot})
+            DELETE s
+            RETURN count(*) as deleted
+        """, {"browser_id": browser_id, "slot": slot})
+
+        if not result or result[0]["deleted"] == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No save found in slot {slot}"
+            )
+
+        logger.info(f"Deleted save from slot {slot} for browser {browser_id[:8]}...")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete from Neo4j: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete save from database"
+        )
 
     return {"success": True, "message": f"Save slot {slot} cleared"}
 

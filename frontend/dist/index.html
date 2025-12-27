@@ -598,6 +598,104 @@
             letter-spacing: 0.1em;
         }
 
+        /* Advanced Options Toggle */
+        .advanced-options-container {
+            margin-top: 10px;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 15px;
+        }
+
+        .advanced-options-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .advanced-options-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .advanced-options-toggle .toggle-icon {
+            font-size: 1.1rem;
+        }
+
+        .advanced-options-toggle .toggle-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .advanced-options-toggle .toggle-arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .advanced-options-toggle.expanded .toggle-arrow {
+            transform: rotate(180deg);
+        }
+
+        .advanced-options-content {
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Curated Worlds Grid */
+        .curated-worlds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .curated-world-card {
+            padding: 16px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .curated-world-card:hover {
+            border-color: var(--accent-gold);
+            background: var(--bg-hover);
+        }
+
+        .curated-world-card.selected {
+            border-color: var(--accent-gold);
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+        }
+
+        .curated-world-card .world-name {
+            font-size: 1rem;
+            color: var(--accent-warm);
+            margin-bottom: 6px;
+        }
+
+        .curated-world-card .world-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .curated-world-card .world-genres {
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
         .tone-options {
             display: flex;
             flex-wrap: wrap;
@@ -2188,130 +2286,137 @@
 
         <!-- Setup Screen -->
         <div id="setup" class="screen">
+            <!-- MAIN SECTION: Choose Your World -->
             <div class="setup-section">
-                <h3>The Tone of Your Tale</h3>
-                <div class="tone-options">
-                    <span class="tone-chip" data-tone="epic" onclick="selectTone('epic')">Epic & Sweeping</span>
-                    <span class="tone-chip" data-tone="intimate" onclick="selectTone('intimate')">Intimate & Personal</span>
-                    <span class="tone-chip" data-tone="dark" onclick="selectTone('dark')">Dark & Gritty</span>
-                    <span class="tone-chip" data-tone="whimsical" onclick="selectTone('whimsical')">Whimsical & Light</span>
-                    <span class="tone-chip" data-tone="dramatic" onclick="selectTone('dramatic')">Dramatic & Intense</span>
-                    <span class="tone-chip" data-tone="cozy" onclick="selectTone('cozy')">Cozy & Comforting</span>
-                </div>
-            </div>
-
-            <div class="setup-section">
-                <h3>Your World</h3>
+                <h3>Choose Your World</h3>
                 <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    Choose a starting point, or describe your own:
+                    Pick a ready-to-play world, or create your own adventure
                 </p>
+
+                <!-- Curated Worlds (loaded from API) -->
+                <div id="setup-curated-worlds" class="curated-worlds-grid" style="margin-bottom: 20px;">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Quick presets as fallback/additions -->
                 <div class="tone-options" style="margin-bottom: 15px;">
-                    <span class="tone-chip world-preset" data-world="A quiet coastal town where secrets wash ashore with every tide" onclick="selectWorldPreset(this)">Coastal Mystery</span>
-                    <span class="tone-chip world-preset" data-world="A glittering royal court where whispered alliances matter more than swords" onclick="selectWorldPreset(this)">Royal Intrigue</span>
-                    <span class="tone-chip world-preset" data-world="A sprawling fantasy realm where ancient magic is awakening" onclick="selectWorldPreset(this)">Epic Fantasy</span>
-                    <span class="tone-chip world-preset" data-world="A small town where everyone knows everyone, and old flames never quite die" onclick="selectWorldPreset(this)">Small Town Romance</span>
-                    <span class="tone-chip world-preset" data-world="A haunted manor with a dark history and darker secrets" onclick="selectWorldPreset(this)">Gothic Horror</span>
-                    <span class="tone-chip world-preset" data-world="" onclick="selectWorldPreset(this)">Surprise Me</span>
+                    <span class="tone-chip world-preset" data-world="A quiet coastal town where secrets wash ashore with every tide" onclick="selectWorldPreset(this)">🌊 Coastal Mystery</span>
+                    <span class="tone-chip world-preset" data-world="A glittering royal court where whispered alliances matter more than swords" onclick="selectWorldPreset(this)">👑 Royal Intrigue</span>
+                    <span class="tone-chip world-preset" data-world="A small town where everyone knows everyone, and old flames never quite die" onclick="selectWorldPreset(this)">💕 Small Town Romance</span>
+                    <span class="tone-chip world-preset" data-world="" onclick="selectWorldPreset(this)">✨ Surprise Me</span>
                 </div>
+
                 <div class="form-group">
-                    <label for="world-seed">Or describe your own world:</label>
-                    <textarea id="world-seed" placeholder="Leave blank to let the story surprise you, or describe a setting that calls to you..."></textarea>
-                    <p class="hint">The more detail you give, the more personalized your story. Or leave it blank for a fresh adventure.</p>
+                    <label for="world-seed" style="color: var(--text-secondary);">Or describe your own world:</label>
+                    <textarea id="world-seed" placeholder="A cozy bookshop where the books whisper secrets at midnight... A space station on the edge of known space... Leave blank to be surprised!"></textarea>
                 </div>
             </div>
 
+            <!-- MAIN SECTION: Your Character -->
             <div class="setup-section">
-                <h3>Your Character</h3>
+                <h3>Who Are You?</h3>
                 <div class="form-group">
-                    <label for="character-concept">Who are you in this story?</label>
-                    <textarea id="character-concept" placeholder="A widow returning to her childhood home... A scholar who discovered something forbidden... A stranger who arrived in town the same night as the storm... Or leave blank and discover who you are."></textarea>
+                    <textarea id="character-concept" placeholder="A curious librarian with a mysterious past... A reluctant hero called to adventure... A charming rogue with a heart of gold... Or leave blank and discover who you are!"></textarea>
+                    <p class="hint">Describe your character in a few words, or leave blank and let the story reveal you.</p>
                 </div>
             </div>
 
-            <div class="setup-section">
-                <h3>Storytelling Style</h3>
-                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    How much help do you want?
-                </p>
-                <div class="tone-options">
-                    <span class="tone-chip style-chip selected" data-style="guided" onclick="selectStyle('guided')">Guided Journey</span>
-                    <span class="tone-chip style-chip" data-style="freeform" onclick="selectStyle('freeform')">Freeform Exploration</span>
-                    <span class="tone-chip style-chip" data-style="collaborative" onclick="selectStyle('collaborative')">Collaborative</span>
-                </div>
-                <div id="style-description" style="margin-top: 15px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; font-size: 0.9rem;">
-                    <strong style="color: var(--accent-gold);">Guided Journey</strong>
-                    <span style="color: var(--accent-sage); font-size: 0.8rem; margin-left: 8px;">Recommended for new players</span>
-                    <p style="color: var(--text-secondary); margin-top: 8px; line-height: 1.6;">
-                        The story provides clear direction and <strong style="color: var(--text-primary);">suggests possible actions</strong> after each scene.
-                        Great if you want help figuring out what to do next!
-                    </p>
-                </div>
+            <!-- Primary action button - visible without scrolling on most devices -->
+            <div class="btn-group" style="margin: 25px 0;">
+                <button class="btn btn-primary" onclick="beginStory()" style="padding: 16px 40px; font-size: 1.1rem;">▶ Begin My Story</button>
             </div>
 
-            <div class="setup-section">
-                <h3>Game Rules</h3>
-                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    Would you like D&D 5e mechanics to power your adventure?
-                </p>
-                <div class="tone-options" style="margin-bottom: 15px;">
-                    <span class="tone-chip rules-chip selected" data-rules="narrative" onclick="selectRulesMode('narrative')">Pure Narrative</span>
-                    <span class="tone-chip rules-chip" data-rules="dnd" onclick="selectRulesMode('dnd')">d20 RPG Rules</span>
-                </div>
-                <div id="dnd-options" style="display: none; margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Genre:</label>
-                        <select id="rules-genre" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
-                            <optgroup label="Popular">
-                                <option value="fantasy" selected>⚔️ Fantasy - Swords, sorcery, mythical creatures</option>
-                                <option value="scifi">🚀 Sci-Fi - Space, technology, alien species</option>
-                                <option value="horror">👻 Horror - Dark mysteries, supernatural threats</option>
-                                <option value="modern">🏙️ Modern - Contemporary setting, realistic skills</option>
-                            </optgroup>
-                            <optgroup label="Historical">
-                                <option value="western">🤠 Western - Frontier justice, outlaws, wilderness</option>
-                                <option value="mythology">🏛️ Mythology - Divine heroes, ancient legends</option>
-                                <option value="noir">🕵️ Noir - Hard-boiled detectives, moral ambiguity</option>
-                                <option value="wuxia">🥋 Wuxia - Martial arts masters, honor-bound warriors</option>
-                            </optgroup>
-                            <optgroup label="Speculative">
-                                <option value="cyberpunk">🌃 Cyberpunk - High tech, low life, chrome and neon</option>
-                                <option value="steampunk">⚙️ Steampunk - Victorian era, impossible machines</option>
-                                <option value="postapoc">☢️ Post-Apocalyptic - Survival in the ashes</option>
-                                <option value="superhero">🦸 Superhero - Capes, powers, heroic battles</option>
-                            </optgroup>
-                            <optgroup label="Other">
-                                <option value="generic">🎲 Generic - Create your own setting</option>
-                            </optgroup>
-                        </select>
+            <!-- ADVANCED OPTIONS (collapsed by default) -->
+            <div class="advanced-options-container">
+                <button class="advanced-options-toggle" onclick="toggleAdvancedOptions()">
+                    <span class="toggle-icon">⚙️</span>
+                    <span class="toggle-text">Advanced Options</span>
+                    <span class="toggle-arrow" id="advanced-arrow">▼</span>
+                </button>
+
+                <div id="advanced-options" class="advanced-options-content" style="display: none;">
+                    <!-- Tone -->
+                    <div class="setup-section" style="margin-top: 20px;">
+                        <h4 style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 10px;">Tone of Your Tale</h4>
+                        <div class="tone-options">
+                            <span class="tone-chip" data-tone="epic" onclick="selectTone('epic')">Epic</span>
+                            <span class="tone-chip" data-tone="intimate" onclick="selectTone('intimate')">Intimate</span>
+                            <span class="tone-chip" data-tone="dark" onclick="selectTone('dark')">Dark</span>
+                            <span class="tone-chip" data-tone="whimsical" onclick="selectTone('whimsical')">Whimsical</span>
+                            <span class="tone-chip selected" data-tone="dramatic" onclick="selectTone('dramatic')">Dramatic</span>
+                            <span class="tone-chip" data-tone="cozy" onclick="selectTone('cozy')">Cozy</span>
+                        </div>
                     </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Rules Visibility:</label>
-                        <select id="rules-visibility" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
-                            <option value="storyteller">Storyteller - Pure narrative, no numbers</option>
-                            <option value="guided" selected>Guided - Light hints when rolls matter</option>
-                            <option value="classic">Classic - See important rolls and results</option>
-                            <option value="tactician">Tactician - Full mechanical breakdown</option>
-                        </select>
+
+                    <!-- Storytelling Style -->
+                    <div class="setup-section">
+                        <h4 style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 10px;">Storytelling Style</h4>
+                        <div class="tone-options">
+                            <span class="tone-chip style-chip selected" data-style="guided" onclick="selectStyle('guided')">
+                                Guided <span style="font-size: 0.75rem; opacity: 0.7;">(suggestions on)</span>
+                            </span>
+                            <span class="tone-chip style-chip" data-style="freeform" onclick="selectStyle('freeform')">
+                                Freeform <span style="font-size: 0.75rem; opacity: 0.7;">(total freedom)</span>
+                            </span>
+                        </div>
                     </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Character Creation:</label>
-                        <select id="creation-mode" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
-                            <option value="concept" selected>Quick Start - AI generates from your description</option>
-                            <option value="guided">Guided - Step-by-step with explanations</option>
-                            <option value="classic">Classic - Traditional character creation</option>
-                        </select>
+
+                    <!-- D&D Rules - with veteran-friendly signals -->
+                    <div class="setup-section">
+                        <h4 style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 10px;">
+                            <span style="margin-right: 6px;">🎲</span> Game Rules
+                            <span style="font-size: 0.75rem; color: var(--accent-sage); margin-left: 8px;">for tabletop fans</span>
+                        </h4>
+                        <div class="tone-options" style="margin-bottom: 15px;">
+                            <span class="tone-chip rules-chip selected" data-rules="narrative" onclick="selectRulesMode('narrative')">Pure Narrative</span>
+                            <span class="tone-chip rules-chip" data-rules="dnd" onclick="selectRulesMode('dnd')">
+                                🎲 d20 Rules <span style="font-size: 0.7rem; opacity: 0.8;">(5e-style)</span>
+                            </span>
+                        </div>
+                        <div id="dnd-options" style="display: none; margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Setting:</label>
+                                <select id="rules-genre" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
+                                    <optgroup label="Popular">
+                                        <option value="fantasy" selected>⚔️ Fantasy</option>
+                                        <option value="scifi">🚀 Sci-Fi</option>
+                                        <option value="horror">👻 Horror</option>
+                                        <option value="modern">🏙️ Modern</option>
+                                    </optgroup>
+                                    <optgroup label="More">
+                                        <option value="western">🤠 Western</option>
+                                        <option value="noir">🕵️ Noir</option>
+                                        <option value="cyberpunk">🌃 Cyberpunk</option>
+                                        <option value="postapoc">☢️ Post-Apocalyptic</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Show Mechanics:</label>
+                                <select id="rules-visibility" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
+                                    <option value="storyteller">Hidden - pure narrative</option>
+                                    <option value="guided" selected>Subtle - hints when it matters</option>
+                                    <option value="classic">Visible - see the rolls</option>
+                                    <option value="tactician">Full - complete breakdown</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Character Creation:</label>
+                                <select id="creation-mode" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
+                                    <option value="concept" selected>Quick - AI builds from your concept</option>
+                                    <option value="guided">Guided - step by step</option>
+                                    <option value="classic">Classic - full control</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <p class="hint" style="margin-top: 10px; font-size: 0.85rem;">
-                        Your character description will be interpreted in the selected genre. You can view your character sheet anytime during play.
-                    </p>
                 </div>
             </div>
 
             <div id="setup-status"></div>
 
-            <div class="btn-group" style="margin-top: 20px;">
-                <button class="btn btn-primary" onclick="beginStory()">Begin My Story</button>
-                <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+            <div class="btn-group" style="margin-top: 15px;">
+                <button class="btn btn-secondary" onclick="showScreen('welcome')">← Back</button>
             </div>
         </div>
 
@@ -2906,6 +3011,22 @@ Example:
         let playerInventory = [];  // Track player's inventory items
         const API_BASE = window.location.origin + '/api';
 
+        // Browser ID for save isolation (each browser gets its own saves)
+        function getBrowserId() {
+            let browserId = localStorage.getItem('airpg_browser_id');
+            if (!browserId) {
+                // Generate UUID v4
+                browserId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('airpg_browser_id', browserId);
+            }
+            return browserId;
+        }
+        const BROWSER_ID = getBrowserId();
+
         // D&D 5e State
         let rulesMode = 'narrative';  // 'narrative' or 'dnd'
         let rulesGenre = 'fantasy';  // 'fantasy', 'scifi', 'modern', 'horror'
@@ -3440,6 +3561,76 @@ Example:
             document.querySelectorAll('.tone-chip[data-tone]').forEach(chip => {
                 chip.classList.toggle('selected', chip.dataset.tone === tone);
             });
+        }
+
+        // Advanced Options Toggle
+        function toggleAdvancedOptions() {
+            const content = document.getElementById('advanced-options');
+            const toggle = document.querySelector('.advanced-options-toggle');
+            const arrow = document.getElementById('advanced-arrow');
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.classList.add('expanded');
+            } else {
+                content.style.display = 'none';
+                toggle.classList.remove('expanded');
+            }
+        }
+
+        // Load curated worlds for setup screen
+        let setupWorldsLoaded = false;
+        let selectedCuratedWorld = null;
+
+        async function loadSetupCuratedWorlds() {
+            if (setupWorldsLoaded) return;
+
+            const container = document.getElementById('setup-curated-worlds');
+            if (!container) return;
+
+            try {
+                const response = await fetch(API_BASE + '/lore-bases');
+                if (!response.ok) {
+                    container.innerHTML = '';  // Hide if no worlds
+                    return;
+                }
+
+                const worlds = await response.json();
+                if (!worlds || worlds.length === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                // Show first 4 curated worlds as cards
+                const worldsHtml = worlds.slice(0, 4).map(world => `
+                    <div class="curated-world-card" onclick="selectCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
+                        <div class="world-name">${world.name}</div>
+                        <div class="world-description">${world.description || 'A unique world awaits...'}</div>
+                        <div class="world-genres">${(world.genre_hints || []).slice(0, 3).join(' • ')}</div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = worldsHtml;
+                setupWorldsLoaded = true;
+            } catch (err) {
+                console.log('Could not load curated worlds:', err);
+                container.innerHTML = '';  // Hide on error
+            }
+        }
+
+        function selectCuratedWorld(worldId, element) {
+            // Deselect all
+            document.querySelectorAll('.curated-world-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelectorAll('.world-preset').forEach(chip => {
+                chip.classList.remove('selected');
+            });
+            document.getElementById('world-seed').value = '';
+
+            // Select this one
+            element.classList.add('selected');
+            selectedCuratedWorld = worldId;
         }
 
         // World Preset Selection
@@ -4730,18 +4921,18 @@ Example:
 
         async function loadSaveSlots() {
             try {
-                const response = await fetch(API_BASE + '/game/saves');
+                const response = await fetch(API_BASE + '/game/saves?browser_id=' + encodeURIComponent(BROWSER_ID));
                 if (response.ok) {
                     saveSlots = await response.json();
                 } else {
-                    saveSlots = Array.from({length: 5}, (_, i) => ({
+                    saveSlots = Array.from({length: 10}, (_, i) => ({
                         slot: i + 1,
                         is_empty: true
                     }));
                 }
             } catch (err) {
                 console.warn('Could not load save slots:', err);
-                saveSlots = Array.from({length: 5}, (_, i) => ({
+                saveSlots = Array.from({length: 10}, (_, i) => ({
                     slot: i + 1,
                     is_empty: true
                 }));
@@ -4951,7 +5142,8 @@ Example:
                     body: JSON.stringify({
                         slot: slot,
                         session_name: saveName,
-                        inventory: playerInventory  // Save inventory with the game
+                        inventory: playerInventory,
+                        browser_id: BROWSER_ID  // Isolate saves by browser
                     })
                 });
 
@@ -4974,7 +5166,7 @@ Example:
             showStatus('saves-status', '<span class="loading"></span> Loading your adventure...', 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/saves/${slot}/load`);
+                const response = await fetch(API_BASE + `/game/saves/${slot}/load?browser_id=` + encodeURIComponent(BROWSER_ID));
 
                 if (response.ok) {
                     const data = await response.json();
@@ -5003,7 +5195,7 @@ Example:
             if (!confirm(`Delete save in slot ${slot}?`)) return;
 
             try {
-                const response = await fetch(API_BASE + `/game/saves/${slot}`, {
+                const response = await fetch(API_BASE + `/game/saves/${slot}?browser_id=` + encodeURIComponent(BROWSER_ID), {
                     method: 'DELETE'
                 });
 
@@ -5493,16 +5685,16 @@ Example:
         }
 
         async function clearAllSaves() {
-            if (!confirm('Delete ALL saved games? This cannot be undone.')) return;
+            if (!confirm('Delete ALL your saved games? This cannot be undone.')) return;
 
             showStatus('admin-status', '<span class="loading"></span> Clearing saves...', 'info');
 
             try {
-                // Delete each slot
-                for (let i = 1; i <= 5; i++) {
-                    await fetch(API_BASE + `/game/saves/${i}`, { method: 'DELETE' });
+                // Delete each slot (only clears THIS browser's saves)
+                for (let i = 1; i <= 10; i++) {
+                    await fetch(API_BASE + `/game/saves/${i}?browser_id=` + encodeURIComponent(BROWSER_ID), { method: 'DELETE' });
                 }
-                showStatus('admin-status', 'All save slots cleared.', 'success');
+                showStatus('admin-status', 'All your save slots cleared.', 'success');
             } catch (err) {
                 showStatus('admin-status', 'Error clearing saves: ' + err.message, 'error');
             }
