@@ -1305,9 +1305,11 @@
             touch-action: manipulation;
         }
 
-        /* Bottom Navigation (Mobile App-like) */
+        /* Bottom Navigation (Mobile App-like) - ALWAYS hidden by default */
         .mobile-nav {
-            display: none; /* Hidden by default, shown on mobile during gameplay */
+            display: none !important; /* Hidden on desktop and when not in gameplay */
+            visibility: hidden;
+            pointer-events: none;
             position: fixed;
             bottom: 0;
             left: 0;
@@ -1351,6 +1353,8 @@
         /* Mobile Menu Overlay */
         .mobile-menu-overlay {
             display: none;
+            visibility: hidden;
+            pointer-events: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -1363,6 +1367,8 @@
 
         .mobile-menu-overlay.visible {
             display: flex;
+            visibility: visible;
+            pointer-events: auto;
             flex-direction: column;
             justify-content: flex-end;
         }
@@ -1416,9 +1422,11 @@
            PHONE BREAKPOINT (max-width: 428px)
            ============================================ */
         @media (max-width: 428px) {
-            /* Show mobile nav during gameplay */
+            /* Show mobile nav during gameplay - override the !important */
             body.in-gameplay .mobile-nav {
-                display: flex;
+                display: flex !important;
+                visibility: visible;
+                pointer-events: auto;
             }
 
             /* Add bottom padding when mobile nav is visible */
