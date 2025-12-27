@@ -1184,32 +1184,32 @@ def _get_genre_guidance(genre: str) -> Dict[str, str]:
     guidance = {
         "fantasy": {
             "elements": "magic, ancient prophecies, mystical creatures, heroic quests",
-            "hooks": "a mysterious letter, a strange mark appearing, an artifact calling to you",
+            "hooks": "something unexpected that demands attention - a person, an event, a discovery, or a problem",
             "voice": "evocative and wonderous, with a sense of destiny",
         },
         "romance": {
             "elements": "emotional tension, meaningful glances, past connections, unspoken feelings",
-            "hooks": "an unexpected reunion, a letter from the past, a chance encounter that changes everything",
+            "hooks": "a moment of connection or tension with another person",
             "voice": "warm and intimate, focused on feelings and connections between people",
         },
         "mystery": {
             "elements": "clues, secrets, suspicious characters, hidden motives, puzzles",
-            "hooks": "something that doesn't add up, a detail that nags at you, an unexpected discovery",
+            "hooks": "something that feels wrong or out of place",
             "voice": "atmospheric and intriguing, building tension through details",
         },
         "horror": {
             "elements": "dread, the unknown, isolation, things not quite right, building unease",
-            "hooks": "something watching, a sound that shouldn't be there, a memory that doesn't fit",
+            "hooks": "a subtle wrongness that grows more unsettling",
             "voice": "unsettling and atmospheric, letting imagination fill the shadows",
         },
         "adventure": {
             "elements": "exploration, discovery, challenges, exotic locations, bold action",
-            "hooks": "a map to somewhere forgotten, news of something valuable, a call to action",
+            "hooks": "an opportunity or challenge that beckons",
             "voice": "exciting and propulsive, full of momentum and possibility",
         },
         "drama": {
             "elements": "complex relationships, moral dilemmas, personal stakes, family secrets",
-            "hooks": "a choice with no good answer, news that changes everything, a past catching up",
+            "hooks": "a moment of emotional weight or decision",
             "voice": "emotionally resonant, focused on human complexity and growth",
         },
     }
@@ -1284,7 +1284,7 @@ Write an opening that:
 1. Begins IN THE MOMENT - no preamble, drop them right into a scene
 2. Uses characters and locations from the world lore above (if provided)
 3. Engages the senses - what do they see, hear, feel?
-4. Creates immediate intrigue using: {genre_info['hooks']}
+4. Creates intrigue through {genre_info['hooks']} (be creative and varied - avoid clichés like mysterious letters or marks appearing)
 5. Makes them feel like they belong in this world
 6. Ends at a natural pause - DO NOT suggest choices or ask questions
 
