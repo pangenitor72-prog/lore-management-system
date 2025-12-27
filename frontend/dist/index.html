@@ -1735,39 +1735,11 @@
             }
 
             /* Suggested actions - horizontal scroll */
-            #suggested-actions-panel {
-                margin-bottom: 10px;
-            }
-
-            .suggested-actions-chips {
-                display: flex;
-                gap: 8px;
-                overflow-x: auto;
-                padding-bottom: 4px;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .suggested-action-chip {
-                min-height: 36px;
-                padding: 8px 14px;
-                white-space: nowrap;
-                flex-shrink: 0;
-            }
-
-            /* Quick actions */
-            .quick-actions {
-                display: flex;
-                gap: 6px;
-                overflow-x: auto;
-                margin-bottom: 8px;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .quick-action-btn {
-                min-height: var(--touch-target-min);
-                padding: 10px 14px;
-                white-space: nowrap;
-                flex-shrink: 0;
+            /* Hide action suggestions on mobile - maximize story space */
+            #suggested-actions-panel,
+            .quick-actions,
+            .example-prompts {
+                display: none !important;
             }
 
             /* Action bar (undo/retry) */
