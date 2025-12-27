@@ -687,7 +687,9 @@
 
         /* Hidden on desktop - only shown on mobile */
         .story-menu-btn,
-        .story-menu-overlay {
+        .story-menu-overlay,
+        .suggestions-toggle,
+        .mobile-suggestions {
             display: none;
         }
 
@@ -1734,12 +1736,64 @@
                 justify-content: center;
             }
 
-            /* Suggested actions - horizontal scroll */
-            /* Hide action suggestions on mobile - maximize story space */
+            /* Hide suggestions by default on mobile - toggle to show */
             #suggested-actions-panel,
             .quick-actions,
             .example-prompts {
                 display: none !important;
+            }
+
+            /* Mobile suggestions toggle button */
+            .suggestions-toggle {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 44px;
+                height: 44px;
+                background: var(--bg-card);
+                border: 1px solid var(--border-subtle);
+                border-radius: 50%;
+                color: var(--text-secondary);
+                font-size: 1.2rem;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            .suggestions-toggle.active {
+                background: var(--accent-gold);
+                color: var(--bg-primary);
+                border-color: var(--accent-gold);
+            }
+
+            /* Expandable suggestions panel on mobile */
+            .mobile-suggestions {
+                display: none;
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 10px;
+                padding: 12px;
+                background: var(--bg-card);
+                border-radius: 12px;
+                border: 1px solid var(--border-subtle);
+            }
+
+            .mobile-suggestions.visible {
+                display: flex;
+            }
+
+            .mobile-suggestions .suggestion-chip {
+                padding: 12px 16px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border-subtle);
+                border-radius: 20px;
+                color: var(--text-primary);
+                font-size: 0.9rem;
+                cursor: pointer;
+                text-align: left;
+            }
+
+            .mobile-suggestions .suggestion-chip:active {
+                background: var(--bg-hover);
             }
 
             /* Action bar (undo/retry) */
@@ -2324,10 +2378,15 @@
                     </div>
                 </div>
 
+                <!-- Mobile suggestions panel (hidden by default, toggle to show) -->
+                <div class="mobile-suggestions" id="mobile-suggestions">
+                    <!-- Populated by JS -->
+                </div>
+
                 <div class="input-row">
-                    <button id="voice-btn" class="voice-btn" onclick="toggleVoiceInput()" title="Voice input (click to speak)">🎤</button>
-                    <input type="text" id="player-input" placeholder="What do you do? (e.g., 'look around' or 'talk to the stranger')" onkeypress="handleKeyPress(event)">
-                    <button class="btn btn-primary" onclick="sendAction()">Continue</button>
+                    <button class="suggestions-toggle" id="suggestions-toggle" onclick="toggleMobileSuggestions()" title="Show suggestions">💡</button>
+                    <input type="text" id="player-input" placeholder="What do you do?" onkeypress="handleKeyPress(event)">
+                    <button class="btn btn-primary" onclick="sendAction()">Go</button>
                 </div>
 
                 <!-- Undo/Retry Bar -->
@@ -4177,21 +4236,39 @@ Example:
         }
 
         // Suggested Actions (from AI response in guided mode)
+        // Store current suggestions for mobile toggle
+        let currentSuggestions = [];
+
         function showSuggestedActions(actions) {
+            currentSuggestions = actions;  // Store for mobile toggle
+
+            // Desktop panel
             const panel = document.getElementById('suggested-actions-panel');
             const chips = document.getElementById('suggested-actions-chips');
-            if (!panel || !chips) return;
+            if (panel && chips) {
+                chips.innerHTML = actions.map(action =>
+                    `<span class="suggested-action-chip" onclick="useSuggestedAction('${action.replace(/'/g, "\\'")}')">${action}</span>`
+                ).join('');
+                panel.classList.add('visible');
+            }
 
-            chips.innerHTML = actions.map(action =>
-                `<span class="suggested-action-chip" onclick="useSuggestedAction('${action.replace(/'/g, "\\'")}')">${action}</span>`
-            ).join('');
-
-            panel.classList.add('visible');
+            // Also populate mobile suggestions (hidden by default)
+            const mobilePanel = document.getElementById('mobile-suggestions');
+            if (mobilePanel) {
+                mobilePanel.innerHTML = actions.map(action =>
+                    `<button class="suggestion-chip" onclick="useSuggestedAction('${action.replace(/'/g, "\\'")}')">${action}</button>`
+                ).join('');
+            }
         }
 
         function hideSuggestedActions() {
             const panel = document.getElementById('suggested-actions-panel');
             if (panel) panel.classList.remove('visible');
+            // Also hide mobile suggestions
+            const mobilePanel = document.getElementById('mobile-suggestions');
+            if (mobilePanel) mobilePanel.classList.remove('visible');
+            const toggle = document.getElementById('suggestions-toggle');
+            if (toggle) toggle.classList.remove('active');
         }
 
         function useSuggestedAction(action) {
@@ -4200,6 +4277,23 @@ Example:
             input.focus();
             hideSuggestedActions();  // Hide after selecting
             sendAction();  // Auto-send the action
+        }
+
+        function toggleMobileSuggestions() {
+            const panel = document.getElementById('mobile-suggestions');
+            const toggle = document.getElementById('suggestions-toggle');
+            if (!panel || !toggle) return;
+
+            if (panel.classList.contains('visible')) {
+                panel.classList.remove('visible');
+                toggle.classList.remove('active');
+            } else {
+                // Make sure there are suggestions to show
+                if (currentSuggestions.length > 0) {
+                    panel.classList.add('visible');
+                    toggle.classList.add('active');
+                }
+            }
         }
 
         // Status Messages
