@@ -1452,7 +1452,10 @@
                 padding: 14px 24px;
             }
 
-            .btn-primary {
+            /* Only full-width primary buttons in specific contexts */
+            .welcome-actions .btn-primary,
+            .setup-section .btn-primary,
+            .invite-box .btn-primary {
                 width: 100%;
             }
 
@@ -1568,8 +1571,8 @@
                 margin-right: 0;
             }
 
-            /* Fixed input area above bottom nav */
-            .input-area {
+            /* Fixed input area above bottom nav - ONLY in story screen */
+            #story .input-area {
                 position: fixed;
                 bottom: calc(var(--mobile-nav-height) + var(--safe-area-bottom));
                 left: 0;
@@ -1580,27 +1583,27 @@
                 z-index: 100;
             }
 
-            /* Input row */
-            .input-row {
+            /* Input row - scoped to story screen */
+            #story .input-row {
                 display: flex;
                 gap: 8px;
                 align-items: center;
             }
 
-            .input-row input {
+            #story .input-row input {
                 flex: 1;
                 padding: 14px 16px;
                 border-radius: 24px;
                 min-height: var(--touch-target-min);
             }
 
-            .input-row .btn {
+            #story .input-row .btn {
                 min-width: 80px;
                 padding: 14px 16px;
                 border-radius: 24px;
             }
 
-            .voice-btn {
+            #story .voice-btn {
                 min-width: var(--touch-target-min);
                 min-height: var(--touch-target-min);
                 border-radius: 50%;
