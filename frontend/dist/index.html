@@ -3635,6 +3635,13 @@ Example:
 
         // World Preset Selection
         function selectWorldPreset(el) {
+            // Clear curated world selection
+            document.querySelectorAll('.curated-world-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            selectedCuratedWorld = null;
+
+            // Select this preset
             document.querySelectorAll('.world-preset').forEach(chip => {
                 chip.classList.remove('selected');
             });
@@ -4389,6 +4396,9 @@ Example:
 
             // Screen-specific hooks (consolidated)
             switch (screenId) {
+                case 'setup':
+                    await loadSetupCuratedWorlds();
+                    break;
                 case 'game':
                     if (tutorialMode) showExamplePrompts();
                     break;
@@ -4552,17 +4562,25 @@ Example:
 
             try {
                 // Create session with genre blend
+                // If a curated world is selected, use its ID; otherwise use the world seed text
+                const sessionPayload = {
+                    character_concept: characterConcept,
+                    setting_preference: selectedCuratedWorld ? '' : worldSeed,  // Don't need seed if using curated world
+                    tone_preference: selectedTone,
+                    genre: selectedGenre,  // Primary genre
+                    genres: selectedGenres,  // All selected genres for blending
+                    storytelling_style: selectedStyle
+                };
+
+                // Add world_id if a curated world was selected
+                if (selectedCuratedWorld) {
+                    sessionPayload.world_id = selectedCuratedWorld;
+                }
+
                 const sessionRes = await fetch(API_BASE + '/game/session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        character_concept: characterConcept,
-                        setting_preference: worldSeed,
-                        tone_preference: selectedTone,
-                        genre: selectedGenre,  // Primary genre
-                        genres: selectedGenres,  // All selected genres for blending
-                        storytelling_style: selectedStyle
-                    })
+                    body: JSON.stringify(sessionPayload)
                 });
 
                 if (!sessionRes.ok) throw new Error('Failed to create session');
