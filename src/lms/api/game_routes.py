@@ -1354,6 +1354,14 @@ async def _handle_active_play(
 
     history_text = "\n\n".join(history_lines)
 
+    # Get the MOST RECENT DM response (untruncated) for immediate context
+    # This ensures the AI always knows exactly what scene the player is responding to
+    last_dm_response = ""
+    for entry in reversed(history):
+        if entry.get("role") == "assistant":
+            last_dm_response = entry.get("content", "")
+            break
+
     # Build world lore context (primary source of truth)
     world_context = ""
     if world_lore:
@@ -1416,6 +1424,9 @@ PROTAGONIST: {character if character else 'the protagonist'}
 
 STORY SO FAR:
 {history_text if history_text else 'The story is just beginning.'}
+
+CURRENT SCENE (what just happened - the player is responding to THIS):
+{last_dm_response if last_dm_response else 'The story is just beginning.'}
 
 PLAYER'S ACTION: {player_input}
 {mechanical_context}
