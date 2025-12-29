@@ -1,11 +1,32 @@
 # src/airpg/runtime/session_loop.py
 from __future__ import annotations
-from typing import List, Tuple, Optional, Callable
+from dataclasses import dataclass
+from typing import List, Tuple, Optional, Callable, Union
 import copy
 
 from .runtime import MinimalRuntime, TraceEvent
 from .session_state import SessionState
-from .gameplay_rules import GameplayRule
+from .gameplay_rules import GameplayRule, Intervention
+
+
+@dataclass
+class StepResult:
+    """
+    Result of a session step, supporting intervention pauses.
+
+    When intervention is set, the session loop is paused waiting for
+    external input. The caller should send the intervention prompt to
+    the user, collect the response, and resume with that input.
+    """
+    state: SessionState
+    trace: List[TraceEvent]
+    intervention: Optional[Intervention] = None
+
+    @property
+    def is_paused(self) -> bool:
+        """Returns True if the step is waiting for intervention response."""
+        return self.intervention is not None
+
 
 def run_session_step(
     *,
@@ -15,7 +36,7 @@ def run_session_step(
     deliver_fn: Callable[..., List[Tuple[str, str]]],
     runtime: MinimalRuntime,
     rules: Optional[List[GameplayRule]] = None,
-) -> Tuple[SessionState, List[TraceEvent]]:
+) -> Union[Tuple[SessionState, List[TraceEvent]], StepResult]:
     """
     Runs a single, deterministic step of a session loop.
 
@@ -23,6 +44,10 @@ def run_session_step(
     2. Runs one full interaction via MinimalRuntime.
     3. Extracts a handoff payload from the resulting trace.
     4. Returns a NEW SessionState and the trace. Does not mutate inputs.
+
+    Returns:
+        - Tuple[SessionState, List[TraceEvent]]: Normal completion (backwards compatible)
+        - StepResult with intervention: When a rule requests external input (RPG mode)
     """
     # The message for this turn is ALWAYS the player's direct input.
     message = player_input
@@ -30,16 +55,29 @@ def run_session_step(
     # Apply gameplay rules to the player's current input before interaction
     if rules:
         for rule in rules:
-            transformed_message = rule(message, state)
-            if transformed_message is None:
+            result = rule(message, state)
+
+            # Check for Intervention (RPG/MANUAL mode pause)
+            if isinstance(result, Intervention):
+                return StepResult(
+                    state=state,
+                    trace=[],
+                    intervention=result,
+                )
+
+            if result is None:
                 # Rule blocked propagation entirely
                 next_state = SessionState(
                     turn_index=state.turn_index + 1,
                     last_player_message=player_input,
                     last_handoff_message="[Action blocked by rule]",
+                    config=state.config,
+                    session_id=state.session_id,
+                    character=state.character,
                 )
                 return next_state, []
-            message = transformed_message
+
+            message = result
 
     initial_message = message
 
@@ -64,11 +102,14 @@ def run_session_step(
             f"{last_event.receiver} considers what to do next."
         )
 
-    # Create and return a NEW state object
+    # Create and return a NEW state object, preserving config, session_id, and character
     next_state = SessionState(
         turn_index=state.turn_index + 1,
         last_player_message=player_input,
         last_handoff_message=handoff_message,
+        config=state.config,
+        session_id=state.session_id,
+        character=state.character,
     )
 
     return next_state, trace

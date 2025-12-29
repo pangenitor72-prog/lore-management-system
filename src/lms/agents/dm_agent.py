@@ -1,9 +1,14 @@
 """
-DMAgent v0.3 - The Grounded Dungeon Master with Generative Worldbuilding
+DMAgent v0.4 - The Grounded Dungeon Master with Dual-Mode Support
 
 This agent wraps Gemini with the DM Prompt to create an immersive,
 text-based RPG experience. It integrates with GameSession for state,
 QueryAgent for lore retrieval, and AuditorAgent for contradiction checking.
+
+NEW in v0.4:
+- Pacing Pressure for ONE_SHOT sessions (drives to climax in ~20 turns)
+- GameConfig integration for narrative complexity
+- Support for "THE END" state
 
 Uses centralized Prompt Library for all system prompts.
 """
@@ -14,7 +19,7 @@ import re
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Literal, TYPE_CHECKING
 from pathlib import Path
 import google.generativeai as genai
 
@@ -28,6 +33,9 @@ from src.lms.core.entity_factory import EntityFactory, EntityType, EntityTemplat
 from src.lms.prompts import DMPrompts, BoundaryPrompts
 from src.lms.agents.boundary_enforcement import PlayerIntent, PlayerIntentType, AgencyOverride
 from src.lms.core.models import OCEANProfile, PersonalityGenerator, PersonalityTemplates
+
+if TYPE_CHECKING:
+    from src.airpg.runtime.game_config import GameConfig
 
 # Arc Engine for narrative structure (optional - graceful fallback if not available)
 try:
@@ -133,6 +141,10 @@ class DMAgent:
         if ARC_ENGINE_AVAILABLE:
             self._arc_engine = ArcEngine()
 
+        # Dual-mode configuration (defaults to casual one-shot)
+        self._game_config: Optional[GameConfig] = None
+        self._session_ended = False  # Flag for THE END state
+
     @property
     def arc_engine(self) -> Optional[ArcEngine]:
         """Get the Arc Engine instance (if available)."""
@@ -153,6 +165,91 @@ class DMAgent:
         if not self._arc_engine:
             return None
         return self._arc_engine.get_status()
+
+    def set_game_config(self, config: "GameConfig") -> None:
+        """Set the game configuration for dual-mode support."""
+        self._game_config = config
+
+    @property
+    def is_session_ended(self) -> bool:
+        """Check if the session has reached THE END."""
+        return self._session_ended
+
+    def get_pacing_context(self, turn: int) -> str:
+        """
+        Get pacing pressure context for ONE_SHOT mode.
+
+        Forces AI to drive toward climax in later turns.
+
+        Args:
+            turn: Current turn number (0-indexed)
+
+        Returns:
+            Pacing instruction to inject into prompts
+        """
+        if not self._game_config or not self._game_config.is_one_shot():
+            return ""
+
+        phase = self._game_config.get_pacing_phase(turn)
+        remaining = self._game_config.max_turns - turn
+
+        pacing_instructions = {
+            "INTRO": """
+=== PACING: INTRODUCTION (Turns 1-3) ===
+- Establish atmosphere, character, and immediate situation
+- Introduce the central tension or mystery
+- Keep it mysterious and inviting
+""",
+            "RISING": f"""
+=== PACING: RISING ACTION (Turns 4-14) ===
+- Escalate tension with each response
+- Introduce complications and stakes
+- Remaining turns: {remaining}
+""",
+            "CLIMAX": f"""
+=== PACING: CLIMAX PHASE (Turns 15-20) ===
+⚠️ CRITICAL: Only {remaining} turns remaining!
+- ACTIVELY drive the narrative toward its climax
+- Increase urgency and stakes dramatically
+- Begin resolving major plot threads
+- Make consequences feel final and meaningful
+""",
+            "END": """
+=== PACING: RESOLUTION ===
+⚠️ THIS IS THE FINAL TURN.
+- Deliver a satisfying conclusion
+- Resolve the central conflict
+- End with: "**THE END**"
+- This session is complete. No further actions possible.
+""",
+        }
+
+        return pacing_instructions.get(phase, "")
+
+    def get_complexity_context(self) -> str:
+        """
+        Get narrative complexity instructions based on config.
+
+        Returns:
+            Complexity instruction to inject into prompts
+        """
+        if not self._game_config:
+            return ""
+
+        if self._game_config.is_verbose():
+            return """
+=== NARRATIVE STYLE: VERBOSE ===
+- Use rich, literary prose with sensory details
+- Allow for longer, more immersive descriptions
+- Include atmospheric and emotional depth
+"""
+        else:
+            return """
+=== NARRATIVE STYLE: CONCISE ===
+- Keep responses short and action-focused
+- Prioritize clarity over flourish
+- Maximum 3-4 paragraphs per response
+"""
 
     @property
     def system_prompt(self) -> str:
@@ -204,21 +301,34 @@ class DMAgent:
         """
         if not self.session:
             raise RuntimeError("No active session. Call start_session() first.")
-        
+
+        # Check if session has ended (ONE_SHOT reached conclusion)
+        if self._session_ended:
+            return (
+                "**THE END**\n\n"
+                "*This story has concluded. Thank you for playing!*\n\n"
+                "To start a new adventure, begin a new session."
+            )
+
         # Log player input
         await self.session.add_event("PLAYER_ACTION", player_input)
         self.history.append({"role": "user", "content": player_input})
-        
+
         # Route based on session state
         if not self.session_0_complete:
             response = await self._handle_session_0(player_input)
         else:
             response = await self._handle_active_play(player_input)
-        
+
+        # Check for THE END marker in response
+        if "**THE END**" in response or "THE END" in response.upper():
+            self._session_ended = True
+            await AuditLogger.log("Session ended: ONE_SHOT reached conclusion")
+
         # Log DM response
         await self.session.add_event("DM_RESPONSE", response)
         self.history.append({"role": "assistant", "content": response})
-        
+
         return response
 
     async def _handle_session_0(self, player_input: str) -> str:
@@ -770,13 +880,22 @@ If you don't introduce new entities, omit this JSON block entirely.
         history_context = self._format_history(limit=10)
         state = await self.session.get_state()
         state_context = self._format_state(state)
-        
+
+        # Get turn number for pacing
+        session_info = state.get("session", {}) if state else {}
+        turn_count = session_info.get("turn_count", len(self.history) // 2)
+
+        # Get pacing and complexity contexts
+        pacing_context = self.get_pacing_context(turn_count)
+        complexity_context = self.get_complexity_context()
+
         prompt = f"""{self.system_prompt}
 
 === SESSION CONTEXT ===
 Setting: {self.session_0_answers.get('setting', 'Unknown')}
 Character: {self.session_0_answers.get('character', 'Unknown')}
 Tone: {self.session_0_answers.get('tone', 'Unknown')}
+Turn: {turn_count}
 
 === CONVERSATION HISTORY ===
 {history_context}
@@ -787,7 +906,8 @@ Tone: {self.session_0_answers.get('tone', 'Unknown')}
 === LORE CONTEXT (Canon - Use if relevant) ===
 {lore_context}
 {generation_instruction}
-
+{pacing_context}
+{complexity_context}
 === PLAYER'S ACTION ===
 {player_input}
 

@@ -169,6 +169,114 @@ class Neo4jDatabase:
             )
             raise
 
+    async def execute_with_overlay(
+        self,
+        cypher: str,
+        params: dict = None,
+        session_id: Optional[str] = None,
+    ) -> list:
+        """
+        Execute query with session-aware delta-layer coalesce.
+
+        Implements the "Layered Memory" strategy:
+        - Layer A (Canon): Nodes without session scope, shared globally
+        - Layer B (Session Overlay): Nodes scoped to a session_id
+
+        Read Logic:
+            Session layer takes precedence. If a node exists in the session
+            overlay (Instance) that links to a Canon entity, the overlay
+            version is returned.
+
+        Write Logic:
+            When session_id is provided, writes create/update nodes in the
+            session layer only, preserving Canon immutability.
+
+        Args:
+            cypher: The Cypher query to execute
+            params: Query parameters
+            session_id: If provided, enables delta-layer awareness.
+                       If None, behaves exactly like execute() (STORY mode).
+
+        Returns:
+            List of result records
+        """
+        if session_id is None:
+            # No session context = pure Canon mode (backwards compatible)
+            return await self.execute(cypher, params)
+
+        params = params or {}
+        params["_session_id"] = session_id
+
+        # For session-scoped queries, we inject the session context
+        # The actual coalesce logic depends on the query pattern.
+        # This method provides the infrastructure; callers use helper methods
+        # like read_entity_with_overlay() for specific patterns.
+        return await self.execute(cypher, params)
+
+    async def read_entity_with_overlay(
+        self,
+        canon_id: str,
+        session_id: Optional[str] = None,
+    ) -> Optional[dict]:
+        """
+        Read an entity with session overlay coalesce.
+
+        Returns session Instance if it exists, otherwise falls back to Canon Entity.
+        """
+        if session_id is None:
+            # Pure Canon read
+            result = await self.execute(
+                "MATCH (e:Entity {canon_id: $cid}) RETURN properties(e) as entity",
+                {"cid": canon_id},
+            )
+            return result[0]["entity"] if result else None
+
+        # Coalesce: prefer session overlay, fall back to Canon
+        result = await self.execute(
+            """
+            MATCH (e:Entity {canon_id: $cid})
+            OPTIONAL MATCH (s:Session {session_id: $sid})-[:CONTAINS]->(i:Instance)-[:INSTANCE_OF]->(e)
+            RETURN COALESCE(properties(i), properties(e)) as entity,
+                   i IS NOT NULL as is_overlay
+            """,
+            {"cid": canon_id, "sid": session_id},
+        )
+        return result[0]["entity"] if result else None
+
+    async def write_entity_delta(
+        self,
+        canon_id: str,
+        session_id: str,
+        properties: dict,
+    ) -> dict:
+        """
+        Write entity changes to session overlay (delta layer).
+
+        Creates or updates an Instance node that overrides the Canon Entity
+        for this session only. Canon remains immutable.
+
+        Args:
+            canon_id: The canonical entity ID to create an overlay for
+            session_id: The session to scope the overlay to
+            properties: Properties to set on the overlay
+
+        Returns:
+            The updated overlay properties
+        """
+        result = await self.execute(
+            """
+            MATCH (s:Session {session_id: $sid})
+            MATCH (e:Entity {canon_id: $cid})
+            MERGE (s)-[:CONTAINS]->(i:Instance {canon_id: $cid})
+            ON CREATE SET i.created_at = datetime()
+            MERGE (i)-[:OVERRIDES]->(e)
+            SET i += $props, i.updated_at = datetime()
+            RETURN properties(i) as instance
+            """,
+            {"sid": session_id, "cid": canon_id, "props": properties},
+        )
+        return result[0]["instance"] if result else {}
+
     def test_connection(self) -> bool:
         """Return True/False without raising on connectivity."""
         try:
