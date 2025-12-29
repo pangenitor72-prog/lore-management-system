@@ -1,0 +1,109 @@
+/* ============================================================
+   Pacing Bar - Narrative Progress Indicator
+   ============================================================ */
+
+.pacing-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Progress Track */
+.pacing-bar__track {
+  position: relative;
+  height: 6px;
+  background: var(--surface-tertiary);
+  border-radius: var(--radius-full);
+  overflow: visible;
+}
+
+.pacing-bar__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.5s var(--ease-standard);
+}
+
+/* Phase colors */
+.pacing-bar__fill--intro {
+  background: linear-gradient(90deg, var(--color-info), #60a5fa);
+}
+
+.pacing-bar__fill--rising {
+  background: linear-gradient(90deg, var(--color-warning), #fbbf24);
+}
+
+.pacing-bar__fill--climax {
+  background: linear-gradient(90deg, var(--color-danger), #f87171);
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.7);
+  }
+}
+
+/* Act markers (25% and 75%) */
+.pacing-bar__marker {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 10px;
+  background: var(--text-muted);
+  border-radius: 1px;
+  opacity: 0.5;
+  transform: translateX(-50%);
+}
+
+/* Info row */
+.pacing-bar__info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pacing-bar__phase {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pacing-bar__phase--intro {
+  color: var(--color-info);
+}
+
+.pacing-bar__phase--rising {
+  color: var(--color-warning);
+}
+
+.pacing-bar__phase--climax {
+  color: var(--color-danger);
+}
+
+.pacing-bar__turns {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.pacing-bar__finale {
+  color: var(--color-danger);
+  font-weight: 600;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

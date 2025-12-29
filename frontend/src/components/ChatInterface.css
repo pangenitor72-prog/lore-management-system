@@ -40,6 +40,12 @@
   margin: 0;
 }
 
+.chat-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .chat-header__status {
   display: flex;
   align-items: center;
@@ -365,5 +371,78 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   Game Mode Enhancements
+   ============================================================ */
+
+.chat-interface--game {
+  position: relative;
+}
+
+/* Session Ended State */
+.chat-interface--game .chat-input:disabled {
+  background: var(--surface-tertiary);
+  border-color: var(--border-subtle);
+}
+
+.chat-interface--game .chat-submit:disabled {
+  background: var(--surface-tertiary);
+  color: var(--text-muted);
+}
+
+/* User vs DM Message Styling */
+.chat-message--user {
+  flex-direction: row-reverse;
+}
+
+.chat-message--user .chat-message__content {
+  align-items: flex-end;
+}
+
+.chat-message--user .chat-message__text {
+  background: var(--color-accent-soft);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.chat-message--assistant .chat-message__text {
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+/* DM Narrative Style */
+.chat-message--assistant .chat-message__text {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* Avatar styling */
+.chat-message__avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-tertiary);
+  border-radius: 50%;
+  font-size: 1.125rem;
+}
+
+.chat-message--user .chat-message__avatar {
+  background: var(--color-accent-soft);
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .chat-header__status .status-text {
+    display: none;
+  }
+
+  .chat-message {
+    max-width: 95%;
+  }
 }
 

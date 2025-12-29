@@ -1,10 +1,11 @@
 # src/airpg/runtime/session_state.py
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .game_config import GameConfig
+    from .game_events import GameEvent, Inventory
     from src.lms.dnd5e.models.character_sheet import CharacterSheet
 
 
@@ -21,6 +22,8 @@ class SessionState:
     - config: GameConfig for STORY/RPG mode selection (None = STORY mode)
     - session_id: For delta-layer persistence (None = no persistence)
     - character: D&D 5e CharacterSheet for RPG mode (None = STORY mode)
+    - inventory: Character inventory with items and gold (None = no inventory)
+    - pending_events: Structured game events for frontend notifications
     """
     turn_index: int
     last_player_message: Optional[str] = None
@@ -30,3 +33,6 @@ class SessionState:
     session_id: Optional[str] = None
     # D&D 5e character for RPG mode
     character: Optional[CharacterSheet] = None
+    # Inventory and structured events
+    inventory: Optional[Inventory] = None
+    pending_events: tuple = ()  # Tuple of GameEvent for immutability

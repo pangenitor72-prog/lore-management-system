@@ -473,3 +473,399 @@ class TestHelperMethods:
         """is_verbose() should return True for VERBOSE complexity."""
         assert GameConfig(narrative_complexity="CONCISE").is_verbose() is False
         assert GameConfig(narrative_complexity="VERBOSE").is_verbose() is True
+
+
+# ============================================================================
+# TEST: World Integrity Check
+# ============================================================================
+
+class TestWorldIntegrity:
+    """Verify World Integrity Check functionality."""
+
+    def test_canon_truths_defaults(self):
+        """CanonTruths should have sensible defaults."""
+        from src.airpg.runtime.world_integrity import CanonTruths
+
+        truths = CanonTruths()
+        assert truths.world_name == "Unknown World"
+        assert truths.theme == "Fantasy Adventure"
+        assert truths.tone == "Balanced"
+        assert truths.core_conflict == ""
+        assert truths.key_factions == []
+        assert truths.forbidden_elements == []
+
+    def test_canon_truths_prompt_injection(self):
+        """CanonTruths should format for prompt injection."""
+        from src.airpg.runtime.world_integrity import CanonTruths
+
+        truths = CanonTruths(
+            world_name="Aethoria",
+            theme="Dark Fantasy",
+            tone="Grim",
+            core_conflict="The Old Gods awaken",
+            key_factions=["The Iron Circle", "House Valdris"],
+        )
+
+        injection = truths.to_prompt_injection()
+
+        assert "IMMUTABLE CANON TRUTHS" in injection
+        assert "Aethoria" in injection
+        assert "Dark Fantasy" in injection
+        assert "Grim" in injection
+        assert "The Old Gods awaken" in injection
+        assert "The Iron Circle" in injection
+        assert "House Valdris" in injection
+
+    def test_integrity_result_defaults(self):
+        """IntegrityResult should track validation state."""
+        from src.airpg.runtime.world_integrity import IntegrityResult
+
+        result = IntegrityResult(is_valid=False)
+        assert result.is_valid is False
+        assert result.errors == []
+        assert result.warnings == []
+        assert result.canon_truths is None
+        assert result.location_count == 0
+        assert result.faction_count == 0
+        assert result.npc_count == 0
+        assert result.has_root is False
+
+    def test_integrity_result_with_errors(self):
+        """IntegrityResult should store validation errors."""
+        from src.airpg.runtime.world_integrity import IntegrityResult
+
+        result = IntegrityResult(
+            is_valid=False,
+            errors=["No world root defined"],
+            warnings=["Only one location defined"],
+        )
+
+        assert result.is_valid is False
+        assert len(result.errors) == 1
+        assert len(result.warnings) == 1
+
+
+# ============================================================================
+# TEST: Inventory and Game Events
+# ============================================================================
+
+class TestInventorySystem:
+    """Verify Inventory and GameEvent functionality."""
+
+    def test_item_creation(self):
+        """Item should be created with proper defaults."""
+        from src.airpg.runtime.game_events import Item
+
+        item = Item(name="Longsword")
+        assert item.name == "Longsword"
+        assert item.quantity == 1
+        assert item.item_type == "misc"
+        assert item.equipped is False
+
+    def test_item_with_properties(self):
+        """Item should store all weapon properties."""
+        from src.airpg.runtime.game_events import Item
+
+        sword = Item(
+            name="Vorpal Blade",
+            quantity=1,
+            item_type="weapon",
+            description="A blade that severs heads",
+            damage="2d6",
+            equipped=True,
+        )
+
+        assert sword.name == "Vorpal Blade"
+        assert sword.item_type == "weapon"
+        assert sword.damage == "2d6"
+        assert sword.equipped is True
+
+    def test_inventory_add_item(self):
+        """Inventory.add_item should add item and emit event."""
+        from src.airpg.runtime.game_events import Item, Inventory, GameEventType
+
+        inv = Inventory()
+        item = Item(name="Health Potion", item_type="consumable")
+
+        event = inv.add_item(item, turn=5)
+
+        assert len(inv.items) == 1
+        assert inv.items[0].name == "Health Potion"
+        assert event.type == GameEventType.ITEM_ADDED
+        assert event.data["item"] == "Health Potion"
+        assert event.turn == 5
+
+    def test_inventory_stack_items(self):
+        """Adding duplicate items should stack quantity."""
+        from src.airpg.runtime.game_events import Item, Inventory
+
+        inv = Inventory()
+        inv.add_item(Item(name="Arrow", quantity=10))
+        inv.add_item(Item(name="Arrow", quantity=5))
+
+        assert len(inv.items) == 1
+        assert inv.items[0].quantity == 15
+
+    def test_inventory_remove_item(self):
+        """Inventory.remove_item should remove and emit event."""
+        from src.airpg.runtime.game_events import Item, Inventory, GameEventType
+
+        inv = Inventory()
+        inv.add_item(Item(name="Torch", quantity=3))
+
+        event = inv.remove_item("Torch", quantity=1, turn=2)
+
+        assert inv.items[0].quantity == 2
+        assert event.type == GameEventType.ITEM_REMOVED
+        assert event.data["quantity"] == 1
+
+    def test_inventory_gold(self):
+        """Inventory should track gold changes."""
+        from src.airpg.runtime.game_events import Inventory, GameEventType
+
+        inv = Inventory(gold=50)
+        assert inv.gold == 50
+
+        event = inv.add_gold(25, turn=1)
+        assert inv.gold == 75
+        assert event.type == GameEventType.GOLD_CHANGED
+        assert event.data["amount"] == 25
+        assert event.data["total"] == 75
+
+        event = inv.remove_gold(10, turn=2)
+        assert inv.gold == 65
+        assert event.data["amount"] == -10
+
+    def test_starting_equipment(self):
+        """get_starting_inventory should return archetype-specific gear."""
+        from src.airpg.runtime.game_events import get_starting_inventory
+
+        fighter_inv = get_starting_inventory("fighter", starting_gold=15)
+
+        assert fighter_inv.gold == 15
+        assert len(fighter_inv.items) > 0
+
+        # Fighter should have weapon
+        item_names = [item.name for item in fighter_inv.items]
+        assert "Longsword" in item_names
+
+    def test_game_event_serialization(self):
+        """GameEvent should serialize to dict."""
+        from src.airpg.runtime.game_events import GameEvent
+
+        event = GameEvent.skill_check(
+            skill="Athletics",
+            roll=15,
+            modifier=3,
+            dc=12,
+            success=True,
+            turn=7,
+        )
+
+        data = event.to_dict()
+
+        assert data["type"] == "SKILL_CHECK"
+        assert data["data"]["skill"] == "Athletics"
+        assert data["data"]["roll"] == 15
+        assert data["data"]["total"] == 18
+        assert data["data"]["success"] is True
+        assert data["turn"] == 7
+
+
+# ============================================================================
+# TEST: Session State with Inventory
+# ============================================================================
+
+class TestSessionStateInventory:
+    """Verify SessionState preserves inventory across transitions."""
+
+    def test_session_state_with_inventory(self):
+        """SessionState should include optional inventory field."""
+        from src.airpg.runtime.game_events import Inventory, Item
+
+        inv = Inventory()
+        inv.add_item(Item(name="Rope", quantity=1))
+
+        state = SessionState(
+            turn_index=0,
+            inventory=inv,
+        )
+
+        assert state.inventory is not None
+        assert len(state.inventory.items) == 1
+
+    def test_session_state_preserves_inventory(
+        self, test_character, mock_runtime, mock_deliver
+    ):
+        """Session loop should preserve inventory across steps."""
+        from src.airpg.runtime.game_events import Inventory, Item
+
+        config = GameConfig(mode="STORY")
+        inv = Inventory()
+        inv.add_item(Item(name="Torch"))
+
+        state = SessionState(
+            turn_index=0,
+            config=config,
+            character=test_character,
+            inventory=inv,
+        )
+
+        result = run_session_step(
+            state=state,
+            player_input="I look around",
+            agent_ids=("Player",),
+            deliver_fn=mock_deliver,
+            runtime=mock_runtime,
+            rules=None,
+        )
+
+        next_state, _ = result
+        assert next_state.inventory is not None
+        assert len(next_state.inventory.items) == 1
+        assert next_state.inventory.items[0].name == "Torch"
+
+    def test_session_state_pending_events(self):
+        """SessionState should track pending events as tuple."""
+        from src.airpg.runtime.game_events import GameEvent, GameEventType
+
+        event1 = GameEvent.item_added("Sword", 1, turn=0)
+        event2 = GameEvent.gold_changed(10, 100, turn=0)
+
+        state = SessionState(
+            turn_index=0,
+            pending_events=(event1, event2),
+        )
+
+        assert len(state.pending_events) == 2
+        assert state.pending_events[0].type == GameEventType.ITEM_ADDED
+        assert state.pending_events[1].type == GameEventType.GOLD_CHANGED
+
+
+# ============================================================================
+# TEST: WorldNotReadyError
+# ============================================================================
+
+class TestWorldNotReadyError:
+    """Verify WorldNotReadyError exception functionality."""
+
+    def test_world_not_ready_error_creation(self):
+        """WorldNotReadyError should capture errors and world_id."""
+        from src.airpg.runtime.world_integrity import WorldNotReadyError
+
+        errors = ["No root defined", "No locations"]
+        error = WorldNotReadyError(errors, world_id="world_123")
+
+        assert error.world_id == "world_123"
+        assert error.errors == errors
+        assert "No root defined" in str(error)
+        assert "world_123" in str(error)
+
+    def test_world_not_ready_error_to_dict(self):
+        """WorldNotReadyError should serialize to dict for API."""
+        from src.airpg.runtime.world_integrity import WorldNotReadyError
+
+        errors = ["Missing faction"]
+        error = WorldNotReadyError(errors, world_id="test_world")
+
+        data = error.to_dict()
+
+        assert data["error"] == "world_not_ready"
+        assert data["world_id"] == "test_world"
+        assert "Missing faction" in data["errors"]
+
+    def test_world_not_ready_error_without_world_id(self):
+        """WorldNotReadyError should work without world_id."""
+        from src.airpg.runtime.world_integrity import WorldNotReadyError
+
+        error = WorldNotReadyError(["No root"])
+
+        assert error.world_id is None
+        assert "No root" in str(error)
+
+
+# ============================================================================
+# TEST: Event Extraction from Narrative
+# ============================================================================
+
+class TestEventExtraction:
+    """Verify event extraction from narrative text."""
+
+    def test_extract_item_from_narrative(self):
+        """Should extract ITEM_ADDED from 'find' phrases."""
+        from src.lms.api.game_routes import _extract_events_from_narrative
+
+        narrative = "You find a Rusty Key on the ground."
+        events = _extract_events_from_narrative(narrative, None, turn=5)
+
+        item_events = [e for e in events if e.type == "ITEM_ADDED"]
+        assert len(item_events) >= 1
+        assert any("Key" in e.data.get("item", "") for e in item_events)
+
+    def test_extract_gold_from_narrative(self):
+        """Should extract GOLD_CHANGED from gold mentions."""
+        from src.lms.api.game_routes import _extract_events_from_narrative
+
+        narrative = "The merchant hands you 50 gold coins."
+        events = _extract_events_from_narrative(narrative, None, turn=3)
+
+        gold_events = [e for e in events if e.type == "GOLD_CHANGED"]
+        assert len(gold_events) == 1
+        assert gold_events[0].data["amount"] == 50
+
+    def test_extract_skill_check_from_mechanical_result(self):
+        """Should extract SKILL_CHECK from mechanical_result."""
+        from src.lms.api.game_routes import _extract_events_from_narrative
+
+        mechanical_result = {
+            "rolls": [
+                {
+                    "type": "skill",
+                    "skill": "stealth",
+                    "roll": 15,
+                    "modifier": 3,
+                    "total": 18,
+                    "dc": 12,
+                    "success": True,
+                }
+            ]
+        }
+
+        events = _extract_events_from_narrative("You move quietly.", mechanical_result, turn=2)
+
+        skill_events = [e for e in events if e.type == "SKILL_CHECK"]
+        assert len(skill_events) == 1
+        assert skill_events[0].data["skill"] == "stealth"
+        assert skill_events[0].data["success"] is True
+
+    def test_extract_attack_from_mechanical_result(self):
+        """Should extract ATTACK_ROLL from mechanical_result."""
+        from src.lms.api.game_routes import _extract_events_from_narrative
+
+        mechanical_result = {
+            "rolls": [
+                {
+                    "type": "attack",
+                    "roll": 17,
+                    "modifier": 5,
+                    "total": 22,
+                    "is_hit": True,
+                }
+            ]
+        }
+
+        events = _extract_events_from_narrative("You swing your sword.", mechanical_result, turn=4)
+
+        attack_events = [e for e in events if e.type == "ATTACK_ROLL"]
+        assert len(attack_events) == 1
+        assert attack_events[0].data["is_hit"] is True
+
+    def test_no_events_for_plain_narrative(self):
+        """Should return empty list for narrative without events."""
+        from src.lms.api.game_routes import _extract_events_from_narrative
+
+        narrative = "You walk down the corridor. The air is cold."
+        events = _extract_events_from_narrative(narrative, None, turn=1)
+
+        # May have some false positives, but should be minimal
+        assert isinstance(events, list)

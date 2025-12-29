@@ -38,6 +38,13 @@ from src.lms.dnd5e.engine.combat_resolver import CombatResolver
 from src.lms.dnd5e.presentation.visibility import VisibilityFilter
 from src.lms.dnd5e.creation.modes import RulesVisibility
 
+# World Integrity Check
+from src.airpg.runtime.world_integrity import (
+    WorldNotReadyError,
+    require_valid_world,
+    validate_world_before_session,
+)
+
 logger = logging.getLogger(__name__)
 
 # Shared lore parsing agent for extracting entities from gameplay
@@ -330,6 +337,13 @@ class PlayerActionRequest(BaseModel):
     action: str = Field(..., min_length=1, max_length=2000, description="What the player does or says")
 
 
+class GameEventData(BaseModel):
+    """Structured game event for frontend notifications."""
+    type: str  # ITEM_ADDED, DAMAGE_TAKEN, SKILL_CHECK, etc.
+    data: Dict[str, Any] = {}
+    turn: int = 0
+
+
 class DMResponse(BaseModel):
     """DM response to player action."""
     narrative: str
@@ -341,6 +355,10 @@ class DMResponse(BaseModel):
     # D&D Rules Integration
     mechanical_result: Optional[Dict[str, Any]] = None  # Roll results, damage, etc.
     character_update: Optional[Dict[str, Any]] = None  # HP changes, conditions, etc.
+    # Structured Events for frontend notifications
+    events: Optional[List[GameEventData]] = None  # ITEM_ADDED, GOLD_CHANGED, etc.
+    # Session state flags
+    session_ended: bool = False  # True when ONE_SHOT reaches THE END
 
 
 # ============================================================
@@ -862,12 +880,31 @@ async def create_session(
 
     If no world_id is provided, starts in Session 0 mode to establish
     the setting collaboratively with the player.
+
+    Validates world integrity before starting active_play sessions.
     """
     session_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
 
     # Determine initial phase
     phase = "session_0" if not session_req.world_id else "active_play"
+
+    # World Integrity Check: Validate world before active_play
+    # For Session 0 (no world_id), we allow empty world since we're building it
+    db = get_optional_neo4j_db(request)
+    if session_req.world_id and db:
+        try:
+            # Validate that the world has required elements
+            await require_valid_world(
+                db,
+                world_id=session_req.world_id,
+                allow_empty=False,  # Existing worlds must be complete
+            )
+        except WorldNotReadyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=e.to_dict(),
+            )
 
     # Build genre blend string for storytelling
     genre_blend = session_req.genre or "fantasy"
@@ -1095,6 +1132,15 @@ async def process_action(
         session.get("storytelling_style", "guided"),
     )
 
+    # Extract structured events from narrative for frontend
+    turn_count = len(session.get("history", [])) // 2
+    events = _extract_events_from_narrative(response_text, mechanical_result, turn_count)
+
+    # Detect session ending (THE END marker for ONE_SHOT mode)
+    session_ended = "**THE END**" in response_text or "THE END" in response_text.upper()
+    if session_ended:
+        session["status"] = "ended"
+
     # Persist session to database for continuity across server restarts
     # This ensures the story is never lost
     asyncio.create_task(_persist_session_to_db(session_id, session, db))
@@ -1106,6 +1152,8 @@ async def process_action(
         mechanical_result=mechanical_result,
         character_update=character_update,
         suggested_actions=suggested_actions,
+        events=events if events else None,
+        session_ended=session_ended,
     )
 
 
@@ -1170,6 +1218,97 @@ async def _handle_session_0(
         return opening, "active_play"
 
     return "Session 0 complete. Begin your adventure.", "active_play"
+
+
+def _extract_events_from_narrative(
+    narrative: str,
+    mechanical_result: Optional[Dict[str, Any]],
+    turn: int,
+) -> List[GameEventData]:
+    """
+    Extract structured game events from narrative text and mechanical results.
+
+    Detects:
+    - Item acquisitions (finds, picks up, receives)
+    - Gold changes (coins, gold, money)
+    - Skill checks (from mechanical_result)
+    - Damage (from mechanical_result)
+
+    Returns:
+        List of GameEventData for frontend rendering
+    """
+    import re
+    events = []
+
+    # Patterns for item acquisition
+    item_patterns = [
+        r"(?:find|pick up|receive|acquire|discover|obtain|grab|take)s?\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[A-Z]?[a-z]+)*)",
+        r"(?:a|an|the)\s+([A-Z][a-z]+(?:\s+[A-Z]?[a-z]+)*)\s+(?:is now yours|added to your inventory)",
+    ]
+
+    for pattern in item_patterns:
+        matches = re.findall(pattern, narrative, re.IGNORECASE)
+        for item_name in matches:
+            # Filter out common false positives
+            if item_name.lower() not in ["the", "a", "an", "you", "your", "they", "their"]:
+                events.append(GameEventData(
+                    type="ITEM_ADDED",
+                    data={"item": item_name.strip(), "quantity": 1},
+                    turn=turn,
+                ))
+
+    # Extract gold/coins from narrative
+    gold_pattern = r"(\d+)\s*(?:gold|coins?|gp|gold pieces)"
+    gold_matches = re.findall(gold_pattern, narrative, re.IGNORECASE)
+    for amount_str in gold_matches:
+        try:
+            amount = int(amount_str)
+            events.append(GameEventData(
+                type="GOLD_CHANGED",
+                data={"amount": amount},
+                turn=turn,
+            ))
+        except ValueError:
+            pass
+
+    # Extract events from mechanical results
+    if mechanical_result and mechanical_result.get("rolls"):
+        for roll in mechanical_result["rolls"]:
+            if roll.get("type") == "skill":
+                events.append(GameEventData(
+                    type="SKILL_CHECK",
+                    data={
+                        "skill": roll.get("skill", "unknown"),
+                        "roll": roll.get("roll", 0),
+                        "modifier": roll.get("modifier", 0),
+                        "total": roll.get("total", 0),
+                        "dc": roll.get("dc", 0),
+                        "success": roll.get("success", False),
+                    },
+                    turn=turn,
+                ))
+            elif roll.get("type") == "attack":
+                events.append(GameEventData(
+                    type="ATTACK_ROLL",
+                    data={
+                        "roll": roll.get("roll", 0),
+                        "modifier": roll.get("modifier", 0),
+                        "total": roll.get("total", 0),
+                        "is_hit": roll.get("is_hit", False),
+                    },
+                    turn=turn,
+                ))
+            elif roll.get("type") == "damage":
+                events.append(GameEventData(
+                    type="DAMAGE_DEALT",
+                    data={
+                        "damage": roll.get("damage", 0),
+                        "damage_type": roll.get("damage_type", "unknown"),
+                    },
+                    turn=turn,
+                ))
+
+    return events
 
 
 def _generate_suggested_actions(

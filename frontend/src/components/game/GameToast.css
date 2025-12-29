@@ -1,0 +1,224 @@
+/* ============================================================
+   Game Toast - Event Notifications
+   ============================================================ */
+
+.game-toast-container {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-3);
+  z-index: var(--z-toast);
+  pointer-events: none;
+}
+
+/* Individual Toast */
+.game-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translateY(0);
+  opacity: 1;
+  transition: all var(--duration-normal) var(--ease-standard);
+}
+
+.game-toast--visible {
+  animation: toast-in 0.4s var(--ease-decelerate);
+}
+
+.game-toast--hidden {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+@keyframes toast-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Toast Icon */
+.game-toast__icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Toast Content */
+.game-toast__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.game-toast__title {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.game-toast__subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   Toast Type Variants
+   ============================================================ */
+
+/* Item Acquired */
+.game-toast--item {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.1));
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+.game-toast--item .game-toast__title {
+  color: var(--color-success);
+}
+
+/* Item Removed */
+.game-toast--item-removed {
+  background: linear-gradient(135deg, rgba(156, 163, 175, 0.15), rgba(107, 114, 128, 0.1));
+  border-color: rgba(156, 163, 175, 0.4);
+}
+
+/* Gold Gain */
+.game-toast--gold-gain {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.game-toast--gold-gain .game-toast__title {
+  color: #fbbf24;
+}
+
+/* Gold Loss */
+.game-toast--gold-loss {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.game-toast--gold-loss .game-toast__title {
+  color: var(--color-danger);
+}
+
+/* Success (Skill Check, Attack Hit) */
+.game-toast--success {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.1));
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+.game-toast--success .game-toast__icon {
+  color: var(--color-success);
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.game-toast--success .game-toast__title {
+  color: var(--color-success);
+}
+
+/* Fail (Skill Check, Attack Miss) */
+.game-toast--fail {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.game-toast--fail .game-toast__icon {
+  color: var(--color-danger);
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.game-toast--fail .game-toast__title {
+  color: var(--color-danger);
+}
+
+/* Damage Dealt */
+.game-toast--damage {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.15), rgba(234, 88, 12, 0.1));
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+.game-toast--damage .game-toast__title {
+  color: #fb923c;
+}
+
+/* Damage Taken */
+.game-toast--damage-taken {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+  border-color: rgba(239, 68, 68, 0.4);
+  animation: damage-shake 0.4s ease-out, toast-in 0.4s var(--ease-decelerate);
+}
+
+@keyframes damage-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+.game-toast--damage-taken .game-toast__title {
+  color: var(--color-danger);
+}
+
+/* Heal */
+.game-toast--heal {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.1));
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+.game-toast--heal .game-toast__title {
+  color: var(--color-success);
+}
+
+/* Level Up */
+.game-toast--level-up {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.15));
+  border-color: rgba(168, 85, 247, 0.5);
+  animation: level-up-glow 1s ease-out, toast-in 0.4s var(--ease-decelerate);
+}
+
+@keyframes level-up-glow {
+  0% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+  }
+  100% {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.game-toast--level-up .game-toast__title {
+  color: #a855f7;
+}
+
+/* Location */
+.game-toast--location {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1));
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.game-toast--location .game-toast__title {
+  color: var(--color-info);
+}
+
+/* Info (default) */
+.game-toast--info {
+  background: var(--surface-secondary);
+  border-color: var(--border-subtle);
+}

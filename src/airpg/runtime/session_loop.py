@@ -74,6 +74,8 @@ def run_session_step(
                     config=state.config,
                     session_id=state.session_id,
                     character=state.character,
+                    inventory=state.inventory,
+                    pending_events=state.pending_events,
                 )
                 return next_state, []
 
@@ -102,7 +104,7 @@ def run_session_step(
             f"{last_event.receiver} considers what to do next."
         )
 
-    # Create and return a NEW state object, preserving config, session_id, and character
+    # Create and return a NEW state object, preserving config, session_id, character, inventory, and events
     next_state = SessionState(
         turn_index=state.turn_index + 1,
         last_player_message=player_input,
@@ -110,6 +112,8 @@ def run_session_step(
         config=state.config,
         session_id=state.session_id,
         character=state.character,
+        inventory=state.inventory,
+        pending_events=state.pending_events,
     )
 
     return next_state, trace

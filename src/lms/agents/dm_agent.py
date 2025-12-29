@@ -36,6 +36,8 @@ from src.lms.core.models import OCEANProfile, PersonalityGenerator, PersonalityT
 
 if TYPE_CHECKING:
     from src.airpg.runtime.game_config import GameConfig
+    from src.airpg.runtime.world_integrity import CanonTruths
+    from src.airpg.runtime.game_events import GameEvent, Inventory
 
 # Arc Engine for narrative structure (optional - graceful fallback if not available)
 try:
@@ -145,6 +147,12 @@ class DMAgent:
         self._game_config: Optional[GameConfig] = None
         self._session_ended = False  # Flag for THE END state
 
+        # Canon truths injection (from world integrity check)
+        self._canon_truths: Optional[CanonTruths] = None
+
+        # Pending structured events for frontend
+        self._pending_events: List[GameEvent] = []
+
     @property
     def arc_engine(self) -> Optional[ArcEngine]:
         """Get the Arc Engine instance (if available)."""
@@ -169,6 +177,36 @@ class DMAgent:
     def set_game_config(self, config: "GameConfig") -> None:
         """Set the game configuration for dual-mode support."""
         self._game_config = config
+
+    def set_canon_truths(self, truths: "CanonTruths") -> None:
+        """Set the immutable canon truths for prompt injection."""
+        self._canon_truths = truths
+
+    @property
+    def canon_truths(self) -> Optional["CanonTruths"]:
+        """Get the current canon truths."""
+        return self._canon_truths
+
+    def get_canon_truths_context(self) -> str:
+        """
+        Get canon truths for prompt injection.
+
+        Returns:
+            Formatted canon truths for DM prompt injection
+        """
+        if not self._canon_truths:
+            return ""
+        return self._canon_truths.to_prompt_injection()
+
+    def add_event(self, event: "GameEvent") -> None:
+        """Add a structured game event for frontend notification."""
+        self._pending_events.append(event)
+
+    def flush_events(self) -> List["GameEvent"]:
+        """Get and clear pending events."""
+        events = self._pending_events.copy()
+        self._pending_events.clear()
+        return events
 
     @property
     def is_session_ended(self) -> bool:
@@ -889,8 +927,11 @@ If you don't introduce new entities, omit this JSON block entirely.
         pacing_context = self.get_pacing_context(turn_count)
         complexity_context = self.get_complexity_context()
 
-        prompt = f"""{self.system_prompt}
+        # Get canon truths for consistency enforcement
+        canon_truths_context = self.get_canon_truths_context()
 
+        prompt = f"""{self.system_prompt}
+{canon_truths_context}
 === SESSION CONTEXT ===
 Setting: {self.session_0_answers.get('setting', 'Unknown')}
 Character: {self.session_0_answers.get('character', 'Unknown')}
