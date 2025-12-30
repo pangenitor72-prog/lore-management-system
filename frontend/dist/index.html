@@ -1277,6 +1277,30 @@
             color: var(--bg-primary);
         }
 
+        /* Step content transition animation */
+        #char-creation-content {
+            transition: opacity 0.2s ease-out;
+        }
+
+        #char-creation-content.fade-out {
+            opacity: 0;
+        }
+
+        #char-creation-content.fade-in {
+            animation: fadeSlideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         .origin-grid, .archetype-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -3525,6 +3549,20 @@ Example:
             // Primary genre is the first selected
             selectedGenre = selectedGenres.length > 0 ? selectedGenres[0] : null;
 
+            // Sync rulesGenre with primary genre for character creation
+            if (selectedGenre) {
+                rulesGenre = selectedGenre;
+                // Also update the dropdown if it exists
+                const genreDropdown = document.getElementById('rules-genre');
+                if (genreDropdown) {
+                    // Check if the genre exists as an option
+                    const optionExists = Array.from(genreDropdown.options).some(opt => opt.value === selectedGenre);
+                    if (optionExists) {
+                        genreDropdown.value = selectedGenre;
+                    }
+                }
+            }
+
             // Update UI
             document.querySelectorAll('.genre-card').forEach(card => {
                 card.classList.toggle('selected', selectedGenres.includes(card.dataset.genre));
@@ -3842,8 +3880,14 @@ Example:
                 archetype: null,
                 abilityPriority: null,
                 selectedSkills: [],
-                concept: concept || ''
+                concept: concept || '',
+                genres: selectedGenres.slice()  // Store selected genres for reference
             };
+
+            // Sync rulesGenre with selectedGenres from welcome screen if available
+            if (selectedGenres.length > 0 && selectedGenres[0]) {
+                rulesGenre = selectedGenres[0];
+            }
 
             // Fetch genre data
             try {
@@ -3906,6 +3950,22 @@ Example:
                 stepsHtml += `<span class="creation-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}" data-step="${i}">${i + 1}</span>`;
             }
             stepsContainer.innerHTML = stepsHtml;
+        }
+
+        // Transition helper for smooth step changes
+        function transitionCreationStep(callback) {
+            const content = document.getElementById('char-creation-content');
+            // Fade out current content
+            content.classList.add('fade-out');
+            content.classList.remove('fade-in');
+
+            setTimeout(() => {
+                // Clear and render new content
+                callback();
+                // Fade in new content
+                content.classList.remove('fade-out');
+                content.classList.add('fade-in');
+            }, 200); // Match CSS transition duration
         }
 
         function renderCreationStep() {
@@ -4244,7 +4304,8 @@ Example:
                 document.getElementById('char-next-btn').disabled = false;
                 document.getElementById('char-next-btn').textContent = 'Accept & Begin';
                 charCreationStep = 1;
-                renderCreationStep();
+                // Use transition for smooth step change - previous answer fades out
+                transitionCreationStep(() => renderCreationStep());
 
             } else if (charCreationStep === 1) {
                 // Accept generated character
@@ -4261,7 +4322,8 @@ Example:
 
             if (charCreationStep < maxSteps - 1) {
                 charCreationStep++;
-                renderCreationStep();
+                // Use transition for smooth step change - previous answer fades out
+                transitionCreationStep(() => renderCreationStep());
             } else {
                 // Final step - create character
                 await createGuidedCharacter();
@@ -4345,7 +4407,8 @@ Example:
         function charCreationPrev() {
             if (charCreationStep > 0) {
                 charCreationStep--;
-                renderCreationStep();
+                // Use transition for smooth step change - previous content fades out
+                transitionCreationStep(() => renderCreationStep());
             }
         }
 
