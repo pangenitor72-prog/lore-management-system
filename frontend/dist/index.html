@@ -2399,20 +2399,38 @@
                         </div>
                         <div id="dnd-options" style="display: none; margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
                             <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Setting:</label>
-                                <select id="rules-genre" style="width: 100%; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; font-size: 1rem;">
-                                    <optgroup label="Popular">
-                                        <option value="fantasy" selected>⚔️ Fantasy</option>
-                                        <option value="scifi">🚀 Sci-Fi</option>
-                                        <option value="horror">👻 Horror</option>
-                                        <option value="modern">🏙️ Modern</option>
-                                    </optgroup>
-                                    <optgroup label="More">
-                                        <option value="western">🤠 Western</option>
-                                        <option value="noir">🕵️ Noir</option>
-                                        <option value="cyberpunk">🌃 Cyberpunk</option>
-                                        <option value="postapoc">☢️ Post-Apocalyptic</option>
-                                    </optgroup>
+                                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Setting <span style="font-size: 0.75rem; opacity: 0.7;">(from your genre picks)</span>:</label>
+                                <div id="rules-genre-display" style="margin-bottom: 10px; min-height: 32px;">
+                                    <!-- Populated by JS based on selectedGenres -->
+                                </div>
+                                <div id="rules-genre-chips" class="tone-options" style="flex-wrap: wrap; gap: 6px;">
+                                    <span class="tone-chip rules-genre-chip" data-genre="fantasy" onclick="toggleRulesGenre('fantasy')">⚔️ Fantasy</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="scifi" onclick="toggleRulesGenre('scifi')">🚀 Sci-Fi</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="horror" onclick="toggleRulesGenre('horror')">👻 Horror</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="modern" onclick="toggleRulesGenre('modern')">🏙️ Modern</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="romance" onclick="toggleRulesGenre('romance')">💕 Romance</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="mystery" onclick="toggleRulesGenre('mystery')">🔍 Mystery</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="adventure" onclick="toggleRulesGenre('adventure')">🗺️ Adventure</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="western" onclick="toggleRulesGenre('western')">🤠 Western</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="noir" onclick="toggleRulesGenre('noir')">🕵️ Noir</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="cyberpunk" onclick="toggleRulesGenre('cyberpunk')">🌃 Cyberpunk</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="postapoc" onclick="toggleRulesGenre('postapoc')">☢️ Post-Apoc</span>
+                                    <span class="tone-chip rules-genre-chip" data-genre="mythology" onclick="toggleRulesGenre('mythology')">🏛️ Mythology</span>
+                                </div>
+                                <!-- Hidden select for backwards compatibility -->
+                                <select id="rules-genre" style="display: none;">
+                                    <option value="fantasy" selected>Fantasy</option>
+                                    <option value="scifi">Sci-Fi</option>
+                                    <option value="horror">Horror</option>
+                                    <option value="modern">Modern</option>
+                                    <option value="romance">Romance</option>
+                                    <option value="mystery">Mystery</option>
+                                    <option value="adventure">Adventure</option>
+                                    <option value="western">Western</option>
+                                    <option value="noir">Noir</option>
+                                    <option value="cyberpunk">Cyberpunk</option>
+                                    <option value="postapoc">Post-Apoc</option>
+                                    <option value="mythology">Mythology</option>
                                 </select>
                             </div>
                             <div style="margin-bottom: 15px;">
@@ -2433,6 +2451,11 @@
                                 </select>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Begin button at bottom of advanced options -->
+                    <div class="btn-group" style="margin-top: 25px; justify-content: center;">
+                        <button class="btn btn-primary" onclick="beginStory()" style="padding: 16px 40px; font-size: 1.1rem;">▶ Begin My Story</button>
                     </div>
                 </div>
             </div>
@@ -3733,6 +3756,67 @@ Example:
             // Show/hide D&D options
             const dndOptions = document.getElementById('dnd-options');
             dndOptions.style.display = mode === 'dnd' ? 'block' : 'none';
+
+            // Sync genre chips with selectedGenres from welcome screen
+            if (mode === 'dnd') {
+                updateRulesGenreDisplay();
+            }
+        }
+
+        // Toggle genre in rules section (mirrors welcome screen behavior)
+        function toggleRulesGenre(genre) {
+            const idx = selectedGenres.indexOf(genre);
+            if (idx >= 0) {
+                selectedGenres.splice(idx, 1);
+            } else {
+                if (selectedGenres.length < 3) {
+                    selectedGenres.push(genre);
+                }
+            }
+
+            // Update primary genre
+            selectedGenre = selectedGenres.length > 0 ? selectedGenres[0] : null;
+            rulesGenre = selectedGenre || 'fantasy';
+
+            // Update hidden select for compatibility
+            const genreSelect = document.getElementById('rules-genre');
+            if (genreSelect && selectedGenre) {
+                genreSelect.value = selectedGenre;
+            }
+
+            // Sync welcome screen genre cards
+            document.querySelectorAll('.genre-card').forEach(card => {
+                card.classList.toggle('selected', selectedGenres.includes(card.dataset.genre));
+            });
+            document.getElementById('begin-btn').disabled = selectedGenres.length === 0;
+            updateGenreBlendHint();
+
+            // Update rules section display
+            updateRulesGenreDisplay();
+        }
+
+        // Update the rules genre display to show selected genres
+        function updateRulesGenreDisplay() {
+            const display = document.getElementById('rules-genre-display');
+            const chips = document.querySelectorAll('.rules-genre-chip');
+
+            // Update chip selection state
+            chips.forEach(chip => {
+                chip.classList.toggle('selected', selectedGenres.includes(chip.dataset.genre));
+            });
+
+            // Show current selection summary
+            if (display) {
+                if (selectedGenres.length === 0) {
+                    display.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">No genres selected - pick from below or go back to change</span>';
+                } else if (selectedGenres.length === 1) {
+                    const name = selectedGenres[0].charAt(0).toUpperCase() + selectedGenres[0].slice(1);
+                    display.innerHTML = `<span style="color: var(--accent-gold); font-size: 0.9rem;">Primary: ${name}</span>`;
+                } else {
+                    const names = selectedGenres.map(g => g.charAt(0).toUpperCase() + g.slice(1));
+                    display.innerHTML = `<span style="color: var(--accent-gold); font-size: 0.9rem;">Blending: ${names.join(' + ')}</span>`;
+                }
+            }
         }
 
         // D&D Character Sheet Modal
