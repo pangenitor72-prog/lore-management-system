@@ -994,6 +994,68 @@ async def reset_database(
 
 
 # ============================================================
+# ANNOUNCEMENTS SYSTEM
+# ============================================================
+
+# In-memory announcement storage (persists until server restart)
+# For production, you'd want to store this in a file or database
+_current_announcement = {
+    "id": "update-2024-12-31",
+    "type": "success",  # info, warning, success, maintenance
+    "icon": "🎉",
+    "message": "<strong>New Update!</strong> Starting inventory now included with character creation. Action buttons added at bottom of screen.",
+    "dismissible": True,
+    "persistent": False,
+    "active": True
+}
+
+
+@app.get("/api/announcement")
+async def get_announcement():
+    """Get current announcement for display in the app."""
+    if not _current_announcement or not _current_announcement.get("active"):
+        return {"announcement": None}
+    return {"announcement": _current_announcement}
+
+
+class AnnouncementUpdate(BaseModel):
+    id: str
+    type: str = "info"  # info, warning, success, maintenance
+    icon: str = "📢"
+    message: str
+    dismissible: bool = True
+    persistent: bool = False
+    active: bool = True
+
+
+@app.post("/api/announcement")
+async def set_announcement(announcement: AnnouncementUpdate, pin: str = Query(...)):
+    """Set or update the current announcement (requires admin PIN)."""
+    global _current_announcement
+
+    # Verify admin PIN
+    if pin != "8675309":  # Same PIN as admin panel
+        raise HTTPException(status_code=403, detail="Invalid admin PIN")
+
+    _current_announcement = announcement.model_dump()
+    logger.info(f"Announcement updated: {announcement.id}")
+    return {"status": "success", "announcement": _current_announcement}
+
+
+@app.delete("/api/announcement")
+async def clear_announcement(pin: str = Query(...)):
+    """Clear the current announcement (requires admin PIN)."""
+    global _current_announcement
+
+    if pin != "8675309":
+        raise HTTPException(status_code=403, detail="Invalid admin PIN")
+
+    _current_announcement = None
+    logger.info("Announcement cleared")
+    return {"status": "success", "message": "Announcement cleared"}
+
+
+# ============================================================
 # ROUTER REGISTRATION
 # ============================================================
 

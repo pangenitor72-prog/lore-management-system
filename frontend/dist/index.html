@@ -56,6 +56,69 @@
             line-height: 1.7;
         }
 
+        /* Announcement Banner */
+        .announcement-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10000;
+            padding: 12px 50px 12px 20px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            display: none;
+        }
+        .announcement-banner.visible {
+            display: block;
+        }
+        .announcement-banner.info {
+            background: linear-gradient(135deg, #2a4a6a, #1a3a5a);
+            border-bottom: 2px solid #4a7ab0;
+            color: #e0f0ff;
+        }
+        .announcement-banner.warning {
+            background: linear-gradient(135deg, #6a4a2a, #5a3a1a);
+            border-bottom: 2px solid #b08a4a;
+            color: #fff5e0;
+        }
+        .announcement-banner.success {
+            background: linear-gradient(135deg, #2a5a3a, #1a4a2a);
+            border-bottom: 2px solid #4ab06a;
+            color: #e0ffe8;
+        }
+        .announcement-banner.maintenance {
+            background: linear-gradient(135deg, #5a2a4a, #4a1a3a);
+            border-bottom: 2px solid #b04a8a;
+            color: #ffe0f0;
+        }
+        .announcement-banner .banner-icon {
+            margin-right: 10px;
+        }
+        .announcement-banner .banner-close {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.7;
+            padding: 5px;
+        }
+        .announcement-banner .banner-close:hover {
+            opacity: 1;
+        }
+        .announcement-banner a {
+            color: inherit;
+            text-decoration: underline;
+        }
+        /* Push content down when banner is visible */
+        body.has-announcement .container {
+            padding-top: 60px;
+        }
+
         .container {
             max-width: 720px;
             margin: 0 auto;
@@ -2146,6 +2209,13 @@
     </style>
 </head>
 <body>
+    <!-- Announcement Banner (controlled via JavaScript or API) -->
+    <div id="announcement-banner" class="announcement-banner">
+        <span class="banner-icon" id="banner-icon">📢</span>
+        <span id="banner-message">Welcome to AIRPG!</span>
+        <button class="banner-close" onclick="dismissAnnouncement()" title="Dismiss">×</button>
+    </div>
+
     <div class="container">
         <header>
             <h1 class="logo">AIRPG</h1>
@@ -3093,6 +3163,116 @@ Example:
     </div>
 
     <script>
+        // ==========================================
+        // ANNOUNCEMENT SYSTEM
+        // ==========================================
+        // To show an announcement, edit CURRENT_ANNOUNCEMENT below.
+        // Set to null to hide all announcements.
+
+        const CURRENT_ANNOUNCEMENT = {
+            id: 'update-2024-12-31',  // Unique ID for this announcement (used for dismissal tracking)
+            type: 'success',          // 'info', 'warning', 'success', 'maintenance'
+            icon: '🎉',               // Emoji icon
+            message: '<strong>New Update!</strong> Starting inventory now included with character creation. Action buttons added at bottom of screen for easy access.',
+            dismissible: true,        // Can user dismiss it?
+            persistent: false         // If true, shows even after dismissal (for critical maintenance)
+        };
+
+        // Set to null to disable announcements:
+        // const CURRENT_ANNOUNCEMENT = null;
+
+        async function initAnnouncements() {
+            const banner = document.getElementById('announcement-banner');
+            if (!banner) return;
+
+            // Try to fetch announcement from API first (allows updates without deploy)
+            let announcement = CURRENT_ANNOUNCEMENT;
+            try {
+                const res = await fetch('/api/announcement');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.announcement && data.announcement.active) {
+                        announcement = data.announcement;
+                    }
+                }
+            } catch (e) {
+                // Fall back to hardcoded announcement
+                console.log('Using hardcoded announcement');
+            }
+
+            if (!announcement) return;
+
+            const dismissedKey = 'dismissed_announcement_' + announcement.id;
+            const wasDismissed = localStorage.getItem(dismissedKey);
+
+            // Don't show if dismissed (unless persistent)
+            if (wasDismissed && !announcement.persistent) return;
+
+            // Set banner content
+            document.getElementById('banner-icon').textContent = announcement.icon || '📢';
+            document.getElementById('banner-message').innerHTML = announcement.message;
+
+            // Set type class
+            banner.className = 'announcement-banner visible ' + (announcement.type || 'info');
+
+            // Store current announcement ID for dismissal
+            banner.dataset.announcementId = announcement.id;
+
+            // Show/hide close button
+            const closeBtn = banner.querySelector('.banner-close');
+            if (closeBtn) {
+                closeBtn.style.display = announcement.dismissible !== false ? 'block' : 'none';
+            }
+
+            // Add body class to push content down
+            document.body.classList.add('has-announcement');
+        }
+
+        function dismissAnnouncement() {
+            const banner = document.getElementById('announcement-banner');
+            if (!banner) return;
+
+            // Get announcement ID from banner data or fallback to hardcoded
+            const announcementId = banner.dataset.announcementId ||
+                (CURRENT_ANNOUNCEMENT ? CURRENT_ANNOUNCEMENT.id : null);
+
+            banner.classList.remove('visible');
+            document.body.classList.remove('has-announcement');
+
+            // Remember dismissal
+            if (announcementId) {
+                const dismissedKey = 'dismissed_announcement_' + announcementId;
+                localStorage.setItem(dismissedKey, 'true');
+            }
+        }
+
+        // Show announcement for a specific message (programmatic use)
+        function showAnnouncement(message, type = 'info', icon = '📢') {
+            const banner = document.getElementById('announcement-banner');
+            if (!banner) return;
+
+            document.getElementById('banner-icon').textContent = icon;
+            document.getElementById('banner-message').innerHTML = message;
+            banner.className = 'announcement-banner visible ' + type;
+            document.body.classList.add('has-announcement');
+        }
+
+        // Hide any visible announcement
+        function hideAnnouncement() {
+            const banner = document.getElementById('announcement-banner');
+            if (banner) {
+                banner.classList.remove('visible');
+                document.body.classList.remove('has-announcement');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initAnnouncements);
+
+        // ==========================================
+        // END ANNOUNCEMENT SYSTEM
+        // ==========================================
+
         // State
         let selectedGenres = [];  // Array of selected genres for mixing
         let selectedGenre = null;  // Primary genre (first selected)
