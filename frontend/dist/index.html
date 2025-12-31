@@ -2453,6 +2453,33 @@
                         </div>
                     </div>
 
+                    <!-- Story Length -->
+                    <div class="setup-section" style="margin-top: 20px;">
+                        <h4 style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 10px;">
+                            <span style="margin-right: 6px;">📖</span> Story Length
+                        </h4>
+                        <div class="tone-options" style="flex-wrap: wrap;">
+                            <span class="tone-chip session-scope-chip selected" data-scope="one_shot" onclick="selectSessionScope('one_shot')">
+                                One-Shot <span style="font-size: 0.7rem; opacity: 0.8;">(~20 turns)</span>
+                            </span>
+                            <span class="tone-chip session-scope-chip" data-scope="short" onclick="selectSessionScope('short')">
+                                Short <span style="font-size: 0.7rem; opacity: 0.8;">(~40 turns)</span>
+                            </span>
+                            <span class="tone-chip session-scope-chip" data-scope="medium" onclick="selectSessionScope('medium')">
+                                Medium <span style="font-size: 0.7rem; opacity: 0.8;">(~80 turns)</span>
+                            </span>
+                            <span class="tone-chip session-scope-chip" data-scope="long" onclick="selectSessionScope('long')">
+                                Long <span style="font-size: 0.7rem; opacity: 0.8;">(~150 turns)</span>
+                            </span>
+                            <span class="tone-chip session-scope-chip" data-scope="campaign" onclick="selectSessionScope('campaign')">
+                                Campaign <span style="font-size: 0.7rem; opacity: 0.8;">(unlimited)</span>
+                            </span>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 8px;">
+                            Shorter stories build to a satisfying climax. Campaigns continue across multiple sessions.
+                        </p>
+                    </div>
+
                     <!-- Begin button at bottom of advanced options -->
                     <div class="btn-group" style="margin-top: 25px; justify-content: center;">
                         <button class="btn btn-primary" onclick="beginStory()" style="padding: 16px 40px; font-size: 1.1rem;">▶ Begin My Story</button>
@@ -3079,6 +3106,8 @@ Example:
         let rulesGenre = 'fantasy';  // 'fantasy', 'scifi', 'modern', 'horror'
         let rulesVisibility = 'guided';  // storyteller, guided, classic, tactician
         let creationMode = 'concept';  // concept, guided, classic
+        let sessionScope = 'one_shot';  // one_shot, short, medium, long, campaign
+        let maxTurnsForScope = { one_shot: 20, short: 40, medium: 80, long: 150, campaign: 0 };
         let dndCharacter = null;  // Current D&D character sheet
 
         // Voice Input State
@@ -3795,6 +3824,14 @@ Example:
             updateRulesGenreDisplay();
         }
 
+        // Session Scope Selection (story length)
+        function selectSessionScope(scope) {
+            sessionScope = scope;
+            document.querySelectorAll('.session-scope-chip').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.scope === scope);
+            });
+        }
+
         // Update the rules genre display to show selected genres
         function updateRulesGenreDisplay() {
             const display = document.getElementById('rules-genre-display');
@@ -3973,7 +4010,25 @@ Example:
                 rulesGenre = selectedGenres[0];
             }
 
-            // Fetch genre data
+            // Default origins and archetypes (used if API fails)
+            const defaultOrigins = [
+                { id: 'human', display_name: 'Human', description: 'Versatile and adaptable' },
+                { id: 'elf', display_name: 'Elf', description: 'Graceful and perceptive' },
+                { id: 'dwarf', display_name: 'Dwarf', description: 'Tough and resilient' },
+                { id: 'halfling', display_name: 'Halfling', description: 'Lucky and nimble' }
+            ];
+            const defaultArchetypes = [
+                { id: 'fighter', display_name: 'Fighter', description: 'Master of martial combat', skill_choices: ['athletics', 'acrobatics', 'intimidation', 'perception'] },
+                { id: 'rogue', display_name: 'Rogue', description: 'Cunning and precise', skill_choices: ['stealth', 'acrobatics', 'sleight_of_hand', 'deception'] },
+                { id: 'cleric', display_name: 'Cleric', description: 'Divine power and healing', skill_choices: ['religion', 'medicine', 'insight', 'persuasion'] },
+                { id: 'wizard', display_name: 'Wizard', description: 'Arcane knowledge and power', skill_choices: ['arcana', 'history', 'investigation', 'insight'] }
+            ];
+
+            // Set defaults first, then try to fetch from API
+            availableOrigins = defaultOrigins;
+            availableArchetypes = defaultArchetypes;
+
+            // Fetch genre data (optional - defaults will be used if this fails)
             try {
                 const genreRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre);
                 if (genreRes.ok) {
@@ -3988,30 +4043,26 @@ Example:
                 // Fetch origins for this genre
                 const originsRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/origins');
                 if (originsRes.ok) {
-                    availableOrigins = await originsRes.json();
+                    const originsData = await originsRes.json();
+                    if (Array.isArray(originsData) && originsData.length > 0) {
+                        availableOrigins = originsData;
+                    }
                 }
 
                 // Fetch archetypes for this genre
                 const archRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/archetypes');
                 if (archRes.ok) {
-                    availableArchetypes = await archRes.json();
+                    const archData = await archRes.json();
+                    if (Array.isArray(archData) && archData.length > 0) {
+                        availableArchetypes = archData;
+                    }
                 }
             } catch (e) {
-                console.error('Failed to fetch genre data:', e);
-                // Use defaults
-                availableOrigins = [
-                    { id: 'human', display_name: 'Human', description: 'Versatile and adaptable' },
-                    { id: 'elf', display_name: 'Elf', description: 'Graceful and perceptive' },
-                    { id: 'dwarf', display_name: 'Dwarf', description: 'Tough and resilient' },
-                    { id: 'halfling', display_name: 'Halfling', description: 'Lucky and nimble' }
-                ];
-                availableArchetypes = [
-                    { id: 'fighter', display_name: 'Fighter', description: 'Master of martial combat', skill_choices: ['athletics', 'acrobatics', 'intimidation', 'perception'] },
-                    { id: 'rogue', display_name: 'Rogue', description: 'Cunning and precise', skill_choices: ['stealth', 'acrobatics', 'sleight_of_hand', 'deception'] },
-                    { id: 'cleric', display_name: 'Cleric', description: 'Divine power and healing', skill_choices: ['religion', 'medicine', 'insight', 'persuasion'] },
-                    { id: 'wizard', display_name: 'Wizard', description: 'Arcane knowledge and power', skill_choices: ['arcana', 'history', 'investigation', 'insight'] }
-                ];
+                console.error('Failed to fetch genre data, using defaults:', e);
+                // Defaults already set above
             }
+
+            console.log('Character creation ready - Origins:', availableOrigins.length, 'Archetypes:', availableArchetypes.length);
 
             // Determine number of steps based on mode
             updateCreationSteps();
@@ -4039,17 +4090,23 @@ Example:
         // Transition helper for smooth step changes
         function transitionCreationStep(callback) {
             const content = document.getElementById('char-creation-content');
-            // Fade out current content
-            content.classList.add('fade-out');
-            content.classList.remove('fade-in');
+            if (!content) {
+                callback();
+                return;
+            }
+            // Quick fade out and in
+            content.style.opacity = '0';
+            content.style.transform = 'translateX(20px)';
 
             setTimeout(() => {
-                // Clear and render new content
                 callback();
-                // Fade in new content
-                content.classList.remove('fade-out');
-                content.classList.add('fade-in');
-            }, 200); // Match CSS transition duration
+                // Fade in
+                requestAnimationFrame(() => {
+                    content.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                    content.style.opacity = '1';
+                    content.style.transform = 'translateX(0)';
+                });
+            }, 150);
         }
 
         function renderCreationStep() {
@@ -4716,7 +4773,9 @@ Example:
                     tone_preference: selectedTone,
                     genre: selectedGenre,  // Primary genre
                     genres: selectedGenres,  // All selected genres for blending
-                    storytelling_style: selectedStyle
+                    storytelling_style: selectedStyle,
+                    session_scope: sessionScope,  // one_shot, short, medium, long, campaign
+                    max_turns: maxTurnsForScope[sessionScope] || 20  // 0 = unlimited for campaigns
                 };
 
                 // Add world_id if a curated world was selected
