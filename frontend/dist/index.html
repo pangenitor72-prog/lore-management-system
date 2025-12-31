@@ -3115,6 +3115,34 @@ Example:
         // D&D 5e State
         let rulesMode = 'narrative';  // 'narrative' or 'dnd'
         let rulesGenre = 'fantasy';  // 'fantasy', 'scifi', 'modern', 'horror'
+
+        // Map story genres to rules genres (d20 system categories)
+        const STORY_TO_RULES_GENRE = {
+            // Fantasy-based
+            'fantasy': 'fantasy',
+            'adventure': 'fantasy',
+            'mythology': 'fantasy',
+            'wuxia': 'fantasy',
+            // Sci-Fi-based
+            'scifi': 'scifi',
+            'cyberpunk': 'scifi',
+            'superhero': 'scifi',
+            'steampunk': 'scifi',
+            // Modern-based
+            'modern': 'modern',
+            'mystery': 'modern',
+            'noir': 'modern',
+            'romance': 'modern',
+            'drama': 'modern',
+            'western': 'modern',
+            // Horror-based
+            'horror': 'horror',
+            'postapoc': 'horror'
+        };
+
+        function getRulesGenre(storyGenre) {
+            return STORY_TO_RULES_GENRE[storyGenre] || 'fantasy';
+        }
         let rulesVisibility = 'guided';  // storyteller, guided, classic, tactician
         let creationMode = 'concept';  // concept, guided, classic
         let sessionScope = 'one_shot';  // one_shot, short, medium, long, campaign
@@ -3613,16 +3641,13 @@ Example:
             selectedGenre = selectedGenres.length > 0 ? selectedGenres[0] : null;
 
             // Sync rulesGenre with primary genre for character creation
+            // Map story genre to rules genre (fantasy/scifi/modern/horror)
             if (selectedGenre) {
-                rulesGenre = selectedGenre;
+                rulesGenre = getRulesGenre(selectedGenre);
                 // Also update the dropdown if it exists
                 const genreDropdown = document.getElementById('rules-genre');
                 if (genreDropdown) {
-                    // Check if the genre exists as an option
-                    const optionExists = Array.from(genreDropdown.options).some(opt => opt.value === selectedGenre);
-                    if (optionExists) {
-                        genreDropdown.value = selectedGenre;
-                    }
+                    genreDropdown.value = rulesGenre;
                 }
             }
 
@@ -3816,12 +3841,12 @@ Example:
 
             // Update primary genre
             selectedGenre = selectedGenres.length > 0 ? selectedGenres[0] : null;
-            rulesGenre = selectedGenre || 'fantasy';
+            rulesGenre = getRulesGenre(selectedGenre);
 
             // Update hidden select for compatibility
             const genreSelect = document.getElementById('rules-genre');
-            if (genreSelect && selectedGenre) {
-                genreSelect.value = selectedGenre;
+            if (genreSelect) {
+                genreSelect.value = rulesGenre;
             }
 
             // Sync welcome screen genre cards
@@ -4017,8 +4042,9 @@ Example:
             };
 
             // Sync rulesGenre with selectedGenres from welcome screen if available
+            // Map story genre to rules genre (fantasy/scifi/modern/horror)
             if (selectedGenres.length > 0 && selectedGenres[0]) {
-                rulesGenre = selectedGenres[0];
+                rulesGenre = getRulesGenre(selectedGenres[0]);
             }
 
             // Default origins and archetypes - Full SRD list (used if API fails)
