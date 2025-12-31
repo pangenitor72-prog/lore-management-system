@@ -1304,17 +1304,28 @@
         .origin-grid, .archetype-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* 3 columns on wider screens for 12 classes */
+        @media (min-width: 600px) {
+            .archetype-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
 
         .origin-card, .archetype-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
             border-radius: 10px;
-            padding: 15px;
+            padding: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
+            min-height: 70px;
         }
 
         .origin-card:hover, .archetype-card:hover {
@@ -4010,18 +4021,31 @@ Example:
                 rulesGenre = selectedGenres[0];
             }
 
-            // Default origins and archetypes (used if API fails)
+            // Default origins and archetypes - Full SRD list (used if API fails)
             const defaultOrigins = [
                 { id: 'human', display_name: 'Human', description: 'Versatile and adaptable' },
                 { id: 'elf', display_name: 'Elf', description: 'Graceful and perceptive' },
                 { id: 'dwarf', display_name: 'Dwarf', description: 'Tough and resilient' },
-                { id: 'halfling', display_name: 'Halfling', description: 'Lucky and nimble' }
+                { id: 'halfling', display_name: 'Halfling', description: 'Lucky and nimble' },
+                { id: 'dragonborn', display_name: 'Dragonborn', description: 'Dragon-blooded warrior' },
+                { id: 'gnome', display_name: 'Gnome', description: 'Clever and inventive' },
+                { id: 'half_elf', display_name: 'Half-Elf', description: 'Versatile and charismatic' },
+                { id: 'half_orc', display_name: 'Half-Orc', description: 'Strong and enduring' },
+                { id: 'tiefling', display_name: 'Tiefling', description: 'Infernal heritage' }
             ];
             const defaultArchetypes = [
-                { id: 'fighter', display_name: 'Fighter', description: 'Master of martial combat', skill_choices: ['athletics', 'acrobatics', 'intimidation', 'perception'] },
-                { id: 'rogue', display_name: 'Rogue', description: 'Cunning and precise', skill_choices: ['stealth', 'acrobatics', 'sleight_of_hand', 'deception'] },
-                { id: 'cleric', display_name: 'Cleric', description: 'Divine power and healing', skill_choices: ['religion', 'medicine', 'insight', 'persuasion'] },
-                { id: 'wizard', display_name: 'Wizard', description: 'Arcane knowledge and power', skill_choices: ['arcana', 'history', 'investigation', 'insight'] }
+                { id: 'fighter', display_name: 'Fighter', description: 'Master of martial combat', hit_die: 'd10', has_powers: false },
+                { id: 'rogue', display_name: 'Rogue', description: 'Cunning and precise', hit_die: 'd8', has_powers: false },
+                { id: 'cleric', display_name: 'Cleric', description: 'Divine power and healing', hit_die: 'd8', has_powers: true },
+                { id: 'wizard', display_name: 'Wizard', description: 'Arcane knowledge and power', hit_die: 'd6', has_powers: true },
+                { id: 'barbarian', display_name: 'Barbarian', description: 'Primal fury and rage', hit_die: 'd12', has_powers: false },
+                { id: 'bard', display_name: 'Bard', description: 'Magic through music', hit_die: 'd8', has_powers: true },
+                { id: 'druid', display_name: 'Druid', description: 'Nature\'s guardian', hit_die: 'd8', has_powers: true },
+                { id: 'monk', display_name: 'Monk', description: 'Martial artist', hit_die: 'd8', has_powers: false },
+                { id: 'paladin', display_name: 'Paladin', description: 'Holy warrior', hit_die: 'd10', has_powers: true },
+                { id: 'ranger', display_name: 'Ranger', description: 'Wilderness expert', hit_die: 'd10', has_powers: true },
+                { id: 'sorcerer', display_name: 'Sorcerer', description: 'Innate magic', hit_die: 'd6', has_powers: true },
+                { id: 'warlock', display_name: 'Warlock', description: 'Pact-bound power', hit_die: 'd8', has_powers: true }
             ];
 
             // Set defaults first, then try to fetch from API
@@ -4044,8 +4068,14 @@ Example:
                 const originsRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/origins');
                 if (originsRes.ok) {
                     const originsData = await originsRes.json();
-                    if (Array.isArray(originsData) && originsData.length > 0) {
-                        availableOrigins = originsData;
+                    // API returns {origins: [...]} with 'name' field
+                    const originsArray = originsData.origins || originsData;
+                    if (Array.isArray(originsArray) && originsArray.length > 0) {
+                        // Map 'name' to 'display_name' for frontend consistency
+                        availableOrigins = originsArray.map(o => ({
+                            ...o,
+                            display_name: o.display_name || o.name || o.id
+                        }));
                     }
                 }
 
@@ -4053,8 +4083,14 @@ Example:
                 const archRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/archetypes');
                 if (archRes.ok) {
                     const archData = await archRes.json();
-                    if (Array.isArray(archData) && archData.length > 0) {
-                        availableArchetypes = archData;
+                    // API returns {archetypes: [...]} with 'name' field
+                    const archArray = archData.archetypes || archData;
+                    if (Array.isArray(archArray) && archArray.length > 0) {
+                        // Map 'name' to 'display_name' for frontend consistency
+                        availableArchetypes = archArray.map(a => ({
+                            ...a,
+                            display_name: a.display_name || a.name || a.id
+                        }));
                     }
                 }
             } catch (e) {

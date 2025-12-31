@@ -1,0 +1,298 @@
+{
+  "_comment": "Genre conversion mappings for runtime flavor transformation. Fantasy SRD is source-of-truth.",
+
+  "terminology": {
+    "fantasy": {
+      "spell": "spell",
+      "spellcasting": "spellcasting",
+      "cantrip": "cantrip",
+      "spell_slot": "spell slot",
+      "arcane": "arcane",
+      "divine": "divine",
+      "hit_points": "hit points",
+      "armor_class": "armor class",
+      "saving_throw": "saving throw",
+      "ability_score": "ability score",
+      "class": "class",
+      "race": "race",
+      "level": "level"
+    },
+    "scifi": {
+      "spell": "tech power",
+      "spellcasting": "tech interface",
+      "cantrip": "basic routine",
+      "spell_slot": "power cell",
+      "arcane": "quantum",
+      "divine": "psionic",
+      "hit_points": "hull integrity",
+      "armor_class": "defense rating",
+      "saving_throw": "resistance check",
+      "ability_score": "stat rating",
+      "class": "role",
+      "race": "species",
+      "level": "tier"
+    },
+    "modern": {
+      "spell": "special ability",
+      "spellcasting": "special training",
+      "cantrip": "basic skill",
+      "spell_slot": "focus point",
+      "arcane": "psychic",
+      "divine": "spiritual",
+      "hit_points": "health",
+      "armor_class": "defense",
+      "saving_throw": "resistance",
+      "ability_score": "attribute",
+      "class": "profession",
+      "race": "background",
+      "level": "rank"
+    },
+    "horror": {
+      "spell": "dark gift",
+      "spellcasting": "occult practice",
+      "cantrip": "minor rite",
+      "spell_slot": "sanity cost",
+      "arcane": "eldritch",
+      "divine": "blessed",
+      "hit_points": "vitality",
+      "armor_class": "protection",
+      "saving_throw": "will save",
+      "ability_score": "trait",
+      "class": "archetype",
+      "race": "origin",
+      "level": "experience"
+    }
+  },
+
+  "schools": {
+    "fantasy": {
+      "abjuration": "Abjuration",
+      "conjuration": "Conjuration",
+      "divination": "Divination",
+      "enchantment": "Enchantment",
+      "evocation": "Evocation",
+      "illusion": "Illusion",
+      "necromancy": "Necromancy",
+      "transmutation": "Transmutation"
+    },
+    "scifi": {
+      "abjuration": "Defense Systems",
+      "conjuration": "Fabrication",
+      "divination": "Sensor Array",
+      "enchantment": "Neural Override",
+      "evocation": "Energy Weapons",
+      "illusion": "Holographics",
+      "necromancy": "Bioware",
+      "transmutation": "Nanotech"
+    },
+    "modern": {
+      "abjuration": "Protection",
+      "conjuration": "Manifestation",
+      "divination": "Perception",
+      "enchantment": "Influence",
+      "evocation": "Force",
+      "illusion": "Deception",
+      "necromancy": "Death Magic",
+      "transmutation": "Alteration"
+    },
+    "horror": {
+      "abjuration": "Wards",
+      "conjuration": "Summoning",
+      "divination": "Sight Beyond",
+      "enchantment": "Domination",
+      "evocation": "Destruction",
+      "illusion": "Phantasms",
+      "necromancy": "Death Arts",
+      "transmutation": "Corruption"
+    }
+  },
+
+  "damage_types": {
+    "fantasy": {
+      "fire": "fire",
+      "cold": "cold",
+      "lightning": "lightning",
+      "thunder": "thunder",
+      "acid": "acid",
+      "poison": "poison",
+      "necrotic": "necrotic",
+      "radiant": "radiant",
+      "force": "force",
+      "psychic": "psychic",
+      "bludgeoning": "bludgeoning",
+      "piercing": "piercing",
+      "slashing": "slashing"
+    },
+    "scifi": {
+      "fire": "thermal",
+      "cold": "cryo",
+      "lightning": "electric",
+      "thunder": "sonic",
+      "acid": "corrosive",
+      "poison": "toxic",
+      "necrotic": "radiation",
+      "radiant": "plasma",
+      "force": "kinetic",
+      "psychic": "psionic",
+      "bludgeoning": "impact",
+      "piercing": "ballistic",
+      "slashing": "blade"
+    },
+    "modern": {
+      "fire": "fire",
+      "cold": "cold",
+      "lightning": "electric",
+      "thunder": "concussive",
+      "acid": "chemical",
+      "poison": "toxic",
+      "necrotic": "necrotic",
+      "radiant": "holy",
+      "force": "force",
+      "psychic": "mental",
+      "bludgeoning": "blunt",
+      "piercing": "piercing",
+      "slashing": "cutting"
+    },
+    "horror": {
+      "fire": "hellfire",
+      "cold": "deathly cold",
+      "lightning": "storm",
+      "thunder": "cacophony",
+      "acid": "corrosion",
+      "poison": "venom",
+      "necrotic": "soul drain",
+      "radiant": "holy light",
+      "force": "spectral",
+      "psychic": "madness",
+      "bludgeoning": "crushing",
+      "piercing": "impaling",
+      "slashing": "rending"
+    }
+  },
+
+  "class_mappings": {
+    "fantasy": {
+      "barbarian": { "name": "Barbarian", "description": "Primal warrior" },
+      "bard": { "name": "Bard", "description": "Magical performer" },
+      "cleric": { "name": "Cleric", "description": "Divine servant" },
+      "druid": { "name": "Druid", "description": "Nature's guardian" },
+      "fighter": { "name": "Fighter", "description": "Combat master" },
+      "monk": { "name": "Monk", "description": "Martial artist" },
+      "paladin": { "name": "Paladin", "description": "Holy warrior" },
+      "ranger": { "name": "Ranger", "description": "Wilderness expert" },
+      "rogue": { "name": "Rogue", "description": "Skilled infiltrator" },
+      "sorcerer": { "name": "Sorcerer", "description": "Innate magic wielder" },
+      "warlock": { "name": "Warlock", "description": "Pact-bound caster" },
+      "wizard": { "name": "Wizard", "description": "Arcane scholar" }
+    },
+    "scifi": {
+      "barbarian": { "name": "Berserker", "description": "Combat augmented warrior" },
+      "bard": { "name": "Influencer", "description": "Social hacker" },
+      "cleric": { "name": "Medic", "description": "Field medic with nano-healing" },
+      "druid": { "name": "Biotech", "description": "Genetic engineer" },
+      "fighter": { "name": "Soldier", "description": "Military specialist" },
+      "monk": { "name": "Operative", "description": "Augmented martial artist" },
+      "paladin": { "name": "Enforcer", "description": "Justice corps agent" },
+      "ranger": { "name": "Scout", "description": "Recon specialist" },
+      "rogue": { "name": "Hacker", "description": "System infiltrator" },
+      "sorcerer": { "name": "Psionic", "description": "Natural psychic" },
+      "warlock": { "name": "Symbiote", "description": "Alien-bonded host" },
+      "wizard": { "name": "Technomancer", "description": "Tech genius" }
+    },
+    "modern": {
+      "barbarian": { "name": "Bruiser", "description": "Street fighter" },
+      "bard": { "name": "Face", "description": "Social expert" },
+      "cleric": { "name": "Medic", "description": "Field doctor" },
+      "druid": { "name": "Survivalist", "description": "Wilderness expert" },
+      "fighter": { "name": "Soldier", "description": "Combat veteran" },
+      "monk": { "name": "Martial Artist", "description": "Hand-to-hand specialist" },
+      "paladin": { "name": "Crusader", "description": "Righteous warrior" },
+      "ranger": { "name": "Tracker", "description": "Hunter and scout" },
+      "rogue": { "name": "Infiltrator", "description": "Stealth specialist" },
+      "sorcerer": { "name": "Psychic", "description": "Mental powers" },
+      "warlock": { "name": "Occultist", "description": "Dark arts practitioner" },
+      "wizard": { "name": "Scholar", "description": "Academic expert" }
+    },
+    "horror": {
+      "barbarian": { "name": "Berserker", "description": "Rage-driven survivor" },
+      "bard": { "name": "Mesmerist", "description": "Hypnotic manipulator" },
+      "cleric": { "name": "Exorcist", "description": "Divine protector" },
+      "druid": { "name": "Witch", "description": "Nature occultist" },
+      "fighter": { "name": "Hunter", "description": "Monster slayer" },
+      "monk": { "name": "Mystic", "description": "Disciplined warrior" },
+      "paladin": { "name": "Inquisitor", "description": "Holy avenger" },
+      "ranger": { "name": "Stalker", "description": "Creature tracker" },
+      "rogue": { "name": "Thief", "description": "Shadow dweller" },
+      "sorcerer": { "name": "Medium", "description": "Spirit channeler" },
+      "warlock": { "name": "Cultist", "description": "Dark pact holder" },
+      "wizard": { "name": "Arcanist", "description": "Forbidden knowledge seeker" }
+    }
+  },
+
+  "race_mappings": {
+    "fantasy": {
+      "dragonborn": { "name": "Dragonborn", "description": "Dragon-blooded humanoid" },
+      "dwarf": { "name": "Dwarf", "description": "Stout mountain folk" },
+      "elf": { "name": "Elf", "description": "Graceful fey-touched" },
+      "gnome": { "name": "Gnome", "description": "Clever tinkerer" },
+      "half_elf": { "name": "Half-Elf", "description": "Human-elf hybrid" },
+      "half_orc": { "name": "Half-Orc", "description": "Human-orc hybrid" },
+      "halfling": { "name": "Halfling", "description": "Lucky small folk" },
+      "human": { "name": "Human", "description": "Versatile and adaptable" },
+      "tiefling": { "name": "Tiefling", "description": "Infernal heritage" }
+    },
+    "scifi": {
+      "dragonborn": { "name": "Saurian", "description": "Reptilian species" },
+      "dwarf": { "name": "Miner Caste", "description": "Heavy-world adapted" },
+      "elf": { "name": "Elari", "description": "Long-lived elder race" },
+      "gnome": { "name": "Tinker", "description": "Tech-savvy species" },
+      "half_elf": { "name": "Hybrid", "description": "Mixed heritage" },
+      "half_orc": { "name": "Brute", "description": "Enhanced humanoid" },
+      "halfling": { "name": "Spacer", "description": "Low-gravity adapted" },
+      "human": { "name": "Terran", "description": "Standard human" },
+      "tiefling": { "name": "Aberrant", "description": "Mutation carrier" }
+    },
+    "modern": {
+      "dragonborn": { "name": "Military Family", "description": "Warrior lineage" },
+      "dwarf": { "name": "Blue Collar", "description": "Working class roots" },
+      "elf": { "name": "Old Money", "description": "Aristocratic heritage" },
+      "gnome": { "name": "Tech Family", "description": "Engineering background" },
+      "half_elf": { "name": "Mixed Heritage", "description": "Diverse background" },
+      "half_orc": { "name": "Tough Upbringing", "description": "Street smart" },
+      "halfling": { "name": "Suburbanite", "description": "Middle class roots" },
+      "human": { "name": "Average Joe", "description": "Ordinary background" },
+      "tiefling": { "name": "Outsider", "description": "Marginalized background" }
+    },
+    "horror": {
+      "dragonborn": { "name": "Dragon-Blooded", "description": "Ancient bloodline" },
+      "dwarf": { "name": "Deep Dweller", "description": "Underground survivor" },
+      "elf": { "name": "Fey-Touched", "description": "Otherworldly heritage" },
+      "gnome": { "name": "Gremlin-Kin", "description": "Trickster blood" },
+      "half_elf": { "name": "Changeling", "description": "Between worlds" },
+      "half_orc": { "name": "Beast-Blood", "description": "Savage heritage" },
+      "halfling": { "name": "Wee Folk", "description": "Folk tale survivor" },
+      "human": { "name": "Mortal", "description": "Fragile humanity" },
+      "tiefling": { "name": "Hell-Spawn", "description": "Demonic taint" }
+    }
+  },
+
+  "spell_flavor_templates": {
+    "_comment": "Templates for converting spell descriptions. {name} = spell name, {effect} = mechanical effect",
+    "fantasy": {
+      "prefix": "You invoke the power of {school} magic.",
+      "suffix": ""
+    },
+    "scifi": {
+      "prefix": "Your neural interface activates the {school} subroutine.",
+      "suffix": "The holographic display confirms execution."
+    },
+    "modern": {
+      "prefix": "Drawing on your training, you focus your {school} abilities.",
+      "suffix": ""
+    },
+    "horror": {
+      "prefix": "The shadows writhe as you channel {school} energies.",
+      "suffix": "Something watches from the darkness."
+    }
+  }
+}

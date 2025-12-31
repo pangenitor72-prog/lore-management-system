@@ -289,22 +289,81 @@ MODERN_ORIGINS: Dict[str, OriginData] = {
 # ORIGIN REGISTRY
 # =============================================================================
 
+# Static registry for non-fantasy genres
 ORIGINS_BY_GENRE: Dict[str, Dict[str, OriginData]] = {
-    "fantasy": FANTASY_ORIGINS,
+    "fantasy": FANTASY_ORIGINS,  # Fallback, prefer SRD loader
     "scifi": SCIFI_ORIGINS,
     "modern": MODERN_ORIGINS,
     "horror": MODERN_ORIGINS,  # Horror uses modern backgrounds
 }
 
 
+def _get_fantasy_origins_from_srd() -> Dict[str, OriginData]:
+    """Load fantasy origins from SRD data."""
+    try:
+        from ..data.loader import get_srd_loader
+        loader = get_srd_loader()
+        srd_races = loader.get_all_races(genre="fantasy")
+
+        origins = {}
+        for race_data in srd_races:
+            race_id = race_data.get("id", "")
+
+            # Parse ASI from SRD format
+            asi = race_data.get("asi", [])
+            ability_bonuses = {}
+            for bonus in asi:
+                if isinstance(bonus, dict):
+                    attr = bonus.get("attributes", [])
+                    val = bonus.get("value", 0)
+                    for a in attr:
+                        ability_bonuses[a.lower()] = val
+
+            # Parse speed
+            speed_data = race_data.get("speed", {})
+            speed = speed_data.get("walk", 30) if isinstance(speed_data, dict) else 30
+
+            # Parse traits
+            traits_str = race_data.get("traits", "")
+            traits = [t.strip() for t in traits_str.split("***") if t.strip() and len(t.strip()) < 100][:5]
+
+            origins[race_id] = OriginData(
+                id=race_id,
+                display_name=race_data.get("display_name", race_id.title()),
+                description=race_data.get("description", "")[:500],
+                ability_bonuses=ability_bonuses,
+                speed=speed,
+                size=race_data.get("size", "Medium"),
+                traits=traits if traits else [race_data.get("vision", "Normal vision")],
+                languages=race_data.get("languages", "Common").split(", "),
+                genre="fantasy",
+            )
+
+        return origins if origins else FANTASY_ORIGINS
+    except Exception as e:
+        # Fallback to hardcoded if loader fails
+        print(f"Warning: Could not load SRD origins: {e}")
+        return FANTASY_ORIGINS
+
+
 def get_origin(origin_id: str, genre: str = "fantasy") -> Optional[OriginData]:
     """Get origin data by ID and genre."""
+    if genre == "fantasy":
+        # Try SRD first
+        srd_origins = _get_fantasy_origins_from_srd()
+        if origin_id in srd_origins:
+            return srd_origins[origin_id]
+
     genre_origins = ORIGINS_BY_GENRE.get(genre, FANTASY_ORIGINS)
     return genre_origins.get(origin_id)
 
 
 def get_origins_for_genre(genre: str = "fantasy") -> List[OriginData]:
     """Get all available origins for a genre."""
+    if genre == "fantasy":
+        # Use SRD data
+        return list(_get_fantasy_origins_from_srd().values())
+
     genre_origins = ORIGINS_BY_GENRE.get(genre, FANTASY_ORIGINS)
     return list(genre_origins.values())
 

@@ -393,22 +393,80 @@ MODERN_ARCHETYPES: Dict[str, ArchetypeData] = {
 # ARCHETYPE REGISTRY
 # =============================================================================
 
+# Static registry for non-fantasy genres
 ARCHETYPES_BY_GENRE: Dict[str, Dict[str, ArchetypeData]] = {
-    "fantasy": FANTASY_ARCHETYPES,
+    "fantasy": FANTASY_ARCHETYPES,  # Fallback, prefer SRD loader
     "scifi": SCIFI_ARCHETYPES,
     "modern": MODERN_ARCHETYPES,
     "horror": MODERN_ARCHETYPES,  # Horror uses modern professions
 }
 
 
+def _get_fantasy_archetypes_from_srd() -> Dict[str, ArchetypeData]:
+    """Load fantasy archetypes from SRD data."""
+    try:
+        from ..data.loader import get_srd_loader
+        loader = get_srd_loader()
+        srd_classes = loader.get_all_classes(genre="fantasy")
+
+        archetypes = {}
+        for class_data in srd_classes:
+            class_id = class_data.get("id", "")
+
+            # Parse hit die
+            hit_die_str = class_data.get("hit_die", "1d8")
+            hit_die_map = {"1d6": HitDie.D6, "1d8": HitDie.D8, "1d10": HitDie.D10, "1d12": HitDie.D12}
+            hit_die = hit_die_map.get(hit_die_str, HitDie.D8)
+
+            # Parse saving throws
+            saving_throws = class_data.get("saving_throws", [])
+
+            # Parse primary ability from saving throws (first one usually)
+            primary_ability = saving_throws[0] if saving_throws else "strength"
+
+            # Check if spellcaster
+            spellcasting_ability = class_data.get("spellcasting_ability")
+            has_powers = spellcasting_ability is not None and spellcasting_ability != ""
+
+            archetypes[class_id] = ArchetypeData(
+                id=class_id,
+                display_name=class_data.get("display_name", class_id.title()),
+                description=class_data.get("description", "")[:500],
+                hit_die=hit_die,
+                primary_ability=primary_ability,
+                saving_throw_proficiencies=saving_throws,
+                armor_proficiencies=class_data.get("armor_proficiencies", []),
+                weapon_proficiencies=class_data.get("weapon_proficiencies", []),
+                has_powers=has_powers,
+                power_ability=spellcasting_ability.lower() if spellcasting_ability else None,
+                genre="fantasy",
+            )
+
+        return archetypes if archetypes else FANTASY_ARCHETYPES
+    except Exception as e:
+        # Fallback to hardcoded if loader fails
+        print(f"Warning: Could not load SRD archetypes: {e}")
+        return FANTASY_ARCHETYPES
+
+
 def get_archetype(archetype_id: str, genre: str = "fantasy") -> Optional[ArchetypeData]:
     """Get archetype data by ID and genre."""
+    if genre == "fantasy":
+        # Try SRD first
+        srd_archetypes = _get_fantasy_archetypes_from_srd()
+        if archetype_id in srd_archetypes:
+            return srd_archetypes[archetype_id]
+
     genre_archetypes = ARCHETYPES_BY_GENRE.get(genre, FANTASY_ARCHETYPES)
     return genre_archetypes.get(archetype_id)
 
 
 def get_archetypes_for_genre(genre: str = "fantasy") -> List[ArchetypeData]:
     """Get all available archetypes for a genre."""
+    if genre == "fantasy":
+        # Use SRD data
+        return list(_get_fantasy_archetypes_from_srd().values())
+
     genre_archetypes = ARCHETYPES_BY_GENRE.get(genre, FANTASY_ARCHETYPES)
     return list(genre_archetypes.values())
 
