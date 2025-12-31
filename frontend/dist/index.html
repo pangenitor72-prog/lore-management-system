@@ -2511,8 +2511,8 @@
                 <span class="story-info" id="story-info">Chapter One</span>
                 <!-- Desktop buttons -->
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button id="char-sheet-btn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showCharacterSheet()">Character</button>
-                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showInventory()">Inventory</button>
+                    <button id="char-sheet-btn" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showCharacterSheet()">👤 Character</button>
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showInventory()">🎒 Inventory</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">💾 Save</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="confirmStartOver()">🔄 New Story</button>
                 </div>
@@ -2583,6 +2583,14 @@
                 <div id="action-bar" class="action-bar" style="display: none;">
                     <button id="undo-btn" class="action-bar-btn" onclick="undoAction()" disabled>↩ Undo</button>
                     <button id="retry-btn" class="action-bar-btn" onclick="retryAction()" disabled>🔄 Retry</button>
+                </div>
+
+                <!-- Bottom Action Buttons (duplicated from header for easy access) -->
+                <div class="bottom-action-bar" style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showCharacterSheet()">👤 Character</button>
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showInventory()">🎒 Inventory</button>
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">💾 Save</button>
+                    <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="confirmStartOver()">🔄 New Story</button>
                 </div>
             </div>
         </div>
@@ -4004,16 +4012,31 @@ Example:
                 spellsSection.style.display = 'none';
             }
 
-            // Equipment section (classic and tactician)
+            // Equipment section - always show (inventory is important for gameplay)
             const equipmentSection = document.getElementById('char-equipment-section');
-            const equipment = dndCharacter.equipment || [];
-            if (equipment.length > 0 && (rulesVisibility === 'classic' || rulesVisibility === 'tactician')) {
-                equipmentSection.style.display = 'block';
-                document.getElementById('char-equipment-list').innerHTML = equipment.map(e =>
-                    `<div style="padding: 4px 0; border-bottom: 1px solid var(--border-color);">${e}</div>`
-                ).join('');
+            equipmentSection.style.display = 'block';
+
+            // Show from playerInventory (which has full item data) or fall back to dndCharacter.equipment
+            if (playerInventory.length > 0) {
+                document.getElementById('char-equipment-list').innerHTML = playerInventory.map(item =>
+                    `<div style="display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-subtle);">
+                        <span style="font-size: 1.1rem; margin-right: 8px;">${item.icon || '📦'}</span>
+                        <span style="flex: 1; color: var(--text-primary);">${item.name}${item.quantity > 1 ? ' ×' + item.quantity : ''}</span>
+                    </div>`
+                ).join('') +
+                `<button class="btn btn-secondary" style="width: 100%; margin-top: 10px; font-size: 0.85rem;" onclick="closeCharacterSheet(); showInventory();">
+                    🎒 Open Full Inventory
+                </button>`;
             } else {
-                equipmentSection.style.display = 'none';
+                const equipment = dndCharacter.equipment || [];
+                if (equipment.length > 0) {
+                    document.getElementById('char-equipment-list').innerHTML = equipment.map(e =>
+                        `<div style="padding: 4px 0; border-bottom: 1px solid var(--border-subtle);">${e}</div>`
+                    ).join('');
+                } else {
+                    document.getElementById('char-equipment-list').innerHTML =
+                        `<div style="color: var(--text-muted); font-style: italic;">No equipment yet.</div>`;
+                }
             }
 
             modal.style.display = 'flex';
@@ -4601,6 +4624,12 @@ Example:
                 } catch (e) {
                     console.error('Failed to fetch character:', e);
                 }
+            }
+
+            // Load starting inventory based on character's archetype/class
+            if (dndCharacter) {
+                const archetype = dndCharacter.character_class || dndCharacter.archetype || charCreationData.archetype;
+                getStartingInventory(archetype);
             }
 
             closeCharCreation();
@@ -5344,6 +5373,149 @@ Example:
                     playerInventory.splice(index, 1);
                 }
             }
+        }
+
+        // Starting equipment by archetype/class
+        const STARTING_EQUIPMENT = {
+            // Fantasy
+            fighter: [
+                { name: 'Longsword', description: '1d8 slashing damage', icon: '⚔️' },
+                { name: 'Chain Mail', description: 'AC 16, heavy armor', icon: '🛡️' },
+                { name: 'Shield', description: '+2 AC', icon: '🛡️' },
+                { name: 'Dungeoneer\'s Pack', description: 'Backpack, bedroll, rope, torches', icon: '🎒' }
+            ],
+            rogue: [
+                { name: 'Shortsword', description: '1d6 piercing damage', icon: '🗡️' },
+                { name: 'Dagger', description: '1d4 piercing, thrown', icon: '🗡️', quantity: 2 },
+                { name: 'Leather Armor', description: 'AC 11 + DEX', icon: '🧥' },
+                { name: 'Thieves\' Tools', description: 'For picking locks and disabling traps', icon: '🔧' },
+                { name: 'Burglar\'s Pack', description: 'Backpack, caltrops, rope, lantern', icon: '🎒' }
+            ],
+            cleric: [
+                { name: 'Mace', description: '1d6 bludgeoning damage', icon: '🔨' },
+                { name: 'Scale Mail', description: 'AC 14 + DEX (max 2)', icon: '🛡️' },
+                { name: 'Shield', description: '+2 AC', icon: '🛡️' },
+                { name: 'Holy Symbol', description: 'Divine focus for spellcasting', icon: '✨' },
+                { name: 'Priest\'s Pack', description: 'Backpack, candles, vestments, rations', icon: '🎒' }
+            ],
+            wizard: [
+                { name: 'Quarterstaff', description: '1d6 bludgeoning damage', icon: '🪄' },
+                { name: 'Spellbook', description: 'Contains your prepared spells', icon: '📖' },
+                { name: 'Component Pouch', description: 'Spell components', icon: '👝' },
+                { name: 'Scholar\'s Pack', description: 'Backpack, ink, parchment, books', icon: '🎒' }
+            ],
+            ranger: [
+                { name: 'Longbow', description: '1d8 piercing damage, range 150/600', icon: '🏹' },
+                { name: 'Arrows', description: 'Ammunition for bows', icon: '🏹', quantity: 20 },
+                { name: 'Leather Armor', description: 'AC 11 + DEX', icon: '🧥' },
+                { name: 'Shortsword', description: '1d6 piercing damage', icon: '🗡️', quantity: 2 },
+                { name: 'Explorer\'s Pack', description: 'Backpack, bedroll, mess kit, rope', icon: '🎒' }
+            ],
+            paladin: [
+                { name: 'Longsword', description: '1d8 slashing damage', icon: '⚔️' },
+                { name: 'Chain Mail', description: 'AC 16, heavy armor', icon: '🛡️' },
+                { name: 'Shield', description: '+2 AC', icon: '🛡️' },
+                { name: 'Holy Symbol', description: 'Divine focus', icon: '✨' },
+                { name: 'Priest\'s Pack', description: 'Backpack, candles, vestments', icon: '🎒' }
+            ],
+            barbarian: [
+                { name: 'Greataxe', description: '1d12 slashing damage', icon: '🪓' },
+                { name: 'Handaxe', description: '1d6 slashing, thrown', icon: '🪓', quantity: 2 },
+                { name: 'Explorer\'s Pack', description: 'Backpack, bedroll, rope', icon: '🎒' }
+            ],
+            bard: [
+                { name: 'Rapier', description: '1d8 piercing damage', icon: '🗡️' },
+                { name: 'Leather Armor', description: 'AC 11 + DEX', icon: '🧥' },
+                { name: 'Lute', description: 'Musical instrument focus', icon: '🎸' },
+                { name: 'Entertainer\'s Pack', description: 'Backpack, costumes, candles', icon: '🎒' }
+            ],
+            druid: [
+                { name: 'Wooden Shield', description: '+2 AC', icon: '🛡️' },
+                { name: 'Scimitar', description: '1d6 slashing damage', icon: '⚔️' },
+                { name: 'Leather Armor', description: 'AC 11 + DEX', icon: '🧥' },
+                { name: 'Druidic Focus', description: 'Sprig of mistletoe', icon: '🌿' },
+                { name: 'Explorer\'s Pack', description: 'Backpack, bedroll, rope', icon: '🎒' }
+            ],
+            monk: [
+                { name: 'Shortsword', description: '1d6 piercing damage', icon: '🗡️' },
+                { name: 'Dart', description: '1d4 piercing, thrown', icon: '🎯', quantity: 10 },
+                { name: 'Explorer\'s Pack', description: 'Backpack, bedroll, rope', icon: '🎒' }
+            ],
+            sorcerer: [
+                { name: 'Light Crossbow', description: '1d8 piercing, range 80/320', icon: '🏹' },
+                { name: 'Bolts', description: 'Crossbow ammunition', icon: '🏹', quantity: 20 },
+                { name: 'Arcane Focus', description: 'Crystal or orb', icon: '🔮' },
+                { name: 'Dungeoneer\'s Pack', description: 'Backpack, rope, torches', icon: '🎒' }
+            ],
+            warlock: [
+                { name: 'Light Crossbow', description: '1d8 piercing, range 80/320', icon: '🏹' },
+                { name: 'Bolts', description: 'Crossbow ammunition', icon: '🏹', quantity: 20 },
+                { name: 'Arcane Focus', description: 'Wand or rod', icon: '🪄' },
+                { name: 'Scholar\'s Pack', description: 'Backpack, ink, parchment', icon: '🎒' },
+                { name: 'Leather Armor', description: 'AC 11 + DEX', icon: '🧥' }
+            ],
+            // Sci-Fi
+            soldier: [
+                { name: 'Pulse Rifle', description: '2d6 energy damage', icon: '🔫' },
+                { name: 'Combat Armor', description: 'Defense 16', icon: '🦺' },
+                { name: 'Frag Grenades', description: '4d6 area damage', icon: '💣', quantity: 2 },
+                { name: 'Military Pack', description: 'Rations, medkit, comm device', icon: '🎒' }
+            ],
+            hacker: [
+                { name: 'Neural Interface', description: 'Connect to any system', icon: '🧠' },
+                { name: 'Sidearm', description: '1d8 ballistic damage', icon: '🔫' },
+                { name: 'Hacking Kit', description: 'Bypass security systems', icon: '💻' },
+                { name: 'Light Armor', description: 'Defense 12', icon: '🧥' }
+            ],
+            pilot: [
+                { name: 'Sidearm', description: '1d8 ballistic damage', icon: '🔫' },
+                { name: 'Flight Suit', description: 'Defense 11, vacuum-sealed', icon: '🧑‍🚀' },
+                { name: 'Multitool', description: 'Repairs and maintenance', icon: '🔧' },
+                { name: 'Emergency Kit', description: 'Beacon, rations, medpatch', icon: '🎒' }
+            ],
+            medic: [
+                { name: 'Medical Kit', description: 'Heal 2d8 HP, 5 uses', icon: '🏥' },
+                { name: 'Sidearm', description: '1d8 ballistic damage', icon: '🔫' },
+                { name: 'Light Armor', description: 'Defense 12', icon: '🧥' },
+                { name: 'Stim Packs', description: 'Restore 1d6 HP instantly', icon: '💉', quantity: 3 }
+            ],
+            // Modern/Horror
+            detective: [
+                { name: 'Handgun', description: '2d6 ballistic damage', icon: '🔫' },
+                { name: 'Badge', description: 'Official credentials', icon: '🪪' },
+                { name: 'Notebook', description: 'For clues and notes', icon: '📓' },
+                { name: 'Flashlight', description: 'Illumination', icon: '🔦' }
+            ],
+            doctor: [
+                { name: 'Medical Bag', description: 'First aid supplies, 10 uses', icon: '🏥' },
+                { name: 'Scalpel', description: '1d4 slashing (improvised)', icon: '🔪' },
+                { name: 'Medications', description: 'Various treatments', icon: '💊', quantity: 5 },
+                { name: 'Phone', description: 'Communication device', icon: '📱' }
+            ],
+            engineer: [
+                { name: 'Tool Kit', description: 'Complete repair set', icon: '🧰' },
+                { name: 'Utility Knife', description: '1d4 slashing', icon: '🔪' },
+                { name: 'Flashlight', description: 'Illumination', icon: '🔦' },
+                { name: 'Duct Tape', description: 'Fixes almost anything', icon: '🩹' }
+            ]
+        };
+
+        function getStartingInventory(archetype) {
+            const archetypeId = (archetype || 'fighter').toLowerCase();
+            const equipment = STARTING_EQUIPMENT[archetypeId] || STARTING_EQUIPMENT['fighter'];
+
+            // Clear and populate inventory
+            playerInventory = [];
+            equipment.forEach(item => {
+                addToInventory({
+                    name: item.name,
+                    description: item.description,
+                    icon: item.icon,
+                    quantity: item.quantity || 1
+                });
+            });
+
+            console.log('Starting inventory loaded for', archetypeId, ':', playerInventory.length, 'items');
         }
 
         function getItemIcon(name) {
