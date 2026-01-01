@@ -8932,7 +8932,7 @@ Example:
             for (const file of uploadQueue) {
                 try {
                     const formData = new FormData();
-                    formData.append('file', file);
+                    formData.append('files', file);  // Backend expects 'files' not 'file'
 
                     const response = await fetch(window.location.origin + '/admin/lore/upload', {
                         method: 'POST',

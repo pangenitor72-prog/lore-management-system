@@ -1185,11 +1185,11 @@ async def upload_lore_files(
     }
 
 
-@app.get("/admin/lore/files", response_model=List[LoreFileResponse])
+@app.get("/admin/lore/files")
 async def list_lore_files():
     """List all uploaded lore files."""
     metadata = _load_lore_metadata()
-    return [LoreFileResponse(**m) for m in metadata]
+    return {"files": [LoreFileResponse(**m).model_dump() for m in metadata]}
 
 
 @app.get("/admin/lore/files/{file_id}")
