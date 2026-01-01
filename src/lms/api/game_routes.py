@@ -32,7 +32,7 @@ from src.lms.guardrails.token_budget import TokenTracker, BudgetExceeded, RateLi
 from src.lms.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
 # D&D Rules Integration
-from src.lms.api.dnd_routes import _characters
+from src.lms.api.dnd_routes import _characters, CharacterSheet
 from src.lms.dnd5e.engine.checks import CheckEngine, SKILL_TO_ABILITY
 from src.lms.dnd5e.engine.combat_resolver import CombatResolver
 from src.lms.dnd5e.presentation.visibility import VisibilityFilter
@@ -2299,6 +2299,7 @@ class LoadGameResponse(BaseModel):
     narrative: str
     message: str
     inventory: List[dict] = Field(default_factory=list)
+    character: Optional[dict] = None  # Full character data for restoration
 
 
 @router.get("/saves", response_model=List[SaveSlotInfo])
@@ -2417,7 +2418,15 @@ async def save_game(
         "character_id": session.get("character_id"),
         "rules_mode": session.get("rules_mode"),
         "rules_visibility": session.get("rules_visibility"),
+        "character_data": None,  # Will be populated below
     }
+
+    # Include full character data in save (not just ID) for persistence across server restarts
+    char_id = session.get("character_id")
+    if char_id:
+        char = _characters.get(char_id)
+        if char:
+            save_data["character_data"] = char.model_dump()
 
     db = get_optional_neo4j_db(request)
     if db:
@@ -2548,6 +2557,21 @@ async def load_game(
 
     _active_sessions[new_session_id] = session_data
 
+    # Restore character from save data (not just ID reference)
+    char_data = save_data.get("character_data")
+    char_id = save_data.get("character_id")
+    if char_data:
+        # Full character data available in save
+        try:
+            character = CharacterSheet.model_validate(char_data)
+            _characters[character.character_id] = character
+            logger.info(f"Restored character '{character.name}' from save data")
+        except Exception as e:
+            logger.error(f"Failed to restore character from save: {e}")
+    elif char_id and char_id not in _characters:
+        # Legacy save without character_data - log warning
+        logger.warning(f"Save has character_id {char_id} but no character_data - character may not be available")
+
     # Get the last narrative to show the player where they left off
     history = save_data.get("history", [])
     last_narrative = "Your adventure continues..."
@@ -2564,7 +2588,8 @@ async def load_game(
         phase=session_data["phase"],
         narrative=last_narrative,
         message=f"Game loaded from slot {slot}",
-        inventory=save_data.get("inventory", [])
+        inventory=save_data.get("inventory", []),
+        character=save_data.get("character_data")  # Include full character for frontend restoration
     )
 
 

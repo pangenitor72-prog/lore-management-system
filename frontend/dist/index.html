@@ -8315,6 +8315,81 @@ Example:
             return '📦';
         }
 
+        // Validate if a captured string is likely an actual item (not NPC, location, or abstract concept)
+        function isValidItem(name) {
+            const lowerName = name.toLowerCase();
+
+            // Blacklist: Words that indicate this is NOT an item
+            const blacklistPatterns = [
+                // People/NPCs
+                /\b(man|woman|person|guard|merchant|innkeeper|stranger|figure|someone|they|him|her|bartender|shopkeeper|owner|traveler|adventurer|soldier|knight|wizard|witch|mage|priest|thief|beggar|noble|king|queen|prince|princess)\b/,
+                // Actions/States
+                /\b(moment|chance|opportunity|time|look|glance|step|steps|path|way|direction|breath|rest|break|sleep|dream|memory|thought|idea|plan|decision|choice)\b/,
+                // Abstract concepts
+                /\b(greeting|welcome|thanks|thank|nod|bow|smile|frown|gesture|word|words|message|news|information|knowledge|wisdom|advice|warning|blessing|curse|favor|quest|mission|task|job|work)\b/,
+                // Locations/Directions
+                /\b(north|south|east|west|up|down|left|right|room|door|entrance|exit|street|alley|corner|floor|wall|ceiling|window|table|chair|bed|stairs|hallway|passage|tunnel|cave|forest|mountain|river|lake|sea|ocean|city|town|village|tavern|inn|shop|market|temple|castle|dungeon)\b/,
+                // Sentence fragments/connectors
+                /\b(who|which|that|where|when|while|before|after|until|because|although|however|therefore|meanwhile|suddenly|quickly|slowly|carefully|quietly|loudly)\b/,
+                // Possessives and pronouns
+                /\b(your|their|his|her|its|my|our)\b/,
+                // Verbs that got captured
+                /\b(is|are|was|were|been|being|have|has|had|do|does|did|will|would|could|should|might|must|shall|can|may)\b/
+            ];
+
+            // Check against blacklist
+            for (const pattern of blacklistPatterns) {
+                if (pattern.test(lowerName)) {
+                    return false;
+                }
+            }
+
+            // Whitelist: Common item categories (if it matches, definitely an item)
+            const whitelistPatterns = [
+                // Weapons
+                /\b(sword|dagger|bow|arrow|arrows|staff|wand|axe|mace|spear|knife|blade|hammer|crossbow|club|flail|halberd|lance|pike|rapier|scimitar|shortsword|longsword|greatsword|shortbow|longbow|whip|trident|morningstar|glaive|javelin|sling|dart|quarterstaff)\b/,
+                // Potions and consumables
+                /\b(potion|potions|elixir|scroll|scrolls|vial|flask|bottle|antidote|remedy|tonic|salve|ointment|balm)\b/,
+                // Treasure
+                /\b(coin|coins|gold|silver|copper|platinum|gem|gems|jewel|jewels|crystal|crystals|pearl|pearls|ruby|rubies|emerald|emeralds|diamond|diamonds|sapphire|sapphires|treasure|loot)\b/,
+                // Books and documents
+                /\b(book|books|tome|tomes|map|maps|letter|letters|note|notes|journal|diary|manual|grimoire|spellbook|codex)\b/,
+                // Keys and locks
+                /\b(key|keys|lockpick|lockpicks)\b/,
+                // Armor and clothing
+                /\b(armor|armour|shield|shields|helmet|helm|boots|gloves|gauntlets|cloak|robe|robes|ring|rings|amulet|amulets|necklace|bracelet|bracelets|belt|belts|vest|tunic|leather|chainmail|platemail|breastplate|greaves|vambrace|pauldron)\b/,
+                // Food and drink
+                /\b(food|ration|rations|bread|meat|cheese|apple|fruit|water|ale|wine|mead|beer|whiskey|rum)\b/,
+                // Tools and equipment
+                /\b(torch|torches|lantern|lanterns|rope|ropes|bag|bags|pack|packs|backpack|sack|chest|box|crate|tent|bedroll|blanket|mirror|compass|spyglass|hourglass|candle|candles|ink|quill|parchment|chalk|flint|steel|tinderbox|crowbar|grappling|hook|piton|pitons|pick|shovel|net|chain|chains|manacles|bell|whistle|horn|drum|flute|lute|harp|instrument)\b/,
+                // Herbs and materials
+                /\b(herb|herbs|flower|flowers|plant|plants|seed|seeds|root|roots|leaf|leaves|mushroom|mushrooms|moss|bark|wood|stone|ore|iron|steel|bronze|copper|silver|gold|mithril|adamantine|leather|cloth|silk|wool|fur|bone|bones|feather|feathers|scale|scales|fang|fangs|claw|claws|horn|horns|tooth|teeth|hide|pelt)\b/,
+                // Magic items
+                /\b(orb|orbs|rod|rods|scepter|scepters|talisman|talismans|charm|charms|relic|relics|artifact|artifacts|phylactery|golem|figurine|idol|totem|focus|component|components|reagent|reagents)\b/
+            ];
+
+            // If it matches whitelist, it's definitely an item
+            for (const pattern of whitelistPatterns) {
+                if (pattern.test(lowerName)) {
+                    return true;
+                }
+            }
+
+            // Reject if too many words (probably a phrase, not an item)
+            const wordCount = name.trim().split(/\s+/).length;
+            if (wordCount > 4) {
+                return false;
+            }
+
+            // Reject single capitalized words that look like names (e.g., "Marcus")
+            if (wordCount === 1 && /^[A-Z][a-z]+$/.test(name.trim())) {
+                return false;
+            }
+
+            // Accept short names that passed blacklist
+            return name.length >= 3 && name.length <= 35;
+        }
+
         // Parse narrative for inventory changes
         function parseInventoryChanges(text) {
             // Look for patterns like "You receive...", "You find...", "You pick up..."
@@ -8337,8 +8412,10 @@ Example:
                     // Clean up the item name
                     itemName = itemName.replace(/[,;].*$/, '').trim();
                     itemName = itemName.replace(/\s+(and|which|that|from|to|in|on|with).*$/i, '').trim();
-                    if (itemName.length > 2 && itemName.length < 50) {
+                    // Validate that this is actually an item, not an NPC or location
+                    if (itemName.length > 2 && itemName.length < 50 && isValidItem(itemName)) {
                         addToInventory({ name: itemName });
+                        console.log('Added item to inventory:', itemName);
                     }
                 }
             });
@@ -8350,8 +8427,10 @@ Example:
                     let itemName = match[1].trim();
                     itemName = itemName.replace(/[,;].*$/, '').trim();
                     itemName = itemName.replace(/\s+(and|which|that|from|to|in|on|with).*$/i, '').trim();
-                    if (itemName.length > 2 && itemName.length < 50) {
+                    // Validate that this is actually an item
+                    if (itemName.length > 2 && itemName.length < 50 && isValidItem(itemName)) {
                         removeFromInventory(itemName);
+                        console.log('Removed item from inventory:', itemName);
                     }
                 }
             });
@@ -8403,6 +8482,14 @@ Example:
                     currentSessionId = data.session_id;
                     currentPhase = data.phase;
                     playerInventory = data.inventory || [];  // Restore inventory
+
+                    // Restore character from save data
+                    if (data.character) {
+                        dndCharacter = data.character;
+                        console.log('Restored character from save:', dndCharacter.name);
+                    } else {
+                        console.warn('No character data in save - character sheet may be unavailable');
+                    }
 
                     showScreen('story');
                     updateQuickRollButton();
