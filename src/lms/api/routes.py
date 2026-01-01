@@ -301,6 +301,34 @@ if frontend_dist.exists() and (frontend_dist / "assets").exists():
 else:
     logger.warning(f"Frontend assets NOT found at {frontend_dist / 'assets'}. UI may be broken.")
 
+# PWA files (manifest, service worker, icons)
+if frontend_dist.exists():
+    # Mount icons directory
+    if (frontend_dist / "icons").exists():
+        app.mount(
+            "/icons",
+            StaticFiles(directory=str(frontend_dist / "icons")),
+            name="pwa-icons"
+        )
+
+    # Serve manifest.json
+    @app.get("/manifest.json")
+    async def get_manifest():
+        from fastapi.responses import FileResponse
+        manifest_path = frontend_dist / "manifest.json"
+        if manifest_path.exists():
+            return FileResponse(manifest_path, media_type="application/manifest+json")
+        return {"error": "manifest not found"}
+
+    # Serve service worker
+    @app.get("/sw.js")
+    async def get_service_worker():
+        from fastapi.responses import FileResponse
+        sw_path = frontend_dist / "sw.js"
+        if sw_path.exists():
+            return FileResponse(sw_path, media_type="application/javascript")
+        return {"error": "service worker not found"}
+
 # Mount Static Files - Updated for new structure
 app.mount(
     "/static",
