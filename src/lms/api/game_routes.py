@@ -255,6 +255,103 @@ async def get_invite_status():
 
 
 # ============================================================
+# FEEDBACK SYSTEM (for playtester feedback collection)
+# ============================================================
+
+FEEDBACK_FILE = Path(__file__).parent.parent.parent.parent / "data" / "feedback.json"
+
+
+def _load_feedback() -> List[Dict[str, Any]]:
+    """Load feedback from file."""
+    try:
+        if FEEDBACK_FILE.exists():
+            with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        logger.error(f"Failed to load feedback: {e}")
+        return []
+
+
+def _save_feedback(feedback_list: List[Dict[str, Any]]) -> None:
+    """Save feedback to file."""
+    try:
+        FEEDBACK_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
+            json.dump(feedback_list, f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save feedback: {e}")
+
+
+class FeedbackRequest(BaseModel):
+    """Feedback submission from playtesters."""
+    category: Optional[str] = Field(None, description="Feedback category: confused, frustrated, delighted, bug, idea, other")
+    text: Optional[str] = Field(None, max_length=5000, description="Detailed feedback text")
+    context: Optional[Dict[str, Any]] = Field(None, description="Context about what was happening")
+
+
+class FeedbackResponse(BaseModel):
+    """Response from feedback submission."""
+    success: bool
+    message: str
+    feedback_id: str
+
+
+@router.post("/feedback", response_model=FeedbackResponse)
+async def submit_feedback(request: FeedbackRequest):
+    """
+    Submit feedback from a playtester.
+
+    Stores feedback with context for later review.
+    """
+    if not request.category and not request.text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide a category or feedback text"
+        )
+
+    feedback_id = str(uuid.uuid4())[:8]
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    feedback_entry = {
+        "id": feedback_id,
+        "timestamp": timestamp,
+        "category": request.category,
+        "text": request.text,
+        "context": request.context or {}
+    }
+
+    # Load existing feedback, append new entry, save
+    feedback_list = _load_feedback()
+    feedback_list.append(feedback_entry)
+    _save_feedback(feedback_list)
+
+    # Log for visibility
+    tester = request.context.get("tester", "anonymous") if request.context else "anonymous"
+    logger.info(f"Feedback received from {tester}: [{request.category}] {(request.text or '')[:100]}")
+
+    return FeedbackResponse(
+        success=True,
+        message="Thank you for your feedback!",
+        feedback_id=feedback_id
+    )
+
+
+@router.get("/feedback")
+async def get_all_feedback():
+    """
+    Get all submitted feedback (for admin review).
+
+    Returns list of all feedback entries.
+    """
+    feedback_list = _load_feedback()
+    return {
+        "count": len(feedback_list),
+        "feedback": feedback_list
+    }
+
+
+# ============================================================
 # REQUEST/RESPONSE MODELS
 # ============================================================
 
@@ -335,6 +432,7 @@ class SessionResponse(BaseModel):
 class PlayerActionRequest(BaseModel):
     """Player action input."""
     action: str = Field(..., min_length=1, max_length=2000, description="What the player does or says")
+    needs_guidance: bool = Field(default=False, description="Whether player needs subtle story direction hints")
 
 
 class GameEventData(BaseModel):
@@ -1108,7 +1206,8 @@ async def process_action(
     else:
         # Active play - generate DM response (with mechanical context if applicable)
         response_text = await _handle_active_play(
-            session, action.action, model, db, mechanical_context
+            session, action.action, model, db, mechanical_context,
+            needs_guidance=action.needs_guidance
         )
 
     # Add response to history
@@ -1477,6 +1576,19 @@ reader to respond. NEVER suggest specific choices or ask direct questions.""",
     return styles.get(style, styles["guided"])
 
 
+def _get_guidance_instruction(needs_guidance: bool) -> str:
+    """Get optional story guidance instruction when player seems stuck."""
+    if needs_guidance:
+        return """
+GUIDANCE MODE: The player seems uncertain about what to do next. Without railroading:
+- Weave a subtle hint into the narrative about possible directions
+- Have an NPC mention something relevant, or describe an environmental detail that suggests action
+- Keep it natural - the player should feel they discovered the option, not that it was handed to them
+Example: Instead of "You should go to the tavern", use "The distant sound of laughter drifts from the tavern's open windows"
+"""
+    return ""
+
+
 async def _generate_opening(session: Dict[str, Any], model) -> str:
     """Generate an opening that matches the user's genre, tone, and style."""
     logger.info(f"[OPENING] Starting _generate_opening for session {session.get('session_id', 'unknown')}")
@@ -1532,18 +1644,19 @@ Write an opening that:
 
 Length: 2-3 paragraphs. Write ONLY the narrative, no meta-commentary.
 Make it feel personal - this is THEIR story beginning.
-IMPORTANT: End the scene naturally. Do NOT list options, ask what they want to do, or suggest choices."""
+IMPORTANT: End the scene naturally. Do NOT list options, ask what they want to do, or suggest choices.
+CRITICAL: Always complete your thoughts. Never end mid-sentence. If approaching your response limit, wrap up naturally rather than cutting off abruptly."""
 
     logger.info(f"[OPENING] Calling protected_ai_call with prompt of {len(prompt)} chars")
 
     # Use protected AI call with guardrails
-    # 900 tokens for opening to allow rich scene-setting without truncation
+    # 1400 tokens for opening to allow rich scene-setting without truncation
     return await protected_ai_call(
         model,
         prompt,
         session_id=session.get("session_id", "unknown"),
         temperature=0.85,
-        max_output_tokens=900,
+        max_output_tokens=1400,
     )
 
 
@@ -1553,6 +1666,7 @@ async def _handle_active_play(
     model,
     db: Optional[Neo4jDatabase],
     mechanical_context: str = "",
+    needs_guidance: bool = False,
 ) -> str:
     """Handle active gameplay with genre-aware storytelling."""
     answers = session.get("session_0_answers", {})
@@ -1672,6 +1786,7 @@ CURRENT SCENE (what just happened - the player is responding to THIS):
 
 PLAYER'S ACTION: {player_input}
 {mechanical_context}
+{_get_guidance_instruction(needs_guidance)}
 
 Continue the narrative:
 - CRITICAL: Pick up EXACTLY where the last scene left off. If the Narrator just described a location, characters, or situation - respond to the player's action within THAT scene.
@@ -1689,17 +1804,18 @@ Continue the narrative:
 IMPORTANT: Do NOT suggest choices, list options, or ask what they want to do.
 Just describe what happens and let the scene breathe. Trust the reader to respond.
 Do NOT introduce new scenes or locations unless the player's action explicitly moves them there.
+CRITICAL: Always complete your thoughts. Never end mid-sentence. If approaching your response limit, wrap up naturally rather than cutting off abruptly.
 
 Write ONLY the narrative:"""
 
     # Use protected AI call with guardrails
-    # 800 tokens allows for complete 2-3 paragraph responses without truncation
+    # 1200 tokens allows for complete responses without truncation
     return await protected_ai_call(
         model,
         prompt,
         session_id=session.get("session_id", "unknown"),
         temperature=0.85,
-        max_output_tokens=800,
+        max_output_tokens=1200,
     )
 
 

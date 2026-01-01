@@ -1056,6 +1056,274 @@ async def clear_announcement(pin: str = Query(...)):
 
 
 # ============================================================
+# LORE FILE MANAGER ENDPOINTS
+# ============================================================
+
+# Storage directory for lore uploads
+LORE_UPLOADS_DIR = Path("data/lore_uploads")
+LORE_METADATA_FILE = LORE_UPLOADS_DIR / "metadata.json"
+
+
+def _ensure_lore_dir():
+    """Ensure lore uploads directory exists."""
+    LORE_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    if not LORE_METADATA_FILE.exists():
+        LORE_METADATA_FILE.write_text("[]", encoding="utf-8")
+
+
+def _load_lore_metadata() -> List[Dict[str, Any]]:
+    """Load lore file metadata."""
+    _ensure_lore_dir()
+    try:
+        return json.loads(LORE_METADATA_FILE.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, FileNotFoundError):
+        return []
+
+
+def _save_lore_metadata(metadata: List[Dict[str, Any]]):
+    """Save lore file metadata."""
+    _ensure_lore_dir()
+    LORE_METADATA_FILE.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+
+class LoreFileResponse(BaseModel):
+    """Response for a lore file."""
+    id: str
+    filename: str
+    size: int
+    uploaded_at: str
+    status: str  # pending, imported, failed
+    import_result: Optional[Dict[str, Any]] = None
+
+
+@app.post("/admin/lore/upload")
+async def upload_lore_files(
+    files: List[UploadFile] = File(...),
+):
+    """
+    Upload lore files to the staging area.
+
+    Supported formats: .txt, .md, .json, .pdf
+    Files are stored for later review and import.
+    """
+    _ensure_lore_dir()
+    uploaded = []
+    metadata = _load_lore_metadata()
+
+    allowed_extensions = {".txt", ".md", ".json", ".pdf"}
+
+    for file in files:
+        # Check file extension
+        ext = Path(file.filename).suffix.lower()
+        if ext not in allowed_extensions:
+            logger.warning(f"Rejected file with extension {ext}: {file.filename}")
+            continue
+
+        # Generate unique ID
+        file_id = f"lore-{uuid.uuid4().hex[:8]}"
+
+        # Save file
+        try:
+            content = await file.read()
+            file_path = LORE_UPLOADS_DIR / f"{file_id}{ext}"
+            await run_in_threadpool(file_path.write_bytes, content)
+
+            # Add metadata entry
+            file_meta = {
+                "id": file_id,
+                "filename": file.filename,
+                "stored_as": f"{file_id}{ext}",
+                "size": len(content),
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                "status": "pending",
+                "import_result": None,
+            }
+            metadata.append(file_meta)
+            uploaded.append(file_meta)
+
+            logger.info(f"Lore file uploaded: {file.filename} as {file_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to save lore file {file.filename}: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to save {file.filename}")
+
+    # Save updated metadata
+    _save_lore_metadata(metadata)
+
+    return {
+        "status": "success",
+        "files_uploaded": len(uploaded),
+        "files": uploaded
+    }
+
+
+@app.get("/admin/lore/files", response_model=List[LoreFileResponse])
+async def list_lore_files():
+    """List all uploaded lore files."""
+    metadata = _load_lore_metadata()
+    return [LoreFileResponse(**m) for m in metadata]
+
+
+@app.get("/admin/lore/files/{file_id}")
+async def get_lore_file(file_id: str):
+    """Get contents of a lore file."""
+    metadata = _load_lore_metadata()
+
+    file_meta = next((m for m in metadata if m["id"] == file_id), None)
+    if not file_meta:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_path = LORE_UPLOADS_DIR / file_meta["stored_as"]
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File data not found")
+
+    # Read file content
+    try:
+        if file_path.suffix == ".pdf":
+            # For PDF, return info that it needs special handling
+            return {
+                "id": file_id,
+                "filename": file_meta["filename"],
+                "type": "pdf",
+                "content": "[PDF files cannot be displayed as text. Use import to process.]",
+                "size": file_meta["size"],
+            }
+        else:
+            content = file_path.read_text(encoding="utf-8")
+            return {
+                "id": file_id,
+                "filename": file_meta["filename"],
+                "type": file_path.suffix[1:],  # Remove leading dot
+                "content": content,
+                "size": file_meta["size"],
+            }
+    except UnicodeDecodeError:
+        return {
+            "id": file_id,
+            "filename": file_meta["filename"],
+            "type": file_path.suffix[1:],
+            "content": "[Binary file - cannot display as text]",
+            "size": file_meta["size"],
+        }
+
+
+@app.post("/admin/lore/import/{file_id}")
+async def import_lore_file(
+    file_id: str,
+    request: Request,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Import a lore file into the database.
+
+    Uses the LoreParsingAgent for AI-powered entity extraction.
+    """
+    from src.lms.agents.lore_parsing_agent import LoreParsingAgent
+
+    metadata = _load_lore_metadata()
+    file_meta = next((m for m in metadata if m["id"] == file_id), None)
+    if not file_meta:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_path = LORE_UPLOADS_DIR / file_meta["stored_as"]
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File data not found")
+
+    # Check if AI is available
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service not configured (GEMINI_API_KEY missing)"
+        )
+
+    try:
+        # Read file content
+        if file_path.suffix == ".pdf":
+            # TODO: Add PDF parsing support
+            raise HTTPException(
+                status_code=501,
+                detail="PDF import not yet implemented"
+            )
+
+        content = file_path.read_text(encoding="utf-8")
+
+        # Use LoreParsingAgent for extraction
+        agent = LoreParsingAgent(api_key=gemini_key)
+        source_name = file_meta["filename"]
+
+        result = await agent.parse_and_store(
+            text=content,
+            db=db,
+            source_name=source_name,
+            world_id=source_name,
+        )
+
+        # Update metadata with import result
+        import_result = {
+            "entities_stored": result.entities_stored,
+            "relationships_stored": result.relationships_stored,
+            "imported_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        for m in metadata:
+            if m["id"] == file_id:
+                m["status"] = "imported"
+                m["import_result"] = import_result
+                break
+
+        _save_lore_metadata(metadata)
+
+        logger.info(f"Lore file imported: {file_meta['filename']} - {result.entities_stored} entities, {result.relationships_stored} relationships")
+
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "filename": file_meta["filename"],
+            "entities_stored": result.entities_stored,
+            "relationships_stored": result.relationships_stored,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Import failed for {file_meta['filename']}: {e}")
+
+        # Update metadata with failure
+        for m in metadata:
+            if m["id"] == file_id:
+                m["status"] = "failed"
+                m["import_result"] = {"error": str(e)}
+                break
+        _save_lore_metadata(metadata)
+
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
+
+
+@app.delete("/admin/lore/files/{file_id}")
+async def delete_lore_file(file_id: str):
+    """Delete a lore file from the staging area."""
+    metadata = _load_lore_metadata()
+
+    file_meta = next((m for m in metadata if m["id"] == file_id), None)
+    if not file_meta:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Delete the actual file
+    file_path = LORE_UPLOADS_DIR / file_meta["stored_as"]
+    if file_path.exists():
+        file_path.unlink()
+
+    # Remove from metadata
+    metadata = [m for m in metadata if m["id"] != file_id]
+    _save_lore_metadata(metadata)
+
+    logger.info(f"Lore file deleted: {file_meta['filename']}")
+
+    return {"status": "success", "message": f"Deleted {file_meta['filename']}"}
+
+
+# ============================================================
 # ROUTER REGISTRATION
 # ============================================================
 
@@ -1077,6 +1345,144 @@ app.include_router(memory_router, prefix="/api")
 # D&D 5e rules system routes
 from src.lms.api.dnd_routes import router as dnd_router
 app.include_router(dnd_router, prefix="/api")
+
+
+# ============================================================
+# FEEDBACK SYSTEM (for playtester feedback collection)
+# ============================================================
+
+FEEDBACK_FILE = Path(__file__).parent.parent.parent.parent / "data" / "feedback.json"
+
+
+def _load_feedback() -> List[Dict[str, Any]]:
+    """Load feedback from file."""
+    try:
+        if FEEDBACK_FILE.exists():
+            with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        logging.error(f"Failed to load feedback: {e}")
+        return []
+
+
+def _save_feedback(feedback_list: List[Dict[str, Any]]) -> None:
+    """Save feedback to file."""
+    try:
+        FEEDBACK_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
+            json.dump(feedback_list, f, indent=2)
+    except Exception as e:
+        logging.error(f"Failed to save feedback: {e}")
+
+
+class FeedbackRequest(BaseModel):
+    """Feedback submission from playtesters."""
+    category: Optional[str] = Field(None, description="Feedback category")
+    text: Optional[str] = Field(None, max_length=5000, description="Detailed feedback text")
+    context: Optional[Dict[str, Any]] = Field(None, description="Context about what was happening")
+
+
+@app.post("/api/feedback")
+async def submit_feedback(request: FeedbackRequest):
+    """Submit feedback from a playtester."""
+    if not request.category and not request.text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide a category or feedback text"
+        )
+
+    feedback_id = str(uuid.uuid4())[:8]
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    feedback_entry = {
+        "id": feedback_id,
+        "timestamp": timestamp,
+        "category": request.category,
+        "text": request.text,
+        "context": request.context or {}
+    }
+
+    feedback_list = _load_feedback()
+    feedback_list.append(feedback_entry)
+    _save_feedback(feedback_list)
+
+    tester = request.context.get("tester", "anonymous") if request.context else "anonymous"
+    await AuditLogger.log(f"Feedback from {tester}: [{request.category}] {(request.text or '')[:100]}")
+
+    return {"success": True, "message": "Thank you for your feedback!", "feedback_id": feedback_id}
+
+
+@app.get("/api/feedback")
+async def get_all_feedback():
+    """Get all submitted feedback (for admin review)."""
+    feedback_list = _load_feedback()
+    return {"count": len(feedback_list), "feedback": feedback_list}
+
+
+# ============================================================
+# SESSION LOGGING (for playtester analytics)
+# ============================================================
+
+SESSION_LOG_FILE = Path(__file__).parent.parent.parent.parent / "data" / "session_logs.json"
+
+
+def _load_session_logs() -> List[Dict[str, Any]]:
+    """Load session logs from file."""
+    try:
+        if SESSION_LOG_FILE.exists():
+            with open(SESSION_LOG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        logging.error(f"Failed to load session logs: {e}")
+        return []
+
+
+def _save_session_logs(logs: List[Dict[str, Any]]) -> None:
+    """Save session logs to file."""
+    try:
+        SESSION_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(SESSION_LOG_FILE, "w", encoding="utf-8") as f:
+            json.dump(logs, f, indent=2)
+    except Exception as e:
+        logging.error(f"Failed to save session logs: {e}")
+
+
+class SessionLogRequest(BaseModel):
+    """Session log submission."""
+    session_id: str
+    tester: Optional[str] = None
+    events: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+@app.post("/api/session-log")
+async def log_session_events(request: SessionLogRequest):
+    """Log session events from playtesters."""
+    if not request.events:
+        return {"success": True, "logged": 0}
+
+    logs = _load_session_logs()
+
+    # Add each event with session context
+    for event in request.events:
+        logs.append({
+            "session_id": request.session_id,
+            "tester": request.tester,
+            "received_at": datetime.now(timezone.utc).isoformat(),
+            **event
+        })
+
+    _save_session_logs(logs)
+
+    return {"success": True, "logged": len(request.events)}
+
+
+@app.get("/api/session-log")
+async def get_session_logs():
+    """Get all session logs (for admin review)."""
+    logs = _load_session_logs()
+    return {"count": len(logs), "logs": logs}
 
 
 # ============================================================

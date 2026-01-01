@@ -282,6 +282,233 @@
             line-height: 1.8;
         }
 
+        /* Landing Page (Intent-Based) */
+        .landing-hero {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .landing-title {
+            font-size: 3.5rem;
+            font-weight: normal;
+            letter-spacing: 0.15em;
+            color: var(--accent-gold);
+            margin-bottom: 8px;
+            text-shadow: 0 2px 20px rgba(232, 196, 124, 0.3);
+        }
+
+        .landing-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            font-style: italic;
+            letter-spacing: 0.05em;
+        }
+
+        .landing-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 700px;
+            margin: 0 auto 40px;
+        }
+
+        .landing-card {
+            background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 2px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 30px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+        }
+
+        .landing-card:hover {
+            border-color: var(--accent-warm);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .landing-card.ttrpg-card {
+            border-color: var(--accent-lavender);
+        }
+
+        .landing-card.ttrpg-card:hover {
+            border-color: var(--accent-lavender);
+            box-shadow: 0 10px 40px rgba(160, 139, 201, 0.2);
+        }
+
+        .landing-card-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .landing-card-title {
+            font-size: 1.2rem;
+            font-weight: normal;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .landing-card-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .landing-card-badge {
+            display: inline-block;
+            background: var(--bg-primary);
+            color: var(--accent-gold);
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.03em;
+        }
+
+        .ttrpg-card .landing-card-badge {
+            color: var(--accent-lavender);
+        }
+
+        .landing-secondary {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .landing-secondary-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+
+        .landing-secondary-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+            color: var(--text-primary);
+        }
+
+        .landing-footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .landing-footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .landing-footer a:hover {
+            color: var(--accent-warm);
+        }
+
+        .landing-footer span {
+            margin: 0 10px;
+        }
+
+        /* Mobile responsive for landing */
+        @media (max-width: 600px) {
+            .landing-title {
+                font-size: 2.5rem;
+            }
+
+            .landing-cards {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 0 10px;
+            }
+
+            .landing-card {
+                padding: 25px 20px;
+            }
+
+            .landing-card-icon {
+                font-size: 2.5rem;
+            }
+
+            .landing-secondary {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .landing-secondary-btn {
+                width: 100%;
+                max-width: 250px;
+                justify-content: center;
+            }
+        }
+
+        /* Quick Start Genre Grid */
+        .quick-genre-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .quick-genre-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 25px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-genre-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .quick-genre-card .icon {
+            font-size: 2.5rem;
+        }
+
+        .quick-genre-card .label {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .quick-genre-card .desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .quick-genre-card.surprise-card {
+            border-color: var(--accent-warm);
+            background: linear-gradient(145deg, var(--bg-card), rgba(212, 165, 116, 0.1));
+        }
+
+        .quick-genre-card.surprise-card:hover {
+            border-color: var(--accent-gold);
+        }
+
+        @media (max-width: 500px) {
+            .quick-genre-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         /* Genre Cards */
         .genre-grid {
             display: grid;
@@ -2206,6 +2433,1012 @@
                 font-size: 1.4rem;
             }
         }
+
+        /* ============================================
+           VTT-STYLE DICE TRAY
+           ============================================ */
+        .dice-tray {
+            position: fixed;
+            bottom: 120px;
+            right: 20px;
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-card));
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 20px;
+            min-width: 200px;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+        }
+
+        .dice-tray.visible {
+            transform: translateX(0);
+        }
+
+        .dice-tray-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .dice-tray-title {
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .dice-tray-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+
+        .dice-tray-close:hover {
+            color: var(--text-primary);
+        }
+
+        .dice-formula {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .dice-breakdown {
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .dice-total {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: var(--text-primary);
+            margin: 10px 0;
+        }
+
+        .dice-total.success {
+            color: var(--accent-sage);
+            text-shadow: 0 0 10px rgba(139, 168, 139, 0.5);
+        }
+
+        .dice-total.failure {
+            color: var(--accent-rose);
+            text-shadow: 0 0 10px rgba(201, 139, 139, 0.5);
+        }
+
+        .dice-total.critical {
+            color: var(--accent-gold);
+            text-shadow: 0 0 15px rgba(232, 196, 124, 0.7);
+            animation: criticalPulse 0.5s ease 2;
+        }
+
+        @keyframes criticalPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .dice-result-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 0.1em;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 8px;
+        }
+
+        .dice-result-label.success {
+            background: rgba(139, 168, 139, 0.2);
+            color: var(--accent-sage);
+        }
+
+        .dice-result-label.failure {
+            background: rgba(201, 139, 139, 0.2);
+            color: var(--accent-rose);
+        }
+
+        .dice-result-label.critical {
+            background: rgba(232, 196, 124, 0.2);
+            color: var(--accent-gold);
+        }
+
+        /* Dice Animation */
+        .dice-rolling {
+            animation: diceRoll 0.5s ease;
+        }
+
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(0.5); opacity: 0; }
+            50% { transform: rotate(180deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); opacity: 1; }
+        }
+
+        /* ============================================
+           SKILL CHECK BUTTONS
+           ============================================ */
+        .skill-btn {
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .skill-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .skill-btn:active {
+            transform: scale(0.98);
+        }
+
+        .skill-btn .modifier {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: var(--accent-sage);
+        }
+
+        .skill-btn .modifier.negative {
+            color: var(--accent-rose);
+        }
+
+        /* Ability score roll buttons */
+        .ability-roll-btn {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            padding: 4px 8px;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-left: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .ability-roll-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* Skills grid in character sheet */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 500px) {
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================
+           COMBAT ACTION BAR
+           ============================================ */
+        .combat-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
+            border-top: 2px solid var(--accent-rose);
+            padding: 12px 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            z-index: 500;
+        }
+
+        .combat-bar.visible {
+            display: flex;
+        }
+
+        .combat-bar-label {
+            color: var(--accent-rose);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-right: 15px;
+        }
+
+        .combat-btn {
+            padding: 10px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .combat-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .combat-btn.primary {
+            background: linear-gradient(135deg, var(--accent-rose), #c97070);
+            border-color: var(--accent-rose);
+            color: white;
+        }
+
+        .combat-btn.primary:hover {
+            box-shadow: 0 4px 15px rgba(201, 139, 139, 0.4);
+        }
+
+        /* ============================================
+           HP TRACKER
+           ============================================ */
+        .hp-tracker {
+            margin: 15px 0;
+        }
+
+        .hp-bar-container {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            height: 28px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #c97070, #e88b8b);
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .hp-bar-fill.low {
+            background: linear-gradient(90deg, #8b3d3d, #c97070);
+        }
+
+        .hp-bar-fill.critical {
+            background: linear-gradient(90deg, #5a2020, #8b3d3d);
+            animation: hpCriticalPulse 1s ease infinite;
+        }
+
+        @keyframes hpCriticalPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .hp-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .hp-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .hp-btn {
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .hp-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .hp-btn.damage {
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        .hp-btn.heal {
+            border-color: var(--accent-sage);
+            color: var(--accent-sage);
+        }
+
+        /* ============================================
+           SPELL SLOTS
+           ============================================ */
+        .spell-slots-container {
+            margin: 15px 0;
+        }
+
+        .spell-slot-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .spell-slot-level {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            min-width: 60px;
+        }
+
+        .spell-slot-pips {
+            display: flex;
+            gap: 6px;
+        }
+
+        .spell-slot-pip {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-lavender);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .spell-slot-pip.filled {
+            background: var(--accent-lavender);
+        }
+
+        .spell-slot-pip:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 8px rgba(160, 139, 201, 0.5);
+        }
+
+        /* ============================================
+           DEATH SAVES
+           ============================================ */
+        .death-saves-container {
+            background: linear-gradient(135deg, rgba(91, 32, 32, 0.3), rgba(139, 61, 61, 0.2));
+            border: 1px solid var(--accent-rose);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .death-saves-title {
+            color: var(--accent-rose);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .death-saves-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .death-saves-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            min-width: 60px;
+        }
+
+        .death-save-pip {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--text-muted);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .death-save-pip.success {
+            border-color: var(--accent-sage);
+        }
+
+        .death-save-pip.success.filled {
+            background: var(--accent-sage);
+        }
+
+        .death-save-pip.failure {
+            border-color: var(--accent-rose);
+        }
+
+        .death-save-pip.failure.filled {
+            background: var(--accent-rose);
+        }
+
+        .death-save-roll-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-rose);
+            border-radius: 8px;
+            color: var(--accent-rose);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .death-save-roll-btn:hover {
+            background: rgba(201, 139, 139, 0.2);
+        }
+
+        /* ============================================
+           CONDITIONS BAR
+           ============================================ */
+        .conditions-container {
+            margin: 15px 0;
+        }
+
+        .conditions-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .conditions-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .condition-badge {
+            padding: 4px 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .condition-badge:hover {
+            border-color: var(--accent-warm);
+        }
+
+        .condition-badge.active {
+            background: rgba(201, 139, 139, 0.2);
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        /* When combat bar is visible, add bottom padding to prevent overlap */
+        body.in-combat .container {
+            padding-bottom: 80px;
+        }
+
+        /* Mobile adjustments for dice tray */
+        @media (max-width: 428px) {
+            .dice-tray {
+                right: 10px;
+                left: 10px;
+                bottom: 100px;
+                min-width: auto;
+            }
+
+            .combat-bar {
+                flex-wrap: wrap;
+                padding: 10px 15px;
+                gap: 8px;
+            }
+
+            .combat-bar-label {
+                width: 100%;
+                text-align: center;
+                margin-right: 0;
+                margin-bottom: 5px;
+            }
+
+            .combat-btn {
+                padding: 8px 14px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Quick Roll Menu */
+        .quick-roll-menu {
+            position: fixed;
+            bottom: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 15px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .quick-roll-menu.visible {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .quick-roll-title {
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .quick-roll-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .quick-roll-item {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .quick-roll-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .quick-roll-close {
+            display: block;
+            margin-top: 12px;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .quick-roll-close:hover {
+            background: var(--bg-hover);
+        }
+
+        /* File Drop Zone */
+        .file-drop-zone {
+            border: 2px dashed var(--border-accent);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+        }
+
+        .file-drop-zone:hover {
+            border-color: var(--accent-lavender);
+            background: var(--bg-secondary);
+        }
+
+        .file-drop-zone.drag-over {
+            border-color: var(--accent-gold);
+            background: rgba(232, 196, 124, 0.1);
+            transform: scale(1.02);
+        }
+
+        .file-drop-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .file-drop-text {
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .file-drop-hint {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* File Queue Item */
+        .file-queue-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .file-queue-item .file-icon {
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+
+        .file-queue-item .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-queue-item .file-name {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-queue-item .file-size {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .file-queue-item .file-remove {
+            background: none;
+            border: none;
+            color: var(--accent-rose);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 5px;
+            opacity: 0.7;
+        }
+
+        .file-queue-item .file-remove:hover {
+            opacity: 1;
+        }
+
+        /* Uploaded File Item */
+        .uploaded-file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .uploaded-file-item:hover {
+            border-color: var(--accent-lavender);
+        }
+
+        .uploaded-file-item .file-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+        }
+
+        .uploaded-file-item .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .uploaded-file-item .file-name {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+
+        .uploaded-file-item .file-meta {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .uploaded-file-item .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .uploaded-file-item .file-action-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .uploaded-file-item .file-action-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .uploaded-file-item .file-action-btn.delete:hover {
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        /* Upload progress */
+        .upload-progress {
+            height: 4px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background: var(--accent-lavender);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* ==========================================
+           FLOATING FEEDBACK BUTTON
+           ========================================== */
+        .feedback-fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-rose), #b87878);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(201, 139, 139, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(201, 139, 139, 0.6);
+        }
+
+        .feedback-fab.hidden {
+            display: none;
+        }
+
+        .feedback-fab .pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--accent-rose);
+            animation: feedbackPulse 2s ease-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes feedbackPulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        /* Feedback Modal */
+        .feedback-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .feedback-modal-overlay.visible {
+            display: flex;
+        }
+
+        .feedback-modal {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-rose);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 450px;
+            width: 100%;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .feedback-modal h3 {
+            color: var(--accent-gold);
+            font-size: 1.4rem;
+            font-weight: normal;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .feedback-modal .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .feedback-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .feedback-category {
+            padding: 8px 16px;
+            border: 2px solid var(--border-subtle);
+            border-radius: 20px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .feedback-category:hover {
+            border-color: var(--accent-warm);
+            color: var(--text-primary);
+        }
+
+        .feedback-category.selected {
+            border-color: var(--accent-rose);
+            background: rgba(201, 139, 139, 0.2);
+            color: var(--accent-rose);
+        }
+
+        .feedback-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+
+        .feedback-textarea:focus {
+            outline: none;
+            border-color: var(--accent-rose);
+        }
+
+        .feedback-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .feedback-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .feedback-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .feedback-btn.cancel {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .feedback-btn.cancel:hover {
+            border-color: var(--text-muted);
+            color: var(--text-primary);
+        }
+
+        .feedback-btn.submit {
+            background: linear-gradient(135deg, var(--accent-rose), #b87878);
+            border: none;
+            color: white;
+        }
+
+        .feedback-btn.submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(201, 139, 139, 0.4);
+        }
+
+        .feedback-btn.submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feedback-success {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .feedback-success .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .feedback-success h4 {
+            color: var(--accent-gold);
+            font-size: 1.3rem;
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+
+        .feedback-success p {
+            color: var(--text-secondary);
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .feedback-fab {
+                bottom: 80px; /* Above mobile nav if any */
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+
+            .feedback-modal {
+                padding: 25px 20px;
+            }
+
+            .feedback-categories {
+                gap: 6px;
+            }
+
+            .feedback-category {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2225,33 +3458,127 @@
         <!-- Invite Code Screen (Alpha Testing) - Disabled for now -->
         <div id="invite-code" class="screen">
             <div class="invite-box">
-                <span class="alpha-badge">Alpha Test</span>
-                <h2>Welcome to the Alpha</h2>
+                <span class="alpha-badge">Family Playtest</span>
+                <h2>Welcome, Family!</h2>
                 <p>
-                    Thanks for being an early tester! Enter your invite code to begin your adventure.
+                    Thanks for helping test Shawn's game! Enter your code to begin.
                 </p>
                 <input type="text"
                        id="invite-code-input"
                        class="invite-input"
-                       placeholder="Enter your invite code"
+                       placeholder="Your code (e.g., MOM2025)"
                        maxlength="20"
                        autocomplete="off"
+                       style="text-transform: uppercase;"
                        onkeydown="if(event.key === 'Enter') validateInviteCode()">
                 <button class="btn btn-primary" style="width: 100%;" onclick="validateInviteCode()">
-                    Enter
+                    Let's Go!
                 </button>
                 <div id="invite-status"></div>
             </div>
             <p style="margin-top: 30px; color: var(--text-muted); font-size: 0.85rem;">
-                Don't have a code? Ask a friend who's testing, or check back later!
+                Your code is your name + 2025 (like MOM2025 or DAVID2025)
             </p>
         </div>
 
-        <!-- Onboarding Screen -->
-        <div id="onboarding" class="screen active">
+        <!-- Playtester Welcome Screen -->
+        <div id="playtester-welcome" class="screen">
+            <div class="welcome-intro" style="max-width: 550px;">
+                <div style="font-size: 3.5rem; margin-bottom: 20px;">🎮 💜</div>
+                <h2 style="font-size: 1.8rem; margin-bottom: 10px;">Thanks for Testing, <span id="tester-name-display">Friend</span>!</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                    You're helping make this game better. Here's what to expect:
+                </p>
+
+                <div style="background: var(--bg-card); padding: 25px; border-radius: 16px; margin-bottom: 25px; text-align: left;">
+                    <div style="margin-bottom: 20px;">
+                        <strong style="color: var(--accent-gold);">What is this?</strong>
+                        <p style="color: var(--text-secondary); margin-top: 8px; font-size: 0.95rem;">
+                            An AI-powered storytelling game. You pick a genre, describe a character, then tell the AI what you want to do. It's like a choose-your-own-adventure, but you can do <em>anything</em>.
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <strong style="color: var(--accent-gold);">How long should I try it?</strong>
+                        <p style="color: var(--text-secondary); margin-top: 8px; font-size: 0.95rem;">
+                            Even 10-15 minutes is helpful! Play until you get stuck, confused, or bored &mdash; that's valuable feedback.
+                        </p>
+                    </div>
+
+                    <div>
+                        <strong style="color: var(--accent-gold);">How do I give feedback?</strong>
+                        <p style="color: var(--text-secondary); margin-top: 8px; font-size: 0.95rem;">
+                            Look for the <span style="color: var(--accent-rose);">pink feedback button</span> in the corner. Click it anytime to tell me what's working or what's confusing!
+                        </p>
+                    </div>
+                </div>
+
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">
+                    There are no wrong answers. Just have fun and be honest!
+                </p>
+            </div>
+
+            <button class="btn btn-primary" style="padding: 18px 50px; font-size: 1.1rem;" onclick="showScreen('start')">
+                Start Playing →
+            </button>
+        </div>
+
+        <!-- Landing Screen (Intent-Based) -->
+        <div id="start" class="screen active">
+            <div class="landing-hero">
+                <h1 class="landing-title">AIRPG</h1>
+                <p class="landing-subtitle">AI-Powered Roleplaying</p>
+            </div>
+
+            <div class="landing-cards">
+                <!-- Quick Start -->
+                <div class="landing-card" onclick="quickStartFlow()">
+                    <div class="landing-card-icon">✨</div>
+                    <h3 class="landing-card-title">Quick Start</h3>
+                    <p class="landing-card-desc">Jump into a story now. Pick a genre and go!</p>
+                    <span class="landing-card-badge">2 clicks to play</span>
+                </div>
+
+                <!-- TTRPG Mode -->
+                <div class="landing-card ttrpg-card" onclick="ttrpgModeFlow()">
+                    <div class="landing-card-icon">🎲</div>
+                    <h3 class="landing-card-title">TTRPG Mode</h3>
+                    <p class="landing-card-desc">D&D 5e rules, dice rolls, character sheets</p>
+                    <span class="landing-card-badge">For tabletop fans</span>
+                </div>
+
+                <!-- Continue Story -->
+                <div class="landing-card" onclick="showScreen('saves')">
+                    <div class="landing-card-icon">📖</div>
+                    <h3 class="landing-card-title">Continue Story</h3>
+                    <p class="landing-card-desc">Pick up where you left off</p>
+                    <span class="landing-card-badge" id="saves-count-badge" style="display: none;">0 saves</span>
+                </div>
+            </div>
+
+            <!-- Secondary Actions -->
+            <div class="landing-secondary">
+                <button class="landing-secondary-btn" onclick="showScreen('world-builder')">
+                    <span>🏰</span> World Builder
+                </button>
+                <button class="landing-secondary-btn" onclick="showScreen('onboarding')">
+                    <span>❓</span> How It Works
+                </button>
+            </div>
+
+            <!-- Footer links -->
+            <p class="landing-footer">
+                <a href="#" onclick="showScreen('welcome'); return false;">Advanced Setup</a>
+                <span>|</span>
+                <a href="#" onclick="showPinModal(); return false;">Admin</a>
+            </p>
+        </div>
+
+        <!-- Onboarding/Tutorial Screen (moved from default) -->
+        <div id="onboarding" class="screen">
             <div class="welcome-intro" style="max-width: 500px;">
                 <div style="font-size: 4rem; margin-bottom: 20px;">📖✨</div>
-                <h2 style="font-size: 1.8rem; margin-bottom: 20px;">Welcome, Storyteller</h2>
+                <h2 style="font-size: 1.8rem; margin-bottom: 20px;">How It Works</h2>
                 <p style="margin-bottom: 30px; font-size: 1.1rem;">
                     You're about to enter a world where <em>you</em> are the hero.
                     Tell the AI what you want to do, and watch your story unfold.
@@ -2259,20 +3586,21 @@
                 <div style="background: var(--bg-card); padding: 25px; border-radius: 16px; margin-bottom: 35px;">
                     <p style="color: var(--text-primary); font-size: 1.05rem; line-height: 1.8;">
                         <strong style="color: var(--accent-gold);">It's simple:</strong><br>
-                        Pick a genre you love. Describe your character.<br>
-                        Then just type what you want to do!
+                        1. Pick a genre you love<br>
+                        2. Describe your character (or let AI surprise you)<br>
+                        3. Type what you want to do!
                     </p>
                 </div>
                 <p style="color: var(--text-muted); margin-bottom: 30px;">
-                    First time here? We'll walk you through it step by step.
+                    Want a guided walkthrough? We'll show you step by step.
                 </p>
             </div>
             <div class="btn-group" style="flex-direction: column; gap: 15px;">
                 <button class="btn btn-primary" style="padding: 18px 40px; font-size: 1.1rem;" onclick="startTutorial()">
-                    ✨ Show Me How (Recommended)
+                    ✨ Start Tutorial
                 </button>
-                <button class="btn btn-secondary" onclick="skipTutorial(); showScreen('welcome')">
-                    I'll Figure It Out
+                <button class="btn btn-secondary" onclick="showScreen('start')">
+                    ← Back to Main Menu
                 </button>
             </div>
         </div>
@@ -2366,9 +3694,9 @@
 
             <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
                 <a href="#" onclick="showScreen('onboarding'); return false;" style="color: var(--text-muted);">How does this work?</a>
+                <span style="margin: 0 10px;">|</span>
+                <a href="#" onclick="showPinModal(); return false;" style="color: var(--text-muted);">Admin / File Manager</a>
             </p>
-
-            <!-- Admin access: Ctrl+Shift+A -->
         </div>
 
         <!-- Saves Screen -->
@@ -2385,7 +3713,7 @@
             </div>
 
             <div class="btn-group" style="margin-top: 30px;">
-                <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+                <button class="btn btn-secondary" onclick="showScreen('start')">← Back to Home</button>
             </div>
         </div>
 
@@ -2645,6 +3973,7 @@
 
                 <div class="input-row">
                     <button class="suggestions-toggle" id="suggestions-toggle" onclick="toggleMobileSuggestions()" title="Show suggestions">💡</button>
+                    <button id="quick-roll-btn" class="voice-btn" onclick="showQuickRollMenu()" title="Quick dice roll" style="display: none;">🎲</button>
                     <input type="text" id="player-input" placeholder="What do you do?" onkeypress="handleKeyPress(event)">
                     <button class="btn btn-primary" onclick="sendAction()">Go</button>
                 </div>
@@ -2744,9 +4073,9 @@
             </div>
 
             <div class="btn-group" style="margin-top: 30px;">
-                <button class="btn btn-primary" id="continue-to-story" style="display: none;" onclick="showScreen('welcome')">Continue to Story Setup</button>
+                <button class="btn btn-primary" id="continue-to-story" style="display: none;" onclick="showScreen('setup')">Continue to Story Setup</button>
                 <button class="btn btn-secondary" onclick="showScreen('graph')">View Lore Graph</button>
-                <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+                <button class="btn btn-secondary" onclick="showScreen('world-builder')">← Back</button>
             </div>
         </div>
 
@@ -2790,15 +4119,18 @@
 
             <div class="btn-group" style="margin-top: 20px;">
                 <button class="btn btn-secondary" onclick="loadGraphData()">Refresh</button>
-                <button class="btn btn-secondary" onclick="showScreen('ingest')">Back to Lore</button>
+                <button class="btn btn-secondary" onclick="showScreen('world-builder')">← Back</button>
             </div>
         </div>
 
         <!-- Admin Screen -->
         <div id="admin" class="screen">
-            <h2 style="color: var(--accent-rose); margin-bottom: 10px; font-weight: normal;">Admin Panel</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="color: var(--accent-rose); margin-bottom: 0; font-weight: normal;">Admin Panel</h2>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back to Start</button>
+            </div>
             <p style="color: var(--text-secondary); margin-bottom: 25px;">
-                System administration and database management.
+                System administration and database management. Scroll down for <strong style="color: var(--accent-lavender);">Lore File Manager</strong>.
             </p>
 
             <div id="admin-status"></div>
@@ -2901,6 +4233,53 @@ Example:
                 </div>
             </div>
 
+            <!-- Lore File Manager -->
+            <div class="setup-section" style="border: 2px solid var(--accent-lavender); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+                <h3 style="color: var(--accent-lavender); margin-bottom: 5px;">Lore File Manager</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                    Upload world-building documents, character backstories, and lore files. Supports .txt, .md, .json, and .pdf files.
+                </p>
+
+                <div id="file-manager-status"></div>
+
+                <!-- File Upload Area -->
+                <div id="file-drop-zone" class="file-drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="file-drop-icon">📁</div>
+                    <div class="file-drop-text">
+                        <strong>Drop files here</strong> or click to browse
+                    </div>
+                    <div class="file-drop-hint">Multiple files supported</div>
+                    <input type="file" id="file-input" multiple accept=".txt,.md,.json,.pdf" style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- Upload Queue -->
+                <div id="upload-queue" style="display: none; margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Files to upload:</span>
+                        <button class="btn btn-secondary" onclick="clearUploadQueue()" style="padding: 6px 12px; font-size: 0.8rem;">Clear All</button>
+                    </div>
+                    <div id="upload-queue-list" style="max-height: 200px; overflow-y: auto;">
+                        <!-- Files listed here -->
+                    </div>
+                    <button class="btn btn-primary" onclick="uploadFiles()" style="width: 100%; margin-top: 15px;">
+                        Upload Files
+                    </button>
+                </div>
+
+                <!-- Uploaded Files List -->
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Uploaded Lore Files</span>
+                        <button class="btn btn-secondary" onclick="refreshFileList()" style="padding: 6px 12px; font-size: 0.8rem;">Refresh</button>
+                    </div>
+                    <div id="uploaded-files-list" style="background: var(--bg-primary); border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto;">
+                        <div style="color: var(--text-muted); text-align: center; padding: 20px;">
+                            <span class="loading"></span> Loading files...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Danger Zone -->
             <div class="setup-section" style="border: 1px solid var(--accent-rose); border-radius: 12px; padding: 20px; margin-top: 30px;">
                 <h3 style="color: var(--accent-rose);">Danger Zone</h3>
@@ -2934,7 +4313,166 @@ Example:
             </div>
 
             <div class="btn-group" style="margin-top: 30px;">
-                <button class="btn btn-secondary" onclick="showScreen('welcome')">Back to Home</button>
+                <button class="btn btn-secondary" onclick="showScreen('start')">Back to Home</button>
+            </div>
+        </div>
+
+        <!-- World Builder Screen -->
+        <div id="world-builder" class="screen">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="color: var(--accent-sage); margin-bottom: 0; font-weight: normal;">🏰 World Builder</h2>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                Create and manage worlds for your stories. Upload lore documents or build from scratch.
+            </p>
+
+            <!-- Quick Actions -->
+            <div class="landing-cards" style="margin-bottom: 30px; max-width: 100%;">
+                <div class="landing-card" onclick="showScreen('ingest')" style="padding: 20px;">
+                    <div class="landing-card-icon" style="font-size: 2rem;">📚</div>
+                    <h3 class="landing-card-title" style="font-size: 1rem;">Browse Worlds</h3>
+                    <p class="landing-card-desc" style="font-size: 0.85rem; margin-bottom: 0;">Curated settings ready to play</p>
+                </div>
+                <div class="landing-card" onclick="showPinModal()" style="padding: 20px;">
+                    <div class="landing-card-icon" style="font-size: 2rem;">📁</div>
+                    <h3 class="landing-card-title" style="font-size: 1rem;">File Manager</h3>
+                    <p class="landing-card-desc" style="font-size: 0.85rem; margin-bottom: 0;">Upload & manage lore files</p>
+                </div>
+                <div class="landing-card" onclick="showScreen('graph')" style="padding: 20px;">
+                    <div class="landing-card-icon" style="font-size: 2rem;">🕸️</div>
+                    <h3 class="landing-card-title" style="font-size: 1rem;">Knowledge Graph</h3>
+                    <p class="landing-card-desc" style="font-size: 0.85rem; margin-bottom: 0;">Visualize lore connections</p>
+                </div>
+            </div>
+
+            <!-- Import Lore Section -->
+            <div class="setup-section" style="border: 2px solid var(--accent-sage); border-radius: 12px; padding: 25px;">
+                <h3 style="color: var(--accent-sage); margin-bottom: 15px;">Quick Import</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                    Paste lore text directly to extract characters, locations, and relationships.
+                </p>
+                <div class="form-group">
+                    <textarea id="world-builder-lore" style="min-height: 120px;" placeholder="Paste your world-building notes, character backstories, or setting descriptions here..."></textarea>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="world-builder-name" placeholder="World name (optional)" style="width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 8px;">
+                </div>
+                <button class="btn btn-primary" onclick="quickImportLore()">Import Lore</button>
+                <div id="world-builder-status" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+
+        <!-- Quick Start Screen (Simplified Genre Picker) -->
+        <div id="quick-start" class="screen">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: var(--accent-gold); font-weight: normal; margin-bottom: 10px;">Pick Your Vibe</h2>
+                <p style="color: var(--text-secondary);">Choose a genre and start playing immediately</p>
+            </div>
+
+            <div class="quick-genre-grid">
+                <div class="quick-genre-card" onclick="quickPlay('fantasy')">
+                    <span class="icon">⚔️</span>
+                    <span class="label">Fantasy</span>
+                    <span class="desc">Magic & adventure</span>
+                </div>
+                <div class="quick-genre-card" onclick="quickPlay('mystery')">
+                    <span class="icon">🔍</span>
+                    <span class="label">Mystery</span>
+                    <span class="desc">Solve the puzzle</span>
+                </div>
+                <div class="quick-genre-card" onclick="quickPlay('romance')">
+                    <span class="icon">💕</span>
+                    <span class="label">Romance</span>
+                    <span class="desc">Love & drama</span>
+                </div>
+                <div class="quick-genre-card" onclick="quickPlay('scifi')">
+                    <span class="icon">🚀</span>
+                    <span class="label">Sci-Fi</span>
+                    <span class="desc">Future worlds</span>
+                </div>
+                <div class="quick-genre-card" onclick="quickPlay('horror')">
+                    <span class="icon">👻</span>
+                    <span class="label">Horror</span>
+                    <span class="desc">Fear & survival</span>
+                </div>
+                <div class="quick-genre-card surprise-card" onclick="quickPlay('surprise')">
+                    <span class="icon">🎲</span>
+                    <span class="label">Surprise Me!</span>
+                    <span class="desc">Random adventure</span>
+                </div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="showScreen('start')">← Back</button>
+                <button class="btn btn-secondary" onclick="showScreen('welcome')">More Options</button>
+            </div>
+        </div>
+
+        <!-- TTRPG Setup Screen -->
+        <div id="ttrpg-setup" class="screen">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="color: var(--accent-lavender); margin-bottom: 0; font-weight: normal;">🎲 TTRPG Mode</h2>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                Full D&D 5e rules with dice rolls, character sheets, and combat tracking.
+            </p>
+
+            <!-- Genre Selection for TTRPG -->
+            <div class="setup-section">
+                <h3>Setting</h3>
+                <div class="tone-options" style="margin-bottom: 20px;">
+                    <span class="tone-chip ttrpg-genre-chip selected" data-ttrpg-genre="fantasy" onclick="selectTTRPGGenre('fantasy')">⚔️ Fantasy</span>
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="scifi" onclick="selectTTRPGGenre('scifi')">🚀 Sci-Fi</span>
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="horror" onclick="selectTTRPGGenre('horror')">👻 Horror</span>
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="modern" onclick="selectTTRPGGenre('modern')">🏙️ Modern</span>
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="western" onclick="selectTTRPGGenre('western')">🤠 Western</span>
+                </div>
+            </div>
+
+            <!-- Character Creation Mode -->
+            <div class="setup-section">
+                <h3>Character Creation</h3>
+                <div class="tone-options">
+                    <span class="tone-chip creation-chip selected" data-creation="concept" onclick="selectCreationMode('concept')">
+                        Quick <span style="font-size: 0.75rem; opacity: 0.7;">(AI builds it)</span>
+                    </span>
+                    <span class="tone-chip creation-chip" data-creation="guided" onclick="selectCreationMode('guided')">
+                        Guided <span style="font-size: 0.75rem; opacity: 0.7;">(step by step)</span>
+                    </span>
+                    <span class="tone-chip creation-chip" data-creation="classic" onclick="selectCreationMode('classic')">
+                        Classic <span style="font-size: 0.75rem; opacity: 0.7;">(full control)</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Mechanics Visibility -->
+            <div class="setup-section">
+                <h3>Show Mechanics</h3>
+                <div class="tone-options">
+                    <span class="tone-chip visibility-chip" data-visibility="guided" onclick="selectVisibility('guided')">
+                        Subtle <span style="font-size: 0.75rem; opacity: 0.7;">(hints only)</span>
+                    </span>
+                    <span class="tone-chip visibility-chip selected" data-visibility="classic" onclick="selectVisibility('classic')">
+                        Visible <span style="font-size: 0.75rem; opacity: 0.7;">(see rolls)</span>
+                    </span>
+                    <span class="tone-chip visibility-chip" data-visibility="tactician" onclick="selectVisibility('tactician')">
+                        Full <span style="font-size: 0.75rem; opacity: 0.7;">(all stats)</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Character Concept -->
+            <div class="setup-section">
+                <h3>Your Character</h3>
+                <div class="form-group">
+                    <textarea id="ttrpg-character-concept" placeholder="A grizzled dwarf cleric... A cunning half-elf rogue... Or leave blank for a random character!"></textarea>
+                </div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 25px;">
+                <button class="btn btn-primary" onclick="beginTTRPGStory()" style="padding: 16px 40px; font-size: 1.1rem;">🎲 Roll for Adventure!</button>
             </div>
         </div>
 
@@ -2968,25 +4506,66 @@ Example:
                     <!-- Combat Stats -->
                     <div id="char-combat-section" style="display: none; margin-bottom: 20px;">
                         <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Combat</div>
-                        <div style="display: flex; gap: 20px;">
-                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px;">
+
+                        <!-- HP Tracker -->
+                        <div id="char-hp-tracker" class="hp-tracker">
+                            <div class="hp-bar-container">
+                                <div id="char-hp-bar" class="hp-bar-fill" style="width: 100%;"></div>
+                                <span id="char-hp-text" class="hp-text">--/--</span>
+                            </div>
+                            <div class="hp-buttons">
+                                <button class="hp-btn damage" onclick="adjustHP(-5)">-5</button>
+                                <button class="hp-btn damage" onclick="adjustHP(-1)">-1</button>
+                                <button class="hp-btn heal" onclick="adjustHP(1)">+1</button>
+                                <button class="hp-btn heal" onclick="adjustHP(5)">+5</button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-top: 15px;">
+                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px; flex: 1;">
                                 <div id="char-ac" style="font-size: 1.2rem; color: var(--accent-warm);"></div>
                                 <div style="color: var(--text-muted); font-size: 0.75rem;">AC</div>
                             </div>
-                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px;">
+                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px; flex: 1; cursor: pointer;" onclick="rollInitiative()">
                                 <div id="char-init" style="font-size: 1.2rem; color: var(--accent-warm);"></div>
-                                <div style="color: var(--text-muted); font-size: 0.75rem;">Initiative</div>
+                                <div style="color: var(--text-muted); font-size: 0.75rem;">🎲 Initiative</div>
                             </div>
-                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px;">
+                            <div style="text-align: center; padding: 10px 15px; background: var(--bg-tertiary); border-radius: 8px; flex: 1;">
                                 <div id="char-prof" style="font-size: 1.2rem; color: var(--accent-warm);"></div>
                                 <div style="color: var(--text-muted); font-size: 0.75rem;">Proficiency</div>
+                            </div>
+                        </div>
+
+                        <!-- Death Saves (hidden unless at 0 HP) -->
+                        <div id="char-death-saves" class="death-saves-container" style="display: none;">
+                            <div class="death-saves-title">Death Saving Throws</div>
+                            <div class="death-saves-row">
+                                <span class="death-saves-label">Success:</span>
+                                <span class="death-save-pip success" data-type="success" data-index="0"></span>
+                                <span class="death-save-pip success" data-type="success" data-index="1"></span>
+                                <span class="death-save-pip success" data-type="success" data-index="2"></span>
+                            </div>
+                            <div class="death-saves-row">
+                                <span class="death-saves-label">Failure:</span>
+                                <span class="death-save-pip failure" data-type="failure" data-index="0"></span>
+                                <span class="death-save-pip failure" data-type="failure" data-index="1"></span>
+                                <span class="death-save-pip failure" data-type="failure" data-index="2"></span>
+                            </div>
+                            <button class="death-save-roll-btn" onclick="rollDeathSave()">🎲 Roll Death Save</button>
+                        </div>
+
+                        <!-- Conditions -->
+                        <div class="conditions-container" style="margin-top: 15px;">
+                            <div class="conditions-title">Conditions (click to toggle)</div>
+                            <div id="active-conditions" class="conditions-grid">
+                                <!-- Populated by JavaScript -->
                             </div>
                         </div>
                     </div>
 
                     <!-- Skills -->
                     <div id="char-skills-section" style="display: none; margin-bottom: 20px;">
-                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Proficient Skills</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Skills (⬤ = Proficient, click to roll)</div>
                         <div id="char-skills-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -3162,6 +4741,91 @@ Example:
         </div>
     </div>
 
+    <!-- VTT-Style Dice Tray -->
+    <div id="dice-tray" class="dice-tray">
+        <div class="dice-tray-header">
+            <span class="dice-tray-title">Dice Roll</span>
+            <button class="dice-tray-close" onclick="closeDiceTray()">×</button>
+        </div>
+        <div id="dice-roll-type" class="dice-formula">Skill Check</div>
+        <div id="dice-breakdown" class="dice-breakdown">[--] + --</div>
+        <div id="dice-total" class="dice-total dice-rolling">--</div>
+        <div id="dice-result-label" class="dice-result-label" style="display: none;"></div>
+    </div>
+
+    <!-- Combat Action Bar -->
+    <div id="combat-bar" class="combat-bar">
+        <span class="combat-bar-label">⚔️ Combat</span>
+        <button class="combat-btn primary" onclick="rollAttack()">🎯 Attack</button>
+        <button class="combat-btn" onclick="rollDamage()">💥 Damage</button>
+        <button class="combat-btn" onclick="rollInitiative()">⚡ Initiative</button>
+        <button class="combat-btn" onclick="rollSavingThrow()">🛡️ Save</button>
+        <button class="combat-btn" onclick="endCombat()">✓ End Combat</button>
+    </div>
+
+    <!-- Quick Roll Menu -->
+    <div id="quick-roll-menu" class="quick-roll-menu">
+        <div class="quick-roll-title">Quick Roll</div>
+        <div class="quick-roll-grid">
+            <div class="quick-roll-item" onclick="quickRoll('d4')">d4</div>
+            <div class="quick-roll-item" onclick="quickRoll('d6')">d6</div>
+            <div class="quick-roll-item" onclick="quickRoll('d8')">d8</div>
+            <div class="quick-roll-item" onclick="quickRoll('d10')">d10</div>
+            <div class="quick-roll-item" onclick="quickRoll('d12')">d12</div>
+            <div class="quick-roll-item" onclick="quickRoll('d20')">d20</div>
+        </div>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+            <div class="quick-roll-grid">
+                <div class="quick-roll-item" onclick="rollAbilityCheck('strength')">STR</div>
+                <div class="quick-roll-item" onclick="rollAbilityCheck('dexterity')">DEX</div>
+                <div class="quick-roll-item" onclick="rollAbilityCheck('constitution')">CON</div>
+                <div class="quick-roll-item" onclick="rollAbilityCheck('intelligence')">INT</div>
+                <div class="quick-roll-item" onclick="rollAbilityCheck('wisdom')">WIS</div>
+                <div class="quick-roll-item" onclick="rollAbilityCheck('charisma')">CHA</div>
+            </div>
+        </div>
+        <button class="quick-roll-close" onclick="closeQuickRollMenu()">Close</button>
+    </div>
+
+    <!-- Floating Feedback Button (for playtesters) -->
+    <button id="feedback-fab" class="feedback-fab hidden" onclick="openFeedbackModal()" title="Send Feedback">
+        <span class="pulse"></span>
+        💬
+    </button>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="feedback-modal-overlay" onclick="if(event.target === this) closeFeedbackModal()">
+        <div class="feedback-modal">
+            <div id="feedback-form-content">
+                <h3>Share Your Feedback</h3>
+                <p class="subtitle">What just happened? How did it feel?</p>
+
+                <div class="feedback-categories">
+                    <button class="feedback-category" data-category="confused" onclick="selectFeedbackCategory(this)">😕 Confused</button>
+                    <button class="feedback-category" data-category="frustrated" onclick="selectFeedbackCategory(this)">😤 Frustrated</button>
+                    <button class="feedback-category" data-category="delighted" onclick="selectFeedbackCategory(this)">😊 Delighted</button>
+                    <button class="feedback-category" data-category="bug" onclick="selectFeedbackCategory(this)">🐛 Bug</button>
+                    <button class="feedback-category" data-category="idea" onclick="selectFeedbackCategory(this)">💡 Idea</button>
+                    <button class="feedback-category" data-category="other" onclick="selectFeedbackCategory(this)">💭 Other</button>
+                </div>
+
+                <textarea id="feedback-text" class="feedback-textarea"
+                    placeholder="Tell me what happened... be as specific as you want!&#10;&#10;Examples:&#10;• I clicked X and expected Y but got Z&#10;• The story did something weird when...&#10;• I loved when the AI said..."></textarea>
+
+                <div class="feedback-actions">
+                    <button class="feedback-btn cancel" onclick="closeFeedbackModal()">Cancel</button>
+                    <button id="feedback-submit-btn" class="feedback-btn submit" onclick="submitFeedback()" disabled>Send Feedback</button>
+                </div>
+            </div>
+
+            <div id="feedback-success-content" class="feedback-success" style="display: none;">
+                <div class="icon">💜</div>
+                <h4>Thanks for the feedback!</h4>
+                <p>This really helps make the game better.</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         // ANNOUNCEMENT SYSTEM
@@ -3170,10 +4834,10 @@ Example:
         // Set to null to hide all announcements.
 
         const CURRENT_ANNOUNCEMENT = {
-            id: 'update-2024-12-31',  // Unique ID for this announcement (used for dismissal tracking)
+            id: 'update-2024-12-31-vtt',  // Unique ID for this announcement (used for dismissal tracking)
             type: 'success',          // 'info', 'warning', 'success', 'maintenance'
-            icon: '🎉',               // Emoji icon
-            message: '<strong>New Update!</strong> Starting inventory now included with character creation. Action buttons added at bottom of screen for easy access.',
+            icon: '🎲',               // Emoji icon
+            message: '<strong>VTT-Style Dice Rolling!</strong> Click abilities and skills to roll. HP tracker, spell slots, conditions, combat bar, and quick dice menu (🎲) all added.',
             dismissible: true,        // Can user dismiss it?
             persistent: false         // If true, shows even after dismissal (for critical maintenance)
         };
@@ -3360,9 +5024,152 @@ Example:
         let availableArchetypes = [];
         let genreTerminology = { origin: 'Origin', archetype: 'Archetype' };
 
-        // Invite Code State (disabled for now - enable later for controlled access)
+        // TTRPG Mode State
+        let ttrpgGenre = 'fantasy';
+        let ttrpgCreationMode = 'concept';
+        let ttrpgVisibility = 'classic';
+
+        // ==========================================
+        // NEW LANDING FLOW FUNCTIONS
+        // ==========================================
+
+        // Quick Start Flow - go straight to genre picker
+        function quickStartFlow() {
+            showScreen('quick-start');
+        }
+
+        // TTRPG Mode Flow - D&D rules enabled by default
+        function ttrpgModeFlow() {
+            showScreen('ttrpg-setup');
+        }
+
+        // Quick Play - start game immediately with selected genre
+        async function quickPlay(genre) {
+            // Set up minimal config
+            if (genre === 'surprise') {
+                const genres = ['fantasy', 'mystery', 'romance', 'scifi', 'horror', 'adventure'];
+                genre = genres[Math.floor(Math.random() * genres.length)];
+            }
+
+            selectedGenres = [genre];
+            selectedGenre = genre;
+            selectedTone = 'dramatic';
+            selectedStyle = 'guided';
+            rulesMode = 'narrative';
+            sessionScope = 'one_shot';
+
+            // Start the story directly
+            await beginStory();
+        }
+
+        // TTRPG Genre Selection
+        function selectTTRPGGenre(genre) {
+            ttrpgGenre = genre;
+            document.querySelectorAll('.ttrpg-genre-chip').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-ttrpg-genre="${genre}"]`)?.classList.add('selected');
+        }
+
+        // TTRPG Creation Mode Selection
+        function selectCreationMode(mode) {
+            ttrpgCreationMode = mode;
+            document.querySelectorAll('.creation-chip').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-creation="${mode}"]`)?.classList.add('selected');
+        }
+
+        // TTRPG Visibility Selection
+        function selectVisibility(visibility) {
+            ttrpgVisibility = visibility;
+            document.querySelectorAll('.visibility-chip').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-visibility="${visibility}"]`)?.classList.add('selected');
+        }
+
+        // Begin TTRPG Story with D&D rules
+        async function beginTTRPGStory() {
+            const concept = document.getElementById('ttrpg-character-concept')?.value?.trim() || '';
+
+            // Set up TTRPG config
+            selectedGenres = [ttrpgGenre];
+            selectedGenre = ttrpgGenre;
+            selectedTone = 'dramatic';
+            selectedStyle = 'guided';
+            rulesMode = 'dnd';
+            rulesGenre = ttrpgGenre;
+            rulesVisibility = ttrpgVisibility;
+            creationMode = ttrpgCreationMode;
+            sessionScope = 'medium';
+
+            // Set character concept if provided
+            const conceptField = document.getElementById('character-concept');
+            if (conceptField) conceptField.value = concept;
+
+            // Start the story
+            await beginStory();
+        }
+
+        // Quick Import Lore (from World Builder screen)
+        async function quickImportLore() {
+            const loreText = document.getElementById('world-builder-lore')?.value?.trim();
+            const worldName = document.getElementById('world-builder-name')?.value?.trim() || 'custom_world';
+            const statusEl = document.getElementById('world-builder-status');
+
+            if (!loreText || loreText.length < 20) {
+                statusEl.innerHTML = '<div class="status error">Please enter at least 20 characters of lore text.</div>';
+                return;
+            }
+
+            statusEl.innerHTML = '<div class="status"><span class="loading"></span> Importing lore...</div>';
+
+            try {
+                const response = await fetch(API_BASE.replace('/api', '') + '/ingest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: loreText,
+                        source_name: worldName
+                    })
+                });
+
+                if (!response.ok) throw new Error('Import failed');
+
+                const data = await response.json();
+                statusEl.innerHTML = `<div class="status success">
+                    Imported ${data.nodes_created || 0} entities and ${data.relationships_created || 0} relationships!
+                </div>`;
+
+                // Clear the form
+                document.getElementById('world-builder-lore').value = '';
+                document.getElementById('world-builder-name').value = '';
+
+            } catch (err) {
+                console.error('Quick import error:', err);
+                statusEl.innerHTML = '<div class="status error">Import failed. Check console for details.</div>';
+            }
+        }
+
+        // Check for saves on landing page load
+        async function updateSavesBadge() {
+            try {
+                const response = await fetch(`${API_BASE}/game/saves?browser_id=${BROWSER_ID}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const count = data.saves?.length || 0;
+                    const badge = document.getElementById('saves-count-badge');
+                    if (badge && count > 0) {
+                        badge.textContent = `${count} save${count > 1 ? 's' : ''}`;
+                        badge.style.display = 'inline-block';
+                    }
+                }
+            } catch (err) {
+                console.log('Could not check saves:', err);
+            }
+        }
+
+        // Call on page load
+        setTimeout(updateSavesBadge, 500);
+
+        // Invite Code State - ENABLED for family playtesting
         let validatedTester = null;  // Tester name if validated
-        const REQUIRE_INVITE_CODE = false;  // Set to true to enable invite code requirement
+        const REQUIRE_INVITE_CODE = true;  // Family playtest mode enabled
 
         // Check for existing valid invite code on page load
         (function checkInviteCode() {
@@ -3372,9 +5179,10 @@ Example:
             const savedTester = localStorage.getItem('airpg_tester_name');
             if (savedCode && savedTester) {
                 validatedTester = savedTester;
-                // Skip invite screen, show onboarding
+                // Skip invite screen, show main landing
                 setTimeout(() => {
-                    showScreen('onboarding');
+                    showScreen('start');
+                    showFeedbackButton();  // Show feedback for returning testers
                 }, 100);
             } else {
                 // Show invite code screen
@@ -3413,9 +5221,23 @@ Example:
 
                     statusEl.innerHTML = '<div class="status success">' + data.message + '</div>';
 
-                    // Proceed to onboarding after a brief moment
+                    // Show feedback button for playtesters
+                    showFeedbackButton();
+
+                    // Check if this is their first time (no saved sessions)
+                    const hasPlayedBefore = localStorage.getItem('airpg_has_played');
+
+                    // Proceed to welcome or start screen after a brief moment
                     setTimeout(() => {
-                        showScreen('onboarding');
+                        if (!hasPlayedBefore) {
+                            // First time - show welcome screen
+                            document.getElementById('tester-name-display').textContent = data.tester_name || 'Friend';
+                            showScreen('playtester-welcome');
+                            localStorage.setItem('airpg_has_played', 'true');
+                        } else {
+                            // Returning tester - go straight to start
+                            showScreen('start');
+                        }
                     }, 1500);
                 } else {
                     statusEl.innerHTML = '<div class="status error">' + data.message + '</div>';
@@ -4129,17 +5951,19 @@ Example:
                     const modStr = mod >= 0 ? '+' + mod : mod.toString();
 
                     if (rulesVisibility === 'guided') {
-                        // Show only modifier
-                        return `<div style="text-align: center; padding: 8px; background: var(--bg-tertiary); border-radius: 6px;">
+                        // Show only modifier with roll button
+                        return `<div style="text-align: center; padding: 8px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer;" onclick="rollAbilityCheck('${fullKey}')">
                             <div style="font-size: 0.75rem; color: var(--text-muted);">${stat}</div>
                             <div style="font-size: 1.1rem; color: var(--accent-warm);">${modStr}</div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">click to roll</div>
                         </div>`;
                     } else {
-                        // Show score and modifier
-                        return `<div style="text-align: center; padding: 8px; background: var(--bg-tertiary); border-radius: 6px;">
+                        // Show score and modifier with roll button
+                        return `<div style="text-align: center; padding: 8px; background: var(--bg-tertiary); border-radius: 6px; cursor: pointer;" onclick="rollAbilityCheck('${fullKey}')">
                             <div style="font-size: 0.7rem; color: var(--text-muted);">${stat}</div>
                             <div style="font-size: 1.2rem;">${score}</div>
                             <div style="font-size: 0.85rem; color: var(--accent-warm);">${modStr}</div>
+                            <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 4px;">🎲 Roll</div>
                         </div>`;
                     }
                 }).join('');
@@ -4155,18 +5979,67 @@ Example:
                 const initMod = Math.floor(((abilities.dexterity || 10) - 10) / 2);
                 document.getElementById('char-init').textContent = (initMod >= 0 ? '+' : '') + initMod;
                 document.getElementById('char-prof').textContent = '+' + (dndCharacter.proficiency_bonus || 2);
+
+                // HP Bar
+                const currentHP = dndCharacter.current_hit_points || 0;
+                const maxHP = dndCharacter.max_hit_points || 1;
+                const hpPercent = (currentHP / maxHP) * 100;
+
+                const hpBar = document.getElementById('char-hp-bar');
+                const hpText = document.getElementById('char-hp-text');
+                hpBar.style.width = `${hpPercent}%`;
+                hpBar.classList.remove('low', 'critical');
+                if (hpPercent <= 25) {
+                    hpBar.classList.add('critical');
+                } else if (hpPercent <= 50) {
+                    hpBar.classList.add('low');
+                }
+                hpText.textContent = `${currentHP}/${maxHP}`;
+
+                // Death saves (show if at 0 HP)
+                const deathSavesSection = document.getElementById('char-death-saves');
+                if (currentHP === 0) {
+                    deathSavesSection.style.display = 'block';
+                    // Update death save pips
+                    document.querySelectorAll('#char-death-saves .death-save-pip.success').forEach((pip, i) => {
+                        pip.classList.toggle('filled', i < deathSaves.successes);
+                    });
+                    document.querySelectorAll('#char-death-saves .death-save-pip.failure').forEach((pip, i) => {
+                        pip.classList.toggle('filled', i < deathSaves.failures);
+                    });
+                } else {
+                    deathSavesSection.style.display = 'none';
+                }
+
+                // Conditions
+                updateConditionsDisplay();
             } else {
                 combatSection.style.display = 'none';
             }
 
-            // Skills section (guided and up)
+            // Skills section (guided and up) - show ALL skills with roll buttons
             const skillsSection = document.getElementById('char-skills-section');
-            const skills = dndCharacter.skill_proficiencies || [];
-            if (skills.length > 0 && rulesVisibility !== 'storyteller') {
+            const proficientSkills = (dndCharacter.skill_proficiencies || []).map(s => s.toLowerCase().replace(/_/g, ' '));
+
+            if (rulesVisibility !== 'storyteller') {
                 skillsSection.style.display = 'block';
-                document.getElementById('char-skills-list').innerHTML = skills.map(s =>
-                    `<span style="padding: 4px 10px; background: var(--bg-tertiary); border-radius: 4px; font-size: 0.85rem;">${s.replace(/_/g, ' ')}</span>`
-                ).join('');
+                const skillsHtml = DND_SKILLS.map(skill => {
+                    const isProficient = proficientSkills.includes(skill.name.toLowerCase());
+                    const modifier = getSkillModifier(skill.name);
+                    const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+                    const modClass = modifier >= 0 ? '' : 'negative';
+
+                    return `<button class="skill-btn" onclick="rollSkillCheck('${skill.name}')" title="${skill.ability.toUpperCase()} skill${isProficient ? ' (Proficient)' : ''}">
+                        ${isProficient ? '⬤' : '○'} ${skill.name}
+                        <span class="modifier ${modClass}">${modStr}</span>
+                    </button>`;
+                }).join('');
+
+                document.getElementById('char-skills-list').innerHTML = `
+                    <div class="skills-grid">
+                        ${skillsHtml}
+                    </div>
+                `;
             } else {
                 skillsSection.style.display = 'none';
             }
@@ -4175,16 +6048,47 @@ Example:
             const spellsSection = document.getElementById('char-spells-section');
             const spells = dndCharacter.spells_known || [];
             const spellSlots = dndCharacter.spell_slots || {};
-            if (spells.length > 0 && rulesVisibility !== 'storyteller') {
+            const isCaster = spells.length > 0 || Object.keys(spellSlots).length > 0;
+
+            if (isCaster && rulesVisibility !== 'storyteller') {
                 spellsSection.style.display = 'block';
-                if (rulesVisibility !== 'guided') {
-                    const slotsText = Object.entries(spellSlots).map(([level, slots]) =>
-                        `Lvl ${level}: ${slots}`
-                    ).join(' | ');
-                    document.getElementById('char-spell-slots').textContent = slotsText || 'No spell slots';
+
+                // Visual spell slots with pips
+                if (rulesVisibility !== 'guided' && Object.keys(spellSlots).length > 0) {
+                    // Ensure spell slots have current/max structure
+                    const normalizedSlots = {};
+                    Object.entries(spellSlots).forEach(([level, slots]) => {
+                        if (typeof slots === 'number') {
+                            normalizedSlots[level] = { max: slots, current: slots };
+                        } else if (typeof slots === 'object') {
+                            normalizedSlots[level] = slots;
+                        }
+                    });
+                    dndCharacter.spell_slots = normalizedSlots;
+
+                    const slotsHtml = Object.entries(normalizedSlots)
+                        .filter(([level, data]) => data.max > 0)
+                        .map(([level, data]) => `
+                            <div class="spell-slot-row">
+                                <span class="spell-slot-level">Level ${level}</span>
+                                <div class="spell-slot-pips">
+                                    ${Array(data.max).fill(0).map((_, i) =>
+                                        `<span class="spell-slot-pip ${i < data.current ? 'filled' : ''}"
+                                               onclick="toggleSpellSlot(${level}, ${i})"></span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `).join('');
+                    document.getElementById('char-spell-slots').innerHTML = `
+                        <div class="spell-slots-container">
+                            ${slotsHtml}
+                        </div>
+                    `;
                 } else {
                     document.getElementById('char-spell-slots').textContent = '';
                 }
+
+                // Spells list
                 document.getElementById('char-spells-list').innerHTML = spells.map(s =>
                     `<span style="padding: 4px 10px; background: var(--accent-lavender); color: #fff; border-radius: 4px; font-size: 0.85rem;">${s}</span>`
                 ).join('');
@@ -4226,6 +6130,565 @@ Example:
             if (!event || event.target === event.currentTarget) {
                 document.getElementById('character-sheet-modal').style.display = 'none';
             }
+        }
+
+        // ============================================================
+        // VTT-STYLE DICE ROLLING SYSTEM
+        // ============================================================
+
+        // D&D 5e Skills with their associated abilities
+        const DND_SKILLS = [
+            { name: 'Acrobatics', ability: 'dexterity' },
+            { name: 'Animal Handling', ability: 'wisdom' },
+            { name: 'Arcana', ability: 'intelligence' },
+            { name: 'Athletics', ability: 'strength' },
+            { name: 'Deception', ability: 'charisma' },
+            { name: 'History', ability: 'intelligence' },
+            { name: 'Insight', ability: 'wisdom' },
+            { name: 'Intimidation', ability: 'charisma' },
+            { name: 'Investigation', ability: 'intelligence' },
+            { name: 'Medicine', ability: 'wisdom' },
+            { name: 'Nature', ability: 'intelligence' },
+            { name: 'Perception', ability: 'wisdom' },
+            { name: 'Performance', ability: 'charisma' },
+            { name: 'Persuasion', ability: 'charisma' },
+            { name: 'Religion', ability: 'intelligence' },
+            { name: 'Sleight of Hand', ability: 'dexterity' },
+            { name: 'Stealth', ability: 'dexterity' },
+            { name: 'Survival', ability: 'wisdom' }
+        ];
+
+        // D&D 5e Conditions
+        const DND_CONDITIONS = [
+            'Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled',
+            'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned',
+            'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion'
+        ];
+
+        // Track active conditions
+        let activeConditions = [];
+
+        // Track death saves
+        let deathSaves = { successes: 0, failures: 0 };
+
+        // Track if in combat mode
+        let inCombatMode = false;
+
+        // Roll a die (client-side for immediate feedback)
+        function rollDie(sides = 20) {
+            return Math.floor(Math.random() * sides) + 1;
+        }
+
+        // Roll multiple dice
+        function rollDice(count, sides) {
+            const rolls = [];
+            for (let i = 0; i < count; i++) {
+                rolls.push(rollDie(sides));
+            }
+            return rolls;
+        }
+
+        // Get ability modifier from score
+        function getAbilityModifier(score) {
+            return Math.floor((score - 10) / 2);
+        }
+
+        // Get skill modifier for a character
+        function getSkillModifier(skillName) {
+            if (!dndCharacter) return 0;
+
+            const skill = DND_SKILLS.find(s => s.name === skillName);
+            if (!skill) return 0;
+
+            const abilities = dndCharacter.ability_scores || {};
+            const abilityScore = abilities[skill.ability] || 10;
+            let modifier = getAbilityModifier(abilityScore);
+
+            // Add proficiency bonus if proficient
+            const proficiencies = dndCharacter.skill_proficiencies || [];
+            if (proficiencies.includes(skillName.toLowerCase())) {
+                const level = dndCharacter.level || 1;
+                const profBonus = Math.ceil(level / 4) + 1;
+                modifier += profBonus;
+            }
+
+            return modifier;
+        }
+
+        // Show dice tray with result
+        function showDiceTray(rollType, formula, breakdown, total, dc = null) {
+            const tray = document.getElementById('dice-tray');
+            const rollTypeEl = document.getElementById('dice-roll-type');
+            const breakdownEl = document.getElementById('dice-breakdown');
+            const totalEl = document.getElementById('dice-total');
+            const labelEl = document.getElementById('dice-result-label');
+
+            // Set content
+            rollTypeEl.textContent = rollType;
+            breakdownEl.textContent = breakdown;
+
+            // Animate the total
+            totalEl.classList.remove('success', 'failure', 'critical', 'dice-rolling');
+            totalEl.textContent = '--';
+
+            // Show tray
+            tray.classList.add('visible');
+
+            // Animate roll
+            setTimeout(() => {
+                totalEl.classList.add('dice-rolling');
+                totalEl.textContent = total;
+
+                // Apply result styling
+                if (dc !== null) {
+                    if (total >= dc) {
+                        totalEl.classList.add('success');
+                        labelEl.textContent = 'Success!';
+                        labelEl.className = 'dice-result-label success';
+                        labelEl.style.display = 'block';
+                    } else {
+                        totalEl.classList.add('failure');
+                        labelEl.textContent = 'Failure';
+                        labelEl.className = 'dice-result-label failure';
+                        labelEl.style.display = 'block';
+                    }
+                } else {
+                    // Check for natural 20/1 on d20 rolls
+                    const naturalRoll = parseInt(breakdown.match(/\[(\d+)\]/)?.[1]);
+                    if (naturalRoll === 20) {
+                        totalEl.classList.add('critical');
+                        labelEl.textContent = 'Natural 20!';
+                        labelEl.className = 'dice-result-label critical';
+                        labelEl.style.display = 'block';
+                    } else if (naturalRoll === 1) {
+                        totalEl.classList.add('failure');
+                        labelEl.textContent = 'Natural 1!';
+                        labelEl.className = 'dice-result-label failure';
+                        labelEl.style.display = 'block';
+                    } else {
+                        labelEl.style.display = 'none';
+                    }
+                }
+            }, 100);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                tray.classList.remove('visible');
+            }, 5000);
+        }
+
+        function closeDiceTray() {
+            document.getElementById('dice-tray').classList.remove('visible');
+        }
+
+        // Quick Roll Menu
+        function showQuickRollMenu() {
+            document.getElementById('quick-roll-menu').classList.add('visible');
+        }
+
+        function closeQuickRollMenu() {
+            document.getElementById('quick-roll-menu').classList.remove('visible');
+        }
+
+        function quickRoll(dieType) {
+            closeQuickRollMenu();
+
+            const sides = parseInt(dieType.replace('d', ''));
+            const roll = rollDie(sides);
+
+            showDiceTray(`${dieType} Roll`, `1${dieType}`, `[${roll}]`, roll);
+
+            return roll;
+        }
+
+        // Show/hide quick roll button based on visibility mode
+        function updateQuickRollButton() {
+            const btn = document.getElementById('quick-roll-btn');
+            if (btn && rulesVisibility && rulesVisibility !== 'storyteller') {
+                btn.style.display = 'block';
+            } else if (btn) {
+                btn.style.display = 'none';
+            }
+        }
+
+        // Roll a skill check
+        function rollSkillCheck(skillName, advantage = false, disadvantage = false) {
+            if (!dndCharacter) {
+                alert('No character created yet.');
+                return;
+            }
+
+            const modifier = getSkillModifier(skillName);
+            let roll;
+
+            if (advantage && !disadvantage) {
+                const roll1 = rollDie(20);
+                const roll2 = rollDie(20);
+                roll = Math.max(roll1, roll2);
+            } else if (disadvantage && !advantage) {
+                const roll1 = rollDie(20);
+                const roll2 = rollDie(20);
+                roll = Math.min(roll1, roll2);
+            } else {
+                roll = rollDie(20);
+            }
+
+            const total = roll + modifier;
+            const modStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
+            const breakdown = `[${roll}] ${modStr}`;
+
+            showDiceTray(`${skillName} Check`, `1d20 ${modStr}`, breakdown, total);
+
+            // Log to story (optional)
+            console.log(`${skillName} Check: ${breakdown} = ${total}`);
+
+            return { roll, modifier, total };
+        }
+
+        // Roll ability check
+        function rollAbilityCheck(ability) {
+            if (!dndCharacter) {
+                alert('No character created yet.');
+                return;
+            }
+
+            const abilities = dndCharacter.ability_scores || {};
+            const score = abilities[ability.toLowerCase()] || 10;
+            const modifier = getAbilityModifier(score);
+
+            const roll = rollDie(20);
+            const total = roll + modifier;
+            const modStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
+            const breakdown = `[${roll}] ${modStr}`;
+
+            const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1);
+            showDiceTray(`${abilityName} Check`, `1d20 ${modStr}`, breakdown, total);
+
+            return { roll, modifier, total };
+        }
+
+        // Roll saving throw
+        function rollSavingThrow(ability = null) {
+            if (!dndCharacter) {
+                alert('No character created yet.');
+                return;
+            }
+
+            // If no ability specified, show a picker
+            if (!ability) {
+                const abilities = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
+                const choice = prompt('Choose ability for saving throw:\\n' + abilities.map((a, i) => `${i+1}. ${a}`).join('\\n'));
+                const idx = parseInt(choice) - 1;
+                if (idx >= 0 && idx < abilities.length) {
+                    ability = abilities[idx].toLowerCase();
+                } else {
+                    return;
+                }
+            }
+
+            const abilities = dndCharacter.ability_scores || {};
+            const score = abilities[ability.toLowerCase()] || 10;
+            let modifier = getAbilityModifier(score);
+
+            // Add proficiency if proficient in this save
+            const saveProficiencies = dndCharacter.saving_throw_proficiencies || [];
+            if (saveProficiencies.includes(ability.toLowerCase())) {
+                const level = dndCharacter.level || 1;
+                const profBonus = Math.ceil(level / 4) + 1;
+                modifier += profBonus;
+            }
+
+            const roll = rollDie(20);
+            const total = roll + modifier;
+            const modStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
+            const breakdown = `[${roll}] ${modStr}`;
+
+            const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1);
+            showDiceTray(`${abilityName} Save`, `1d20 ${modStr}`, breakdown, total);
+
+            return { roll, modifier, total };
+        }
+
+        // Roll attack
+        function rollAttack() {
+            if (!dndCharacter) {
+                alert('No character created yet.');
+                return;
+            }
+
+            // Get attack modifier (simplified - uses STR or DEX based on class)
+            const abilities = dndCharacter.ability_scores || {};
+            const classType = dndCharacter.character_class?.toLowerCase() || '';
+            const finessClasses = ['rogue', 'monk', 'ranger'];
+            const usesDex = finessClasses.includes(classType);
+
+            const abilityScore = usesDex ? (abilities.dexterity || 10) : (abilities.strength || 10);
+            const abilityMod = getAbilityModifier(abilityScore);
+
+            const level = dndCharacter.level || 1;
+            const profBonus = Math.ceil(level / 4) + 1;
+            const modifier = abilityMod + profBonus;
+
+            const roll = rollDie(20);
+            const total = roll + modifier;
+            const modStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
+            const breakdown = `[${roll}] ${modStr}`;
+
+            showDiceTray('Attack Roll', `1d20 ${modStr}`, breakdown, total);
+
+            return { roll, modifier, total, critical: roll === 20, fumble: roll === 1 };
+        }
+
+        // Roll damage
+        function rollDamage(criticalHit = false) {
+            if (!dndCharacter) {
+                alert('No character created yet.');
+                return;
+            }
+
+            // Get damage based on equipped weapon or class default
+            const abilities = dndCharacter.ability_scores || {};
+            const classType = dndCharacter.character_class?.toLowerCase() || '';
+            const finessClasses = ['rogue', 'monk', 'ranger'];
+            const usesDex = finessClasses.includes(classType);
+
+            const abilityScore = usesDex ? (abilities.dexterity || 10) : (abilities.strength || 10);
+            const abilityMod = getAbilityModifier(abilityScore);
+
+            // Default damage die based on class
+            let damageDice = '1d8'; // Default
+            const classDamageDice = {
+                'barbarian': '1d12',
+                'fighter': '1d10',
+                'paladin': '1d10',
+                'ranger': '1d8',
+                'rogue': '1d6',
+                'monk': '1d6',
+                'wizard': '1d4',
+                'sorcerer': '1d6',
+                'warlock': '1d10',
+                'bard': '1d8',
+                'cleric': '1d8',
+                'druid': '1d8'
+            };
+            if (classDamageDice[classType]) {
+                damageDice = classDamageDice[classType];
+            }
+
+            const [count, sides] = damageDice.split('d').map(Number);
+            const diceCount = criticalHit ? count * 2 : count;
+            const rolls = rollDice(diceCount, sides);
+            const diceTotal = rolls.reduce((a, b) => a + b, 0);
+            const total = diceTotal + abilityMod;
+
+            const modStr = abilityMod >= 0 ? `+ ${abilityMod}` : `- ${Math.abs(abilityMod)}`;
+            const breakdown = `[${rolls.join(', ')}] ${modStr}`;
+            const formula = criticalHit ? `${diceCount}d${sides} ${modStr} (CRIT!)` : `${count}d${sides} ${modStr}`;
+
+            showDiceTray('Damage', formula, breakdown, total);
+
+            return { rolls, modifier: abilityMod, total };
+        }
+
+        // Roll initiative
+        function rollInitiative() {
+            if (!dndCharacter) {
+                alert('No character created yet.');
+                return;
+            }
+
+            const abilities = dndCharacter.ability_scores || {};
+            const dexScore = abilities.dexterity || 10;
+            const modifier = getAbilityModifier(dexScore);
+
+            const roll = rollDie(20);
+            const total = roll + modifier;
+            const modStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
+            const breakdown = `[${roll}] ${modStr}`;
+
+            showDiceTray('Initiative', `1d20 ${modStr}`, breakdown, total);
+
+            // Enter combat mode
+            enterCombatMode();
+
+            return { roll, modifier, total };
+        }
+
+        // Enter combat mode
+        function enterCombatMode() {
+            inCombatMode = true;
+            document.body.classList.add('in-combat');
+            document.getElementById('combat-bar').classList.add('visible');
+        }
+
+        // End combat
+        function endCombat() {
+            inCombatMode = false;
+            document.body.classList.remove('in-combat');
+            document.getElementById('combat-bar').classList.remove('visible');
+        }
+
+        // Death save roll
+        function rollDeathSave() {
+            const roll = rollDie(20);
+            let result;
+
+            if (roll === 20) {
+                // Natural 20 - regain 1 HP
+                result = 'NATURAL 20! You regain 1 HP and become conscious!';
+                deathSaves = { successes: 0, failures: 0 };
+                if (dndCharacter) {
+                    dndCharacter.current_hit_points = 1;
+                }
+            } else if (roll === 1) {
+                // Natural 1 - two failures
+                deathSaves.failures += 2;
+                result = 'NATURAL 1! Two death save failures!';
+            } else if (roll >= 10) {
+                deathSaves.successes++;
+                result = `Success! (${deathSaves.successes}/3)`;
+            } else {
+                deathSaves.failures++;
+                result = `Failure! (${deathSaves.failures}/3)`;
+            }
+
+            showDiceTray('Death Save', '1d20', `[${roll}]`, roll, 10);
+
+            // Check for stabilization or death
+            if (deathSaves.successes >= 3) {
+                alert('You have stabilized! You are unconscious but no longer dying.');
+                deathSaves = { successes: 0, failures: 0 };
+            } else if (deathSaves.failures >= 3) {
+                alert('Your character has died...');
+                deathSaves = { successes: 0, failures: 0 };
+            }
+
+            return { roll, result };
+        }
+
+        // Adjust HP
+        function adjustHP(amount) {
+            if (!dndCharacter) return;
+
+            const currentHP = dndCharacter.current_hit_points || 0;
+            const maxHP = dndCharacter.max_hit_points || 1;
+            const wasAtZero = currentHP === 0;
+
+            dndCharacter.current_hit_points = Math.max(0, Math.min(maxHP, currentHP + amount));
+
+            // Update HUD if visible
+            updateCharacterHUD();
+
+            // Update character sheet if open
+            const hpBar = document.getElementById('char-hp-bar');
+            const hpText = document.getElementById('char-hp-text');
+            if (hpBar && hpText) {
+                const newHP = dndCharacter.current_hit_points;
+                const hpPercent = (newHP / maxHP) * 100;
+                hpBar.style.width = `${hpPercent}%`;
+                hpBar.classList.remove('low', 'critical');
+                if (hpPercent <= 25) hpBar.classList.add('critical');
+                else if (hpPercent <= 50) hpBar.classList.add('low');
+                hpText.textContent = `${newHP}/${maxHP}`;
+
+                // Show/hide death saves based on HP
+                const deathSavesSection = document.getElementById('char-death-saves');
+                if (deathSavesSection) {
+                    deathSavesSection.style.display = newHP === 0 ? 'block' : 'none';
+                }
+            }
+
+            // Check for death saves
+            if (dndCharacter.current_hit_points === 0 && !wasAtZero && amount < 0) {
+                // Reset death saves when first dropping to 0
+                deathSaves = { successes: 0, failures: 0 };
+            }
+        }
+
+        // Toggle condition
+        function toggleCondition(condition) {
+            const idx = activeConditions.indexOf(condition);
+            if (idx >= 0) {
+                activeConditions.splice(idx, 1);
+            } else {
+                activeConditions.push(condition);
+            }
+            updateConditionsDisplay();
+        }
+
+        // Update conditions display
+        function updateConditionsDisplay() {
+            const container = document.getElementById('active-conditions');
+            if (!container) return;
+
+            container.innerHTML = DND_CONDITIONS.map(cond =>
+                `<span class="condition-badge ${activeConditions.includes(cond) ? 'active' : ''}"
+                       onclick="toggleCondition('${cond}')">${cond}</span>`
+            ).join('');
+        }
+
+        // Update character HUD with HP
+        function updateCharacterHUD() {
+            const hud = document.querySelector('.character-hud');
+            if (!hud || !dndCharacter) return;
+
+            const currentHP = dndCharacter.current_hit_points || 0;
+            const maxHP = dndCharacter.max_hit_points || 1;
+            const hpPercent = (currentHP / maxHP) * 100;
+
+            const hpFill = hud.querySelector('.hud-hp-fill');
+            if (hpFill) {
+                hpFill.style.width = `${hpPercent}%`;
+                hpFill.classList.remove('low', 'critical');
+                if (hpPercent <= 25) {
+                    hpFill.classList.add('critical');
+                } else if (hpPercent <= 50) {
+                    hpFill.classList.add('low');
+                }
+            }
+
+            const hpText = hud.querySelector('.hud-hp-text');
+            if (hpText) {
+                hpText.textContent = `${currentHP}/${maxHP}`;
+            }
+        }
+
+        // Toggle spell slot
+        function toggleSpellSlot(level, index) {
+            if (!dndCharacter || !dndCharacter.spell_slots) return;
+
+            const slots = dndCharacter.spell_slots[level];
+            if (!slots) return;
+
+            // Toggle: if clicking on a filled slot, expend it
+            // If clicking on empty slot, restore up to that point
+            if (index < slots.current) {
+                slots.current = index;
+            } else {
+                slots.current = index + 1;
+            }
+
+            updateSpellSlotsDisplay();
+        }
+
+        // Update spell slots display
+        function updateSpellSlotsDisplay() {
+            const container = document.getElementById('spell-slots-tracker');
+            if (!container || !dndCharacter || !dndCharacter.spell_slots) return;
+
+            container.innerHTML = Object.entries(dndCharacter.spell_slots)
+                .filter(([level, data]) => data.max > 0)
+                .map(([level, data]) => `
+                    <div class="spell-slot-row">
+                        <span class="spell-slot-level">Level ${level}</span>
+                        <div class="spell-slot-pips">
+                            ${Array(data.max).fill(0).map((_, i) =>
+                                `<span class="spell-slot-pip ${i < data.current ? 'filled' : ''}"
+                                       onclick="toggleSpellSlot(${level}, ${i})"></span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `).join('');
         }
 
         // ============================================================
@@ -4671,6 +7134,38 @@ Example:
             }
         }
 
+        // Show error message during character creation
+        function showCreationError(message) {
+            const errorEl = document.createElement('div');
+            errorEl.className = 'creation-error';
+            errorEl.style.cssText = 'background: rgba(220, 53, 69, 0.9); color: white; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-weight: 500;';
+            errorEl.textContent = message;
+            const content = document.getElementById('char-creation-content');
+            if (content) {
+                content.prepend(errorEl);
+                setTimeout(() => errorEl.remove(), 5000);
+            }
+        }
+
+        // Create a default fallback character
+        function createDefaultCharacter() {
+            return {
+                name: charCreationData.name || 'Adventurer',
+                race: charCreationData.origin || 'Human',
+                origin: charCreationData.origin || 'Human',
+                character_class: charCreationData.archetype || 'Fighter',
+                archetype: charCreationData.archetype || 'Fighter',
+                level: 1,
+                ability_scores: { strength: 14, dexterity: 12, constitution: 14, intelligence: 10, wisdom: 12, charisma: 10 },
+                max_hit_points: 12,
+                current_hit_points: 12,
+                armor_class: 14,
+                proficiency_bonus: 2,
+                skill_proficiencies: ['athletics', 'perception'],
+                equipment: []
+            };
+        }
+
         async function handleConceptModeNext() {
             if (charCreationStep === 0) {
                 // Get name and concept
@@ -4701,10 +7196,20 @@ Example:
                             const detail = await detailRes.json();
                             charCreationData.generatedChar = detail.character;
                             charCreationData.characterId = data.character_id;
+                        } else {
+                            console.error('Failed to fetch character details');
+                            showCreationError('Character created but details unavailable. Using defaults.');
+                            charCreationData.generatedChar = createDefaultCharacter();
                         }
+                    } else {
+                        console.error('Character generation API returned error:', response.status);
+                        showCreationError('Character generation failed. Using default character.');
+                        charCreationData.generatedChar = createDefaultCharacter();
                     }
                 } catch (e) {
                     console.error('Failed to generate character:', e);
+                    showCreationError('Connection error. Using default character.');
+                    charCreationData.generatedChar = createDefaultCharacter();
                 }
 
                 document.getElementById('char-next-btn').disabled = false;
@@ -4770,10 +7275,20 @@ Example:
                         const finalData = await finalRes.json();
                         charCreationData.characterId = finalData.character_id;
                         charCreationData.generatedChar = finalData.character;
+                    } else {
+                        console.error('Failed to finalize guided character');
+                        showCreationError('Character finalization failed. Using your selections.');
+                        charCreationData.generatedChar = createDefaultCharacter();
                     }
+                } else {
+                    console.error('Failed to start guided flow:', startRes.status);
+                    showCreationError('Character creation failed. Using default character.');
+                    charCreationData.generatedChar = createDefaultCharacter();
                 }
             } catch (e) {
                 console.error('Failed to create guided character:', e);
+                showCreationError('Connection error. Using default character.');
+                charCreationData.generatedChar = createDefaultCharacter();
             }
 
             finalizeCharacter();
@@ -4806,11 +7321,36 @@ Example:
                 }
             }
 
-            // Load starting inventory based on character's archetype/class
-            if (dndCharacter) {
-                const archetype = dndCharacter.character_class || dndCharacter.archetype || charCreationData.archetype;
-                getStartingInventory(archetype);
+            // ALWAYS create fallback if still no character (guaranteed character)
+            if (!dndCharacter) {
+                console.warn('Creating fallback character - API may have failed');
+                dndCharacter = {
+                    name: charCreationData.name || 'Adventurer',
+                    race: charCreationData.origin || 'Human',
+                    origin: charCreationData.origin || 'Human',
+                    character_class: charCreationData.archetype || 'Fighter',
+                    archetype: charCreationData.archetype || 'Fighter',
+                    level: 1,
+                    ability_scores: {
+                        strength: 14,
+                        dexterity: 12,
+                        constitution: 14,
+                        intelligence: 10,
+                        wisdom: 12,
+                        charisma: 10
+                    },
+                    max_hit_points: 12,
+                    current_hit_points: 12,
+                    armor_class: 14,
+                    proficiency_bonus: 2,
+                    skill_proficiencies: charCreationData.selectedSkills || ['athletics', 'perception'],
+                    equipment: []
+                };
             }
+
+            // Load starting inventory based on character's archetype/class (always runs now)
+            const archetype = dndCharacter.character_class || dndCharacter.archetype || charCreationData.archetype || 'fighter';
+            getStartingInventory(archetype);
 
             closeCharCreation();
             continueToStory();
@@ -4865,9 +7405,23 @@ Example:
         }
 
         // Screen Navigation
+        let lastScreenTransition = Date.now();
+
         async function showScreen(screenId) {
+            // Calculate time spent on previous screen
+            const timeOnPrevScreen = Date.now() - lastScreenTransition;
+            const prevScreen = document.querySelector('.screen.active')?.id;
+
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
+
+            // Log screen transition for session analytics
+            logSessionEvent('screen_view', {
+                screen: screenId,
+                previous_screen: prevScreen,
+                time_on_previous: timeOnPrevScreen
+            });
+            lastScreenTransition = Date.now();
 
             // Screen-specific hooks (consolidated)
             switch (screenId) {
@@ -4915,6 +7469,22 @@ Example:
         // Store current suggestions for mobile toggle
         let currentSuggestions = [];
 
+        // Story guidance tracking
+        let suggestionUsageCount = 0;
+        let totalPlayerActions = 0;
+        const GUIDANCE_THRESHOLD = 0.6;  // If >60% of actions are suggestions
+
+        function needsStoryGuidance() {
+            // Need at least 3 actions before considering guidance
+            if (totalPlayerActions < 3) return false;
+            return (suggestionUsageCount / totalPlayerActions) > GUIDANCE_THRESHOLD;
+        }
+
+        function resetGuidanceTracking() {
+            suggestionUsageCount = 0;
+            totalPlayerActions = 0;
+        }
+
         function showSuggestedActions(actions) {
             currentSuggestions = actions;  // Store for mobile toggle
 
@@ -4952,6 +7522,8 @@ Example:
             input.value = action;
             input.focus();
             hideSuggestedActions();  // Hide after selecting
+            // Track that this was a suggestion
+            suggestionUsageCount++;
             sendAction();  // Auto-send the action
         }
 
@@ -5087,7 +7659,13 @@ Example:
             const worldSeed = document.getElementById('world-seed').value.trim();
             const characterConcept = document.getElementById('character-concept').value.trim();
 
+            // Reset story guidance tracking for new story
+            resetGuidanceTracking();
+
             showScreen('story');
+
+            // Update quick roll button visibility
+            updateQuickRollButton();
 
             // Update header with character info if D&D mode
             if (dndCharacter) {
@@ -5096,11 +7674,9 @@ Example:
                 document.getElementById('story-info').textContent = `${dndCharacter.name} - Level ${dndCharacter.level} ${archetype}`;
                 // Show the Character Sheet button
                 document.getElementById('char-sheet-btn').style.display = 'inline-block';
-                // Add starting equipment to inventory
-                if (dndCharacter.equipment && dndCharacter.equipment.length > 0) {
-                    dndCharacter.equipment.forEach(item => {
-                        addToInventory({ name: item, description: 'Starting equipment' });
-                    });
+                // Note: Starting inventory is already populated by getStartingInventory() in finalizeCharacter()
+                if (playerInventory.length > 0) {
+                    console.log('Inventory already populated:', playerInventory.length, 'items');
                 }
 
                 // Update visibility setting on server
@@ -5172,12 +7748,17 @@ Example:
             const action = input.value.trim();
             if (!action) return;
             input.value = '';
+            // Track total player actions for guidance system
+            totalPlayerActions++;
             await sendActionText(action);
         }
 
         async function sendActionText(action) {
             addPassage(action, 'player');
             showLoading();
+
+            // Check if player needs story guidance (using suggestions frequently)
+            const needsGuidance = needsStoryGuidance();
 
             // Create timeout controller
             const controller = new AbortController();
@@ -5187,7 +7768,7 @@ Example:
                 const response = await fetch(API_BASE + '/game/session/' + currentSessionId + '/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action }),
+                    body: JSON.stringify({ action: action, needs_guidance: needsGuidance }),
                     signal: controller.signal
                 });
 
@@ -5263,8 +7844,8 @@ Example:
                 document.querySelectorAll('.genre-card').forEach(c => c.classList.remove('selected'));
                 document.getElementById('begin-btn').disabled = true;
 
-                // Go back to onboarding
-                showScreen('onboarding');
+                // Go back to main landing
+                showScreen('start');
             }
         }
 
@@ -5813,6 +8394,7 @@ Example:
                     playerInventory = data.inventory || [];  // Restore inventory
 
                     showScreen('story');
+                    updateQuickRollButton();
                     document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
                     document.getElementById('story-container').innerHTML = '';
 
@@ -6126,6 +8708,274 @@ Example:
                 }
             } catch (err) {
                 statsEl.innerHTML = '<span style="color: var(--accent-rose);">Error: ' + err.message + '</span>';
+            }
+        }
+
+        // ============================================================
+        // LORE FILE MANAGER
+        // ============================================================
+
+        let uploadQueue = [];
+
+        // Initialize drag and drop
+        function initFileManager() {
+            const dropZone = document.getElementById('file-drop-zone');
+            if (!dropZone) return;
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                handleDroppedFiles(e.dataTransfer.files);
+            });
+
+            // Load file list
+            refreshFileList();
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            handleDroppedFiles(files);
+            event.target.value = ''; // Reset input
+        }
+
+        function handleDroppedFiles(files) {
+            const allowedTypes = ['.txt', '.md', '.json', '.pdf'];
+
+            for (const file of files) {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowedTypes.includes(ext)) {
+                    showStatus('file-manager-status', `Skipped ${file.name}: unsupported file type`, 'warning');
+                    continue;
+                }
+
+                // Check for duplicates in queue
+                if (uploadQueue.some(f => f.name === file.name)) {
+                    continue;
+                }
+
+                uploadQueue.push(file);
+            }
+
+            updateUploadQueueDisplay();
+        }
+
+        function updateUploadQueueDisplay() {
+            const queueEl = document.getElementById('upload-queue');
+            const listEl = document.getElementById('upload-queue-list');
+
+            if (uploadQueue.length === 0) {
+                queueEl.style.display = 'none';
+                return;
+            }
+
+            queueEl.style.display = 'block';
+
+            listEl.innerHTML = uploadQueue.map((file, index) => {
+                const icon = getFileIcon(file.name);
+                const size = formatFileSize(file.size);
+
+                return `
+                    <div class="file-queue-item">
+                        <span class="file-icon">${icon}</span>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${size}</div>
+                        </div>
+                        <button class="file-remove" onclick="removeFromQueue(${index})">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeFromQueue(index) {
+            uploadQueue.splice(index, 1);
+            updateUploadQueueDisplay();
+        }
+
+        function clearUploadQueue() {
+            uploadQueue = [];
+            updateUploadQueueDisplay();
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'txt': '📄',
+                'md': '📝',
+                'json': '📋',
+                'pdf': '📕'
+            };
+            return icons[ext] || '📁';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        async function uploadFiles() {
+            if (uploadQueue.length === 0) return;
+
+            const statusEl = document.getElementById('file-manager-status');
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const file of uploadQueue) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch(window.location.origin + '/admin/lore/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        const err = await response.json();
+                        console.error(`Failed to upload ${file.name}:`, err);
+                    }
+                } catch (err) {
+                    errorCount++;
+                    console.error(`Error uploading ${file.name}:`, err);
+                }
+            }
+
+            // Clear queue and refresh
+            uploadQueue = [];
+            updateUploadQueueDisplay();
+            refreshFileList();
+
+            // Show status
+            if (errorCount === 0) {
+                showStatus('file-manager-status', `Successfully uploaded ${successCount} file(s)`, 'success');
+            } else {
+                showStatus('file-manager-status', `Uploaded ${successCount}, failed ${errorCount}`, 'warning');
+            }
+        }
+
+        async function refreshFileList() {
+            const listEl = document.getElementById('uploaded-files-list');
+            if (!listEl) return;
+
+            listEl.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;"><span class="loading"></span> Loading files...</div>';
+
+            try {
+                const response = await fetch(window.location.origin + '/admin/lore/files');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const files = data.files || [];
+
+                    if (files.length === 0) {
+                        listEl.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">No lore files uploaded yet</div>';
+                        return;
+                    }
+
+                    listEl.innerHTML = files.map(file => `
+                        <div class="uploaded-file-item">
+                            <span class="file-icon">${getFileIcon(file.name)}</span>
+                            <div class="file-details">
+                                <div class="file-name">${file.name}</div>
+                                <div class="file-meta">${formatFileSize(file.size)} • ${formatDate(file.uploaded_at)}</div>
+                            </div>
+                            <div class="file-actions">
+                                <button class="file-action-btn" onclick="viewLoreFile('${file.id}')">View</button>
+                                <button class="file-action-btn" onclick="importToLore('${file.id}')">Import</button>
+                                <button class="file-action-btn delete" onclick="deleteLoreFile('${file.id}')">Delete</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    listEl.innerHTML = '<div style="color: var(--accent-rose); text-align: center; padding: 20px;">Failed to load files</div>';
+                }
+            } catch (err) {
+                listEl.innerHTML = '<div style="color: var(--accent-rose); text-align: center; padding: 20px;">Error: ' + err.message + '</div>';
+            }
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return 'Unknown';
+            const date = new Date(isoString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function viewLoreFile(fileId) {
+            try {
+                const response = await fetch(window.location.origin + '/admin/lore/files/' + fileId);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Create a modal to show content
+                    const content = data.content || 'No content available';
+                    const name = data.name || 'File';
+
+                    // Simple alert for now, could be enhanced with a proper modal
+                    const preview = content.length > 2000 ? content.substring(0, 2000) + '...' : content;
+                    alert(`📄 ${name}\n\n${preview}`);
+                } else {
+                    showStatus('file-manager-status', 'Failed to load file content', 'error');
+                }
+            } catch (err) {
+                showStatus('file-manager-status', 'Error: ' + err.message, 'error');
+            }
+        }
+
+        async function importToLore(fileId) {
+            if (!confirm('Import this file into the lore database? This will parse the content and create entities.')) {
+                return;
+            }
+
+            showStatus('file-manager-status', 'Importing...', 'info');
+
+            try {
+                const response = await fetch(window.location.origin + '/admin/lore/import/' + fileId, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('file-manager-status', `Imported: ${data.entities_created || 0} entities created`, 'success');
+                    loadDbStats(); // Refresh stats
+                } else {
+                    const err = await response.json();
+                    showStatus('file-manager-status', 'Import failed: ' + (err.detail || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showStatus('file-manager-status', 'Error: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteLoreFile(fileId) {
+            if (!confirm('Delete this lore file? This cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(window.location.origin + '/admin/lore/files/' + fileId, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showStatus('file-manager-status', 'File deleted', 'success');
+                    refreshFileList();
+                } else {
+                    showStatus('file-manager-status', 'Failed to delete file', 'error');
+                }
+            } catch (err) {
+                showStatus('file-manager-status', 'Error: ' + err.message, 'error');
             }
         }
 
@@ -6478,6 +9328,265 @@ Example:
                     break;
             }
         }
+
+        // ==========================================
+        // FEEDBACK SYSTEM (for playtesters)
+        // ==========================================
+        let selectedFeedbackCategory = null;
+
+        function showFeedbackButton() {
+            // Show feedback button (always available, not just for playtesters)
+            document.getElementById('feedback-fab').classList.remove('hidden');
+        }
+
+        function hideFeedbackButton() {
+            document.getElementById('feedback-fab').classList.add('hidden');
+        }
+
+        // Show feedback button on DOMContentLoaded (for everyone)
+        document.addEventListener('DOMContentLoaded', () => {
+            // Delay slightly to ensure page is ready
+            setTimeout(() => {
+                const fab = document.getElementById('feedback-fab');
+                if (fab) {
+                    fab.classList.remove('hidden');
+                    console.log('Feedback button shown');
+                } else {
+                    console.error('Feedback button element not found!');
+                }
+            }, 500);
+        });
+
+        function openFeedbackModal() {
+            // Reset form
+            document.getElementById('feedback-form-content').style.display = 'block';
+            document.getElementById('feedback-success-content').style.display = 'none';
+            document.getElementById('feedback-text').value = '';
+            document.getElementById('feedback-submit-btn').disabled = true;
+            selectedFeedbackCategory = null;
+
+            // Clear category selection
+            document.querySelectorAll('.feedback-category').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            // Show modal
+            document.getElementById('feedback-modal').classList.add('visible');
+
+            // Focus textarea
+            setTimeout(() => {
+                document.getElementById('feedback-text').focus();
+            }, 100);
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedback-modal').classList.remove('visible');
+        }
+
+        function selectFeedbackCategory(btn) {
+            // Remove selection from all
+            document.querySelectorAll('.feedback-category').forEach(b => {
+                b.classList.remove('selected');
+            });
+
+            // Select this one
+            btn.classList.add('selected');
+            selectedFeedbackCategory = btn.dataset.category;
+
+            // Enable submit if there's text
+            updateFeedbackSubmitState();
+        }
+
+        function updateFeedbackSubmitState() {
+            const text = document.getElementById('feedback-text').value.trim();
+            const hasContent = text.length > 0 || selectedFeedbackCategory;
+            document.getElementById('feedback-submit-btn').disabled = !hasContent;
+        }
+
+        // Listen for text input
+        document.addEventListener('DOMContentLoaded', () => {
+            const feedbackText = document.getElementById('feedback-text');
+            if (feedbackText) {
+                feedbackText.addEventListener('input', updateFeedbackSubmitState);
+            }
+        });
+
+        async function submitFeedback() {
+            const text = document.getElementById('feedback-text').value.trim();
+            const category = selectedFeedbackCategory;
+
+            if (!text && !category) {
+                return;
+            }
+
+            const submitBtn = document.getElementById('feedback-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+
+            // Collect context about what's happening
+            const context = {
+                tester: validatedTester || 'anonymous',
+                timestamp: new Date().toISOString(),
+                currentScreen: document.querySelector('.screen.active')?.id || 'unknown',
+                hasCharacter: !!currentCharacter,
+                characterName: currentCharacter?.name || null,
+                genre: selectedGenre || null,
+                rulesMode: rulesMode || null,
+                storyLength: storyLog.length,
+                lastStoryEntry: storyLog.length > 0 ? storyLog[storyLog.length - 1]?.substring(0, 200) : null,
+                userAgent: navigator.userAgent,
+                screenSize: `${window.innerWidth}x${window.innerHeight}`
+            };
+
+            const feedback = {
+                category: category,
+                text: text,
+                context: context
+            };
+
+            try {
+                // Try to send to backend
+                const response = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(feedback)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to submit feedback');
+                }
+
+                // Show success
+                document.getElementById('feedback-form-content').style.display = 'none';
+                document.getElementById('feedback-success-content').style.display = 'block';
+
+                // Close after delay
+                setTimeout(() => {
+                    closeFeedbackModal();
+                }, 2000);
+
+            } catch (error) {
+                console.error('Feedback submission error:', error);
+
+                // Store locally as fallback
+                const storedFeedback = JSON.parse(localStorage.getItem('pendingFeedback') || '[]');
+                storedFeedback.push(feedback);
+                localStorage.setItem('pendingFeedback', JSON.stringify(storedFeedback));
+
+                // Still show success (we have it stored locally)
+                document.getElementById('feedback-form-content').style.display = 'none';
+                document.getElementById('feedback-success-content').style.display = 'block';
+
+                setTimeout(() => {
+                    closeFeedbackModal();
+                }, 2000);
+            }
+        }
+
+        // ==========================================
+        // SESSION LOGGING (for playtester analytics)
+        // ==========================================
+        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const sessionEvents = [];
+        let lastEventFlush = Date.now();
+
+        function logSessionEvent(eventType, data = {}) {
+            // Only log for playtesters
+            if (!validatedTester) return;
+
+            const event = {
+                type: eventType,
+                timestamp: new Date().toISOString(),
+                data: data
+            };
+
+            sessionEvents.push(event);
+
+            // Batch send every 30 seconds or when there are 10+ events
+            if (sessionEvents.length >= 10 || (Date.now() - lastEventFlush) > 30000) {
+                flushSessionEvents();
+            }
+        }
+
+        async function flushSessionEvents() {
+            if (sessionEvents.length === 0) return;
+
+            const eventsToSend = [...sessionEvents];
+            sessionEvents.length = 0;  // Clear the queue
+            lastEventFlush = Date.now();
+
+            try {
+                await fetch('/api/session-log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        tester: validatedTester,
+                        events: eventsToSend
+                    })
+                });
+            } catch (e) {
+                // Store locally if failed
+                const pending = JSON.parse(localStorage.getItem('pendingSessionEvents') || '[]');
+                pending.push(...eventsToSend.map(ev => ({ ...ev, session_id: sessionId, tester: validatedTester })));
+                localStorage.setItem('pendingSessionEvents', JSON.stringify(pending));
+            }
+        }
+
+        // Flush events before page unload
+        window.addEventListener('beforeunload', () => {
+            if (sessionEvents.length > 0) {
+                // Use sendBeacon for reliable delivery on page unload
+                navigator.sendBeacon('/api/session-log', JSON.stringify({
+                    session_id: sessionId,
+                    tester: validatedTester,
+                    events: sessionEvents
+                }));
+            }
+        });
+
+        // Periodic flush
+        setInterval(flushSessionEvents, 30000);
+
+        // Log session start
+        document.addEventListener('DOMContentLoaded', () => {
+            logSessionEvent('session_start', {
+                user_agent: navigator.userAgent,
+                screen_size: `${window.innerWidth}x${window.innerHeight}`,
+                referrer: document.referrer
+            });
+        });
+
+        // Retry sending any pending feedback when online
+        async function flushPendingFeedback() {
+            const pending = JSON.parse(localStorage.getItem('pendingFeedback') || '[]');
+            if (pending.length === 0) return;
+
+            const stillPending = [];
+
+            for (const feedback of pending) {
+                try {
+                    const response = await fetch('/api/feedback', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(feedback)
+                    });
+
+                    if (!response.ok) {
+                        stillPending.push(feedback);
+                    }
+                } catch {
+                    stillPending.push(feedback);
+                }
+            }
+
+            localStorage.setItem('pendingFeedback', JSON.stringify(stillPending));
+        }
+
+        // Try to flush pending feedback on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(flushPendingFeedback, 5000);
+        });
     </script>
 </body>
 </html>
