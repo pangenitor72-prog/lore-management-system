@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <title>AIRPG - AI-Powered Roleplaying</title>
+
+    <!-- PWA Support - Makes app installable like native -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#c98b8b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AIRPG">
+    <link rel="apple-touch-icon" href="/icons/icon.svg">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+
     <!-- vis.js for graph visualization -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
@@ -9587,6 +9597,85 @@ Example:
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(flushPendingFeedback, 5000);
         });
+
+        // ============================================================
+        // PWA INSTALL SUPPORT
+        // ============================================================
+
+        let deferredPrompt = null;
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+
+        // Capture install prompt for later use
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install button
+            showInstallButton();
+        });
+
+        function showInstallButton() {
+            // Create install button if it doesn't exist
+            if (!document.getElementById('install-btn')) {
+                const btn = document.createElement('button');
+                btn.id = 'install-btn';
+                btn.innerHTML = 'Install App';
+                btn.style.cssText = `
+                    position: fixed;
+                    bottom: 80px;
+                    left: 20px;
+                    background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
+                    color: var(--bg-primary);
+                    border: none;
+                    padding: 12px 20px;
+                    border-radius: 25px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(212, 165, 116, 0.4);
+                    z-index: 9999;
+                    font-size: 14px;
+                `;
+                btn.onclick = installApp;
+                document.body.appendChild(btn);
+            }
+        }
+
+        async function installApp() {
+            if (!deferredPrompt) return;
+
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('Install prompt outcome:', outcome);
+            deferredPrompt = null;
+
+            // Hide install button
+            const btn = document.getElementById('install-btn');
+            if (btn) btn.remove();
+        }
+
+        // Hide install button if already installed
+        window.addEventListener('appinstalled', () => {
+            console.log('App installed successfully');
+            deferredPrompt = null;
+            const btn = document.getElementById('install-btn');
+            if (btn) btn.remove();
+        });
+
+        // Check if running as installed PWA
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('Running as installed PWA');
+        }
     </script>
 </body>
 </html>
