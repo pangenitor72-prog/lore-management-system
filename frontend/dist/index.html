@@ -7075,7 +7075,13 @@ Example:
             });
             const conceptInput = document.getElementById('char-concept-input');
             const arch = availableArchetypes.find(a => a.id === archId);
-            if (arch && conceptInput && !conceptInput.value.trim()) {
+            if (arch && conceptInput) {
+                // If empty or was previously set by another quick archetype, fill it in
+                const currentValue = conceptInput.value.trim();
+                const isQuickArchetypeValue = currentValue.startsWith('A ') && currentValue.includes(' who');
+                if (!currentValue || isQuickArchetypeValue) {
+                    conceptInput.value = `A ${arch.display_name.toLowerCase()} who seeks adventure`;
+                }
                 conceptInput.placeholder = `A ${arch.display_name.toLowerCase()} with...`;
             }
         }
@@ -7187,7 +7193,11 @@ Example:
                 document.getElementById('char-next-btn').disabled = true;
                 document.getElementById('char-next-btn').innerHTML = '<span class="loading"></span> Generating...';
 
+                const startTime = performance.now();
+                console.log('[CharGen] Starting character generation...');
+
                 try {
+                    const conceptStart = performance.now();
                     const response = await fetch(API_BASE + '/dnd/characters/concept', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -7201,12 +7211,18 @@ Example:
 
                     if (response.ok) {
                         const data = await response.json();
+                        console.log(`[CharGen] Concept API took ${(performance.now() - conceptStart).toFixed(0)}ms`);
+
                         // Get full character details
+                        const detailStart = performance.now();
                         const detailRes = await fetch(API_BASE + '/dnd/characters/' + data.character_id);
+                        console.log(`[CharGen] Detail fetch took ${(performance.now() - detailStart).toFixed(0)}ms`);
+
                         if (detailRes.ok) {
                             const detail = await detailRes.json();
                             charCreationData.generatedChar = detail.character;
                             charCreationData.characterId = data.character_id;
+                            console.log(`[CharGen] Total time: ${(performance.now() - startTime).toFixed(0)}ms`);
                         } else {
                             console.error('Failed to fetch character details');
                             showCreationError('Character created but details unavailable. Using defaults.');
