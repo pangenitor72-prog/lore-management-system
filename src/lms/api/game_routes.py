@@ -2906,3 +2906,86 @@ async def get_graph_data(
     except Exception as e:
         logger.error(f"Graph query failed: {e}")
         return {"nodes": [], "edges": [], "error": str(e)}
+
+
+@router.get("/graph/node/{node_id}")
+async def get_node_details(
+    request: Request,
+    node_id: str,
+):
+    """
+    Get full details for a specific node in the graph.
+
+    Returns all properties stored on the node, including OCEAN personality
+    traits for characters, goals, fears, secrets, etc.
+    """
+    db = get_optional_neo4j_db(request)
+    if not db:
+        return {"error": "Database not available", "node_id": node_id}
+
+    try:
+        # Fetch all properties for the node
+        query = """
+        MATCH (n)
+        WHERE n.canon_id = $node_id OR n.name = $node_id OR id(n) = toInteger($node_id)
+        RETURN
+            COALESCE(n.canon_id, toString(id(n))) AS id,
+            labels(n) AS labels,
+            properties(n) AS props
+        LIMIT 1
+        """
+        result = await db.execute(query, {"node_id": node_id})
+
+        if not result:
+            return {"error": "Node not found", "node_id": node_id}
+
+        row = result[0]
+        node_labels = row.get("labels", [])
+        props = row.get("props", {})
+
+        # Determine entity type from labels or props
+        entity_type = props.get("entity_type") or (node_labels[0] if node_labels else "Unknown")
+
+        # Extract OCEAN personality traits
+        ocean = {}
+        ocean_keys = ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]
+        for key in ocean_keys:
+            if key in props:
+                ocean[key] = props[key]
+
+        # Extract relationships
+        rel_query = """
+        MATCH (n)-[r]-(other)
+        WHERE n.canon_id = $node_id OR n.name = $node_id OR id(n) = toInteger($node_id)
+        RETURN
+            type(r) AS rel_type,
+            CASE WHEN startNode(r) = n THEN 'outgoing' ELSE 'incoming' END AS direction,
+            COALESCE(other.name, other.canonical_name, 'Unknown') AS other_name,
+            labels(other)[0] AS other_type
+        LIMIT 20
+        """
+        rel_result = await db.execute(rel_query, {"node_id": node_id})
+
+        relationships = []
+        for rel_row in rel_result:
+            relationships.append({
+                "type": rel_row["rel_type"],
+                "direction": rel_row["direction"],
+                "target_name": rel_row["other_name"],
+                "target_type": rel_row["other_type"],
+            })
+
+        return {
+            "id": row["id"],
+            "labels": node_labels,
+            "entity_type": entity_type,
+            "name": props.get("name") or props.get("canonical_name") or "Unknown",
+            "description": props.get("description", ""),
+            "properties": props,
+            "ocean": ocean if ocean else None,
+            "relationships": relationships,
+        }
+
+    except Exception as e:
+        logger.error(f"Node detail query failed: {e}")
+        return {"error": str(e), "node_id": node_id}

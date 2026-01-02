@@ -10385,24 +10385,26 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             contentEl.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Fetching entity data...</p>';
 
             try {
-                const response = await fetch(API_BASE + '/entities/' + encodeURIComponent(entityId));
+                // Use the new graph/node endpoint to get full data
+                const response = await fetch(API_BASE + '/graph/node/' + encodeURIComponent(entityId));
+                const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error('Entity not found in database');
+                if (data.error) {
+                    throw new Error(data.error);
                 }
 
-                const entity = await response.json();
-                renderEntityDetails(entity);
+                renderFullNodeDetails(data);
 
             } catch (err) {
-                // If entity not found in entities API, show basic info from graph
+                // Fallback to basic info
                 contentEl.innerHTML = `
                     <div style="text-align: center; padding: 20px;">
                         <p style="color: var(--text-secondary); margin-bottom: 15px;">
-                            This entity exists in the graph but detailed information is not available.
+                            Unable to load entity details.
                         </p>
                         <p style="color: var(--text-muted); font-size: 0.85rem;">
-                            ID: ${entityId}
+                            ID: ${entityId}<br>
+                            Error: ${err.message}
                         </p>
                     </div>
                 `;
@@ -10512,6 +10514,172 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closeEntityInspector() {
             document.getElementById('entity-inspector-modal').style.display = 'none';
+        }
+
+        function renderFullNodeDetails(data) {
+            const titleEl = document.getElementById('entity-inspector-title');
+            const contentEl = document.getElementById('entity-inspector-content');
+
+            titleEl.textContent = data.name || 'Unknown Entity';
+
+            let html = '';
+
+            // Type badge
+            const typeColors = {
+                'Character': 'var(--accent-rose)',
+                'Location': 'var(--accent-sage)',
+                'Faction': 'var(--accent-lavender)',
+                'Item': 'var(--accent-gold)',
+                'Event': '#8b9fc9',
+                'Concept': 'var(--accent-warm)'
+            };
+            const typeColor = typeColors[data.entity_type] || 'var(--text-muted)';
+
+            html += `
+                <div style="margin-bottom: 15px;">
+                    <span style="
+                        background: ${typeColor};
+                        color: var(--bg-primary);
+                        padding: 4px 12px;
+                        border-radius: 20px;
+                        font-size: 0.8rem;
+                        font-weight: 600;
+                    ">${data.entity_type}</span>
+                </div>
+            `;
+
+            // Description
+            if (data.description) {
+                html += `
+                    <div style="background: var(--bg-card); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                        <p style="color: var(--text-primary); margin: 0; line-height: 1.6;">${data.description}</p>
+                    </div>
+                `;
+            }
+
+            // OCEAN Personality Traits (for Characters)
+            if (data.ocean && Object.keys(data.ocean).length > 0) {
+                html += `
+                    <div style="margin-bottom: 20px;">
+                        <div style="color: var(--accent-warm); font-size: 0.85rem; font-weight: 600; margin-bottom: 12px;">PERSONALITY (OCEAN)</div>
+                `;
+
+                const oceanLabels = {
+                    openness: { name: 'Openness', low: 'Conventional', high: 'Creative' },
+                    conscientiousness: { name: 'Conscientiousness', low: 'Spontaneous', high: 'Disciplined' },
+                    extraversion: { name: 'Extraversion', low: 'Reserved', high: 'Outgoing' },
+                    agreeableness: { name: 'Agreeableness', low: 'Skeptical', high: 'Compassionate' },
+                    neuroticism: { name: 'Neuroticism', low: 'Confident', high: 'Anxious' }
+                };
+
+                for (const [trait, value] of Object.entries(data.ocean)) {
+                    const info = oceanLabels[trait] || { name: trait, low: 'Low', high: 'High' };
+                    const percent = Math.round(value * 100);
+                    const label = value < 0.4 ? info.low : (value > 0.6 ? info.high : 'Balanced');
+
+                    html += `
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary); font-size: 0.8rem;">${info.name}</span>
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">${label}</span>
+                            </div>
+                            <div style="background: var(--bg-secondary); border-radius: 6px; height: 8px; overflow: hidden;">
+                                <div style="background: ${typeColor}; height: 100%; width: ${percent}%; border-radius: 6px;"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+            }
+
+            // Character-specific fields (goals, fears, secrets, etc.)
+            const props = data.properties || {};
+            const characterFields = ['role', 'race', 'species', 'occupation', 'alignment', 'faction', 'goals', 'fears', 'secrets', 'background'];
+            const hasCharacterFields = characterFields.some(f => props[f]);
+
+            if (hasCharacterFields) {
+                html += `<div style="margin-bottom: 20px;">`;
+
+                for (const field of characterFields) {
+                    if (props[field]) {
+                        const displayName = field.charAt(0).toUpperCase() + field.slice(1);
+                        const isLongField = ['goals', 'fears', 'secrets', 'background'].includes(field);
+
+                        if (isLongField) {
+                            html += `
+                                <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                                    <div style="color: var(--accent-warm); font-size: 0.75rem; margin-bottom: 6px; text-transform: uppercase;">${displayName}</div>
+                                    <div style="color: var(--text-primary); font-size: 0.9rem; line-height: 1.5;">${props[field]}</div>
+                                </div>
+                            `;
+                        } else {
+                            html += `
+                                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+                                    <span style="color: var(--text-muted); font-size: 0.85rem; min-width: 80px;">${displayName}:</span>
+                                    <span style="color: var(--text-primary); font-size: 0.85rem;">${props[field]}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                html += `</div>`;
+            }
+
+            // Location-specific fields
+            const locationFields = ['geography', 'climate', 'population', 'government', 'notable_features', 'dangers', 'resources', 'atmosphere'];
+            const hasLocationFields = locationFields.some(f => props[f]);
+
+            if (hasLocationFields) {
+                html += `<div style="margin-bottom: 20px;">`;
+                for (const field of locationFields) {
+                    if (props[field]) {
+                        const displayName = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        html += `
+                            <div style="background: var(--bg-card); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                                <div style="color: var(--accent-sage); font-size: 0.75rem; margin-bottom: 4px;">${displayName}</div>
+                                <div style="color: var(--text-primary); font-size: 0.85rem;">${props[field]}</div>
+                            </div>
+                        `;
+                    }
+                }
+                html += `</div>`;
+            }
+
+            // Relationships
+            if (data.relationships && data.relationships.length > 0) {
+                html += `
+                    <div style="margin-bottom: 20px;">
+                        <div style="color: var(--accent-warm); font-size: 0.85rem; font-weight: 600; margin-bottom: 10px;">RELATIONSHIPS</div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                `;
+
+                for (const rel of data.relationships) {
+                    const arrow = rel.direction === 'outgoing' ? '→' : '←';
+                    const relColor = typeColors[rel.target_type] || 'var(--text-muted)';
+
+                    html += `
+                        <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 8px 12px; border-radius: 6px;">
+                            <span style="color: var(--text-muted);">${arrow}</span>
+                            <span style="color: var(--accent-gold); font-size: 0.8rem; text-transform: uppercase;">${rel.type.replace(/_/g, ' ')}</span>
+                            <span style="color: var(--text-muted);">${arrow}</span>
+                            <span style="color: ${relColor}; font-size: 0.85rem;">${rel.target_name}</span>
+                            <span style="color: var(--text-muted); font-size: 0.75rem; margin-left: auto;">${rel.target_type}</span>
+                        </div>
+                    `;
+                }
+                html += `</div></div>`;
+            }
+
+            // ID footer
+            html += `
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 15px;">
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">
+                        ID: <span style="font-family: monospace;">${data.id}</span>
+                    </div>
+                </div>
+            `;
+
+            contentEl.innerHTML = html;
         }
 
         // ==========================================
