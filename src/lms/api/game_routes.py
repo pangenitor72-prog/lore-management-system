@@ -255,6 +255,151 @@ async def get_invite_status():
 
 
 # ============================================================
+# ANALYTICS DASHBOARD
+# ============================================================
+
+def _load_session_logs() -> List[Dict[str, Any]]:
+    """Load session logs from file."""
+    try:
+        log_file = Path(__file__).parent.parent.parent.parent / "data" / "session_logs.json"
+        if log_file.exists():
+            with open(log_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        logger.error(f"Failed to load session logs: {e}")
+        return []
+
+
+@router.get("/analytics")
+async def get_analytics():
+    """
+    Get comprehensive analytics for the admin dashboard.
+    Shows tester engagement, session activity, and usage patterns.
+    """
+    # Load invite codes
+    codes_data = _load_invite_codes()
+    codes = codes_data.get("codes", [])
+
+    # Load session logs
+    session_logs = _load_session_logs()
+
+    # === TESTER ANALYTICS ===
+    activated_testers = [c for c in codes if c.get("activated", False)]
+    testers = []
+    for tester in activated_testers:
+        tester_name = tester.get("name", "Unknown")
+        tester_code = tester.get("code", "")
+        activated_at = tester.get("activated_at")
+
+        # Find this tester's sessions
+        tester_sessions = [log for log in session_logs if log.get("tester") == tester_name]
+        tester_actions = [log for log in tester_sessions if log.get("event_type") == "player_action"]
+
+        # Get unique session IDs
+        unique_sessions = set(log.get("session_id") for log in tester_sessions if log.get("session_id"))
+
+        # Find last activity
+        last_activity = None
+        if tester_sessions:
+            timestamps = [log.get("received_at") or log.get("timestamp") for log in tester_sessions]
+            timestamps = [t for t in timestamps if t]
+            if timestamps:
+                last_activity = max(timestamps)
+
+        testers.append({
+            "name": tester_name,
+            "code": tester_code,
+            "activated_at": activated_at,
+            "last_activity": last_activity,
+            "total_sessions": len(unique_sessions),
+            "total_actions": len(tester_actions),
+        })
+
+    # Sort by last activity (most recent first)
+    testers.sort(key=lambda x: x.get("last_activity") or "", reverse=True)
+
+    # === SESSION ANALYTICS ===
+    all_sessions = {}
+    for log in session_logs:
+        sid = log.get("session_id")
+        if not sid:
+            continue
+        if sid not in all_sessions:
+            all_sessions[sid] = {
+                "session_id": sid,
+                "tester": log.get("tester"),
+                "events": [],
+                "started_at": None,
+                "last_event": None,
+            }
+        all_sessions[sid]["events"].append(log)
+
+        timestamp = log.get("received_at") or log.get("timestamp")
+        if timestamp:
+            if not all_sessions[sid]["started_at"] or timestamp < all_sessions[sid]["started_at"]:
+                all_sessions[sid]["started_at"] = timestamp
+            if not all_sessions[sid]["last_event"] or timestamp > all_sessions[sid]["last_event"]:
+                all_sessions[sid]["last_event"] = timestamp
+
+    # Calculate session stats
+    sessions_list = []
+    for sid, session in all_sessions.items():
+        events = session["events"]
+        action_count = sum(1 for e in events if e.get("event_type") == "player_action")
+        screen_views = [e for e in events if e.get("event_type") == "screen_view"]
+
+        sessions_list.append({
+            "session_id": sid[:8] + "...",
+            "tester": session["tester"],
+            "started_at": session["started_at"],
+            "last_event": session["last_event"],
+            "event_count": len(events),
+            "action_count": action_count,
+            "screens_visited": len(set(e.get("data", {}).get("screen") for e in screen_views if e.get("data"))),
+        })
+
+    # Sort by start time (most recent first)
+    sessions_list.sort(key=lambda x: x.get("started_at") or "", reverse=True)
+
+    # === AGGREGATE STATS ===
+    total_actions = sum(1 for log in session_logs if log.get("event_type") == "player_action")
+    total_sessions = len(all_sessions)
+
+    # Event type breakdown
+    event_types = {}
+    for log in session_logs:
+        evt = log.get("event_type", "unknown")
+        event_types[evt] = event_types.get(evt, 0) + 1
+
+    # Activity by date (last 7 days)
+    from collections import defaultdict
+    activity_by_date = defaultdict(int)
+    for log in session_logs:
+        timestamp = log.get("received_at") or log.get("timestamp")
+        if timestamp:
+            try:
+                date = timestamp[:10]  # YYYY-MM-DD
+                activity_by_date[date] += 1
+            except:
+                pass
+
+    return {
+        "summary": {
+            "testers_activated": len(activated_testers),
+            "testers_max": codes_data.get("max_testers", 30),
+            "total_sessions": total_sessions,
+            "total_events": len(session_logs),
+            "total_actions": total_actions,
+        },
+        "testers": testers[:20],  # Top 20 most recent
+        "recent_sessions": sessions_list[:15],  # Last 15 sessions
+        "event_breakdown": event_types,
+        "activity_by_date": dict(sorted(activity_by_date.items())[-7:]),  # Last 7 days
+    }
+
+
+# ============================================================
 # FEEDBACK SYSTEM (for playtester feedback collection)
 # ============================================================
 
