@@ -12,8 +12,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AIRPG">
-    <link rel="apple-touch-icon" href="/icons/icon.svg">
-    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="apple-touch-icon" href="/icons/icon.png">
+    <link rel="icon" type="image/png" href="/icons/icon.png">
 
     <!-- vis.js for graph visualization -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
@@ -213,6 +213,18 @@
             padding: 40px 20px;
         }
 
+        .invite-watermark {
+            position: absolute;
+            width: 300px;
+            height: auto;
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         .invite-box {
             background: var(--bg-card);
             border: 2px solid var(--border-subtle);
@@ -220,6 +232,8 @@
             padding: 40px;
             max-width: 450px;
             width: 100%;
+            position: relative;
+            z-index: 1;
         }
 
         .invite-box h2 {
@@ -324,6 +338,19 @@
         .landing-hero {
             text-align: center;
             margin-bottom: 50px;
+        }
+
+        .landing-mascot {
+            width: 180px;
+            height: auto;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 20px rgba(232, 196, 124, 0.3));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         .landing-title {
@@ -3879,6 +3906,7 @@
 
         <!-- Invite Code Screen (Alpha Testing) - Disabled for now -->
         <div id="invite-code" class="screen">
+            <img src="/images/raven.png" alt="" class="invite-watermark">
             <div class="invite-box">
                 <span class="alpha-badge">Family Playtest</span>
                 <h2>Welcome, Family!</h2>
@@ -3948,6 +3976,7 @@
         <!-- Landing Screen (Intent-Based) -->
         <div id="start" class="screen active">
             <div class="landing-hero">
+                <img src="/images/raven.png" alt="AIRPG Raven" class="landing-mascot">
                 <h1 class="landing-title">AIRPG</h1>
                 <p class="landing-subtitle">AI-Powered Roleplaying</p>
             </div>
