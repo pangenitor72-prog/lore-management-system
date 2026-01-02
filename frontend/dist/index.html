@@ -10386,7 +10386,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Use the new graph/node endpoint to get full data
-                const response = await fetch(API_BASE + '/graph/node/' + encodeURIComponent(entityId));
+                const response = await fetch(API_BASE + '/game/graph/node/' + encodeURIComponent(entityId));
                 const data = await response.json();
 
                 if (data.error) {
