@@ -1028,10 +1028,18 @@ async def reset_database(
 # In-memory announcement storage (persists until server restart)
 # For production, you'd want to store this in a file or database
 _current_announcement = {
-    "id": "update-2024-12-31",
+    "id": "update-2026-01-02",
     "type": "success",  # info, warning, success, maintenance
     "icon": "🎉",
-    "message": "<strong>New Update!</strong> Starting inventory now included with character creation. Action buttons added at bottom of screen.",
+    "message": """<strong>Character Creation Overhaul!</strong> The new 5e-style character creation is now live. Pick your race, class, and abilities step-by-step — no more wrong equipment!
+<br><br>
+<strong>What's New:</strong>
+<ul style="margin: 8px 0 0 20px; padding: 0; text-align: left;">
+<li><strong>Standard Creation Mode</strong> — Choose race, class, assign abilities, pick skills</li>
+<li><strong>All 12 D&D Classes</strong> — Barbarian, Bard, Druid, Monk, Paladin, Ranger, Sorcerer, Warlock added</li>
+<li><strong>Starting Equipment Preview</strong> — See exactly what gear you'll get before starting</li>
+<li><strong>Proper Ability Scores</strong> — Standard array (15,14,13,12,10,8) with auto-assign option</li>
+</ul>""",
     "dismissible": True,
     "persistent": False,
     "active": True

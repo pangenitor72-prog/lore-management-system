@@ -1682,6 +1682,211 @@
             color: var(--accent-warm);
         }
 
+        /* Ability Score Assignment Grid */
+        .ability-assignment-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .ability-assign-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .ability-assign-name {
+            font-size: 0.95rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .ability-assign-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .ability-select {
+            width: 100%;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .ability-select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .ability-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .ability-select option:disabled {
+            color: var(--text-muted);
+        }
+
+        /* Skill Selection Grid */
+        .skill-selection-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        /* Character Review Card */
+        .char-review-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .review-race-class {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .review-level {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .review-stats-row {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+        }
+
+        .review-stat {
+            text-align: center;
+        }
+
+        .review-stat-value {
+            display: block;
+            font-size: 1.4rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .review-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .review-abilities {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+            background: var(--bg-secondary);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .review-ability {
+            text-align: center;
+        }
+
+        .review-ability-name {
+            display: block;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .review-ability-score {
+            display: block;
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .review-ability-mod {
+            font-size: 0.75rem;
+            color: var(--accent-warm);
+        }
+
+        .review-section {
+            margin-top: 12px;
+        }
+
+        .review-section-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .review-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .review-skill {
+            background: var(--bg-secondary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .review-equipment {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .review-equipment-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .equipment-icon {
+            font-size: 1rem;
+        }
+
+        .equipment-name {
+            flex: 1;
+        }
+
+        @media (max-width: 480px) {
+            .ability-assignment-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .review-abilities {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .review-equipment {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .skill-option {
             display: inline-block;
             padding: 8px 14px;
@@ -3087,6 +3292,48 @@
             font-size: 0.85rem;
         }
 
+        /* Lore Textarea Drop Zone */
+        .lore-dropzone {
+            position: relative;
+        }
+
+        .lore-dropzone.drag-over textarea {
+            border-color: var(--accent-gold);
+            background: rgba(232, 196, 124, 0.05);
+        }
+
+        .lore-drop-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(232, 196, 124, 0.15);
+            border: 2px dashed var(--accent-gold);
+            border-radius: 8px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .lore-dropzone.drag-over .lore-drop-overlay {
+            display: flex;
+        }
+
+        .lore-drop-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .lore-drop-overlay div {
+            color: var(--accent-gold);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
         /* File Queue Item */
         .file-queue-item {
             display: flex;
@@ -3195,6 +3442,16 @@
         .uploaded-file-item .file-action-btn.delete:hover {
             border-color: var(--accent-rose);
             color: var(--accent-rose);
+        }
+
+        .uploaded-file-item .file-action-btn.use {
+            background: rgba(232, 196, 124, 0.15);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .uploaded-file-item .file-action-btn.use:hover {
+            background: rgba(232, 196, 124, 0.3);
         }
 
         /* Upload progress */
@@ -4220,7 +4477,11 @@
                     <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">
                         The Lore <span style="color: var(--text-muted);">(characters, locations, history, plot hooks - be creative!)</span>
                     </label>
-                    <textarea id="wc-lore" rows="12" placeholder="Write your world here...
+                    <div id="wc-lore-dropzone" class="lore-dropzone"
+                         ondragover="handleLoreDragOver(event)"
+                         ondragleave="handleLoreDragLeave(event)"
+                         ondrop="handleLoreDrop(event)">
+                        <textarea id="wc-lore" rows="12" oninput="updateLoreCharCount()" placeholder="Write your world here... or drop .txt/.md files!
 
 Include:
 • Key characters with personalities (brave, cunning, mysterious, warm, etc.)
@@ -4229,9 +4490,13 @@ Include:
 • History and secrets
 • Plot hooks to draw players in
 
-Example:
-'Lady Moira is the cunning matriarch of House Varell, known for her sharp wit and hidden kindness. She rules from the Obsidian Tower, a fortress built on secrets...'"
-                              style="width: 100%; padding: 15px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.95rem; line-height: 1.6; resize: vertical; min-height: 250px;"></textarea>
+You can also drag and drop lore files directly here, or use the 'Use' button on uploaded files below."
+                                  style="width: 100%; padding: 15px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.95rem; line-height: 1.6; resize: vertical; min-height: 250px;"></textarea>
+                        <div class="lore-drop-overlay">
+                            <div class="lore-drop-icon">📄</div>
+                            <div>Drop lore files here</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Create Button -->
@@ -4446,11 +4711,11 @@ Example:
             <div class="setup-section">
                 <h3>Character Creation</h3>
                 <div class="tone-options">
-                    <span class="tone-chip creation-chip selected" data-creation="concept" onclick="selectCreationMode('concept')">
-                        Quick <span style="font-size: 0.75rem; opacity: 0.7;">(AI builds it)</span>
+                    <span class="tone-chip creation-chip selected" data-creation="guided" onclick="selectCreationMode('guided')">
+                        Standard <span style="font-size: 0.75rem; opacity: 0.7;">(5e style)</span>
                     </span>
-                    <span class="tone-chip creation-chip" data-creation="guided" onclick="selectCreationMode('guided')">
-                        Guided <span style="font-size: 0.75rem; opacity: 0.7;">(step by step)</span>
+                    <span class="tone-chip creation-chip" data-creation="concept" onclick="selectCreationMode('concept')">
+                        AI Concept <span style="font-size: 0.75rem; opacity: 0.7;">(describe & generate)</span>
                     </span>
                     <span class="tone-chip creation-chip" data-creation="classic" onclick="selectCreationMode('classic')">
                         Classic <span style="font-size: 0.75rem; opacity: 0.7;">(full control)</span>
@@ -5029,15 +5294,24 @@ Example:
             archetype: null,
             abilityPriority: null,
             selectedSkills: [],
-            concept: ''
+            concept: '',
+            abilityScores: {
+                strength: null,
+                dexterity: null,
+                constitution: null,
+                intelligence: null,
+                wisdom: null,
+                charisma: null
+            }
         };
+        const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
         let availableOrigins = [];
         let availableArchetypes = [];
         let genreTerminology = { origin: 'Origin', archetype: 'Archetype' };
 
         // TTRPG Mode State
         let ttrpgGenre = 'fantasy';
-        let ttrpgCreationMode = 'concept';
+        let ttrpgCreationMode = 'guided';  // Changed default from 'concept' to 'guided'
         let ttrpgVisibility = 'classic';
 
         // ==========================================
@@ -6715,7 +6989,15 @@ Example:
                 abilityPriority: null,
                 selectedSkills: [],
                 concept: concept || '',
-                genres: selectedGenres.slice()  // Store selected genres for reference
+                genres: selectedGenres.slice(),  // Store selected genres for reference
+                abilityScores: {
+                    strength: null,
+                    dexterity: null,
+                    constitution: null,
+                    intelligence: null,
+                    wisdom: null,
+                    charisma: null
+                }
             };
 
             // Sync rulesGenre with selectedGenres from welcome screen if available
@@ -6811,7 +7093,7 @@ Example:
 
         function updateCreationSteps() {
             const stepsContainer = document.getElementById('char-creation-steps');
-            let numSteps = 5; // Default for guided/classic
+            let numSteps = 6; // Default for guided/classic: name, origin, class, abilities, skills, review
 
             if (creationMode === 'concept') {
                 numSteps = 3; // Concept: name/concept, review AI suggestion, confirm/adjust
@@ -7011,60 +7293,166 @@ Example:
                     nextBtn.disabled = !charCreationData.archetype;
                     break;
 
-                case 3: // Ability Priority
-                    title.textContent = 'What is Your Greatest Strength?';
-                    subtitle.textContent = 'This determines how we distribute your abilities.';
-                    const priorities = [
-                        { id: 'physical', name: 'Physical Power', desc: 'Strong and tough - face challenges head-on' },
-                        { id: 'agility', name: 'Quick Reflexes', desc: 'Fast and precise - dodge danger and strike true' },
-                        { id: 'intellect', name: 'Sharp Mind', desc: 'Clever and perceptive - knowledge is power' },
-                        { id: 'presence', name: 'Force of Personality', desc: 'Charismatic and insightful - people listen when you speak' }
-                    ];
+                case 3: // Ability Score Assignment
+                    title.textContent = 'Assign Your Abilities';
+                    subtitle.textContent = 'Distribute the standard array (15, 14, 13, 12, 10, 8) to your ability scores.';
+
+                    const abilityNames3 = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+                    const abilityLabels3 = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
+                    const abilityDescriptions = {
+                        strength: 'Physical power, melee attacks',
+                        dexterity: 'Agility, ranged attacks, AC',
+                        constitution: 'Health, stamina, concentration',
+                        intelligence: 'Knowledge, arcane magic',
+                        wisdom: 'Perception, divine magic',
+                        charisma: 'Personality, social skills'
+                    };
+
                     content.innerHTML = `
-                        <div class="archetype-grid">
-                            ${priorities.map(p => `
-                                <div class="archetype-card ${charCreationData.abilityPriority === p.id ? 'selected' : ''}"
-                                     onclick="selectPriority('${p.id}')">
-                                    <div class="archetype-name">${p.name}</div>
-                                    <div class="archetype-desc">${p.desc}</div>
-                                </div>
-                            `).join('')}
+                        <div class="ability-assignment-grid">
+                            ${abilityNames3.map((ab, i) => {
+                                const currentValue = charCreationData.abilityScores[ab];
+                                const usedValues = Object.values(charCreationData.abilityScores).filter(v => v !== null);
+                                const availableValues = STANDARD_ARRAY.filter(v => !usedValues.includes(v) || v === currentValue);
+
+                                return `
+                                    <div class="ability-assign-card">
+                                        <div class="ability-assign-name">${abilityLabels3[i]}</div>
+                                        <div class="ability-assign-desc">${abilityDescriptions[ab]}</div>
+                                        <select class="ability-select" onchange="assignAbilityScore('${ab}', this.value)">
+                                            <option value="">--</option>
+                                            ${STANDARD_ARRAY.map(v => `
+                                                <option value="${v}" ${currentValue === v ? 'selected' : ''}
+                                                    ${!availableValues.includes(v) && currentValue !== v ? 'disabled' : ''}>
+                                                    ${v} (${v >= 10 ? '+' : ''}${Math.floor((v - 10) / 2)})
+                                                </option>
+                                            `).join('')}
+                                        </select>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button class="btn btn-secondary" onclick="autoAssignAbilities()" style="font-size: 0.85rem; padding: 8px 15px;">
+                                Auto-assign for ${getArchetypeName(charCreationData.archetype)}
+                            </button>
                         </div>
                     `;
                     nextBtn.textContent = 'Next';
-                    nextBtn.disabled = !charCreationData.abilityPriority;
+                    const allAssigned = Object.values(charCreationData.abilityScores).every(v => v !== null);
+                    nextBtn.disabled = !allAssigned;
                     break;
 
-                case 4: // Skills and Review
-                    title.textContent = 'Review Your Character';
-                    subtitle.textContent = 'Make any final adjustments before your adventure begins.';
+                case 4: // Skills Selection
+                    title.textContent = 'Choose Your Skills';
+                    subtitle.textContent = 'Select the skills your character is proficient in.';
 
-                    const selectedArch = availableArchetypes.find(a => a.id === charCreationData.archetype);
-                    const skillChoices = selectedArch?.skill_choices || ['athletics', 'perception', 'stealth', 'persuasion'];
-                    const numSkills = selectedArch?.num_skill_choices || 2;
+                    const selectedArch4 = availableArchetypes.find(a => a.id === charCreationData.archetype);
+                    const skillChoices4 = selectedArch4?.skill_choices || ['athletics', 'perception', 'stealth', 'persuasion', 'investigation', 'insight'];
+                    const numSkills4 = selectedArch4?.num_skill_choices || 2;
 
                     content.innerHTML = `
-                        <div class="char-summary">
-                            <div class="summary-header">
-                                <div>
-                                    <div class="summary-name">${charCreationData.name || 'Unnamed Hero'}</div>
-                                    <div class="summary-class">${getOriginName(charCreationData.origin)} ${getArchetypeName(charCreationData.archetype)}</div>
-                                </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">
+                                Select ${numSkills4} skill${numSkills4 > 1 ? 's' : ''} for your ${getArchetypeName(charCreationData.archetype)}:
                             </div>
-                        </div>
-
-                        <div style="margin-bottom: 20px;">
-                            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">Choose ${numSkills} Skills:</div>
-                            <div>
-                                ${skillChoices.map(skill => `
+                            <div class="skill-selection-grid">
+                                ${skillChoices4.map(skill => `
                                     <span class="skill-option ${charCreationData.selectedSkills.includes(skill) ? 'selected' : ''}"
-                                          onclick="toggleSkill('${skill}', ${numSkills})">${skill.replace(/_/g, ' ')}</span>
+                                          onclick="toggleSkill('${skill}', ${numSkills4})">${skill.replace(/_/g, ' ')}</span>
                                 `).join('')}
                             </div>
                         </div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem; text-align: center;">
+                            ${charCreationData.selectedSkills.length} / ${numSkills4} selected
+                        </div>
                     `;
-                    nextBtn.textContent = 'Create Character';
-                    nextBtn.disabled = charCreationData.selectedSkills.length !== numSkills;
+                    nextBtn.textContent = 'Next';
+                    nextBtn.disabled = charCreationData.selectedSkills.length !== numSkills4;
+                    break;
+
+                case 5: // Name and Review
+                    title.textContent = 'Name Your Character';
+                    subtitle.textContent = 'Review your character and begin your adventure.';
+
+                    const selectedArch5 = availableArchetypes.find(a => a.id === charCreationData.archetype);
+                    const hitDieMax = { d6: 6, d8: 8, d10: 10, d12: 12 };
+                    const hitDie = selectedArch5?.hit_die || 'd8';
+                    const conMod = Math.floor((charCreationData.abilityScores.constitution - 10) / 2);
+                    const calculatedHP = (hitDieMax[hitDie] || 8) + conMod;
+                    const dexMod = Math.floor((charCreationData.abilityScores.dexterity - 10) / 2);
+
+                    // Get equipment for preview
+                    const archetypeId5 = charCreationData.archetype?.toLowerCase();
+                    const equipment5 = STARTING_EQUIPMENT[archetypeId5] || STARTING_EQUIPMENT['fighter'];
+
+                    content.innerHTML = `
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="char-name-input">Character Name</label>
+                            <input type="text" id="char-name-input" value="${charCreationData.name}"
+                                   placeholder="Enter your character's name"
+                                   oninput="charCreationData.name = this.value"
+                                   style="font-size: 1.1rem; text-align: center;">
+                        </div>
+
+                        <div class="char-review-card">
+                            <div class="review-header">
+                                <span class="review-race-class">${getOriginName(charCreationData.origin)} ${getArchetypeName(charCreationData.archetype)}</span>
+                                <span class="review-level">Level 1</span>
+                            </div>
+
+                            <div class="review-stats-row">
+                                <div class="review-stat">
+                                    <span class="review-stat-value">${calculatedHP}</span>
+                                    <span class="review-stat-label">HP</span>
+                                </div>
+                                <div class="review-stat">
+                                    <span class="review-stat-value">${10 + dexMod}</span>
+                                    <span class="review-stat-label">AC</span>
+                                </div>
+                                <div class="review-stat">
+                                    <span class="review-stat-value">30ft</span>
+                                    <span class="review-stat-label">Speed</span>
+                                </div>
+                            </div>
+
+                            <div class="review-abilities">
+                                ${Object.entries(charCreationData.abilityScores).map(([ab, score]) => {
+                                    const mod = Math.floor((score - 10) / 2);
+                                    return `
+                                        <div class="review-ability">
+                                            <span class="review-ability-name">${ab.substring(0, 3).toUpperCase()}</span>
+                                            <span class="review-ability-score">${score}</span>
+                                            <span class="review-ability-mod">${mod >= 0 ? '+' : ''}${mod}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+
+                            <div class="review-section">
+                                <div class="review-section-title">Skills</div>
+                                <div class="review-skills">
+                                    ${charCreationData.selectedSkills.map(s =>
+                                        `<span class="review-skill">${s.replace(/_/g, ' ')}</span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+
+                            <div class="review-section">
+                                <div class="review-section-title">Starting Equipment</div>
+                                <div class="review-equipment">
+                                    ${equipment5.map(item => `
+                                        <div class="review-equipment-item">
+                                            <span class="equipment-icon">${item.icon}</span>
+                                            <span class="equipment-name">${item.name}${item.quantity > 1 ? ` x${item.quantity}` : ''}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Begin Adventure';
+                    nextBtn.disabled = false;
                     break;
             }
         }
@@ -7111,6 +7499,57 @@ Example:
             renderCreationStep();
         }
 
+        function assignAbilityScore(ability, value) {
+            if (value === '') {
+                charCreationData.abilityScores[ability] = null;
+            } else {
+                charCreationData.abilityScores[ability] = parseInt(value);
+            }
+            renderCreationStep();
+        }
+
+        function autoAssignAbilities() {
+            // Get the archetype's primary ability
+            const arch = availableArchetypes.find(a => a.id === charCreationData.archetype);
+            const primaryAbility = arch?.primary_ability || 'strength';
+
+            // Standard ability priority by class type
+            const abilityPriorities = {
+                // Melee martial
+                fighter: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
+                barbarian: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
+                paladin: ['strength', 'charisma', 'constitution', 'wisdom', 'dexterity', 'intelligence'],
+
+                // Dex martial
+                rogue: ['dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma', 'strength'],
+                ranger: ['dexterity', 'wisdom', 'constitution', 'intelligence', 'strength', 'charisma'],
+                monk: ['dexterity', 'wisdom', 'constitution', 'strength', 'intelligence', 'charisma'],
+
+                // Divine casters
+                cleric: ['wisdom', 'constitution', 'strength', 'charisma', 'dexterity', 'intelligence'],
+                druid: ['wisdom', 'constitution', 'dexterity', 'intelligence', 'charisma', 'strength'],
+
+                // Arcane casters
+                wizard: ['intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength'],
+                sorcerer: ['charisma', 'constitution', 'dexterity', 'wisdom', 'intelligence', 'strength'],
+                warlock: ['charisma', 'constitution', 'dexterity', 'wisdom', 'intelligence', 'strength'],
+
+                // Hybrid
+                bard: ['charisma', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'strength']
+            };
+
+            const archId = charCreationData.archetype?.toLowerCase() || 'fighter';
+            const priority = abilityPriorities[archId] || ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+
+            // Assign standard array based on priority
+            const sortedArray = [...STANDARD_ARRAY].sort((a, b) => b - a); // [15, 14, 13, 12, 10, 8]
+            priority.forEach((ability, index) => {
+                charCreationData.abilityScores[ability] = sortedArray[index];
+            });
+
+            renderCreationStep();
+        }
+
         function toggleSkill(skill, maxSkills) {
             const idx = charCreationData.selectedSkills.indexOf(skill);
             if (idx >= 0) {
@@ -7139,6 +7578,10 @@ Example:
                 charCreationData.name = charCreationData.generatedChar.name || '';
                 charCreationData.origin = charCreationData.generatedChar.race || charCreationData.generatedChar.origin;
                 charCreationData.archetype = charCreationData.generatedChar.character_class || charCreationData.generatedChar.archetype;
+                // Pre-fill ability scores if available
+                if (charCreationData.generatedChar.ability_scores) {
+                    charCreationData.abilityScores = { ...charCreationData.generatedChar.ability_scores };
+                }
             }
             renderCreationStep();
         }
@@ -7252,7 +7695,7 @@ Example:
         }
 
         async function handleGuidedModeNext() {
-            const maxSteps = 5;
+            const maxSteps = 6; // name, origin, class, abilities, skills, review
 
             if (charCreationStep === 0) {
                 charCreationData.name = document.getElementById('char-name-input')?.value.trim() || 'Adventurer';
@@ -7272,6 +7715,12 @@ Example:
             document.getElementById('char-next-btn').disabled = true;
             document.getElementById('char-next-btn').innerHTML = '<span class="loading"></span> Creating...';
 
+            // Get name from the review step input
+            const nameInput = document.getElementById('char-name-input');
+            if (nameInput) {
+                charCreationData.name = nameInput.value.trim() || 'Adventurer';
+            }
+
             try {
                 // Use the guided flow API
                 const startRes = await fetch(API_BASE + '/dnd/characters/guided/start', {
@@ -7288,7 +7737,13 @@ Example:
                     await submitGuidedStep(flowId, 'name', charCreationData.name);
                     await submitGuidedStep(flowId, 'race', charCreationData.origin);
                     await submitGuidedStep(flowId, 'class', charCreationData.archetype);
-                    await submitGuidedStep(flowId, 'priority', charCreationData.abilityPriority);
+                    // Submit ability scores if assigned, otherwise fall back to priority
+                    const hasAbilityScores = Object.values(charCreationData.abilityScores).every(v => v !== null);
+                    if (hasAbilityScores) {
+                        await submitGuidedStep(flowId, 'abilities', charCreationData.abilityScores);
+                    } else {
+                        await submitGuidedStep(flowId, 'priority', charCreationData.abilityPriority || 'physical');
+                    }
                     await submitGuidedStep(flowId, 'skills', charCreationData.selectedSkills);
 
                     // Finalize
@@ -7351,6 +7806,30 @@ Example:
             // ALWAYS create fallback if still no character (guaranteed character)
             if (!dndCharacter) {
                 console.warn('Creating fallback character - API may have failed');
+
+                // Use assigned ability scores or defaults
+                const scores = charCreationData.abilityScores || {};
+                const abilityScores = {
+                    strength: scores.strength || 14,
+                    dexterity: scores.dexterity || 12,
+                    constitution: scores.constitution || 14,
+                    intelligence: scores.intelligence || 10,
+                    wisdom: scores.wisdom || 12,
+                    charisma: scores.charisma || 10
+                };
+
+                // Calculate HP based on class hit die
+                const hitDieMax = { barbarian: 12, fighter: 10, paladin: 10, ranger: 10,
+                    bard: 8, cleric: 8, druid: 8, monk: 8, rogue: 8, warlock: 8,
+                    sorcerer: 6, wizard: 6 };
+                const archId = (charCreationData.archetype || 'fighter').toLowerCase();
+                const hitDie = hitDieMax[archId] || 8;
+                const conMod = Math.floor((abilityScores.constitution - 10) / 2);
+                const maxHP = hitDie + conMod;
+
+                // Calculate AC (base 10 + DEX for no armor, will be adjusted by equipment)
+                const dexMod = Math.floor((abilityScores.dexterity - 10) / 2);
+
                 dndCharacter = {
                     name: charCreationData.name || 'Adventurer',
                     race: charCreationData.origin || 'Human',
@@ -7358,17 +7837,10 @@ Example:
                     character_class: charCreationData.archetype || 'Fighter',
                     archetype: charCreationData.archetype || 'Fighter',
                     level: 1,
-                    ability_scores: {
-                        strength: 14,
-                        dexterity: 12,
-                        constitution: 14,
-                        intelligence: 10,
-                        wisdom: 12,
-                        charisma: 10
-                    },
-                    max_hit_points: 12,
-                    current_hit_points: 12,
-                    armor_class: 14,
+                    ability_scores: abilityScores,
+                    max_hit_points: maxHP,
+                    current_hit_points: maxHP,
+                    armor_class: 10 + dexMod,
                     proficiency_bonus: 2,
                     skill_proficiencies: charCreationData.selectedSkills || ['athletics', 'perception'],
                     equipment: []
@@ -7377,6 +7849,12 @@ Example:
 
             // Load starting inventory based on character's archetype/class (always runs now)
             const archetype = dndCharacter.character_class || dndCharacter.archetype || charCreationData.archetype || 'fighter';
+            console.log('[Equipment] Character archetype sources:', {
+                character_class: dndCharacter.character_class,
+                archetype: dndCharacter.archetype,
+                charCreationArchetype: charCreationData.archetype,
+                resolved: archetype
+            });
             getStartingInventory(archetype);
 
             closeCharCreation();
@@ -7864,7 +8342,10 @@ Example:
                 selectedTone = null;
                 selectedLoreBase = null;
                 dndCharacter = null;
-                charCreationData = { name: '', origin: null, archetype: null, abilityPriority: null, selectedSkills: [], concept: '' };
+                charCreationData = {
+                    name: '', origin: null, archetype: null, abilityPriority: null, selectedSkills: [], concept: '',
+                    abilityScores: { strength: null, dexterity: null, constitution: null, intelligence: null, wisdom: null, charisma: null }
+                };
                 document.getElementById('story-container').innerHTML = '';
 
                 // Clear genre selections visually
@@ -8290,7 +8771,16 @@ Example:
 
         function getStartingInventory(archetype) {
             const archetypeId = (archetype || 'fighter').toLowerCase();
+            const hasEquipment = STARTING_EQUIPMENT.hasOwnProperty(archetypeId);
             const equipment = STARTING_EQUIPMENT[archetypeId] || STARTING_EQUIPMENT['fighter'];
+
+            console.log('[Equipment] getStartingInventory called:', {
+                inputArchetype: archetype,
+                normalizedId: archetypeId,
+                foundInMap: hasEquipment,
+                availableKeys: Object.keys(STARTING_EQUIPMENT),
+                equipmentItems: equipment.map(e => e.name)
+            });
 
             // Clear and populate inventory
             playerInventory = [];
@@ -8303,7 +8793,7 @@ Example:
                 });
             });
 
-            console.log('Starting inventory loaded for', archetypeId, ':', playerInventory.length, 'items');
+            console.log('[Equipment] Inventory populated:', playerInventory.length, 'items');
         }
 
         function getItemIcon(name) {
@@ -8883,6 +9373,106 @@ Example:
             updateUploadQueueDisplay();
         }
 
+        // Lore textarea drag & drop handlers
+        function handleLoreDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const dropzone = document.getElementById('wc-lore-dropzone');
+            if (dropzone) dropzone.classList.add('drag-over');
+        }
+
+        function handleLoreDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const dropzone = document.getElementById('wc-lore-dropzone');
+            if (dropzone) dropzone.classList.remove('drag-over');
+        }
+
+        async function handleLoreDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropzone = document.getElementById('wc-lore-dropzone');
+            if (dropzone) dropzone.classList.remove('drag-over');
+
+            const files = event.dataTransfer.files;
+            if (!files.length) return;
+
+            const allowedTypes = ['.txt', '.md', '.json'];
+            let addedContent = [];
+
+            for (const file of files) {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowedTypes.includes(ext)) {
+                    showStatus('world-creator-status', `Skipped ${file.name}: only .txt, .md, .json files are supported`, 'warning');
+                    continue;
+                }
+
+                try {
+                    const content = await readFileContent(file);
+                    addedContent.push(`\n\n--- ${file.name} ---\n${content}`);
+                } catch (err) {
+                    showStatus('world-creator-status', `Failed to read ${file.name}: ${err.message}`, 'error');
+                }
+            }
+
+            if (addedContent.length > 0) {
+                const textarea = document.getElementById('wc-lore');
+                const currentContent = textarea.value;
+                textarea.value = currentContent + addedContent.join('');
+                updateLoreCharCount();
+                showStatus('world-creator-status', `Added content from ${addedContent.length} file(s)`, 'success');
+            }
+        }
+
+        function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+
+        function updateLoreCharCount() {
+            const textarea = document.getElementById('wc-lore');
+            const countEl = document.getElementById('wc-char-count');
+            if (textarea && countEl) {
+                countEl.textContent = `${textarea.value.length} characters`;
+            }
+        }
+
+        // Add content from uploaded file to World Creator
+        async function useInWorldCreator(fileId) {
+            try {
+                const response = await fetch(window.location.origin + '/admin/lore/files/' + fileId);
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = data.content || '';
+                    const name = data.name || 'File';
+
+                    const textarea = document.getElementById('wc-lore');
+                    if (textarea) {
+                        const currentContent = textarea.value;
+                        textarea.value = currentContent + `\n\n--- ${name} ---\n${content}`;
+                        updateLoreCharCount();
+
+                        // Scroll to World Creator section
+                        const worldCreator = document.querySelector('#admin-screen .setup-section');
+                        if (worldCreator) {
+                            worldCreator.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+
+                        showStatus('world-creator-status', `Added "${name}" to lore content`, 'success');
+                    }
+                } else {
+                    showStatus('file-manager-status', 'Failed to load file content', 'error');
+                }
+            } catch (err) {
+                showStatus('file-manager-status', 'Error: ' + err.message, 'error');
+            }
+        }
+
         function updateUploadQueueDisplay() {
             const queueEl = document.getElementById('upload-queue');
             const listEl = document.getElementById('upload-queue-list');
@@ -9007,6 +9597,7 @@ Example:
                                 <div class="file-meta">${formatFileSize(file.size)} • ${formatDate(file.uploaded_at)}</div>
                             </div>
                             <div class="file-actions">
+                                <button class="file-action-btn use" onclick="useInWorldCreator('${file.id}')" title="Add to World Creator">Use</button>
                                 <button class="file-action-btn" onclick="viewLoreFile('${file.id}')">View</button>
                                 <button class="file-action-btn" onclick="importToLore('${file.id}')">Import</button>
                                 <button class="file-action-btn delete" onclick="deleteLoreFile('${file.id}')">Delete</button>
