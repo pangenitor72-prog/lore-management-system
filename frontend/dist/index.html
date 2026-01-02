@@ -161,16 +161,25 @@
             font-size: 1.1rem;
         }
 
-        /* Screens */
+        /* Screens with smooth transitions */
         .screen {
             display: none;
             flex: 1;
             flex-direction: column;
-            animation: fadeIn 0.4s ease;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
         }
 
         .screen.active {
             display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .screen.fade-out {
+            opacity: 0;
+            transform: translateY(-10px);
         }
 
         @keyframes fadeIn {
@@ -1267,6 +1276,52 @@
         .hud-stat-value {
             color: var(--accent-warm);
             font-weight: bold;
+        }
+
+        /* Story Arc Indicator */
+        .story-arc {
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .arc-progress {
+            height: 4px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            margin-bottom: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .arc-progress::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: var(--arc-progress, 10%);
+            background: linear-gradient(90deg, var(--accent-sage), var(--accent-gold), var(--accent-rose));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .arc-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 500px) {
+            .story-arc {
+                padding: 6px 12px;
+            }
+            .arc-labels span {
+                font-size: 0.55rem;
+            }
         }
 
         /* Quick Actions */
@@ -4215,6 +4270,17 @@
                 <button class="story-menu-btn" onclick="toggleStoryMenu()">☰</button>
             </div>
 
+            <!-- Story Arc Indicator -->
+            <div id="story-arc" class="story-arc">
+                <div class="arc-progress" id="arc-progress"></div>
+                <div class="arc-labels">
+                    <span>Beginning</span>
+                    <span>Rising</span>
+                    <span>Climax</span>
+                    <span>Resolution</span>
+                </div>
+            </div>
+
             <!-- Character HUD (visible when d20 rules active) -->
             <div id="character-hud" class="character-hud">
                 <div class="hud-header">
@@ -6156,6 +6222,31 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
+        // Story Arc Progress
+        function updateStoryArc() {
+            const arcEl = document.getElementById('arc-progress');
+            if (!arcEl) return;
+
+            // Calculate progress based on player profile turn count and session scope
+            const turnCount = playerProfile?.turnCount || actionHistory?.length || 0;
+            const maxTurns = maxTurnsForScope[sessionScope] || 20;
+
+            // Progress follows a narrative arc curve (not linear)
+            // Beginning (0-20%), Rising (20-50%), Climax (50-80%), Resolution (80-100%)
+            let progress = Math.min((turnCount / maxTurns) * 100, 100);
+
+            arcEl.style.setProperty('--arc-progress', progress + '%');
+
+            // Highlight current phase in labels
+            const labels = document.querySelectorAll('.arc-labels span');
+            labels.forEach((label, i) => {
+                const thresholds = [20, 50, 80, 100];
+                label.style.color = progress >= (i > 0 ? thresholds[i-1] : 0) && progress < thresholds[i]
+                    ? 'var(--accent-gold)'
+                    : 'var(--text-muted)';
+            });
+        }
+
         // Character HUD Functions
         function updateCharacterHUD() {
             if (!dndCharacter || rulesMode !== 'dnd') {
@@ -6896,6 +6987,66 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Track if in combat mode
         let inCombatMode = false;
 
+        // Sound Effects System (Web Audio API)
+        let audioContext = null;
+
+        function getAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        function playDiceSound() {
+            try {
+                const ctx = getAudioContext();
+                if (ctx.state === 'suspended') ctx.resume();
+
+                // Create a short "click-clatter" sound for dice
+                const now = ctx.currentTime;
+
+                // Multiple quick clicks for dice rolling
+                for (let i = 0; i < 4; i++) {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    // Random frequency for each "click"
+                    osc.frequency.value = 800 + Math.random() * 400;
+                    osc.type = 'square';
+
+                    // Quick attack and decay
+                    const clickTime = now + (i * 0.05);
+                    gain.gain.setValueAtTime(0, clickTime);
+                    gain.gain.linearRampToValueAtTime(0.1, clickTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, clickTime + 0.05);
+
+                    osc.start(clickTime);
+                    osc.stop(clickTime + 0.06);
+                }
+
+                // Final "thud" when dice lands
+                const thud = ctx.createOscillator();
+                const thudGain = ctx.createGain();
+                thud.connect(thudGain);
+                thudGain.connect(ctx.destination);
+
+                thud.frequency.value = 150;
+                thud.type = 'sine';
+
+                const landTime = now + 0.25;
+                thudGain.gain.setValueAtTime(0.15, landTime);
+                thudGain.gain.exponentialRampToValueAtTime(0.001, landTime + 0.1);
+
+                thud.start(landTime);
+                thud.stop(landTime + 0.15);
+            } catch (e) {
+                // Audio not supported or blocked - fail silently
+            }
+        }
+
         // Roll a die (client-side for immediate feedback)
         function rollDie(sides = 20) {
             return Math.floor(Math.random() * sides) + 1;
@@ -6903,6 +7054,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         // Roll multiple dice
         function rollDice(count, sides) {
+            playDiceSound(); // Play sound effect
+
             const rolls = [];
             for (let i = 0; i < count; i++) {
                 rolls.push(rollDie(sides));
@@ -8363,15 +8516,27 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function showScreen(screenId) {
             // Calculate time spent on previous screen
             const timeOnPrevScreen = Date.now() - lastScreenTransition;
-            const prevScreen = document.querySelector('.screen.active')?.id;
+            const prevScreen = document.querySelector('.screen.active');
+            const prevScreenId = prevScreen?.id;
+            const newScreen = document.getElementById(screenId);
 
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            if (!newScreen) return;
+
+            // Smooth transition: fade out old, fade in new
+            if (prevScreen && prevScreen !== newScreen) {
+                prevScreen.classList.add('fade-out');
+                await new Promise(r => setTimeout(r, 150)); // Wait for fade out
+                prevScreen.classList.remove('active', 'fade-out');
+            } else {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            }
+
+            newScreen.classList.add('active');
 
             // Log screen transition for session analytics
             logSessionEvent('screen_view', {
                 screen: screenId,
-                previous_screen: prevScreen,
+                previous_screen: prevScreenId,
                 time_on_previous: timeOnPrevScreen
             });
             lastScreenTransition = Date.now();
@@ -8534,16 +8699,52 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const container = document.getElementById('story-container');
             const passage = document.createElement('div');
             passage.className = 'passage ' + type;
-            passage.innerHTML = content.replace(/\n/g, '<br>');
             container.appendChild(passage);
 
-            if (type === 'player') {
-                // Scroll to show player's input at bottom
-                container.scrollTop = container.scrollHeight;
-            } else if (type === 'narrator') {
+            if (type === 'narrator') {
+                // Typewriter effect for narrator - immersive reveal
+                typewriterEffect(passage, content.replace(/\n/g, '<br>'));
                 // Scroll to show TOP of narrator response so user can read from beginning
                 passage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                passage.innerHTML = content.replace(/\n/g, '<br>');
+                if (type === 'player') {
+                    // Scroll to show player's input at bottom
+                    container.scrollTop = container.scrollHeight;
+                }
             }
+        }
+
+        // Typewriter effect - reveals text word by word
+        function typewriterEffect(element, html, wordsPerChunk = 3) {
+            // Parse HTML to preserve formatting
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const text = tempDiv.textContent || tempDiv.innerText;
+            const words = text.split(' ');
+
+            element.innerHTML = '';
+            element.style.minHeight = '3em'; // Prevent layout shift
+
+            let currentIndex = 0;
+            const chunkDelay = 30; // ms between word chunks
+
+            function revealNextChunk() {
+                if (currentIndex >= words.length) {
+                    // Done - set final HTML with formatting
+                    element.innerHTML = html;
+                    element.style.minHeight = '';
+                    return;
+                }
+
+                const chunk = words.slice(currentIndex, currentIndex + wordsPerChunk).join(' ');
+                element.textContent += (currentIndex > 0 ? ' ' : '') + chunk;
+                currentIndex += wordsPerChunk;
+
+                requestAnimationFrame(() => setTimeout(revealNextChunk, chunkDelay));
+            }
+
+            revealNextChunk();
         }
 
         function showLoading() {
@@ -8831,6 +9032,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     dndCharacter = data.character;
                     updateCharacterHUD();
                 }
+
+                // Update story arc progress
+                updateStoryArc();
 
             } catch (err) {
                 clearTimeout(timeoutId);
