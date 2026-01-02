@@ -1598,6 +1598,22 @@
             border: 1px solid var(--border-accent);
         }
 
+        /* Site Map Links */
+        .sitemap-link {
+            display: block;
+            padding: 12px 15px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .sitemap-link:hover {
+            background: var(--bg-hover);
+            color: var(--accent-gold);
+            transform: translateX(5px);
+        }
+
         .modal h3 {
             color: var(--accent-gold);
             margin-bottom: 20px;
@@ -3958,8 +3974,41 @@
             <p class="landing-footer">
                 <a href="#" onclick="showScreen('welcome'); return false;">Advanced Setup</a>
                 <span>|</span>
+                <a href="#" onclick="showSiteMap(); return false;">Site Map</a>
+                <span>|</span>
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
+        </div>
+
+        <!-- Site Map Modal -->
+        <div id="sitemap-modal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) closeSiteMap()">
+            <div class="modal" style="max-width: 500px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-warm); margin: 0;">Site Map</h3>
+                    <button onclick="closeSiteMap()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+
+                <div style="display: grid; gap: 10px;">
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">PLAY</div>
+                    <a href="#" onclick="closeSiteMap(); showScreen('start'); return false;" class="sitemap-link">🏠 Home</a>
+                    <a href="#" onclick="closeSiteMap(); quickStartFlow(); return false;" class="sitemap-link">✨ Quick Start</a>
+                    <a href="#" onclick="closeSiteMap(); ttrpgModeFlow(); return false;" class="sitemap-link">🎲 Tabletop Mode (D&D 5e)</a>
+                    <a href="#" onclick="closeSiteMap(); showScreen('saves'); return false;" class="sitemap-link">📖 Saved Stories</a>
+
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">CREATE</div>
+                    <a href="#" onclick="closeSiteMap(); showScreen('welcome'); return false;" class="sitemap-link">🎭 Genre Selection</a>
+                    <a href="#" onclick="closeSiteMap(); showScreen('setup'); return false;" class="sitemap-link">⚙️ Story Setup</a>
+                    <a href="#" onclick="closeSiteMap(); showScreen('world-builder'); return false;" class="sitemap-link">🏰 World Builder</a>
+                    <a href="#" onclick="closeSiteMap(); showScreen('ingest'); return false;" class="sitemap-link">🌍 Curated Worlds</a>
+
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">EXPLORE</div>
+                    <a href="#" onclick="closeSiteMap(); showScreen('graph'); return false;" class="sitemap-link">🔗 Lore Graph</a>
+                    <a href="#" onclick="closeSiteMap(); showScreen('onboarding'); return false;" class="sitemap-link">❓ How It Works</a>
+
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">ADMIN</div>
+                    <a href="#" onclick="closeSiteMap(); showPinModal(); return false;" class="sitemap-link">🔧 Admin Panel</a>
+                </div>
+            </div>
         </div>
 
         <!-- Onboarding/Tutorial Screen (moved from default) -->
@@ -3995,9 +4044,12 @@
 
         <!-- Welcome Screen -->
         <div id="welcome" class="screen">
-            <div class="welcome-intro">
-                <h2>What kind of story calls to you?</h2>
-                <p>Select one or more genres to blend together.</p>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div class="welcome-intro" style="margin-bottom: 0;">
+                    <h2>What kind of story calls to you?</h2>
+                    <p>Select one or more genres to blend together.</p>
+                </div>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px; white-space: nowrap;">← Home</button>
             </div>
 
             <div class="genre-grid" style="max-width: 650px;">
@@ -4089,7 +4141,10 @@
 
         <!-- Saves Screen -->
         <div id="saves" class="screen">
-            <h2 style="color: var(--accent-warm); margin-bottom: 10px; font-weight: normal;">Your Saved Stories</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="color: var(--accent-warm); margin-bottom: 0; font-weight: normal;">Your Saved Stories</h2>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Home</button>
+            </div>
             <p style="color: var(--text-secondary); margin-bottom: 25px;">
                 Continue a previous adventure or start fresh.
             </p>
@@ -4107,6 +4162,9 @@
 
         <!-- Setup Screen -->
         <div id="setup" class="screen">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Home</button>
+            </div>
             <!-- MAIN SECTION: Choose Your World -->
             <div class="setup-section">
                 <h3>Choose Your World</h3>
@@ -4395,7 +4453,10 @@
 
         <!-- Ingest Screen -->
         <div id="ingest" class="screen">
-            <h2 style="color: var(--accent-warm); margin-bottom: 20px; font-weight: normal;">Choose Your World</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="color: var(--accent-warm); margin-bottom: 0; font-weight: normal;">Choose Your World</h2>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Home</button>
+            </div>
             <p style="color: var(--text-secondary); margin-bottom: 25px;">
                 Every great story needs a foundation. Choose from our curated worlds, or bring your own
                 universe to life.
@@ -4487,7 +4548,10 @@
 
         <!-- Graph Visualization Screen -->
         <div id="graph" class="screen">
-            <h2 style="color: var(--accent-warm); margin-bottom: 10px; font-weight: normal;">Lore Knowledge Graph</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="color: var(--accent-warm); margin-bottom: 0; font-weight: normal;">Lore Knowledge Graph</h2>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Home</button>
+            </div>
             <p style="color: var(--text-secondary); margin-bottom: 20px;">
                 Visual map of all entities and their relationships in the database.
             </p>
@@ -8727,6 +8791,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 case 'world-builder':
                     await loadCuratedWorlds();
                     break;
+                case 'ingest':
+                    await loadCuratedWorlds();
+                    break;
                 case 'game':
                     if (tutorialMode) showExamplePrompts();
                     break;
@@ -10270,6 +10337,22 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 logoTapTimer = setTimeout(() => { logoTapCount = 0; }, 2000);
             }
         });
+
+        // ============================================================
+        // SITE MAP
+        // ============================================================
+
+        function showSiteMap() {
+            document.getElementById('sitemap-modal').style.display = 'flex';
+        }
+
+        function closeSiteMap() {
+            document.getElementById('sitemap-modal').style.display = 'none';
+        }
+
+        // ============================================================
+        // ADMIN PIN
+        // ============================================================
 
         function showPinModal() {
             // Check if locked out
