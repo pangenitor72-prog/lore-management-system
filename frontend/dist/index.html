@@ -2251,6 +2251,16 @@
                 to { transform: translateX(0); }
             }
 
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(100%); }
+            }
+
+            @keyframes slideInUp {
+                from { opacity: 0; transform: translate(-50%, 20px); }
+                to { opacity: 1; transform: translate(-50%, 0); }
+            }
+
             .story-menu-header {
                 display: flex;
                 justify-content: space-between;
@@ -3807,12 +3817,12 @@
                     <span class="landing-card-badge">2 clicks to play</span>
                 </div>
 
-                <!-- TTRPG Mode -->
+                <!-- Full Adventure Mode (was TTRPG Mode) -->
                 <div class="landing-card ttrpg-card" onclick="ttrpgModeFlow()">
                     <div class="landing-card-icon">🎲</div>
-                    <h3 class="landing-card-title">TTRPG Mode</h3>
-                    <p class="landing-card-desc">D&D 5e rules, dice rolls, character sheets</p>
-                    <span class="landing-card-badge">For tabletop fans</span>
+                    <h3 class="landing-card-title">Full Adventure</h3>
+                    <p class="landing-card-desc">Dice rolls, character sheets, combat</p>
+                    <span class="landing-card-badge">The complete experience</span>
                 </div>
 
                 <!-- Continue Story -->
@@ -4062,16 +4072,16 @@
                         </div>
                     </div>
 
-                    <!-- D&D Rules - with veteran-friendly signals -->
+                    <!-- Game Rules -->
                     <div class="setup-section">
                         <h4 style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 10px;">
                             <span style="margin-right: 6px;">🎲</span> Game Rules
-                            <span style="font-size: 0.75rem; color: var(--accent-sage); margin-left: 8px;">for tabletop fans</span>
+                            <span style="font-size: 0.75rem; color: var(--accent-sage); margin-left: 8px;">optional</span>
                         </h4>
                         <div class="tone-options" style="margin-bottom: 15px;">
-                            <span class="tone-chip rules-chip selected" data-rules="narrative" onclick="selectRulesMode('narrative')">Pure Narrative</span>
+                            <span class="tone-chip rules-chip selected" data-rules="narrative" onclick="selectRulesMode('narrative')">Pure Story</span>
                             <span class="tone-chip rules-chip" data-rules="dnd" onclick="selectRulesMode('dnd')">
-                                🎲 d20 Rules <span style="font-size: 0.7rem; opacity: 0.8;">(5e-style)</span>
+                                🎲 With Dice <span style="font-size: 0.7rem; opacity: 0.8;">(5e rules)</span>
                             </span>
                         </div>
                         <div id="dnd-options" style="display: none; margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
@@ -4688,11 +4698,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         <!-- TTRPG Setup Screen -->
         <div id="ttrpg-setup" class="screen">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h2 style="color: var(--accent-lavender); margin-bottom: 0; font-weight: normal;">🎲 TTRPG Mode</h2>
+                <h2 style="color: var(--accent-lavender); margin-bottom: 0; font-weight: normal;">🎲 Full Adventure</h2>
                 <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back</button>
             </div>
             <p style="color: var(--text-secondary); margin-bottom: 25px;">
-                Full D&D 5e rules with dice rolls, character sheets, and combat tracking.
+                Build a character, roll dice, and track your stats as you play.
+                <span style="opacity: 0.7;">Powered by D&D 5e rules.</span>
             </p>
 
             <!-- Genre Selection for TTRPG -->
@@ -4712,13 +4723,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 <h3>Character Creation</h3>
                 <div class="tone-options">
                     <span class="tone-chip creation-chip selected" data-creation="guided" onclick="selectCreationMode('guided')">
-                        Standard <span style="font-size: 0.75rem; opacity: 0.7;">(5e style)</span>
+                        Step by Step <span style="font-size: 0.75rem; opacity: 0.7;">(recommended)</span>
                     </span>
                     <span class="tone-chip creation-chip" data-creation="concept" onclick="selectCreationMode('concept')">
-                        AI Concept <span style="font-size: 0.75rem; opacity: 0.7;">(describe & generate)</span>
+                        Quick Create <span style="font-size: 0.75rem; opacity: 0.7;">(describe & go)</span>
                     </span>
                     <span class="tone-chip creation-chip" data-creation="classic" onclick="selectCreationMode('classic')">
-                        Classic <span style="font-size: 0.75rem; opacity: 0.7;">(full control)</span>
+                        Detailed <span style="font-size: 0.75rem; opacity: 0.7;">(full control)</span>
                     </span>
                 </div>
             </div>
@@ -5431,17 +5442,46 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
-        // Check for saves on landing page load
+        // ==========================================
+        // LOCAL SAVE HELPERS (used by updateSavesBadge)
+        // ==========================================
+        const SAVES_STORAGE_KEY = 'airpg_saves';
+
+        function getLocalSaves() {
+            try {
+                const saved = localStorage.getItem(SAVES_STORAGE_KEY);
+                return saved ? JSON.parse(saved) : {};
+            } catch (e) {
+                console.error('Error reading saves from localStorage:', e);
+                return {};
+            }
+        }
+
+        function setLocalSaves(saves) {
+            try {
+                localStorage.setItem(SAVES_STORAGE_KEY, JSON.stringify(saves));
+                return true;
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+                if (e.name === 'QuotaExceededError') {
+                    alert('Storage full! Try deleting old saves.');
+                }
+                return false;
+            }
+        }
+
+        // Check for saves on landing page load (now uses localStorage)
         async function updateSavesBadge() {
             try {
-                const response = await fetch(`${API_BASE}/game/saves?browser_id=${BROWSER_ID}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    const count = data.saves?.length || 0;
-                    const badge = document.getElementById('saves-count-badge');
-                    if (badge && count > 0) {
+                const saves = getLocalSaves();
+                const count = Object.keys(saves).length;
+                const badge = document.getElementById('saves-count-badge');
+                if (badge) {
+                    if (count > 0) {
                         badge.textContent = `${count} save${count > 1 ? 's' : ''}`;
                         badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
                     }
                 }
             } catch (err) {
@@ -6187,10 +6227,34 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
+        // Helper: Show a non-intrusive notification for missing character
+        function showNoCharacterMessage() {
+            // Create a toast-style notification instead of blocking alert
+            const toast = document.createElement('div');
+            toast.innerHTML = '⚔️ Start a new adventure to create your character';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #3d2d2d, #2d1e1e);
+                color: #e6a8a8;
+                padding: 14px 24px;
+                border-radius: 10px;
+                font-weight: 500;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                z-index: 9999;
+                animation: slideInUp 0.3s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+                border: 1px solid rgba(230,168,168,0.3);
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
         // D&D Character Sheet Modal
         function showCharacterSheet() {
             if (!dndCharacter) {
-                alert('No character created yet.');
+                showNoCharacterMessage();
                 return;
             }
 
@@ -6599,7 +6663,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Roll a skill check
         function rollSkillCheck(skillName, advantage = false, disadvantage = false) {
             if (!dndCharacter) {
-                alert('No character created yet.');
+                showNoCharacterMessage();
                 return;
             }
 
@@ -6633,7 +6697,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Roll ability check
         function rollAbilityCheck(ability) {
             if (!dndCharacter) {
-                alert('No character created yet.');
+                showNoCharacterMessage();
                 return;
             }
 
@@ -6655,7 +6719,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Roll saving throw
         function rollSavingThrow(ability = null) {
             if (!dndCharacter) {
-                alert('No character created yet.');
+                showNoCharacterMessage();
                 return;
             }
 
@@ -6697,7 +6761,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Roll attack
         function rollAttack() {
             if (!dndCharacter) {
-                alert('No character created yet.');
+                showNoCharacterMessage();
                 return;
             }
 
@@ -6727,7 +6791,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Roll damage
         function rollDamage(criticalHit = false) {
             if (!dndCharacter) {
-                alert('No character created yet.');
+                showNoCharacterMessage();
                 return;
             }
 
@@ -6778,7 +6842,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Roll initiative
         function rollInitiative() {
             if (!dndCharacter) {
-                alert('No character created yet.');
+                showNoCharacterMessage();
                 return;
             }
 
@@ -6913,30 +6977,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         // Update character HUD with HP
-        function updateCharacterHUD() {
-            const hud = document.querySelector('.character-hud');
-            if (!hud || !dndCharacter) return;
-
-            const currentHP = dndCharacter.current_hit_points || 0;
-            const maxHP = dndCharacter.max_hit_points || 1;
-            const hpPercent = (currentHP / maxHP) * 100;
-
-            const hpFill = hud.querySelector('.hud-hp-fill');
-            if (hpFill) {
-                hpFill.style.width = `${hpPercent}%`;
-                hpFill.classList.remove('low', 'critical');
-                if (hpPercent <= 25) {
-                    hpFill.classList.add('critical');
-                } else if (hpPercent <= 50) {
-                    hpFill.classList.add('low');
-                }
-            }
-
-            const hpText = hud.querySelector('.hud-hp-text');
-            if (hpText) {
-                hpText.textContent = `${currentHP}/${maxHP}`;
-            }
-        }
+        // NOTE: updateCharacterHUD is defined earlier with full functionality
+        // (includes rulesMode check, visibility check, name/class updates, etc.)
 
         // Toggle spell slot
         function toggleSpellSlot(level, index) {
@@ -7626,63 +7668,139 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             };
         }
 
+        // Parse concept text to infer class and race (local, instant)
+        function parseConceptForCharacter(concept) {
+            const text = (concept || '').toLowerCase();
+
+            // Class detection patterns
+            const classPatterns = {
+                barbarian: /\b(barbarian|berserker|raging|rage|savage|tribal warrior)\b/,
+                bard: /\b(bard|minstrel|musician|singer|poet|performer|troubadour)\b/,
+                cleric: /\b(cleric|priest|priestess|healer|holy|divine|temple)\b/,
+                druid: /\b(druid|nature|shapeshifter|wild|forest guardian)\b/,
+                fighter: /\b(fighter|soldier|warrior|knight|mercenary|swordsman|guard|veteran)\b/,
+                monk: /\b(monk|martial artist|fist|monastery|discipline)\b/,
+                paladin: /\b(paladin|holy knight|champion|crusader|oath|righteous)\b/,
+                ranger: /\b(ranger|hunter|archer|scout|tracker|woodsman|bounty hunter)\b/,
+                rogue: /\b(rogue|thief|assassin|spy|sneaky|shadow|cunning|pickpocket|burglar)\b/,
+                sorcerer: /\b(sorcerer|innate magic|bloodline|wild magic|chaotic magic)\b/,
+                warlock: /\b(warlock|pact|patron|eldritch|dark magic|otherworldly)\b/,
+                wizard: /\b(wizard|mage|magician|scholar|arcane|spellbook|academic|sage)\b/
+            };
+
+            // Race detection patterns
+            const racePatterns = {
+                'Elf': /\b(elf|elven|elvish|high elf|wood elf|dark elf|drow)\b/,
+                'Dwarf': /\b(dwarf|dwarven|mountain|stout|bearded)\b/,
+                'Halfling': /\b(halfling|hobbit|small folk|lightfoot)\b/,
+                'Human': /\b(human|man|woman|folk)\b/,
+                'Dragonborn': /\b(dragonborn|dragon|draconic|scaled)\b/,
+                'Gnome': /\b(gnome|tinker|inventor)\b/,
+                'Half-Elf': /\b(half-elf|half elf)\b/,
+                'Half-Orc': /\b(half-orc|half orc|orcish)\b/,
+                'Tiefling': /\b(tiefling|infernal|demon|devil|horned)\b/
+            };
+
+            // Detect class
+            let detectedClass = 'fighter'; // default
+            for (const [cls, pattern] of Object.entries(classPatterns)) {
+                if (pattern.test(text)) {
+                    detectedClass = cls;
+                    break;
+                }
+            }
+
+            // Detect race
+            let detectedRace = 'Human'; // default
+            for (const [race, pattern] of Object.entries(racePatterns)) {
+                if (pattern.test(text)) {
+                    detectedRace = race;
+                    break;
+                }
+            }
+
+            console.log('[CharGen] Parsed concept:', { concept: text, detectedClass, detectedRace });
+            return { archetype: detectedClass, origin: detectedRace };
+        }
+
         async function handleConceptModeNext() {
             if (charCreationStep === 0) {
                 // Get name and concept
                 charCreationData.name = document.getElementById('char-name-input')?.value.trim() || '';
                 charCreationData.concept = document.getElementById('char-concept-input')?.value.trim() || '';
 
-                // Generate character from concept
-                document.getElementById('char-next-btn').disabled = true;
-                document.getElementById('char-next-btn').innerHTML = '<span class="loading"></span> Generating...';
+                // Parse concept LOCALLY - no API calls, instant!
+                const parsed = parseConceptForCharacter(charCreationData.concept);
+                charCreationData.archetype = parsed.archetype;
+                charCreationData.origin = parsed.origin;
 
-                const startTime = performance.now();
-                console.log('[CharGen] Starting character generation...');
+                // Assign default ability scores based on class
+                const classAbilityPriority = {
+                    barbarian: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
+                    bard: ['charisma', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'strength'],
+                    cleric: ['wisdom', 'constitution', 'strength', 'charisma', 'dexterity', 'intelligence'],
+                    druid: ['wisdom', 'constitution', 'dexterity', 'intelligence', 'charisma', 'strength'],
+                    fighter: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
+                    monk: ['dexterity', 'wisdom', 'constitution', 'strength', 'charisma', 'intelligence'],
+                    paladin: ['strength', 'charisma', 'constitution', 'wisdom', 'dexterity', 'intelligence'],
+                    ranger: ['dexterity', 'wisdom', 'constitution', 'strength', 'intelligence', 'charisma'],
+                    rogue: ['dexterity', 'intelligence', 'constitution', 'charisma', 'wisdom', 'strength'],
+                    sorcerer: ['charisma', 'constitution', 'dexterity', 'wisdom', 'intelligence', 'strength'],
+                    warlock: ['charisma', 'constitution', 'dexterity', 'wisdom', 'intelligence', 'strength'],
+                    wizard: ['intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength']
+                };
 
-                try {
-                    const conceptStart = performance.now();
-                    const response = await fetch(API_BASE + '/dnd/characters/concept', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            genre: rulesGenre,
-                            concept: charCreationData.concept || 'A brave adventurer',
-                            player_id: currentSessionId,
-                            name: charCreationData.name || undefined
-                        })
-                    });
+                const priority = classAbilityPriority[parsed.archetype] || classAbilityPriority.fighter;
+                const standardArray = [15, 14, 13, 12, 10, 8];
+                charCreationData.abilityScores = {};
+                priority.forEach((ability, i) => {
+                    charCreationData.abilityScores[ability] = standardArray[i];
+                });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log(`[CharGen] Concept API took ${(performance.now() - conceptStart).toFixed(0)}ms`);
+                // Assign default skills based on class
+                const classSkills = {
+                    barbarian: ['athletics', 'intimidation'],
+                    bard: ['performance', 'persuasion'],
+                    cleric: ['medicine', 'religion'],
+                    druid: ['nature', 'survival'],
+                    fighter: ['athletics', 'perception'],
+                    monk: ['acrobatics', 'insight'],
+                    paladin: ['athletics', 'persuasion'],
+                    ranger: ['nature', 'survival'],
+                    rogue: ['stealth', 'perception'],
+                    sorcerer: ['arcana', 'persuasion'],
+                    warlock: ['arcana', 'deception'],
+                    wizard: ['arcana', 'investigation']
+                };
+                charCreationData.selectedSkills = classSkills[parsed.archetype] || ['athletics', 'perception'];
 
-                        // Get full character details
-                        const detailStart = performance.now();
-                        const detailRes = await fetch(API_BASE + '/dnd/characters/' + data.character_id);
-                        console.log(`[CharGen] Detail fetch took ${(performance.now() - detailStart).toFixed(0)}ms`);
+                // Build local character object for review
+                const hitDieMax = { barbarian: 12, fighter: 10, paladin: 10, ranger: 10,
+                    bard: 8, cleric: 8, druid: 8, monk: 8, rogue: 8, warlock: 8,
+                    sorcerer: 6, wizard: 6 };
+                const hitDie = hitDieMax[parsed.archetype] || 8;
+                const conMod = Math.floor((charCreationData.abilityScores.constitution - 10) / 2);
+                const dexMod = Math.floor((charCreationData.abilityScores.dexterity - 10) / 2);
+                const maxHP = hitDie + conMod;
 
-                        if (detailRes.ok) {
-                            const detail = await detailRes.json();
-                            charCreationData.generatedChar = detail.character;
-                            charCreationData.characterId = data.character_id;
-                            console.log(`[CharGen] Total time: ${(performance.now() - startTime).toFixed(0)}ms`);
-                        } else {
-                            console.error('Failed to fetch character details');
-                            showCreationError('Character created but details unavailable. Using defaults.');
-                            charCreationData.generatedChar = createDefaultCharacter();
-                        }
-                    } else {
-                        console.error('Character generation API returned error:', response.status);
-                        showCreationError('Character generation failed. Using default character.');
-                        charCreationData.generatedChar = createDefaultCharacter();
-                    }
-                } catch (e) {
-                    console.error('Failed to generate character:', e);
-                    showCreationError('Connection error. Using default character.');
-                    charCreationData.generatedChar = createDefaultCharacter();
-                }
+                charCreationData.generatedChar = {
+                    name: charCreationData.name || 'Adventurer',
+                    race: parsed.origin,
+                    origin: parsed.origin,
+                    character_class: parsed.archetype.charAt(0).toUpperCase() + parsed.archetype.slice(1),
+                    archetype: parsed.archetype.charAt(0).toUpperCase() + parsed.archetype.slice(1),
+                    level: 1,
+                    ability_scores: charCreationData.abilityScores,
+                    max_hit_points: maxHP,
+                    current_hit_points: maxHP,
+                    armor_class: 10 + dexMod,
+                    proficiency_bonus: 2,
+                    skill_proficiencies: charCreationData.selectedSkills,
+                    equipment: []
+                };
 
-                document.getElementById('char-next-btn').disabled = false;
+                console.log('[CharGen] Character built locally (instant):', charCreationData.generatedChar);
+
                 document.getElementById('char-next-btn').textContent = 'Accept & Begin';
                 charCreationStep = 1;
                 // Use transition for smooth step change - previous answer fades out
@@ -7713,7 +7831,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function createGuidedCharacter() {
             document.getElementById('char-next-btn').disabled = true;
-            document.getElementById('char-next-btn').innerHTML = '<span class="loading"></span> Creating...';
+            document.getElementById('char-next-btn').textContent = 'Creating...';
 
             // Get name from the review step input
             const nameInput = document.getElementById('char-name-input');
@@ -7721,71 +7839,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 charCreationData.name = nameInput.value.trim() || 'Adventurer';
             }
 
-            try {
-                // Use the guided flow API
-                const startRes = await fetch(API_BASE + '/dnd/characters/guided/start', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ genre: rulesGenre })
-                });
+            // Build character locally - no API calls needed!
+            // All data is already in charCreationData from the creation steps
+            console.log('[CharGen] Building character locally from selections');
 
-                if (startRes.ok) {
-                    const flowData = await startRes.json();
-                    const flowId = flowData.flow_id;
-
-                    // Submit each step
-                    await submitGuidedStep(flowId, 'name', charCreationData.name);
-                    await submitGuidedStep(flowId, 'race', charCreationData.origin);
-                    await submitGuidedStep(flowId, 'class', charCreationData.archetype);
-                    // Submit ability scores if assigned, otherwise fall back to priority
-                    const hasAbilityScores = Object.values(charCreationData.abilityScores).every(v => v !== null);
-                    if (hasAbilityScores) {
-                        await submitGuidedStep(flowId, 'abilities', charCreationData.abilityScores);
-                    } else {
-                        await submitGuidedStep(flowId, 'priority', charCreationData.abilityPriority || 'physical');
-                    }
-                    await submitGuidedStep(flowId, 'skills', charCreationData.selectedSkills);
-
-                    // Finalize
-                    const finalRes = await fetch(API_BASE + `/dnd/characters/guided/${flowId}/finalize`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ player_id: currentSessionId })
-                    });
-
-                    if (finalRes.ok) {
-                        const finalData = await finalRes.json();
-                        charCreationData.characterId = finalData.character_id;
-                        charCreationData.generatedChar = finalData.character;
-                    } else {
-                        console.error('Failed to finalize guided character');
-                        showCreationError('Character finalization failed. Using your selections.');
-                        charCreationData.generatedChar = createDefaultCharacter();
-                    }
-                } else {
-                    console.error('Failed to start guided flow:', startRes.status);
-                    showCreationError('Character creation failed. Using default character.');
-                    charCreationData.generatedChar = createDefaultCharacter();
-                }
-            } catch (e) {
-                console.error('Failed to create guided character:', e);
-                showCreationError('Connection error. Using default character.');
-                charCreationData.generatedChar = createDefaultCharacter();
+            // Generate a local session ID if we don't have one
+            if (!currentSessionId) {
+                currentSessionId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             }
 
+            // Character will be built in finalizeCharacter() from charCreationData
+            // No need to set generatedChar - the fallback in finalizeCharacter handles it
             finalizeCharacter();
-        }
-
-        async function submitGuidedStep(flowId, stepType, value) {
-            try {
-                await fetch(API_BASE + `/dnd/characters/guided/${flowId}/step`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ step_type: stepType, value: value })
-                });
-            } catch (e) {
-                console.error('Failed to submit step:', stepType, e);
-            }
         }
 
         async function finalizeCharacter() {
@@ -7857,7 +7922,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             });
             getStartingInventory(archetype);
 
-            closeCharCreation();
+            closeCharCreation(null, true);  // Force close - character creation complete
             continueToStory();
         }
 
@@ -7869,9 +7934,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
-        function closeCharCreation(event) {
-            if (!event || event.target === event.currentTarget) {
+        function closeCharCreation(event, force = false) {
+            // Prevent accidental dismissal - only close on explicit force or X button
+            // Clicking outside the modal should NOT close it during character creation
+            if (force) {
                 document.getElementById('char-creation-modal').style.display = 'none';
+            }
+            // If event is from clicking the overlay (not the modal content), warn user
+            else if (event && event.target === event.currentTarget) {
+                // Don't close - user might have clicked accidentally
+                // Could add a subtle shake animation here to indicate it can't be closed
+                console.log('[CharCreation] Click outside modal ignored - use the buttons to navigate');
             }
         }
 
@@ -8092,6 +8165,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (el) el.remove();
         }
 
+        // Background session creation promise
+        let pendingSessionPromise = null;
+
         // Begin Story
         async function beginStory() {
             const worldSeed = document.getElementById('world-seed').value.trim();
@@ -8110,52 +8186,67 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             clearStatus('setup-status');
+            playerInventory = [];  // Reset inventory for new story
+            dndCharacter = null;   // Reset D&D character
+
+            // Build session payload
+            const sessionPayload = {
+                character_concept: characterConcept,
+                setting_preference: selectedCuratedWorld ? '' : worldSeed,
+                tone_preference: selectedTone,
+                genre: selectedGenre,
+                genres: selectedGenres,
+                storytelling_style: selectedStyle,
+                session_scope: sessionScope,
+                max_turns: maxTurnsForScope[sessionScope] || 20
+            };
+
+            if (selectedCuratedWorld) {
+                sessionPayload.world_id = selectedCuratedWorld;
+            }
+
+            // Start session creation in background (don't await yet)
+            pendingSessionPromise = createSessionInBackground(sessionPayload);
+
+            // If D&D mode, show character creation immediately (no wait!)
+            if (rulesMode === 'dnd') {
+                await startCharacterCreation(characterConcept);
+                return; // Character creation modal will call continueToStory when done
+            }
+
+            // For narrative mode, wait for session then continue
             showStatus('setup-status', '<span class="loading"></span> Preparing your world...', 'info');
-
             try {
-                // Create session with genre blend
-                // If a curated world is selected, use its ID; otherwise use the world seed text
-                const sessionPayload = {
-                    character_concept: characterConcept,
-                    setting_preference: selectedCuratedWorld ? '' : worldSeed,  // Don't need seed if using curated world
-                    tone_preference: selectedTone,
-                    genre: selectedGenre,  // Primary genre
-                    genres: selectedGenres,  // All selected genres for blending
-                    storytelling_style: selectedStyle,
-                    session_scope: sessionScope,  // one_shot, short, medium, long, campaign
-                    max_turns: maxTurnsForScope[sessionScope] || 20  // 0 = unlimited for campaigns
-                };
+                await pendingSessionPromise;
+                clearStatus('setup-status');
+                await continueToStory();
+            } catch (err) {
+                showStatus('setup-status', 'Error: ' + err.message, 'error');
+            }
+        }
 
-                // Add world_id if a curated world was selected
-                if (selectedCuratedWorld) {
-                    sessionPayload.world_id = selectedCuratedWorld;
-                }
-
+        // Create session in background
+        async function createSessionInBackground(payload) {
+            try {
                 const sessionRes = await fetch(API_BASE + '/game/session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(sessionPayload)
+                    body: JSON.stringify(payload)
                 });
 
                 if (!sessionRes.ok) throw new Error('Failed to create session');
                 const sessionData = await sessionRes.json();
                 currentSessionId = sessionData.session_id;
                 currentPhase = sessionData.phase;
-                playerInventory = [];  // Reset inventory for new story
-                dndCharacter = null;   // Reset D&D character
-
-                // If D&D mode, show character creation modal
-                if (rulesMode === 'dnd') {
-                    clearStatus('setup-status');
-                    await startCharacterCreation(characterConcept);
-                    return; // Character creation modal will call continueToStory when done
-                }
-
-                // For narrative mode, continue directly to story
-                await continueToStory();
-
+                console.log('[Session] Created in background:', currentSessionId);
+                return sessionData;
             } catch (err) {
-                showStatus('setup-status', 'Error: ' + err.message, 'error');
+                console.error('[Session] Background creation failed:', err);
+                // Generate a local session ID as fallback
+                currentSessionId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                currentPhase = 'active_play';
+                console.log('[Session] Using local fallback:', currentSessionId);
+                return { session_id: currentSessionId, phase: currentPhase };
             }
         }
 
@@ -8163,6 +8254,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function continueToStory() {
             const worldSeed = document.getElementById('world-seed').value.trim();
             const characterConcept = document.getElementById('character-concept').value.trim();
+
+            // Wait for background session creation if still pending
+            if (pendingSessionPromise) {
+                try {
+                    await pendingSessionPromise;
+                } catch (e) {
+                    console.warn('Session creation failed, using local fallback');
+                }
+                pendingSessionPromise = null;
+            }
 
             // Reset story guidance tracking for new story
             resetGuidanceTracking();
@@ -8183,13 +8284,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 if (playerInventory.length > 0) {
                     console.log('Inventory already populated:', playerInventory.length, 'items');
                 }
-
-                // Update visibility setting on server
-                await fetch(API_BASE + '/dnd/settings/visibility', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ rules_visibility: rulesVisibility })
-                });
+                // Visibility is handled client-side now - no API call needed
             } else {
                 document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
                 document.getElementById('char-sheet-btn').style.display = 'none';
@@ -8498,29 +8593,35 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         // ==========================================
-        // SAVE/LOAD SYSTEM
+        // SAVE/LOAD SYSTEM (localStorage-based)
+        // Helper functions defined earlier near updateSavesBadge
         // ==========================================
 
         let saveSlots = [];
 
+        // Load save slots (uses getLocalSaves defined earlier)
         async function loadSaveSlots() {
-            try {
-                const response = await fetch(API_BASE + '/game/saves?browser_id=' + encodeURIComponent(BROWSER_ID));
-                if (response.ok) {
-                    saveSlots = await response.json();
+            const saves = getLocalSaves();
+
+            // Create 10 slots, filling in saved data where it exists
+            saveSlots = Array.from({length: 10}, (_, i) => {
+                const slotNum = i + 1;
+                const savedSlot = saves[slotNum];
+                if (savedSlot) {
+                    return {
+                        slot: slotNum,
+                        is_empty: false,
+                        session_name: savedSlot.session_name,
+                        saved_at: savedSlot.saved_at,
+                        genre: savedSlot.genre,
+                        turn_count: savedSlot.turn_count,
+                        character_name: savedSlot.character?.name
+                    };
                 } else {
-                    saveSlots = Array.from({length: 10}, (_, i) => ({
-                        slot: i + 1,
-                        is_empty: true
-                    }));
+                    return { slot: slotNum, is_empty: true };
                 }
-            } catch (err) {
-                console.warn('Could not load save slots:', err);
-                saveSlots = Array.from({length: 10}, (_, i) => ({
-                    slot: i + 1,
-                    is_empty: true
-                }));
-            }
+            });
+
             return saveSlots;
         }
 
@@ -8618,7 +8719,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
-        function addToInventory(item) {
+        function addToInventory(item, showNotification = false) {
             // Check if item already exists
             const existing = playerInventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
             if (existing) {
@@ -8631,6 +8732,43 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     quantity: item.quantity || 1
                 });
             }
+
+            // Show notification if requested
+            if (showNotification) {
+                showInventoryNotification(item.name, item.icon || getItemIcon(item.name), 'added');
+            }
+        }
+
+        function showInventoryNotification(itemName, icon, action = 'added') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'inventory-notification';
+            notification.innerHTML = `
+                <span class="notif-icon">${icon || '📦'}</span>
+                <span class="notif-text">${action === 'added' ? '+' : '-'} ${itemName}</span>
+            `;
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                right: 20px;
+                background: ${action === 'added' ? 'linear-gradient(135deg, #2d5a3d, #1e3d2b)' : 'linear-gradient(135deg, #5a2d2d, #3d1e1e)'};
+                color: ${action === 'added' ? '#a8e6cf' : '#e6a8a8'};
+                padding: 12px 18px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                z-index: 9999;
+                animation: slideInRight 0.3s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+                border: 1px solid ${action === 'added' ? 'rgba(168,230,207,0.3)' : 'rgba(230,168,168,0.3)'};
+            `;
+
+            document.body.appendChild(notification);
+
+            // Remove after animation
+            setTimeout(() => notification.remove(), 3000);
         }
 
         function removeFromInventory(itemName) {
@@ -8920,7 +9058,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     itemName = itemName.replace(/\s+(and|which|that|from|to|in|on|with).*$/i, '').trim();
                     // Validate that this is actually an item, not an NPC or location
                     if (itemName.length > 2 && itemName.length < 50 && isValidItem(itemName)) {
-                        addToInventory({ name: itemName });
+                        addToInventory({ name: itemName }, true);  // Show notification!
                         console.log('Added item to inventory:', itemName);
                     }
                 }
@@ -8935,6 +9073,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     itemName = itemName.replace(/\s+(and|which|that|from|to|in|on|with).*$/i, '').trim();
                     // Validate that this is actually an item
                     if (itemName.length > 2 && itemName.length < 50 && isValidItem(itemName)) {
+                        showInventoryNotification(itemName, getItemIcon(itemName), 'removed');
                         removeFromInventory(itemName);
                         console.log('Removed item from inventory:', itemName);
                     }
@@ -8943,37 +9082,69 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         async function saveToSlot(slot) {
-            if (!currentSessionId) {
+            if (!currentSessionId && !dndCharacter) {
                 alert('No active session to save');
                 return;
             }
 
-            const saveName = document.getElementById('save-name').value.trim() || `Adventure ${slot}`;
+            const saveName = document.getElementById('save-name')?.value.trim() || `Adventure ${slot}`;
 
-            try {
-                const response = await fetch(API_BASE + `/game/saves/${slot}?session_id=${currentSessionId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        slot: slot,
-                        session_name: saveName,
-                        inventory: playerInventory,
-                        browser_id: BROWSER_ID  // Isolate saves by browser
-                    })
-                });
+            // Capture the current story content
+            const storyContainer = document.getElementById('story-container');
+            const storyHTML = storyContainer ? storyContainer.innerHTML : '';
 
-                if (response.ok) {
-                    closeSaveModal();
-                    showStatus('story-info', 'Game saved!', 'success');
-                    setTimeout(() => {
-                        document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
-                    }, 2000);
-                } else {
-                    const err = await response.json();
-                    alert('Save failed: ' + (err.detail || 'Unknown error'));
-                }
-            } catch (err) {
-                alert('Save failed: ' + err.message);
+            // Build the save data
+            const saveData = {
+                slot: slot,
+                session_name: saveName,
+                saved_at: new Date().toISOString(),
+                session_id: currentSessionId,
+                phase: currentPhase,
+                genre: rulesGenre || 'fantasy',
+                turn_count: actionHistory.length,
+
+                // Game mode settings (CRITICAL for proper restore)
+                rules_mode: rulesMode,
+                rules_visibility: rulesVisibility,
+                selected_tone: selectedTone,
+                selected_style: selectedStyle,
+
+                // Character data
+                character: dndCharacter ? {
+                    name: dndCharacter.name,
+                    race: dndCharacter.race || dndCharacter.origin,
+                    character_class: dndCharacter.character_class || dndCharacter.archetype,
+                    level: dndCharacter.level || 1,
+                    ability_scores: dndCharacter.ability_scores,
+                    max_hit_points: dndCharacter.max_hit_points,
+                    current_hit_points: dndCharacter.current_hit_points,
+                    armor_class: dndCharacter.armor_class,
+                    skill_proficiencies: dndCharacter.skill_proficiencies
+                } : null,
+
+                // Inventory
+                inventory: playerInventory,
+
+                // Story content
+                story_html: storyHTML,
+
+                // Action history for undo/redo
+                action_history: actionHistory.slice(-10),  // Keep last 10 actions
+                last_player_input: lastPlayerInput
+            };
+
+            // Get existing saves and update the slot
+            const saves = getLocalSaves();
+            saves[slot] = saveData;
+
+            if (setLocalSaves(saves)) {
+                closeSaveModal();
+                showStatus('story-info', 'Game saved locally!', 'success');
+                setTimeout(() => {
+                    document.getElementById('story-info').textContent = 'Session: ' + (currentSessionId ? currentSessionId.substring(0, 8) : 'Local');
+                }, 2000);
+            } else {
+                alert('Save failed: Could not write to local storage');
             }
         }
 
@@ -8981,36 +9152,74 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('saves-status', '<span class="loading"></span> Loading your adventure...', 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/saves/${slot}/load?browser_id=` + encodeURIComponent(BROWSER_ID));
+                const saves = getLocalSaves();
+                const saveData = saves[slot];
 
-                if (response.ok) {
-                    const data = await response.json();
-                    currentSessionId = data.session_id;
-                    currentPhase = data.phase;
-                    playerInventory = data.inventory || [];  // Restore inventory
-
-                    // Restore character from save data
-                    if (data.character) {
-                        dndCharacter = data.character;
-                        console.log('Restored character from save:', dndCharacter.name);
-                    } else {
-                        console.warn('No character data in save - character sheet may be unavailable');
-                    }
-
-                    showScreen('story');
-                    updateQuickRollButton();
-                    document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
-                    document.getElementById('story-container').innerHTML = '';
-
-                    addPassage('Your adventure continues...', 'system');
-                    addPassage(data.narrative, 'narrator');
-
-                    clearStatus('saves-status');
-                } else {
-                    const err = await response.json();
-                    showStatus('saves-status', 'Load failed: ' + (err.detail || 'Unknown error'), 'error');
+                if (!saveData) {
+                    showStatus('saves-status', 'Load failed: Save slot is empty', 'error');
+                    return;
                 }
+
+                // Restore game state
+                currentSessionId = saveData.session_id || `local-${Date.now()}`;
+                currentPhase = saveData.phase || 'exploration';
+                playerInventory = saveData.inventory || [];
+                rulesGenre = saveData.genre || 'fantasy';
+
+                // Restore game mode settings
+                rulesMode = saveData.rules_mode || 'dnd';
+                rulesVisibility = saveData.rules_visibility || 'guided';
+                selectedTone = saveData.selected_tone || 'dramatic';
+                selectedStyle = saveData.selected_style || 'dynamic';
+
+                // Restore character
+                if (saveData.character) {
+                    dndCharacter = {
+                        name: saveData.character.name,
+                        race: saveData.character.race,
+                        origin: saveData.character.race,
+                        character_class: saveData.character.character_class,
+                        archetype: saveData.character.character_class,
+                        level: saveData.character.level || 1,
+                        ability_scores: saveData.character.ability_scores || {},
+                        max_hit_points: saveData.character.max_hit_points || 10,
+                        current_hit_points: saveData.character.current_hit_points || 10,
+                        armor_class: saveData.character.armor_class || 10,
+                        proficiency_bonus: 2,
+                        skill_proficiencies: saveData.character.skill_proficiencies || []
+                    };
+                    console.log('Restored character from local save:', dndCharacter.name);
+                } else {
+                    console.warn('No character data in save - character sheet may be unavailable');
+                }
+
+                // Restore action history for undo/redo
+                if (saveData.action_history) {
+                    actionHistory = saveData.action_history;
+                    lastPlayerInput = saveData.last_player_input || null;
+                }
+
+                // Show story screen and restore content
+                showScreen('story');
+                updateQuickRollButton();
+                updateActionBar();
+                document.getElementById('story-info').textContent = 'Session: ' + currentSessionId.substring(0, 8);
+
+                // Restore story content
+                const storyContainer = document.getElementById('story-container');
+                if (saveData.story_html) {
+                    storyContainer.innerHTML = saveData.story_html;
+                } else {
+                    storyContainer.innerHTML = '';
+                    addPassage('Your adventure continues...', 'system');
+                }
+
+                // Close the saves screen
+                showScreen('story');
+                clearStatus('saves-status');
+
             } catch (err) {
+                console.error('Load error:', err);
                 showStatus('saves-status', 'Load failed: ' + err.message, 'error');
             }
         }
@@ -9019,17 +9228,15 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!confirm(`Delete save in slot ${slot}?`)) return;
 
             try {
-                const response = await fetch(API_BASE + `/game/saves/${slot}?browser_id=` + encodeURIComponent(BROWSER_ID), {
-                    method: 'DELETE'
-                });
+                const saves = getLocalSaves();
+                delete saves[slot];
 
-                if (response.ok) {
+                if (setLocalSaves(saves)) {
                     await loadSaveSlots();
                     renderSaveSlots('save-slots-container', false);
                     showStatus('saves-status', 'Save deleted.', 'info');
                 } else {
-                    const err = await response.json();
-                    showStatus('saves-status', 'Delete failed: ' + (err.detail || 'Unknown error'), 'error');
+                    showStatus('saves-status', 'Delete failed: Could not update local storage', 'error');
                 }
             } catch (err) {
                 showStatus('saves-status', 'Delete failed: ' + err.message, 'error');
@@ -9883,11 +10090,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('admin-status', '<span class="loading"></span> Clearing saves...', 'info');
 
             try {
-                // Delete each slot (only clears THIS browser's saves)
-                for (let i = 1; i <= 10; i++) {
-                    await fetch(API_BASE + `/game/saves/${i}?browser_id=` + encodeURIComponent(BROWSER_ID), { method: 'DELETE' });
-                }
+                // Clear all saves from localStorage
+                localStorage.removeItem(SAVES_STORAGE_KEY);
                 showStatus('admin-status', 'All your save slots cleared.', 'success');
+                updateSavesBadge();
             } catch (err) {
                 showStatus('admin-status', 'Error clearing saves: ' + err.message, 'error');
             }
@@ -10238,15 +10444,27 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
-        // Flush events before page unload
-        window.addEventListener('beforeunload', () => {
+        // Flush events before page unload and warn about unsaved progress
+        window.addEventListener('beforeunload', (e) => {
+            // Flush session events
             if (sessionEvents.length > 0) {
-                // Use sendBeacon for reliable delivery on page unload
                 navigator.sendBeacon('/api/session-log', JSON.stringify({
                     session_id: sessionId,
                     tester: validatedTester,
                     events: sessionEvents
                 }));
+            }
+
+            // Warn if there's unsaved story progress
+            const storyContainer = document.getElementById('story-container');
+            const hasStoryContent = storyContainer && storyContainer.children.length > 0;
+            const isOnStoryScreen = document.getElementById('story')?.classList.contains('active');
+
+            if (hasStoryContent && isOnStoryScreen && actionHistory.length > 0) {
+                // Standard way to trigger browser's "unsaved changes" warning
+                e.preventDefault();
+                e.returnValue = ''; // Required for Chrome
+                return '';
             }
         });
 
