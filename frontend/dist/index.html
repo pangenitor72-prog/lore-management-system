@@ -5326,6 +5326,360 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let ttrpgVisibility = 'classic';
 
         // ==========================================
+        // PLAYER PSYCHOLOGY SYSTEM
+        // Observes player behavior, builds profile, adapts AI responses
+        // ==========================================
+
+        // The living player profile - updates every action
+        let playerProfile = {
+            // Core preferences (0.0 to 1.0 spectrum)
+            pacing: 0.5,         // 0 = slow & rich, 1 = fast & punchy
+            stakes: 0.5,         // 0 = cozy & safe, 1 = intense & dangerous
+            socialFocus: 0.5,    // 0 = NPCs are tools, 1 = NPCs are people
+            challenge: 0.5,      // 0 = power fantasy, 1 = earned struggle
+            exploration: 0.5,    // 0 = goal-focused, 1 = wanderer
+            roleplayDepth: 0.5,  // 0 = director, 1 = actor
+            novelty: 0.5,        // 0 = comfort, 1 = surprise me
+
+            // Detected player archetype (emerges from patterns)
+            archetype: null,     // 'hero', 'explorer', 'strategist', 'storyteller', 'chaos-agent'
+
+            // Tracking
+            turnCount: 0,
+            confidence: 0.0,     // How sure we are (0-1)
+            actionHistory: [],   // Recent action analyses for pattern detection
+
+            // Session engagement signals
+            sessionStartTime: null,
+            totalActions: 0,
+            averageActionLength: 0,
+            suggestionsUsed: 0,
+            suggestionsIgnored: 0
+        };
+
+        // Known NPCs in current session (for social detection)
+        let knownNPCs = [];
+
+        // Analyze a single player action
+        function analyzePlayerAction(action, context = {}) {
+            const words = action.trim().split(/\s+/);
+            const wordCount = words.length;
+            const actionLower = action.toLowerCase();
+
+            const analysis = {
+                // Length & Detail
+                wordCount: wordCount,
+                isDetailed: action.length > 100,
+                isTerse: action.length < 30,
+
+                // Intent Type Detection
+                isCombat: /attack|fight|strike|hit|kill|shoot|stab|slash|punch|kick|cast.*at|throw.*at/i.test(action),
+                isSocial: /talk|speak|ask|tell|say|persuade|convince|negotiate|greet|thank|apologize|flirt/i.test(action),
+                isExploration: /look|examine|search|explore|investigate|check|inspect|open|enter|go to|head to|walk|move/i.test(action),
+                isCreative: /try to|attempt|what if|can i|i want to|maybe/i.test(action),
+                isCautious: /careful|quietly|slowly|sneak|hide|wait|listen|watch|observe|peek/i.test(action),
+
+                // Voice & Roleplay
+                speaksAsCharacter: /^["']|"[^"]+"|I say|I ask|I tell|I whisper|I shout|speaking|saying/i.test(action),
+                usesFirstPerson: /\bI\b/.test(action),
+                describesFeeling: /I feel|feeling|nervous|excited|angry|happy|sad|scared|confident|worried/i.test(action),
+
+                // Social Orientation
+                mentionsNPC: knownNPCs.some(npc => actionLower.includes(npc.toLowerCase())),
+                asksQuestion: /\?|who is|what is|where is|why|how do|tell me about/i.test(action),
+
+                // Risk Attitude
+                isAggressive: /attack|charge|rush|immediately|quickly|now|fight/i.test(action),
+                isDefensive: /defend|block|protect|shield|retreat|run away|escape|flee/i.test(action),
+                takesBigRisk: /dangerous|risky|try anyway|despite|even if|reckless/i.test(action),
+
+                // Novelty Seeking
+                usedSuggestion: context.suggestions?.some(s =>
+                    action.toLowerCase().includes(s.toLowerCase().substring(0, 20))
+                ) || false,
+                doesUnexpected: context.expectedActions ?
+                    !context.expectedActions.some(e => actionLower.includes(e)) : false,
+
+                // Meta
+                timestamp: Date.now()
+            };
+
+            // Derive primary intent
+            if (analysis.isCombat) analysis.primaryIntent = 'combat';
+            else if (analysis.isSocial) analysis.primaryIntent = 'social';
+            else if (analysis.isExploration) analysis.primaryIntent = 'exploration';
+            else if (analysis.isCreative) analysis.primaryIntent = 'creative';
+            else analysis.primaryIntent = 'other';
+
+            return analysis;
+        }
+
+        // Update the player profile based on a new action analysis
+        function updatePlayerProfile(analysis) {
+            const profile = playerProfile;
+            profile.turnCount++;
+            profile.totalActions++;
+
+            // Track action history (keep last 10)
+            profile.actionHistory.push(analysis);
+            if (profile.actionHistory.length > 10) {
+                profile.actionHistory.shift();
+            }
+
+            // Update average action length
+            profile.averageActionLength = (
+                (profile.averageActionLength * (profile.totalActions - 1) + analysis.wordCount)
+                / profile.totalActions
+            );
+
+            // Track suggestion usage
+            if (analysis.usedSuggestion) {
+                profile.suggestionsUsed++;
+            } else if (analysis.primaryIntent !== 'other') {
+                profile.suggestionsIgnored++;
+            }
+
+            // Learning rate decreases as we become more confident
+            const learningRate = Math.max(0.1, 0.4 - (profile.confidence * 0.3));
+
+            // Update PACING (action length and detail signals)
+            if (analysis.isTerse) {
+                profile.pacing = lerp(profile.pacing, 0.8, learningRate);
+            } else if (analysis.isDetailed) {
+                profile.pacing = lerp(profile.pacing, 0.2, learningRate);
+            }
+
+            // Update STAKES (aggression, risk-taking signals)
+            if (analysis.isAggressive || analysis.takesBigRisk) {
+                profile.stakes = lerp(profile.stakes, 0.8, learningRate);
+            } else if (analysis.isCautious || analysis.isDefensive) {
+                profile.stakes = lerp(profile.stakes, 0.3, learningRate);
+            }
+
+            // Update SOCIAL FOCUS (NPC interaction, questions)
+            if (analysis.isSocial || analysis.mentionsNPC) {
+                profile.socialFocus = lerp(profile.socialFocus, 0.8, learningRate);
+            } else if (analysis.isCombat && !analysis.mentionsNPC) {
+                profile.socialFocus = lerp(profile.socialFocus, 0.3, learningRate);
+            }
+
+            // Update CHALLENGE (based on risk-taking and caution)
+            if (analysis.takesBigRisk || analysis.isAggressive) {
+                profile.challenge = lerp(profile.challenge, 0.7, learningRate);
+            } else if (analysis.isCautious) {
+                profile.challenge = lerp(profile.challenge, 0.4, learningRate);
+            }
+
+            // Update EXPLORATION (based on exploration actions vs goal-focused)
+            if (analysis.isExploration || analysis.asksQuestion) {
+                profile.exploration = lerp(profile.exploration, 0.7, learningRate);
+            } else if (analysis.isCombat || analysis.isAggressive) {
+                profile.exploration = lerp(profile.exploration, 0.3, learningRate);
+            }
+
+            // Update ROLEPLAY DEPTH (based on character voice and emotion)
+            if (analysis.speaksAsCharacter || analysis.describesFeeling) {
+                profile.roleplayDepth = lerp(profile.roleplayDepth, 0.8, learningRate);
+            } else if (analysis.isTerse && !analysis.usesFirstPerson) {
+                profile.roleplayDepth = lerp(profile.roleplayDepth, 0.3, learningRate);
+            }
+
+            // Update NOVELTY (based on suggestion usage and unexpected actions)
+            if (analysis.doesUnexpected || profile.suggestionsIgnored > profile.suggestionsUsed) {
+                profile.novelty = lerp(profile.novelty, 0.8, learningRate);
+            } else if (analysis.usedSuggestion) {
+                profile.novelty = lerp(profile.novelty, 0.3, learningRate);
+            }
+
+            // Increase confidence over time
+            profile.confidence = Math.min(1.0, profile.turnCount * 0.1);
+
+            // Detect archetype after enough data
+            if (profile.turnCount >= 3) {
+                profile.archetype = detectPlayerArchetype(profile);
+            }
+
+            console.log('[Psychology] Profile updated:', {
+                turn: profile.turnCount,
+                confidence: profile.confidence.toFixed(2),
+                archetype: profile.archetype,
+                pacing: profile.pacing.toFixed(2),
+                stakes: profile.stakes.toFixed(2),
+                socialFocus: profile.socialFocus.toFixed(2)
+            });
+
+            return profile;
+        }
+
+        // Linear interpolation helper
+        function lerp(current, target, rate) {
+            return current + (target - current) * rate;
+        }
+
+        // Detect player archetype from profile
+        function detectPlayerArchetype(profile) {
+            // Score each archetype based on profile fit
+            const scores = {
+                'hero': (1 - profile.challenge) * 0.3 + profile.stakes * 0.3 + profile.pacing * 0.2 + (1 - profile.exploration) * 0.2,
+                'explorer': profile.exploration * 0.4 + (1 - profile.pacing) * 0.3 + profile.novelty * 0.3,
+                'strategist': profile.challenge * 0.3 + (1 - profile.pacing) * 0.2 + (1 - profile.stakes) * 0.3 + profile.exploration * 0.2,
+                'storyteller': profile.socialFocus * 0.3 + profile.roleplayDepth * 0.4 + (1 - profile.pacing) * 0.3,
+                'chaos-agent': profile.novelty * 0.5 + profile.stakes * 0.2 + profile.pacing * 0.3
+            };
+
+            // Find highest scoring archetype
+            let maxScore = 0;
+            let detected = null;
+            for (const [archetype, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    detected = archetype;
+                }
+            }
+
+            return detected;
+        }
+
+        // Generate adaptive AI prompt additions based on player profile
+        function buildAdaptivePrompt(profile) {
+            if (profile.confidence < 0.2) {
+                // Not enough data yet - use neutral defaults
+                return '';
+            }
+
+            const additions = [];
+
+            // PACING guidance
+            if (profile.pacing > 0.65) {
+                additions.push("PACING: Keep scenes SHORT and punchy. Advance action quickly. Don't over-describe.");
+            } else if (profile.pacing < 0.35) {
+                additions.push("PACING: Take your time. Rich, atmospheric descriptions. Let moments breathe.");
+            }
+
+            // STAKES guidance
+            if (profile.stakes > 0.65) {
+                additions.push("STAKES: Raise tension. Real danger exists. Consequences matter. Not everyone is safe.");
+            } else if (profile.stakes < 0.35) {
+                additions.push("STAKES: Keep it adventurous but not threatening. The player should feel capable and heroic.");
+            }
+
+            // SOCIAL guidance
+            if (profile.socialFocus > 0.65) {
+                additions.push("NPCS: Give NPCs personality and depth. They remember past interactions. Relationships matter to this player.");
+            } else if (profile.socialFocus < 0.35) {
+                additions.push("NPCS: Keep NPC interactions efficient. They serve the action, not the other way around.");
+            }
+
+            // CHALLENGE guidance
+            if (profile.challenge > 0.65) {
+                additions.push("CHALLENGE: Make them earn victories. Obstacles are real. Clever solutions should be required.");
+            } else if (profile.challenge < 0.35) {
+                additions.push("CHALLENGE: Let them feel competent. Challenges exist but reward boldness.");
+            }
+
+            // EXPLORATION guidance
+            if (profile.exploration > 0.65) {
+                additions.push("EXPLORATION: Reward curiosity. Hide secrets to discover. The world has layers to uncover.");
+            } else if (profile.exploration < 0.35) {
+                additions.push("EXPLORATION: Keep things moving toward objectives. Don't distract with too many tangents.");
+            }
+
+            // ROLEPLAY guidance
+            if (profile.roleplayDepth > 0.65) {
+                additions.push("ROLEPLAY: Engage with their character's emotions and voice. Reflect their personality back.");
+            } else if (profile.roleplayDepth < 0.35) {
+                additions.push("ROLEPLAY: Focus on action and outcomes rather than emotional interiority.");
+            }
+
+            // NOVELTY guidance
+            if (profile.novelty > 0.65) {
+                additions.push("SURPRISE: Subvert expectations. Include twists. This player wants to be caught off guard.");
+            } else if (profile.novelty < 0.35) {
+                additions.push("EXPECTATIONS: Deliver satisfying genre conventions. Comfort in the familiar.");
+            }
+
+            // ARCHETYPE-specific guidance
+            if (profile.archetype && profile.confidence > 0.4) {
+                switch (profile.archetype) {
+                    case 'hero':
+                        additions.push("ARCHETYPE HERO: Make them feel powerful and admired. Enemies should fear them.");
+                        break;
+                    case 'explorer':
+                        additions.push("ARCHETYPE EXPLORER: Always hint at more to discover. Reward their curiosity with secrets.");
+                        break;
+                    case 'strategist':
+                        additions.push("ARCHETYPE STRATEGIST: Present problems with multiple solutions. Reward clever thinking.");
+                        break;
+                    case 'storyteller':
+                        additions.push("ARCHETYPE STORYTELLER: Develop emotional arcs. NPCs should feel real. Drama matters.");
+                        break;
+                    case 'chaos-agent':
+                        additions.push("ARCHETYPE CHAOS: Match their energy. Let wild ideas have wild consequences. Embrace the unexpected.");
+                        break;
+                }
+            }
+
+            if (additions.length === 0) {
+                return '';
+            }
+
+            return '\n\n[PLAYER ADAPTATION - The system has learned this about the player\'s preferences:]\n' +
+                   additions.join('\n') +
+                   '\n[Adapt your storytelling style accordingly while maintaining narrative coherence.]';
+        }
+
+        // Register an NPC that the player has encountered
+        function registerNPC(name) {
+            if (name && !knownNPCs.includes(name)) {
+                knownNPCs.push(name);
+            }
+        }
+
+        // Extract NPC names from AI narrative (simple heuristic)
+        function extractNPCsFromNarrative(narrative) {
+            // Look for capitalized names that aren't at sentence starts
+            const namePattern = /(?:named|called|introduces? (?:himself|herself|themselves) as|meet|greets you,?) ([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)/g;
+            let match;
+            while ((match = namePattern.exec(narrative)) !== null) {
+                registerNPC(match[1]);
+            }
+
+            // Also look for dialogue attribution
+            const dialoguePattern = /"[^"]+"\s+(?:says?|asks?|replies?|exclaims?|whispers?|shouts?)\s+([A-Z][a-z]+)/g;
+            while ((match = dialoguePattern.exec(narrative)) !== null) {
+                registerNPC(match[1]);
+            }
+        }
+
+        // Reset profile for new session
+        function resetPlayerProfile() {
+            playerProfile = {
+                pacing: 0.5,
+                stakes: 0.5,
+                socialFocus: 0.5,
+                challenge: 0.5,
+                exploration: 0.5,
+                roleplayDepth: 0.5,
+                novelty: 0.5,
+                archetype: null,
+                turnCount: 0,
+                confidence: 0.0,
+                actionHistory: [],
+                sessionStartTime: Date.now(),
+                totalActions: 0,
+                averageActionLength: 0,
+                suggestionsUsed: 0,
+                suggestionsIgnored: 0
+            };
+            knownNPCs = [];
+            console.log('[Psychology] Profile reset for new session');
+        }
+
+        // ==========================================
+        // END PLAYER PSYCHOLOGY SYSTEM
+        // ==========================================
+
+        // ==========================================
         // NEW LANDING FLOW FUNCTIONS
         // ==========================================
 
@@ -8188,6 +8542,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             clearStatus('setup-status');
             playerInventory = [];  // Reset inventory for new story
             dndCharacter = null;   // Reset D&D character
+            resetPlayerProfile();  // Reset player psychology for new story
 
             // Build session payload
             const sessionPayload = {
@@ -8357,6 +8712,26 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             addPassage(action, 'player');
             showLoading();
 
+            // === PLAYER PSYCHOLOGY: Analyze the action ===
+            const storyContainer = document.getElementById('story-container');
+            const recentPassages = storyContainer ?
+                Array.from(storyContainer.querySelectorAll('.narrator-passage'))
+                    .slice(-3)
+                    .map(p => p.textContent)
+                    .join(' ') : '';
+
+            const actionAnalysis = analyzePlayerAction(action, {
+                recentNarrative: recentPassages,
+                turnCount: playerProfile.turnCount,
+                currentPhase: currentPhase
+            });
+
+            updatePlayerProfile(actionAnalysis);
+
+            // Build adaptive prompt based on learned preferences
+            const adaptivePrompt = buildAdaptivePrompt(playerProfile);
+            // === END PSYCHOLOGY ===
+
             // Check if player needs story guidance (using suggestions frequently)
             const needsGuidance = needsStoryGuidance();
 
@@ -8368,7 +8743,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const response = await fetch(API_BASE + '/game/session/' + currentSessionId + '/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action, needs_guidance: needsGuidance }),
+                    body: JSON.stringify({
+                        action: action,
+                        needs_guidance: needsGuidance,
+                        adaptive_context: adaptivePrompt  // Send learned preferences to AI
+                    }),
                     signal: controller.signal
                 });
 
@@ -8393,6 +8772,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 // Parse narrative for inventory changes
                 parseInventoryChanges(data.narrative);
+
+                // === PLAYER PSYCHOLOGY: Track NPCs mentioned ===
+                extractNPCsFromNarrative(data.narrative);
+                // === END PSYCHOLOGY ===
 
                 // Save to history for undo/retry
                 saveToHistory(action, data.narrative);
@@ -8441,6 +8824,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     name: '', origin: null, archetype: null, abilityPriority: null, selectedSkills: [], concept: '',
                     abilityScores: { strength: null, dexterity: null, constitution: null, intelligence: null, wisdom: null, charisma: null }
                 };
+
+                // Reset player psychology for fresh start
+                resetPlayerProfile();
+
                 document.getElementById('story-container').innerHTML = '';
 
                 // Clear genre selections visually
@@ -9130,7 +9517,26 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 // Action history for undo/redo
                 action_history: actionHistory.slice(-10),  // Keep last 10 actions
-                last_player_input: lastPlayerInput
+                last_player_input: lastPlayerInput,
+
+                // Player psychology profile (learned preferences)
+                player_profile: {
+                    pacing: playerProfile.pacing,
+                    stakes: playerProfile.stakes,
+                    socialFocus: playerProfile.socialFocus,
+                    challenge: playerProfile.challenge,
+                    exploration: playerProfile.exploration,
+                    roleplayDepth: playerProfile.roleplayDepth,
+                    novelty: playerProfile.novelty,
+                    archetype: playerProfile.archetype,
+                    turnCount: playerProfile.turnCount,
+                    confidence: playerProfile.confidence,
+                    totalActions: playerProfile.totalActions,
+                    averageActionLength: playerProfile.averageActionLength,
+                    suggestionsUsed: playerProfile.suggestionsUsed,
+                    suggestionsIgnored: playerProfile.suggestionsIgnored,
+                    knownNPCs: knownNPCs  // Separate variable for NPC tracking
+                }
             };
 
             // Get existing saves and update the slot
@@ -9197,6 +9603,27 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 if (saveData.action_history) {
                     actionHistory = saveData.action_history;
                     lastPlayerInput = saveData.last_player_input || null;
+                }
+
+                // Restore player psychology profile (learned preferences)
+                if (saveData.player_profile) {
+                    const p = saveData.player_profile;
+                    playerProfile.pacing = p.pacing ?? 0.5;
+                    playerProfile.stakes = p.stakes ?? 0.5;
+                    playerProfile.socialFocus = p.socialFocus ?? 0.5;
+                    playerProfile.challenge = p.challenge ?? 0.5;
+                    playerProfile.exploration = p.exploration ?? 0.5;
+                    playerProfile.roleplayDepth = p.roleplayDepth ?? 0.5;
+                    playerProfile.novelty = p.novelty ?? 0.5;
+                    playerProfile.archetype = p.archetype || null;
+                    playerProfile.turnCount = p.turnCount || 0;
+                    playerProfile.confidence = p.confidence || 0;
+                    playerProfile.totalActions = p.totalActions || 0;
+                    playerProfile.averageActionLength = p.averageActionLength || 0;
+                    playerProfile.suggestionsUsed = p.suggestionsUsed || 0;
+                    playerProfile.suggestionsIgnored = p.suggestionsIgnored || 0;
+                    knownNPCs = p.knownNPCs || [];  // Restore separate NPC array
+                    console.log('Restored player profile - archetype:', playerProfile.archetype, 'confidence:', playerProfile.confidence.toFixed(2));
                 }
 
                 // Show story screen and restore content
