@@ -1156,6 +1156,17 @@
             padding: 14px 24px;
         }
 
+        /* Bottom action bar - hidden on desktop, shown on mobile only */
+        .bottom-action-bar {
+            display: none !important;
+        }
+
+        @media (max-width: 600px) {
+            .bottom-action-bar {
+                display: flex !important;
+            }
+        }
+
         /* Voice Input Button */
         .voice-btn {
             padding: 14px 16px;
@@ -1553,29 +1564,37 @@
 
         /* Character Creation Modal */
         .creation-step {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
+            padding: 6px 12px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
             color: var(--text-muted);
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .creation-step.active {
             background: var(--accent-gold);
             border-color: var(--accent-gold);
             color: var(--bg-primary);
+            font-weight: 600;
         }
 
         .creation-step.completed {
             background: var(--accent-sage);
             border-color: var(--accent-sage);
             color: var(--bg-primary);
+        }
+
+        @media (max-width: 500px) {
+            .creation-step {
+                padding: 4px 8px;
+                font-size: 0.65rem;
+            }
         }
 
         /* Step content transition animation */
@@ -3817,12 +3836,12 @@
                     <span class="landing-card-badge">2 clicks to play</span>
                 </div>
 
-                <!-- Full Adventure Mode (was TTRPG Mode) -->
+                <!-- Tabletop Mode -->
                 <div class="landing-card ttrpg-card" onclick="ttrpgModeFlow()">
                     <div class="landing-card-icon">🎲</div>
-                    <h3 class="landing-card-title">Full Adventure</h3>
-                    <p class="landing-card-desc">Dice rolls, character sheets, combat</p>
-                    <span class="landing-card-badge">The complete experience</span>
+                    <h3 class="landing-card-title">Tabletop Mode</h3>
+                    <p class="landing-card-desc">Build a character, roll dice, track stats</p>
+                    <span class="landing-card-badge">D&D 5e rules</span>
                 </div>
 
                 <!-- Continue Story -->
@@ -4234,10 +4253,10 @@
                     </div>
                 </div>
 
-                <!-- Suggested Actions (shows in guided mode) -->
+                <!-- Suggested Actions (always visible with fallback) -->
                 <div id="suggested-actions-panel">
                     <div class="suggested-actions-header">
-                        <span>💡</span> <span>Try one of these:</span>
+                        <span>💡</span> <span>Ideas</span>
                     </div>
                     <div class="suggested-actions-chips" id="suggested-actions-chips">
                         <!-- Populated by JS from API response -->
@@ -4253,7 +4272,7 @@
                     <button class="suggestions-toggle" id="suggestions-toggle" onclick="toggleMobileSuggestions()" title="Show suggestions">💡</button>
                     <button id="quick-roll-btn" class="voice-btn" onclick="showQuickRollMenu()" title="Quick dice roll" style="display: none;">🎲</button>
                     <input type="text" id="player-input" placeholder="What do you do?" onkeypress="handleKeyPress(event)">
-                    <button class="btn btn-primary" onclick="sendAction()">Go</button>
+                    <button class="btn btn-primary" onclick="sendAction()">Act</button>
                 </div>
 
                 <!-- Undo/Retry Bar -->
@@ -4698,7 +4717,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         <!-- TTRPG Setup Screen -->
         <div id="ttrpg-setup" class="screen">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h2 style="color: var(--accent-lavender); margin-bottom: 0; font-weight: normal;">🎲 Full Adventure</h2>
+                <h2 style="color: var(--accent-lavender); margin-bottom: 0; font-weight: normal;">🎲 Tabletop Mode</h2>
                 <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back</button>
             </div>
             <p style="color: var(--text-secondary); margin-bottom: 25px;">
@@ -5121,10 +5140,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Set to null to hide all announcements.
 
         const CURRENT_ANNOUNCEMENT = {
-            id: 'update-2024-12-31-vtt',  // Unique ID for this announcement (used for dismissal tracking)
+            id: 'update-2025-01-02-psychology',  // Unique ID for this announcement (used for dismissal tracking)
             type: 'success',          // 'info', 'warning', 'success', 'maintenance'
-            icon: '🎲',               // Emoji icon
-            message: '<strong>VTT-Style Dice Rolling!</strong> Click abilities and skills to roll. HP tracker, spell slots, conditions, combat bar, and quick dice menu (🎲) all added.',
+            icon: '✨',               // Emoji icon
+            message: '<strong>Smarter Storytelling!</strong> The AI now learns your playstyle and adapts. Plus: cleaner UI, better character creation flow, and always-visible action ideas.',
             dismissible: true,        // Can user dismiss it?
             persistent: false         // If true, shows even after dismissal (for critical maintenance)
         };
@@ -7489,17 +7508,19 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function updateCreationSteps() {
             const stepsContainer = document.getElementById('char-creation-steps');
-            let numSteps = 6; // Default for guided/classic: name, origin, class, abilities, skills, review
 
-            if (creationMode === 'concept') {
-                numSteps = 3; // Concept: name/concept, review AI suggestion, confirm/adjust
-            }
+            // Step labels for each creation mode
+            const standardLabels = ['Name', 'Origin', 'Class', 'Abilities', 'Skills', 'Review'];
+            const conceptLabels = ['Concept', 'Review', 'Confirm'];
+
+            const labels = creationMode === 'concept' ? conceptLabels : standardLabels;
+            const numSteps = labels.length;
 
             let stepsHtml = '';
             for (let i = 0; i < numSteps; i++) {
                 const isActive = i === charCreationStep;
                 const isCompleted = i < charCreationStep;
-                stepsHtml += `<span class="creation-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}" data-step="${i}">${i + 1}</span>`;
+                stepsHtml += `<span class="creation-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}" data-step="${i}" title="${labels[i]}">${labels[i]}</span>`;
             }
             stepsContainer.innerHTML = stepsHtml;
         }
@@ -8440,13 +8461,35 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         function hideSuggestedActions() {
-            const panel = document.getElementById('suggested-actions-panel');
-            if (panel) panel.classList.remove('visible');
-            // Also hide mobile suggestions
-            const mobilePanel = document.getElementById('mobile-suggestions');
-            if (mobilePanel) mobilePanel.classList.remove('visible');
-            const toggle = document.getElementById('suggestions-toggle');
-            if (toggle) toggle.classList.remove('active');
+            // Instead of hiding, show fallback suggestions based on context
+            const fallbackActions = getFallbackSuggestions();
+            if (fallbackActions.length > 0) {
+                showSuggestedActions(fallbackActions);
+            } else {
+                const panel = document.getElementById('suggested-actions-panel');
+                if (panel) panel.classList.remove('visible');
+                const mobilePanel = document.getElementById('mobile-suggestions');
+                if (mobilePanel) mobilePanel.classList.remove('visible');
+                const toggle = document.getElementById('suggestions-toggle');
+                if (toggle) toggle.classList.remove('active');
+            }
+        }
+
+        function getFallbackSuggestions() {
+            // Context-aware fallback suggestions
+            const phase = currentPhase || 'exploration';
+            const hasCharacter = !!dndCharacter;
+
+            if (phase === 'combat') {
+                return hasCharacter ?
+                    ['Attack', 'Defend', 'Use ability', 'Retreat'] :
+                    ['Fight back', 'Dodge', 'Run away'];
+            } else if (phase === 'social') {
+                return ['Ask a question', 'Listen carefully', 'Make a request', 'Leave'];
+            } else {
+                // Exploration/default
+                return ['Look around', 'Talk to someone', 'Investigate', 'Move on'];
+            }
         }
 
         function useSuggestedAction(action) {
@@ -8624,6 +8667,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             resetGuidanceTracking();
 
             showScreen('story');
+
+            // Show initial suggestions (fallback until AI provides specific ones)
+            showSuggestedActions(getFallbackSuggestions());
 
             // Update quick roll button visibility
             updateQuickRollButton();
