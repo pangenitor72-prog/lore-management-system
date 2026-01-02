@@ -1465,6 +1465,40 @@
             box-shadow: 0 0 20px rgba(232, 196, 124, 0.2);
         }
 
+        /* Genre Filter Tabs */
+        .genre-tab {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+        .genre-tab:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+        }
+        .genre-tab.active {
+            background: var(--accent-warm);
+            border-color: var(--accent-warm);
+            color: var(--bg-primary);
+        }
+
+        /* World Card with Genre Icon */
+        .world-card-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .world-card-genre {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-warm);
+            margin-bottom: 6px;
+        }
+
         /* Save Slots */
         .save-slots {
             display: grid;
@@ -4375,22 +4409,29 @@
                 <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
                     Rich, detailed settings ready for your story:
                 </p>
-                <div class="lore-bases" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                    <div class="lore-base-card" onclick="selectLoreBase('shattered_kingdoms')" data-lore="shattered_kingdoms" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
-                        <span style="font-size: 1.5rem;">&#9876;</span>
-                        <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">The Shattered Kingdoms</h4>
-                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">A realm fractured by an ancient war. Noble houses vie for power while darker forces stir in the shadows. Deeply detailed political intrigue and high fantasy.</p>
+
+                <!-- Genre Filter Tabs -->
+                <div id="genre-filter-tabs" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+                    <button class="genre-tab active" data-genre="" onclick="filterWorldsByGenre('')">All</button>
+                    <button class="genre-tab" data-genre="fantasy" onclick="filterWorldsByGenre('fantasy')">Fantasy</button>
+                    <button class="genre-tab" data-genre="horror" onclick="filterWorldsByGenre('horror')">Horror</button>
+                    <button class="genre-tab" data-genre="scifi" onclick="filterWorldsByGenre('scifi')">Sci-Fi</button>
+                    <button class="genre-tab" data-genre="mystery" onclick="filterWorldsByGenre('mystery')">Mystery</button>
+                    <button class="genre-tab" data-genre="romance" onclick="filterWorldsByGenre('romance')">Romance</button>
+                </div>
+
+                <!-- Dynamically loaded worlds -->
+                <div id="curated-worlds-grid" class="lore-bases" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                        <span class="loading"></span> Loading worlds...
                     </div>
-                    <div class="lore-base-card" onclick="selectLoreBase('thornwood')" data-lore="thornwood" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
-                        <span style="font-size: 1.5rem;">&#127795;</span>
-                        <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">Thornwood Chronicles</h4>
-                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">A mystical forest where fey courts hold sway. Ancient pacts, forbidden love, and the boundaries between worlds. Perfect for romance, mystery, or dark fairy tales.</p>
-                    </div>
-                    <div class="lore-base-card" onclick="selectLoreBase('empty')" data-lore="empty" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
-                        <span style="font-size: 1.5rem;">&#10024;</span>
-                        <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">Fresh Canvas</h4>
-                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Start with nothing. Let the world emerge from your story. The AI will create lore as you play, building a unique mythology together.</p>
-                    </div>
+                </div>
+
+                <!-- Fresh Canvas always available -->
+                <div class="lore-base-card" onclick="selectLoreBase('empty')" data-lore="empty" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease; max-width: 300px;">
+                    <span style="font-size: 1.5rem;">&#10024;</span>
+                    <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">Fresh Canvas</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Start with nothing. Let the world emerge organically from your story.</p>
                 </div>
             </div>
 
@@ -5224,10 +5265,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Set to null to hide all announcements.
 
         const CURRENT_ANNOUNCEMENT = {
-            id: 'update-2025-01-02-psychology',  // Unique ID for this announcement (used for dismissal tracking)
+            id: 'update-2025-01-02-v2',  // Unique ID for this announcement (used for dismissal tracking)
             type: 'success',          // 'info', 'warning', 'success', 'maintenance'
-            icon: '✨',               // Emoji icon
-            message: '<strong>Smarter Storytelling!</strong> The AI now learns your playstyle and adapts. Plus: cleaner UI, better character creation flow, and always-visible action ideas.',
+            icon: '🎮',               // Emoji icon
+            message: '<strong>Major Update!</strong> 20+ curated worlds across all genres (Horror, Sci-Fi, Western, more). Adaptive AI learns your playstyle. Smoother animations, dice sounds, and scrollable character sheets.',
             dismissible: true,        // Can user dismiss it?
             persistent: false         // If true, shows even after dismissal (for critical maintenance)
         };
@@ -6388,6 +6429,125 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 description: 'Begin with a blank slate and let the world emerge.'
             }
         };
+
+        // ============================================================
+        // CURATED WORLDS LOADER
+        // ============================================================
+
+        let allCuratedWorlds = [];
+        let currentGenreFilter = '';
+
+        const GENRE_ICONS = {
+            fantasy: '&#9876;',      // Crossed swords
+            horror: '&#128123;',     // Ghost
+            scifi: '&#128640;',      // Rocket
+            mystery: '&#128269;',    // Magnifying glass
+            romance: '&#10084;',     // Heart
+            adventure: '&#127796;',  // Compass
+            drama: '&#127917;',      // Theater masks
+            noir: '&#128374;',       // Detective
+            western: '&#129312;',    // Cowboy
+            cyberpunk: '&#129302;',  // Robot
+            steampunk: '&#9881;',    // Gear
+            postapoc: '&#9762;',     // Radiation
+            superhero: '&#128165;',  // Lightning
+            mythology: '&#127752;',  // Rainbow (Bifrost)
+            historical: '&#127984;', // Scroll
+            thriller: '&#128296;',   // Knife
+            wuxia: '&#129668;',      // Martial arts
+            default: '&#127760;'     // Globe
+        };
+
+        async function loadCuratedWorlds() {
+            const container = document.getElementById('curated-worlds-grid');
+            if (!container) return;
+
+            try {
+                const response = await fetch(API_BASE + '/lore-bases');
+                if (!response.ok) throw new Error('Failed to load worlds');
+
+                const worlds = await response.json();
+                // Filter out 'empty' as it's shown separately
+                allCuratedWorlds = worlds.filter(w => w.id !== 'empty');
+
+                // Also update the local loreBases cache
+                worlds.forEach(w => {
+                    loreBases[w.id] = {
+                        name: w.name,
+                        description: w.description || ''
+                    };
+                });
+
+                renderCuratedWorlds(allCuratedWorlds);
+            } catch (err) {
+                console.error('Failed to load curated worlds:', err);
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Could not load worlds. Using defaults.</p>';
+                renderDefaultWorlds();
+            }
+        }
+
+        function filterWorldsByGenre(genre) {
+            currentGenreFilter = genre;
+
+            // Update tab styling
+            document.querySelectorAll('.genre-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.genre === genre);
+            });
+
+            // Filter and render
+            if (genre === '') {
+                renderCuratedWorlds(allCuratedWorlds);
+            } else {
+                const filtered = allCuratedWorlds.filter(w => {
+                    const hints = w.genre_hints || [];
+                    const mainGenre = w.genre || '';
+                    return hints.includes(genre) || mainGenre === genre;
+                });
+                renderCuratedWorlds(filtered);
+            }
+        }
+
+        function renderCuratedWorlds(worlds) {
+            const container = document.getElementById('curated-worlds-grid');
+            if (!container) return;
+
+            if (worlds.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No worlds match this genre yet.</p>';
+                return;
+            }
+
+            container.innerHTML = worlds.map(world => {
+                const genre = world.genre || (world.genre_hints && world.genre_hints[0]) || 'default';
+                const icon = GENRE_ICONS[genre] || GENRE_ICONS.default;
+                const isSelected = selectedLoreBase === world.id;
+
+                return `
+                    <div class="lore-base-card ${isSelected ? 'selected' : ''}"
+                         onclick="selectLoreBase('${world.id}')"
+                         data-lore="${world.id}"
+                         style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
+                        <div class="world-card-genre">${genre.toUpperCase()}</div>
+                        <span class="world-card-icon">${icon}</span>
+                        <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">${world.name}</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0; line-height: 1.4;">
+                            ${world.description || 'A unique world awaits...'}
+                        </p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDefaultWorlds() {
+            const defaults = [
+                { id: 'shattered_kingdoms', name: 'The Shattered Kingdoms', description: 'A realm fractured by an ancient war. Noble houses vie for power while darker forces stir.', genre: 'fantasy' },
+                { id: 'thornwood', name: 'Thornwood Chronicles', description: 'A mystical forest where fey courts hold sway. Ancient pacts and forbidden love.', genre: 'fantasy' }
+            ];
+            renderCuratedWorlds(defaults);
+        }
+
+        // ============================================================
+        // END CURATED WORLDS LOADER
+        // ============================================================
 
         // Lore Base Selection
         function selectLoreBase(loreId) {
@@ -8563,6 +8723,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             switch (screenId) {
                 case 'setup':
                     await loadSetupCuratedWorlds();
+                    break;
+                case 'world-builder':
+                    await loadCuratedWorlds();
                     break;
                 case 'game':
                     if (tutorialMode) showExamplePrompts();
