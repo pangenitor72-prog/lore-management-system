@@ -433,6 +433,7 @@ class PlayerActionRequest(BaseModel):
     """Player action input."""
     action: str = Field(..., min_length=1, max_length=2000, description="What the player does or says")
     needs_guidance: bool = Field(default=False, description="Whether player needs subtle story direction hints")
+    adaptive_context: Optional[str] = Field(default=None, description="AI adaptation hints based on learned player preferences")
 
 
 class GameEventData(BaseModel):
@@ -1207,7 +1208,8 @@ async def process_action(
         # Active play - generate DM response (with mechanical context if applicable)
         response_text = await _handle_active_play(
             session, action.action, model, db, mechanical_context,
-            needs_guidance=action.needs_guidance
+            needs_guidance=action.needs_guidance,
+            adaptive_context=action.adaptive_context
         )
 
     # Add response to history
@@ -1667,6 +1669,7 @@ async def _handle_active_play(
     db: Optional[Neo4jDatabase],
     mechanical_context: str = "",
     needs_guidance: bool = False,
+    adaptive_context: Optional[str] = None,
 ) -> str:
     """Handle active gameplay with genre-aware storytelling."""
     answers = session.get("session_0_answers", {})
@@ -1787,7 +1790,10 @@ CURRENT SCENE (what just happened - the player is responding to THIS):
 PLAYER'S ACTION: {player_input}
 {mechanical_context}
 {_get_guidance_instruction(needs_guidance)}
-
+{f'''
+STORYTELLING ADJUSTMENT (based on player preferences - apply subtly):
+{adaptive_context}
+''' if adaptive_context else ''}
 Continue the narrative:
 - CRITICAL: Pick up EXACTLY where the last scene left off. If the Narrator just described a location, characters, or situation - respond to the player's action within THAT scene.
 - React naturally and immediately to what the player did or said
