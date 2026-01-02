@@ -1,6 +1,7 @@
 {
   "max_testers": 30,
   "codes": [
+    {"code": "DEV-ADMIN", "name": "Developer (Admin)", "activated": false, "activated_at": null},
     {"code": "DEB2025", "name": "Deb Wood", "activated": false, "activated_at": null},
     {"code": "MOM2025", "name": "Deb Wood", "activated": false, "activated_at": null},
     {"code": "CAITLIN2025", "name": "Caitlin Byers", "activated": false, "activated_at": null},
