@@ -4058,6 +4058,19 @@
             </div>
         </div>
 
+        <!-- Entity Inspector Modal -->
+        <div id="entity-inspector-modal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) closeEntityInspector()">
+            <div class="modal" style="max-width: 550px; max-height: 85vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-warm); margin: 0;" id="entity-inspector-title">Entity Details</h3>
+                    <button onclick="closeEntityInspector()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+                <div id="entity-inspector-content">
+                    <p style="color: var(--text-muted);">Loading...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Onboarding/Tutorial Screen (moved from default) -->
         <div id="onboarding" class="screen">
             <div class="welcome-intro" style="max-width: 500px;">
@@ -4601,6 +4614,7 @@
             </div>
             <p style="color: var(--text-secondary); margin-bottom: 20px;">
                 Visual map of all entities and their relationships in the database.
+                <span style="color: var(--text-muted); font-size: 0.9rem;">Click any node to inspect its details.</span>
             </p>
 
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
@@ -10347,6 +10361,157 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             graphNetwork = new vis.Network(container, { nodes: nodesDataset, edges: edgesDataset }, options);
+
+            // Add click handler for node inspection
+            graphNetwork.on('click', function(params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    showEntityInspector(nodeId);
+                }
+            });
+        }
+
+        // ==========================================
+        // ENTITY INSPECTOR
+        // ==========================================
+
+        async function showEntityInspector(entityId) {
+            const modal = document.getElementById('entity-inspector-modal');
+            const titleEl = document.getElementById('entity-inspector-title');
+            const contentEl = document.getElementById('entity-inspector-content');
+
+            modal.style.display = 'flex';
+            titleEl.textContent = 'Loading...';
+            contentEl.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Fetching entity data...</p>';
+
+            try {
+                const response = await fetch(API_BASE + '/entities/' + encodeURIComponent(entityId));
+
+                if (!response.ok) {
+                    throw new Error('Entity not found in database');
+                }
+
+                const entity = await response.json();
+                renderEntityDetails(entity);
+
+            } catch (err) {
+                // If entity not found in entities API, show basic info from graph
+                contentEl.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            This entity exists in the graph but detailed information is not available.
+                        </p>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">
+                            ID: ${entityId}
+                        </p>
+                    </div>
+                `;
+                titleEl.textContent = 'Entity Info';
+            }
+        }
+
+        function renderEntityDetails(entity) {
+            const titleEl = document.getElementById('entity-inspector-title');
+            const contentEl = document.getElementById('entity-inspector-content');
+
+            titleEl.textContent = entity.canonical_name || 'Unknown Entity';
+
+            // Build the HTML for entity details
+            let html = '';
+
+            // Type badge
+            const typeColors = {
+                'Character': 'var(--accent-rose)',
+                'Location': 'var(--accent-sage)',
+                'Faction': 'var(--accent-lavender)',
+                'Item': 'var(--accent-gold)',
+                'Event': '#8b9fc9',
+                'Concept': 'var(--accent-warm)'
+            };
+            const typeColor = typeColors[entity.entity_type] || 'var(--text-muted)';
+
+            html += `
+                <div style="margin-bottom: 20px;">
+                    <span style="
+                        background: ${typeColor};
+                        color: var(--bg-primary);
+                        padding: 4px 12px;
+                        border-radius: 20px;
+                        font-size: 0.8rem;
+                        font-weight: 600;
+                    ">${entity.entity_type}</span>
+                </div>
+            `;
+
+            // Core info
+            html += `<div style="background: var(--bg-card); padding: 15px; border-radius: 10px; margin-bottom: 15px;">`;
+            html += `<div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 5px;">CANON ID</div>`;
+            html += `<div style="color: var(--text-secondary); font-family: monospace; font-size: 0.85rem;">${entity.canon_id}</div>`;
+            html += `</div>`;
+
+            // Aliases
+            if (entity.aliases && entity.aliases.length > 0) {
+                html += `<div style="margin-bottom: 15px;">`;
+                html += `<div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 8px;">ALIASES</div>`;
+                html += `<div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
+                for (const alias of entity.aliases) {
+                    html += `<span style="background: var(--bg-secondary); padding: 4px 10px; border-radius: 15px; font-size: 0.85rem; color: var(--text-secondary);">${alias}</span>`;
+                }
+                html += `</div></div>`;
+            }
+
+            // Approved fields (custom properties)
+            if (entity.approved_fields && Object.keys(entity.approved_fields).length > 0) {
+                html += `<div style="margin-bottom: 15px;">`;
+                html += `<div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 10px;">PROPERTIES</div>`;
+
+                for (const [key, value] of Object.entries(entity.approved_fields)) {
+                    const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    let displayValue = value;
+
+                    if (typeof value === 'object') {
+                        displayValue = JSON.stringify(value, null, 2);
+                    }
+
+                    html += `
+                        <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                            <div style="color: var(--accent-warm); font-size: 0.8rem; margin-bottom: 4px;">${displayKey}</div>
+                            <div style="color: var(--text-primary); font-size: 0.9rem; white-space: pre-wrap; word-break: break-word;">${displayValue}</div>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+            }
+
+            // Metadata footer
+            html += `
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 15px; margin-top: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem;">
+                        <div>
+                            <span style="color: var(--text-muted);">Status:</span>
+                            <span style="color: var(--text-secondary);">${entity.approval_status || 'unknown'}</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted);">Confidence:</span>
+                            <span style="color: var(--text-secondary);">${entity.confidence_level || 'unknown'}</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted);">Knowledge:</span>
+                            <span style="color: var(--text-secondary);">${entity.party_knowledge || 'known'}</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted);">Updated:</span>
+                            <span style="color: var(--text-secondary);">${entity.updated_at ? new Date(entity.updated_at).toLocaleDateString() : 'unknown'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            contentEl.innerHTML = html;
+        }
+
+        function closeEntityInspector() {
+            document.getElementById('entity-inspector-modal').style.display = 'none';
         }
 
         // ==========================================
