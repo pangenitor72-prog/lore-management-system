@@ -381,7 +381,7 @@ Only use the races and classes listed. Return valid JSON only."""
             cantrips_known=cantrips,
             abilities_known=abilities_known,
             features=archetype_data.features_by_level.get(1, []) if archetype_data else [],
-            rules_visibility="storyteller",  # Concept mode defaults to storyteller
+            rules_visibility="guided",  # Concept mode defaults to guided for progressive reveal
         )
 
     def _get_starting_equipment(self, archetype_id: str, dex_mod: int) -> tuple:
