@@ -311,6 +311,14 @@ if frontend_dist.exists():
             name="pwa-icons"
         )
 
+    # Mount images directory (raven mascot, etc.)
+    if (frontend_dist / "images").exists():
+        app.mount(
+            "/images",
+            StaticFiles(directory=str(frontend_dist / "images")),
+            name="frontend-images"
+        )
+
     # Serve manifest.json
     @app.get("/manifest.json")
     async def get_manifest():
