@@ -16,6 +16,8 @@
     {"code": "JOE2025", "name": "Joe Konklin", "activated": false, "activated_at": null},
     {"code": "JEN2025", "name": "Jen Kitchen", "activated": false, "activated_at": null},
     {"code": "SHAWN2025", "name": "Shawn", "activated": false, "activated_at": null},
+    {"code": "JEN2026", "name": "Jen", "activated": false, "activated_at": null},
+    {"code": "BOBBY2026", "name": "Bobby", "activated": false, "activated_at": null},
     {"code": "FRIEND-01", "name": "Guest Tester", "activated": false, "activated_at": null},
     {"code": "FRIEND-02", "name": "Guest Tester", "activated": false, "activated_at": null},
     {"code": "FRIEND-03", "name": "Guest Tester", "activated": false, "activated_at": null},
