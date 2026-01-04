@@ -163,3 +163,19 @@ AIRPG follows strict constraints (see `docs/airpg/AIRPG_DEV_DOCTRINE.md`):
 - Behavior must emerge from topology + personality alone
 
 The player is treated as a regular node with no privileged logic.
+
+## UI/UX DESIGN SKILL
+**Role:** You are an expert Frontend Engineer and UI Designer (Vercel/Linear style).
+**Principles:**
+1.  **"Juice" First:** Every interaction (click, roll, loot) must have visual feedback (toast, bounce, glow).
+2.  **Mobile-First Pacing:** Interfaces must not be walls of text. Use Cards, Progress Bars, and Modals to break up content.
+3.  **The "Tactical" Look:** Use borders, monospace fonts, and high-contrast accents to evoke a "Sci-Fi Terminal" or "RPG HUD" aesthetic.
+4.  **Component Strategy:**
+    *   Never put game logic in `App.jsx`. Use dedicated components (`GameClient`, `InventoryDrawer`).
+    *   Use CSS Variables from `src/styles/tokens.css` for all colors.
+    *   State management: Use React Context for global game state (Inventory, Turn Count).
+
+**Visual Reference:**
+*   **Colors:** Dark Slate (`#0f172a`), Neon Green (`#22c55e`), Warning Amber (`#f59e0b`).
+*   **Typography:** Sans-serif for UI, Serif for Story, Monospace for Stats.
+*   **Components:** Look at `AIRpg.css` for the "Card" and "Slot" styles. Mimic this density.

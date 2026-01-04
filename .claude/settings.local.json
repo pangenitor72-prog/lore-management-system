@@ -28,7 +28,30 @@
       "WebSearch",
       "Bash(pytest:*)",
       "Bash(wc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git restore:*)",
+      "WebFetch(domain:5thsrd.org)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.open5e.com)",
+      "Bash(powershell -Command \"\\(Invoke-WebRequest -Uri ''https://lore-management-system.fly.dev/api/genres/fantasy/origins''\\).Content.Substring\\(0, 500\\)\")",
+      "Bash(timeout 10 curl:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(fly machine show:*)",
+      "Bash(fly machine status:*)",
+      "Bash(timeout 30 fly status:*)",
+      "Bash(fly scale count:*)",
+      "Bash(timeout 15 curl:*)",
+      "Bash(fly machine destroy:*)",
+      "Bash(timeout 30 curl:*)",
+      "Bash(xargs ls:*)",
+      "WebFetch(domain:lore-management-system.fly.dev)",
+      "Bash(powershell -Command:*)",
+      "Bash(dir:*)",
+      "WebFetch(domain:freesvg.org)",
+      "WebFetch(domain:commons.wikimedia.org)",
+      "WebFetch(domain:www.svgrepo.com)",
+      "WebFetch(domain:game-icons.net)"
     ]
   }
 }
