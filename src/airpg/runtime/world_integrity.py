@@ -257,6 +257,8 @@ async def validate_world_before_session(
         result.warnings.extend(result.errors)
         result.errors = []
 
+    return result
+
 
 async def require_valid_world(
     db: "Neo4jDatabase",
