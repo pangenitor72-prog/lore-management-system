@@ -343,6 +343,9 @@ TEXT TO ANALYZE:
         db,  # Neo4jDatabase
         source_name: str = "lore_upload",
         world_id: str = None,
+        curated_world_id: str = None,
+        genre: str = None,
+        session_id: str = None,
     ) -> ParsedLoreResult:
         """
         Parse lore text and store entities in Neo4j with OCEAN profiles.
@@ -351,7 +354,10 @@ TEXT TO ANALYZE:
             text: Raw lore text
             db: Neo4j database instance
             source_name: Source identifier for tracking
-            world_id: World/lore base ID for separation (extracted from source if not provided)
+            world_id: Session-scoped world ID for entity isolation
+            curated_world_id: Original curated world ID (e.g., "eldoria") for filtering
+            genre: Genre to tag entities with (fantasy, sci_fi, horror, etc.)
+            session_id: Session ID for gameplay tracking
 
         Returns:
             ParsedLoreResult with storage counts
@@ -384,7 +390,10 @@ TEXT TO ANALYZE:
                 "description": entity.description,
                 "content": entity.verbatim_text or entity.description,
                 "source": source_name,
-                "world_id": world_id,  # Explicit world association
+                "world_id": world_id,  # Session-scoped world ID for isolation
+                "curated_world_id": curated_world_id,  # Original curated world ID for filtering
+                "genre": genre,  # Genre for filtering
+                "session_id": session_id,  # Session tracking
                 "confidence_level": "AI_GENERATED",
                 "approval_status": "PENDING",
                 "created_at": timestamp,

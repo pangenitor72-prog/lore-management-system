@@ -64,6 +64,9 @@ async def extract_and_store_gameplay_lore(
     session_id: str,
     db: Optional[Neo4jDatabase],
     world_id: Optional[str] = None,
+    curated_world_id: Optional[str] = None,
+    genre: Optional[str] = None,
+    character_name: Optional[str] = None,
 ) -> None:
     """
     Extract entities from gameplay narrative and store them in Neo4j.
@@ -75,7 +78,10 @@ async def extract_and_store_gameplay_lore(
         narrative: The narrative text to extract entities from
         session_id: The session ID for source tracking
         db: Neo4j database instance
-        world_id: The world/lore base ID to associate entities with
+        world_id: The session-scoped world ID (for entity isolation)
+        curated_world_id: The original curated world ID (e.g., "eldoria") for filtering
+        genre: The genre(s) to tag entities with
+        character_name: The player's character name for session tracking
     """
     if not db:
         logger.debug("No database available for lore extraction")
@@ -94,6 +100,9 @@ async def extract_and_store_gameplay_lore(
             db=db,
             source_name=f"session:{session_id}",
             world_id=world_id,
+            curated_world_id=curated_world_id,
+            genre=genre,
+            session_id=session_id,
         )
 
         if result.entities_stored > 0:
@@ -1230,20 +1239,33 @@ async def create_session(
         # Persist full session data for recovery
         await _persist_session_to_db(session_id, session_data, db)
 
-        # Also create minimal GameSession node for querying
+        # Create GameSession node with full metadata for admin tracking
         try:
             await db.execute("""
                 CREATE (s:GameSession {
                     session_id: $session_id,
                     world_id: $world_id,
+                    session_world_id: $session_world_id,
                     phase: $phase,
                     status: 'active',
+                    genre: $genre,
+                    character_name: $character_name,
+                    storytelling_style: $style,
+                    is_curated_world: $is_curated,
+                    curated_world_name: $curated_name,
+                    turn_count: 0,
                     created_at: datetime()
                 })
             """, {
                 "session_id": session_id,
                 "world_id": session_req.world_id or "",
+                "session_world_id": session_world_id,
                 "phase": phase,
+                "genre": session_req.genre or "fantasy",
+                "character_name": session_req.character_name or "",
+                "style": session_req.storytelling_style or "guided",
+                "is_curated": bool(session_req.world_id and not session_req.world_id.startswith("custom")),
+                "curated_name": session_req.world_id if session_req.world_id and not session_req.world_id.startswith("custom") else "",
             })
         except Exception as e:
             logger.warning(f"Failed to create GameSession node: {e}")
@@ -1407,13 +1429,16 @@ async def process_action(
     session["history"].append({"role": "assistant", "content": response_text})
 
     # Extract and store lore entities from the narrative (fire-and-forget)
-    # Use session_world_id for isolation - each game gets its own entity space
+    # Store both session_world_id (for isolation) and original world_id (for curated world filtering)
     asyncio.create_task(
         extract_and_store_gameplay_lore(
             response_text,
             session_id,
             db,
-            world_id=session.get("session_world_id"),  # Session-scoped, not shared!
+            world_id=session.get("session_world_id"),  # Session-scoped, for isolation
+            curated_world_id=session.get("world_id"),  # Original curated world ID, for filtering
+            genre=session.get("genre", "fantasy"),
+            character_name=session.get("character_name"),
         )
     )
 
@@ -1436,6 +1461,21 @@ async def process_action(
     # Persist session to database for continuity across server restarts
     # This ensures the story is never lost
     asyncio.create_task(_persist_session_to_db(session_id, session, db))
+
+    # Update GameSession node with turn count and last activity
+    if db:
+        asyncio.create_task(
+            db.execute("""
+                MATCH (s:GameSession {session_id: $session_id})
+                SET s.turn_count = $turn_count,
+                    s.last_activity = datetime(),
+                    s.status = $status
+            """, {
+                "session_id": session_id,
+                "turn_count": turn_count,
+                "status": "ended" if session_ended else "active",
+            })
+        )
 
     return DMResponse(
         narrative=response_text,
@@ -2303,11 +2343,18 @@ async def ingest_lore_base(
         agent = LoreParsingAgent()
         logger.info(f"Starting AI lore parsing for lore base: {lore_id}")
 
+        # Get genre from lore base metadata
+        base_genre = lore_base.get("genre")
+        if not base_genre and lore_base.get("genre_hints"):
+            base_genre = lore_base.get("genre_hints")[0]
+
         result = await agent.parse_and_store(
             text=lore_content,
             db=db,
             source_name=f"lore_base:{lore_id}",
-            world_id=lore_id,  # Use lore base ID as the world_id
+            world_id=lore_id,  # Use lore base ID as the world_id (this IS the curated world)
+            curated_world_id=lore_id,  # Also mark as curated world
+            genre=base_genre,  # Tag with the lore base's genre
         )
 
         # Update lore base status
@@ -2915,6 +2962,7 @@ async def get_graph_data(
     entity_type: Optional[str] = None,
     session_id: Optional[str] = None,
     genre: Optional[str] = None,
+    curated_world: Optional[str] = None,
     search: Optional[str] = None,
     limit: int = 100,
 ):
@@ -2924,10 +2972,11 @@ async def get_graph_data(
     Returns nodes and edges in a format suitable for vis.js or similar libraries.
 
     Args:
-        world_id: Filter to show only entities from a specific world/lore base
+        world_id: Filter by session-scoped world ID
         entity_type: Filter by entity type (Character, Location, Faction, Item, Event, Concept)
         session_id: Filter to show only entities from a specific game session
         genre: Filter by genre tag
+        curated_world: Filter by curated world ID (e.g., "eldoria", "veiled_city")
         search: Text search within entity names
         limit: Maximum number of nodes to return
     """
@@ -2943,6 +2992,11 @@ async def get_graph_data(
         if world_id:
             filters.append("n.world_id = $world_id")
             params["world_id"] = world_id
+
+        if curated_world:
+            # Match either curated_world_id or world_id (for directly ingested lore bases)
+            filters.append("(n.curated_world_id = $curated_world OR n.world_id = $curated_world)")
+            params["curated_world"] = curated_world
 
         if entity_type:
             filters.append("(n.entity_type = $entity_type OR labels(n)[0] = $entity_type)")
@@ -3052,6 +3106,8 @@ async def get_graph_data(
         filters_applied = {}
         if world_id:
             filters_applied["world_id"] = world_id
+        if curated_world:
+            filters_applied["curated_world"] = curated_world
         if entity_type:
             filters_applied["entity_type"] = entity_type
         if session_id:
@@ -3099,16 +3155,35 @@ async def get_graph_filter_options(request: Request):
         types_result = await db.execute(types_query, {})
         entity_types = [row["entity_type"] for row in types_result if row.get("entity_type")]
 
-        # Get distinct sessions
+        # Get sessions from GameSession nodes for rich metadata
         sessions_query = """
-        MATCH (n)
-        WHERE n.session_id IS NOT NULL
-        RETURN DISTINCT n.session_id AS session_id, n.world_id AS world_id
-        ORDER BY session_id
+        MATCH (s:GameSession)
+        RETURN s.session_id AS session_id,
+               s.world_id AS world_id,
+               s.character_name AS character_name,
+               s.genre AS genre,
+               s.turn_count AS turn_count,
+               s.status AS status,
+               s.is_curated_world AS is_curated,
+               s.curated_world_name AS curated_name,
+               s.created_at AS created_at
+        ORDER BY s.created_at DESC
         LIMIT 100
         """
         sessions_result = await db.execute(sessions_query, {})
-        sessions = [{"id": row["session_id"], "world": row.get("world_id", "")} for row in sessions_result if row.get("session_id")]
+        sessions = []
+        for row in sessions_result:
+            if row.get("session_id"):
+                sessions.append({
+                    "id": row["session_id"],
+                    "world": row.get("world_id", ""),
+                    "character_name": row.get("character_name", ""),
+                    "genre": row.get("genre", "fantasy"),
+                    "turn_count": row.get("turn_count", 0),
+                    "status": row.get("status", "unknown"),
+                    "is_curated": row.get("is_curated", False),
+                    "curated_name": row.get("curated_name", ""),
+                })
 
         # Get distinct genres
         genres_query = """
@@ -3120,22 +3195,42 @@ async def get_graph_filter_options(request: Request):
         genres_result = await db.execute(genres_query, {})
         genres = [row["genre"] for row in genres_result if row.get("genre")]
 
-        # Get distinct worlds
+        # Get distinct worlds (both session-scoped and curated)
         worlds_query = """
         MATCH (n)
-        WHERE n.world_id IS NOT NULL
-        RETURN DISTINCT n.world_id AS world_id
-        ORDER BY world_id
-        LIMIT 100
+        WHERE n.world_id IS NOT NULL OR n.curated_world_id IS NOT NULL
+        RETURN DISTINCT
+            n.world_id AS world_id,
+            n.curated_world_id AS curated_world_id
+        LIMIT 200
         """
         worlds_result = await db.execute(worlds_query, {})
-        worlds = [row["world_id"] for row in worlds_result if row.get("world_id")]
+
+        # Separate curated worlds from session-scoped worlds
+        curated_worlds = set()
+        session_worlds = set()
+        for row in worlds_result:
+            if row.get("curated_world_id"):
+                curated_worlds.add(row["curated_world_id"])
+            if row.get("world_id"):
+                wid = row["world_id"]
+                # Check if it's a session-scoped world (has underscore + 8 char suffix)
+                if "_" in wid and len(wid.split("_")[-1]) == 8:
+                    session_worlds.add(wid)
+                else:
+                    # It's a curated world used directly
+                    curated_worlds.add(wid)
+
+        # Also add curated worlds from LORE_BASES
+        for lore_id in LORE_BASES.keys():
+            curated_worlds.add(lore_id)
 
         return {
             "entity_types": entity_types or ["Character", "Location", "Faction", "Item", "Event", "Concept"],
             "sessions": sessions,
             "genres": genres,
-            "worlds": worlds
+            "worlds": sorted(list(session_worlds))[:100],  # Session-scoped worlds
+            "curated_worlds": sorted(list(curated_worlds)),  # Curated worlds from lore bases
         }
 
     except Exception as e:

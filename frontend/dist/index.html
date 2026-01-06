@@ -4754,9 +4754,26 @@
                 </div>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                    <!-- World Filter -->
+                    <!-- Curated World Filter -->
                     <div>
-                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">World</label>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Curated World</label>
+                        <select id="curated-world-filter" onchange="loadGraphData()" style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            background: var(--bg-page);
+                            border: 1px solid var(--border-subtle);
+                            border-radius: 8px;
+                            color: var(--text-primary);
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        ">
+                            <option value="">All Curated Worlds</option>
+                        </select>
+                    </div>
+
+                    <!-- Session World Filter (session-scoped) -->
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Session World</label>
                         <select id="world-filter" onchange="loadGraphData()" style="
                             width: 100%;
                             padding: 10px 12px;
@@ -4767,7 +4784,7 @@
                             font-size: 0.9rem;
                             cursor: pointer;
                         ">
-                            <option value="">All Worlds</option>
+                            <option value="">All Session Worlds</option>
                         </select>
                     </div>
 
@@ -10694,6 +10711,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const statsEl = document.getElementById('graph-stats');
 
             // Get filter values
+            const curatedWorldFilter = document.getElementById('curated-world-filter');
             const worldFilter = document.getElementById('world-filter');
             const entityTypeFilter = document.getElementById('entity-type-filter');
             const sessionFilter = document.getElementById('session-filter');
@@ -10706,9 +10724,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             let url = API_BASE + '/game/graph?limit=1000';
             const activeFilters = [];
 
+            if (curatedWorldFilter && curatedWorldFilter.value) {
+                url += '&curated_world=' + encodeURIComponent(curatedWorldFilter.value);
+                activeFilters.push('Curated: ' + curatedWorldFilter.options[curatedWorldFilter.selectedIndex].text);
+            }
             if (worldFilter && worldFilter.value) {
                 url += '&world_id=' + encodeURIComponent(worldFilter.value);
-                activeFilters.push('World: ' + worldFilter.options[worldFilter.selectedIndex].text);
+                activeFilters.push('Session: ' + worldFilter.value.substring(0, 12) + '...');
             }
             if (entityTypeFilter && entityTypeFilter.value) {
                 url += '&entity_type=' + encodeURIComponent(entityTypeFilter.value);
@@ -10716,7 +10738,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
             if (sessionFilter && sessionFilter.value) {
                 url += '&session_id=' + encodeURIComponent(sessionFilter.value);
-                activeFilters.push('Session: ' + sessionFilter.value.substring(0, 8) + '...');
+                activeFilters.push('Session ID: ' + sessionFilter.value.substring(0, 8) + '...');
             }
             if (genreFilter && genreFilter.value) {
                 url += '&genre=' + encodeURIComponent(genreFilter.value);
@@ -10759,12 +10781,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         function clearGraphFilters() {
+            const curatedWorldFilter = document.getElementById('curated-world-filter');
             const worldFilter = document.getElementById('world-filter');
             const entityTypeFilter = document.getElementById('entity-type-filter');
             const sessionFilter = document.getElementById('session-filter');
             const genreFilter = document.getElementById('genre-filter');
             const searchInput = document.getElementById('graph-search');
 
+            if (curatedWorldFilter) curatedWorldFilter.value = '';
             if (worldFilter) worldFilter.value = '';
             if (entityTypeFilter) entityTypeFilter.value = '';
             if (sessionFilter) sessionFilter.value = '';
@@ -10781,26 +10805,84 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 const data = await response.json();
 
-                // Populate session filter
+                // Populate curated world filter
+                const curatedWorldSelect = document.getElementById('curated-world-filter');
+                if (curatedWorldSelect && data.curated_worlds) {
+                    curatedWorldSelect.innerHTML = '<option value="">All Curated Worlds</option>';
+                    data.curated_worlds.forEach(worldId => {
+                        const option = document.createElement('option');
+                        option.value = worldId;
+                        // Make the ID more readable
+                        option.textContent = worldId.replace(/_/g, ' ').split(' ')
+                            .map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                        curatedWorldSelect.appendChild(option);
+                    });
+                }
+
+                // Populate session world filter (session-scoped worlds)
+                const worldSelect = document.getElementById('world-filter');
+                if (worldSelect && data.worlds) {
+                    worldSelect.innerHTML = '<option value="">All Session Worlds</option>';
+                    data.worlds.forEach(worldId => {
+                        const option = document.createElement('option');
+                        option.value = worldId;
+                        option.textContent = worldId;
+                        worldSelect.appendChild(option);
+                    });
+                }
+
+                // Populate session filter with rich metadata
                 const sessionSelect = document.getElementById('session-filter');
                 if (sessionSelect && data.sessions) {
                     sessionSelect.innerHTML = '<option value="">All Sessions</option>';
                     data.sessions.forEach(session => {
                         const option = document.createElement('option');
                         option.value = session.id;
-                        option.textContent = session.id.substring(0, 8) + '... (' + (session.world || 'unknown') + ')';
+
+                        // Build descriptive label
+                        let label = '';
+                        if (session.character_name) {
+                            label = session.character_name;
+                        } else {
+                            label = session.id.substring(0, 8) + '...';
+                        }
+
+                        // Add genre and turn count
+                        const details = [];
+                        if (session.genre) details.push(session.genre);
+                        if (session.turn_count > 0) details.push(session.turn_count + ' turns');
+                        if (session.is_curated && session.curated_name) {
+                            details.push(session.curated_name);
+                        }
+                        if (session.status === 'ended') details.push('completed');
+
+                        if (details.length > 0) {
+                            label += ' (' + details.join(', ') + ')';
+                        }
+
+                        option.textContent = label;
                         sessionSelect.appendChild(option);
                     });
                 }
 
-                // Populate genre filter
+                // Populate genre filter (from both entities and sessions)
                 const genreSelect = document.getElementById('genre-filter');
-                if (genreSelect && data.genres) {
+                if (genreSelect) {
                     genreSelect.innerHTML = '<option value="">All Genres</option>';
-                    data.genres.forEach(genre => {
+
+                    // Collect genres from entities and sessions
+                    const allGenres = new Set(data.genres || []);
+                    if (data.sessions) {
+                        data.sessions.forEach(s => {
+                            if (s.genre) allGenres.add(s.genre);
+                        });
+                    }
+
+                    Array.from(allGenres).sort().forEach(genre => {
                         const option = document.createElement('option');
                         option.value = genre;
-                        option.textContent = genre.charAt(0).toUpperCase() + genre.slice(1);
+                        option.textContent = genre.replace(/_/g, ' ').split(' ')
+                            .map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                         genreSelect.appendChild(option);
                     });
                 }
