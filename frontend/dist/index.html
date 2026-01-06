@@ -3899,6 +3899,45 @@
             }
         }
 
+        /* Mobile View Mode Toggle Button */
+        .mobile-view-toggle {
+            display: none;  /* Hidden by default on desktop */
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent-lavender);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .mobile-view-toggle:hover {
+            transform: scale(1.1);
+            background: var(--accent-gold);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-view-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        body.force-desktop .mobile-view-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent-gold);
+        }
+
         /* Force Desktop Mode - Override mobile styles when toggled */
         body.force-desktop {
             /* Show the view mode toggle is active */
@@ -4019,6 +4058,11 @@
                 Start Playing →
             </button>
         </div>
+
+        <!-- Mobile View Mode Toggle (floating button) -->
+        <button id="mobile-view-toggle" class="mobile-view-toggle" onclick="toggleViewMode()" title="Toggle Desktop/Mobile View">
+            <span id="mobile-view-icon">🖥️</span>
+        </button>
 
         <!-- Landing Screen (Intent-Based) -->
         <div id="start" class="screen active">
@@ -10457,7 +10501,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             statsEl.innerHTML = '<span class="loading"></span> Loading graph data...';
 
             // Build URL with optional world filter
-            let url = API_BASE + '/game/graph?limit=150';
+            let url = API_BASE + '/game/graph?limit=1000';
             if (worldFilter && worldFilter.value) {
                 url += '&world_id=' + encodeURIComponent(worldFilter.value);
             }
@@ -12008,11 +12052,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         function updateViewModeButton(isDesktop) {
+            // Update story menu button
             const icon = document.getElementById('view-mode-icon');
             const label = document.getElementById('view-mode-label');
             if (icon && label) {
                 icon.textContent = isDesktop ? '📱' : '🖥️';
                 label.textContent = isDesktop ? 'Mobile View' : 'Desktop View';
+            }
+
+            // Update floating mobile toggle button
+            const mobileIcon = document.getElementById('mobile-view-icon');
+            if (mobileIcon) {
+                mobileIcon.textContent = isDesktop ? '📱' : '🖥️';
             }
         }
 
