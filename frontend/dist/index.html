@@ -5038,15 +5038,32 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 <span style="opacity: 0.7;">Powered by D&D 5e rules.</span>
             </p>
 
-            <!-- Genre Selection for TTRPG -->
+            <!-- World Selection for TTRPG -->
             <div class="setup-section">
-                <h3>Setting</h3>
-                <div class="tone-options" style="margin-bottom: 20px;">
+                <h3>Choose Your World</h3>
+                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                    Pick a ready-to-play world, or select a genre
+                </p>
+
+                <!-- Curated Worlds (loaded from API) -->
+                <div id="ttrpg-curated-worlds" class="curated-worlds-grid" style="margin-bottom: 20px;">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Genre chips -->
+                <div class="tone-options" style="margin-bottom: 10px;">
                     <span class="tone-chip ttrpg-genre-chip selected" data-ttrpg-genre="fantasy" onclick="selectTTRPGGenre('fantasy')">⚔️ Fantasy</span>
                     <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="scifi" onclick="selectTTRPGGenre('scifi')">🚀 Sci-Fi</span>
                     <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="horror" onclick="selectTTRPGGenre('horror')">👻 Horror</span>
                     <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="modern" onclick="selectTTRPGGenre('modern')">🏙️ Modern</span>
                     <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="western" onclick="selectTTRPGGenre('western')">🤠 Western</span>
+                </div>
+                <div class="tone-options" style="margin-bottom: 15px;">
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="mystery" onclick="selectTTRPGGenre('mystery')">🔍 Mystery</span>
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="adventure" onclick="selectTTRPGGenre('adventure')">🗺️ Adventure</span>
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="noir" onclick="selectTTRPGGenre('noir')">🌃 Noir</span>
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="mythology" onclick="selectTTRPGGenre('mythology')">🏛️ Mythology</span>
+                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="wuxia" onclick="selectTTRPGGenre('wuxia')">🥋 Wuxia</span>
                 </div>
             </div>
 
@@ -5656,6 +5673,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let ttrpgGenre = 'fantasy';
         let ttrpgCreationMode = 'guided';  // Changed default from 'concept' to 'guided'
         let ttrpgVisibility = 'classic';
+        let selectedTTRPGWorld = null;
+        let ttrpgWorldsLoaded = false;
 
         // ==========================================
         // PLAYER PSYCHOLOGY SYSTEM
@@ -6023,6 +6042,70 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // TTRPG Mode Flow - D&D rules enabled by default
         function ttrpgModeFlow() {
             showScreen('ttrpg-setup');
+            loadTTRPGCuratedWorlds();
+        }
+
+        // Load curated worlds for TTRPG setup screen
+        async function loadTTRPGCuratedWorlds() {
+            if (ttrpgWorldsLoaded) return;
+
+            const container = document.getElementById('ttrpg-curated-worlds');
+            if (!container) return;
+
+            try {
+                const response = await fetch(API_BASE + '/game/lore-bases');
+                if (!response.ok) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                const worlds = await response.json();
+                if (!worlds || worlds.length === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                // Show first 6 curated worlds as cards
+                const worldsHtml = worlds.slice(0, 6).map(world => `
+                    <div class="curated-world-card" onclick="selectTTRPGCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
+                        <div class="world-name">${world.name}</div>
+                        <div class="world-description">${world.description || 'A unique world awaits...'}</div>
+                        <div class="world-genres">${(world.genre_hints || []).slice(0, 3).join(' • ')}</div>
+                    </div>
+                `).join('');
+
+                // Add "View All" link if there are more worlds
+                const moreLink = worlds.length > 6 ? `
+                    <div style="text-align: center; grid-column: 1/-1; margin-top: 5px;">
+                        <a href="#" onclick="showScreen('ingest'); return false;" style="color: var(--accent-lavender); font-size: 0.9rem;">
+                            View all ${worlds.length} worlds →
+                        </a>
+                    </div>
+                ` : '';
+
+                container.innerHTML = worldsHtml + moreLink;
+                ttrpgWorldsLoaded = true;
+            } catch (err) {
+                console.log('Could not load TTRPG curated worlds:', err);
+                container.innerHTML = '';
+            }
+        }
+
+        // Select a curated world for TTRPG mode
+        function selectTTRPGCuratedWorld(worldId, element) {
+            // Deselect all worlds
+            document.querySelectorAll('#ttrpg-curated-worlds .curated-world-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            // Deselect all genre chips when a world is selected
+            document.querySelectorAll('.ttrpg-genre-chip').forEach(chip => {
+                chip.classList.remove('selected');
+            });
+
+            // Select this world
+            element.classList.add('selected');
+            selectedTTRPGWorld = worldId;
+            ttrpgGenre = null;  // Clear genre when world is selected
         }
 
         // Quick Play - start game immediately with selected genre
@@ -6051,6 +6134,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // TTRPG Genre Selection
         function selectTTRPGGenre(genre) {
             ttrpgGenre = genre;
+            selectedTTRPGWorld = null;  // Clear world selection when genre is selected
+
+            // Deselect all curated worlds
+            document.querySelectorAll('#ttrpg-curated-worlds .curated-world-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Update genre chip selection
             document.querySelectorAll('.ttrpg-genre-chip').forEach(c => c.classList.remove('selected'));
             document.querySelector(`[data-ttrpg-genre="${genre}"]`)?.classList.add('selected');
         }
@@ -6073,16 +6164,26 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function beginTTRPGStory() {
             const concept = document.getElementById('ttrpg-character-concept')?.value?.trim() || '';
 
+            // Use selected world or fall back to genre (default to 'fantasy' if neither selected)
+            const effectiveGenre = ttrpgGenre || 'fantasy';
+
             // Set up TTRPG config
-            selectedGenres = [ttrpgGenre];
-            selectedGenre = ttrpgGenre;
+            selectedGenres = [effectiveGenre];
+            selectedGenre = effectiveGenre;
             selectedTone = 'dramatic';
             selectedStyle = 'guided';
             rulesMode = 'dnd';
-            rulesGenre = ttrpgGenre;
+            rulesGenre = effectiveGenre;
             rulesVisibility = ttrpgVisibility;
             creationMode = ttrpgCreationMode;
             sessionScope = 'medium';
+
+            // If a curated world is selected, use it
+            if (selectedTTRPGWorld) {
+                selectedCuratedWorld = selectedTTRPGWorld;
+            } else {
+                selectedCuratedWorld = null;
+            }
 
             // Set character concept if provided
             const conceptField = document.getElementById('character-concept');
