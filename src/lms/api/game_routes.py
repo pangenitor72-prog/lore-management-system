@@ -2912,34 +2912,64 @@ async def delete_save(
 async def get_graph_data(
     request: Request,
     world_id: Optional[str] = None,
+    entity_type: Optional[str] = None,
+    session_id: Optional[str] = None,
+    genre: Optional[str] = None,
+    search: Optional[str] = None,
     limit: int = 100,
 ):
     """
-    Get graph data for visualization.
+    Get graph data for visualization with robust filtering.
 
     Returns nodes and edges in a format suitable for vis.js or similar libraries.
 
     Args:
-        world_id: Optional filter to show only entities from a specific world/lore base
+        world_id: Filter to show only entities from a specific world/lore base
+        entity_type: Filter by entity type (Character, Location, Faction, Item, Event, Concept)
+        session_id: Filter to show only entities from a specific game session
+        genre: Filter by genre tag
+        search: Text search within entity names
         limit: Maximum number of nodes to return
     """
     db = get_optional_neo4j_db(request)
     if not db:
-        return {"nodes": [], "edges": []}
+        return {"nodes": [], "edges": [], "filters_applied": {}}
 
     try:
-        # Build world filter clause
-        world_filter = ""
+        # Build filter clauses dynamically
+        filters = []
         params = {"limit": limit}
+
         if world_id:
-            world_filter = "AND n.world_id = $world_id"
+            filters.append("n.world_id = $world_id")
             params["world_id"] = world_id
+
+        if entity_type:
+            filters.append("(n.entity_type = $entity_type OR labels(n)[0] = $entity_type)")
+            params["entity_type"] = entity_type
+
+        if session_id:
+            filters.append("n.session_id = $session_id")
+            params["session_id"] = session_id
+
+        if genre:
+            filters.append("(n.genre = $genre OR $genre IN n.genres)")
+            params["genre"] = genre
+
+        if search:
+            filters.append("(toLower(n.name) CONTAINS toLower($search) OR toLower(n.description) CONTAINS toLower($search))")
+            params["search"] = search
+
+        # Combine filters with AND
+        filter_clause = ""
+        if filters:
+            filter_clause = "AND " + " AND ".join(filters)
 
         # Get all entities (nodes)
         node_query = f"""
         MATCH (n)
         WHERE (n.canon_id IS NOT NULL OR n.name IS NOT NULL)
-        {world_filter}
+        {filter_clause}
         RETURN
             COALESCE(n.canon_id, id(n)) AS id,
             COALESCE(n.name, n.canonical_name, 'Unknown') AS label,
@@ -2947,24 +2977,36 @@ async def get_graph_data(
             n.entity_type AS entity_type,
             n.openness AS openness,
             n.description AS description,
-            n.world_id AS world_id
+            n.world_id AS world_id,
+            n.session_id AS session_id,
+            n.genre AS genre
         LIMIT $limit
         """
         nodes_result = await db.execute(node_query, params)
 
-        # Build edge world filter
-        edge_world_filter = ""
+        # Build edge filter to match node filters
+        edge_filters = []
         edge_params = {"limit": limit * 2}
         if world_id:
-            edge_world_filter = "AND (a.world_id = $world_id OR b.world_id = $world_id)"
+            edge_filters.append("(a.world_id = $world_id OR b.world_id = $world_id)")
             edge_params["world_id"] = world_id
+        if entity_type:
+            edge_filters.append("(a.entity_type = $entity_type OR b.entity_type = $entity_type OR labels(a)[0] = $entity_type OR labels(b)[0] = $entity_type)")
+            edge_params["entity_type"] = entity_type
+        if session_id:
+            edge_filters.append("(a.session_id = $session_id OR b.session_id = $session_id)")
+            edge_params["session_id"] = session_id
+
+        edge_filter_clause = ""
+        if edge_filters:
+            edge_filter_clause = "AND " + " AND ".join(edge_filters)
 
         # Get all relationships (edges)
         edge_query = f"""
         MATCH (a)-[r]->(b)
         WHERE (a.canon_id IS NOT NULL OR a.name IS NOT NULL)
           AND (b.canon_id IS NOT NULL OR b.name IS NOT NULL)
-        {edge_world_filter}
+        {edge_filter_clause}
         RETURN
             COALESCE(a.canon_id, id(a)) AS from,
             COALESCE(b.canon_id, id(b)) AS to,
@@ -3006,18 +3048,104 @@ async def get_graph_data(
                 "arrows": "to",
             })
 
+        # Track which filters were applied
+        filters_applied = {}
+        if world_id:
+            filters_applied["world_id"] = world_id
+        if entity_type:
+            filters_applied["entity_type"] = entity_type
+        if session_id:
+            filters_applied["session_id"] = session_id
+        if genre:
+            filters_applied["genre"] = genre
+        if search:
+            filters_applied["search"] = search
+
         return {
             "nodes": nodes,
             "edges": edges,
             "stats": {
                 "node_count": len(nodes),
                 "edge_count": len(edges),
-            }
+            },
+            "filters_applied": filters_applied
         }
 
     except Exception as e:
         logger.error(f"Graph query failed: {e}")
         return {"nodes": [], "edges": [], "error": str(e)}
+
+
+@router.get("/graph/filters")
+async def get_graph_filter_options(request: Request):
+    """
+    Get available filter options for the graph visualization.
+
+    Returns lists of unique values for: entity types, sessions, genres, worlds.
+    This populates the filter dropdowns in the UI.
+    """
+    db = get_optional_neo4j_db(request)
+    if not db:
+        return {"entity_types": [], "sessions": [], "genres": [], "worlds": []}
+
+    try:
+        # Get distinct entity types
+        types_query = """
+        MATCH (n)
+        WHERE n.entity_type IS NOT NULL
+        RETURN DISTINCT n.entity_type AS entity_type
+        ORDER BY entity_type
+        """
+        types_result = await db.execute(types_query, {})
+        entity_types = [row["entity_type"] for row in types_result if row.get("entity_type")]
+
+        # Get distinct sessions
+        sessions_query = """
+        MATCH (n)
+        WHERE n.session_id IS NOT NULL
+        RETURN DISTINCT n.session_id AS session_id, n.world_id AS world_id
+        ORDER BY session_id
+        LIMIT 100
+        """
+        sessions_result = await db.execute(sessions_query, {})
+        sessions = [{"id": row["session_id"], "world": row.get("world_id", "")} for row in sessions_result if row.get("session_id")]
+
+        # Get distinct genres
+        genres_query = """
+        MATCH (n)
+        WHERE n.genre IS NOT NULL
+        RETURN DISTINCT n.genre AS genre
+        ORDER BY genre
+        """
+        genres_result = await db.execute(genres_query, {})
+        genres = [row["genre"] for row in genres_result if row.get("genre")]
+
+        # Get distinct worlds
+        worlds_query = """
+        MATCH (n)
+        WHERE n.world_id IS NOT NULL
+        RETURN DISTINCT n.world_id AS world_id
+        ORDER BY world_id
+        LIMIT 100
+        """
+        worlds_result = await db.execute(worlds_query, {})
+        worlds = [row["world_id"] for row in worlds_result if row.get("world_id")]
+
+        return {
+            "entity_types": entity_types or ["Character", "Location", "Faction", "Item", "Event", "Concept"],
+            "sessions": sessions,
+            "genres": genres,
+            "worlds": worlds
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get graph filter options: {e}")
+        return {
+            "entity_types": ["Character", "Location", "Faction", "Item", "Event", "Concept"],
+            "sessions": [],
+            "genres": [],
+            "worlds": []
+        }
 
 
 @router.get("/graph/node/{node_id}")

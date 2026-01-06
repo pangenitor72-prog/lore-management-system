@@ -4740,20 +4740,114 @@
                 <span style="color: var(--text-muted); font-size: 0.9rem;">Click any node to inspect its details.</span>
             </p>
 
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-                <label style="color: var(--text-secondary); font-size: 0.9rem;">Filter by World:</label>
-                <select id="world-filter" onchange="loadGraphData()" style="
-                    padding: 10px 15px;
-                    background: var(--bg-card);
-                    border: 1px solid var(--border-subtle);
-                    border-radius: 8px;
-                    color: var(--text-primary);
-                    font-size: 0.9rem;
-                    min-width: 180px;
-                    cursor: pointer;
-                ">
-                    <option value="">All Worlds</option>
-                </select>
+            <!-- Graph Filters -->
+            <div class="graph-filters" style="
+                background: var(--bg-card);
+                border: 1px solid var(--border-subtle);
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 20px;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4 style="margin: 0; color: var(--text-primary); font-weight: 500;">Filter Graph</h4>
+                    <button onclick="clearGraphFilters()" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Clear All</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                    <!-- World Filter -->
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">World</label>
+                        <select id="world-filter" onchange="loadGraphData()" style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            background: var(--bg-page);
+                            border: 1px solid var(--border-subtle);
+                            border-radius: 8px;
+                            color: var(--text-primary);
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        ">
+                            <option value="">All Worlds</option>
+                        </select>
+                    </div>
+
+                    <!-- Entity Type Filter -->
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Entity Type</label>
+                        <select id="entity-type-filter" onchange="loadGraphData()" style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            background: var(--bg-page);
+                            border: 1px solid var(--border-subtle);
+                            border-radius: 8px;
+                            color: var(--text-primary);
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        ">
+                            <option value="">All Types</option>
+                            <option value="Character">Character</option>
+                            <option value="Location">Location</option>
+                            <option value="Faction">Faction</option>
+                            <option value="Item">Item</option>
+                            <option value="Event">Event</option>
+                            <option value="Concept">Concept</option>
+                        </select>
+                    </div>
+
+                    <!-- Session Filter -->
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Session</label>
+                        <select id="session-filter" onchange="loadGraphData()" style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            background: var(--bg-page);
+                            border: 1px solid var(--border-subtle);
+                            border-radius: 8px;
+                            color: var(--text-primary);
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        ">
+                            <option value="">All Sessions</option>
+                        </select>
+                    </div>
+
+                    <!-- Genre Filter -->
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Genre</label>
+                        <select id="genre-filter" onchange="loadGraphData()" style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            background: var(--bg-page);
+                            border: 1px solid var(--border-subtle);
+                            border-radius: 8px;
+                            color: var(--text-primary);
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        ">
+                            <option value="">All Genres</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Search Box -->
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="graph-search" placeholder="Search entities by name..." style="
+                        flex: 1;
+                        padding: 10px 15px;
+                        background: var(--bg-page);
+                        border: 1px solid var(--border-subtle);
+                        border-radius: 8px;
+                        color: var(--text-primary);
+                        font-size: 0.9rem;
+                    " onkeypress="if(event.key==='Enter') loadGraphData()">
+                    <button onclick="loadGraphData()" class="btn" style="padding: 10px 20px;">Search</button>
+                </div>
+
+                <!-- Active Filters Display -->
+                <div id="active-filters" style="margin-top: 10px; display: none;">
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Active filters: </span>
+                    <span id="active-filters-list" style="color: var(--accent-lavender); font-size: 0.85rem;"></span>
+                </div>
             </div>
 
             <div class="graph-legend">
@@ -9182,6 +9276,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     break;
                 case 'graph':
                     await loadAvailableWorlds();
+                    await loadGraphFilterOptions();
                     loadGraphData();
                     break;
                 case 'admin':
@@ -10597,14 +10692,49 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function loadGraphData() {
             const container = document.getElementById('graph-container');
             const statsEl = document.getElementById('graph-stats');
+
+            // Get filter values
             const worldFilter = document.getElementById('world-filter');
+            const entityTypeFilter = document.getElementById('entity-type-filter');
+            const sessionFilter = document.getElementById('session-filter');
+            const genreFilter = document.getElementById('genre-filter');
+            const searchInput = document.getElementById('graph-search');
 
             statsEl.innerHTML = '<span class="loading"></span> Loading graph data...';
 
-            // Build URL with optional world filter
+            // Build URL with all filters
             let url = API_BASE + '/game/graph?limit=1000';
+            const activeFilters = [];
+
             if (worldFilter && worldFilter.value) {
                 url += '&world_id=' + encodeURIComponent(worldFilter.value);
+                activeFilters.push('World: ' + worldFilter.options[worldFilter.selectedIndex].text);
+            }
+            if (entityTypeFilter && entityTypeFilter.value) {
+                url += '&entity_type=' + encodeURIComponent(entityTypeFilter.value);
+                activeFilters.push('Type: ' + entityTypeFilter.value);
+            }
+            if (sessionFilter && sessionFilter.value) {
+                url += '&session_id=' + encodeURIComponent(sessionFilter.value);
+                activeFilters.push('Session: ' + sessionFilter.value.substring(0, 8) + '...');
+            }
+            if (genreFilter && genreFilter.value) {
+                url += '&genre=' + encodeURIComponent(genreFilter.value);
+                activeFilters.push('Genre: ' + genreFilter.value);
+            }
+            if (searchInput && searchInput.value.trim()) {
+                url += '&search=' + encodeURIComponent(searchInput.value.trim());
+                activeFilters.push('Search: "' + searchInput.value.trim() + '"');
+            }
+
+            // Update active filters display
+            const activeFiltersDiv = document.getElementById('active-filters');
+            const activeFiltersList = document.getElementById('active-filters-list');
+            if (activeFilters.length > 0) {
+                activeFiltersDiv.style.display = 'block';
+                activeFiltersList.textContent = activeFilters.join(' | ');
+            } else {
+                activeFiltersDiv.style.display = 'none';
             }
 
             try {
@@ -10618,16 +10748,65 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     return;
                 }
 
-                const worldName = worldFilter && worldFilter.value ?
-                    worldFilter.options[worldFilter.selectedIndex].text :
-                    'All Worlds';
-
-                statsEl.innerHTML = `<span>Showing: ${worldName}</span><span>Entities: ${data.stats.node_count}</span><span>Relationships: ${data.stats.edge_count}</span>`;
+                const filterSummary = activeFilters.length > 0 ? activeFilters.length + ' filter(s) active' : 'No filters';
+                statsEl.innerHTML = `<span>${filterSummary}</span><span>Entities: ${data.stats.node_count}</span><span>Relationships: ${data.stats.edge_count}</span>`;
 
                 renderGraph(data.nodes, data.edges);
 
             } catch (err) {
                 statsEl.innerHTML = 'Error loading graph: ' + err.message;
+            }
+        }
+
+        function clearGraphFilters() {
+            const worldFilter = document.getElementById('world-filter');
+            const entityTypeFilter = document.getElementById('entity-type-filter');
+            const sessionFilter = document.getElementById('session-filter');
+            const genreFilter = document.getElementById('genre-filter');
+            const searchInput = document.getElementById('graph-search');
+
+            if (worldFilter) worldFilter.value = '';
+            if (entityTypeFilter) entityTypeFilter.value = '';
+            if (sessionFilter) sessionFilter.value = '';
+            if (genreFilter) genreFilter.value = '';
+            if (searchInput) searchInput.value = '';
+
+            loadGraphData();
+        }
+
+        async function loadGraphFilterOptions() {
+            try {
+                const response = await fetch(API_BASE + '/game/graph/filters');
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                // Populate session filter
+                const sessionSelect = document.getElementById('session-filter');
+                if (sessionSelect && data.sessions) {
+                    sessionSelect.innerHTML = '<option value="">All Sessions</option>';
+                    data.sessions.forEach(session => {
+                        const option = document.createElement('option');
+                        option.value = session.id;
+                        option.textContent = session.id.substring(0, 8) + '... (' + (session.world || 'unknown') + ')';
+                        sessionSelect.appendChild(option);
+                    });
+                }
+
+                // Populate genre filter
+                const genreSelect = document.getElementById('genre-filter');
+                if (genreSelect && data.genres) {
+                    genreSelect.innerHTML = '<option value="">All Genres</option>';
+                    data.genres.forEach(genre => {
+                        const option = document.createElement('option');
+                        option.value = genre;
+                        option.textContent = genre.charAt(0).toUpperCase() + genre.slice(1);
+                        genreSelect.appendChild(option);
+                    });
+                }
+
+            } catch (err) {
+                console.warn('Could not load graph filter options:', err);
             }
         }
 
