@@ -704,16 +704,16 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
 
 
 # Global guardrails - Beta testing configuration
-# Reasonable limits: ~50-70 turns per session, supports 20+ concurrent users
+# Conservative daily limit ($2) to stay well within $20/month budget
 _beta_budget = TokenBudget(
     max_tokens_per_session=150000,      # 150k tokens/session (~50-70 turns)
     max_requests_per_session=200,        # 200 AI calls per session
     max_requests_per_hour=300,           # 5 requests/min across all users
     max_tokens_per_hour=500000,          # 500k tokens/hour
-    max_tokens_per_day=2000000,          # 2M tokens/day (~$0.15-0.60/day)
+    max_tokens_per_day=2000000,          # 2M tokens/day
     max_requests_per_day=2000,           # 2000 requests/day
-    max_cost_per_session=1.00,           # $1 per session max
-    max_cost_per_day=10.00,              # $10/day max (very generous)
+    max_cost_per_session=0.50,           # $0.50 per session max
+    max_cost_per_day=2.00,               # $2/day max - alerts if approaching $20/month budget
 )
 _token_tracker = TokenTracker(budget=_beta_budget)
 _gemini_breaker = get_circuit_breaker("gemini")
