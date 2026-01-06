@@ -1686,7 +1686,7 @@ def _generate_suggested_actions(
             "Listen to the shadows",
             "Check the beast within",
             "Sense supernatural presence",
-            "Look for the Masquerade breach",
+            "Look for signs of exposure",
             "Appeal to the old ways",
             "Trust my instincts",
         ],
@@ -1765,12 +1765,12 @@ def _get_genre_guidance(genre: str) -> Dict[str, str]:
         "urban_fantasy": {
             "elements": "hidden magic in modern cities, secret societies, mundane meets magical, parallel supernatural world, magical creatures disguised among humans",
             "hooks": "the veil between worlds thinning, a magical intrusion into normal life, or discovering the truth behind the mundane",
-            "voice": "grounded in familiar reality but threaded with wonder and danger, like Dresden Files or Harry Potter's magical world existing alongside our own",
+            "voice": "grounded in familiar reality but threaded with wonder and danger, where the magical world exists alongside our own",
         },
         "gothic": {
-            "elements": "vampires, werewolves, mages, supernatural politics, personal horror, the beast within, ancient conspiracies, tragic immortality, the Masquerade",
+            "elements": "vampires, werewolves, mages, supernatural politics, personal horror, the beast within, ancient conspiracies, tragic immortality",
             "hooks": "a threat to one's humanity, a breach in the supernatural order, or the eternal struggle between monster and man",
-            "voice": "dark and atmospheric like World of Darkness, where monsters are the protagonists wrestling with their nature, and power comes at a terrible cost",
+            "voice": "dark and atmospheric, where monsters are the protagonists wrestling with their nature, and power comes at a terrible cost",
         },
     }
     return guidance.get(genre, guidance["fantasy"])
