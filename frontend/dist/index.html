@@ -4351,6 +4351,29 @@
                 </div>
             </div>
 
+            <!-- GENRE BLEND SECTION (customizable) -->
+            <div class="setup-section" id="genre-blend-section">
+                <h3>Customize Your Genres</h3>
+                <p id="genre-blend-hint" style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                    Add genres to blend into your story. Mix fantasy with romance, horror with mystery - it's your adventure!
+                </p>
+                <div id="genre-blend-container" class="tone-options" style="flex-wrap: wrap; gap: 8px;">
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="fantasy" onclick="toggleBlendGenre('fantasy')">⚔️ Fantasy</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="romance" onclick="toggleBlendGenre('romance')">💕 Romance</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="mystery" onclick="toggleBlendGenre('mystery')">🔍 Mystery</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="horror" onclick="toggleBlendGenre('horror')">👻 Horror</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="adventure" onclick="toggleBlendGenre('adventure')">🗺️ Adventure</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="drama" onclick="toggleBlendGenre('drama')">🎭 Drama</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="scifi" onclick="toggleBlendGenre('scifi')">🚀 Sci-Fi</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="urban_fantasy" onclick="toggleBlendGenre('urban_fantasy')">🔮 Urban Fantasy</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="gothic" onclick="toggleBlendGenre('gothic')">🦇 Gothic</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="noir" onclick="toggleBlendGenre('noir')">🌃 Noir</span>
+                </div>
+                <p id="genre-blend-result" style="color: var(--accent-gold); margin-top: 10px; font-size: 0.85rem; display: none;">
+                    Your blend: <span id="blend-genres-list"></span>
+                </p>
+            </div>
+
             <!-- MAIN SECTION: Your Character -->
             <div class="setup-section">
                 <h3>Who Are You?</h3>
@@ -5527,10 +5550,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Set to null to hide all announcements.
 
         const CURRENT_ANNOUNCEMENT = {
-            id: 'update-2026-01-06-fixes',  // Unique ID for this announcement (used for dismissal tracking)
+            id: 'update-2026-01-06-v2',  // Unique ID for this announcement (used for dismissal tracking)
             type: 'success',          // 'info', 'warning', 'success', 'maintenance'
             icon: '✨',               // Emoji icon
-            message: '<strong>Jan 6 Update:</strong> Fixed curated world selection • Save slots now show character names • Desktop/mobile view toggle added • Improved error handling • Better caching for faster updates. <em>Please refresh (Ctrl+Shift+R) to get the latest version!</em>',
+            message: '<strong>Jan 6 Update:</strong> New Urban Fantasy & Gothic genres • Custom genre blending • New curated worlds (The Veiled City, City of Night) • Fixed save slots • Mobile/desktop toggle • Lore graph now shows 1000+ entities • Better caching. <em>Refresh (Ctrl+Shift+R) for the latest!</em>',
             dismissible: true,        // Can user dismiss it?
             persistent: false         // If true, shows even after dismissal (for critical maintenance)
         };
@@ -5636,6 +5659,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let selectedTone = null;
         let selectedStyle = 'guided';
         let selectedLoreBase = null;
+        let blendGenres = [];  // Custom genre blend for setup screen
+        let curatedWorldGenres = [];  // Store genre hints from selected curated world
         let currentSessionId = null;
         let currentPhase = null;
         let playerInventory = [];  // Track player's inventory items
@@ -7034,6 +7059,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Load curated worlds for setup screen
         let setupWorldsLoaded = false;
         let selectedCuratedWorld = null;
+        let loadedCuratedWorlds = [];  // Store loaded worlds data for genre lookup
 
         async function loadSetupCuratedWorlds() {
             if (setupWorldsLoaded) return;
@@ -7053,6 +7079,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     container.innerHTML = '';
                     return;
                 }
+
+                // Store for later lookup
+                loadedCuratedWorlds = worlds;
 
                 // Show first 6 curated worlds as cards
                 const worldsHtml = worlds.slice(0, 6).map(world => `
@@ -7093,6 +7122,56 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // Select this one
             element.classList.add('selected');
             selectedCuratedWorld = worldId;
+
+            // Find the world and pre-populate genre blend with its genre_hints
+            const world = loadedCuratedWorlds.find(w => w.id === worldId);
+            if (world && world.genre_hints) {
+                curatedWorldGenres = [...world.genre_hints];
+                blendGenres = [...world.genre_hints];
+                updateGenreBlendDisplay();
+            }
+        }
+
+        // Toggle a genre in the blend (multi-select)
+        function toggleBlendGenre(genre) {
+            const index = blendGenres.indexOf(genre);
+            if (index === -1) {
+                blendGenres.push(genre);
+            } else {
+                blendGenres.splice(index, 1);
+            }
+            updateGenreBlendDisplay();
+        }
+
+        // Update the genre blend display
+        function updateGenreBlendDisplay() {
+            // Update chip selection states
+            document.querySelectorAll('.genre-blend-chip').forEach(chip => {
+                const genre = chip.dataset.blendGenre;
+                if (blendGenres.includes(genre)) {
+                    chip.classList.add('selected');
+                } else {
+                    chip.classList.remove('selected');
+                }
+            });
+
+            // Update the result text
+            const resultEl = document.getElementById('genre-blend-result');
+            const listEl = document.getElementById('blend-genres-list');
+            if (blendGenres.length > 0) {
+                listEl.textContent = blendGenres.join(' + ');
+                resultEl.style.display = 'block';
+            } else {
+                resultEl.style.display = 'none';
+            }
+
+            // Update hint text based on whether curated world is selected
+            const hintEl = document.getElementById('genre-blend-hint');
+            if (selectedCuratedWorld && curatedWorldGenres.length > 0) {
+                hintEl.innerHTML = `This world's default genres are highlighted. <strong>Add or remove genres</strong> to customize your experience!`;
+            } else {
+                hintEl.textContent = 'Add genres to blend into your story. Mix fantasy with romance, horror with mystery - it\'s your adventure!';
+            }
         }
 
         // World Preset Selection
@@ -7102,6 +7181,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 card.classList.remove('selected');
             });
             selectedCuratedWorld = null;
+
+            // Clear genre blend when selecting a preset (not a curated world)
+            blendGenres = [];
+            curatedWorldGenres = [];
+            updateGenreBlendDisplay();
 
             // Select this preset
             document.querySelectorAll('.world-preset').forEach(chip => {
@@ -9333,13 +9417,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             dndCharacter = null;   // Reset D&D character
             resetPlayerProfile();  // Reset player psychology for new story
 
+            // Use blend genres if set, otherwise fall back to selected genres
+            const effectiveGenres = blendGenres.length > 0 ? blendGenres : selectedGenres;
+            const effectiveGenre = effectiveGenres[0] || selectedGenre || 'fantasy';
+
             // Build session payload
             const sessionPayload = {
                 character_concept: characterConcept,
                 setting_preference: selectedCuratedWorld ? '' : worldSeed,
                 tone_preference: selectedTone,
-                genre: selectedGenre,
-                genres: selectedGenres,
+                genre: effectiveGenre,
+                genres: effectiveGenres,
                 storytelling_style: selectedStyle,
                 session_scope: sessionScope,
                 max_turns: maxTurnsForScope[sessionScope] || 20
