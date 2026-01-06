@@ -4909,6 +4909,22 @@
                 <button class="btn btn-secondary" onclick="loadDbStats()">Refresh Stats</button>
             </div>
 
+            <!-- API Usage / Cost Tracking -->
+            <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+                <h3 style="color: var(--accent-gold); margin-bottom: 5px;">💰 API Usage & Costs</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                    Real-time Gemini API usage. Daily limit: $2.00 (resets at midnight UTC).
+                </p>
+
+                <div id="usage-content">
+                    <div style="text-align: center; padding: 30px;">
+                        <span class="loading"></span> Loading usage data...
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" onclick="loadUsageStats()" style="margin-top: 15px;">Refresh Usage</button>
+            </div>
+
             <!-- Analytics Dashboard -->
             <div class="setup-section" style="border: 2px solid var(--accent-sage); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-sage); margin-bottom: 5px;">📊 Tester Analytics</h3>
@@ -9298,6 +9314,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     break;
                 case 'admin':
                     loadDbStats();
+                    loadUsageStats();
                     loadAnalytics();
                     loadFeedback();
                     break;
@@ -11429,6 +11446,95 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             } catch (err) {
                 statsEl.innerHTML = '<span style="color: var(--accent-rose);">Error: ' + err.message + '</span>';
             }
+        }
+
+        // ============================================================
+        // API USAGE TRACKING
+        // ============================================================
+
+        async function loadUsageStats() {
+            const container = document.getElementById('usage-content');
+            if (!container) return;
+
+            container.innerHTML = '<div style="text-align: center; padding: 30px;"><span class="loading"></span> Loading usage data...</div>';
+
+            try {
+                const response = await fetch(API_BASE + '/game/usage');
+                if (!response.ok) throw new Error('Failed to load usage stats');
+
+                const data = await response.json();
+                renderUsageStats(data);
+            } catch (err) {
+                container.innerHTML = `<div style="color: var(--accent-rose); padding: 20px;">Error: ${err.message}</div>`;
+            }
+        }
+
+        function renderUsageStats(data) {
+            const container = document.getElementById('usage-content');
+            const daily = data.daily || {};
+            const hourly = data.hourly || {};
+            const limits = data.limits || {};
+
+            // Determine status color
+            const costPct = daily.cost_percent || 0;
+            let statusColor = 'var(--accent-sage)';
+            let statusIcon = '✅';
+            if (costPct >= 80) {
+                statusColor = 'var(--accent-rose)';
+                statusIcon = '⚠️';
+            } else if (costPct >= 50) {
+                statusColor = 'var(--accent-gold)';
+                statusIcon = '📊';
+            }
+
+            container.innerHTML = `
+                <!-- Daily Cost Bar -->
+                <div style="margin-bottom: 25px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary);">Daily Cost</span>
+                        <span style="color: ${statusColor}; font-weight: 600;">
+                            ${statusIcon} $${daily.estimated_cost?.toFixed(4) || '0.0000'} / $${daily.cost_limit?.toFixed(2) || '2.00'}
+                        </span>
+                    </div>
+                    <div style="background: var(--bg-tertiary); border-radius: 8px; height: 12px; overflow: hidden;">
+                        <div style="background: ${statusColor}; height: 100%; width: ${Math.min(costPct, 100)}%; transition: width 0.3s;"></div>
+                    </div>
+                    <div style="text-align: right; font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                        ${costPct.toFixed(1)}% of daily limit
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px;">
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 1.5rem; color: var(--accent-lavender);">${(daily.tokens_used || 0).toLocaleString()}</div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">Tokens Today</div>
+                        <div style="color: var(--text-muted); font-size: 0.7rem; margin-top: 4px;">of ${(daily.tokens_limit || 0).toLocaleString()}</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 1.5rem; color: var(--accent-sage);">${daily.requests || 0}</div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">Requests Today</div>
+                        <div style="color: var(--text-muted); font-size: 0.7rem; margin-top: 4px;">of ${daily.requests_limit || 0}</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 1.5rem; color: var(--accent-warm);">${hourly.requests || 0}</div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">This Hour</div>
+                        <div style="color: var(--text-muted); font-size: 0.7rem; margin-top: 4px;">of ${hourly.requests_limit || 0}</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 1.5rem; color: var(--accent-rose);">${data.active_sessions || 0}</div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">Active Sessions</div>
+                        <div style="color: var(--text-muted); font-size: 0.7rem; margin-top: 4px;">(in memory)</div>
+                    </div>
+                </div>
+
+                <!-- Session Limits Info -->
+                <div style="margin-top: 20px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+                    <strong>Session Limits:</strong> ${(limits.tokens_per_session || 0).toLocaleString()} tokens,
+                    ${limits.requests_per_session || 0} requests,
+                    $${limits.cost_per_session?.toFixed(2) || '0.50'} max per session
+                </div>
+            `;
         }
 
         // ============================================================

@@ -409,6 +409,55 @@ async def get_analytics():
 
 
 # ============================================================
+# API USAGE TRACKING (for cost monitoring)
+# ============================================================
+
+@router.get("/usage")
+async def get_usage_stats():
+    """
+    Get current API usage statistics for cost monitoring.
+    Shows token usage, estimated costs, and budget status.
+    """
+    usage = _token_tracker.get_usage_summary()
+    budget = _beta_budget
+
+    # Calculate percentages
+    daily_token_pct = (usage["daily"]["tokens"] / budget.max_tokens_per_day) * 100 if budget.max_tokens_per_day else 0
+    daily_cost_pct = (usage["daily"]["cost"] / budget.max_cost_per_day) * 100 if budget.max_cost_per_day else 0
+    hourly_token_pct = (usage["hourly"]["tokens"] / budget.max_tokens_per_hour) * 100 if budget.max_tokens_per_hour else 0
+
+    return {
+        "daily": {
+            "tokens_used": usage["daily"]["tokens"],
+            "tokens_limit": budget.max_tokens_per_day,
+            "tokens_remaining": usage["daily"]["tokens_remaining"],
+            "tokens_percent": round(daily_token_pct, 1),
+            "requests": usage["daily"]["requests"],
+            "requests_limit": budget.max_requests_per_day,
+            "estimated_cost": round(usage["daily"]["cost"], 4),
+            "cost_limit": budget.max_cost_per_day,
+            "cost_percent": round(daily_cost_pct, 1),
+        },
+        "hourly": {
+            "tokens_used": usage["hourly"]["tokens"],
+            "tokens_limit": budget.max_tokens_per_hour,
+            "tokens_percent": round(hourly_token_pct, 1),
+            "requests": usage["hourly"]["requests"],
+            "requests_limit": budget.max_requests_per_hour,
+        },
+        "active_sessions": usage["active_sessions"],
+        "limits": {
+            "tokens_per_session": budget.max_tokens_per_session,
+            "requests_per_session": budget.max_requests_per_session,
+            "cost_per_session": budget.max_cost_per_session,
+            "cost_per_day": budget.max_cost_per_day,
+        },
+        "status": "warning" if daily_cost_pct > 80 else "ok",
+        "message": f"Daily usage: ${usage['daily']['cost']:.4f} of ${budget.max_cost_per_day:.2f} limit"
+    }
+
+
+# ============================================================
 # FEEDBACK SYSTEM (for playtester feedback collection)
 # ============================================================
 
