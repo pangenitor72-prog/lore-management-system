@@ -51,7 +51,10 @@
       "WebFetch(domain:freesvg.org)",
       "WebFetch(domain:commons.wikimedia.org)",
       "WebFetch(domain:www.svgrepo.com)",
-      "WebFetch(domain:game-icons.net)"
+      "WebFetch(domain:game-icons.net)",
+      "Bash(ping:*)",
+      "WebFetch(domain:status.fly.io)",
+      "WebFetch(domain:status.flyio.net)"
     ]
   }
 }

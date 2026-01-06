@@ -1078,7 +1078,7 @@ async def set_announcement(announcement: AnnouncementUpdate, pin: str = Query(..
     global _current_announcement
 
     # Verify admin PIN
-    if pin != "8675309":  # Same PIN as admin panel
+    if pin != ADMIN_PIN:
         raise HTTPException(status_code=403, detail="Invalid admin PIN")
 
     _current_announcement = announcement.model_dump()
@@ -1091,7 +1091,7 @@ async def clear_announcement(pin: str = Query(...)):
     """Clear the current announcement (requires admin PIN)."""
     global _current_announcement
 
-    if pin != "8675309":
+    if pin != ADMIN_PIN:
         raise HTTPException(status_code=403, detail="Invalid admin PIN")
 
     _current_announcement = None
@@ -1138,6 +1138,17 @@ class LoreFileResponse(BaseModel):
     uploaded_at: str
     status: str  # pending, imported, failed
     import_result: Optional[Dict[str, Any]] = None
+
+    @property
+    def name(self) -> str:
+        """Alias for filename (frontend compatibility)."""
+        return self.filename
+
+    def model_dump(self, **kwargs):
+        """Include 'name' alias in serialization."""
+        data = super().model_dump(**kwargs)
+        data["name"] = self.filename
+        return data
 
 
 @app.post("/admin/lore/upload")
@@ -1228,6 +1239,7 @@ async def get_lore_file(file_id: str):
             return {
                 "id": file_id,
                 "filename": file_meta["filename"],
+                "name": file_meta["filename"],  # Alias for frontend compatibility
                 "type": "pdf",
                 "content": "[PDF files cannot be displayed as text. Use import to process.]",
                 "size": file_meta["size"],
@@ -1237,6 +1249,7 @@ async def get_lore_file(file_id: str):
             return {
                 "id": file_id,
                 "filename": file_meta["filename"],
+                "name": file_meta["filename"],  # Alias for frontend compatibility
                 "type": file_path.suffix[1:],  # Remove leading dot
                 "content": content,
                 "size": file_meta["size"],
@@ -1245,6 +1258,7 @@ async def get_lore_file(file_id: str):
         return {
             "id": file_id,
             "filename": file_meta["filename"],
+            "name": file_meta["filename"],  # Alias for frontend compatibility
             "type": file_path.suffix[1:],
             "content": "[Binary file - cannot display as text]",
             "size": file_meta["size"],
@@ -1325,6 +1339,7 @@ async def import_lore_file(
             "file_id": file_id,
             "filename": file_meta["filename"],
             "entities_stored": result.entities_stored,
+            "entities_created": result.entities_stored,  # Alias for frontend compatibility
             "relationships_stored": result.relationships_stored,
         }
 

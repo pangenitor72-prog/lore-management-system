@@ -572,6 +572,16 @@ class SessionResponse(BaseModel):
     phase: str  # "session_0" or "active_play"
     created_at: datetime
     arc_status: Optional[Dict[str, Any]] = None
+    # Extended fields for session context
+    world_id: Optional[str] = None
+    world_name: Optional[str] = None
+    genre: Optional[str] = None
+    genres: Optional[List[str]] = None
+    rules_mode: Optional[str] = None
+    rules_visibility: Optional[str] = None
+    character_concept: Optional[str] = None
+    character_id: Optional[str] = None
+    tone_preference: Optional[str] = None
 
 
 class PlayerActionRequest(BaseModel):
@@ -1229,6 +1239,16 @@ async def create_session(
         status="active",
         phase=phase,
         created_at=now,
+        # Include full session context for frontend
+        world_id=session_req.world_id,
+        world_name=world_name,
+        genre=session_req.genre or "fantasy",
+        genres=session_req.genres or [session_req.genre or "fantasy"],
+        rules_mode=session_req.rules_mode or "narrative",
+        rules_visibility=session_req.rules_visibility or "guided",
+        character_concept=session_req.character_concept,
+        character_id=session_req.character_id,
+        tone_preference=session_req.tone_preference,
     )
 
 
@@ -1255,6 +1275,16 @@ async def get_session(request: Request, session_id: str):
         status=session.get("status", "active"),
         phase=session["phase"],
         created_at=session["created_at"],
+        # Include full session context for frontend
+        world_id=session.get("world_id"),
+        world_name=session.get("world_name"),
+        genre=session.get("genre"),
+        genres=session.get("genres"),
+        rules_mode=session.get("rules_mode"),
+        rules_visibility=session.get("rules_visibility"),
+        character_concept=session.get("character_concept"),
+        character_id=session.get("character_id"),
+        tone_preference=session.get("tone_preference"),
     )
 
 
@@ -2099,6 +2129,9 @@ class LoreBaseResponse(BaseModel):
     entities_count: int
     seed_prompt: str
     is_seed: bool = False
+    # Additional fields for frontend visibility
+    has_lore_content: bool = False  # True if lore_content exists and is non-empty
+    ingested: bool = False  # True if lore has been processed into entities
 
 
 @router.get("/lore-bases", response_model=List[LoreBaseResponse])
@@ -2128,6 +2161,8 @@ async def list_lore_bases(genre: Optional[str] = None):
             entities_count=base.get("entities_count", 0),
             seed_prompt=base.get("seed_prompt", ""),
             is_seed=base.get("is_seed", False),
+            has_lore_content=bool(base.get("lore_content", "").strip()),
+            ingested=base.get("ingested", False),
         ))
 
     return bases
@@ -2147,7 +2182,20 @@ async def get_lore_base(lore_id: str):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Lore base '{lore_id}' not found"
         )
-    return LoreBaseResponse(**LORE_BASES[lore_id])
+    base = LORE_BASES[lore_id]
+    return LoreBaseResponse(
+        id=base["id"],
+        name=base["name"],
+        description=base["description"],
+        genre=base.get("genre"),
+        genre_hints=base.get("genre_hints", []),
+        tone_hints=base.get("tone_hints", []),
+        entities_count=base.get("entities_count", 0),
+        seed_prompt=base.get("seed_prompt", ""),
+        is_seed=base.get("is_seed", False),
+        has_lore_content=bool(base.get("lore_content", "").strip()),
+        ingested=base.get("ingested", False),
+    )
 
 
 class LoreBaseIngestResponse(BaseModel):
@@ -2422,6 +2470,10 @@ class SaveSlotInfo(BaseModel):
     turn_count: Optional[int] = None
     saved_at: Optional[datetime] = None
     world_name: Optional[str] = None
+    # Character preview data
+    character_id: Optional[str] = None
+    character_name: Optional[str] = None
+    rules_mode: Optional[str] = None
 
 
 class InventoryItem(BaseModel):
@@ -2481,7 +2533,9 @@ async def list_save_slots(
                 RETURN s.slot as slot, s.session_name as session_name,
                        s.character_concept as character_concept, s.genre as genre,
                        s.phase as phase, s.turn_count as turn_count,
-                       s.saved_at as saved_at, s.world_name as world_name
+                       s.saved_at as saved_at, s.world_name as world_name,
+                       s.character_id as character_id, s.character_name as character_name,
+                       s.rules_mode as rules_mode
                 ORDER BY s.slot
             """, {"browser_id": browser_id})
 
@@ -2504,6 +2558,9 @@ async def list_save_slots(
                         turn_count=save["turn_count"],
                         saved_at=save["saved_at"],
                         world_name=save["world_name"],
+                        character_id=save.get("character_id"),
+                        character_name=save.get("character_name"),
+                        rules_mode=save.get("rules_mode"),
                     ))
                 else:
                     slots.append(SaveSlotInfo(slot=slot_num, is_empty=True))
@@ -2600,6 +2657,9 @@ async def save_game(
                     s.turn_count = $turn_count,
                     s.saved_at = datetime(),
                     s.world_name = $world_name,
+                    s.character_id = $character_id,
+                    s.character_name = $character_name,
+                    s.rules_mode = $rules_mode,
                     s.save_data = $save_data_json
             """, {
                 "browser_id": browser_id,
@@ -2611,6 +2671,9 @@ async def save_game(
                 "phase": save_data.get("phase", "active_play"),
                 "turn_count": len(save_data.get("history", [])) // 2,
                 "world_name": save_data.get("world_name", ""),
+                "character_id": save_data.get("character_id"),
+                "character_name": save_data.get("character_name") or save_data.get("character", {}).get("name"),
+                "rules_mode": save_data.get("rules_mode", "narrative"),
                 "save_data_json": json.dumps(save_data),
             })
             logger.info(f"Saved session {session_id} to Neo4j slot {slot} for browser {browser_id[:8]}...")
