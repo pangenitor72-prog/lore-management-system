@@ -58,7 +58,9 @@
       "Bash(fly version:*)",
       "Bash(fly apps list:*)",
       "Bash(python3:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(for i in 1 2 3 4 5 6)",
+      "Bash(break)"
     ]
   }
 }
