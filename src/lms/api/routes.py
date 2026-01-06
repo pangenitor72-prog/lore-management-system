@@ -589,7 +589,7 @@ async def list_entities(
     entity_type: Optional[EntityType] = None,
     approval_status: Optional[ApprovalStatus] = None,
     world_id: Optional[str] = Query(default=None, description="Filter by world/lore base ID"),
-    limit: int = 100,
+    limit: int = Query(default=100, le=1000, description="Max entities to return (up to 1000)"),
 ):
 
     query = "MATCH (n:Entity)"
@@ -1416,8 +1416,10 @@ def _save_feedback(feedback_list: List[Dict[str, Any]]) -> None:
         FEEDBACK_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
             json.dump(feedback_list, f, indent=2)
+        logging.info(f"Saved {len(feedback_list)} feedback entries to {FEEDBACK_FILE}")
     except Exception as e:
-        logging.error(f"Failed to save feedback: {e}")
+        logging.error(f"Failed to save feedback to {FEEDBACK_FILE}: {e}")
+        raise  # Re-raise so the API can return an error
 
 
 class FeedbackRequest(BaseModel):

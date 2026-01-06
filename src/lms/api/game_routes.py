@@ -1159,9 +1159,9 @@ async def create_session(
     world_lore_content = ""
     world_name = ""
     if session_req.world_id:
-        lore_bases = _get_all_lore_bases()
-        if session_req.world_id in lore_bases:
-            world_data = lore_bases[session_req.world_id]
+        # Use the global LORE_BASES dict (loaded at startup from seed files)
+        if session_req.world_id in LORE_BASES:
+            world_data = LORE_BASES[session_req.world_id]
             world_lore_content = world_data.get("lore_content", "")
             world_name = world_data.get("name", "")
             logger.info(f"Loaded lore_content for world '{session_req.world_id}': {len(world_lore_content)} chars")
@@ -2080,6 +2080,12 @@ LORE_BASES = {
 
 # Merge file-loaded lore bases (they take precedence over built-ins)
 LORE_BASES.update(_file_lore_bases)
+
+# Log all loaded lore bases at startup for debugging
+logger.info(f"Loaded {len(LORE_BASES)} total lore bases at startup:")
+for base_id, base_data in LORE_BASES.items():
+    is_seed = base_data.get("is_seed", False)
+    logger.info(f"  - {base_id}: {base_data.get('name', 'unnamed')} (seed={is_seed})")
 
 
 class LoreBaseResponse(BaseModel):
