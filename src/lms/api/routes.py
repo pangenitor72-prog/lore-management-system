@@ -277,6 +277,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:3000",
+        "http://localhost:8000",
+        "http://localhost:9000",
         "https://lore-management-system.fly.dev"
     ],
     allow_credentials=True,
@@ -328,13 +330,21 @@ if frontend_dist.exists():
             return FileResponse(manifest_path, media_type="application/manifest+json")
         return {"error": "manifest not found"}
 
-    # Serve service worker
+    # Serve service worker (with no-cache to ensure updates propagate)
     @app.get("/sw.js")
     async def get_service_worker():
         from fastapi.responses import FileResponse
         sw_path = frontend_dist / "sw.js"
         if sw_path.exists():
-            return FileResponse(sw_path, media_type="application/javascript")
+            return FileResponse(
+                sw_path,
+                media_type="application/javascript",
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                }
+            )
         return {"error": "service worker not found"}
 
 # Mount Static Files - Updated for new structure
@@ -416,9 +426,17 @@ def root():
     """Serve frontend index if built; fallback to API JSON."""
     frontend_dist = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "dist"
     index_path = frontend_dist / "index.html"
-    
+
     if index_path.exists():
-        return FileResponse(str(index_path))
+        # Add no-cache headers to ensure users always get latest version
+        return FileResponse(
+            str(index_path),
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     
     logger.warning(f"Frontend index not found at {index_path}. Serving API status.")
     return {
@@ -1560,7 +1578,15 @@ async def catch_all(full_path: str):
     index_path = frontend_dist / "index.html"
 
     if index_path.exists():
-        return FileResponse(str(index_path))
+        # Add no-cache headers to ensure users always get latest version
+        return FileResponse(
+            str(index_path),
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
 
     raise HTTPException(status_code=404, detail="Not Found")
 

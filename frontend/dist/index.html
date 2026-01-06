@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <title>AIRPG - AI-Powered Roleplaying</title>
 
+    <!-- Cache Control - Ensure users get latest version -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <!-- PWA Support - Makes app installable like native -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#c98b8b">
@@ -3888,6 +3893,43 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* Force Desktop Mode - Override mobile styles when toggled */
+        body.force-desktop {
+            /* Show the view mode toggle is active */
+        }
+
+        body.force-desktop .story-menu-btn {
+            /* Keep hamburger visible for toggling back */
+            display: flex !important;
+        }
+
+        body.force-desktop .mobile-suggestions {
+            display: none !important;
+        }
+
+        body.force-desktop .mobile-input-area {
+            position: relative !important;
+            background: transparent !important;
+            border-top: none !important;
+            padding: 20px !important;
+        }
+
+        body.force-desktop .story-container {
+            padding-bottom: 20px !important;
+        }
+
+        body.force-desktop .container {
+            max-width: 720px !important;
+        }
+
+        body.force-desktop .landing-cards {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
+
+        body.force-desktop .quick-genre-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
     </style>
 </head>
 <body>
@@ -6608,7 +6650,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!container) return;
 
             try {
-                const response = await fetch(API_BASE + '/lore-bases');
+                const response = await fetch(API_BASE + '/game/lore-bases');
                 if (!response.ok) throw new Error('Failed to load worlds');
 
                 const worlds = await response.json();
@@ -6837,7 +6879,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!container) return;
 
             try {
-                const response = await fetch(API_BASE + '/lore-bases');
+                const response = await fetch(API_BASE + '/game/lore-bases');
                 if (!response.ok) {
                     container.innerHTML = '';  // Hide if no worlds
                     return;
@@ -11804,6 +11846,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     <span class="action-icon">🔄</span>
                     <span>New Story</span>
                 </button>
+                <div style="border-top: 1px solid var(--border-subtle); margin: 10px 0;"></div>
+                <button class="story-menu-action" onclick="storyMenuAction('toggleView')" id="view-mode-toggle">
+                    <span class="action-icon" id="view-mode-icon">🖥️</span>
+                    <span id="view-mode-label">Desktop View</span>
+                </button>
             </div>
         </div>
     </div>
@@ -11833,8 +11880,46 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 case 'new':
                     confirmStartOver();
                     break;
+                case 'toggleView':
+                    toggleViewMode();
+                    break;
             }
         }
+
+        // Desktop/Mobile view mode toggle
+        function toggleViewMode() {
+            const isDesktop = document.body.classList.toggle('force-desktop');
+            localStorage.setItem('viewMode', isDesktop ? 'desktop' : 'mobile');
+            updateViewModeButton(isDesktop);
+
+            // Update viewport for desktop mode
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (isDesktop) {
+                viewport.content = 'width=1024';
+            } else {
+                viewport.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no';
+            }
+        }
+
+        function updateViewModeButton(isDesktop) {
+            const icon = document.getElementById('view-mode-icon');
+            const label = document.getElementById('view-mode-label');
+            if (icon && label) {
+                icon.textContent = isDesktop ? '📱' : '🖥️';
+                label.textContent = isDesktop ? 'Mobile View' : 'Desktop View';
+            }
+        }
+
+        // Initialize view mode from localStorage
+        (function initViewMode() {
+            const savedMode = localStorage.getItem('viewMode');
+            if (savedMode === 'desktop') {
+                document.body.classList.add('force-desktop');
+                const viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport) viewport.content = 'width=1024';
+                updateViewModeButton(true);
+            }
+        })();
 
         // ==========================================
         // FEEDBACK SYSTEM (for playtesters)
@@ -11980,13 +12065,25 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 storedFeedback.push(feedback);
                 localStorage.setItem('pendingFeedback', JSON.stringify(storedFeedback));
 
-                // Still show success (we have it stored locally)
+                // Show warning that feedback was saved locally but not sent
+                const successContent = document.getElementById('feedback-success-content');
+                if (successContent) {
+                    successContent.innerHTML = `
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; margin-bottom: 15px;">⚠️</div>
+                            <h3 style="color: var(--accent-warm); margin-bottom: 10px;">Saved Locally</h3>
+                            <p style="color: var(--text-secondary);">
+                                Couldn't reach server. Your feedback is saved locally and will be sent when connection is restored.
+                            </p>
+                        </div>
+                    `;
+                }
                 document.getElementById('feedback-form-content').style.display = 'none';
-                document.getElementById('feedback-success-content').style.display = 'block';
+                successContent.style.display = 'block';
 
                 setTimeout(() => {
                     closeFeedbackModal();
-                }, 2000);
+                }, 3000);
             }
         }
 

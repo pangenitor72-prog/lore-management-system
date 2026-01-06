@@ -1175,6 +1175,22 @@ async def create_session(
             world_lore_content = world_data.get("lore_content", "")
             world_name = world_data.get("name", "")
             logger.info(f"Loaded lore_content for world '{session_req.world_id}': {len(world_lore_content)} chars")
+        else:
+            # World ID provided but not found - return error instead of silently continuing
+            logger.warning(f"World '{session_req.world_id}' not found in LORE_BASES")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"World '{session_req.world_id}' not found. Available worlds: {list(LORE_BASES.keys())[:10]}..."
+            )
+
+    # Validate character_id if provided (for D&D mode)
+    if session_req.character_id:
+        if session_req.character_id not in _characters:
+            logger.warning(f"Character '{session_req.character_id}' not found in _characters")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Character '{session_req.character_id}' not found. Please create a character first."
+            )
 
     # Create a unique session-scoped world ID for entity isolation
     # This ensures each game has its own lore space, even if using the same base world
@@ -2641,6 +2657,7 @@ async def save_game(
         char = _characters.get(char_id)
         if char:
             save_data["character_data"] = char.model_dump()
+            save_data["character_name"] = char.name  # Populate character_name for save slot display
 
     db = get_optional_neo4j_db(request)
     if db:
