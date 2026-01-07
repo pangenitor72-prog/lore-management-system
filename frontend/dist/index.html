@@ -11659,27 +11659,30 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 html += `<div style="color: var(--text-muted); padding: 20px; text-align: center; background: var(--bg-primary); border-radius: 10px;">No testers have activated their codes yet.</div>`;
             }
 
-            // Recent sessions
+            // Recent sessions (from Neo4j GameSession nodes)
             if (sessions.length > 0) {
                 html += `
                     <div>
                         <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">Recent Sessions</div>
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            ${sessions.slice(0, 8).map(s => `
-                                <div style="background: var(--bg-primary); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            ${sessions.slice(0, 10).map(s => `
+                                <div style="background: var(--bg-primary); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                     <div>
-                                        <span style="color: var(--accent-gold);">${s.tester || 'Anonymous'}</span>
-                                        <span style="color: var(--text-muted); margin-left: 10px;">${s.session_id}</span>
+                                        <span style="color: var(--accent-gold);">${s.character || 'Anonymous'}</span>
+                                        <span style="color: var(--text-muted); margin-left: 8px; font-size: 0.8rem;">${s.session_id}</span>
                                     </div>
-                                    <div style="text-align: right;">
-                                        <span style="color: var(--accent-sage);">${s.action_count} actions</span>
-                                        <span style="color: var(--text-muted); margin-left: 10px;">${timeAgo(s.started_at)}</span>
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <span style="color: var(--accent-lavender); font-size: 0.85rem;">${s.world || 'Custom'}</span>
+                                        <span style="color: var(--accent-sage);">${s.turn_count || 0} turns</span>
+                                        <span style="color: var(--text-muted); font-size: 0.8rem;">${timeAgo(s.started_at)}</span>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
                 `;
+            } else {
+                html += `<div style="color: var(--text-muted); padding: 20px; text-align: center; background: var(--bg-primary); border-radius: 10px; margin-top: 15px;">No sessions recorded yet. Sessions are stored in Neo4j when players start games.</div>`;
             }
 
             container.innerHTML = html;
@@ -12315,9 +12318,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 if (response.ok) {
                     const data = await response.json();
+                    const entityCount = data.entities_count || 0;
+                    const ingested = data.ingested ? 'Yes' : 'Pending';
+
                     showStatus('world-creator-status',
                         `<strong style="color: var(--accent-sage);">World "${name}" created successfully!</strong><br>` +
-                        `<span style="color: var(--text-muted);">ID: ${id} | Players can now find it when selecting "${wcSelectedGenres[0]}" genre.</span>`,
+                        `<span style="color: var(--text-muted);">ID: ${id} | Genre: ${wcSelectedGenres[0]}</span><br>` +
+                        `<span style="color: var(--accent-lavender);">Entities extracted: ${entityCount} | Ingested: ${ingested}</span>`,
                         'success'
                     );
 
@@ -12326,7 +12333,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         if (confirm('World created! Would you like to create another?')) {
                             clearWorldForm();
                         }
-                    }, 1500);
+                    }, 2000);
                 } else {
                     const err = await response.json();
                     if (err.detail && err.detail.includes('already exists')) {

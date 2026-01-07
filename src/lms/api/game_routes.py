@@ -264,147 +264,100 @@ async def get_invite_status():
 
 
 # ============================================================
-# ANALYTICS DASHBOARD
+# ANALYTICS DASHBOARD (reads from Neo4j GameSession nodes)
 # ============================================================
 
-def _load_session_logs() -> List[Dict[str, Any]]:
-    """Load session logs from file."""
-    try:
-        log_file = Path(__file__).parent.parent.parent.parent / "data" / "session_logs.json"
-        if log_file.exists():
-            with open(log_file, "r", encoding="utf-8") as f:
-                return json.load(f)
-        return []
-    except Exception as e:
-        logger.error(f"Failed to load session logs: {e}")
-        return []
-
-
 @router.get("/analytics")
-async def get_analytics():
+async def get_analytics(http_request: Request):
     """
-    Get comprehensive analytics for the admin dashboard.
+    Get comprehensive analytics from Neo4j.
     Shows tester engagement, session activity, and usage patterns.
     """
-    # Load invite codes
+    from collections import defaultdict
+
+    # Load invite codes (still from file - these are static config)
     codes_data = _load_invite_codes()
     codes = codes_data.get("codes", [])
-
-    # Load session logs
-    session_logs = _load_session_logs()
-
-    # === TESTER ANALYTICS ===
     activated_testers = [c for c in codes if c.get("activated", False)]
+
+    db = getattr(http_request.app.state, "neo4j_db", None)
+
+    sessions_list = []
+    total_actions = 0
+    activity_by_date = defaultdict(int)
+
+    if db:
+        try:
+            # Get all GameSession nodes
+            result = await db.execute("""
+                MATCH (s:GameSession)
+                RETURN s.session_id AS session_id,
+                       s.character_name AS character_name,
+                       s.curated_world_name AS world_name,
+                       s.genre AS genre,
+                       s.turn_count AS turn_count,
+                       s.status AS status,
+                       s.created_at AS created_at,
+                       s.last_activity AS last_activity
+                ORDER BY s.created_at DESC
+                LIMIT 100
+            """, {})
+
+            for record in result:
+                session_id = record.get("session_id", "")
+                created_at = str(record.get("created_at", ""))
+                turn_count = record.get("turn_count") or 0
+                total_actions += turn_count
+
+                sessions_list.append({
+                    "session_id": session_id[:8] + "..." if session_id else "unknown",
+                    "character": record.get("character_name") or "Anonymous",
+                    "world": record.get("world_name") or "Custom",
+                    "genre": record.get("genre") or "fantasy",
+                    "turn_count": turn_count,
+                    "status": record.get("status") or "unknown",
+                    "started_at": created_at,
+                    "last_activity": str(record.get("last_activity", "")),
+                })
+
+                # Track activity by date
+                if created_at and len(created_at) >= 10:
+                    date = created_at[:10]
+                    activity_by_date[date] += 1
+
+        except Exception as e:
+            logger.error(f"Failed to load sessions from Neo4j: {e}")
+
+    # Build tester list with session counts
     testers = []
     for tester in activated_testers:
         tester_name = tester.get("name", "Unknown")
-        tester_code = tester.get("code", "")
-        activated_at = tester.get("activated_at")
-
-        # Find this tester's sessions
-        tester_sessions = [log for log in session_logs if log.get("tester") == tester_name]
-        tester_actions = [log for log in tester_sessions if log.get("event_type") == "player_action"]
-
-        # Get unique session IDs
-        unique_sessions = set(log.get("session_id") for log in tester_sessions if log.get("session_id"))
-
-        # Find last activity
-        last_activity = None
-        if tester_sessions:
-            timestamps = [log.get("received_at") or log.get("timestamp") for log in tester_sessions]
-            timestamps = [t for t in timestamps if t]
-            if timestamps:
-                last_activity = max(timestamps)
+        # Count sessions for this tester (match by character name or world)
+        tester_sessions = [s for s in sessions_list if s.get("character", "").lower() == tester_name.lower()]
 
         testers.append({
             "name": tester_name,
-            "code": tester_code,
-            "activated_at": activated_at,
-            "last_activity": last_activity,
-            "total_sessions": len(unique_sessions),
-            "total_actions": len(tester_actions),
+            "code": tester.get("code", ""),
+            "activated_at": tester.get("activated_at"),
+            "last_activity": tester_sessions[0].get("last_activity") if tester_sessions else None,
+            "total_sessions": len(tester_sessions),
+            "total_actions": sum(s.get("turn_count", 0) for s in tester_sessions),
         })
 
-    # Sort by last activity (most recent first)
     testers.sort(key=lambda x: x.get("last_activity") or "", reverse=True)
-
-    # === SESSION ANALYTICS ===
-    all_sessions = {}
-    for log in session_logs:
-        sid = log.get("session_id")
-        if not sid:
-            continue
-        if sid not in all_sessions:
-            all_sessions[sid] = {
-                "session_id": sid,
-                "tester": log.get("tester"),
-                "events": [],
-                "started_at": None,
-                "last_event": None,
-            }
-        all_sessions[sid]["events"].append(log)
-
-        timestamp = log.get("received_at") or log.get("timestamp")
-        if timestamp:
-            if not all_sessions[sid]["started_at"] or timestamp < all_sessions[sid]["started_at"]:
-                all_sessions[sid]["started_at"] = timestamp
-            if not all_sessions[sid]["last_event"] or timestamp > all_sessions[sid]["last_event"]:
-                all_sessions[sid]["last_event"] = timestamp
-
-    # Calculate session stats
-    sessions_list = []
-    for sid, session in all_sessions.items():
-        events = session["events"]
-        action_count = sum(1 for e in events if e.get("event_type") == "player_action")
-        screen_views = [e for e in events if e.get("event_type") == "screen_view"]
-
-        sessions_list.append({
-            "session_id": sid[:8] + "...",
-            "tester": session["tester"],
-            "started_at": session["started_at"],
-            "last_event": session["last_event"],
-            "event_count": len(events),
-            "action_count": action_count,
-            "screens_visited": len(set(e.get("data", {}).get("screen") for e in screen_views if e.get("data"))),
-        })
-
-    # Sort by start time (most recent first)
-    sessions_list.sort(key=lambda x: x.get("started_at") or "", reverse=True)
-
-    # === AGGREGATE STATS ===
-    total_actions = sum(1 for log in session_logs if log.get("event_type") == "player_action")
-    total_sessions = len(all_sessions)
-
-    # Event type breakdown
-    event_types = {}
-    for log in session_logs:
-        evt = log.get("event_type", "unknown")
-        event_types[evt] = event_types.get(evt, 0) + 1
-
-    # Activity by date (last 7 days)
-    from collections import defaultdict
-    activity_by_date = defaultdict(int)
-    for log in session_logs:
-        timestamp = log.get("received_at") or log.get("timestamp")
-        if timestamp:
-            try:
-                date = timestamp[:10]  # YYYY-MM-DD
-                activity_by_date[date] += 1
-            except:
-                pass
 
     return {
         "summary": {
             "testers_activated": len(activated_testers),
             "testers_max": codes_data.get("max_testers", 30),
-            "total_sessions": total_sessions,
-            "total_events": len(session_logs),
+            "total_sessions": len(sessions_list),
+            "total_events": len(sessions_list),
             "total_actions": total_actions,
         },
-        "testers": testers[:20],  # Top 20 most recent
-        "recent_sessions": sessions_list[:15],  # Last 15 sessions
-        "event_breakdown": event_types,
-        "activity_by_date": dict(sorted(activity_by_date.items())[-7:]),  # Last 7 days
+        "testers": testers[:20],
+        "recent_sessions": sessions_list[:15],
+        "event_breakdown": {"sessions": len(sessions_list), "actions": total_actions},
+        "activity_by_date": dict(sorted(activity_by_date.items())[-7:]),
     }
 
 
@@ -458,33 +411,8 @@ async def get_usage_stats():
 
 
 # ============================================================
-# FEEDBACK SYSTEM (for playtester feedback collection)
+# FEEDBACK SYSTEM (stored in Neo4j for persistence)
 # ============================================================
-
-FEEDBACK_FILE = Path(__file__).parent.parent.parent.parent / "data" / "feedback.json"
-
-
-def _load_feedback() -> List[Dict[str, Any]]:
-    """Load feedback from file."""
-    try:
-        if FEEDBACK_FILE.exists():
-            with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        return []
-    except Exception as e:
-        logger.error(f"Failed to load feedback: {e}")
-        return []
-
-
-def _save_feedback(feedback_list: List[Dict[str, Any]]) -> None:
-    """Save feedback to file."""
-    try:
-        FEEDBACK_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
-            json.dump(feedback_list, f, indent=2)
-    except Exception as e:
-        logger.error(f"Failed to save feedback: {e}")
-
 
 class FeedbackRequest(BaseModel):
     """Feedback submission from playtesters."""
@@ -501,11 +429,14 @@ class FeedbackResponse(BaseModel):
 
 
 @router.post("/feedback", response_model=FeedbackResponse)
-async def submit_feedback(request: FeedbackRequest):
+async def submit_feedback(
+    http_request: Request,
+    request: FeedbackRequest
+):
     """
     Submit feedback from a playtester.
 
-    Stores feedback with context for later review.
+    Stores feedback in Neo4j for persistence across deploys.
     """
     if not request.category and not request.text:
         raise HTTPException(
@@ -515,23 +446,39 @@ async def submit_feedback(request: FeedbackRequest):
 
     feedback_id = str(uuid.uuid4())[:8]
     timestamp = datetime.now(timezone.utc).isoformat()
-
-    feedback_entry = {
-        "id": feedback_id,
-        "timestamp": timestamp,
-        "category": request.category,
-        "text": request.text,
-        "context": request.context or {}
-    }
-
-    # Load existing feedback, append new entry, save
-    feedback_list = _load_feedback()
-    feedback_list.append(feedback_entry)
-    _save_feedback(feedback_list)
-
-    # Log for visibility
     tester = request.context.get("tester", "anonymous") if request.context else "anonymous"
-    logger.info(f"Feedback received from {tester}: [{request.category}] {(request.text or '')[:100]}")
+    session_id = request.context.get("session_id", "") if request.context else ""
+
+    # Store in Neo4j
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if db:
+        try:
+            await db.execute("""
+                CREATE (f:Feedback {
+                    feedback_id: $feedback_id,
+                    timestamp: $timestamp,
+                    category: $category,
+                    text: $text,
+                    tester: $tester,
+                    session_id: $session_id,
+                    screen: $screen,
+                    world_id: $world_id
+                })
+            """, {
+                "feedback_id": feedback_id,
+                "timestamp": timestamp,
+                "category": request.category or "",
+                "text": request.text or "",
+                "tester": tester,
+                "session_id": session_id,
+                "screen": request.context.get("screen", "") if request.context else "",
+                "world_id": request.context.get("world_id", "") if request.context else "",
+            })
+            logger.info(f"Feedback stored in Neo4j from {tester}: [{request.category}]")
+        except Exception as e:
+            logger.error(f"Failed to store feedback in Neo4j: {e}")
+    else:
+        logger.warning("No Neo4j connection - feedback not persisted")
 
     return FeedbackResponse(
         success=True,
@@ -541,17 +488,48 @@ async def submit_feedback(request: FeedbackRequest):
 
 
 @router.get("/feedback")
-async def get_all_feedback():
+async def get_all_feedback(http_request: Request):
     """
-    Get all submitted feedback (for admin review).
+    Get all submitted feedback from Neo4j (for admin review).
+    """
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if not db:
+        return {"count": 0, "feedback": []}
 
-    Returns list of all feedback entries.
-    """
-    feedback_list = _load_feedback()
-    return {
-        "count": len(feedback_list),
-        "feedback": feedback_list
-    }
+    try:
+        result = await db.execute("""
+            MATCH (f:Feedback)
+            RETURN f.feedback_id AS id,
+                   f.timestamp AS timestamp,
+                   f.category AS category,
+                   f.text AS text,
+                   f.tester AS tester,
+                   f.session_id AS session_id,
+                   f.screen AS screen,
+                   f.world_id AS world_id
+            ORDER BY f.timestamp DESC
+            LIMIT 100
+        """, {})
+
+        feedback_list = []
+        for record in result:
+            feedback_list.append({
+                "id": record.get("id"),
+                "timestamp": record.get("timestamp"),
+                "category": record.get("category"),
+                "text": record.get("text"),
+                "context": {
+                    "tester": record.get("tester"),
+                    "session_id": record.get("session_id"),
+                    "screen": record.get("screen"),
+                    "world_id": record.get("world_id"),
+                }
+            })
+
+        return {"count": len(feedback_list), "feedback": feedback_list}
+    except Exception as e:
+        logger.error(f"Failed to load feedback from Neo4j: {e}")
+        return {"count": 0, "feedback": []}
 
 
 # ============================================================
@@ -2455,25 +2433,21 @@ class LoreBaseUploadRequest(BaseModel):
 
 
 @router.post("/lore-bases", response_model=LoreBaseResponse)
-async def create_lore_base(lore_base: LoreBaseUploadRequest):
+async def create_lore_base(
+    http_request: Request,
+    lore_base: LoreBaseUploadRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
     """
-    Create a new lore base from JSON data.
+    Create a new lore base and automatically ingest the lore content.
 
-    The lore_content field should contain narrative text describing:
-    - Characters and their personalities/traits
-    - Locations and their atmosphere
-    - Factions and their relationships
-    - Items and artifacts
-    - Events and history
+    This endpoint:
+    1. Creates the world definition in Neo4j (persistent!)
+    2. Parses the lore_content using AI to extract entities
+    3. Creates Characters, Locations, Factions with OCEAN profiles
+    4. Makes the world immediately playable
 
-    Example lore_content for NPCs with OCEAN profiles:
-    "Lord Aldric is a calculating and ambitious noble, known for his cold demeanor
-    and strategic mind. He commands absolute loyalty from his guards yet shows
-    surprising kindness to the common folk. His rival, Lady Seraphina, is warm and
-    charismatic but hides a vengeful streak beneath her charming exterior..."
-
-    After creation, call POST /game/lore-bases/{id}/ingest to process
-    the content and create entities with OCEAN profiles.
+    Just upload your lore and the world is ready to play.
     """
     if lore_base.id in LORE_BASES:
         raise HTTPException(
@@ -2481,31 +2455,93 @@ async def create_lore_base(lore_base: LoreBaseUploadRequest):
             detail=f"Lore base '{lore_base.id}' already exists"
         )
 
+    # Get primary genre
+    primary_genre = lore_base.genre_hints[0] if lore_base.genre_hints else "fantasy"
+
     new_base = {
         "id": lore_base.id,
         "name": lore_base.name,
         "description": lore_base.description,
+        "genre": primary_genre,
         "genre_hints": lore_base.genre_hints,
         "tone_hints": lore_base.tone_hints,
         "entities_count": 0,
         "seed_prompt": lore_base.seed_prompt,
         "lore_content": lore_base.lore_content,
         "ingested": False,
+        "is_curated": True,
     }
 
-    # Save to file for persistence
-    LORE_BASES_DIR.mkdir(parents=True, exist_ok=True)
-    file_path = LORE_BASES_DIR / f"{lore_base.id}.json"
-
+    # Store lore base definition in Neo4j (persistent across deploys!)
     try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(new_base, f, indent=2)
-        logger.info(f"Created lore base file: {file_path}")
+        await db.execute("""
+            CREATE (lb:LoreBase {
+                lore_id: $id,
+                name: $name,
+                description: $description,
+                genre: $genre,
+                genre_hints: $genre_hints,
+                tone_hints: $tone_hints,
+                seed_prompt: $seed_prompt,
+                lore_content: $lore_content,
+                is_curated: true,
+                ingested: false,
+                created_at: datetime()
+            })
+        """, {
+            "id": lore_base.id,
+            "name": lore_base.name,
+            "description": lore_base.description,
+            "genre": primary_genre,
+            "genre_hints": lore_base.genre_hints,
+            "tone_hints": lore_base.tone_hints,
+            "seed_prompt": lore_base.seed_prompt,
+            "lore_content": lore_base.lore_content,
+        })
+        logger.info(f"Created LoreBase node in Neo4j: {lore_base.id}")
     except Exception as e:
-        logger.error(f"Failed to save lore base file: {e}")
-        # Continue even if file save fails - keep in memory
+        logger.error(f"Failed to create LoreBase in Neo4j: {e}")
 
+    # Add to in-memory dict
     LORE_BASES[lore_base.id] = new_base
+
+    # AUTO-INGEST: Parse the lore content and create entities immediately
+    if lore_base.lore_content and len(lore_base.lore_content.strip()) >= 50:
+        try:
+            from src.lms.agents.lore_parsing_agent import LoreParsingAgent
+
+            agent = LoreParsingAgent()
+            logger.info(f"Auto-ingesting lore for new world: {lore_base.id}")
+
+            result = await agent.parse_and_store(
+                text=lore_base.lore_content,
+                db=db,
+                source_name=f"lore_base:{lore_base.id}",
+                world_id=lore_base.id,
+                curated_world_id=lore_base.id,
+                genre=primary_genre,
+            )
+
+            # Update counts
+            new_base["ingested"] = True
+            new_base["entities_count"] = result.entities_stored
+            LORE_BASES[lore_base.id] = new_base
+
+            # Update Neo4j node
+            await db.execute("""
+                MATCH (lb:LoreBase {lore_id: $id})
+                SET lb.ingested = true,
+                    lb.entities_count = $count
+            """, {"id": lore_base.id, "count": result.entities_stored})
+
+            logger.info(
+                f"Auto-ingested {lore_base.id}: {result.entities_stored} entities, "
+                f"{result.characters_with_ocean} with OCEAN profiles"
+            )
+
+        except Exception as e:
+            logger.error(f"Auto-ingest failed for {lore_base.id}: {e}")
+            # World is still created, just not ingested
 
     return LoreBaseResponse(**new_base)
 
