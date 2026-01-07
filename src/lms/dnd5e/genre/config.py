@@ -19,6 +19,9 @@ from .terminology import (
     MYTHOLOGY_TERMS,
     NOIR_TERMS,
     WUXIA_TERMS,
+    PIRATE_TERMS,
+    DARK_FANTASY_TERMS,
+    SPACE_OPERA_TERMS,
 )
 
 
@@ -36,6 +39,9 @@ class GenreId(str, Enum):
     MYTHOLOGY = "mythology"
     NOIR = "noir"
     WUXIA = "wuxia"
+    PIRATE = "pirate"
+    DARK_FANTASY = "dark_fantasy"
+    SPACE_OPERA = "space_opera"
     GENERIC = "generic"
     CUSTOM = "custom"
 
@@ -241,6 +247,42 @@ GENERIC_CONFIG = GenreConfig(
     example_archetypes=["Archetype A", "Archetype B", "Archetype C", "Archetype D"],
 )
 
+PIRATE_CONFIG = GenreConfig(
+    id="pirate",
+    name="Pirate",
+    description="Swashbuckling adventures on the high seas, buried treasure, and naval battles.",
+    terminology=PIRATE_TERMS,
+    icon="🏴‍☠️",
+    has_magic=True,
+    gritty_mode=True,
+    example_origins=["Naval Deserter", "Merchant Sailor", "Island Native", "Shipwreck Survivor"],
+    example_archetypes=["Captain", "Swashbuckler", "Gunner", "Navigator"],
+)
+
+DARK_FANTASY_CONFIG = GenreConfig(
+    id="dark_fantasy",
+    name="Dark Fantasy",
+    description="Grim worlds where hope is scarce, choices have consequences, and nothing comes free.",
+    terminology=DARK_FANTASY_TERMS,
+    icon="🌑",
+    has_magic=True,
+    gritty_mode=True,
+    sanity_system=True,
+    example_origins=["Cursed Noble", "Fallen Knight", "Plague Survivor", "Branded Outcast"],
+    example_archetypes=["Hollow", "Pyromancer", "Knight", "Cleric"],
+)
+
+SPACE_OPERA_CONFIG = GenreConfig(
+    id="space_opera",
+    name="Space Opera",
+    description="Epic galactic adventures with starships, alien empires, and legendary heroes.",
+    terminology=SPACE_OPERA_TERMS,
+    icon="🌌",
+    has_magic=True,
+    example_origins=["Core Worlder", "Rim Dweller", "Clone Soldier", "Force Sensitive"],
+    example_archetypes=["Jedi", "Smuggler", "Bounty Hunter", "Diplomat"],
+)
+
 # Registry of all built-in genres
 GENRES: Dict[str, GenreConfig] = {
     "fantasy": FANTASY_CONFIG,
@@ -255,6 +297,9 @@ GENRES: Dict[str, GenreConfig] = {
     "mythology": MYTHOLOGY_CONFIG,
     "noir": NOIR_CONFIG,
     "wuxia": WUXIA_CONFIG,
+    "pirate": PIRATE_CONFIG,
+    "dark_fantasy": DARK_FANTASY_CONFIG,
+    "space_opera": SPACE_OPERA_CONFIG,
     "generic": GENERIC_CONFIG,
 }
 
@@ -356,7 +401,8 @@ def get_genre_categories() -> Dict[str, List[str]]:
     """Get genres organized by category for UI display."""
     return {
         "Popular": ["fantasy", "scifi", "horror", "modern"],
-        "Historical": ["western", "mythology", "noir", "wuxia"],
-        "Speculative": ["cyberpunk", "steampunk", "postapoc", "superhero"],
+        "Historical": ["western", "mythology", "noir", "wuxia", "pirate"],
+        "Speculative": ["cyberpunk", "steampunk", "postapoc", "superhero", "space_opera"],
+        "Dark & Gritty": ["dark_fantasy"],
         "Other": ["generic"] + list(CUSTOM_GENRES.keys()),
     }

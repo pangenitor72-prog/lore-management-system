@@ -6332,8 +6332,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     return;
                 }
 
-                // Show first 6 curated worlds as cards
-                const worldsHtml = worlds.slice(0, 6).map(world => `
+                // Show all curated worlds as cards (scrollable container)
+                const worldsHtml = worlds.map(world => `
                     <div class="curated-world-card" onclick="selectTTRPGCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
                         <div class="world-name">${world.name}</div>
                         <div class="world-description">${world.description || 'A unique world awaits...'}</div>
@@ -6341,16 +6341,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     </div>
                 `).join('');
 
-                // Add "View All" link if there are more worlds
-                const moreLink = worlds.length > 6 ? `
-                    <div style="text-align: center; grid-column: 1/-1; margin-top: 5px;">
-                        <a href="#" onclick="showScreen('ingest'); return false;" style="color: var(--accent-lavender); font-size: 0.9rem;">
-                            View all ${worlds.length} worlds →
-                        </a>
-                    </div>
-                ` : '';
-
-                container.innerHTML = worldsHtml + moreLink;
+                // Make container scrollable if many worlds
+                container.style.maxHeight = '400px';
+                container.style.overflowY = 'auto';
+                container.innerHTML = worldsHtml;
                 ttrpgWorldsLoaded = true;
             } catch (err) {
                 console.log('Could not load TTRPG curated worlds:', err);
@@ -7307,8 +7301,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Store for later lookup
                 loadedCuratedWorlds = worlds;
 
-                // Show first 6 curated worlds as cards
-                const worldsHtml = worlds.slice(0, 6).map(world => `
+                // Show all curated worlds as cards (scrollable container)
+                const worldsHtml = worlds.map(world => `
                     <div class="curated-world-card" onclick="selectCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
                         <div class="world-name">${world.name}</div>
                         <div class="world-description">${world.description || 'A unique world awaits...'}</div>
@@ -7316,16 +7310,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     </div>
                 `).join('');
 
-                // Add "View All" link if there are more worlds
-                const moreLink = worlds.length > 6 ? `
-                    <div style="text-align: center; grid-column: 1/-1; margin-top: 5px;">
-                        <a href="#" onclick="showScreen('ingest'); return false;" style="color: var(--accent-lavender); font-size: 0.9rem;">
-                            View all ${worlds.length} worlds →
-                        </a>
-                    </div>
-                ` : '';
-
-                container.innerHTML = worldsHtml + moreLink;
+                // Make container scrollable if many worlds
+                container.style.maxHeight = '400px';
+                container.style.overflowY = 'auto';
+                container.innerHTML = worldsHtml;
                 setupWorldsLoaded = true;
             } catch (err) {
                 console.log('Could not load curated worlds:', err);

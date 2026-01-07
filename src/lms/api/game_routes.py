@@ -371,6 +371,52 @@ async def get_analytics(http_request: Request):
     }
 
 
+@router.delete("/admin/sessions/cleanup")
+async def cleanup_old_sessions(
+    http_request: Request,
+    before_date: Optional[str] = None,
+    empty_only: bool = True
+):
+    """
+    Delete old sessions with no useful data.
+
+    - empty_only=True (default): Delete sessions with no tester, no character, and 0 turns
+    - before_date: Delete all sessions before this ISO date (e.g., "2026-01-01")
+    """
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if not db:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    try:
+        if empty_only:
+            # Delete sessions with no tester and no character_name and 0 turns
+            result = await db.execute("""
+                MATCH (s:GameSession)
+                WHERE (s.tester IS NULL OR s.tester = '')
+                  AND (s.character_name IS NULL OR s.character_name = '')
+                  AND (s.turn_count IS NULL OR s.turn_count = 0)
+                DELETE s
+                RETURN count(s) as deleted
+            """, {})
+        elif before_date:
+            # Delete sessions before date
+            result = await db.execute("""
+                MATCH (s:GameSession)
+                WHERE s.created_at < datetime($before_date)
+                DELETE s
+                RETURN count(s) as deleted
+            """, {"before_date": before_date})
+        else:
+            return {"deleted": 0, "message": "Specify empty_only=true or provide before_date"}
+
+        deleted = result[0].get("deleted", 0) if result else 0
+        logger.info(f"Cleaned up {deleted} old sessions")
+        return {"deleted": deleted, "message": f"Cleaned up {deleted} sessions"}
+    except Exception as e:
+        logger.error(f"Failed to cleanup sessions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================
 # API USAGE TRACKING (for cost monitoring)
 # ============================================================
@@ -1521,9 +1567,10 @@ async def process_action(
     asyncio.create_task(_persist_session_to_db(session_id, session, db))
 
     # Update GameSession node with turn count and last activity
+    # IMPORTANT: Await this to ensure turn_count is actually saved
     if db:
-        asyncio.create_task(
-            db.execute("""
+        try:
+            await db.execute("""
                 MATCH (s:GameSession {session_id: $session_id})
                 SET s.turn_count = $turn_count,
                     s.last_activity = datetime(),
@@ -1533,7 +1580,8 @@ async def process_action(
                 "turn_count": turn_count,
                 "status": "ended" if session_ended else "active",
             })
-        )
+        except Exception as e:
+            logger.error(f"Failed to update session turn_count: {e}")
 
     return DMResponse(
         narrative=response_text,
