@@ -1,21 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useWebSocket, ConnectionState } from '../contexts/WebSocketContext'
 import { PacingBar, InventoryDrawer, BackpackButton, GameToastContainer, MissionReport } from './game'
 import './ChatInterface.css'
 
 /**
  * ChatInterface Component - The Game Client
- *
- * Interactive game UI with:
- * - Pacing Layer (progress bar for ONE_SHOT sessions)
- * - Tactical Layer (inventory drawer)
- * - Event Layer (toast notifications)
- * - Mission Report (end screen)
  */
 
 export function ChatInterface({
-  // Session configuration
-  sessionId = null,
+  // Session configuration from props or location state
+  sessionId: propSessionId = null,
   sessionScope = "ONE_SHOT",
   mode = "STORY",
   maxTurns = 20,
@@ -27,6 +22,9 @@ export function ChatInterface({
   onReturnToMenu = () => {},
   onSaveSession = () => {},
 }) {
+  const location = useLocation()
+  const sessionId = propSessionId || location.state?.sessionId
+  
   const { messages, sendMessage, connectionState } = useWebSocket()
   const safeMessages = Array.isArray(messages) ? messages : []
 
@@ -64,7 +62,7 @@ export function ChatInterface({
     if (response.turn !== undefined) {
       setCurrentTurn(response.turn)
     } else {
-      setCurrentTurn(prev => prev + 1)
+      // Logic for turn increment if not explicitly provided
     }
 
     // Extract events
@@ -117,7 +115,12 @@ export function ChatInterface({
 
     console.log('UI: sending', trimmed)
     try {
-      const result = await sendMessage('query', { query: trimmed })
+      // Note: WebSocketProvider uses session_id from query param if we update it
+      // or we can pass it here if we update sendMessage
+      const result = await sendMessage('query', { 
+        query: trimmed,
+        session_id: sessionId // Pass it explicitly in payload too
+      })
       console.log('UI: sendMessage() returned', result)
       if (result) setInputValue('')
     } catch (err) {
@@ -187,7 +190,12 @@ export function ChatInterface({
       <header className="chat-header">
         <div className="chat-header__title">
           <span className="chat-header__icon">🎲</span>
-          <h1>Adventure</h1>
+          <div>
+            <h1>Adventure</h1>
+            {sessionId && (
+              <span className="session-badge">Session: {sessionId.substring(0, 8)}</span>
+            )}
+          </div>
         </div>
         <div className="chat-header__actions">
           <BackpackButton
@@ -208,7 +216,7 @@ export function ChatInterface({
           <div className="chat-empty">
             <div className="chat-empty__icon">🗺️</div>
             <h2>Your Adventure Awaits</h2>
-            <p>What do you do?</p>
+            <p>{sessionId ? "Resuming your journey..." : "What do you do?"}</p>
           </div>
         ) : (
           <>

@@ -69,7 +69,10 @@ export function WebSocketProvider({ children }) {
     if (!payload.query) return false
 
     try {
-      wsRef.current.send(JSON.stringify({ query: payload.query }))
+      wsRef.current.send(JSON.stringify({ 
+        query: payload.query,
+        session_id: payload.session_id 
+      }))
       return true
     } catch {
       return false

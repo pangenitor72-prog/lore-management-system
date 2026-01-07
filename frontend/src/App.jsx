@@ -3,6 +3,8 @@ import { useWebSocket, ConnectionState } from './contexts/WebSocketContext'
 import ChatInterface from './components/ChatInterface'
 import Dashboard from './components/Dashboard'
 import LoreUpload from './components/LoreUpload'
+import Library from './components/Library'
+import AIRpg from './components/AIRpg'
 import { useAuditor } from './hooks/useAuditor'
 import './App.css'
 
@@ -27,11 +29,27 @@ function App() {
 
         <div className="app-nav__links">
           <NavLink 
+            to="/play"
+            className={({ isActive }) => `nav-link ${isActive ? 'nav-link--active' : ''}`}
+          >
+            <span className="nav-link__icon">🎲</span>
+            <span className="nav-link__text">Play</span>
+          </NavLink>
+
+          <NavLink 
             to="/" 
             className={({ isActive }) => `nav-link ${isActive ? 'nav-link--active' : ''}`}
           >
             <span className="nav-link__icon">💬</span>
             <span className="nav-link__text">Chat</span>
+          </NavLink>
+
+          <NavLink 
+            to="/library" 
+            className={({ isActive }) => `nav-link ${isActive ? 'nav-link--active' : ''}`}
+          >
+            <span className="nav-link__icon">🏛️</span>
+            <span className="nav-link__text">Library</span>
           </NavLink>
 
           <NavLink 
@@ -78,6 +96,8 @@ function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<ChatInterface />} />
+          <Route path="/play" element={<AIRpg />} />
+          <Route path="/library" element={<Library />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/upload" element={<LoreUpload />} />
         </Routes>

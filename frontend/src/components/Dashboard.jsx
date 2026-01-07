@@ -3,6 +3,8 @@ import { useAuditor } from '../hooks/useAuditor'
 import { useWebSocket, ConnectionState } from '../contexts/WebSocketContext'
 import './Dashboard.css'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+
 /**
  * Dashboard Component
  * 
@@ -27,6 +29,7 @@ export function Dashboard() {
   const { connectionState } = useWebSocket()
   const [selectedContradiction, setSelectedContradiction] = useState(null)
   const [filterSeverity, setFilterSeverity] = useState('ALL')
+  const [resolving, setResolving] = useState(false)
 
   // Sort contradictions by severity and newness
   const sortedContradictions = [...contradictions]
@@ -40,6 +43,30 @@ export function Dashboard() {
     setSelectedContradiction(contradiction)
     if (contradiction.isNew) {
       markAsSeen(contradiction.contradiction_id)
+    }
+  }
+
+  const handleResolve = async () => {
+    if (!selectedContradiction) return
+    setResolving(true)
+    try {
+      const res = await fetch(`${API_BASE}/audit/resolve/${selectedContradiction.contradiction_id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolution: "Manual resolution via Dashboard" })
+      })
+      
+      if (res.ok) {
+        // Close modal on success - list will update via WebSocket eventually
+        // or we could optimistically remove it here
+        setSelectedContradiction(null)
+      } else {
+        console.error("Failed to resolve contradiction")
+      }
+    } catch (e) {
+      console.error("Error resolving contradiction:", e)
+    } finally {
+      setResolving(false)
     }
   }
 
@@ -252,8 +279,10 @@ export function Dashboard() {
               )}
             </div>
             <div className="detail-modal__actions">
-              <button className="btn btn--secondary">Dismiss</button>
-              <button className="btn btn--primary">Resolve</button>
+              <button className="btn btn--secondary" onClick={() => setSelectedContradiction(null)}>Dismiss</button>
+              <button className="btn btn--primary" onClick={handleResolve} disabled={resolving}>
+                {resolving ? 'Resolving...' : 'Resolve'}
+              </button>
             </div>
           </div>
         </div>

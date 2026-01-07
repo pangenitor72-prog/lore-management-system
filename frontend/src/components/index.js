@@ -1,4 +1,5 @@
 export { ChatInterface } from './ChatInterface'
 export { default as LoreUpload } from './LoreUpload'
 export { Dashboard } from './Dashboard'
-
+export { default as Library } from './Library'
+export { default as AIRpg } from './AIRpg'
