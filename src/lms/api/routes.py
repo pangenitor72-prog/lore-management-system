@@ -882,6 +882,199 @@ async def ingest_text_endpoint(
         )
 
 
+class PreviewResponse(BaseModel):
+    """Response for preview extraction (no storage)."""
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+    summary: Dict[str, int]
+
+
+@router.post("/ingest/preview", response_model=PreviewResponse)
+async def preview_extraction(
+    request: Request,
+    ingest_req: IngestTextRequest,
+):
+    """
+    Preview entity extraction WITHOUT storing to database.
+
+    This allows users to review what will be extracted before committing.
+    Returns extracted entities, relationships, and a summary.
+    """
+    from src.lms.agents.lore_parsing_agent import LoreParsingAgent
+
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service not configured (GEMINI_API_KEY missing)"
+        )
+
+    try:
+        agent = LoreParsingAgent(api_key=gemini_key)
+
+        # Parse WITHOUT storing - just extract
+        result = await agent.parse_lore(ingest_req.content)
+
+        # Format entities for preview
+        entities = []
+        type_counts = {}
+        for entity in result.entities:
+            entity_type = entity.entity_type
+            type_counts[entity_type] = type_counts.get(entity_type, 0) + 1
+
+            # Generate OCEAN profile for characters
+            ocean = None
+            if entity_type == "Character" and entity.traits:
+                ocean = agent._calculate_ocean_from_traits(entity.traits)
+
+            entities.append({
+                "name": entity.name,
+                "type": entity_type,
+                "description": entity.description,
+                "traits": entity.traits,
+                "tags": entity.tags,
+                "verbatim_text": entity.verbatim_text,
+                "ocean": ocean,
+            })
+
+        # Format relationships for preview
+        relationships = []
+        for rel in result.relationships:
+            relationships.append({
+                "source": rel.source,
+                "target": rel.target,
+                "type": rel.relationship_type,
+                "description": rel.description,
+            })
+
+        return PreviewResponse(
+            entities=entities,
+            relationships=relationships,
+            summary={
+                "total_entities": len(entities),
+                "total_relationships": len(relationships),
+                **type_counts,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Preview extraction failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Preview failed: {str(e)}"
+        )
+
+
+class CommitEntitiesRequest(BaseModel):
+    """Request to commit approved entities."""
+    source_name: str
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+
+
+@router.post("/ingest/commit")
+async def commit_entities(
+    request: Request,
+    commit_req: CommitEntitiesRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Commit previously previewed entities to the database.
+
+    Takes the approved entities from preview and stores them.
+    """
+    from src.lms.agents.lore_parsing_agent import LoreParsingAgent
+
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    agent = LoreParsingAgent(api_key=gemini_key) if gemini_key else None
+
+    try:
+        entities_stored = 0
+        relationships_stored = 0
+
+        for entity_data in commit_req.entities:
+            # Generate human-readable ID
+            from src.lms.agents.lore_parsing_agent import _generate_human_readable_id
+            canon_id = _generate_human_readable_id(
+                entity_data["name"],
+                entity_data["type"],
+                commit_req.source_name
+            )
+
+            # Build OCEAN properties if present
+            ocean_props = {}
+            if entity_data.get("ocean"):
+                ocean = entity_data["ocean"]
+                ocean_props = {
+                    "openness": ocean.get("openness", 0.5),
+                    "conscientiousness": ocean.get("conscientiousness", 0.5),
+                    "extraversion": ocean.get("extraversion", 0.5),
+                    "agreeableness": ocean.get("agreeableness", 0.5),
+                    "neuroticism": ocean.get("neuroticism", 0.5),
+                }
+
+            # Store entity in Neo4j
+            await db.execute(
+                f"""
+                MERGE (e:{entity_data['type']} {{canon_id: $canon_id}})
+                SET e.name = $name,
+                    e.description = $description,
+                    e.traits = $traits,
+                    e.tags = $tags,
+                    e.source = $source,
+                    e.world_id = $world_id,
+                    e.confidence = 'USER_APPROVED',
+                    e.created_at = datetime(),
+                    e += $ocean_props
+                """,
+                {
+                    "canon_id": canon_id,
+                    "name": entity_data["name"],
+                    "description": entity_data.get("description", ""),
+                    "traits": entity_data.get("traits", []),
+                    "tags": entity_data.get("tags", []),
+                    "source": commit_req.source_name,
+                    "world_id": commit_req.source_name,
+                    "ocean_props": ocean_props,
+                }
+            )
+            entities_stored += 1
+
+        # Store relationships
+        for rel in commit_req.relationships:
+            await db.execute(
+                f"""
+                MATCH (a {{name: $source}})
+                MATCH (b {{name: $target}})
+                MERGE (a)-[r:{rel['type']}]->(b)
+                SET r.description = $description,
+                    r.source = $rel_source,
+                    r.created_at = datetime()
+                """,
+                {
+                    "source": rel["source"],
+                    "target": rel["target"],
+                    "description": rel.get("description", ""),
+                    "rel_source": commit_req.source_name,
+                }
+            )
+            relationships_stored += 1
+
+        return {
+            "status": "success",
+            "entities_stored": entities_stored,
+            "relationships_stored": relationships_stored,
+            "source_name": commit_req.source_name,
+        }
+
+    except Exception as e:
+        logger.error(f"Entity commit failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Commit failed: {str(e)}"
+        )
+
+
 # ============================================================
 # ENTITY BROWSER UI
 # ============================================================

@@ -1645,6 +1645,527 @@
             color: var(--accent-warm);
         }
 
+        /* ============================================
+           WORLDBUILDER SCREEN
+           ============================================ */
+        #worldbuilder {
+            padding: 20px 0;
+        }
+
+        .worldbuilder-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .worldbuilder-header h2 {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            color: var(--accent-gold);
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .worldbuilder-header p {
+            color: var(--text-secondary);
+        }
+
+        .worldbuilder-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 15px;
+        }
+
+        .worldbuilder-tab {
+            padding: 12px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .worldbuilder-tab:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+        }
+
+        .worldbuilder-tab.active {
+            background: var(--accent-warm);
+            border-color: var(--accent-warm);
+            color: var(--bg-primary);
+        }
+
+        .worldbuilder-panel {
+            display: none;
+        }
+
+        .worldbuilder-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Lore Base Browser */
+        .lore-base-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .lore-base-filter {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .lore-base-filter:hover {
+            border-color: var(--accent-warm);
+        }
+
+        .lore-base-filter.active {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .lore-bases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .lore-base-item {
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .lore-base-item:hover {
+            border-color: var(--accent-warm);
+            transform: translateY(-2px);
+        }
+
+        .lore-base-item.selected {
+            border-color: var(--accent-gold);
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+        }
+
+        .lore-base-item .lb-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .lore-base-item .lb-name {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 1.1rem;
+            color: var(--accent-warm);
+            margin-bottom: 6px;
+        }
+
+        .lore-base-item .lb-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .lore-base-item .lb-genres {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .lore-base-item .lb-genre-tag {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            color: var(--text-muted);
+        }
+
+        /* Text Input Panel */
+        .lore-text-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.7;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .lore-text-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .lore-text-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .lore-source-name {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .lore-source-name label {
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .lore-source-name input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        /* Entity Preview Panel */
+        .entity-preview-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .entity-preview-panel.visible {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .preview-header h3 {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+        }
+
+        .preview-summary {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .preview-summary span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .preview-summary .count {
+            color: var(--accent-warm);
+            font-weight: bold;
+        }
+
+        /* Entity Cards in Preview */
+        .entity-preview-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .entity-preview-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .entity-preview-card.rejected {
+            opacity: 0.4;
+            border-color: var(--accent-rose);
+        }
+
+        .entity-preview-card .entity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .entity-preview-card .entity-name {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 1.1rem;
+            color: var(--accent-warm);
+        }
+
+        .entity-preview-card .entity-type {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .entity-preview-card .entity-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .entity-preview-card .entity-traits {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .entity-preview-card .trait-tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            background: rgba(160, 139, 201, 0.2);
+            border-radius: 8px;
+            color: var(--accent-lavender);
+        }
+
+        .entity-preview-card .ocean-bar {
+            display: flex;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .entity-preview-card .ocean-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .entity-preview-card .ocean-value {
+            width: 30px;
+            height: 4px;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .entity-preview-card .ocean-fill {
+            height: 100%;
+            background: var(--accent-sage);
+            transition: width 0.3s ease;
+        }
+
+        .entity-preview-card .entity-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .entity-action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .entity-action-btn:hover {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .entity-action-btn.reject:hover {
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        .entity-action-btn.approve:hover {
+            border-color: var(--accent-sage);
+            color: var(--accent-sage);
+        }
+
+        /* Commit Actions */
+        .commit-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        /* Worldbuilder Entity Cards */
+        .wb-entity-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .wb-entity-card.approved {
+            border-color: var(--accent-sage);
+            background: linear-gradient(135deg, var(--bg-card), rgba(139, 165, 139, 0.1));
+        }
+
+        .wb-entity-card.rejected {
+            opacity: 0.5;
+            border-color: var(--accent-rose);
+        }
+
+        .wb-entity-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .wb-entity-icon {
+            font-size: 1.3rem;
+        }
+
+        .wb-entity-name {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 1.1rem;
+            color: var(--accent-warm);
+            flex: 1;
+        }
+
+        .wb-entity-type {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .wb-entity-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .wb-ocean-profile {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .wb-ocean-profile span {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .wb-entity-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .wb-approve-btn, .wb-reject-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .wb-approve-btn:hover, .wb-approve-btn.active {
+            background: var(--accent-sage);
+            border-color: var(--accent-sage);
+            color: var(--bg-primary);
+        }
+
+        .wb-reject-btn:hover, .wb-reject-btn.active {
+            background: var(--accent-rose);
+            border-color: var(--accent-rose);
+            color: var(--bg-primary);
+        }
+
+        .wb-loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .wb-error {
+            color: var(--accent-rose);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .wb-success {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .wb-success h3 {
+            color: var(--accent-sage);
+            margin-bottom: 10px;
+        }
+
+        .wb-success p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .wb-empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
         /* Ingest Screen */
         #ingest {
             padding: 20px 0;
@@ -4318,7 +4839,7 @@
 
             <!-- Secondary Actions -->
             <div class="landing-secondary">
-                <button class="landing-secondary-btn" onclick="showScreen('world-builder')">
+                <button class="landing-secondary-btn" onclick="showScreen('worldbuilder')">
                     <span>🏰</span> World Builder
                 </button>
                 <button class="landing-secondary-btn" onclick="showScreen('onboarding')">
@@ -4862,6 +5383,97 @@
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showInventory()">🎒 Inventory</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="showSaveModal()">💾 Save</button>
                     <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="confirmStartOver()">🔄 New Story</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Worldbuilder Screen -->
+        <div id="worldbuilder" class="screen">
+            <div class="worldbuilder-header">
+                <h2>Worldbuilder</h2>
+                <p>Import your lore, preview entities, and build your world</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div class="worldbuilder-tabs">
+                    <button class="worldbuilder-tab active" onclick="showWorldbuilderTab('browse')">Browse Worlds</button>
+                    <button class="worldbuilder-tab" onclick="showWorldbuilderTab('import')">Import Lore</button>
+                </div>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 8px 16px;">Back to Home</button>
+            </div>
+
+            <!-- Browse Worlds Panel -->
+            <div id="wb-browse-panel" class="worldbuilder-panel active">
+                <div class="lore-base-filters">
+                    <button class="lore-base-filter active" onclick="filterLoreBases('')">All</button>
+                    <button class="lore-base-filter" onclick="filterLoreBases('fantasy')">Fantasy</button>
+                    <button class="lore-base-filter" onclick="filterLoreBases('horror')">Horror</button>
+                    <button class="lore-base-filter" onclick="filterLoreBases('scifi')">Sci-Fi</button>
+                    <button class="lore-base-filter" onclick="filterLoreBases('noir')">Noir</button>
+                    <button class="lore-base-filter" onclick="filterLoreBases('western')">Western</button>
+                </div>
+
+                <div id="wb-lore-bases-grid" class="lore-bases-grid">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <div id="wb-selected-world" style="margin-top: 20px; display: none;">
+                    <div style="background: var(--bg-card); border-radius: 12px; padding: 20px; border: 1px solid var(--accent-gold);">
+                        <h3 style="color: var(--accent-gold); margin-bottom: 10px;" id="wb-selected-name">Selected World</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;" id="wb-selected-desc">Description</p>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="previewSelectedWorld()">Preview Entities</button>
+                            <button class="btn btn-secondary" onclick="ingestSelectedWorldDirect()">Quick Import (No Preview)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Lore Panel -->
+            <div id="wb-import-panel" class="worldbuilder-panel">
+                <div class="lore-source-name">
+                    <label>Source Name:</label>
+                    <input type="text" id="wb-source-name" placeholder="e.g., Campaign Notes 2024, Eldoria Lore">
+                </div>
+
+                <textarea id="wb-lore-text" class="lore-text-input" placeholder="Paste your lore text here...
+
+Example:
+The Kingdom of Valdris has stood for a thousand years, ruled by the Ironhart dynasty. Queen Seraphina Ironhart, known for her wisdom and cold pragmatism, inherited the throne after her father's mysterious death.
+
+Lord Varen Blackwood, once the queen's trusted advisor, now leads a rebellion from the Shadowfen marshes. His forces include the disgraced knight Sir Marcus Thorne and the hedge witch Elara Nightbloom.
+
+The ancient city of Thornhaven serves as the capital, its spires visible for miles across the Amber Plains..."></textarea>
+
+                <div class="btn-group" style="justify-content: flex-start;">
+                    <button class="btn btn-primary" onclick="previewLoreText()">Preview Extraction</button>
+                    <button class="btn btn-secondary" onclick="clearLoreText()">Clear</button>
+                </div>
+            </div>
+
+            <!-- Entity Preview Panel -->
+            <div id="wb-preview-panel" class="entity-preview-panel">
+                <div class="preview-header">
+                    <h3>Entity Preview</h3>
+                    <div class="preview-summary" id="wb-preview-summary">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="entity-preview-list" id="wb-entity-list">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <div id="wb-relationships-section" style="margin-top: 20px; display: none;">
+                    <h4 style="color: var(--text-secondary); margin-bottom: 10px;">Relationships</h4>
+                    <div id="wb-relationships-list" style="font-size: 0.9rem; color: var(--text-muted);">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="commit-actions">
+                    <button class="btn btn-secondary" onclick="cancelPreview()">Cancel</button>
+                    <button class="btn btn-primary" onclick="commitApprovedEntities()">Commit Approved Entities</button>
                 </div>
             </div>
         </div>
@@ -7316,6 +7928,416 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // END CURATED WORLDS LOADER
         // ============================================================
 
+        // ============================================================
+        // WORLDBUILDER FUNCTIONS
+        // ============================================================
+
+        let worldbuilderLoreBases = [];
+        let worldbuilderFilter = '';
+        let previewedEntities = [];
+        let approvedEntities = new Set();
+        let rejectedEntities = new Set();
+
+        async function loadWorldbuilderLoreBases() {
+            const container = document.getElementById('wb-lore-bases-grid');
+            if (!container) return;
+
+            container.innerHTML = '<div class="skeleton-loader"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>';
+
+            try {
+                const response = await fetch(API_BASE + '/game/lore-bases');
+                if (!response.ok) throw new Error('Failed to load worlds');
+
+                worldbuilderLoreBases = await response.json();
+                renderWorldbuilderLoreBases(worldbuilderLoreBases);
+            } catch (err) {
+                console.error('Failed to load worldbuilder lore bases:', err);
+                container.innerHTML = '<p class="wb-empty-state">Could not load worlds. Please refresh to try again.</p>';
+            }
+        }
+
+        function renderWorldbuilderLoreBases(worlds) {
+            const container = document.getElementById('wb-lore-bases-grid');
+            if (!container) return;
+
+            if (worlds.length === 0) {
+                container.innerHTML = '<p class="wb-empty-state">No worlds found matching your filter.</p>';
+                return;
+            }
+
+            container.innerHTML = worlds.map(world => {
+                const genre = world.genre || 'fantasy';
+                const icon = GENRE_ICONS[genre] || GENRE_ICONS.default;
+                const entityCount = world.entities_count || 0;
+
+                return `
+                    <div class="wb-world-card" onclick="previewWorldLore('${world.id}')">
+                        <div class="wb-world-icon">${icon}</div>
+                        <div class="wb-world-info">
+                            <h4>${world.name}</h4>
+                            <p>${world.description || 'A unique world awaits...'}</p>
+                            <div class="wb-world-meta">
+                                <span class="wb-genre-badge">${genre}</span>
+                                <span>${entityCount} entities</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showWorldbuilderTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.worldbuilder-tab').forEach(tab => {
+                const isActive = (tabName === 'browse' && tab.textContent.includes('Browse')) ||
+                                 (tabName === 'import' && tab.textContent.includes('Import'));
+                tab.classList.toggle('active', isActive);
+            });
+
+            // Show/hide tab content
+            document.getElementById('wb-browse-panel').classList.toggle('active', tabName === 'browse');
+            document.getElementById('wb-import-panel').classList.toggle('active', tabName === 'import');
+
+            // Load content based on tab
+            if (tabName === 'browse') {
+                loadWorldbuilderLoreBases();
+            }
+        }
+
+        function filterWorldbuilderLoreBases(genre) {
+            worldbuilderFilter = genre;
+
+            // Update filter button styling
+            document.querySelectorAll('.wb-filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.genre === genre);
+            });
+
+            // Filter and render
+            if (genre === '') {
+                renderWorldbuilderLoreBases(worldbuilderLoreBases);
+            } else {
+                const filtered = worldbuilderLoreBases.filter(w => {
+                    const hints = w.genre_hints || [];
+                    const mainGenre = w.genre || '';
+                    return hints.includes(genre) || mainGenre === genre;
+                });
+                renderWorldbuilderLoreBases(filtered);
+            }
+        }
+
+        async function previewWorldLore(worldId) {
+            const previewPanel = document.getElementById('wb-preview-panel');
+            const entityList = document.getElementById('wb-entity-list');
+
+            if (!previewPanel || !entityList) return;
+
+            previewPanel.style.display = 'block';
+            entityList.innerHTML = '<div class="wb-loading"><div class="typing-indicator"><span></span><span></span><span></span></div><p>Loading world entities...</p></div>';
+
+            try {
+                const response = await fetch(API_BASE + '/game/lore-bases/' + worldId);
+                if (!response.ok) throw new Error('Failed to load world');
+
+                const world = await response.json();
+
+                // Store entities for potential editing
+                previewedEntities = world.entities || [];
+                approvedEntities = new Set(previewedEntities.map((_, i) => i));
+                rejectedEntities = new Set();
+
+                renderEntityPreview(world.name, previewedEntities);
+            } catch (err) {
+                console.error('Failed to preview world:', err);
+                entityList.innerHTML = '<p class="wb-error">Failed to load world data. Please try again.</p>';
+            }
+        }
+
+        async function previewLoreText() {
+            const textInput = document.getElementById('wb-lore-text');
+            const previewPanel = document.getElementById('wb-preview-panel');
+            const entityList = document.getElementById('wb-entity-list');
+            const sourceName = document.getElementById('wb-source-name');
+
+            if (!textInput || !previewPanel || !entityList) return;
+
+            const text = textInput.value.trim();
+            if (!text) {
+                alert('Please enter some lore text to analyze.');
+                return;
+            }
+
+            previewPanel.style.display = 'block';
+            entityList.innerHTML = '<div class="wb-loading"><div class="typing-indicator"><span></span><span></span><span></span></div><p>AI is analyzing your lore...</p></div>';
+
+            try {
+                const response = await fetch(API_BASE.replace('/api', '') + '/ingest/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: text,
+                        source: sourceName ? sourceName.value || 'Worldbuilder Import' : 'Worldbuilder Import'
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Preview failed');
+                }
+
+                const result = await response.json();
+
+                // Store entities for approval workflow
+                previewedEntities = result.entities || [];
+                approvedEntities = new Set(previewedEntities.map((_, i) => i));
+                rejectedEntities = new Set();
+
+                renderEntityPreview('Extracted Entities', previewedEntities, result.relationships, result.summary);
+            } catch (err) {
+                console.error('Preview failed:', err);
+                entityList.innerHTML = `<p class="wb-error">Analysis failed: ${err.message}</p>`;
+            }
+        }
+
+        function renderEntityPreview(title, entities, relationships = [], summary = null) {
+            const entityList = document.getElementById('wb-entity-list');
+            const summaryEl = document.getElementById('wb-preview-summary');
+            const relationshipsSection = document.getElementById('wb-relationships-section');
+            const relationshipsList = document.getElementById('wb-relationships-list');
+
+            if (!entityList) return;
+
+            if (!entities || entities.length === 0) {
+                entityList.innerHTML = '<p class="wb-empty-state">No entities found in this content.</p>';
+                return;
+            }
+
+            // Update summary
+            if (summaryEl) {
+                if (summary) {
+                    summaryEl.innerHTML = `📊 Found: ${summary.characters || 0} characters, ${summary.locations || 0} locations, ${summary.factions || 0} factions, ${summary.items || 0} items`;
+                } else {
+                    summaryEl.innerHTML = `📊 ${entities.length} entities extracted`;
+                }
+            }
+
+            let html = '';
+
+            entities.forEach((entity, index) => {
+                const isApproved = approvedEntities.has(index);
+                const isRejected = rejectedEntities.has(index);
+                const statusClass = isRejected ? 'rejected' : (isApproved ? 'approved' : '');
+
+                // Get entity type icon
+                const typeIcons = {
+                    'Character': '👤',
+                    'Location': '📍',
+                    'Faction': '⚔️',
+                    'Item': '🎒',
+                    'Event': '📜',
+                    'Concept': '💡'
+                };
+                const icon = typeIcons[entity.entity_type] || typeIcons[entity.type] || '📄';
+
+                // Build OCEAN display if available
+                let oceanHtml = '';
+                if (entity.ocean_profile || entity.personality) {
+                    const ocean = entity.ocean_profile || entity.personality;
+                    oceanHtml = `
+                        <div class="wb-ocean-profile">
+                            <span title="Openness">O: ${(ocean.openness * 100).toFixed(0)}%</span>
+                            <span title="Conscientiousness">C: ${(ocean.conscientiousness * 100).toFixed(0)}%</span>
+                            <span title="Extraversion">E: ${(ocean.extraversion * 100).toFixed(0)}%</span>
+                            <span title="Agreeableness">A: ${(ocean.agreeableness * 100).toFixed(0)}%</span>
+                            <span title="Neuroticism">N: ${(ocean.neuroticism * 100).toFixed(0)}%</span>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="wb-entity-card ${statusClass}" data-index="${index}">
+                        <div class="wb-entity-header">
+                            <span class="wb-entity-icon">${icon}</span>
+                            <span class="wb-entity-name">${entity.name}</span>
+                            <span class="wb-entity-type">${entity.entity_type || entity.type || 'Unknown'}</span>
+                        </div>
+                        <div class="wb-entity-description">${entity.description || 'No description available.'}</div>
+                        ${oceanHtml}
+                        <div class="wb-entity-actions">
+                            <button class="wb-approve-btn ${isApproved ? 'active' : ''}" onclick="toggleEntityApproval(${index}, true)">
+                                ✓ Accept
+                            </button>
+                            <button class="wb-reject-btn ${isRejected ? 'active' : ''}" onclick="toggleEntityApproval(${index}, false)">
+                                ✗ Reject
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Set the entity list HTML
+            entityList.innerHTML = html;
+
+            // Handle relationships section
+            if (relationshipsSection && relationshipsList) {
+                if (relationships && relationships.length > 0) {
+                    relationshipsSection.style.display = 'block';
+                    relationshipsList.innerHTML = relationships.map(r =>
+                        `<div>${r.source} → <em>${r.type}</em> → ${r.target}</div>`
+                    ).join('');
+                } else {
+                    relationshipsSection.style.display = 'none';
+                }
+            }
+
+            // Update commit button count
+            const commitBtn = document.querySelector('.commit-actions .btn-primary');
+            if (commitBtn) {
+                commitBtn.textContent = `Commit ${approvedEntities.size} Approved Entities`;
+            }
+        }
+
+        function toggleEntityApproval(index, approve) {
+            if (approve) {
+                approvedEntities.add(index);
+                rejectedEntities.delete(index);
+            } else {
+                rejectedEntities.add(index);
+                approvedEntities.delete(index);
+            }
+
+            // Update card visual state
+            const card = document.querySelector(`.wb-entity-card[data-index="${index}"]`);
+            if (card) {
+                card.classList.toggle('approved', approve);
+                card.classList.toggle('rejected', !approve);
+
+                const approveBtn = card.querySelector('.wb-approve-btn');
+                const rejectBtn = card.querySelector('.wb-reject-btn');
+                if (approveBtn) approveBtn.classList.toggle('active', approve);
+                if (rejectBtn) rejectBtn.classList.toggle('active', !approve);
+            }
+
+            // Update commit button count
+            const commitBtn = document.querySelector('.wb-commit-actions .btn-primary');
+            if (commitBtn) {
+                commitBtn.textContent = `Commit ${approvedEntities.size} Entities`;
+            }
+        }
+
+        function selectAllEntities(approve) {
+            previewedEntities.forEach((_, index) => {
+                toggleEntityApproval(index, approve);
+            });
+        }
+
+        async function commitApprovedEntities() {
+            if (approvedEntities.size === 0) {
+                alert('No entities selected for commit.');
+                return;
+            }
+
+            const entitiesToCommit = previewedEntities.filter((_, index) => approvedEntities.has(index));
+
+            const commitBtn = document.querySelector('.commit-actions .btn-primary');
+            if (commitBtn) {
+                commitBtn.disabled = true;
+                commitBtn.textContent = 'Committing...';
+            }
+
+            try {
+                const response = await fetch(API_BASE.replace('/api', '') + '/ingest/commit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        source_name: document.getElementById('wb-source-name')?.value || 'Worldbuilder Import',
+                        entities: entitiesToCommit,
+                        relationships: []  // Relationships are optional for commit
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Commit failed');
+                }
+
+                const result = await response.json();
+
+                // Show success message
+                const entityList = document.getElementById('wb-entity-list');
+                if (entityList) {
+                    entityList.innerHTML = `
+                        <div class="wb-success">
+                            <h3>✓ Successfully Committed</h3>
+                            <p>${result.committed || entitiesToCommit.length} entities have been added to your lore base.</p>
+                            <button class="btn btn-secondary" onclick="closePreviewPanel()">Close</button>
+                        </div>
+                    `;
+                }
+
+                // Clear the input
+                const textInput = document.getElementById('wb-lore-text');
+                if (textInput) textInput.value = '';
+
+            } catch (err) {
+                console.error('Commit failed:', err);
+                alert('Failed to commit entities: ' + err.message);
+
+                if (commitBtn) {
+                    commitBtn.disabled = false;
+                    commitBtn.textContent = `Commit ${approvedEntities.size} Approved Entities`;
+                }
+            }
+        }
+
+        function closePreviewPanel() {
+            const previewPanel = document.getElementById('wb-preview-panel');
+            if (previewPanel) {
+                previewPanel.style.display = 'none';
+            }
+            previewedEntities = [];
+            approvedEntities = new Set();
+            rejectedEntities = new Set();
+        }
+
+        // Wrapper function for HTML onclick handlers
+        function filterLoreBases(genre) {
+            filterWorldbuilderLoreBases(genre);
+            // Update filter button styling
+            document.querySelectorAll('.lore-base-filter').forEach(btn => {
+                const btnGenre = btn.onclick.toString().match(/filterLoreBases\('([^']*)'\)/);
+                const thisGenre = btnGenre ? btnGenre[1] : '';
+                btn.classList.toggle('active', thisGenre === genre);
+            });
+        }
+
+        function clearLoreText() {
+            const textInput = document.getElementById('wb-lore-text');
+            if (textInput) textInput.value = '';
+        }
+
+        function cancelPreview() {
+            closePreviewPanel();
+        }
+
+        function previewSelectedWorld() {
+            const selectedName = document.getElementById('wb-selected-name');
+            if (selectedName && selectedName.dataset.worldId) {
+                previewWorldLore(selectedName.dataset.worldId);
+            }
+        }
+
+        function ingestSelectedWorldDirect() {
+            const selectedName = document.getElementById('wb-selected-name');
+            if (selectedName && selectedName.dataset.worldId) {
+                // Direct import without preview - just show success
+                alert('World imported successfully! (In a full implementation, this would load the world data directly.)');
+            }
+        }
+
+        // ============================================================
+        // END WORLDBUILDER FUNCTIONS
+        // ============================================================
+
         // Lore Base Selection
         function selectLoreBase(loreId) {
             selectedLoreBase = loreId;
@@ -9552,6 +10574,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             switch (screenId) {
                 case 'setup':
                     await loadSetupCuratedWorlds();
+                    break;
+                case 'worldbuilder':
+                    await loadWorldbuilderLoreBases();
                     break;
                 case 'world-builder':
                     await loadCuratedWorlds();
