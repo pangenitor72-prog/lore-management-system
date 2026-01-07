@@ -30,6 +30,58 @@ logger = logging.getLogger(__name__)
 _executor = ThreadPoolExecutor(max_workers=2)
 
 
+def _slugify(text: str, max_length: int = 30) -> str:
+    """Convert text to a URL-friendly slug."""
+    # Lowercase and replace spaces/special chars with hyphens
+    slug = text.lower().strip()
+    slug = re.sub(r"[^a-z0-9\s-]", "", slug)  # Remove special chars
+    slug = re.sub(r"[\s_]+", "-", slug)        # Spaces/underscores to hyphens
+    slug = re.sub(r"-+", "-", slug)            # Multiple hyphens to single
+    slug = slug.strip("-")                      # Remove leading/trailing hyphens
+    return slug[:max_length]
+
+
+def _generate_human_readable_id(
+    name: str,
+    entity_type: str,
+    world_id: Optional[str] = None
+) -> str:
+    """
+    Generate a human-readable entity ID.
+
+    Format: {world}-{type_prefix}-{name_slug}-{short_random}
+    Examples:
+        - eldoria-chr-captain-varn-7f3a
+        - city_of_night-loc-the-rack-a2c1
+        - session-fac-thieves-guild-9d4e
+    """
+    # Type prefixes for brevity
+    type_prefixes = {
+        "Character": "chr",
+        "Location": "loc",
+        "Faction": "fac",
+        "Item": "itm",
+        "Event": "evt",
+        "Concept": "con",
+    }
+    type_prefix = type_prefixes.get(entity_type, "ent")
+
+    # Slugify the name
+    name_slug = _slugify(name, max_length=20)
+    if not name_slug:
+        name_slug = "unnamed"
+
+    # Short random suffix for uniqueness
+    short_id = uuid.uuid4().hex[:4]
+
+    # Build the ID
+    if world_id:
+        world_slug = _slugify(world_id, max_length=15)
+        return f"{world_slug}-{type_prefix}-{name_slug}-{short_id}"
+    else:
+        return f"{type_prefix}-{name_slug}-{short_id}"
+
+
 class ExtractedEntity(BaseModel):
     """Entity extracted from lore text."""
     name: str
@@ -381,7 +433,14 @@ TEXT TO ANALYZE:
 
         # Store entities
         for entity in result.entities:
-            canon_id = f"lore-{uuid.uuid4().hex[:12]}"
+            # Generate human-readable ID: {world}-{type}-{name}-{short_random}
+            # e.g., "eldoria-chr-captain-varn-7f3a"
+            id_world = curated_world_id or world_id
+            canon_id = _generate_human_readable_id(
+                name=entity.name,
+                entity_type=entity.entity_type,
+                world_id=id_world
+            )
 
             props = {
                 "canon_id": canon_id,

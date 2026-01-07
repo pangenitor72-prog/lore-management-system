@@ -506,10 +506,24 @@ async def debug_status(request: Request):
 # ENTITY ENDPOINTS
 # ============================================================
 
+def _slugify_name(name: str, max_length: int = 20) -> str:
+    """Convert name to URL-friendly slug for human-readable IDs."""
+    import re
+    slug = name.lower().strip()
+    slug = re.sub(r"[^a-z0-9\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug[:max_length] or "unnamed"
+
+
 @router.post("/entities", response_model=EntityResponse, status_code=201)
 async def create_entity(entity_data: EntityCreate, db: Neo4jDatabase = Depends(get_neo4j_db)):
-
-    canon_id = f"{entity_data.entity_type.value.lower()}-{uuid.uuid4().hex[:8]}"
+    # Human-readable ID: {type}-{name_slug}-{short_random}
+    # e.g., "character-lord-aldric-7f3a"
+    type_slug = entity_data.entity_type.value.lower()
+    name_slug = _slugify_name(entity_data.canonical_name)
+    short_id = uuid.uuid4().hex[:4]
+    canon_id = f"{type_slug}-{name_slug}-{short_id}"
     now = datetime.now(timezone.utc).isoformat()
 
     props = {
