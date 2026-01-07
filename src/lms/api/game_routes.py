@@ -285,6 +285,7 @@ async def get_analytics(http_request: Request):
     sessions_list = []
     total_actions = 0
     activity_by_date = defaultdict(int)
+    unique_testers = set()
 
     if db:
         try:
@@ -293,6 +294,7 @@ async def get_analytics(http_request: Request):
                 MATCH (s:GameSession)
                 RETURN s.session_id AS session_id,
                        s.character_name AS character_name,
+                       s.tester AS tester,
                        s.curated_world_name AS world_name,
                        s.genre AS genre,
                        s.turn_count AS turn_count,
@@ -308,10 +310,15 @@ async def get_analytics(http_request: Request):
                 created_at = str(record.get("created_at", ""))
                 turn_count = record.get("turn_count") or 0
                 total_actions += turn_count
+                tester_name = record.get("tester") or ""
+
+                if tester_name:
+                    unique_testers.add(tester_name)
 
                 sessions_list.append({
                     "session_id": session_id[:8] + "..." if session_id else "unknown",
                     "character": record.get("character_name") or "Anonymous",
+                    "tester": tester_name,
                     "world": record.get("world_name") or "Custom",
                     "genre": record.get("genre") or "fantasy",
                     "turn_count": turn_count,
@@ -328,17 +335,19 @@ async def get_analytics(http_request: Request):
         except Exception as e:
             logger.error(f"Failed to load sessions from Neo4j: {e}")
 
-    # Build tester list with session counts
+    # Build tester list from unique testers found in sessions
     testers = []
-    for tester in activated_testers:
-        tester_name = tester.get("name", "Unknown")
-        # Count sessions for this tester (match by character name or world)
-        tester_sessions = [s for s in sessions_list if s.get("character", "").lower() == tester_name.lower()]
+    for tester_name in unique_testers:
+        # Get all sessions for this tester
+        tester_sessions = [s for s in sessions_list if s.get("tester") == tester_name]
+
+        # Find matching invite code
+        matching_code = next((c for c in codes if c.get("name") == tester_name), None)
 
         testers.append({
             "name": tester_name,
-            "code": tester.get("code", ""),
-            "activated_at": tester.get("activated_at"),
+            "code": matching_code.get("code", "") if matching_code else "",
+            "activated_at": matching_code.get("activated_at") if matching_code else None,
             "last_activity": tester_sessions[0].get("last_activity") if tester_sessions else None,
             "total_sessions": len(tester_sessions),
             "total_actions": sum(s.get("turn_count", 0) for s in tester_sessions),
@@ -348,7 +357,8 @@ async def get_analytics(http_request: Request):
 
     return {
         "summary": {
-            "testers_activated": len(activated_testers),
+            "testers_activated": len(unique_testers),  # Unique testers from actual sessions
+            "codes_activated": len(activated_testers),  # Invite codes marked as activated
             "testers_max": codes_data.get("max_testers", 30),
             "total_sessions": len(sessions_list),
             "total_events": len(sessions_list),
@@ -571,6 +581,14 @@ class SessionCreateRequest(BaseModel):
     character_concept: Optional[str] = Field(
         default=None,
         description="Brief character concept for Session 0"
+    )
+    character_name: Optional[str] = Field(
+        default=None,
+        description="Character name for analytics tracking"
+    )
+    tester: Optional[str] = Field(
+        default=None,
+        description="Tester name from invite code for analytics"
     )
     setting_preference: Optional[str] = None
     tone_preference: Optional[str] = None
@@ -1288,6 +1306,7 @@ async def create_session(
                     status: 'active',
                     genre: $genre,
                     character_name: $character_name,
+                    tester: $tester,
                     storytelling_style: $style,
                     is_curated_world: $is_curated,
                     curated_world_name: $curated_name,
@@ -1300,7 +1319,8 @@ async def create_session(
                 "session_world_id": session_world_id,
                 "phase": phase,
                 "genre": session_req.genre or "fantasy",
-                "character_name": session_req.character_name or "",
+                "character_name": session_req.character_name or session_req.character_concept or "",
+                "tester": session_req.tester or "",
                 "style": session_req.storytelling_style or "guided",
                 "is_curated": bool(session_req.world_id and not session_req.world_id.startswith("custom")),
                 "curated_name": session_req.world_id if session_req.world_id and not session_req.world_id.startswith("custom") else "",

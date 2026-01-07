@@ -9650,13 +9650,15 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // Build session payload
             const sessionPayload = {
                 character_concept: characterConcept,
+                character_name: characterConcept || 'Adventurer',  // Use concept as initial name
                 setting_preference: selectedCuratedWorld ? '' : worldSeed,
                 tone_preference: selectedTone,
                 genre: effectiveGenre,
                 genres: effectiveGenres,
                 storytelling_style: selectedStyle,
                 session_scope: sessionScope,
-                max_turns: maxTurnsForScope[sessionScope] || 20
+                max_turns: maxTurnsForScope[sessionScope] || 20,
+                tester: localStorage.getItem('airpg_tester_name') || null  // Link tester to session
             };
 
             if (selectedCuratedWorld) {
@@ -11766,6 +11768,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 <div style="background: var(--bg-primary); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                     <div>
                                         <span style="color: var(--accent-gold);">${s.character || 'Anonymous'}</span>
+                                        ${s.tester ? `<span style="color: var(--accent-rose); margin-left: 8px; font-size: 0.75rem; background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">${s.tester}</span>` : ''}
                                         <span style="color: var(--text-muted); margin-left: 8px; font-size: 0.8rem;">${s.session_id}</span>
                                     </div>
                                     <div style="display: flex; gap: 12px; align-items: center;">
