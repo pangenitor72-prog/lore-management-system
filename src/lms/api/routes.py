@@ -1477,9 +1477,9 @@ class FeedbackRequest(BaseModel):
 
 
 @app.post("/api/feedback")
-async def submit_feedback(request: FeedbackRequest):
-    """Submit feedback from a playtester."""
-    if not request.category and not request.text:
+async def submit_feedback(request: Request, feedback: FeedbackRequest):
+    """Submit feedback from a playtester. Stores in Neo4j for persistence."""
+    if not feedback.category and not feedback.text:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Please provide a category or feedback text"
@@ -1487,30 +1487,86 @@ async def submit_feedback(request: FeedbackRequest):
 
     feedback_id = str(uuid.uuid4())[:8]
     timestamp = datetime.now(timezone.utc).isoformat()
+    tester = feedback.context.get("tester", "anonymous") if feedback.context else "anonymous"
+    session_id = feedback.context.get("session_id", "") if feedback.context else ""
 
-    feedback_entry = {
-        "id": feedback_id,
-        "timestamp": timestamp,
-        "category": request.category,
-        "text": request.text,
-        "context": request.context or {}
-    }
+    # Store in Neo4j for persistence across deploys
+    db = getattr(request.app.state, "neo4j_db", None)
+    if db:
+        try:
+            await db.execute("""
+                CREATE (f:Feedback {
+                    feedback_id: $feedback_id,
+                    timestamp: $timestamp,
+                    category: $category,
+                    text: $text,
+                    tester: $tester,
+                    session_id: $session_id,
+                    screen: $screen,
+                    world_id: $world_id
+                })
+            """, {
+                "feedback_id": feedback_id,
+                "timestamp": timestamp,
+                "category": feedback.category or "",
+                "text": feedback.text or "",
+                "tester": tester,
+                "session_id": session_id,
+                "screen": feedback.context.get("screen", "") if feedback.context else "",
+                "world_id": feedback.context.get("world_id", "") if feedback.context else "",
+            })
+            logging.info(f"Feedback stored in Neo4j from {tester}: [{feedback.category}]")
+        except Exception as e:
+            logging.error(f"Failed to store feedback in Neo4j: {e}")
+    else:
+        logging.warning("No Neo4j connection - feedback not persisted")
 
-    feedback_list = _load_feedback()
-    feedback_list.append(feedback_entry)
-    _save_feedback(feedback_list)
-
-    tester = request.context.get("tester", "anonymous") if request.context else "anonymous"
-    await AuditLogger.log(f"Feedback from {tester}: [{request.category}] {(request.text or '')[:100]}")
+    await AuditLogger.log(f"Feedback from {tester}: [{feedback.category}] {(feedback.text or '')[:100]}")
 
     return {"success": True, "message": "Thank you for your feedback!", "feedback_id": feedback_id}
 
 
 @app.get("/api/feedback")
-async def get_all_feedback():
-    """Get all submitted feedback (for admin review)."""
-    feedback_list = _load_feedback()
-    return {"count": len(feedback_list), "feedback": feedback_list}
+async def get_all_feedback(request: Request):
+    """Get all submitted feedback from Neo4j (for admin review)."""
+    db = getattr(request.app.state, "neo4j_db", None)
+    if not db:
+        return {"count": 0, "feedback": []}
+
+    try:
+        result = await db.execute("""
+            MATCH (f:Feedback)
+            RETURN f.feedback_id AS id,
+                   f.timestamp AS timestamp,
+                   f.category AS category,
+                   f.text AS text,
+                   f.tester AS tester,
+                   f.session_id AS session_id,
+                   f.screen AS screen,
+                   f.world_id AS world_id
+            ORDER BY f.timestamp DESC
+            LIMIT 100
+        """, {})
+
+        feedback_list = []
+        for record in result:
+            feedback_list.append({
+                "id": record.get("id"),
+                "timestamp": record.get("timestamp"),
+                "category": record.get("category"),
+                "text": record.get("text"),
+                "context": {
+                    "tester": record.get("tester"),
+                    "session_id": record.get("session_id"),
+                    "screen": record.get("screen"),
+                    "world_id": record.get("world_id"),
+                }
+            })
+
+        return {"count": len(feedback_list), "feedback": feedback_list}
+    except Exception as e:
+        logging.error(f"Failed to load feedback from Neo4j: {e}")
+        return {"count": 0, "feedback": []}
 
 
 # ============================================================
