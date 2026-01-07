@@ -3974,6 +3974,50 @@
         body.force-desktop .quick-genre-grid {
             grid-template-columns: repeat(3, 1fr) !important;
         }
+
+        /* Force Mobile Mode - Apply mobile styles on desktop when toggled */
+        body.force-mobile .container {
+            max-width: 100% !important;
+            padding: 0 16px !important;
+        }
+
+        body.force-mobile .landing-cards {
+            grid-template-columns: 1fr !important;
+        }
+
+        body.force-mobile .quick-genre-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
+
+        body.force-mobile .story-header {
+            padding: 8px 16px !important;
+        }
+
+        body.force-mobile .story-container {
+            padding-bottom: 80px !important;
+        }
+
+        body.force-mobile .story-menu-btn {
+            display: flex !important;
+        }
+
+        body.force-mobile .mobile-input-area {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: var(--bg-primary) !important;
+            border-top: 1px solid var(--border-subtle) !important;
+            padding: 12px 16px !important;
+        }
+
+        body.force-mobile .setup-options-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        body.force-mobile #floating-back-btn {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -4145,6 +4189,20 @@
 
                     <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">ADMIN</div>
                     <a href="#" onclick="closeSiteMap(); showPinModal(); return false;" class="sitemap-link">🔧 Admin Panel</a>
+
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">VIEW MODE</div>
+                    <div style="display: flex; gap: 10px; align-items: center; padding: 10px 0;">
+                        <button id="view-mode-mobile" onclick="setViewMode('mobile')" class="view-mode-btn" style="flex: 1; padding: 10px; border-radius: 8px; border: 2px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
+                            📱 Mobile
+                        </button>
+                        <button id="view-mode-desktop" onclick="setViewMode('desktop')" class="view-mode-btn" style="flex: 1; padding: 10px; border-radius: 8px; border: 2px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
+                            🖥️ Desktop
+                        </button>
+                        <button id="view-mode-auto" onclick="setViewMode('auto')" class="view-mode-btn" style="flex: 1; padding: 10px; border-radius: 8px; border: 2px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
+                            🔄 Auto
+                        </button>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0;">Current: <span id="current-view-mode">Auto</span></p>
                 </div>
             </div>
         </div>
@@ -12542,15 +12600,70 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
+        // Set view mode: 'mobile', 'desktop', or 'auto'
+        function setViewMode(mode) {
+            const viewport = document.querySelector('meta[name="viewport"]');
+
+            // Remove existing forced classes
+            document.body.classList.remove('force-desktop', 'force-mobile');
+
+            if (mode === 'desktop') {
+                document.body.classList.add('force-desktop');
+                if (viewport) viewport.content = 'width=1024';
+                localStorage.setItem('viewMode', 'desktop');
+            } else if (mode === 'mobile') {
+                document.body.classList.add('force-mobile');
+                if (viewport) viewport.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no';
+                localStorage.setItem('viewMode', 'mobile');
+            } else {
+                // Auto mode - let CSS media queries decide
+                if (viewport) viewport.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no';
+                localStorage.setItem('viewMode', 'auto');
+            }
+
+            // Update UI indicators
+            updateViewModeUI(mode);
+            updateViewModeButton(mode === 'desktop');
+        }
+
+        function updateViewModeUI(mode) {
+            // Update sitemap modal buttons
+            ['mobile', 'desktop', 'auto'].forEach(m => {
+                const btn = document.getElementById(`view-mode-${m}`);
+                if (btn) {
+                    if (m === mode) {
+                        btn.style.borderColor = 'var(--accent-warm)';
+                        btn.style.background = 'var(--accent-warm-bg, rgba(255, 149, 0, 0.15))';
+                    } else {
+                        btn.style.borderColor = 'var(--border-subtle)';
+                        btn.style.background = 'var(--bg-tertiary)';
+                    }
+                }
+            });
+
+            // Update current view mode text
+            const modeLabel = document.getElementById('current-view-mode');
+            if (modeLabel) {
+                const labels = { mobile: 'Mobile', desktop: 'Desktop', auto: 'Auto (device-based)' };
+                modeLabel.textContent = labels[mode] || 'Auto';
+            }
+        }
+
         // Initialize view mode from localStorage
         (function initViewMode() {
-            const savedMode = localStorage.getItem('viewMode');
+            const savedMode = localStorage.getItem('viewMode') || 'auto';
+            const viewport = document.querySelector('meta[name="viewport"]');
+
             if (savedMode === 'desktop') {
                 document.body.classList.add('force-desktop');
-                const viewport = document.querySelector('meta[name="viewport"]');
                 if (viewport) viewport.content = 'width=1024';
                 updateViewModeButton(true);
+            } else if (savedMode === 'mobile') {
+                document.body.classList.add('force-mobile');
             }
+
+            // Update UI on page load (with slight delay to ensure DOM is ready)
+            setTimeout(() => updateViewModeUI(savedMode), 100);
         })();
 
         // ==========================================
