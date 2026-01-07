@@ -1,6 +1,6 @@
 // AIRPG Service Worker - Enables offline functionality and app-like experience
 // IMPORTANT: Update this version string on every deploy to bust caches!
-const CACHE_VERSION = '2026-01-07-v7';
+const CACHE_VERSION = '2026-01-07-v8';
 const CACHE_NAME = `airpg-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 

@@ -32,7 +32,7 @@
 
             --text-primary: #f5f0eb;
             --text-secondary: #b8a99a;
-            --text-muted: #8a7d70;
+            --text-muted: #9d9080; /* Improved contrast ratio */
 
             --accent-warm: #d4a574;
             --accent-gold: #e8c47c;
@@ -64,14 +64,38 @@
             box-sizing: border-box;
         }
 
+        /* Focus styles for keyboard accessibility */
+        *:focus-visible {
+            outline: 2px solid var(--accent-gold);
+            outline-offset: 2px;
+        }
+
+        /* Remove focus outline for mouse users */
+        *:focus:not(:focus-visible) {
+            outline: none;
+        }
+
         body {
-            font-family: 'Georgia', 'Times New Roman', serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: linear-gradient(-45deg, #1a1612, #2a1f2d, #1f2a2a, #2d1f1f, #1a1612);
             background-size: 400% 400%;
             animation: gradientShift 30s ease infinite;
             color: var(--text-primary);
             min-height: 100vh;
             line-height: 1.7;
+        }
+
+        /* Respect user preference for reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            body {
+                animation: none;
+                background-position: 0% 50%;
+            }
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
         @keyframes gradientShift {
@@ -165,6 +189,30 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+
+        /* Typography - Georgia for headings, system fonts for body */
+        h1, h2, h3, h4, h5, h6,
+        .logo, .landing-title, .tutorial-title,
+        .hud-name, .save-slot-name, .world-name {
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+
+        /* Skip link for accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            padding: 8px 16px;
+            z-index: 10001;
+            text-decoration: none;
+            border-radius: 0 0 8px 0;
+            font-weight: 600;
+        }
+        .skip-link:focus {
+            top: 0;
         }
 
         /* Header */
@@ -1200,6 +1248,67 @@
             padding: 15px;
         }
 
+        /* Skeleton Loading State */
+        .passage.loading {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border-left: 3px solid var(--accent-warm);
+        }
+
+        .skeleton-line {
+            height: 1em;
+            background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-card) 50%, var(--bg-hover) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 0.75em;
+        }
+
+        .skeleton-line:last-child {
+            width: 60%;
+            margin-bottom: 0;
+        }
+
+        .skeleton-line:nth-child(2) {
+            width: 90%;
+        }
+
+        .skeleton-line:nth-child(3) {
+            width: 75%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border-radius: 12px;
+            border-left: 3px solid var(--accent-warm);
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-warm);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
         /* Input Area */
         .input-area {
             padding: 20px 0;
@@ -1472,6 +1581,68 @@
             background: rgba(160, 139, 201, 0.15);
             border: 1px solid var(--accent-lavender);
             color: var(--accent-lavender);
+        }
+
+        /* Empty States */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            min-height: 200px;
+        }
+
+        .empty-state-icon {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+
+        .empty-state-title {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-description {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            max-width: 300px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-cta {
+            padding: 12px 24px;
+            background: var(--bg-card);
+            border: 1px dashed var(--border-accent);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .empty-state-cta:hover {
+            border-color: var(--accent-gold);
+            border-style: solid;
+            color: var(--accent-gold);
+        }
+
+        /* Story empty state */
+        .story-empty {
+            color: var(--text-muted);
+            font-style: italic;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .story-empty-hint {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: var(--accent-warm);
         }
 
         /* Ingest Screen */
@@ -4021,6 +4192,9 @@
     </style>
 </head>
 <body>
+    <!-- Skip link for keyboard accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Announcement Banner (controlled via JavaScript or API) -->
     <div id="announcement-banner" class="announcement-banner">
         <span class="banner-icon" id="banner-icon">📢</span>
@@ -4028,7 +4202,7 @@
         <button class="banner-close" onclick="dismissAnnouncement()" title="Dismiss">×</button>
     </div>
 
-    <div class="container">
+    <div class="container" id="main-content">
         <header>
             <h1 class="logo">AIRPG</h1>
             <p class="tagline">AI-Powered Roleplaying Games</p>
@@ -9594,8 +9768,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const container = document.getElementById('story-container');
             const loading = document.createElement('div');
             loading.id = 'loading-passage';
-            loading.className = 'passage system';
-            loading.innerHTML = '<span class="loading"></span> The story unfolds...';
+            loading.innerHTML = `
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            `;
             container.appendChild(loading);
             // Scroll to show loading indicator
             container.scrollTop = container.scrollHeight;
