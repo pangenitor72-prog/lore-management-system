@@ -1013,7 +1013,16 @@ async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -
         else:
             created_at_str = str(created_at) if created_at else None
 
+        # Create serializable copy, handling non-JSON objects
         session_copy = {**session, "created_at": created_at_str}
+
+        # Serialize Arc Engine state if present
+        arc_engine = session.get("arc_engine")
+        if arc_engine and hasattr(arc_engine, 'to_dict'):
+            session_copy["arc_engine_state"] = arc_engine.to_dict()
+            del session_copy["arc_engine"]  # Remove non-serializable object
+        elif "arc_engine" in session_copy:
+            del session_copy["arc_engine"]  # Remove if not serializable
 
         await db.execute("""
             MERGE (s:ActiveSession {session_id: $session_id})
@@ -1059,6 +1068,20 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
                 session_data["created_at"] = datetime.fromisoformat(session_data["created_at"])
             except (ValueError, TypeError):
                 session_data["created_at"] = datetime.now(timezone.utc)
+
+        # Restore Arc Engine from saved state if available
+        arc_engine_state = session_data.pop("arc_engine_state", None)
+        if arc_engine_state and ARC_ENGINE_AVAILABLE:
+            try:
+                session_data["arc_engine"] = ArcEngine.from_dict(arc_engine_state)
+                logger.info(f"Restored Arc Engine state for session {session_id}")
+            except Exception as arc_err:
+                logger.warning(f"Failed to restore Arc Engine for {session_id}: {arc_err}")
+                # Create fresh Arc Engine if restoration fails
+                session_data["arc_engine"] = ArcEngine(session_id=session_id)
+        elif ARC_ENGINE_AVAILABLE:
+            # No saved state - create fresh Arc Engine
+            session_data["arc_engine"] = ArcEngine(session_id=session_id)
 
         logger.info(f"Recovered session {session_id} from Neo4j database")
         return session_data
