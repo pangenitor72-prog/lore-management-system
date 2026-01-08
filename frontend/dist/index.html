@@ -9597,38 +9597,76 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 }
             };
 
-            // Sync rulesGenre with selectedGenres from welcome screen if available
+            // Sync rulesGenre with effective genres (blendGenres from curated world, or selectedGenres)
             // Map story genre to rules genre (fantasy/scifi/modern/horror)
-            if (selectedGenres.length > 0 && selectedGenres[0]) {
-                rulesGenre = getRulesGenre(selectedGenres[0]);
+            const effectiveGenres = blendGenres.length > 0 ? blendGenres : selectedGenres;
+            if (effectiveGenres.length > 0 && effectiveGenres[0]) {
+                rulesGenre = getRulesGenre(effectiveGenres[0]);
+                console.log('[CharCreate] Using genre:', effectiveGenres[0], '-> rulesGenre:', rulesGenre);
             }
 
-            // Default origins and archetypes - Full SRD list (used if API fails)
-            const defaultOrigins = [
-                { id: 'human', display_name: 'Human', description: 'Versatile and adaptable' },
-                { id: 'elf', display_name: 'Elf', description: 'Graceful and perceptive' },
-                { id: 'dwarf', display_name: 'Dwarf', description: 'Tough and resilient' },
-                { id: 'halfling', display_name: 'Halfling', description: 'Lucky and nimble' },
-                { id: 'dragonborn', display_name: 'Dragonborn', description: 'Dragon-blooded warrior' },
-                { id: 'gnome', display_name: 'Gnome', description: 'Clever and inventive' },
-                { id: 'half_elf', display_name: 'Half-Elf', description: 'Versatile and charismatic' },
-                { id: 'half_orc', display_name: 'Half-Orc', description: 'Strong and enduring' },
-                { id: 'tiefling', display_name: 'Tiefling', description: 'Infernal heritage' }
-            ];
-            const defaultArchetypes = [
-                { id: 'fighter', display_name: 'Fighter', description: 'Master of martial combat', hit_die: 'd10', has_powers: false },
-                { id: 'rogue', display_name: 'Rogue', description: 'Cunning and precise', hit_die: 'd8', has_powers: false },
-                { id: 'cleric', display_name: 'Cleric', description: 'Divine power and healing', hit_die: 'd8', has_powers: true },
-                { id: 'wizard', display_name: 'Wizard', description: 'Arcane knowledge and power', hit_die: 'd6', has_powers: true },
-                { id: 'barbarian', display_name: 'Barbarian', description: 'Primal fury and rage', hit_die: 'd12', has_powers: false },
-                { id: 'bard', display_name: 'Bard', description: 'Magic through music', hit_die: 'd8', has_powers: true },
-                { id: 'druid', display_name: 'Druid', description: 'Nature\'s guardian', hit_die: 'd8', has_powers: true },
-                { id: 'monk', display_name: 'Monk', description: 'Martial artist', hit_die: 'd8', has_powers: false },
-                { id: 'paladin', display_name: 'Paladin', description: 'Holy warrior', hit_die: 'd10', has_powers: true },
-                { id: 'ranger', display_name: 'Ranger', description: 'Wilderness expert', hit_die: 'd10', has_powers: true },
-                { id: 'sorcerer', display_name: 'Sorcerer', description: 'Innate magic', hit_die: 'd6', has_powers: true },
-                { id: 'warlock', display_name: 'Warlock', description: 'Pact-bound power', hit_die: 'd8', has_powers: true }
-            ];
+            // Genre-aware default origins and archetypes (used if API fails)
+            const defaultsByGenre = {
+                fantasy: {
+                    origins: [
+                        { id: 'human', display_name: 'Human', description: 'Versatile and adaptable' },
+                        { id: 'elf', display_name: 'Elf', description: 'Graceful and perceptive' },
+                        { id: 'dwarf', display_name: 'Dwarf', description: 'Tough and resilient' },
+                        { id: 'halfling', display_name: 'Halfling', description: 'Lucky and nimble' }
+                    ],
+                    archetypes: [
+                        { id: 'fighter', display_name: 'Fighter', description: 'Master of martial combat', hit_die: 'd10', has_powers: false },
+                        { id: 'rogue', display_name: 'Rogue', description: 'Cunning and stealthy', hit_die: 'd8', has_powers: false },
+                        { id: 'cleric', display_name: 'Cleric', description: 'Divine power and healing', hit_die: 'd8', has_powers: true },
+                        { id: 'wizard', display_name: 'Wizard', description: 'Arcane knowledge', hit_die: 'd6', has_powers: true }
+                    ]
+                },
+                scifi: {
+                    origins: [
+                        { id: 'human', display_name: 'Human', description: 'Adaptable and ambitious' },
+                        { id: 'android', display_name: 'Android', description: 'Synthetic intelligence' },
+                        { id: 'alien', display_name: 'Alien', description: 'Otherworldly biology' },
+                        { id: 'cyborg', display_name: 'Cyborg', description: 'Human-machine hybrid' }
+                    ],
+                    archetypes: [
+                        { id: 'soldier', display_name: 'Soldier', description: 'Military combat specialist', hit_die: 'd10', has_powers: false },
+                        { id: 'hacker', display_name: 'Hacker', description: 'Digital infiltration expert', hit_die: 'd8', has_powers: false },
+                        { id: 'medic', display_name: 'Medic', description: 'Field medicine and biotech', hit_die: 'd8', has_powers: true },
+                        { id: 'engineer', display_name: 'Engineer', description: 'Tech and machinery', hit_die: 'd8', has_powers: true }
+                    ]
+                },
+                modern: {
+                    origins: [
+                        { id: 'human', display_name: 'Human', description: 'Ordinary person' },
+                        { id: 'athlete', display_name: 'Athlete', description: 'Peak physical condition' },
+                        { id: 'scholar', display_name: 'Scholar', description: 'Academic background' },
+                        { id: 'street', display_name: 'Street Smart', description: 'Urban survivor' }
+                    ],
+                    archetypes: [
+                        { id: 'investigator', display_name: 'Investigator', description: 'Detective and analyst', hit_die: 'd8', has_powers: false },
+                        { id: 'operative', display_name: 'Operative', description: 'Covert specialist', hit_die: 'd10', has_powers: false },
+                        { id: 'face', display_name: 'Face', description: 'Social manipulation', hit_die: 'd8', has_powers: false },
+                        { id: 'specialist', display_name: 'Specialist', description: 'Technical expert', hit_die: 'd8', has_powers: false }
+                    ]
+                },
+                horror: {
+                    origins: [
+                        { id: 'human', display_name: 'Human', description: 'Mortal and vulnerable' },
+                        { id: 'survivor', display_name: 'Survivor', description: 'Trauma-hardened' },
+                        { id: 'touched', display_name: 'Touched', description: 'Brushed by darkness' },
+                        { id: 'innocent', display_name: 'Innocent', description: 'Untainted but naive' }
+                    ],
+                    archetypes: [
+                        { id: 'investigator', display_name: 'Investigator', description: 'Seeker of truth', hit_die: 'd8', has_powers: false },
+                        { id: 'protector', display_name: 'Protector', description: 'Guardian against evil', hit_die: 'd10', has_powers: false },
+                        { id: 'occultist', display_name: 'Occultist', description: 'Forbidden knowledge', hit_die: 'd6', has_powers: true },
+                        { id: 'survivor', display_name: 'Survivor', description: 'Endurance and will', hit_die: 'd10', has_powers: false }
+                    ]
+                }
+            };
+            const genreDefaults = defaultsByGenre[rulesGenre] || defaultsByGenre.fantasy;
+            const defaultOrigins = genreDefaults.origins;
+            const defaultArchetypes = genreDefaults.archetypes;
 
             // Set defaults first, then try to fetch from API
             availableOrigins = defaultOrigins;
