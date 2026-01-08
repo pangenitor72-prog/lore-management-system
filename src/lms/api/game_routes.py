@@ -525,24 +525,51 @@ async def update_lore_base_content(
             except Exception:
                 continue
 
-    if not lore_file:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Could not find JSON file for lore base '{lore_id}'"
-        )
-
-    # Update the file
+    # Update the file or create one for Neo4j-sourced worlds
     try:
-        with open(lore_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        if lore_file:
+            # Update existing JSON file
+            with open(lore_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
 
-        data["lore_content"] = new_lore
+            data["lore_content"] = new_lore
 
-        with open(lore_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+            with open(lore_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        else:
+            # No JSON file - create one for this Neo4j-sourced world
+            base_data = LORE_BASES.get(lore_id, {})
+            data = {
+                "id": lore_id,
+                "name": base_data.get("name", lore_id),
+                "description": base_data.get("description", ""),
+                "genre": base_data.get("genre", "fantasy"),
+                "genre_hints": base_data.get("genre_hints", []),
+                "tone_hints": base_data.get("tone_hints", []),
+                "seed_prompt": base_data.get("seed_prompt", ""),
+                "lore_content": new_lore,
+            }
+
+            # Create new JSON file in lore_bases directory
+            new_file = LORE_BASES_DIR / f"{lore_id}.json"
+            with open(new_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
+            logger.info(f"Created new JSON file for Neo4j-sourced world: {new_file}")
 
         # Update in-memory cache
         LORE_BASES[lore_id]["lore_content"] = new_lore
+
+        # Also update Neo4j if database is available
+        db = getattr(http_request.app.state, "neo4j_db", None)
+        if db:
+            try:
+                await db.execute("""
+                    MATCH (lb:LoreBase {lore_id: $lore_id})
+                    SET lb.lore_content = $lore_content
+                """, {"lore_id": lore_id, "lore_content": new_lore})
+            except Exception as e:
+                logger.warning(f"Failed to update Neo4j LoreBase: {e}")
 
         logger.info(f"Updated lore_content for '{lore_id}': {len(new_lore)} chars")
         return {
@@ -2587,10 +2614,75 @@ LORE_BASES = {
 LORE_BASES.update(_file_lore_bases)
 
 # Log all loaded lore bases at startup for debugging
-logger.info(f"Loaded {len(LORE_BASES)} total lore bases at startup:")
+logger.info(f"Loaded {len(LORE_BASES)} total lore bases from files at startup:")
 for base_id, base_data in LORE_BASES.items():
     is_seed = base_data.get("is_seed", False)
     logger.info(f"  - {base_id}: {base_data.get('name', 'unnamed')} (seed={is_seed})")
+
+
+async def load_lore_bases_from_neo4j(db) -> int:
+    """
+    Load LoreBase nodes from Neo4j database (admin-created worlds).
+
+    This is called during app startup to restore worlds created via the API
+    that were stored in Neo4j but not written to JSON files.
+
+    Returns the count of worlds loaded from Neo4j.
+    """
+    if not db:
+        return 0
+
+    try:
+        results = await db.execute("""
+            MATCH (lb:LoreBase)
+            RETURN lb.lore_id as id,
+                   lb.name as name,
+                   lb.description as description,
+                   lb.genre as genre,
+                   lb.genre_hints as genre_hints,
+                   lb.tone_hints as tone_hints,
+                   lb.seed_prompt as seed_prompt,
+                   lb.lore_content as lore_content,
+                   lb.is_curated as is_curated,
+                   lb.ingested as ingested,
+                   lb.entities_count as entities_count
+        """, {})
+
+        loaded_count = 0
+        for record in results:
+            lore_id = record.get("id")
+            if not lore_id:
+                continue
+
+            # Skip if already loaded from file (file takes precedence)
+            if lore_id in LORE_BASES:
+                logger.debug(f"Skipping Neo4j lore base {lore_id} - already loaded from file")
+                continue
+
+            # Load from Neo4j
+            genre_hints = record.get("genre_hints") or []
+            LORE_BASES[lore_id] = {
+                "id": lore_id,
+                "name": record.get("name", lore_id),
+                "description": record.get("description", ""),
+                "genre": record.get("genre", genre_hints[0] if genre_hints else "fantasy"),
+                "genre_hints": genre_hints,
+                "tone_hints": record.get("tone_hints") or [],
+                "entities_count": record.get("entities_count") or 0,
+                "seed_prompt": record.get("seed_prompt", ""),
+                "lore_content": record.get("lore_content", ""),
+                "ingested": record.get("ingested", False),
+                "is_curated": record.get("is_curated", True),
+                "source": "neo4j",  # Mark as loaded from DB
+            }
+            loaded_count += 1
+            logger.info(f"Loaded lore base from Neo4j: {lore_id}")
+
+        return loaded_count
+
+    except Exception as e:
+        logger.error(f"Failed to load LoreBase nodes from Neo4j: {e}")
+        return 0
 
 
 class LoreBaseResponse(BaseModel):

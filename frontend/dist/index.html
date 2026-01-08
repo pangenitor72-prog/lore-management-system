@@ -4667,7 +4667,41 @@
             grid-template-columns: repeat(3, 1fr) !important;
         }
 
-        /* Force Mobile Mode - Apply mobile styles on desktop when toggled */
+        /* Force Mobile Mode - Simulate mobile view on desktop */
+        body.force-mobile {
+            /* Scale up the mobile view to be readable on desktop */
+            font-size: 18px !important;
+        }
+
+        body.force-mobile::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            z-index: -1;
+        }
+
+        body.force-mobile .screen {
+            max-width: 430px !important;
+            margin: 0 auto !important;
+            border-left: 1px solid var(--border-subtle);
+            border-right: 1px solid var(--border-subtle);
+            min-height: 100vh;
+            background: var(--bg-primary);
+            /* Scale up for desktop viewing */
+            zoom: 1.5;
+        }
+
+        body.force-mobile h1 { font-size: 2rem !important; }
+        body.force-mobile h2 { font-size: 1.75rem !important; }
+        body.force-mobile h3 { font-size: 1.5rem !important; }
+        body.force-mobile p, body.force-mobile span, body.force-mobile div { font-size: inherit; }
+        body.force-mobile .btn { font-size: 1.1rem !important; padding: 14px 24px !important; }
+        body.force-mobile input, body.force-mobile textarea { font-size: 16px !important; }
+
         body.force-mobile .container {
             max-width: 100% !important;
             padding: 0 16px !important;
@@ -4683,10 +4717,20 @@
 
         body.force-mobile .story-header {
             padding: 8px 16px !important;
+            max-width: 430px !important;
+            margin: 0 auto !important;
+            border-left: 1px solid var(--border-subtle);
+            border-right: 1px solid var(--border-subtle);
+            background: var(--bg-primary);
         }
 
         body.force-mobile .story-container {
-            padding-bottom: 80px !important;
+            padding-bottom: 100px !important;
+            max-width: 430px !important;
+            margin: 0 auto !important;
+            border-left: 1px solid var(--border-subtle);
+            border-right: 1px solid var(--border-subtle);
+            background: var(--bg-primary);
         }
 
         body.force-mobile .story-menu-btn {
@@ -4696,11 +4740,19 @@
         body.force-mobile .mobile-input-area {
             position: fixed !important;
             bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 430px !important;
+            max-width: 100% !important;
             background: var(--bg-primary) !important;
             border-top: 1px solid var(--border-subtle) !important;
+            border-left: 1px solid var(--border-subtle) !important;
+            border-right: 1px solid var(--border-subtle) !important;
             padding: 12px 16px !important;
+        }
+
+        body.force-mobile .mobile-suggestions {
+            display: flex !important;
         }
 
         body.force-mobile .setup-options-grid {
@@ -4709,6 +4761,11 @@
 
         body.force-mobile #floating-back-btn {
             display: none !important;
+        }
+
+        body.force-mobile .mobile-view-toggle {
+            display: flex !important;
+            background: var(--accent-rose) !important;
         }
     </style>
 </head>
@@ -5106,9 +5163,9 @@
 
             <!-- GENRE BLEND SECTION (customizable) -->
             <div class="setup-section" id="genre-blend-section">
-                <h3>Customize Your Genres</h3>
+                <h3 id="genre-blend-heading">Add More Genres?</h3>
                 <p id="genre-blend-hint" style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    Add genres to blend into your story. Mix fantasy with romance, horror with mystery - it's your adventure!
+                    Optional: blend in additional genres like romance, mystery, or horror. Or skip this and jump right in!
                 </p>
                 <div id="genre-blend-container" class="tone-options" style="flex-wrap: wrap; gap: 8px;">
                     <span class="tone-chip genre-blend-chip" data-blend-genre="fantasy" onclick="toggleBlendGenre('fantasy')">⚔️ Fantasy</span>
@@ -5827,7 +5884,10 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                     </div>
                 </div>
 
-                <button class="btn btn-secondary" onclick="loadWorldManagerData()" style="margin-top: 15px;">Refresh</button>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-secondary" onclick="loadWorldManagerData()">Refresh</button>
+                    <button class="btn btn-primary" onclick="ingestAllUnprocessed()" style="background: var(--accent-gold); color: var(--bg-primary);">⚡ Ingest All Unprocessed</button>
+                </div>
             </div>
 
             <!-- World Creator (for Jim) -->
@@ -8602,12 +8662,20 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 resultEl.style.display = 'none';
             }
 
-            // Update hint text based on whether curated world is selected
+            // Update heading and hint based on whether curated world is selected
+            const headingEl = document.getElementById('genre-blend-heading');
             const hintEl = document.getElementById('genre-blend-hint');
+
             if (selectedCuratedWorld && curatedWorldGenres.length > 0) {
-                hintEl.innerHTML = `This world's default genres are highlighted. <strong>Add or remove genres</strong> to customize your experience!`;
+                // World already has genres - make it clear they're adding ADDITIONAL ones
+                const worldGenreList = curatedWorldGenres.slice(0, 3).join(', ');
+                headingEl.textContent = 'Add More Genres? (Optional)';
+                hintEl.innerHTML = `Your world already includes <strong>${worldGenreList}</strong>. ` +
+                    `Click below to add more, or just skip this section!`;
             } else {
-                hintEl.textContent = 'Add genres to blend into your story. Mix fantasy with romance, horror with mystery - it\'s your adventure!';
+                // No world selected - this IS their genre selection
+                headingEl.textContent = 'Add More Genres?';
+                hintEl.textContent = 'Optional: blend in additional genres like romance, mystery, or horror. Or skip this and jump right in!';
             }
         }
 
@@ -12178,7 +12246,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             statsEl.innerHTML = '<span class="loading"></span> Loading graph data...';
 
             // Build URL with all filters
-            let url = API_BASE + '/game/graph?limit=1000';
+            let url = API_BASE + '/game/graph?limit=2000';
             const activeFilters = [];
 
             if (curatedWorldFilter && curatedWorldFilter.value) {
@@ -13238,12 +13306,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Load world details
-                const worldsRes = await fetch(API_BASE + '/admin/lore-bases/details');
+                const worldsRes = await fetch(API_BASE + '/game/admin/lore-bases/details');
                 if (!worldsRes.ok) throw new Error('Failed to load world details');
                 worldManagerData = await worldsRes.json();
 
                 // Load orphan count
-                const orphansRes = await fetch(API_BASE + '/admin/entities/orphans');
+                const orphansRes = await fetch(API_BASE + '/game/admin/entities/orphans');
                 if (orphansRes.ok) {
                     const orphanData = await orphansRes.json();
                     if (orphanSpan) {
@@ -13295,9 +13363,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 10px;">${world.id}</span>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <span style="background: var(--accent-sage); color: var(--bg-primary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
+                                <span style="background: ${world.entity_count > 0 ? 'var(--accent-sage)' : 'var(--accent-rose)'}; color: var(--bg-primary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
                                     ${world.entity_count} entities
                                 </span>
+                                ${world.has_lore_content ? `
+                                    <button class="btn btn-secondary" onclick="ingestWorldLore('${world.id}')" style="padding: 4px 10px; font-size: 0.85rem; ${world.entity_count === 0 ? 'background: var(--accent-gold); color: var(--bg-primary);' : ''}">
+                                        ${world.entity_count === 0 ? '⚡ Ingest' : '🔄 Re-ingest'}
+                                    </button>
+                                ` : ''}
                                 <button class="btn btn-secondary" onclick="toggleWorldLoreEditor('${world.id}')" style="padding: 4px 10px; font-size: 0.85rem;">
                                     Edit Lore
                                 </button>
@@ -13342,7 +13415,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (statusSpan) statusSpan.textContent = 'Saving...';
 
             try {
-                const response = await fetch(API_BASE + `/admin/lore-bases/${worldId}/lore`, {
+                const response = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/lore`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lore_content: newLore })
@@ -13372,7 +13445,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('world-manager-status', '<span class="loading"></span> Cleaning up orphans...', 'info');
 
             try {
-                const response = await fetch(API_BASE + '/admin/entities/orphans', {
+                const response = await fetch(API_BASE + '/game/admin/entities/orphans', {
                     method: 'DELETE'
                 });
 
@@ -13386,6 +13459,99 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             } catch (err) {
                 showStatus('world-manager-status', `Error: ${err.message}`, 'error');
             }
+        }
+
+        async function ingestWorldLore(worldId) {
+            const world = worldManagerData?.worlds?.find(w => w.id === worldId);
+            const action = world?.entity_count > 0 ? 're-ingest' : 'ingest';
+
+            if (world?.entity_count > 0) {
+                if (!confirm(`Re-ingesting will parse the lore again. Existing entities will remain. Continue?`)) return;
+            }
+
+            showStatus('world-manager-status', `<span class="loading"></span> Ingesting lore for ${worldId}... (this may take 30-60 seconds)`, 'info');
+
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}/ingest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `Failed to ${action} lore`);
+                }
+
+                const result = await response.json();
+                showStatus('world-manager-status',
+                    `✓ Ingested ${result.entities_stored} entities (${result.characters_with_ocean} with personalities)`,
+                    'success'
+                );
+
+                // Refresh data to show new entity count
+                loadWorldManagerData();
+            } catch (err) {
+                showStatus('world-manager-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function ingestAllUnprocessed() {
+            if (!worldManagerData?.worlds) {
+                showStatus('world-manager-status', 'No world data loaded. Please refresh first.', 'error');
+                return;
+            }
+
+            // Find worlds with lore but 0 entities
+            const unprocessed = worldManagerData.worlds.filter(w => w.has_lore_content && w.entity_count === 0);
+
+            if (unprocessed.length === 0) {
+                showStatus('world-manager-status', 'All worlds with lore content have already been ingested!', 'success');
+                return;
+            }
+
+            if (!confirm(`This will ingest ${unprocessed.length} worlds. This may take several minutes. Continue?`)) return;
+
+            let processed = 0;
+            let totalEntities = 0;
+            let errors = [];
+
+            for (const world of unprocessed) {
+                showStatus('world-manager-status',
+                    `<span class="loading"></span> Ingesting ${world.name} (${processed + 1}/${unprocessed.length})...`,
+                    'info'
+                );
+
+                try {
+                    const response = await fetch(API_BASE + `/game/lore-bases/${world.id}/ingest`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        totalEntities += result.entities_stored || 0;
+                        processed++;
+                    } else {
+                        errors.push(world.name);
+                    }
+                } catch (err) {
+                    errors.push(world.name);
+                }
+            }
+
+            if (errors.length > 0) {
+                showStatus('world-manager-status',
+                    `Completed with errors. ${processed} worlds ingested (${totalEntities} entities). Failed: ${errors.join(', ')}`,
+                    'warning'
+                );
+            } else {
+                showStatus('world-manager-status',
+                    `✓ Successfully ingested ${processed} worlds with ${totalEntities} total entities!`,
+                    'success'
+                );
+            }
+
+            loadWorldManagerData();
         }
 
         function escapeHtml(text) {
@@ -14168,7 +14334,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 localStorage.setItem('viewMode', 'desktop');
             } else if (mode === 'mobile') {
                 document.body.classList.add('force-mobile');
-                if (viewport) viewport.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no';
+                // Set narrow viewport to trigger mobile media queries
+                if (viewport) viewport.content = 'width=430';
                 localStorage.setItem('viewMode', 'mobile');
             } else {
                 // Auto mode - let CSS media queries decide
@@ -14215,6 +14382,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 updateViewModeButton(true);
             } else if (savedMode === 'mobile') {
                 document.body.classList.add('force-mobile');
+                if (viewport) viewport.content = 'width=430';
             }
 
             // Update UI on page load (with slight delay to ensure DOM is ready)
