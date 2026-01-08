@@ -17,9 +17,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-5);
   background: var(--surface-secondary);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.chat-header__info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex: 1;
 }
 
 .chat-header__title {
@@ -40,6 +47,75 @@
   margin: 0;
 }
 
+.session-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+/* Mini HUD (Vitality Ribbon) */
+.mini-hud {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--surface-tertiary);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  animation: fadeSlideIn 0.4s ease-out;
+}
+
+.mini-hud__stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mini-hud__label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.mini-hud__value {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 3ch;
+}
+
+.mini-hud__value--accent {
+  color: var(--color-accent);
+}
+
+.mini-hud__bar-container {
+  width: 60px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.mini-hud__bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-danger), #fca5a5);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mini-hud__divider {
+  width: 1px;
+  height: 12px;
+  background: var(--border-subtle);
+}
+
 .chat-header__actions {
   display: flex;
   align-items: center;
@@ -58,93 +134,9 @@
   border-radius: 50%;
   background: var(--color-danger);
 }
+/* ... existing status indicator styles ... */
 
-.status-indicator.status--connected {
-  background: var(--color-success);
-  box-shadow: 0 0 8px var(--color-success);
-}
-
-.status-indicator.status--connecting {
-  background: var(--color-warning);
-  animation: pulse 1.5s infinite;
-}
-
-.status-indicator.status--disconnected {
-  background: var(--color-danger);
-}
-
-.status-text {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Messages Container */
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-/* Empty State */
-.chat-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  text-align: center;
-  padding: var(--space-8);
-}
-
-.chat-empty__icon {
-  font-size: 4rem;
-  margin-bottom: var(--space-4);
-  opacity: 0.7;
-}
-
-.chat-empty h2 {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  color: var(--text-primary);
-  margin: 0 0 var(--space-2);
-}
-
-.chat-empty p {
-  color: var(--text-secondary);
-  margin: 0 0 var(--space-6);
-}
-
-.chat-empty__suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  justify-content: center;
-}
-
-.chat-empty__suggestions button {
-  background: var(--surface-tertiary);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
-  padding: var(--space-2) var(--space-4);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.chat-empty__suggestions button:hover {
-  background: var(--surface-hover);
-  border-color: var(--color-accent);
-  color: var(--text-primary);
-}
-
-/* Message Bubbles */
+/* Message Bubbles - Grimoire Typography */
 .chat-message {
   display: flex;
   gap: var(--space-3);
@@ -204,15 +196,26 @@
   background: var(--surface-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-5);
   color: var(--text-primary);
-  line-height: 1.6;
+  /* Typography Upgrade */
+  font-family: var(--font-display); /* Crimson Pro */
+  font-size: 1.05rem; /* Larger, book-like */
+  line-height: 1.75;  /* Relaxed reading */
   white-space: pre-wrap;
+  box-shadow: var(--shadow-sm);
+  max-width: 65ch; /* Optimal reading width */
+}
+
+/* Distinguish DM vs User */
+.chat-message--assistant .chat-message__text {
+  background: linear-gradient(to bottom right, var(--surface-secondary), var(--surface-tertiary));
+  border-left: 3px solid var(--color-accent-muted);
 }
 
 .chat-message--user .chat-message__text {
-  background: var(--color-accent-muted);
-  border-color: var(--color-accent);
+  background: linear-gradient(135deg, rgba(212, 165, 74, 0.05), rgba(212, 165, 74, 0.02));
+  border-color: rgba(212, 165, 74, 0.2);
 }
 
 .chat-message--error .chat-message__text {
@@ -246,6 +249,63 @@
   border-radius: var(--radius-sm);
   padding: 2px 8px;
   font-family: var(--font-mono);
+}
+
+/* Suggestion Chips */
+.suggestion-chips {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-2);
+}
+
+.suggestion-chip {
+  background: var(--surface-tertiary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.suggestion-chip:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--color-accent);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.suggestion-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty State Actions */
+.chat-empty__actions {
+  margin-top: var(--space-6);
+}
+
+.btn-start {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  border: none;
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(212, 165, 74, 0.3);
+}
+
+.btn-start:hover {
+  transform: translateY(-2px) scale(1.05);
+  background: var(--color-accent-hover);
+  box-shadow: 0 6px 16px rgba(212, 165, 74, 0.4);
 }
 
 /* Input Form */

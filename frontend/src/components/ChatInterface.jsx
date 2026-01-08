@@ -4,6 +4,32 @@ import { useWebSocket, ConnectionState } from '../contexts/WebSocketContext'
 import { PacingBar, InventoryDrawer, BackpackButton, GameToastContainer, MissionReport } from './game'
 import './ChatInterface.css'
 
+// Suggestion Chips Component
+function SuggestionChips({ onSelect, disabled }) {
+  const suggestions = [
+    "Look around",
+    "Check inventory", 
+    "Where am I?",
+    "Search for clues"
+  ]
+
+  return (
+    <div className="suggestion-chips">
+      {suggestions.map((text) => (
+        <button
+          key={text}
+          type="button"
+          className="suggestion-chip"
+          onClick={() => onSelect(text)}
+          disabled={disabled}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 /**
  * ChatInterface Component - The Game Client
  */
@@ -106,26 +132,29 @@ export function ChatInterface({
     }
   }, [safeMessages, processResponse])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const sendQuery = async (text) => {
     if (sessionEnded) return
+    if (!text.trim()) return
 
-    const trimmed = inputValue.trim()
-    if (!trimmed) return
-
-    console.log('UI: sending', trimmed)
+    console.log('UI: sending', text)
     try {
-      // Note: WebSocketProvider uses session_id from query param if we update it
-      // or we can pass it here if we update sendMessage
       const result = await sendMessage('query', { 
-        query: trimmed,
-        session_id: sessionId // Pass it explicitly in payload too
+        query: text,
+        session_id: sessionId 
       })
-      console.log('UI: sendMessage() returned', result)
       if (result) setInputValue('')
     } catch (err) {
       console.error('UI: send failed', err)
     }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    await sendQuery(inputValue)
+  }
+
+  const handleChipClick = (text) => {
+    sendQuery(text)
   }
 
   const handleKeyDown = (e) => {
@@ -188,15 +217,41 @@ export function ChatInterface({
 
       {/* Header */}
       <header className="chat-header">
-        <div className="chat-header__title">
-          <span className="chat-header__icon">🎲</span>
-          <div>
-            <h1>Adventure</h1>
-            {sessionId && (
-              <span className="session-badge">Session: {sessionId.substring(0, 8)}</span>
-            )}
+        <div className="chat-header__info">
+          <div className="chat-header__title">
+            <span className="chat-header__icon">🎲</span>
+            <div>
+              <h1>Adventure</h1>
+              {sessionId && (
+                <span className="session-badge">Session: {sessionId.substring(0, 8)}</span>
+              )}
+            </div>
           </div>
+
+          {/* Mini HUD - Vitality Ribbon */}
+          {character && (
+            <div className="mini-hud">
+              <div className="mini-hud__stat">
+                <span className="mini-hud__label">HP</span>
+                <div className="mini-hud__bar-container">
+                  <div 
+                    className="mini-hud__bar" 
+                    style={{ width: `${Math.min(100, (character.current_hit_points / character.max_hit_points) * 100)}%` }}
+                  />
+                </div>
+                <span className="mini-hud__value">
+                  {character.current_hit_points}/{character.max_hit_points}
+                </span>
+              </div>
+              <div className="mini-hud__divider"></div>
+              <div className="mini-hud__stat">
+                <span className="mini-hud__label">LVL</span>
+                <span className="mini-hud__value mini-hud__value--accent">{character.level || 1}</span>
+              </div>
+            </div>
+          )}
         </div>
+
         <div className="chat-header__actions">
           <BackpackButton
             onClick={() => setIsDrawerOpen(true)}
@@ -217,6 +272,11 @@ export function ChatInterface({
             <div className="chat-empty__icon">🗺️</div>
             <h2>Your Adventure Awaits</h2>
             <p>{sessionId ? "Resuming your journey..." : "What do you do?"}</p>
+            <div className="chat-empty__actions">
+              <button className="btn-start" onClick={() => sendQuery("I look around to see where I am.")}>
+                Begin Adventure
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -253,6 +313,10 @@ export function ChatInterface({
 
       {/* Input Form */}
       <form className="chat-input-form" onSubmit={handleSubmit}>
+        <SuggestionChips 
+          onSelect={handleChipClick} 
+          disabled={sessionEnded || connectionState !== ConnectionState.CONNECTED}
+        />
         <div className="chat-input-wrapper">
           <textarea
             ref={inputRef}
