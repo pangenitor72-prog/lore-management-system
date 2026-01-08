@@ -2723,6 +2723,62 @@
             color: var(--text-muted);
         }
 
+        /* Background Selection */
+        .background-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .background-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .background-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .background-card.selected {
+            border-color: var(--success-color, #28a745);
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .background-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .background-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .background-skills {
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            margin-bottom: 4px;
+            text-transform: capitalize;
+        }
+
+        .background-feature {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
         /* Character Review Card */
         .char-review-card {
             background: var(--bg-card);
@@ -6906,6 +6962,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             selectedCantrips: [],
             selectedSpells: [],
             selectedEquipment: {},  // choice_1: "option_id", etc.
+            selectedBackground: null,
             concept: '',
             abilityScores: {
                 strength: null,
@@ -6920,6 +6977,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let availableOrigins = [];
         let availableArchetypes = [];
         let availableEquipment = { choices: null, fixed: [] };
+        let availableBackgrounds = [];
         let availableSpells = { cantrips: [], level_1: [] };  // Spell data for current class
         let genreTerminology = { origin: 'Origin', archetype: 'Archetype' };
 
@@ -9797,6 +9855,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 selectedCantrips: [],
                 selectedSpells: [],
                 selectedEquipment: {},
+                selectedBackground: null,
                 concept: concept || '',
                 genres: selectedGenres.slice(),  // Store selected genres for reference
                 abilityScores: {
@@ -10338,7 +10397,33 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     nextBtn.disabled = !allEquipmentChoicesMade();
                     break;
 
-                case 7: // Name and Review
+                case 7: // Background Selection
+                    title.textContent = 'Choose Your Background';
+                    subtitle.textContent = 'Your background describes your life before adventuring.';
+
+                    // Load backgrounds if not already loaded
+                    if (availableBackgrounds.length === 0) {
+                        loadBackgrounds();
+                    }
+
+                    content.innerHTML = `
+                        <div class="background-selection-grid">
+                            ${availableBackgrounds.length > 0 ? availableBackgrounds.map(bg => `
+                                <div class="background-card ${charCreationData.selectedBackground === bg.id ? 'selected' : ''}"
+                                     onclick="selectBackground('${bg.id}')">
+                                    <div class="background-name">${bg.name}</div>
+                                    <div class="background-desc">${bg.description}</div>
+                                    <div class="background-skills">Skills: ${(bg.skill_proficiencies || []).join(', ').replace(/_/g, ' ')}</div>
+                                    <div class="background-feature">Feature: ${bg.feature_name}</div>
+                                </div>
+                            `).join('') : '<div style="color: var(--text-muted); padding: 20px; text-align: center;">Loading backgrounds...</div>'}
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Next';
+                    nextBtn.disabled = !charCreationData.selectedBackground;
+                    break;
+
+                case 8: // Name and Review
                     title.textContent = 'Name Your Character';
                     subtitle.textContent = 'Review your character and begin your adventure.';
 
@@ -10688,6 +10773,30 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             return '\uD83D\uDCE6';
         }
 
+        async function loadBackgrounds() {
+            try {
+                const response = await fetch('/api/dnd/backgrounds');
+                if (response.ok) {
+                    availableBackgrounds = await response.json();
+                    renderCreationStep();
+                } else {
+                    console.warn('Failed to load backgrounds:', response.status);
+                }
+            } catch (error) {
+                console.error('Error loading backgrounds:', error);
+            }
+        }
+
+        function selectBackground(backgroundId) {
+            charCreationData.selectedBackground = backgroundId;
+            renderCreationStep();
+        }
+
+        function getBackgroundName(bgId) {
+            const bg = availableBackgrounds.find(b => b.id === bgId);
+            return bg?.name || bgId || 'Unknown';
+        }
+
         function getOriginName(originId) {
             const origin = availableOrigins.find(o => o.id === originId);
             return origin?.display_name || originId || 'Unknown';
@@ -10982,7 +11091,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         async function handleGuidedModeNext() {
-            const maxSteps = 8; // name, origin, class, abilities, skills, spells, equipment, review
+            const maxSteps = 9; // name, origin, class, abilities, skills, spells, equipment, background, review
 
             if (charCreationStep === 0) {
                 charCreationData.name = document.getElementById('char-name-input')?.value.trim() || 'Adventurer';
@@ -11736,7 +11845,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 dndCharacter = null;
                 charCreationData = {
                     name: '', origin: null, archetype: null, abilityPriority: null, selectedSkills: [],
-                    selectedCantrips: [], selectedSpells: [], selectedEquipment: {}, concept: '',
+                    selectedCantrips: [], selectedSpells: [], selectedEquipment: {}, selectedBackground: null, concept: '',
                     abilityScores: { strength: null, dexterity: null, constitution: null, intelligence: null, wisdom: null, charisma: null }
                 };
 

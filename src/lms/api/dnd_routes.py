@@ -393,6 +393,56 @@ async def get_class_equipment_choices(class_id: str):
     }
 
 
+# =============================================================================
+# BACKGROUND DATA ENDPOINTS
+# =============================================================================
+
+@router.get("/backgrounds")
+async def list_all_backgrounds():
+    """Get all available backgrounds."""
+    from ..dnd5e.models.backgrounds import get_all_backgrounds
+    backgrounds = get_all_backgrounds()
+    return [
+        {
+            "id": bg.id,
+            "name": bg.display_name,
+            "description": bg.description,
+            "skill_proficiencies": bg.skill_proficiencies,
+            "tool_proficiencies": bg.tool_proficiencies,
+            "languages": bg.languages,
+            "feature_name": bg.feature_name,
+            "feature_description": bg.feature_description,
+        }
+        for bg in backgrounds
+    ]
+
+
+@router.get("/backgrounds/{background_id}")
+async def get_background_details(background_id: str):
+    """Get detailed information about a background."""
+    from ..dnd5e.models.backgrounds import get_background
+    bg = get_background(background_id)
+    if not bg:
+        raise HTTPException(status_code=404, detail="Background not found")
+
+    return {
+        "id": bg.id,
+        "name": bg.display_name,
+        "description": bg.description,
+        "skill_proficiencies": bg.skill_proficiencies,
+        "tool_proficiencies": bg.tool_proficiencies,
+        "languages": bg.languages,
+        "equipment": bg.equipment,
+        "gold": bg.gold,
+        "feature_name": bg.feature_name,
+        "feature_description": bg.feature_description,
+        "personality_traits": bg.personality_traits,
+        "ideals": bg.ideals,
+        "bonds": bg.bonds,
+        "flaws": bg.flaws,
+    }
+
+
 @router.get("/reference/skills")
 async def list_skills():
     """Get all skills and their associated abilities."""
@@ -549,14 +599,17 @@ async def guided_creation_step(flow_id: str, request: GuidedStepRequest):
             success = flow.set_equipment(equipment_choices)
         except json.JSONDecodeError:
             success = False
+    elif step == 7:
+        # Background selection
+        success = flow.set_background(request.choice)
     else:
         success = False
 
     if not success:
         raise HTTPException(status_code=400, detail="Invalid choice for this step")
 
-    # Check if complete (step 7 is review)
-    if flow.get_current_step() == 7:
+    # Check if complete (step 8 is review)
+    if flow.get_current_step() == 8:
         return {
             "flow_id": flow_id,
             "genre": genre,

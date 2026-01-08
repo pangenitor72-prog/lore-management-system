@@ -71,6 +71,13 @@ class CharacterSheet(BaseModel):
     # Features (from archetype and origin)
     features: List[str] = Field(default_factory=list)
 
+    # Background (D&D 5e SRD backgrounds)
+    background: str = ""  # e.g., "acolyte", "soldier"
+    personality_traits: List[str] = Field(default_factory=list)
+    ideals: List[str] = Field(default_factory=list)
+    bonds: List[str] = Field(default_factory=list)
+    flaws: List[str] = Field(default_factory=list)
+
     # Metadata
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

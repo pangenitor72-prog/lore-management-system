@@ -22,6 +22,7 @@ class GuidedCreationState(BaseModel):
     selected_cantrips: List[str] = []  # Selected cantrip IDs
     selected_spells: List[str] = []  # Selected spell IDs
     selected_equipment: Dict[str, str] = {}  # choice_1: "option_id", etc.
+    selected_background: Optional[str] = None  # e.g., "acolyte"
     completed: bool = False
 
 
@@ -37,7 +38,8 @@ class GuidedCreationFlow:
     4. "What are you good at?" (skills with context)
     5. "Choose your spells" (casters only, non-casters skip)
     6. "Choose your equipment" (class-based choices)
-    7. Review with narrative summary
+    7. "What is your background?" (background selection)
+    8. Review with narrative summary
     """
 
     PLAYSTYLE_TO_ABILITIES = {
@@ -229,7 +231,7 @@ class GuidedCreationFlow:
             equipment_choices = loader.get_equipment_choices_for_class(class_id)
 
             if not equipment_choices:
-                # No choices for this class, skip to review
+                # No choices for this class, skip to background
                 self.state.step = 7
                 return self.get_step_content()
 
@@ -252,6 +254,27 @@ class GuidedCreationFlow:
             }
 
         elif step == 7:
+            # Background selection step
+            from ..models.backgrounds import get_all_backgrounds
+            backgrounds = get_all_backgrounds()
+
+            return {
+                "step": "background",
+                "question": "What is your background?",
+                "hint": "Your background describes where you came from and grants additional skills.",
+                "options": [
+                    {
+                        "id": bg.id,
+                        "name": bg.display_name,
+                        "description": bg.description,
+                        "skills": bg.skill_proficiencies,
+                        "feature": bg.feature_name,
+                    }
+                    for bg in backgrounds
+                ],
+            }
+
+        elif step == 8:
             return {
                 "step": "review",
                 "question": "Does this look right?",
@@ -408,7 +431,7 @@ class GuidedCreationFlow:
         equipment_data = loader.get_equipment_choices_for_class(class_id)
 
         if not equipment_data:
-            # No choices for this class, advance to review
+            # No choices for this class, advance to background
             self.state.step = 7
             return True
 
@@ -424,7 +447,18 @@ class GuidedCreationFlow:
                 return False
 
         self.state.selected_equipment = choices
-        self.state.step = 7  # Advance to review
+        self.state.step = 7  # Advance to background selection
+        return True
+
+    def set_background(self, background: str) -> bool:
+        """Set selected background."""
+        from ..models.backgrounds import get_background
+        bg = get_background(background)
+        if not bg:
+            return False
+
+        self.state.selected_background = background
+        self.state.step = 8  # Advance to review
         return True
 
     def _generate_abilities(self) -> AbilityScores:
@@ -465,7 +499,7 @@ class GuidedCreationFlow:
 
     def finalize(self, player_id: str = "") -> CharacterSheet:
         """Create the final character sheet."""
-        if self.state.step != 7:
+        if self.state.step != 8:
             raise ValueError("Character creation not complete")
 
         race_data = RACES[self.state.race]
@@ -491,6 +525,17 @@ class GuidedCreationFlow:
             cantrips = self.state.selected_cantrips
             spells_known = self.state.selected_spells
 
+        # Build skill list combining class and background
+        all_skills = list(self.state.skill_proficiencies)
+        background_data = None
+        if self.state.selected_background:
+            from ..models.backgrounds import get_background
+            background_data = get_background(self.state.selected_background)
+            if background_data:
+                for skill in background_data.skill_proficiencies:
+                    if skill not in all_skills:
+                        all_skills.append(skill)
+
         return CharacterSheet(
             character_id=str(uuid.uuid4()),
             name=self.state.name,
@@ -503,7 +548,7 @@ class GuidedCreationFlow:
             current_hit_points=starting_hp,
             armor_class=base_ac,
             speed=race_data.speed,
-            skill_proficiencies=self.state.skill_proficiencies,
+            skill_proficiencies=all_skills,
             saving_throw_proficiencies=class_data.saving_throw_proficiencies,
             armor_proficiencies=class_data.armor_proficiencies,
             weapon_proficiencies=class_data.weapon_proficiencies,
@@ -512,6 +557,7 @@ class GuidedCreationFlow:
             cantrips_known=cantrips,
             spells_known=spells_known,
             features=class_data.features_by_level.get(1, []),
+            background=self.state.selected_background or "",
             rules_visibility="guided",
         )
 
