@@ -10267,37 +10267,87 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         function parseConceptForCharacter(concept) {
             const text = (concept || '').toLowerCase();
 
-            // Class detection patterns
-            const classPatterns = {
-                barbarian: /\b(barbarian|berserker|raging|rage|savage|tribal warrior)\b/,
-                bard: /\b(bard|minstrel|musician|singer|poet|performer|troubadour)\b/,
-                cleric: /\b(cleric|priest|priestess|healer|holy|divine|temple)\b/,
-                druid: /\b(druid|nature|shapeshifter|wild|forest guardian)\b/,
-                fighter: /\b(fighter|soldier|warrior|knight|mercenary|swordsman|guard|veteran)\b/,
-                monk: /\b(monk|martial artist|fist|monastery|discipline)\b/,
-                paladin: /\b(paladin|holy knight|champion|crusader|oath|righteous)\b/,
-                ranger: /\b(ranger|hunter|archer|scout|tracker|woodsman|bounty hunter)\b/,
-                rogue: /\b(rogue|thief|assassin|spy|sneaky|shadow|cunning|pickpocket|burglar)\b/,
-                sorcerer: /\b(sorcerer|innate magic|bloodline|wild magic|chaotic magic)\b/,
-                warlock: /\b(warlock|pact|patron|eldritch|dark magic|otherworldly)\b/,
-                wizard: /\b(wizard|mage|magician|scholar|arcane|spellbook|academic|sage)\b/
+            // Genre-aware class/archetype detection patterns
+            const classPatternsByGenre = {
+                fantasy: {
+                    barbarian: /\b(barbarian|berserker|raging|rage|savage|tribal warrior)\b/,
+                    bard: /\b(bard|minstrel|musician|singer|poet|performer|troubadour)\b/,
+                    cleric: /\b(cleric|priest|priestess|healer|holy|divine|temple)\b/,
+                    druid: /\b(druid|nature|shapeshifter|wild|forest guardian)\b/,
+                    fighter: /\b(fighter|soldier|warrior|knight|mercenary|swordsman|guard|veteran)\b/,
+                    monk: /\b(monk|martial artist|fist|monastery|discipline)\b/,
+                    paladin: /\b(paladin|holy knight|champion|crusader|oath|righteous)\b/,
+                    ranger: /\b(ranger|hunter|archer|scout|tracker|woodsman|bounty hunter)\b/,
+                    rogue: /\b(rogue|thief|assassin|spy|sneaky|shadow|cunning|pickpocket|burglar)\b/,
+                    sorcerer: /\b(sorcerer|innate magic|bloodline|wild magic|chaotic magic)\b/,
+                    warlock: /\b(warlock|pact|patron|eldritch|dark magic|otherworldly)\b/,
+                    wizard: /\b(wizard|mage|magician|scholar|arcane|spellbook|academic|sage)\b/
+                },
+                scifi: {
+                    soldier: /\b(soldier|marine|trooper|military|combat|veteran|warrior|fighter)\b/,
+                    hacker: /\b(hacker|netrunner|programmer|coder|tech|cyber|digital|slicer)\b/,
+                    medic: /\b(medic|doctor|healer|nurse|medical|surgeon|paramedic)\b/,
+                    engineer: /\b(engineer|mechanic|technician|fixer|builder|inventor|scientist)\b/,
+                    pilot: /\b(pilot|driver|navigator|ace|flyboy)\b/,
+                    operative: /\b(operative|spy|agent|assassin|infiltrator|covert)\b/
+                },
+                modern: {
+                    investigator: /\b(investigator|detective|cop|police|fbi|agent|sleuth)\b/,
+                    operative: /\b(operative|spy|agent|assassin|mercenary|soldier|military)\b/,
+                    face: /\b(face|con|grifter|social|charmer|diplomat|negotiator)\b/,
+                    specialist: /\b(specialist|expert|technician|hacker|medic|doctor)\b/
+                },
+                horror: {
+                    investigator: /\b(investigator|detective|researcher|scholar|professor)\b/,
+                    protector: /\b(protector|guardian|soldier|cop|veteran|fighter)\b/,
+                    occultist: /\b(occultist|mystic|psychic|medium|witch|sorcerer)\b/,
+                    survivor: /\b(survivor|everyman|ordinary|civilian|victim)\b/
+                }
             };
 
-            // Race detection patterns
-            const racePatterns = {
-                'Elf': /\b(elf|elven|elvish|high elf|wood elf|dark elf|drow)\b/,
-                'Dwarf': /\b(dwarf|dwarven|mountain|stout|bearded)\b/,
-                'Halfling': /\b(halfling|hobbit|small folk|lightfoot)\b/,
-                'Human': /\b(human|man|woman|folk)\b/,
-                'Dragonborn': /\b(dragonborn|dragon|draconic|scaled)\b/,
-                'Gnome': /\b(gnome|tinker|inventor)\b/,
-                'Half-Elf': /\b(half-elf|half elf)\b/,
-                'Half-Orc': /\b(half-orc|half orc|orcish)\b/,
-                'Tiefling': /\b(tiefling|infernal|demon|devil|horned)\b/
+            // Genre-aware race/origin detection patterns
+            const racePatternsByGenre = {
+                fantasy: {
+                    'elf': /\b(elf|elven|elvish|high elf|wood elf|dark elf|drow)\b/,
+                    'dwarf': /\b(dwarf|dwarven|mountain|stout|bearded)\b/,
+                    'halfling': /\b(halfling|hobbit|small folk|lightfoot)\b/,
+                    'human': /\b(human|man|woman|folk)\b/,
+                    'dragonborn': /\b(dragonborn|dragon|draconic|scaled)\b/,
+                    'gnome': /\b(gnome|tinker|inventor)\b/,
+                    'half_elf': /\b(half-elf|half elf)\b/,
+                    'half_orc': /\b(half-orc|half orc|orcish)\b/,
+                    'tiefling': /\b(tiefling|infernal|demon|devil|horned)\b/
+                },
+                scifi: {
+                    'human': /\b(human|terran|earthling|baseline)\b/,
+                    'android': /\b(android|robot|synth|synthetic|artificial|machine)\b/,
+                    'alien': /\b(alien|xeno|extraterrestrial|otherworldly)\b/,
+                    'cyborg': /\b(cyborg|augmented|enhanced|modified|chrome)\b/
+                },
+                modern: {
+                    'human': /\b(human|person|man|woman)\b/,
+                    'athlete': /\b(athlete|jock|sports|physical|fit)\b/,
+                    'scholar': /\b(scholar|academic|professor|scientist|intellectual)\b/,
+                    'street': /\b(street|urban|tough|scrappy|survivor)\b/
+                },
+                horror: {
+                    'human': /\b(human|mortal|person)\b/,
+                    'survivor': /\b(survivor|veteran|scarred|hardened)\b/,
+                    'touched': /\b(touched|cursed|haunted|marked|psychic)\b/,
+                    'innocent': /\b(innocent|naive|pure|untainted|young)\b/
+                }
             };
+
+            // Get patterns for current genre
+            const classPatterns = classPatternsByGenre[rulesGenre] || classPatternsByGenre.fantasy;
+            const racePatterns = racePatternsByGenre[rulesGenre] || racePatternsByGenre.fantasy;
+
+            // Get first archetype as default for this genre
+            const defaultArchetype = availableArchetypes[0]?.id || Object.keys(classPatterns)[0];
+            const defaultOrigin = availableOrigins[0]?.id || 'human';
 
             // Detect class
-            let detectedClass = 'fighter'; // default
+            let detectedClass = defaultArchetype;
             for (const [cls, pattern] of Object.entries(classPatterns)) {
                 if (pattern.test(text)) {
                     detectedClass = cls;
@@ -10306,7 +10356,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             // Detect race
-            let detectedRace = 'Human'; // default
+            let detectedRace = defaultOrigin;
             for (const [race, pattern] of Object.entries(racePatterns)) {
                 if (pattern.test(text)) {
                     detectedRace = race;
@@ -10329,8 +10379,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 charCreationData.archetype = parsed.archetype;
                 charCreationData.origin = parsed.origin;
 
-                // Assign default ability scores based on class
+                // Assign default ability scores based on archetype (genre-aware)
                 const classAbilityPriority = {
+                    // Fantasy
                     barbarian: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
                     bard: ['charisma', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'strength'],
                     cleric: ['wisdom', 'constitution', 'strength', 'charisma', 'dexterity', 'intelligence'],
@@ -10342,18 +10393,35 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     rogue: ['dexterity', 'intelligence', 'constitution', 'charisma', 'wisdom', 'strength'],
                     sorcerer: ['charisma', 'constitution', 'dexterity', 'wisdom', 'intelligence', 'strength'],
                     warlock: ['charisma', 'constitution', 'dexterity', 'wisdom', 'intelligence', 'strength'],
-                    wizard: ['intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength']
+                    wizard: ['intelligence', 'constitution', 'dexterity', 'wisdom', 'charisma', 'strength'],
+                    // Sci-Fi
+                    soldier: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
+                    hacker: ['intelligence', 'dexterity', 'constitution', 'wisdom', 'charisma', 'strength'],
+                    medic: ['wisdom', 'intelligence', 'constitution', 'dexterity', 'charisma', 'strength'],
+                    engineer: ['intelligence', 'dexterity', 'constitution', 'wisdom', 'charisma', 'strength'],
+                    pilot: ['dexterity', 'wisdom', 'constitution', 'intelligence', 'charisma', 'strength'],
+                    operative: ['dexterity', 'intelligence', 'constitution', 'charisma', 'wisdom', 'strength'],
+                    // Modern
+                    investigator: ['intelligence', 'wisdom', 'constitution', 'dexterity', 'charisma', 'strength'],
+                    face: ['charisma', 'intelligence', 'dexterity', 'constitution', 'wisdom', 'strength'],
+                    specialist: ['intelligence', 'dexterity', 'constitution', 'wisdom', 'charisma', 'strength'],
+                    // Horror
+                    protector: ['strength', 'constitution', 'dexterity', 'wisdom', 'charisma', 'intelligence'],
+                    occultist: ['wisdom', 'intelligence', 'charisma', 'constitution', 'dexterity', 'strength'],
+                    survivor: ['constitution', 'dexterity', 'wisdom', 'strength', 'charisma', 'intelligence']
                 };
 
-                const priority = classAbilityPriority[parsed.archetype] || classAbilityPriority.fighter;
+                const defaultPriority = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+                const priority = classAbilityPriority[parsed.archetype] || defaultPriority;
                 const standardArray = [15, 14, 13, 12, 10, 8];
                 charCreationData.abilityScores = {};
                 priority.forEach((ability, i) => {
                     charCreationData.abilityScores[ability] = standardArray[i];
                 });
 
-                // Assign default skills based on class
+                // Assign default skills based on archetype (genre-aware)
                 const classSkills = {
+                    // Fantasy
                     barbarian: ['athletics', 'intimidation'],
                     bard: ['performance', 'persuasion'],
                     cleric: ['medicine', 'religion'],
@@ -10365,9 +10433,24 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     rogue: ['stealth', 'perception'],
                     sorcerer: ['arcana', 'persuasion'],
                     warlock: ['arcana', 'deception'],
-                    wizard: ['arcana', 'investigation']
+                    wizard: ['arcana', 'investigation'],
+                    // Sci-Fi
+                    soldier: ['athletics', 'perception'],
+                    hacker: ['investigation', 'stealth'],
+                    medic: ['medicine', 'insight'],
+                    engineer: ['investigation', 'perception'],
+                    pilot: ['acrobatics', 'perception'],
+                    operative: ['stealth', 'deception'],
+                    // Modern
+                    investigator: ['investigation', 'insight'],
+                    face: ['persuasion', 'deception'],
+                    specialist: ['investigation', 'perception'],
+                    // Horror
+                    protector: ['athletics', 'perception'],
+                    occultist: ['arcana', 'investigation'],
+                    survivor: ['survival', 'perception']
                 };
-                charCreationData.selectedSkills = classSkills[parsed.archetype] || ['athletics', 'perception'];
+                charCreationData.selectedSkills = classSkills[parsed.archetype] || ['perception', 'investigation'];
 
                 // Build local character object for review
                 const hitDieMax = { barbarian: 12, fighter: 10, paladin: 10, ranger: 10,
