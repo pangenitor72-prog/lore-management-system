@@ -45,6 +45,14 @@ from src.airpg.runtime.world_integrity import (
     validate_world_before_session,
 )
 
+# Arc Engine for narrative pacing
+try:
+    from src.lms.arc.arc_engine import ArcEngine
+    ARC_ENGINE_AVAILABLE = True
+except ImportError:
+    ARC_ENGINE_AVAILABLE = False
+    ArcEngine = None
+
 logger = logging.getLogger(__name__)
 
 # Shared lore parsing agent for extracting entities from gameplay
@@ -1330,6 +1338,8 @@ async def create_session(
         "character_id": session_req.character_id,
         "rules_mode": session_req.rules_mode or "narrative",
         "rules_visibility": session_req.rules_visibility or "guided",
+        # Arc Engine for narrative pacing (per-session instance)
+        "arc_engine": ArcEngine(session_id=session_id) if ARC_ENGINE_AVAILABLE else None,
     }
 
     _active_sessions[session_id] = session_data
@@ -1516,6 +1526,7 @@ async def process_action(
     session["history"].append({"role": "user", "content": action.action})
 
     # Handle Session 0 (collaborative world-building)
+    arc_context = None  # Arc Engine context for narrative pacing
     if session["phase"] == "session_0":
         response_text, new_phase = await _handle_session_0(
             session, action.action, model, db
@@ -1523,7 +1534,7 @@ async def process_action(
         session["phase"] = new_phase
     else:
         # Active play - generate DM response (with mechanical context if applicable)
-        response_text = await _handle_active_play(
+        response_text, arc_context = await _handle_active_play(
             session, action.action, model, db, mechanical_context,
             needs_guidance=action.needs_guidance,
             adaptive_context=action.adaptive_context
@@ -1587,6 +1598,7 @@ async def process_action(
         narrative=response_text,
         session_id=session_id,
         phase=session["phase"],
+        arc_context=arc_context,
         mechanical_result=mechanical_result,
         character_update=character_update,
         suggested_actions=suggested_actions,
@@ -2033,9 +2045,16 @@ async def _handle_active_play(
     mechanical_context: str = "",
     needs_guidance: bool = False,
     adaptive_context: Optional[str] = None,
-) -> str:
-    """Handle active gameplay with genre-aware storytelling."""
+) -> tuple[str, Optional[Dict[str, Any]]]:
+    """Handle active gameplay with genre-aware storytelling.
+
+    Returns:
+        Tuple of (narrative_text, arc_context_dict)
+    """
     answers = session.get("session_0_answers", {})
+
+    # Get Arc Engine for narrative pacing
+    arc_engine = session.get("arc_engine")
     genre = session.get("genre", "fantasy")
     tone = session.get("tone_preference", answers.get("tone", "dramatic"))
     style = session.get("storytelling_style", "guided")
@@ -2125,6 +2144,15 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
 - Level {dnd_char.level}, {dnd_char.current_hit_points}/{dnd_char.max_hit_points} HP
 - Skills: {', '.join(dnd_char.skill_proficiencies[:4])}"""
 
+    # Build arc context for narrative pacing (Hero's Journey phases, tension)
+    arc_context_str = ""
+    if arc_engine:
+        try:
+            arc_context_str = arc_engine.get_dm_context_injection()
+            logger.debug(f"[ARC] Injecting context: phase={arc_engine.current_phase.value}, tension={arc_engine.tension_level.value}")
+        except Exception as e:
+            logger.warning(f"[ARC] Failed to get context injection: {e}")
+
     # Handle genre blending
     genre_display = session.get("genre_blend", genre)
 
@@ -2156,7 +2184,7 @@ PLAYER'S ACTION: {player_input}
 {f'''
 STORYTELLING ADJUSTMENT (based on player preferences - apply subtly):
 {adaptive_context}
-''' if adaptive_context else ''}
+''' if adaptive_context else ''}{arc_context_str}
 Continue the narrative:
 - CRITICAL: Pick up EXACTLY where the last scene left off. If the Narrator just described a location, characters, or situation - respond to the player's action within THAT scene.
 - React naturally and immediately to what the player did or said
@@ -2179,13 +2207,36 @@ Write ONLY the narrative:"""
 
     # Use protected AI call with guardrails
     # 1200 tokens allows for complete responses without truncation
-    return await protected_ai_call(
+    narrative = await protected_ai_call(
         model,
         prompt,
         session_id=session.get("session_id", "unknown"),
         temperature=0.85,
         max_output_tokens=1200,
     )
+
+    # Process narrative through Arc Engine for state updates
+    arc_context = None
+    if arc_engine and narrative:
+        try:
+            # Process the narrative to update arc state (phase transitions, tension)
+            arc_engine.process_narrative(narrative, player_input)
+
+            # Build arc context for API response
+            arc_context = {
+                "current_phase": arc_engine.current_phase.value,
+                "phase_display": arc_engine.current_phase.value.replace("_", " ").title(),
+                "act": arc_engine.current_act.value,
+                "tension_level": arc_engine.tension_level.value,
+                "tension_value": arc_engine.current_tension,
+                "journey_progress": arc_engine.journey_progress,
+                "episode_number": arc_engine.episode_number,
+            }
+            logger.info(f"[ARC] Post-narrative: phase={arc_context['current_phase']}, tension={arc_context['tension_level']}, progress={arc_context['journey_progress']:.0%}")
+        except Exception as e:
+            logger.warning(f"[ARC] Failed to process narrative: {e}")
+
+    return narrative, arc_context
 
 
 # ============================================================
