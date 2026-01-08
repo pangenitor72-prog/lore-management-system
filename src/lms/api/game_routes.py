@@ -11,6 +11,7 @@ Endpoints for:
 from __future__ import annotations
 
 import os
+import re
 import uuid
 import json
 import logging
@@ -450,8 +451,10 @@ async def get_all_lore_bases_details(
             """, {})
             for row in result:
                 wid = row.get("world_id", "")
-                # Filter out session-scoped IDs (contain underscore + 8 chars)
-                if wid and not (len(wid) > 9 and wid[-9] == '_'):
+                # Include known curated worlds OR short IDs (non-session-scoped)
+                # Session-scoped IDs look like: worldname_YYMMDD_HHMMSS (timestamp suffix)
+                # Curated world IDs are in LORE_BASES
+                if wid and (wid in LORE_BASES or not re.match(r'.+_\d{6}_\d{6}$', wid)):
                     entity_counts[wid] = row.get("count", 0)
         except Exception as e:
             logger.warning(f"Failed to get entity counts: {e}")
