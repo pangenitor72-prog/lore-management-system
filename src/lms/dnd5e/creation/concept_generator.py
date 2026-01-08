@@ -334,15 +334,35 @@ Only use the races and classes listed. Return valid JSON only."""
         abilities_known = []
         if archetype_data and archetype_data.has_powers:
             power_slots = {1: 2}
-            # Get starting abilities from the abilities module
-            from ..models.abilities import get_cantrips_for_archetype, get_abilities_for_archetype, AbilityType
-            archetype_cantrips = get_cantrips_for_archetype(archetype_id, self.genre)
-            archetype_abilities = [
-                a for a in get_abilities_for_archetype(archetype_id, self.genre)
-                if a.ability_type.value.startswith("level_")
-            ]
-            cantrips = [c.id for c in archetype_cantrips[:2]]
-            abilities_known = [a.id for a in archetype_abilities[:2]]
+
+            # For fantasy genre, use SRD spells for proper class-based spells
+            if self.genre == "fantasy":
+                from ..data.loader import get_srd_loader
+                loader = get_srd_loader()
+
+                # Get cantrips and level 1 spells for this class
+                available_cantrips = loader.get_cantrips_for_class(archetype_id)
+                available_spells = [s for s in loader.get_spells_for_class(archetype_id) if s.get("level") == 1]
+
+                # Calculate number of prepared spells
+                num_cantrips = archetype_data.cantrips_known
+                num_prepared = self._get_prepared_spell_count(archetype_data, abilities)
+
+                # Select first N cantrips and spells (auto-selection for concept mode)
+                cantrips = [s.get("id", s.get("name", "").lower().replace(" ", "_"))
+                           for s in available_cantrips[:num_cantrips]]
+                abilities_known = [s.get("id", s.get("name", "").lower().replace(" ", "_"))
+                                  for s in available_spells[:num_prepared]]
+            else:
+                # For non-fantasy genres, use the abilities module
+                from ..models.abilities import get_cantrips_for_archetype, get_abilities_for_archetype, AbilityType
+                archetype_cantrips = get_cantrips_for_archetype(archetype_id, self.genre)
+                archetype_abilities = [
+                    a for a in get_abilities_for_archetype(archetype_id, self.genre)
+                    if a.ability_type.value.startswith("level_")
+                ]
+                cantrips = [c.id for c in archetype_cantrips[:2]]
+                abilities_known = [a.id for a in archetype_abilities[:2]]
 
         # Get skills (limit to archetype available)
         skills = parsed.get("skills", [])
@@ -419,3 +439,34 @@ Only use the races and classes listed. Return valid JSON only."""
 
         equipment_map = genre_equipment.get(self.genre, fantasy_equipment)
         return equipment_map.get(archetype_id, (10 + dex_mod, ["basic gear"]))
+
+    def _get_prepared_spell_count(self, archetype_data, abilities: AbilityScores) -> int:
+        """Calculate number of prepared spells based on archetype and ability modifier."""
+        if not archetype_data:
+            return 2  # Default
+
+        archetype_id = archetype_data.id.lower()
+
+        # Cleric and Druid prepare WIS mod + level spells
+        if archetype_id in ["cleric", "druid"]:
+            wis_mod = abilities.get_modifier(AbilityName.WIS)
+            return max(1, wis_mod + 1)  # +1 for level 1
+
+        # Wizard prepares INT mod + level spells
+        if archetype_id == "wizard":
+            int_mod = abilities.get_modifier(AbilityName.INT)
+            return max(1, int_mod + 1)
+
+        # Paladin prepares CHA mod + half level spells (starts at level 2)
+        if archetype_id == "paladin":
+            return 1  # Minimal at level 1
+
+        # Bard, Sorcerer, Warlock - spells known (not prepared)
+        if archetype_id in ["bard", "sorcerer", "warlock"]:
+            return 2  # Default known spells at level 1
+
+        # Ranger - starts at level 2, but give 1 for concept
+        if archetype_id == "ranger":
+            return 1
+
+        return 2  # Default

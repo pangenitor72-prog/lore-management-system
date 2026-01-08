@@ -323,6 +323,44 @@ async def list_classes():
     ]
 
 
+# =============================================================================
+# SPELL DATA ENDPOINTS
+# =============================================================================
+
+@router.get("/spells")
+async def list_all_spells(genre: str = "fantasy"):
+    """Get all spells organized by level."""
+    from ..dnd5e.data.loader import get_srd_loader
+    loader = get_srd_loader()
+
+    spells_by_level = {}
+    for level in range(10):
+        level_key = "cantrips" if level == 0 else f"level_{level}"
+        spells = loader.get_spells_by_level(level, genre)
+        spells_by_level[level_key] = {
+            s.get("id", s.get("name", "").lower().replace(" ", "_")): s
+            for s in spells
+        }
+
+    return spells_by_level
+
+
+@router.get("/spells/class/{class_id}")
+async def get_class_spells(class_id: str, genre: str = "fantasy"):
+    """Get all spells available to a specific class."""
+    from ..dnd5e.data.loader import get_srd_loader
+    loader = get_srd_loader()
+
+    cantrips = loader.get_cantrips_for_class(class_id, genre)
+    all_spells = loader.get_spells_for_class(class_id, genre)
+
+    return {
+        "class_id": class_id,
+        "cantrips": cantrips,
+        "spells": all_spells,
+    }
+
+
 @router.get("/reference/skills")
 async def list_skills():
     """Get all skills and their associated abilities."""

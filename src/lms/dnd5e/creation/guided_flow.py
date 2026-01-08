@@ -19,6 +19,8 @@ class GuidedCreationState(BaseModel):
     playstyle: Optional[str] = None  # "warrior", "skilled", "caster"
     ability_priority: Optional[str] = None  # Primary stat preference
     skill_proficiencies: List[str] = []
+    selected_cantrips: List[str] = []  # Selected cantrip IDs
+    selected_spells: List[str] = []  # Selected spell IDs
     completed: bool = False
 
 
@@ -181,6 +183,42 @@ class GuidedCreationFlow:
             }
 
         elif step == 5:
+            # Spell selection step (casters only)
+            class_data = CLASSES[self.state.character_class]
+            if not class_data.spellcasting:
+                # Non-casters skip spell selection, go directly to review
+                self.state.step = 6
+                return self.get_step_content()
+
+            from ..data.loader import get_srd_loader
+            loader = get_srd_loader()
+
+            # Get cantrips and level 1 spells for this class
+            class_id = self.state.character_class.value
+            cantrips = loader.get_cantrips_for_class(class_id)
+            level_1_spells = [s for s in loader.get_spells_for_class(class_id) if s.get("level") == 1]
+
+            # Calculate how many spells to prepare (ability mod + level, min 1)
+            num_cantrips = class_data.cantrips_known
+            num_prepared = self._get_prepared_spell_count()
+
+            return {
+                "step": "spells",
+                "question": "Choose your spells",
+                "hint": f"Select {num_cantrips} cantrips and {num_prepared} prepared spells.",
+                "cantrips": {
+                    "options": [self._spell_to_option(s) for s in cantrips],
+                    "num_choices": num_cantrips,
+                    "selected": self.state.selected_cantrips,
+                },
+                "spells": {
+                    "options": [self._spell_to_option(s) for s in level_1_spells],
+                    "num_choices": num_prepared,
+                    "selected": self.state.selected_spells,
+                },
+            }
+
+        elif step == 6:
             return {
                 "step": "review",
                 "question": "Does this look right?",
@@ -188,6 +226,38 @@ class GuidedCreationFlow:
             }
 
         return {}
+
+    def _spell_to_option(self, spell: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert spell data to user-friendly option."""
+        return {
+            "id": spell.get("id", spell.get("name", "").lower().replace(" ", "_")),
+            "name": spell.get("name", "Unknown"),
+            "school": spell.get("school", "").title(),
+            "description": spell.get("description", "")[:150] + "..." if len(spell.get("description", "")) > 150 else spell.get("description", ""),
+            "casting_time": spell.get("casting_time", "1 action"),
+            "range": spell.get("range", "Self"),
+            "concentration": spell.get("concentration", False),
+            "duration": spell.get("duration", "Instantaneous"),
+        }
+
+    def _get_prepared_spell_count(self) -> int:
+        """Calculate number of prepared spells based on class and ability modifier."""
+        if not self.state.character_class:
+            return 2  # Default
+
+        # Generate abilities to get the modifier
+        abilities = self._generate_abilities()
+
+        if self.state.character_class == ClassName.CLERIC:
+            # Cleric prepares WIS mod + level spells (min 1)
+            wis_mod = abilities.get_modifier(AbilityName.WIS)
+            return max(1, wis_mod + 1)  # +1 for level 1
+        elif self.state.character_class == ClassName.WIZARD:
+            # Wizard prepares INT mod + level spells (min 1)
+            int_mod = abilities.get_modifier(AbilityName.INT)
+            return max(1, int_mod + 1)  # +1 for level 1
+
+        return 2  # Default for other casters
 
     def _skill_to_option(self, skill: str) -> Dict[str, str]:
         """Convert skill name to user-friendly option."""
@@ -254,7 +324,47 @@ class GuidedCreationFlow:
             if skill.lower() not in available:
                 return False
         self.state.skill_proficiencies = [s.lower() for s in skills]
-        self.state.step = 5
+        self.state.step = 5  # Go to spell selection (non-casters will auto-skip)
+        return True
+
+    def set_spells(self, cantrips: List[str], spells: List[str]) -> bool:
+        """Set selected cantrips and spells."""
+        class_data = CLASSES[self.state.character_class]
+
+        # Non-casters don't select spells
+        if not class_data.spellcasting:
+            self.state.step = 6
+            return True
+
+        # Validate cantrip count
+        if len(cantrips) != class_data.cantrips_known:
+            return False
+
+        # Validate spell count
+        num_prepared = self._get_prepared_spell_count()
+        if len(spells) != num_prepared:
+            return False
+
+        # Validate selections are available to this class
+        from ..data.loader import get_srd_loader
+        loader = get_srd_loader()
+        class_id = self.state.character_class.value
+
+        available_cantrips = {s.get("id", s.get("name", "").lower().replace(" ", "_"))
+                             for s in loader.get_cantrips_for_class(class_id)}
+        available_spells = {s.get("id", s.get("name", "").lower().replace(" ", "_"))
+                           for s in loader.get_spells_for_class(class_id) if s.get("level") == 1}
+
+        for c in cantrips:
+            if c not in available_cantrips:
+                return False
+        for s in spells:
+            if s not in available_spells:
+                return False
+
+        self.state.selected_cantrips = cantrips
+        self.state.selected_spells = spells
+        self.state.step = 6  # Advance to review
         return True
 
     def _generate_abilities(self) -> AbilityScores:
@@ -295,7 +405,7 @@ class GuidedCreationFlow:
 
     def finalize(self, player_id: str = "") -> CharacterSheet:
         """Create the final character sheet."""
-        if self.state.step != 5:
+        if self.state.step != 6:
             raise ValueError("Character creation not complete")
 
         race_data = RACES[self.state.race]
@@ -320,18 +430,14 @@ class GuidedCreationFlow:
             base_ac = 10 + dex_mod
             equipment = ["quarterstaff", "spellbook", "arcane focus"]
 
-        # Spell slots for casters
+        # Spell slots for casters - use player-selected spells
         spell_slots = {}
         cantrips = []
         spells_known = []
         if class_data.spellcasting:
             spell_slots = {1: 2}
-            if self.state.character_class == ClassName.CLERIC:
-                cantrips = ["sacred_flame", "light"]
-                spells_known = ["cure_wounds", "bless"]
-            else:
-                cantrips = ["fire_bolt", "light"]
-                spells_known = ["magic_missile", "shield"]
+            cantrips = self.state.selected_cantrips
+            spells_known = self.state.selected_spells
 
         return CharacterSheet(
             character_id=str(uuid.uuid4()),
