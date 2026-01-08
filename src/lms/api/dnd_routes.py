@@ -361,6 +361,38 @@ async def get_class_spells(class_id: str, genre: str = "fantasy"):
     }
 
 
+# =============================================================================
+# EQUIPMENT DATA ENDPOINTS
+# =============================================================================
+
+@router.get("/equipment")
+async def list_all_equipment():
+    """Get all equipment data."""
+    from ..dnd5e.data.loader import get_srd_loader
+    loader = get_srd_loader()
+    return loader.get_all_equipment()
+
+
+@router.get("/equipment/class/{class_id}")
+async def get_class_equipment_choices(class_id: str):
+    """Get equipment choices for a specific class."""
+    from ..dnd5e.data.loader import get_srd_loader
+    loader = get_srd_loader()
+
+    choices = loader.get_equipment_choices_for_class(class_id)
+    if not choices:
+        return {"class_id": class_id, "choices": None, "fixed": []}
+
+    return {
+        "class_id": class_id,
+        "choices": {
+            k: v for k, v in choices.items()
+            if k.startswith("choice_")
+        },
+        "fixed": choices.get("fixed", []),
+    }
+
+
 @router.get("/reference/skills")
 async def list_skills():
     """Get all skills and their associated abilities."""
@@ -499,14 +531,32 @@ async def guided_creation_step(flow_id: str, request: GuidedStepRequest):
         # Skills are passed as comma-separated
         skills = [s.strip() for s in request.choice.split(",")]
         success = flow.set_skills(skills)
+    elif step == 5:
+        # Spells are passed as JSON: {"cantrips": [...], "spells": [...]}
+        import json
+        try:
+            spell_data = json.loads(request.choice)
+            cantrips = spell_data.get("cantrips", [])
+            spells = spell_data.get("spells", [])
+            success = flow.set_spells(cantrips, spells)
+        except json.JSONDecodeError:
+            success = False
+    elif step == 6:
+        # Equipment choices are passed as JSON: {"choice_1": "option_id", ...}
+        import json
+        try:
+            equipment_choices = json.loads(request.choice)
+            success = flow.set_equipment(equipment_choices)
+        except json.JSONDecodeError:
+            success = False
     else:
         success = False
 
     if not success:
         raise HTTPException(status_code=400, detail="Invalid choice for this step")
 
-    # Check if complete
-    if flow.get_current_step() == 5:
+    # Check if complete (step 7 is review)
+    if flow.get_current_step() == 7:
         return {
             "flow_id": flow_id,
             "genre": genre,

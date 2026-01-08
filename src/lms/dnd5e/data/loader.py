@@ -55,6 +55,7 @@ class SRDDataLoader:
             self._spells_by_class: Dict[str, List[str]] = {}
             self._classes: Dict[str, Dict[str, Any]] = {}
             self._races: Dict[str, Dict[str, Any]] = {}
+            self._equipment: Dict[str, Any] = {}
             self._genre_mappings: Dict[str, Any] = {}
 
     def _load_all(self) -> None:
@@ -62,6 +63,7 @@ class SRDDataLoader:
         self._load_spells()
         self._load_classes()
         self._load_races()
+        self._load_equipment()
         self._load_genre_mappings()
         self._build_indexes()
 
@@ -110,6 +112,10 @@ class SRDDataLoader:
         # Add id field to each race
         for race_id, race_data in self._races.items():
             race_data["id"] = race_id
+
+    def _load_equipment(self) -> None:
+        """Load equipment from equipment.json."""
+        self._equipment = self._load_json(self._data_dir / "equipment.json")
 
     def _load_genre_mappings(self) -> None:
         """Load genre conversion mappings."""
@@ -212,6 +218,49 @@ class SRDDataLoader:
     def get_all_races(self, genre: str = "fantasy") -> List[Dict[str, Any]]:
         """Get all races."""
         return [self.get_race(rid, genre) for rid in self._races.keys()]
+
+    # =========================================================================
+    # EQUIPMENT ACCESS
+    # =========================================================================
+
+    def get_weapon(self, weapon_id: str) -> Optional[Dict[str, Any]]:
+        """Get a weapon by ID."""
+        weapons = self._equipment.get("weapons", {})
+        weapon = weapons.get(weapon_id)
+        if weapon:
+            result = weapon.copy()
+            result["id"] = weapon_id
+            return result
+        return None
+
+    def get_armor(self, armor_id: str) -> Optional[Dict[str, Any]]:
+        """Get an armor by ID."""
+        armor_items = self._equipment.get("armor", {})
+        armor = armor_items.get(armor_id)
+        if armor:
+            result = armor.copy()
+            result["id"] = armor_id
+            return result
+        return None
+
+    def get_pack(self, pack_id: str) -> Optional[Dict[str, Any]]:
+        """Get a pack by ID."""
+        packs = self._equipment.get("packs", {})
+        pack = packs.get(pack_id)
+        if pack:
+            result = pack.copy()
+            result["id"] = pack_id
+            return result
+        return None
+
+    def get_equipment_choices_for_class(self, class_id: str) -> Optional[Dict[str, Any]]:
+        """Get equipment choices for a class."""
+        class_choices = self._equipment.get("class_choices", {})
+        return class_choices.get(class_id.lower())
+
+    def get_all_equipment(self) -> Dict[str, Any]:
+        """Get all equipment data."""
+        return self._equipment.copy()
 
     # =========================================================================
     # GENRE CONVERSION

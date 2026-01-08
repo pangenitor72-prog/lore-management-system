@@ -21,6 +21,7 @@ class GuidedCreationState(BaseModel):
     skill_proficiencies: List[str] = []
     selected_cantrips: List[str] = []  # Selected cantrip IDs
     selected_spells: List[str] = []  # Selected spell IDs
+    selected_equipment: Dict[str, str] = {}  # choice_1: "option_id", etc.
     completed: bool = False
 
 
@@ -29,12 +30,14 @@ class GuidedCreationFlow:
     Step-by-step character creation with plain language explanations.
 
     Steps:
-    1. Choose name
-    2. "What draws you to adventure?" (race with narrative framing)
-    3. "How do you solve problems?" (class with playstyle focus)
-    4. "What are your strengths?" (simplified ability priority)
-    5. "What are you good at?" (skills with context)
-    6. Review with narrative summary
+    0. Choose name
+    1. "What ancestry calls to you?" (race with narrative framing)
+    2. "What is your calling?" (class with playstyle focus)
+    3. "What is your greatest strength?" (simplified ability priority)
+    4. "What are you good at?" (skills with context)
+    5. "Choose your spells" (casters only, non-casters skip)
+    6. "Choose your equipment" (class-based choices)
+    7. Review with narrative summary
     """
 
     PLAYSTYLE_TO_ABILITIES = {
@@ -186,7 +189,7 @@ class GuidedCreationFlow:
             # Spell selection step (casters only)
             class_data = CLASSES[self.state.character_class]
             if not class_data.spellcasting:
-                # Non-casters skip spell selection, go directly to review
+                # Non-casters skip spell selection, go to equipment
                 self.state.step = 6
                 return self.get_step_content()
 
@@ -219,6 +222,36 @@ class GuidedCreationFlow:
             }
 
         elif step == 6:
+            # Equipment selection step
+            from ..data.loader import get_srd_loader
+            loader = get_srd_loader()
+            class_id = self.state.character_class.value
+            equipment_choices = loader.get_equipment_choices_for_class(class_id)
+
+            if not equipment_choices:
+                # No choices for this class, skip to review
+                self.state.step = 7
+                return self.get_step_content()
+
+            choices = []
+            for key, choice in equipment_choices.items():
+                if key.startswith("choice_"):
+                    choices.append({
+                        "choice_id": key,
+                        "prompt": choice.get("prompt", "Choose equipment"),
+                        "options": choice.get("options", []),
+                        "selected": self.state.selected_equipment.get(key),
+                    })
+
+            return {
+                "step": "equipment",
+                "question": "Choose your starting equipment",
+                "hint": "Select your gear from the options below.",
+                "choices": choices,
+                "fixed": equipment_choices.get("fixed", []),
+            }
+
+        elif step == 7:
             return {
                 "step": "review",
                 "question": "Does this look right?",
@@ -333,7 +366,7 @@ class GuidedCreationFlow:
 
         # Non-casters don't select spells
         if not class_data.spellcasting:
-            self.state.step = 6
+            self.state.step = 6  # Go to equipment
             return True
 
         # Validate cantrip count
@@ -364,7 +397,34 @@ class GuidedCreationFlow:
 
         self.state.selected_cantrips = cantrips
         self.state.selected_spells = spells
-        self.state.step = 6  # Advance to review
+        self.state.step = 6  # Advance to equipment selection
+        return True
+
+    def set_equipment(self, choices: Dict[str, str]) -> bool:
+        """Set selected equipment choices."""
+        from ..data.loader import get_srd_loader
+        loader = get_srd_loader()
+        class_id = self.state.character_class.value
+        equipment_data = loader.get_equipment_choices_for_class(class_id)
+
+        if not equipment_data:
+            # No choices for this class, advance to review
+            self.state.step = 7
+            return True
+
+        # Validate all required choices are provided
+        required_choices = [k for k in equipment_data.keys() if k.startswith("choice_")]
+        for choice_key in required_choices:
+            if choice_key not in choices:
+                return False
+            # Validate the option is valid
+            choice_data = equipment_data[choice_key]
+            valid_options = [opt.get("id") for opt in choice_data.get("options", [])]
+            if choices[choice_key] not in valid_options:
+                return False
+
+        self.state.selected_equipment = choices
+        self.state.step = 7  # Advance to review
         return True
 
     def _generate_abilities(self) -> AbilityScores:
@@ -405,7 +465,7 @@ class GuidedCreationFlow:
 
     def finalize(self, player_id: str = "") -> CharacterSheet:
         """Create the final character sheet."""
-        if self.state.step != 6:
+        if self.state.step != 7:
             raise ValueError("Character creation not complete")
 
         race_data = RACES[self.state.race]
@@ -416,19 +476,11 @@ class GuidedCreationFlow:
         dex_mod = abilities.get_modifier(AbilityName.DEX)
         starting_hp = get_starting_hp(self.state.character_class, con_mod)
 
-        # Calculate AC based on class
-        if self.state.character_class == ClassName.FIGHTER:
-            base_ac = 16  # Chain mail
-            equipment = ["chain mail", "longsword", "shield"]
-        elif self.state.character_class == ClassName.ROGUE:
-            base_ac = 11 + dex_mod
-            equipment = ["leather armor", "rapier", "shortbow"]
-        elif self.state.character_class == ClassName.CLERIC:
-            base_ac = 14 + min(dex_mod, 2) + 2
-            equipment = ["scale mail", "mace", "shield", "holy symbol"]
-        else:  # Wizard
-            base_ac = 10 + dex_mod
-            equipment = ["quarterstaff", "spellbook", "arcane focus"]
+        # Build equipment from selections
+        equipment = self._build_equipment_list(dex_mod)
+
+        # Calculate AC based on selected armor
+        base_ac = self._calculate_ac_from_equipment(equipment, dex_mod)
 
         # Spell slots for casters - use player-selected spells
         spell_slots = {}
@@ -462,6 +514,57 @@ class GuidedCreationFlow:
             features=class_data.features_by_level.get(1, []),
             rules_visibility="guided",
         )
+
+    def _build_equipment_list(self, dex_mod: int) -> List[str]:
+        """Build equipment list from selected choices and fixed items."""
+        from ..data.loader import get_srd_loader
+        loader = get_srd_loader()
+        class_id = self.state.character_class.value
+        equipment_data = loader.get_equipment_choices_for_class(class_id)
+
+        equipment = []
+
+        if equipment_data:
+            # Add fixed items
+            equipment.extend(equipment_data.get("fixed", []))
+
+            # Add items from selected choices
+            for choice_key, selected_id in self.state.selected_equipment.items():
+                choice_data = equipment_data.get(choice_key, {})
+                for option in choice_data.get("options", []):
+                    if option.get("id") == selected_id:
+                        equipment.extend(option.get("items", []))
+                        break
+        else:
+            # Fallback for classes without equipment data
+            if self.state.character_class == ClassName.FIGHTER:
+                equipment = ["chain mail", "longsword", "shield"]
+            elif self.state.character_class == ClassName.ROGUE:
+                equipment = ["leather armor", "rapier", "shortbow"]
+            elif self.state.character_class == ClassName.CLERIC:
+                equipment = ["scale mail", "mace", "shield", "holy symbol"]
+            else:  # Wizard
+                equipment = ["quarterstaff", "spellbook", "arcane focus"]
+
+        return equipment
+
+    def _calculate_ac_from_equipment(self, equipment: List[str], dex_mod: int) -> int:
+        """Calculate AC based on equipped armor."""
+        # Check for armor in equipment
+        if "chain_mail" in equipment or "chain mail" in equipment:
+            return 16  # Heavy armor, no DEX
+        elif "scale_mail" in equipment or "scale mail" in equipment:
+            base_ac = 14 + min(dex_mod, 2)  # Medium armor
+        elif "leather" in equipment or "leather armor" in equipment:
+            base_ac = 11 + dex_mod  # Light armor
+        else:
+            base_ac = 10 + dex_mod  # No armor
+
+        # Add shield if present
+        if "shield" in equipment:
+            base_ac += 2
+
+        return base_ac
 
     def _build_narrative_summary(self) -> Dict[str, Any]:
         """Build a narrative summary for review."""
