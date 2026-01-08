@@ -425,6 +425,242 @@ async def cleanup_old_sessions(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/admin/lore-bases/details")
+async def get_all_lore_bases_details(
+    http_request: Request,
+):
+    """
+    Get detailed info about all curated worlds including:
+    - Basic info (id, name, description, genres, tones)
+    - Lore content (the actual seed text)
+    - Entity counts from database
+    - Ingestion status
+    """
+    db = getattr(http_request.app.state, "neo4j_db", None)
+
+    # Get entity counts per world from database
+    entity_counts = {}
+    if db:
+        try:
+            result = await db.execute("""
+                MATCH (n:Entity)
+                WHERE n.curated_world_id IS NOT NULL OR n.world_id IS NOT NULL
+                WITH COALESCE(n.curated_world_id, n.world_id) AS world_id
+                RETURN world_id, count(*) AS count
+            """, {})
+            for row in result:
+                wid = row.get("world_id", "")
+                # Filter out session-scoped IDs (contain underscore + 8 chars)
+                if wid and not (len(wid) > 9 and wid[-9] == '_'):
+                    entity_counts[wid] = row.get("count", 0)
+        except Exception as e:
+            logger.warning(f"Failed to get entity counts: {e}")
+
+    worlds = []
+    for lore_id, base in LORE_BASES.items():
+        worlds.append({
+            "id": base["id"],
+            "name": base["name"],
+            "description": base.get("description", ""),
+            "genre": base.get("genre"),
+            "genre_hints": base.get("genre_hints", []),
+            "tone_hints": base.get("tone_hints", []),
+            "lore_content": base.get("lore_content", ""),
+            "seed_prompt": base.get("seed_prompt", ""),
+            "is_seed": base.get("is_seed", False),
+            "entity_count": entity_counts.get(lore_id, 0),
+            "has_lore_content": bool(base.get("lore_content", "").strip()),
+            "lore_char_count": len(base.get("lore_content", "")),
+        })
+
+    return {
+        "worlds": worlds,
+        "total_worlds": len(worlds),
+        "total_entities": sum(entity_counts.values()),
+    }
+
+
+@router.put("/admin/lore-bases/{lore_id}/lore")
+async def update_lore_base_content(
+    lore_id: str,
+    http_request: Request,
+):
+    """
+    Update the lore_content for a curated world.
+    This updates the JSON file on disk and reloads the lore base.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    try:
+        body = await http_request.json()
+        new_lore = body.get("lore_content", "")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    # Find the JSON file for this lore base
+    lore_file = None
+    for json_file in LORE_BASES_DIR.glob("*.json"):
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if data.get("id") == lore_id:
+                    lore_file = json_file
+                    break
+        except Exception:
+            continue
+
+    if not lore_file:
+        # Check seeds directory
+        for json_file in SEEDS_DIR.glob("*.json"):
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    if data.get("id") == lore_id:
+                        lore_file = json_file
+                        break
+            except Exception:
+                continue
+
+    if not lore_file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Could not find JSON file for lore base '{lore_id}'"
+        )
+
+    # Update the file
+    try:
+        with open(lore_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        data["lore_content"] = new_lore
+
+        with open(lore_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        # Update in-memory cache
+        LORE_BASES[lore_id]["lore_content"] = new_lore
+
+        logger.info(f"Updated lore_content for '{lore_id}': {len(new_lore)} chars")
+        return {
+            "success": True,
+            "lore_id": lore_id,
+            "lore_char_count": len(new_lore),
+            "message": f"Updated lore for '{lore_id}'"
+        }
+    except Exception as e:
+        logger.error(f"Failed to update lore for '{lore_id}': {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/admin/entities/orphans")
+async def get_orphan_entities(
+    http_request: Request,
+):
+    """
+    Find entities that are not associated with any valid curated world.
+    These may be from deleted worlds or failed ingestions.
+    """
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if not db:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    valid_world_ids = set(LORE_BASES.keys())
+
+    try:
+        # Find entities with no world_id or with an invalid world_id
+        result = await db.execute("""
+            MATCH (n:Entity)
+            RETURN n.canon_id AS canon_id,
+                   n.name AS name,
+                   n.entity_type AS entity_type,
+                   n.world_id AS world_id,
+                   n.curated_world_id AS curated_world_id,
+                   n.source_name AS source_name
+            ORDER BY n.world_id, n.name
+        """, {})
+
+        orphans = []
+        valid = []
+        for row in result:
+            world_id = row.get("world_id", "")
+            curated_id = row.get("curated_world_id", "")
+
+            # Check if it belongs to a valid curated world
+            is_valid = False
+            if curated_id and curated_id in valid_world_ids:
+                is_valid = True
+            elif world_id and world_id in valid_world_ids:
+                is_valid = True
+            # Session-scoped entities are valid if base world exists
+            elif world_id and "_" in world_id:
+                base_world = world_id.rsplit("_", 1)[0]
+                if base_world in valid_world_ids or base_world == "custom":
+                    is_valid = True
+
+            if is_valid:
+                valid.append(row)
+            else:
+                orphans.append({
+                    "canon_id": row.get("canon_id"),
+                    "name": row.get("name"),
+                    "entity_type": row.get("entity_type"),
+                    "world_id": world_id,
+                    "curated_world_id": curated_id,
+                    "source_name": row.get("source_name"),
+                })
+
+        return {
+            "orphan_count": len(orphans),
+            "valid_count": len(valid),
+            "orphans": orphans[:100],  # Limit to 100 for display
+            "valid_worlds": list(valid_world_ids),
+        }
+    except Exception as e:
+        logger.error(f"Failed to find orphan entities: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/admin/entities/orphans")
+async def delete_orphan_entities(
+    http_request: Request,
+):
+    """
+    Delete all orphan entities that are not associated with valid curated worlds.
+    """
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if not db:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    valid_world_ids = list(LORE_BASES.keys())
+
+    try:
+        # Delete entities with no valid world association
+        # This is conservative - only deletes entities with world_ids that don't match any known world
+        result = await db.execute("""
+            MATCH (n:Entity)
+            WHERE n.world_id IS NOT NULL
+              AND NOT n.world_id IN $valid_worlds
+              AND NOT n.curated_world_id IN $valid_worlds
+              AND NOT any(w IN $valid_worlds WHERE n.world_id STARTS WITH w + '_')
+            DETACH DELETE n
+            RETURN count(n) AS deleted
+        """, {"valid_worlds": valid_world_ids})
+
+        deleted = result[0].get("deleted", 0) if result else 0
+        logger.info(f"Deleted {deleted} orphan entities")
+        return {
+            "deleted": deleted,
+            "message": f"Deleted {deleted} orphan entities",
+        }
+    except Exception as e:
+        logger.error(f"Failed to delete orphan entities: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================
 # API USAGE TRACKING (for cost monitoring)
 # ============================================================
