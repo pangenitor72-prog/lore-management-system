@@ -168,5 +168,132 @@
       "default_equipment": ["quarterstaff", "arcane focus", "spellbook", "scholar's pack"],
       "gold": 0
     }
+  },
+  "class_choices": {
+    "fighter": {
+      "choice_1": {
+        "prompt": "Choose your armor",
+        "options": [
+          {"id": "heavy", "name": "Chain Mail", "items": ["chain_mail"], "ac": 16},
+          {"id": "light", "name": "Leather Armor + Longbow", "items": ["leather", "longbow", "20 arrows"], "ac": "11 + DEX"}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your weapons",
+        "options": [
+          {"id": "sword_shield", "name": "Longsword & Shield", "items": ["longsword", "shield"]},
+          {"id": "two_weapons", "name": "Two Martial Weapons", "items": ["longsword", "shortsword"]}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your ranged option",
+        "options": [
+          {"id": "crossbow", "name": "Light Crossbow & 20 Bolts", "items": ["light_crossbow", "20 bolts"]},
+          {"id": "handaxes", "name": "Two Handaxes", "items": ["handaxe", "handaxe"]}
+        ]
+      },
+      "fixed": ["explorer's pack"]
+    },
+    "rogue": {
+      "choice_1": {
+        "prompt": "Choose your primary weapon",
+        "options": [
+          {"id": "rapier", "name": "Rapier", "items": ["rapier"]},
+          {"id": "shortsword", "name": "Shortsword", "items": ["shortsword"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your secondary weapon",
+        "options": [
+          {"id": "shortbow", "name": "Shortbow & 20 Arrows", "items": ["shortbow", "20 arrows"]},
+          {"id": "shortsword2", "name": "Shortsword", "items": ["shortsword"]}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "burglar", "name": "Burglar's Pack", "items": ["burglar's pack"]},
+          {"id": "dungeoneer", "name": "Dungeoneer's Pack", "items": ["dungeoneer's pack"]},
+          {"id": "explorer", "name": "Explorer's Pack", "items": ["explorer's pack"]}
+        ]
+      },
+      "fixed": ["leather", "dagger", "dagger", "thieves' tools"]
+    },
+    "cleric": {
+      "choice_1": {
+        "prompt": "Choose your weapon",
+        "options": [
+          {"id": "mace", "name": "Mace", "items": ["mace"]},
+          {"id": "warhammer", "name": "Warhammer", "items": ["warhammer"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your armor",
+        "options": [
+          {"id": "scale_mail", "name": "Scale Mail", "items": ["scale_mail"], "ac": 14},
+          {"id": "leather", "name": "Leather Armor", "items": ["leather"], "ac": "11 + DEX"},
+          {"id": "chain_mail", "name": "Chain Mail", "items": ["chain_mail"], "ac": 16}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "priest", "name": "Priest's Pack", "items": ["priest's pack"]},
+          {"id": "explorer", "name": "Explorer's Pack", "items": ["explorer's pack"]}
+        ]
+      },
+      "fixed": ["shield", "holy symbol"]
+    },
+    "wizard": {
+      "choice_1": {
+        "prompt": "Choose your weapon",
+        "options": [
+          {"id": "quarterstaff", "name": "Quarterstaff", "items": ["quarterstaff"]},
+          {"id": "dagger", "name": "Dagger", "items": ["dagger"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your arcane focus",
+        "options": [
+          {"id": "pouch", "name": "Component Pouch", "items": ["component pouch"]},
+          {"id": "focus", "name": "Arcane Focus", "items": ["arcane focus"]}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "scholar", "name": "Scholar's Pack", "items": ["scholar's pack"]},
+          {"id": "explorer", "name": "Explorer's Pack", "items": ["explorer's pack"]}
+        ]
+      },
+      "fixed": ["spellbook"]
+    }
+  },
+  "packs": {
+    "explorer's pack": {
+      "name": "Explorer's Pack",
+      "cost": 10,
+      "contents": ["backpack", "bedroll", "mess kit", "tinderbox", "10 torches", "10 days rations", "waterskin", "50 feet hemp rope"]
+    },
+    "burglar's pack": {
+      "name": "Burglar's Pack",
+      "cost": 16,
+      "contents": ["backpack", "bag of 1000 ball bearings", "10 feet string", "bell", "5 candles", "crowbar", "hammer", "10 pitons", "hooded lantern", "2 flasks oil", "5 days rations", "tinderbox", "waterskin"]
+    },
+    "dungeoneer's pack": {
+      "name": "Dungeoneer's Pack",
+      "cost": 12,
+      "contents": ["backpack", "crowbar", "hammer", "10 pitons", "10 torches", "tinderbox", "10 days rations", "waterskin", "50 feet hemp rope"]
+    },
+    "priest's pack": {
+      "name": "Priest's Pack",
+      "cost": 19,
+      "contents": ["backpack", "blanket", "10 candles", "tinderbox", "alms box", "2 blocks incense", "censer", "vestments", "2 days rations", "waterskin"]
+    },
+    "scholar's pack": {
+      "name": "Scholar's Pack",
+      "cost": 40,
+      "contents": ["backpack", "book of lore", "bottle of ink", "ink pen", "10 sheets parchment", "little bag of sand", "small knife"]
+    }
   }
 }
