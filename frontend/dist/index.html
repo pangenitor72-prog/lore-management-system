@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <title>AIRPG - AI-Powered Roleplaying</title>
+    <title>Mantle - Your Story Awaits</title>
 
     <!-- Cache Control - Ensure users get latest version -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -16,7 +16,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="AIRPG">
+    <meta name="apple-mobile-web-app-title" content="Mantle">
     <link rel="apple-touch-icon" href="/icons/icon.png">
     <link rel="icon" type="image/png" href="/icons/icon.png">
 
@@ -418,6 +418,77 @@
             color: var(--accent-gold);
             margin-bottom: 8px;
             text-shadow: 0 2px 20px rgba(232, 196, 124, 0.3);
+        }
+
+        /* MANTLE Logo - Professional title integrated with raven */
+        .mantle-logo-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .mantle-logo-container .landing-mascot {
+            margin-bottom: -25px;
+            z-index: 1;
+        }
+
+        .mantle-title {
+            font-size: 4.5rem !important;
+            font-weight: 300 !important;
+            letter-spacing: 0.35em !important;
+            text-transform: uppercase;
+            background: linear-gradient(
+                180deg,
+                #e8c47c 0%,
+                #d4a574 25%,
+                #c98b8b 50%,
+                #a08bc9 75%,
+                #8ba88b 100%
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            position: relative;
+            padding: 0 20px;
+        }
+
+        .mantle-title::before,
+        .mantle-title::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 80px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+        }
+
+        .mantle-title::before {
+            right: 100%;
+            margin-right: 15px;
+        }
+
+        .mantle-title::after {
+            left: 100%;
+            margin-left: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .mantle-title {
+                font-size: 2.8rem !important;
+                letter-spacing: 0.2em !important;
+            }
+
+            .mantle-title::before,
+            .mantle-title::after {
+                width: 40px;
+            }
+
+            .mantle-logo-container .landing-mascot {
+                margin-bottom: -15px;
+            }
         }
 
         .landing-subtitle {
@@ -4997,14 +5068,14 @@
     <!-- Announcement Banner (controlled via JavaScript or API) -->
     <div id="announcement-banner" class="announcement-banner">
         <span class="banner-icon" id="banner-icon">📢</span>
-        <span id="banner-message">Welcome to AIRPG!</span>
+        <span id="banner-message">Welcome to Mantle!</span>
         <button class="banner-close" onclick="dismissAnnouncement()" title="Dismiss">×</button>
     </div>
 
     <div class="container" id="main-content">
         <header>
-            <h1 class="logo">AIRPG</h1>
-            <p class="tagline">AI-Powered Roleplaying Games</p>
+            <h1 class="logo">MANTLE</h1>
+            <p class="tagline">Your Story Awaits</p>
         </header>
 
         <!-- Invite Code Screen (Alpha Testing) - Disabled for now -->
@@ -5084,9 +5155,11 @@
         <!-- Landing Screen (Intent-Based) -->
         <div id="start" class="screen active">
             <div class="landing-hero">
-                <img src="/images/raven.png" alt="AIRPG Raven" class="landing-mascot">
-                <h1 class="landing-title">AIRPG</h1>
-                <p class="landing-subtitle">AI-Powered Roleplaying</p>
+                <div class="mantle-logo-container">
+                    <img src="/images/raven.png" alt="Mantle Raven" class="landing-mascot">
+                    <h1 class="landing-title mantle-title">MANTLE</h1>
+                </div>
+                <p class="landing-subtitle">Your Story Awaits</p>
             </div>
 
             <div class="landing-cards">
