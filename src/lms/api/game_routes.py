@@ -54,6 +54,9 @@ except ImportError:
     ARC_ENGINE_AVAILABLE = False
     ArcEngine = None
 
+# Context-aware action suggestions
+from src.lms.suggestions.action_engine import generate_action_suggestions, PlayerMode
+
 logger = logging.getLogger(__name__)
 
 # Shared lore parsing agent for extracting entities from gameplay
@@ -1846,12 +1849,36 @@ async def process_action(
         )
     )
 
-    # Generate suggested actions for guided mode
-    suggested_actions = _generate_suggested_actions(
-        response_text,
-        session.get("genre", "fantasy"),
-        session.get("storytelling_style", "guided"),
-    )
+    # Generate context-aware action suggestions
+    # Only for guided storytelling style
+    suggested_actions = None
+    if session.get("storytelling_style") == "guided":
+        # Determine player mode from rules visibility
+        rules_vis = session.get("rules_visibility", "storyteller")
+        player_mode = "ttrpg" if rules_vis == "tactician" else "quick_start"
+
+        # Get character class if available
+        character_class = None
+        if session.get("character_id"):
+            character = _characters.get(session["character_id"])
+            if character:
+                character_class = character.archetype
+
+        # Get arc phase and tension from arc context
+        arc_phase = arc_context.get("current_phase") if arc_context else None
+        tension = 0.5  # Default medium tension
+        if arc_context:
+            tension_level = arc_context.get("tension_level", "medium")
+            tension = {"low": 0.3, "medium": 0.5, "high": 0.8, "climax": 1.0}.get(tension_level, 0.5)
+
+        suggested_actions = generate_action_suggestions(
+            narrative=response_text,
+            mode=player_mode,
+            character_class=character_class,
+            arc_phase=arc_phase,
+            tension=tension,
+            max_suggestions=5,
+        )
 
     # Extract structured events from narrative for frontend
     turn_count = len(session.get("history", [])) // 2
@@ -2048,132 +2075,6 @@ def _extract_events_from_narrative(
                 ))
 
     return events
-
-
-def _generate_suggested_actions(
-    narrative: str,
-    genre: str,
-    style: str,
-) -> Optional[List[str]]:
-    """
-    Generate contextual action suggestions based on narrative and genre.
-
-    Returns 3 suggested actions for 'guided' style, None for other styles.
-    """
-    if style != "guided":
-        return None
-
-    # Genre-specific action templates
-    genre_actions = {
-        "fantasy": [
-            "Look for magical signs",
-            "Speak with a local",
-            "Examine my surroundings",
-            "Draw my weapon",
-            "Search for clues",
-            "Ask about the legends",
-        ],
-        "romance": [
-            "Make eye contact",
-            "Start a conversation",
-            "Ask about their day",
-            "Offer to help",
-            "Share something personal",
-            "Take a deep breath",
-        ],
-        "mystery": [
-            "Search for clues",
-            "Question a witness",
-            "Examine the evidence",
-            "Follow the lead",
-            "Check my notes",
-            "Look for something out of place",
-        ],
-        "horror": [
-            "Listen carefully",
-            "Check behind me",
-            "Look for an exit",
-            "Investigate cautiously",
-            "Stay calm",
-            "Find a light source",
-        ],
-        "adventure": [
-            "Explore further",
-            "Check my equipment",
-            "Look for a path",
-            "Ask the guide",
-            "Take point",
-            "Search for supplies",
-        ],
-        "drama": [
-            "Speak my mind",
-            "Listen quietly",
-            "Ask what happened",
-            "Offer support",
-            "Walk away",
-            "Take a moment",
-        ],
-        "scifi": [
-            "Scan the area",
-            "Check the systems",
-            "Hail the station",
-            "Analyze the data",
-            "Prepare for departure",
-            "Access the terminal",
-        ],
-        "urban_fantasy": [
-            "Sense for magic",
-            "Check the mundane explanation",
-            "Consult my grimoire",
-            "Look for hidden wards",
-            "Blend in with normals",
-            "Reach out to my contact",
-        ],
-        "gothic": [
-            "Listen to the shadows",
-            "Check the beast within",
-            "Sense supernatural presence",
-            "Look for signs of exposure",
-            "Appeal to the old ways",
-            "Trust my instincts",
-        ],
-    }
-
-    # Get genre-specific actions or default
-    base_actions = genre_actions.get(genre, [
-        "Look around",
-        "Talk to someone nearby",
-        "Investigate further",
-        "Wait and observe",
-        "Move cautiously",
-        "Ask a question",
-    ])
-
-    # Context-aware suggestions based on narrative keywords
-    suggestions = []
-
-    narrative_lower = narrative.lower()
-
-    # Add contextual suggestions
-    if any(word in narrative_lower for word in ["person", "figure", "man", "woman", "stranger"]):
-        suggestions.append("Approach and introduce myself")
-    if any(word in narrative_lower for word in ["door", "entrance", "gate"]):
-        suggestions.append("Try the door")
-    if any(word in narrative_lower for word in ["letter", "note", "paper", "book"]):
-        suggestions.append("Read it carefully")
-    if any(word in narrative_lower for word in ["sound", "noise", "voice"]):
-        suggestions.append("Listen more closely")
-    if any(word in narrative_lower for word in ["dark", "shadow", "night"]):
-        suggestions.append("Look for a light source")
-
-    # Fill remaining slots with genre actions
-    import random
-    while len(suggestions) < 3:
-        action = random.choice(base_actions)
-        if action not in suggestions:
-            suggestions.append(action)
-
-    return suggestions[:3]
 
 
 def _get_genre_guidance(genre: str) -> Dict[str, str]:
