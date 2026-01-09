@@ -5060,6 +5060,398 @@
             display: flex !important;
             background: var(--accent-rose) !important;
         }
+
+        /* ============================================================
+           LIVING GRIMOIRE: Biome Themes
+           Dynamic atmosphere based on location
+           ============================================================ */
+
+        /* Dungeon Theme - Deep caverns, crypts, underground */
+        #story.theme-dungeon {
+            --biome-bg-primary: #12151a;
+            --biome-bg-secondary: #1a1e25;
+            --biome-accent: #6b9bd1;
+            --biome-accent-glow: rgba(107, 155, 209, 0.3);
+            --biome-text-highlight: #8fb4e0;
+            --biome-border: #2a3545;
+        }
+
+        #story.theme-dungeon .passage.narrator {
+            background: linear-gradient(135deg, var(--biome-bg-secondary), var(--biome-bg-primary));
+            border-left-color: var(--biome-accent);
+        }
+
+        #story.theme-dungeon .story-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at bottom, rgba(107, 155, 209, 0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Forest Theme - Woods, groves, nature */
+        #story.theme-forest {
+            --biome-bg-primary: #141a14;
+            --biome-bg-secondary: #1e2a1e;
+            --biome-accent: #7ab87a;
+            --biome-accent-glow: rgba(122, 184, 122, 0.3);
+            --biome-text-highlight: #a5d4a5;
+            --biome-border: #2a3d2a;
+        }
+
+        #story.theme-forest .passage.narrator {
+            background: linear-gradient(135deg, var(--biome-bg-secondary), var(--biome-bg-primary));
+            border-left-color: var(--biome-accent);
+        }
+
+        #story.theme-forest .story-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at top, rgba(122, 184, 122, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* City Theme - Towns, taverns, civilization */
+        #story.theme-city {
+            --biome-bg-primary: #1a1815;
+            --biome-bg-secondary: #2a2520;
+            --biome-accent: #d4a574;
+            --biome-accent-glow: rgba(212, 165, 116, 0.3);
+            --biome-text-highlight: #e8c47c;
+            --biome-border: #3d3530;
+        }
+
+        #story.theme-city .passage.narrator {
+            background: linear-gradient(135deg, var(--biome-bg-secondary), var(--biome-bg-primary));
+            border-left-color: var(--biome-accent);
+        }
+
+        #story.theme-city .story-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, rgba(212, 165, 116, 0.03) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Wilderness Theme - Plains, roads, open areas */
+        #story.theme-wilderness {
+            --biome-bg-primary: #18181a;
+            --biome-bg-secondary: #252528;
+            --biome-accent: #a89a8b;
+            --biome-accent-glow: rgba(168, 154, 139, 0.3);
+            --biome-text-highlight: #c9bba8;
+            --biome-border: #3a3835;
+        }
+
+        #story.theme-wilderness .passage.narrator {
+            background: linear-gradient(135deg, var(--biome-bg-secondary), var(--biome-bg-primary));
+            border-left-color: var(--biome-accent);
+        }
+
+        /* Theme transition animation */
+        #story[class*="theme-"] .passage.narrator {
+            transition: background 0.6s ease, border-color 0.6s ease;
+        }
+
+        /* ============================================================
+           LIVING GRIMOIRE: Scene Card (Location Anchor)
+           ============================================================ */
+
+        .scene-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        /* Decorative corner accents */
+        .scene-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30px;
+            height: 30px;
+            border-top: 2px solid var(--accent-warm);
+            border-left: 2px solid var(--accent-warm);
+            border-radius: 12px 0 0 0;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .scene-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            border-bottom: 2px solid var(--accent-warm);
+            border-right: 2px solid var(--accent-warm);
+            border-radius: 0 0 12px 0;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .scene-card:hover::before,
+        .scene-card:hover::after {
+            opacity: 0.8;
+        }
+
+        .scene-card__header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .scene-card__icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .scene-card__location {
+            font-family: 'Georgia', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            margin: 0;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .scene-card__conditions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .scene-card__condition {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .scene-card__entities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .scene-card__entity {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .scene-card__entity:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-warm);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        /* Entity type colors */
+        .scene-card__entity--npc { border-color: rgba(139, 168, 139, 0.4); }
+        .scene-card__entity--creature { border-color: rgba(201, 139, 139, 0.4); }
+        .scene-card__entity--item { border-color: rgba(212, 165, 116, 0.4); }
+
+        /* Animation for location change */
+        @keyframes sceneCardPulse {
+            0% { box-shadow: 0 0 0 0 var(--accent-warm); }
+            50% { box-shadow: 0 0 20px 5px rgba(212, 165, 116, 0.2); }
+            100% { box-shadow: 0 0 0 0 transparent; }
+        }
+
+        .scene-card--animating {
+            animation: sceneCardPulse 0.6s ease-out;
+        }
+
+        /* ============================================================
+           LIVING GRIMOIRE: Lore Text (Entity Hyperlinks)
+           ============================================================ */
+
+        .lore-link {
+            color: var(--accent-warm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border-bottom: 1px dotted currentColor;
+            padding-bottom: 1px;
+        }
+
+        .lore-link:hover {
+            color: var(--text-primary);
+            border-bottom-style: solid;
+            text-shadow: 0 0 8px rgba(212, 165, 116, 0.4);
+        }
+
+        /* Entity type variants */
+        .lore-link--character,
+        .lore-link--npc {
+            color: #8ba88b;
+            border-color: rgba(139, 168, 139, 0.5);
+        }
+
+        .lore-link--character:hover,
+        .lore-link--npc:hover {
+            text-shadow: 0 0 8px rgba(139, 168, 139, 0.4);
+        }
+
+        .lore-link--location {
+            color: #a08bc9;
+            border-color: rgba(160, 139, 201, 0.5);
+        }
+
+        .lore-link--location:hover {
+            text-shadow: 0 0 8px rgba(160, 139, 201, 0.4);
+        }
+
+        .lore-link--item {
+            color: #d4a574;
+            border-color: rgba(212, 165, 116, 0.5);
+        }
+
+        .lore-link--item:hover {
+            text-shadow: 0 0 8px rgba(212, 165, 116, 0.4);
+        }
+
+        .lore-link--faction {
+            color: #c98b8b;
+            border-color: rgba(201, 139, 139, 0.5);
+        }
+
+        .lore-link--faction:hover {
+            text-shadow: 0 0 8px rgba(201, 139, 139, 0.4);
+        }
+
+        .lore-link--creature {
+            color: #e07a5f;
+            border-color: rgba(224, 122, 95, 0.5);
+        }
+
+        .lore-link--creature:hover {
+            text-shadow: 0 0 8px rgba(224, 122, 95, 0.4);
+        }
+
+        /* Lore Tooltip */
+        .lore-tooltip {
+            position: fixed;
+            z-index: 1000;
+            max-width: 280px;
+            min-width: 160px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border: 1px solid var(--border-accent);
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .lore-tooltip.visible {
+            opacity: 1;
+        }
+
+        .lore-tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid var(--bg-card);
+        }
+
+        .lore-tooltip__type {
+            font-size: 0.65rem;
+            color: var(--accent-warm);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .lore-tooltip__name {
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 2px;
+        }
+
+        .lore-tooltip__description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-top: 8px;
+        }
+
+        /* Animation for new entity appearing */
+        @keyframes loreLinkAppear {
+            from { background-color: rgba(212, 165, 116, 0.3); }
+            to { background-color: transparent; }
+        }
+
+        .lore-link--new {
+            animation: loreLinkAppear 1s ease-out;
+        }
+
+        /* Biome-specific accent colors for themed stories */
+        #story.theme-dungeon .lore-link { color: var(--biome-text-highlight); }
+        #story.theme-dungeon .scene-card::before,
+        #story.theme-dungeon .scene-card::after { border-color: var(--biome-accent); }
+        #story.theme-dungeon .scene-card__location { color: var(--biome-text-highlight); }
+
+        #story.theme-forest .lore-link { color: var(--biome-text-highlight); }
+        #story.theme-forest .scene-card::before,
+        #story.theme-forest .scene-card::after { border-color: var(--biome-accent); }
+        #story.theme-forest .scene-card__location { color: var(--biome-text-highlight); }
+
+        #story.theme-city .lore-link { color: var(--biome-text-highlight); }
+        #story.theme-city .scene-card::before,
+        #story.theme-city .scene-card::after { border-color: var(--biome-accent); }
+        #story.theme-city .scene-card__location { color: var(--biome-text-highlight); }
+
+        #story.theme-wilderness .lore-link { color: var(--biome-text-highlight); }
+        #story.theme-wilderness .scene-card::before,
+        #story.theme-wilderness .scene-card::after { border-color: var(--biome-accent); }
+        #story.theme-wilderness .scene-card__location { color: var(--biome-text-highlight); }
+
     </style>
 </head>
 <body>
@@ -12825,8 +13217,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function loadWithMode(mode) {
             if (selectedSlotForContinue === null) return;
-            closeContinueModal();
-            loadFromSlot(selectedSlotForContinue, mode);
+            const slot = selectedSlotForContinue;  // Save before closing modal
+            document.getElementById('continue-modal').classList.remove('active');
+            selectedSlotForContinue = null;
+            loadFromSlot(slot, mode);
         }
 
         async function loadFromSlot(slot, mode = 'continue') {
