@@ -1,13 +1,19 @@
 {
-  "name": "AIRPG - AI Roleplaying Game",
-  "short_name": "AIRPG",
-  "description": "An AI-powered text-based roleplaying game engine. Create your own adventure with AI storytelling.",
+  "name": "Mantle - Your Story Awaits",
+  "short_name": "Mantle",
+  "description": "An AI-powered narrative roleplaying experience. Craft your own adventure with intelligent storytelling.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1612",
   "theme_color": "#c98b8b",
   "orientation": "any",
   "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon.png",
       "sizes": "512x512",

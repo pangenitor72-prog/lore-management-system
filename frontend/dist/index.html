@@ -18,6 +18,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Mantle">
     <link rel="apple-touch-icon" href="/icons/icon.png">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
     <link rel="icon" type="image/png" href="/icons/icon.png">
 
     <!-- vis.js for graph visualization -->
@@ -6943,12 +6944,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Set to null to hide all announcements.
 
         const CURRENT_ANNOUNCEMENT = {
-            id: 'update-2026-01-08',  // Unique ID for this announcement (used for dismissal tracking)
+            id: 'mantle-launch-2026-01-09',  // Unique ID for this announcement (used for dismissal tracking)
             type: 'success',          // 'info', 'warning', 'success', 'maintenance'
-            icon: '✨',               // Emoji icon
-            message: '<strong>Jan 7-8 Update:</strong> Story continuity across sessions (your adventure saves!) • Feedback system fixed • Arc Engine narrative pacing now persists • World Manager entity counts fixed • All 20+ curated worlds visible. <em>Refresh (Ctrl+Shift+R) for the latest!</em>',
+            icon: '🦅',               // Emoji icon
+            message: '<strong>Welcome to Mantle!</strong> New: Session continuation (Continue Story / New Chapter) • Context-aware action suggestions • 100-turn sessions • Bottom save button. <em>Your story awaits.</em>',
             dismissible: true,        // Can user dismiss it?
-            persistent: true          // If true, shows even after dismissal (for critical maintenance)
+            persistent: false         // If true, shows even after dismissal (for critical maintenance)
         };
 
         // Set to null to disable announcements:

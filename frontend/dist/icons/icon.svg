@@ -4,27 +4,48 @@
       <stop offset="0%" style="stop-color:#2a2420"/>
       <stop offset="100%" style="stop-color:#1a1612"/>
     </linearGradient>
+    <linearGradient id="mantleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8c47c"/>
+      <stop offset="25%" style="stop-color:#d4a574"/>
+      <stop offset="50%" style="stop-color:#c98b8b"/>
+      <stop offset="75%" style="stop-color:#a08bc9"/>
+      <stop offset="100%" style="stop-color:#8ba88b"/>
+    </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#d4a574"/>
       <stop offset="100%" style="stop-color:#c98b8b"/>
     </linearGradient>
   </defs>
   <!-- Background -->
-  <rect width="512" height="512" rx="80" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
   <!-- Decorative border -->
-  <rect x="20" y="20" width="472" height="472" rx="60" fill="none" stroke="url(#accent)" stroke-width="4" opacity="0.5"/>
-  <!-- Book/scroll shape -->
-  <path d="M140 120 L372 120 C390 120 392 140 392 160 L392 380 C392 400 380 400 360 400 L152 400 C132 400 120 400 120 380 L120 160 C120 140 122 120 140 120 Z" fill="#352f2a" stroke="url(#accent)" stroke-width="3"/>
-  <!-- Page lines -->
-  <line x1="160" y1="180" x2="340" y2="180" stroke="#8a7d70" stroke-width="3" stroke-linecap="round"/>
-  <line x1="160" y1="220" x2="320" y2="220" stroke="#8a7d70" stroke-width="3" stroke-linecap="round"/>
-  <line x1="160" y1="260" x2="300" y2="260" stroke="#8a7d70" stroke-width="3" stroke-linecap="round"/>
-  <line x1="160" y1="300" x2="280" y2="300" stroke="#8a7d70" stroke-width="3" stroke-linecap="round"/>
-  <!-- Quill/pen -->
-  <path d="M320 340 L380 280 C390 270 400 280 390 290 L340 360 C335 370 320 370 320 360 L320 340 Z" fill="url(#accent)"/>
-  <!-- Sparkle/AI indicator -->
-  <circle cx="380" cy="140" r="25" fill="url(#accent)" opacity="0.8"/>
-  <path d="M380 120 L380 160 M360 140 L400 140" stroke="#1a1612" stroke-width="4" stroke-linecap="round"/>
-  <!-- AIRPG text -->
-  <text x="256" y="460" font-family="Georgia, serif" font-size="48" font-weight="bold" fill="url(#accent)" text-anchor="middle">AIRPG</text>
+  <rect x="16" y="16" width="480" height="480" rx="84" fill="none" stroke="url(#mantleGrad)" stroke-width="3" opacity="0.4"/>
+
+  <!-- Stylized Raven silhouette -->
+  <g transform="translate(256, 180)">
+    <!-- Body -->
+    <ellipse cx="0" cy="40" rx="65" ry="50" fill="#352f2a"/>
+    <!-- Head -->
+    <circle cx="45" cy="-10" r="35" fill="#352f2a"/>
+    <!-- Beak -->
+    <path d="M75 -15 L110 -5 L75 5 Z" fill="url(#accent)"/>
+    <!-- Wing -->
+    <path d="M-30 20 Q-90 -20 -70 60 Q-30 80 10 50 Z" fill="#453d36"/>
+    <!-- Eye -->
+    <circle cx="55" cy="-15" r="8" fill="url(#mantleGrad)"/>
+    <circle cx="57" cy="-17" r="3" fill="#1a1612"/>
+    <!-- Tail feathers -->
+    <path d="M-50 70 L-80 120 L-60 75 L-70 130 L-40 80 L-50 125 L-20 75 Z" fill="#352f2a"/>
+  </g>
+
+  <!-- MANTLE text -->
+  <text x="256" y="400" font-family="Georgia, serif" font-size="64" font-weight="300" letter-spacing="12" fill="url(#mantleGrad)" text-anchor="middle">MANTLE</text>
+
+  <!-- Decorative lines beside text -->
+  <line x1="40" y1="385" x2="100" y2="385" stroke="url(#accent)" stroke-width="2" opacity="0.6"/>
+  <line x1="412" y1="385" x2="472" y2="385" stroke="url(#accent)" stroke-width="2" opacity="0.6"/>
+
+  <!-- Subtle sparkle -->
+  <circle cx="420" cy="100" r="15" fill="url(#mantleGrad)" opacity="0.6"/>
+  <path d="M420 88 L420 112 M408 100 L432 100" stroke="#1a1612" stroke-width="3" stroke-linecap="round"/>
 </svg>
