@@ -3018,6 +3018,86 @@ async def list_sessions():
 MAX_SAVES_PER_BROWSER = 50
 
 
+async def _generate_session_summary(
+    history: List[Dict[str, str]],
+    save_data: Dict[str, Any],
+    db: Optional[Neo4jDatabase],
+) -> str:
+    """
+    Generate a narrative summary of the previous session for New Chapter mode.
+
+    Creates a "Last time, on your adventure..." style summary that:
+    - Highlights key events and decisions
+    - Mentions important NPCs and locations
+    - Sets up context for the new chapter
+    """
+    if not history:
+        return "A new chapter begins..."
+
+    # Extract key information for summary context
+    character_name = save_data.get("character_name", "the hero")
+    world_name = save_data.get("world_name", "the realm")
+    genre = save_data.get("genre", "fantasy")
+
+    # Get the last few exchanges for recent context
+    recent_history = history[-20:] if len(history) > 20 else history
+
+    # Build conversation text for summarization
+    conversation_text = ""
+    for entry in recent_history:
+        role = "Player" if entry.get("role") == "user" else "Narrator"
+        content = entry.get("content", "")[:500]  # Limit per entry
+        conversation_text += f"{role}: {content}\n\n"
+
+    # Try to use Gemini for intelligent summarization
+    model = get_gemini_model()
+    if model:
+        try:
+            summary_prompt = f"""You are summarizing a {genre} roleplaying story for a player returning after a break.
+
+CHARACTER: {character_name}
+WORLD: {world_name}
+
+RECENT STORY EVENTS:
+{conversation_text}
+
+Write a brief "Previously, in your adventure..." summary (2-3 short paragraphs) that:
+1. Reminds the player what happened
+2. Mentions any key characters, locations, or items
+3. Sets up anticipation for what comes next
+4. Uses second person ("You...")
+5. Matches the {genre} tone
+
+Keep it under 200 words. Be evocative but concise."""
+
+            response = model.generate_content(summary_prompt)
+            if response and response.text:
+                summary = response.text.strip()
+                logger.info(f"Generated session summary ({len(summary)} chars)")
+                return summary
+        except Exception as e:
+            logger.warning(f"Failed to generate AI summary: {e}")
+
+    # Fallback: Extract key details manually
+    # Find mentions of notable elements in recent history
+    last_narrator_text = ""
+    for entry in reversed(history):
+        if entry.get("role") == "assistant":
+            last_narrator_text = entry.get("content", "")
+            break
+
+    # Simple fallback summary
+    if last_narrator_text:
+        # Take first 2-3 sentences as context
+        sentences = last_narrator_text.split(". ")[:3]
+        context = ". ".join(sentences)
+        if not context.endswith("."):
+            context += "."
+        return f"*Previously, in {world_name}...*\n\n{context}\n\nA new chapter begins for {character_name}."
+
+    return f"*A new chapter begins in {world_name}...*\n\nYour adventure continues, {character_name}. The path ahead is yours to forge."
+
+
 class SaveSlotInfo(BaseModel):
     """Information about a save slot."""
     slot: int
@@ -3033,6 +3113,9 @@ class SaveSlotInfo(BaseModel):
     character_id: Optional[str] = None
     character_name: Optional[str] = None
     rules_mode: Optional[str] = None
+    # Session continuation info
+    session_status: Optional[str] = None  # "active", "ended", "mid_scene"
+    suggested_mode: Optional[str] = None  # "continue" or "new_chapter"
 
 
 class InventoryItem(BaseModel):
@@ -3068,6 +3151,11 @@ class LoadGameResponse(BaseModel):
     message: str
     inventory: List[dict] = Field(default_factory=list)
     character: Optional[dict] = None  # Full character data for restoration
+    # Continuation mode fields
+    continuation_mode: str = "continue"  # "continue" or "new_chapter"
+    session_summary: Optional[str] = None  # Summary for new_chapter mode
+    arc_context: Optional[Dict[str, Any]] = None  # Current arc state
+    turn_count: int = 0  # Number of turns in this session
 
 
 @router.get("/saves", response_model=List[SaveSlotInfo])
@@ -3094,7 +3182,7 @@ async def list_save_slots(
                        s.phase as phase, s.turn_count as turn_count,
                        s.saved_at as saved_at, s.world_name as world_name,
                        s.character_id as character_id, s.character_name as character_name,
-                       s.rules_mode as rules_mode
+                       s.rules_mode as rules_mode, s.session_status as session_status
                 ORDER BY s.slot
             """, {"browser_id": browser_id})
 
@@ -3107,6 +3195,20 @@ async def list_save_slots(
             for slot_num in range(1, 11):
                 if slot_num in existing_saves:
                     save = existing_saves[slot_num]
+                    turn_count = save["turn_count"] or 0
+                    session_status = save.get("session_status", "active")
+
+                    # Determine suggested continuation mode based on session state
+                    # - First session (turn_count == 0): Only "continue" makes sense
+                    # - Session ended cleanly: Suggest "new_chapter"
+                    # - Session interrupted mid-scene: Suggest "continue"
+                    if turn_count == 0:
+                        suggested_mode = "continue"  # Just started
+                    elif session_status == "ended":
+                        suggested_mode = "new_chapter"  # Story concluded
+                    else:
+                        suggested_mode = "continue"  # Mid-story, resume
+
                     slots.append(SaveSlotInfo(
                         slot=slot_num,
                         is_empty=False,
@@ -3114,12 +3216,14 @@ async def list_save_slots(
                         character_concept=save["character_concept"],
                         genre=save["genre"],
                         phase=save["phase"],
-                        turn_count=save["turn_count"],
+                        turn_count=turn_count,
                         saved_at=save["saved_at"],
                         world_name=save["world_name"],
                         character_id=save.get("character_id"),
                         character_name=save.get("character_name"),
                         rules_mode=save.get("rules_mode"),
+                        session_status=session_status,
+                        suggested_mode=suggested_mode,
                     ))
                 else:
                     slots.append(SaveSlotInfo(slot=slot_num, is_empty=True))
@@ -3207,6 +3311,8 @@ async def save_game(
         try:
             # Store the full save data as JSON in Neo4j
             # MERGE to update existing or create new
+            # Determine session status from session state
+            session_status = session.get("status", "active")
             await db.execute("""
                 MERGE (s:GameSave {browser_id: $browser_id, slot: $slot})
                 SET s.session_id = $session_id,
@@ -3220,6 +3326,7 @@ async def save_game(
                     s.character_id = $character_id,
                     s.character_name = $character_name,
                     s.rules_mode = $rules_mode,
+                    s.session_status = $session_status,
                     s.save_data = $save_data_json
             """, {
                 "browser_id": browser_id,
@@ -3234,6 +3341,7 @@ async def save_game(
                 "character_id": save_data.get("character_id"),
                 "character_name": save_data.get("character_name") or save_data.get("character", {}).get("name"),
                 "rules_mode": save_data.get("rules_mode", "narrative"),
+                "session_status": session_status,
                 "save_data_json": json.dumps(save_data),
             })
             logger.info(f"Saved session {session_id} to Neo4j slot {slot} for browser {browser_id[:8]}...")
@@ -3262,11 +3370,16 @@ async def load_game(
     request: Request,
     slot: int,
     browser_id: str = Query(..., min_length=1, description="Unique browser identifier"),
+    mode: str = Query("continue", description="Continuation mode: 'continue' or 'new_chapter'"),
 ):
     """
-    Load a game from a save slot.
+    Load a game from a save slot with optional continuation mode.
 
-    Restores the session and returns the last narrative.
+    Args:
+        mode: "continue" - Resume exactly where left off with full context
+              "new_chapter" - Start fresh arc with summarized history
+
+    Restores the session and returns the last narrative or summary.
     Only loads saves belonging to the specified browser_id.
     """
     if slot < 1 or slot > MAX_SAVES_PER_BROWSER:
@@ -3354,22 +3467,73 @@ async def load_game(
 
     # Get the last narrative to show the player where they left off
     history = save_data.get("history", [])
-    last_narrative = "Your adventure continues..."
-    for entry in reversed(history):
-        if entry.get("role") == "assistant":
-            last_narrative = entry.get("content", last_narrative)
-            break
+    turn_count = len(history) // 2
 
-    logger.info(f"Loaded save from slot {slot} for browser {browser_id[:8]}... as session {new_session_id}")
+    # Build arc context if available
+    arc_context = None
+    if ARC_ENGINE_AVAILABLE:
+        arc_state = save_data.get("arc_engine_state")
+        if arc_state:
+            try:
+                arc_engine = ArcEngine.from_dict(arc_state)
+                session_data["arc_engine"] = arc_engine
+                arc_context = {
+                    "current_phase": arc_engine.current_phase.value,
+                    "phase_display": arc_engine.current_phase.value.replace("_", " ").title(),
+                    "tension_level": arc_engine.tension_level.value,
+                    "journey_progress": arc_engine.journey_progress,
+                }
+            except Exception as e:
+                logger.warning(f"Failed to restore Arc Engine: {e}")
+
+    if mode == "new_chapter":
+        # NEW CHAPTER MODE: Generate summary, reset arc, preserve world
+        session_summary = await _generate_session_summary(history, save_data, db)
+
+        # Reset history to just the summary context
+        session_data["history"] = [
+            {"role": "system", "content": f"PREVIOUS CHAPTER SUMMARY:\n{session_summary}"}
+        ]
+
+        # Reset Arc Engine to Call to Adventure (new story arc)
+        if ARC_ENGINE_AVAILABLE:
+            new_arc = ArcEngine()
+            session_data["arc_engine"] = new_arc
+            arc_context = {
+                "current_phase": "CALL_TO_ADVENTURE",
+                "phase_display": "Call To Adventure",
+                "tension_level": "low",
+                "journey_progress": 0.0,
+            }
+
+        narrative = session_summary
+        message = f"Starting new chapter in {save_data.get('world_name', 'your world')}"
+        logger.info(f"Loaded save from slot {slot} as NEW CHAPTER for browser {browser_id[:8]}...")
+
+    else:
+        # CONTINUE MODE: Resume exactly where left off
+        last_narrative = "Your adventure continues..."
+        for entry in reversed(history):
+            if entry.get("role") == "assistant":
+                last_narrative = entry.get("content", last_narrative)
+                break
+
+        narrative = last_narrative
+        message = f"Game loaded from slot {slot}"
+        logger.info(f"Loaded save from slot {slot} for browser {browser_id[:8]}... as session {new_session_id}")
 
     return LoadGameResponse(
         success=True,
         session_id=new_session_id,
         phase=session_data["phase"],
-        narrative=last_narrative,
-        message=f"Game loaded from slot {slot}",
+        narrative=narrative,
+        message=message,
         inventory=save_data.get("inventory", []),
-        character=save_data.get("character_data")  # Include full character for frontend restoration
+        character=save_data.get("character_data"),
+        continuation_mode=mode,
+        session_summary=narrative if mode == "new_chapter" else None,
+        arc_context=arc_context,
+        turn_count=turn_count,
     )
 
 
