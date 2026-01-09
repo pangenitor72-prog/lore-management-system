@@ -5471,16 +5471,16 @@
                         </h4>
                         <div class="tone-options" style="flex-wrap: wrap;">
                             <span class="tone-chip session-scope-chip selected" data-scope="one_shot" onclick="selectSessionScope('one_shot')">
-                                One-Shot <span style="font-size: 0.7rem; opacity: 0.8;">(~20 turns)</span>
+                                One-Shot <span style="font-size: 0.7rem; opacity: 0.8;">(~100 turns)</span>
                             </span>
                             <span class="tone-chip session-scope-chip" data-scope="short" onclick="selectSessionScope('short')">
-                                Short <span style="font-size: 0.7rem; opacity: 0.8;">(~40 turns)</span>
+                                Short <span style="font-size: 0.7rem; opacity: 0.8;">(~150 turns)</span>
                             </span>
                             <span class="tone-chip session-scope-chip" data-scope="medium" onclick="selectSessionScope('medium')">
-                                Medium <span style="font-size: 0.7rem; opacity: 0.8;">(~80 turns)</span>
+                                Medium <span style="font-size: 0.7rem; opacity: 0.8;">(~250 turns)</span>
                             </span>
                             <span class="tone-chip session-scope-chip" data-scope="long" onclick="selectSessionScope('long')">
-                                Long <span style="font-size: 0.7rem; opacity: 0.8;">(~150 turns)</span>
+                                Long <span style="font-size: 0.7rem; opacity: 0.8;">(~400 turns)</span>
                             </span>
                             <span class="tone-chip session-scope-chip" data-scope="campaign" onclick="selectSessionScope('campaign')">
                                 Campaign <span style="font-size: 0.7rem; opacity: 0.8;">(unlimited)</span>
@@ -6939,7 +6939,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let rulesVisibility = 'guided';  // storyteller, guided, classic, tactician
         let creationMode = 'concept';  // concept, guided, classic
         let sessionScope = 'one_shot';  // one_shot, short, medium, long, campaign
-        let maxTurnsForScope = { one_shot: 20, short: 40, medium: 80, long: 150, campaign: 0 };
+        let maxTurnsForScope = { one_shot: 100, short: 150, medium: 250, long: 400, campaign: 0 };
         let dndCharacter = null;  // Current D&D character sheet
 
         // Voice Input State

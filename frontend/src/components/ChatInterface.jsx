@@ -39,7 +39,7 @@ export function ChatInterface({
   sessionId: propSessionId = null,
   sessionScope = "ONE_SHOT",
   mode = "STORY",
-  maxTurns = 20,
+  maxTurns = 100,
   // Character data (for RPG mode)
   character = null,
   // Initial inventory

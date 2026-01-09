@@ -8,12 +8,12 @@ import './PacingBar.css'
  *
  * Props:
  *   currentTurn: number - Current turn (1-indexed)
- *   maxTurns: number - Maximum turns (default 20)
+ *   maxTurns: number - Maximum turns (default 100)
  *   sessionScope: "ONE_SHOT" | "CAMPAIGN"
  */
 export function PacingBar({
   currentTurn = 0,
-  maxTurns = 20,
+  maxTurns = 100,
   sessionScope = "ONE_SHOT"
 }) {
   // Don't show for CAMPAIGN mode
@@ -25,20 +25,24 @@ export function PacingBar({
     const turn = Math.max(0, currentTurn)
     const progress = Math.min((turn / maxTurns) * 100, 100)
 
+    // Phase thresholds scale with maxTurns (25%, 75%)
+    const introEnd = Math.floor(maxTurns * 0.25)
+    const risingEnd = Math.floor(maxTurns * 0.75)
+
     let phase, phaseLabel, phaseProgress
 
-    if (turn <= 5) {
+    if (turn <= introEnd) {
       phase = "intro"
       phaseLabel = "Act I: The Hook"
-      phaseProgress = (turn / 5) * 100
-    } else if (turn <= 15) {
+      phaseProgress = (turn / introEnd) * 100
+    } else if (turn <= risingEnd) {
       phase = "rising"
       phaseLabel = "Act II: The Struggle"
-      phaseProgress = ((turn - 5) / 10) * 100
+      phaseProgress = ((turn - introEnd) / (risingEnd - introEnd)) * 100
     } else {
       phase = "climax"
       phaseLabel = "Act III: The Climax"
-      phaseProgress = ((turn - 15) / 5) * 100
+      phaseProgress = ((turn - risingEnd) / (maxTurns - risingEnd)) * 100
     }
 
     return { phase, phaseLabel, progress, phaseProgress }

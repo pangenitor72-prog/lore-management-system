@@ -90,7 +90,7 @@ class TestGameConfigDefaults:
         assert config.narrative_complexity == "CONCISE"
 
     def test_default_scope_is_one_shot(self):
-        """Default scope should be ONE_SHOT (ends in ~20 turns)."""
+        """Default scope should be ONE_SHOT (ends in ~100 turns)."""
         config = GameConfig()
         assert config.session_scope == "ONE_SHOT"
 

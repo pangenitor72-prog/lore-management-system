@@ -6,7 +6,7 @@ text-based RPG experience. It integrates with GameSession for state,
 QueryAgent for lore retrieval, and AuditorAgent for contradiction checking.
 
 NEW in v0.4:
-- Pacing Pressure for ONE_SHOT sessions (drives to climax in ~20 turns)
+- Pacing Pressure for ONE_SHOT sessions (drives to climax in ~100 turns)
 - GameConfig integration for narrative complexity
 - Support for "THE END" state
 
