@@ -60,7 +60,13 @@
       "Bash(python3:*)",
       "Bash(done)",
       "Bash(for i in 1 2 3 4 5 6)",
-      "Bash(break)"
+      "Bash(break)",
+      "Bash(timeout 120 fly status:*)",
+      "Bash(__NEW_LINE__ curl -s \"https://lore-management-system.fly.dev/api/game/admin/lore-bases/details\")",
+      "Bash(timeout 30 fly logs:*)",
+      "Bash(timeout 180 fly deploy:*)",
+      "Bash(timeout 20 curl:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }
