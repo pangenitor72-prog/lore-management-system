@@ -488,13 +488,15 @@
             }
 
             .mantle-logo-container .landing-mascot {
-                width: 100px;
-                height: 100px;
-                object-fit: cover;
-                border-radius: 50%;
-                border: 3px solid var(--accent-gold);
-                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-                margin-bottom: 20px;
+                width: 80px;
+                height: 80px;
+                object-fit: contain;
+                margin-bottom: 10px;
+                animation: none;
+            }
+
+            .mantle-logo-container {
+                margin-bottom: 5px;
             }
         }
 
@@ -5606,7 +5608,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v2026-01-10-v8</span>
+                <span style="opacity: 0.5;">v2026-01-10-v9</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
