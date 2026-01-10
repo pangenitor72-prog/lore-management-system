@@ -1840,6 +1840,80 @@ async def get_session_logs():
 
 
 # ============================================================
+# EMAIL SIGNUP (for update notifications)
+# ============================================================
+
+EMAIL_SIGNUPS_FILE = Path(__file__).parent.parent.parent.parent / "data" / "email_signups.json"
+
+
+def _load_email_signups() -> Dict[str, Any]:
+    """Load email signups from file."""
+    try:
+        if EMAIL_SIGNUPS_FILE.exists():
+            with open(EMAIL_SIGNUPS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return {"signups": []}
+    except Exception as e:
+        logging.error(f"Failed to load email signups: {e}")
+        return {"signups": []}
+
+
+def _save_email_signups(data: Dict[str, Any]) -> None:
+    """Save email signups to file."""
+    try:
+        EMAIL_SIGNUPS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(EMAIL_SIGNUPS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        logging.error(f"Failed to save email signups: {e}")
+
+
+class EmailSignupRequest(BaseModel):
+    """Email signup submission."""
+    email: str = Field(..., min_length=5, max_length=254)
+
+
+@app.post("/api/email-signup")
+async def submit_email_signup(request: EmailSignupRequest):
+    """Submit email for update notifications."""
+    import re
+
+    # Basic email validation
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, request.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please enter a valid email address"
+        )
+
+    data = _load_email_signups()
+
+    # Check for duplicate
+    existing_emails = [s.get("email", "").lower() for s in data.get("signups", [])]
+    if request.email.lower() in existing_emails:
+        return {"success": True, "message": "You're already signed up for updates!"}
+
+    # Add new signup
+    data["signups"].append({
+        "email": request.email,
+        "signed_up_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    _save_email_signups(data)
+
+    await AuditLogger.log(f"Email signup: {request.email[:3]}***@***")
+
+    return {"success": True, "message": "Thanks! We'll keep you posted on updates."}
+
+
+@app.get("/api/email-signup")
+async def get_email_signups():
+    """Get all email signups (for admin review)."""
+    data = _load_email_signups()
+    return {"count": len(data.get("signups", [])), "signups": data.get("signups", [])}
+
+
+# ============================================================
 # CATCH-ALL FOR SPA (must be registered LAST)
 # ============================================================
 

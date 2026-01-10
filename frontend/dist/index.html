@@ -4901,6 +4901,138 @@
             }
         }
 
+        /* Email Signup Banner */
+        .email-signup-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 20px 25px;
+            max-width: 400px;
+            width: calc(100% - 40px);
+            z-index: 9999;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .email-signup-banner.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .email-signup-banner .banner-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+        }
+
+        .email-signup-banner .banner-close:hover {
+            color: var(--text-primary);
+        }
+
+        .email-signup-banner h4 {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            font-weight: normal;
+            margin: 0 0 8px 0;
+        }
+
+        .email-signup-banner p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0 0 15px 0;
+        }
+
+        .email-signup-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .email-signup-form input {
+            flex: 1;
+            padding: 10px 15px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .email-signup-form input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .email-signup-form input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .email-signup-form button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-warm));
+            border: none;
+            border-radius: 8px;
+            color: var(--bg-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .email-signup-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(232, 196, 124, 0.4);
+        }
+
+        .email-signup-form button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .email-signup-success {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .email-signup-success .icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .email-signup-success p {
+            margin: 0;
+            color: var(--accent-sage);
+        }
+
+        @media (max-width: 480px) {
+            .email-signup-banner {
+                bottom: 15px;
+                padding: 15px 20px;
+            }
+
+            .email-signup-form {
+                flex-direction: column;
+            }
+
+            .email-signup-form button {
+                width: 100%;
+            }
+        }
+
         /* Mobile View Mode Toggle Button */
         .mobile-view-toggle {
             display: none;  /* Hidden by default on desktop */
@@ -5644,7 +5776,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v2026-01-10-v15</span>
+                <span style="opacity: 0.5;">v2026-01-10-v16</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
@@ -7377,6 +7509,23 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         </div>
     </div>
 
+    <!-- Email Signup Banner -->
+    <div id="email-signup-banner" class="email-signup-banner">
+        <button class="banner-close" onclick="closeEmailBanner()" aria-label="Close">&times;</button>
+        <div id="email-signup-form-content">
+            <h4>Stay in the Loop</h4>
+            <p>Get notified about new features and updates.</p>
+            <form class="email-signup-form" onsubmit="submitEmailSignup(event)">
+                <input type="email" id="signup-email" placeholder="your@email.com" required>
+                <button type="submit" id="signup-submit-btn">Subscribe</button>
+            </form>
+        </div>
+        <div id="email-signup-success" class="email-signup-success" style="display: none;">
+            <div class="icon">✨</div>
+            <p>You're on the list! We'll keep you posted.</p>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         // ANNOUNCEMENT SYSTEM
@@ -7486,6 +7635,91 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         // ==========================================
         // END ANNOUNCEMENT SYSTEM
+        // ==========================================
+
+        // ==========================================
+        // EMAIL SIGNUP BANNER
+        // ==========================================
+
+        function showEmailBanner() {
+            // Don't show if already shown this session or if user signed up
+            if (sessionStorage.getItem('emailBannerShown') || localStorage.getItem('emailSignedUp')) {
+                return;
+            }
+
+            const banner = document.getElementById('email-signup-banner');
+            if (banner) {
+                banner.classList.add('visible');
+                sessionStorage.setItem('emailBannerShown', 'true');
+            }
+        }
+
+        function closeEmailBanner() {
+            const banner = document.getElementById('email-signup-banner');
+            if (banner) {
+                banner.classList.remove('visible');
+            }
+        }
+
+        async function submitEmailSignup(event) {
+            event.preventDefault();
+
+            const emailInput = document.getElementById('signup-email');
+            const submitBtn = document.getElementById('signup-submit-btn');
+            const formContent = document.getElementById('email-signup-form-content');
+            const successContent = document.getElementById('email-signup-success');
+
+            const email = emailInput.value.trim();
+            if (!email) return;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch('/api/email-signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    // Show success state
+                    formContent.style.display = 'none';
+                    successContent.style.display = 'block';
+                    localStorage.setItem('emailSignedUp', 'true');
+
+                    // Auto-close after 3 seconds
+                    setTimeout(() => {
+                        closeEmailBanner();
+                    }, 3000);
+                } else {
+                    alert(data.detail || data.message || 'Failed to sign up. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Subscribe';
+                }
+            } catch (e) {
+                console.error('Email signup error:', e);
+                alert('Failed to sign up. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Subscribe';
+            }
+        }
+
+        // Show email banner after a delay when user lands on the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show banner after 10 seconds if on the landing page
+            setTimeout(() => {
+                const startScreen = document.getElementById('start');
+                if (startScreen && startScreen.classList.contains('active')) {
+                    showEmailBanner();
+                }
+            }, 10000);
+        });
+
+        // ==========================================
+        // END EMAIL SIGNUP BANNER
         // ==========================================
 
         // State
