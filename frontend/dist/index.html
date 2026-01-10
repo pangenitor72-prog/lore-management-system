@@ -488,8 +488,13 @@
             }
 
             .mantle-logo-container .landing-mascot {
-                width: 144px;
-                margin-bottom: 15px;
+                width: 100px;
+                height: 100px;
+                object-fit: cover;
+                border-radius: 50%;
+                border: 3px solid var(--accent-gold);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                margin-bottom: 20px;
             }
         }
 
@@ -5554,6 +5559,9 @@
                     <h1 class="landing-title mantle-title">MANTLE</h1>
                 </div>
                 <p class="landing-subtitle">Your Story Awaits</p>
+                <button class="landing-secondary-btn" onclick="showScreen('onboarding')" style="margin-top: 15px;">
+                    <span>❓</span> How It Works
+                </button>
             </div>
 
             <div class="landing-cards">
@@ -5587,9 +5595,6 @@
                 <button class="landing-secondary-btn" onclick="showScreen('worldbuilder')">
                     <span>🏰</span> World Builder
                 </button>
-                <button class="landing-secondary-btn" onclick="showScreen('onboarding')">
-                    <span>❓</span> How It Works
-                </button>
             </div>
 
             <!-- Footer links -->
@@ -5599,6 +5604,11 @@
                 <a href="#" onclick="showSiteMap(); return false;">Site Map</a>
                 <span>|</span>
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
+            </p>
+            <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
+                <span style="opacity: 0.5;">v2026-01-10-v8</span>
+                <span>|</span>
+                <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
         </div>
 
@@ -7492,9 +7502,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             'romance': 'modern',
             'drama': 'modern',
             'western': 'modern',
+            'urban_fantasy': 'modern',  // Modern setting with magic
             // Horror-based
             'horror': 'horror',
-            'postapoc': 'horror'
+            'postapoc': 'horror',
+            'gothic': 'horror'  // Gothic horror
         };
 
         function getRulesGenre(storyGenre) {
@@ -8056,6 +8068,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // Use selected world or fall back to genre (default to 'fantasy' if neither selected)
             const effectiveGenre = ttrpgGenre || 'fantasy';
 
+            console.log('[TTRPG] Starting with:', {
+                ttrpgCreationMode,
+                ttrpgGenre,
+                ttrpgVisibility,
+                concept
+            });
+
             // Set up TTRPG config
             selectedGenres = [effectiveGenre];
             selectedGenre = effectiveGenre;
@@ -8066,6 +8085,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             rulesVisibility = ttrpgVisibility;
             creationMode = ttrpgCreationMode;
             sessionScope = 'medium';
+
+            console.log('[TTRPG] creationMode set to:', creationMode);
 
             // If a curated world is selected, use it
             if (selectedTTRPGWorld) {
@@ -10454,9 +10475,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // Sync rulesGenre with effective genres (blendGenres from curated world, or selectedGenres)
             // Map story genre to rules genre (fantasy/scifi/modern/horror)
             const effectiveGenres = blendGenres.length > 0 ? blendGenres : selectedGenres;
+            console.log('[CharCreate] Genre state:', {
+                blendGenres,
+                selectedGenres,
+                effectiveGenres,
+                currentRulesGenre: rulesGenre
+            });
             if (effectiveGenres.length > 0 && effectiveGenres[0]) {
                 rulesGenre = getRulesGenre(effectiveGenres[0]);
                 console.log('[CharCreate] Using genre:', effectiveGenres[0], '-> rulesGenre:', rulesGenre);
+            } else {
+                console.log('[CharCreate] No effective genres, keeping rulesGenre:', rulesGenre);
             }
 
             // Genre-aware default origins and archetypes (used if API fails)
@@ -10518,61 +10547,251 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     ]
                 }
             };
-            const genreDefaults = defaultsByGenre[rulesGenre] || defaultsByGenre.fantasy;
-            const defaultOrigins = genreDefaults.origins;
-            const defaultArchetypes = genreDefaults.archetypes;
 
-            // Set defaults first, then try to fetch from API
+            // Story-genre-specific overrides (take precedence over rules genre)
+            const storyGenreOverrides = {
+                wuxia: {
+                    origins: [
+                        { id: 'mortal', display_name: 'Mortal', description: 'An ordinary person with extraordinary potential' },
+                        { id: 'cultivator', display_name: 'Cultivator', description: 'One who has begun the path of cultivation' },
+                        { id: 'spirit_touched', display_name: 'Spirit-Touched', description: 'Blessed or cursed by supernatural forces' },
+                        { id: 'noble_blood', display_name: 'Noble Blood', description: 'Born into a martial arts clan' }
+                    ],
+                    archetypes: [
+                        { id: 'swordsman', display_name: 'Swordsman', description: 'Master of the blade', hit_die: 'd10', has_powers: false },
+                        { id: 'monk', display_name: 'Monk', description: 'Internal arts and meditation', hit_die: 'd8', has_powers: true },
+                        { id: 'assassin', display_name: 'Assassin', description: 'Shadow arts and stealth', hit_die: 'd8', has_powers: false },
+                        { id: 'healer', display_name: 'Healer', description: 'Medicine and qi restoration', hit_die: 'd8', has_powers: true }
+                    ]
+                },
+                mythology: {
+                    origins: [
+                        { id: 'mortal', display_name: 'Mortal', description: 'A human touched by fate' },
+                        { id: 'demigod', display_name: 'Demigod', description: 'Child of a deity' },
+                        { id: 'blessed', display_name: 'Blessed', description: 'Favored by the gods' },
+                        { id: 'cursed', display_name: 'Cursed', description: 'Marked by divine punishment' }
+                    ],
+                    archetypes: [
+                        { id: 'hero', display_name: 'Hero', description: 'Destined for greatness', hit_die: 'd10', has_powers: false },
+                        { id: 'oracle', display_name: 'Oracle', description: 'Seer of fate', hit_die: 'd6', has_powers: true },
+                        { id: 'champion', display_name: 'Champion', description: 'Warrior of the gods', hit_die: 'd10', has_powers: true },
+                        { id: 'trickster', display_name: 'Trickster', description: 'Cunning and deceptive', hit_die: 'd8', has_powers: false }
+                    ]
+                },
+                cyberpunk: {
+                    origins: [
+                        { id: 'street_rat', display_name: 'Street Rat', description: 'Grew up in the urban sprawl' },
+                        { id: 'corporate', display_name: 'Corporate', description: 'Ex-megacorp employee' },
+                        { id: 'chrome', display_name: 'Chrome', description: 'Heavily augmented' },
+                        { id: 'natural', display_name: 'Natural', description: 'Reject cybernetic enhancement' }
+                    ],
+                    archetypes: [
+                        { id: 'netrunner', display_name: 'Netrunner', description: 'Hacker and data thief', hit_die: 'd6', has_powers: true },
+                        { id: 'solo', display_name: 'Solo', description: 'Combat specialist', hit_die: 'd10', has_powers: false },
+                        { id: 'fixer', display_name: 'Fixer', description: 'Connections and deals', hit_die: 'd8', has_powers: false },
+                        { id: 'tech', display_name: 'Tech', description: 'Builder and inventor', hit_die: 'd8', has_powers: true }
+                    ]
+                },
+                western: {
+                    origins: [
+                        { id: 'settler', display_name: 'Settler', description: 'Pioneer seeking a new life' },
+                        { id: 'outlaw', display_name: 'Outlaw', description: 'Running from the law' },
+                        { id: 'native', display_name: 'Native', description: 'Of the indigenous peoples' },
+                        { id: 'veteran', display_name: 'Veteran', description: 'Survivor of the war' }
+                    ],
+                    archetypes: [
+                        { id: 'gunslinger', display_name: 'Gunslinger', description: 'Fast draw and deadly aim', hit_die: 'd10', has_powers: false },
+                        { id: 'lawman', display_name: 'Lawman', description: 'Upholder of justice', hit_die: 'd10', has_powers: false },
+                        { id: 'gambler', display_name: 'Gambler', description: 'Lucky and charming', hit_die: 'd8', has_powers: false },
+                        { id: 'tracker', display_name: 'Tracker', description: 'Hunter and scout', hit_die: 'd8', has_powers: false }
+                    ]
+                },
+                noir: {
+                    origins: [
+                        { id: 'veteran', display_name: 'Veteran', description: 'Haunted by the war' },
+                        { id: 'street', display_name: 'Street', description: 'Grew up hard' },
+                        { id: 'fallen', display_name: 'Fallen', description: 'Once had it all' },
+                        { id: 'immigrant', display_name: 'Immigrant', description: 'Seeking the dream' }
+                    ],
+                    archetypes: [
+                        { id: 'detective', display_name: 'Private Eye', description: 'Seeker of truth', hit_die: 'd8', has_powers: false },
+                        { id: 'femme_fatale', display_name: 'Femme Fatale', description: 'Dangerous and alluring', hit_die: 'd6', has_powers: false },
+                        { id: 'muscle', display_name: 'Muscle', description: 'Enforcer and bodyguard', hit_die: 'd10', has_powers: false },
+                        { id: 'grifter', display_name: 'Grifter', description: 'Con artist', hit_die: 'd8', has_powers: false }
+                    ]
+                },
+                adventure: {
+                    origins: [
+                        { id: 'explorer', display_name: 'Explorer', description: 'Driven to discover the unknown' },
+                        { id: 'scholar', display_name: 'Scholar', description: 'Seeker of ancient knowledge' },
+                        { id: 'scoundrel', display_name: 'Scoundrel', description: 'Fortune hunter and risk-taker' },
+                        { id: 'noble', display_name: 'Noble', description: 'Wealthy patron of expeditions' }
+                    ],
+                    archetypes: [
+                        { id: 'adventurer', display_name: 'Adventurer', description: 'Jack of all trades', hit_die: 'd10', has_powers: false },
+                        { id: 'archaeologist', display_name: 'Archaeologist', description: 'Expert in ancient ruins', hit_die: 'd8', has_powers: false },
+                        { id: 'guide', display_name: 'Guide', description: 'Wilderness expert', hit_die: 'd8', has_powers: false },
+                        { id: 'mystic', display_name: 'Mystic', description: 'Student of the occult', hit_die: 'd6', has_powers: true }
+                    ]
+                },
+                mystery: {
+                    origins: [
+                        { id: 'professional', display_name: 'Professional', description: 'Career in law or medicine' },
+                        { id: 'amateur', display_name: 'Amateur', description: 'Curious mind drawn to puzzles' },
+                        { id: 'victim', display_name: 'Victim', description: 'Personal stake in the case' },
+                        { id: 'insider', display_name: 'Insider', description: 'Knowledge from within' }
+                    ],
+                    archetypes: [
+                        { id: 'detective', display_name: 'Detective', description: 'Professional investigator', hit_die: 'd8', has_powers: false },
+                        { id: 'journalist', display_name: 'Journalist', description: 'Seeks the truth', hit_die: 'd6', has_powers: false },
+                        { id: 'consultant', display_name: 'Consultant', description: 'Expert specialist', hit_die: 'd6', has_powers: false },
+                        { id: 'psychic', display_name: 'Psychic', description: 'Gifted with insight', hit_die: 'd6', has_powers: true }
+                    ]
+                },
+                gothic: {
+                    origins: [
+                        { id: 'aristocrat', display_name: 'Aristocrat', description: 'Old money and dark secrets' },
+                        { id: 'servant', display_name: 'Servant', description: 'Witness to household horrors' },
+                        { id: 'outcast', display_name: 'Outcast', description: 'Shunned by society' },
+                        { id: 'inheritor', display_name: 'Inheritor', description: 'Cursed bloodline' }
+                    ],
+                    archetypes: [
+                        { id: 'occultist', display_name: 'Occultist', description: 'Dabbler in dark arts', hit_die: 'd6', has_powers: true },
+                        { id: 'hunter', display_name: 'Monster Hunter', description: 'Stalker of the night', hit_die: 'd10', has_powers: false },
+                        { id: 'medium', display_name: 'Medium', description: 'Speaker to spirits', hit_die: 'd6', has_powers: true },
+                        { id: 'romantic', display_name: 'Romantic', description: 'Driven by passion', hit_die: 'd8', has_powers: false }
+                    ]
+                },
+                urban_fantasy: {
+                    origins: [
+                        { id: 'mundane', display_name: 'Mundane', description: 'Ordinary person in a magical world' },
+                        { id: 'awakened', display_name: 'Awakened', description: 'Recently discovered magic' },
+                        { id: 'born_magical', display_name: 'Born Magical', description: 'Magic in your blood' },
+                        { id: 'touched', display_name: 'Touched', description: 'Changed by supernatural encounter' }
+                    ],
+                    archetypes: [
+                        { id: 'wizard', display_name: 'Urban Mage', description: 'Modern practitioner', hit_die: 'd6', has_powers: true },
+                        { id: 'werewolf', display_name: 'Shapeshifter', description: 'Dual nature', hit_die: 'd10', has_powers: true },
+                        { id: 'vampire', display_name: 'Vampire', description: 'Creature of the night', hit_die: 'd8', has_powers: true },
+                        { id: 'hunter', display_name: 'Hunter', description: 'Protector of humanity', hit_die: 'd10', has_powers: false }
+                    ]
+                },
+                superhero: {
+                    origins: [
+                        { id: 'mutant', display_name: 'Mutant', description: 'Born with powers' },
+                        { id: 'accident', display_name: 'Accident', description: 'Powers from mishap' },
+                        { id: 'tech', display_name: 'Tech Genius', description: 'Built your abilities' },
+                        { id: 'chosen', display_name: 'Chosen', description: 'Granted powers' }
+                    ],
+                    archetypes: [
+                        { id: 'brick', display_name: 'Brick', description: 'Super strength and durability', hit_die: 'd12', has_powers: true },
+                        { id: 'speedster', display_name: 'Speedster', description: 'Super speed', hit_die: 'd8', has_powers: true },
+                        { id: 'psychic', display_name: 'Psychic', description: 'Mental powers', hit_die: 'd6', has_powers: true },
+                        { id: 'gadgeteer', display_name: 'Gadgeteer', description: 'Tech and gear', hit_die: 'd8', has_powers: false }
+                    ]
+                },
+                steampunk: {
+                    origins: [
+                        { id: 'aristocrat', display_name: 'Aristocrat', description: 'Wealthy inventor patron' },
+                        { id: 'worker', display_name: 'Worker', description: 'Factory laborer' },
+                        { id: 'airship', display_name: 'Airship Crew', description: 'Sky sailor' },
+                        { id: 'inventor', display_name: 'Inventor', description: 'Mad genius' }
+                    ],
+                    archetypes: [
+                        { id: 'engineer', display_name: 'Engineer', description: 'Builder of wonders', hit_die: 'd8', has_powers: true },
+                        { id: 'ace', display_name: 'Ace Pilot', description: 'Airship commander', hit_die: 'd10', has_powers: false },
+                        { id: 'agent', display_name: 'Agent', description: 'Crown spy', hit_die: 'd8', has_powers: false },
+                        { id: 'automaton', display_name: 'Automaton', description: 'Mechanical being', hit_die: 'd10', has_powers: true }
+                    ]
+                }
+            };
+
+            // Check for story-genre-specific overrides first
+            const storyGenre = effectiveGenres[0] || 'fantasy';
+            const storyOverride = storyGenreOverrides[storyGenre];
+
+            let defaultOrigins, defaultArchetypes;
+            if (storyOverride) {
+                console.log('[CharCreate] Using story-genre override for:', storyGenre);
+                defaultOrigins = storyOverride.origins;
+                defaultArchetypes = storyOverride.archetypes;
+            } else {
+                const genreDefaults = defaultsByGenre[rulesGenre] || defaultsByGenre.fantasy;
+                defaultOrigins = genreDefaults.origins;
+                defaultArchetypes = genreDefaults.archetypes;
+            }
+
+            // Set defaults first
             availableOrigins = defaultOrigins;
             availableArchetypes = defaultArchetypes;
 
-            // Fetch genre data (optional - defaults will be used if this fails)
-            try {
-                const genreRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre);
-                if (genreRes.ok) {
-                    const genreData = await genreRes.json();
-                    genreTerminology = {
-                        origin: genreData.terminology?.origin || 'Origin',
-                        archetype: genreData.terminology?.archetype || 'Archetype',
-                        ability: genreData.terminology?.ability_power || 'Ability'
-                    };
-                }
-
-                // Fetch origins for this genre
-                const originsRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/origins');
-                if (originsRes.ok) {
-                    const originsData = await originsRes.json();
-                    // API returns {origins: [...]} with 'name' field
-                    const originsArray = originsData.origins || originsData;
-                    if (Array.isArray(originsArray) && originsArray.length > 0) {
-                        // Map 'name' to 'display_name' for frontend consistency
-                        availableOrigins = originsArray.map(o => ({
-                            ...o,
-                            display_name: o.display_name || o.name || o.id
-                        }));
+            // Only fetch from API if no story-genre override exists
+            // (API returns D&D-style data that would overwrite custom genre choices)
+            if (!storyOverride) {
+                try {
+                    const genreRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre);
+                    if (genreRes.ok) {
+                        const genreData = await genreRes.json();
+                        genreTerminology = {
+                            origin: genreData.terminology?.origin || 'Origin',
+                            archetype: genreData.terminology?.archetype || 'Archetype',
+                            ability: genreData.terminology?.ability_power || 'Ability'
+                        };
                     }
-                }
 
-                // Fetch archetypes for this genre
-                const archRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/archetypes');
-                if (archRes.ok) {
-                    const archData = await archRes.json();
-                    // API returns {archetypes: [...]} with 'name' field
-                    const archArray = archData.archetypes || archData;
-                    if (Array.isArray(archArray) && archArray.length > 0) {
-                        // Map 'name' to 'display_name' for frontend consistency
-                        availableArchetypes = archArray.map(a => ({
-                            ...a,
-                            display_name: a.display_name || a.name || a.id
-                        }));
+                    // Fetch origins for this genre
+                    const originsRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/origins');
+                    if (originsRes.ok) {
+                        const originsData = await originsRes.json();
+                        // API returns {origins: [...]} with 'name' field
+                        const originsArray = originsData.origins || originsData;
+                        if (Array.isArray(originsArray) && originsArray.length > 0) {
+                            // Map 'name' to 'display_name' for frontend consistency
+                            availableOrigins = originsArray.map(o => ({
+                                ...o,
+                                display_name: o.display_name || o.name || o.id
+                            }));
+                        }
                     }
+
+                    // Fetch archetypes for this genre
+                    const archRes = await fetch(API_BASE + '/dnd/genres/' + rulesGenre + '/archetypes');
+                    if (archRes.ok) {
+                        const archData = await archRes.json();
+                        // API returns {archetypes: [...]} with 'name' field
+                        const archArray = archData.archetypes || archData;
+                        if (Array.isArray(archArray) && archArray.length > 0) {
+                            // Map 'name' to 'display_name' for frontend consistency
+                            availableArchetypes = archArray.map(a => ({
+                                ...a,
+                                display_name: a.display_name || a.name || a.id
+                            }));
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch genre data, using defaults:', e);
+                    // Defaults already set above
                 }
-            } catch (e) {
-                console.error('Failed to fetch genre data, using defaults:', e);
-                // Defaults already set above
+            } else {
+                // Set genre-appropriate terminology for story genres
+                const terminologyByGenre = {
+                    wuxia: { origin: 'Background', archetype: 'Path', ability: 'Art' },
+                    mythology: { origin: 'Heritage', archetype: 'Calling', ability: 'Power' },
+                    cyberpunk: { origin: 'Background', archetype: 'Role', ability: 'Tech' },
+                    western: { origin: 'Background', archetype: 'Profession', ability: 'Skill' },
+                    noir: { origin: 'Background', archetype: 'Role', ability: 'Edge' },
+                    adventure: { origin: 'Background', archetype: 'Role', ability: 'Skill' },
+                    mystery: { origin: 'Background', archetype: 'Role', ability: 'Method' },
+                    gothic: { origin: 'Lineage', archetype: 'Role', ability: 'Gift' },
+                    urban_fantasy: { origin: 'Heritage', archetype: 'Role', ability: 'Power' },
+                    superhero: { origin: 'Origin', archetype: 'Role', ability: 'Power' },
+                    steampunk: { origin: 'Background', archetype: 'Profession', ability: 'Device' }
+                };
+                genreTerminology = terminologyByGenre[storyGenre] || { origin: 'Origin', archetype: 'Archetype', ability: 'Ability' };
+                console.log('[CharCreate] Using custom terminology for', storyGenre, ':', genreTerminology);
             }
 
-            console.log('Character creation ready - Origins:', availableOrigins.length, 'Archetypes:', availableArchetypes.length);
+            console.log('[CharCreate] Ready - rulesGenre:', rulesGenre, 'Origins:', availableOrigins.map(o => o.id), 'Archetypes:', availableArchetypes.map(a => a.id));
 
             // Determine number of steps based on mode
             updateCreationSteps();
@@ -11124,6 +11343,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function selectOrigin(originId) {
             charCreationData.origin = originId;
+            console.log('[CharCreate] Origin selected:', originId, '| charCreationData.origin now:', charCreationData.origin);
             document.querySelectorAll('.origin-card').forEach(card => {
                 card.classList.toggle('selected', card.querySelector('.origin-name')?.textContent === getOriginName(originId));
             });
@@ -11133,6 +11353,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function selectArchetype(archId) {
             charCreationData.archetype = archId;
+            console.log('[CharCreate] Archetype selected:', archId, '| charCreationData.archetype now:', charCreationData.archetype);
             charCreationData.selectedSkills = []; // Reset skills when archetype changes
             charCreationData.selectedCantrips = []; // Reset spells when archetype changes
             charCreationData.selectedSpells = [];
@@ -11729,7 +11950,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         async function finalizeCharacter() {
+            console.log('[CharCreate] finalizeCharacter() called');
+            console.log('[CharCreate] charCreationData:', JSON.stringify({
+                name: charCreationData.name,
+                origin: charCreationData.origin,
+                archetype: charCreationData.archetype,
+                selectedSkills: charCreationData.selectedSkills,
+                generatedChar: !!charCreationData.generatedChar,
+                characterId: charCreationData.characterId
+            }, null, 2));
+
             if (charCreationData.generatedChar) {
+                console.log('[CharCreate] Using generatedChar');
                 dndCharacter = charCreationData.generatedChar;
             } else if (charCreationData.characterId) {
                 try {
@@ -11785,7 +12017,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     skill_proficiencies: charCreationData.selectedSkills || ['athletics', 'perception'],
                     equipment: []
                 };
+                console.log('[CharCreate] Created fallback character:', dndCharacter.name, dndCharacter.race, dndCharacter.character_class);
             }
+
+            console.log('[CharCreate] Final dndCharacter:', dndCharacter.name, dndCharacter.race, dndCharacter.character_class);
 
             // Load starting inventory based on character's archetype/class (always runs now)
             const archetype = dndCharacter.character_class || dndCharacter.archetype || charCreationData.archetype || 'fighter';
@@ -12140,12 +12375,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 selectedTone = 'dramatic';
             }
 
-            // Get D&D settings if enabled
-            if (rulesMode === 'dnd') {
-                rulesGenre = document.getElementById('rules-genre').value;
-                rulesVisibility = document.getElementById('rules-visibility').value;
-                creationMode = document.getElementById('creation-mode').value;
+            // Get D&D settings from advanced setup screen ONLY if we came from there
+            // If we came from TTRPG setup, values are already set correctly by beginTTRPGStory()
+            const cameFromAdvancedSetup = document.getElementById('setup')?.classList.contains('active');
+            if (rulesMode === 'dnd' && cameFromAdvancedSetup) {
+                const genreEl = document.getElementById('rules-genre');
+                const visEl = document.getElementById('rules-visibility');
+                const modeEl = document.getElementById('creation-mode');
+                if (genreEl?.value) rulesGenre = genreEl.value;
+                if (visEl?.value) rulesVisibility = visEl.value;
+                if (modeEl?.value) creationMode = modeEl.value;
             }
+            console.log('[beginStory] D&D settings:', { rulesGenre, rulesVisibility, creationMode, cameFromAdvancedSetup });
 
             clearStatus('setup-status');
             playerInventory = [];  // Reset inventory for new story
@@ -15890,17 +16131,97 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         let deferredPrompt = null;
 
-        // Register service worker
+        // Register service worker with aggressive update checking
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then((registration) => {
                         console.log('Service Worker registered:', registration.scope);
+
+                        // Check for updates immediately
+                        registration.update();
+
+                        // Check for updates every 60 seconds
+                        setInterval(() => registration.update(), 60000);
+
+                        // Listen for new service worker
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('[SW] Update found, installing...');
+
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available - show update prompt
+                                    console.log('[SW] New version ready');
+                                    showUpdateAvailable();
+                                }
+                            });
+                        });
                     })
                     .catch((error) => {
                         console.log('Service Worker registration failed:', error);
                     });
             });
+
+            // Handle controller change (new SW activated)
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('[SW] Controller changed, reloading...');
+                window.location.reload();
+            });
+        }
+
+        // Show update notification
+        function showUpdateAvailable() {
+            const banner = document.createElement('div');
+            banner.id = 'update-banner';
+            banner.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
+                color: var(--bg-primary);
+                padding: 12px 24px;
+                border-radius: 25px;
+                font-weight: 600;
+                z-index: 10000;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                display: flex;
+                gap: 12px;
+                align-items: center;
+            `;
+            banner.innerHTML = `
+                <span>Update available!</span>
+                <button onclick="forceRefresh()" style="background: var(--bg-primary); color: var(--text-primary); border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-weight: 600;">Refresh</button>
+            `;
+            document.body.appendChild(banner);
+        }
+
+        // Force refresh - clear caches and reload
+        async function forceRefresh() {
+            console.log('[SW] Force refreshing...');
+
+            // Tell service worker to skip waiting
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage('skipWaiting');
+            }
+
+            // Clear all caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                console.log('[SW] All caches cleared');
+            }
+
+            // Unregister service worker
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                await registration.unregister();
+                console.log('[SW] Unregistered:', registration.scope);
+            }
+
+            // Hard reload
+            window.location.reload(true);
         }
 
         // Capture install prompt for later use
