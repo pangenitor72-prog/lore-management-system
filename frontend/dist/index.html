@@ -488,22 +488,17 @@
             }
 
             .landing-mascot {
-                width: 60px !important;
-                height: 60px !important;
-                animation: none !important;
-                margin-bottom: 5px !important;
+                display: none !important;
             }
 
             .mantle-logo-container {
                 margin-bottom: 0 !important;
             }
+        }
 
-            .mantle-logo-container .landing-mascot {
-                width: 60px !important;
-                height: 60px !important;
-                animation: none !important;
-                margin-bottom: 5px !important;
-            }
+        /* Hide raven when force-mobile mode is active (from view toggle) */
+        .force-mobile .landing-mascot {
+            display: none !important;
         }
 
         .landing-subtitle {
@@ -5567,11 +5562,15 @@
                     <h1 class="landing-title mantle-title">MANTLE</h1>
                 </div>
                 <script>
-                    // Hide raven on mobile using JavaScript (CSS wasn't working)
+                    // Hide raven on mobile - checks BOTH viewport AND force-mobile class
                     (function() {
                         function checkMobile() {
                             var raven = document.getElementById('hero-raven');
-                            if (raven && window.innerWidth <= 768) {
+                            var isForceMobile = document.body.classList.contains('force-mobile');
+                            var isNarrowViewport = window.innerWidth <= 768;
+                            var isActualMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                            if (raven && (isForceMobile || isNarrowViewport || isActualMobile)) {
                                 raven.style.display = 'none';
                             } else if (raven) {
                                 raven.style.display = '';
@@ -5580,6 +5579,8 @@
                         checkMobile();
                         window.addEventListener('resize', checkMobile);
                         document.addEventListener('DOMContentLoaded', checkMobile);
+                        // Also check when body classes might change
+                        new MutationObserver(checkMobile).observe(document.body, {attributes: true, attributeFilter: ['class']});
                     })();
                 </script>
                 <p class="landing-subtitle">Your Story Awaits</p>
@@ -5630,7 +5631,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v2026-01-10-v12</span>
+                <span style="opacity: 0.5;">v2026-01-10-v13</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
