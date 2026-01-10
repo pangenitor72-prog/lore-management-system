@@ -1914,6 +1914,173 @@ async def get_email_signups():
 
 
 # ============================================================
+# EMAIL NOTIFICATIONS (via Resend)
+# ============================================================
+
+VERSION_FILE = Path(__file__).parent.parent.parent.parent / "data" / "deployed_version.txt"
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+
+# Get current version from sw.js
+def _get_current_version() -> str:
+    """Read current version from service worker."""
+    try:
+        sw_path = Path(__file__).parent.parent.parent.parent / "frontend" / "dist" / "sw.js"
+        if sw_path.exists():
+            content = sw_path.read_text()
+            # Extract version from: const CACHE_VERSION = '2026-01-10-v16';
+            import re
+            match = re.search(r"CACHE_VERSION\s*=\s*['\"]([^'\"]+)['\"]", content)
+            if match:
+                return match.group(1)
+    except Exception as e:
+        logging.error(f"Failed to read version: {e}")
+    return "unknown"
+
+
+def _get_last_deployed_version() -> str:
+    """Get the last deployed version we notified about."""
+    try:
+        if VERSION_FILE.exists():
+            return VERSION_FILE.read_text().strip()
+    except Exception:
+        pass
+    return ""
+
+
+def _save_deployed_version(version: str) -> None:
+    """Save the current version as last deployed."""
+    try:
+        VERSION_FILE.parent.mkdir(parents=True, exist_ok=True)
+        VERSION_FILE.write_text(version)
+    except Exception as e:
+        logging.error(f"Failed to save version: {e}")
+
+
+async def send_update_notification(subject: str, message: str) -> dict:
+    """Send update notification to all subscribers via Resend."""
+    if not RESEND_API_KEY:
+        logging.warning("RESEND_API_KEY not set - skipping email notification")
+        return {"success": False, "error": "API key not configured"}
+
+    try:
+        import resend
+        resend.api_key = RESEND_API_KEY
+
+        data = _load_email_signups()
+        subscribers = data.get("signups", [])
+
+        if not subscribers:
+            logging.info("No subscribers to notify")
+            return {"success": True, "sent": 0, "message": "No subscribers"}
+
+        emails = [s.get("email") for s in subscribers if s.get("email")]
+
+        if not emails:
+            return {"success": True, "sent": 0, "message": "No valid emails"}
+
+        # Send email (Resend supports batch sending)
+        # Using their onboarding domain for testing, replace with your verified domain
+        from_email = os.getenv("RESEND_FROM_EMAIL", "Mantle <onboarding@resend.dev>")
+
+        html_content = f"""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #e8c47c;">Mantle Update</h2>
+            <div style="color: #333; line-height: 1.6;">
+                {message}
+            </div>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            <p style="color: #888; font-size: 12px;">
+                You're receiving this because you signed up for Mantle updates.<br>
+                <a href="https://lore-management-system.fly.dev" style="color: #e8c47c;">Play Mantle</a>
+            </p>
+        </div>
+        """
+
+        # Send to each subscriber (Resend free tier: 100/day)
+        sent_count = 0
+        errors = []
+
+        for email in emails[:100]:  # Limit to 100 per send
+            try:
+                resend.Emails.send({
+                    "from": from_email,
+                    "to": [email],
+                    "subject": subject,
+                    "html": html_content
+                })
+                sent_count += 1
+                logging.info(f"Sent update email to {email[:3]}***")
+            except Exception as e:
+                errors.append(f"{email[:3]}***: {str(e)}")
+                logging.error(f"Failed to send to {email}: {e}")
+
+        return {
+            "success": True,
+            "sent": sent_count,
+            "total_subscribers": len(emails),
+            "errors": errors if errors else None
+        }
+
+    except ImportError:
+        logging.error("Resend package not installed")
+        return {"success": False, "error": "Resend package not installed"}
+    except Exception as e:
+        logging.error(f"Failed to send notifications: {e}")
+        return {"success": False, "error": str(e)}
+
+
+class UpdateNotificationRequest(BaseModel):
+    """Manual update notification request."""
+    subject: str = Field(..., min_length=5, max_length=200)
+    message: str = Field(..., min_length=10, max_length=5000)
+
+
+@app.post("/api/admin/send-update")
+async def send_manual_update(request: UpdateNotificationRequest):
+    """Send a manual update notification to all subscribers (admin only)."""
+    result = await send_update_notification(request.subject, request.message)
+    return result
+
+
+# Auto-notify on deploy (called during startup)
+async def check_and_notify_deploy():
+    """Check if version changed and send notification."""
+    current_version = _get_current_version()
+    last_version = _get_last_deployed_version()
+
+    logging.info(f"Version check: current={current_version}, last={last_version}")
+
+    if current_version and current_version != last_version and current_version != "unknown":
+        logging.info(f"New version detected: {current_version}")
+
+        # Save version first to prevent duplicate notifications
+        _save_deployed_version(current_version)
+
+        # Send notification
+        result = await send_update_notification(
+            subject=f"Mantle Updated - {current_version}",
+            message=f"""
+            <p>A new version of Mantle has been deployed!</p>
+            <p><strong>Version:</strong> {current_version}</p>
+            <p>Check out the latest features and improvements at
+            <a href="https://lore-management-system.fly.dev" style="color: #e8c47c;">lore-management-system.fly.dev</a></p>
+            """
+        )
+        logging.info(f"Deploy notification result: {result}")
+    else:
+        logging.info("No version change detected, skipping notification")
+
+
+# Register startup event to check for deploy
+@app.on_event("startup")
+async def startup_deploy_check():
+    """Check for new deploy on startup."""
+    # Run after a short delay to let other startup tasks complete
+    await asyncio.sleep(5)
+    await check_and_notify_deploy()
+
+
+# ============================================================
 # CATCH-ALL FOR SPA (must be registered LAST)
 # ============================================================
 
