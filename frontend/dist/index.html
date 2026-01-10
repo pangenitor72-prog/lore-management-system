@@ -488,23 +488,25 @@
             }
 
             .landing-mascot {
-                width: 50px !important;
-                height: 50px !important;
-                animation: none !important;
-                margin-bottom: 8px !important;
+                width: 100px !important;
+                height: auto !important;
+                margin-bottom: 15px !important;
             }
 
             .mantle-logo-container {
                 margin-bottom: 0 !important;
             }
+
+            .mantle-logo-container .landing-mascot {
+                margin-bottom: 15px !important;
+            }
         }
 
-        /* Smaller raven when force-mobile mode is active (from view toggle) */
+        /* Raven sizing when force-mobile mode is active (from view toggle) */
         .force-mobile .landing-mascot {
-            width: 50px !important;
-            height: 50px !important;
-            animation: none !important;
-            margin-bottom: 8px !important;
+            width: 100px !important;
+            height: auto !important;
+            margin-bottom: 15px !important;
         }
 
         .landing-subtitle {
@@ -5577,14 +5579,13 @@
                             var isActualMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
                             if (raven && (isForceMobile || isNarrowViewport || isActualMobile)) {
-                                raven.style.width = '50px';
-                                raven.style.height = '50px';
-                                raven.style.animation = 'none';
-                                raven.style.marginBottom = '8px';
+                                raven.style.width = '100px';
+                                raven.style.height = 'auto';
+                                raven.style.marginBottom = '15px';
+                                // Keep animation running
                             } else if (raven) {
                                 raven.style.width = '';
                                 raven.style.height = '';
-                                raven.style.animation = '';
                                 raven.style.marginBottom = '';
                             }
                         }
@@ -5643,7 +5644,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v2026-01-10-v14</span>
+                <span style="opacity: 0.5;">v2026-01-10-v15</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
