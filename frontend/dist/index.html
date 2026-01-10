@@ -488,7 +488,10 @@
             }
 
             .landing-mascot {
-                display: none !important;
+                width: 50px !important;
+                height: 50px !important;
+                animation: none !important;
+                margin-bottom: 8px !important;
             }
 
             .mantle-logo-container {
@@ -496,9 +499,12 @@
             }
         }
 
-        /* Hide raven when force-mobile mode is active (from view toggle) */
+        /* Smaller raven when force-mobile mode is active (from view toggle) */
         .force-mobile .landing-mascot {
-            display: none !important;
+            width: 50px !important;
+            height: 50px !important;
+            animation: none !important;
+            margin-bottom: 8px !important;
         }
 
         .landing-subtitle {
@@ -5562,7 +5568,7 @@
                     <h1 class="landing-title mantle-title">MANTLE</h1>
                 </div>
                 <script>
-                    // Hide raven on mobile - checks BOTH viewport AND force-mobile class
+                    // Resize raven on mobile - checks BOTH viewport AND force-mobile class
                     (function() {
                         function checkMobile() {
                             var raven = document.getElementById('hero-raven');
@@ -5571,9 +5577,15 @@
                             var isActualMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
                             if (raven && (isForceMobile || isNarrowViewport || isActualMobile)) {
-                                raven.style.display = 'none';
+                                raven.style.width = '50px';
+                                raven.style.height = '50px';
+                                raven.style.animation = 'none';
+                                raven.style.marginBottom = '8px';
                             } else if (raven) {
-                                raven.style.display = '';
+                                raven.style.width = '';
+                                raven.style.height = '';
+                                raven.style.animation = '';
+                                raven.style.marginBottom = '';
                             }
                         }
                         checkMobile();
@@ -5631,7 +5643,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v2026-01-10-v13</span>
+                <span style="opacity: 0.5;">v2026-01-10-v14</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
