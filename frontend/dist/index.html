@@ -5563,9 +5563,16 @@
         <div id="start" class="screen active">
             <div class="landing-hero">
                 <div class="mantle-logo-container">
-                    <img src="/images/raven.png" alt="Mantle Raven" class="landing-mascot">
+                    <img src="/images/raven.png" alt="Mantle Raven" class="landing-mascot" id="hero-raven">
                     <h1 class="landing-title mantle-title">MANTLE</h1>
                 </div>
+                <style>
+                    @media (max-width: 768px) {
+                        #hero-raven {
+                            display: none !important;
+                        }
+                    }
+                </style>
                 <p class="landing-subtitle">Your Story Awaits</p>
                 <button class="landing-secondary-btn" onclick="showScreen('onboarding')" style="margin-top: 15px;">
                     <span>❓</span> How It Works
@@ -5614,7 +5621,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v2026-01-10-v10</span>
+                <span style="opacity: 0.5;">v2026-01-10-v11</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
