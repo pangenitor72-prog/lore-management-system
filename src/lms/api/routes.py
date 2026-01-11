@@ -458,6 +458,19 @@ def root():
     }
 
 
+@router.get("/api/version")
+def get_app_version():
+    """Return current app version for frontend update checking."""
+    version_file = Path(__file__).parent.parent.parent.parent / "data" / "deployed_version.txt"
+    try:
+        if version_file.exists():
+            version = version_file.read_text().strip()
+            return {"version": version, "status": "ok"}
+    except Exception as e:
+        logger.error(f"Failed to read version: {e}")
+    return {"version": "unknown", "status": "error"}
+
+
 @router.get("/health")
 async def health_check(request: Request):
     out = {

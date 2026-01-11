@@ -83,6 +83,8 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  width: 100%;
 }
 
 body {
@@ -92,15 +94,34 @@ body {
   color: var(--text-primary);
   /* Atmospheric Background */
   background-color: var(--color-bg);
-  background-image: 
+  background-image:
     radial-gradient(circle at 50% 0%, #1a1e29 0%, transparent 70%),
     radial-gradient(circle at 85% 30%, rgba(212, 165, 74, 0.03) 0%, transparent 50%);
   background-attachment: fixed;
-  min-height: 100vh;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* Prevent body scroll, let app handle it */
+  margin: 0;
+  padding: 0;
 }
 
 #root {
-  min-height: 100vh;
+  height: 100%;
+  width: 100%;
+}
+
+/* Mobile viewport fixes */
+@media (max-width: 768px) {
+  html, body {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  #root {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
 }
 
 /* Typography */

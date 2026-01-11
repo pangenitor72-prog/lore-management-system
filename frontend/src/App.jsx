@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import { useWebSocket, ConnectionState } from './contexts/WebSocketContext'
 import ChatInterface from './components/ChatInterface'
@@ -8,18 +9,70 @@ import AIRpg from './components/AIRpg'
 import { useAuditor } from './hooks/useAuditor'
 import './App.css'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+const VERSION_CHECK_INTERVAL = 5 * 60 * 1000 // Check every 5 minutes
+const STORED_VERSION_KEY = 'lms_app_version'
+
 /**
  * Main App Component
- * 
+ *
  * Provides layout shell with navigation between Chat and Dashboard views.
  */
 
 function App() {
   const { connectionState } = useWebSocket()
   const { newCount } = useAuditor()
+  const [updateAvailable, setUpdateAvailable] = useState(false)
+
+  const checkForUpdates = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/version`, { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        const serverVersion = data.version
+        const storedVersion = localStorage.getItem(STORED_VERSION_KEY)
+
+        if (!storedVersion) {
+          // First visit - store current version
+          localStorage.setItem(STORED_VERSION_KEY, serverVersion)
+        } else if (serverVersion !== storedVersion && serverVersion !== 'unknown') {
+          // Version changed - show update banner
+          setUpdateAvailable(true)
+        }
+      }
+    } catch (e) {
+      // Silent fail - don't disrupt user experience
+      console.debug('Version check failed:', e)
+    }
+  }, [])
+
+  const handleRefresh = () => {
+    // Clear stored version so it gets updated on next load
+    localStorage.removeItem(STORED_VERSION_KEY)
+    window.location.reload()
+  }
+
+  useEffect(() => {
+    // Check on mount
+    checkForUpdates()
+
+    // Check periodically
+    const interval = setInterval(checkForUpdates, VERSION_CHECK_INTERVAL)
+    return () => clearInterval(interval)
+  }, [checkForUpdates])
 
   return (
     <div className="app">
+      {/* Update Available Banner */}
+      {updateAvailable && (
+        <div className="update-banner">
+          <span>A new version is available!</span>
+          <button onClick={handleRefresh} className="update-banner__btn">
+            Refresh Now
+          </button>
+        </div>
+      )}
+
       {/* Navigation Sidebar */}
       <nav className="app-nav">
         <div className="app-nav__brand">

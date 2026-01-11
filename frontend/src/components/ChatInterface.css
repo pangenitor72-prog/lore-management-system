@@ -496,6 +496,111 @@
 }
 
 /* Mobile Responsive */
+@media (max-width: 768px) {
+  /* Maximize screen real estate */
+  .chat-interface {
+    border-radius: 0;
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  /* Compact Header */
+  .chat-header {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .chat-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .chat-header__icon {
+    font-size: 1.25rem;
+  }
+
+  /* Hide mini-hud on mobile to save space */
+  .mini-hud {
+    display: none;
+  }
+
+  /* Compact Messages */
+  .chat-messages {
+    padding: var(--space-2);
+    width: 100%;
+  }
+
+  .chat-message {
+    max-width: 100%;
+    gap: var(--space-2);
+  }
+
+  .chat-message__avatar {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    font-size: 0.9rem;
+  }
+
+  .chat-message__text {
+    padding: var(--space-3);
+    font-size: 1.0625rem; /* 17px - comfortable mobile reading size */
+    line-height: 1.6;
+    max-width: none; /* Remove max-width constraint on mobile */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Hide connection text status to save space */
+  .chat-header__status .status-text {
+    display: none;
+  }
+  
+  /* Input Area - Critical Fixes */
+  .chat-input-form {
+    padding: var(--space-2);
+    padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  }
+
+  .chat-input {
+    /* Critical: Prevent iOS zoom on focus */
+    font-size: 16px; 
+    padding: var(--space-2) var(--space-3);
+    min-height: 40px;
+  }
+
+  .chat-submit {
+    min-width: 60px;
+    padding: 0 var(--space-3);
+    height: 40px;
+  }
+  
+  .suggestion-chips {
+    gap: var(--space-2);
+    padding-bottom: var(--space-1);
+    flex-wrap: nowrap; /* Horizontal scroll for chips */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scroll */
+    padding-left: 2px;
+    padding-right: 2px;
+    /* Hide scrollbar */
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
+  }
+  
+  .suggestion-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .suggestion-chip {
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+}
+
+/* Existing small screen check */
 @media (max-width: 640px) {
   .chat-header__status .status-text {
     display: none;
