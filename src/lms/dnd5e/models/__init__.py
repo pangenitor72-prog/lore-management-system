@@ -64,6 +64,25 @@ from .abilities import (
 
 from .character_sheet import CharacterSheet
 
+from .features import (
+    FeatureData,
+    UseType,
+    EffectType,
+    ResourcePool,
+    ResourcePoolData,
+    CORE_FEATURES,
+    RESOURCE_POOLS_BY_GENRE,
+    FEATURE_TRANSLATIONS,
+    ARCHETYPE_FEATURES,
+    get_feature,
+    get_features_for_archetype,
+    get_resource_pool,
+    get_all_resource_pools,
+    translate_resource_pool_name,
+    get_features_for_archetype_at_level,
+    get_new_features_at_level,
+)
+
 __all__ = [
     # Core
     "AbilityScores",
@@ -119,4 +138,22 @@ __all__ = [
     "SPELLS",
     "get_spell",
     "get_all_spells",
+
+    # Features (class abilities)
+    "FeatureData",
+    "UseType",
+    "EffectType",
+    "ResourcePool",
+    "ResourcePoolData",
+    "CORE_FEATURES",
+    "RESOURCE_POOLS_BY_GENRE",
+    "FEATURE_TRANSLATIONS",
+    "ARCHETYPE_FEATURES",
+    "get_feature",
+    "get_features_for_archetype",
+    "get_resource_pool",
+    "get_all_resource_pools",
+    "translate_resource_pool_name",
+    "get_features_for_archetype_at_level",
+    "get_new_features_at_level",
 ]

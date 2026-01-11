@@ -43,6 +43,8 @@
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   width: 250px;
+  font-size: 16px; /* Prevents iOS zoom on focus */
+  min-height: 44px; /* Touch target */
 }
 
 .search-bar input:focus {
@@ -56,6 +58,8 @@
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   cursor: pointer;
+  font-size: 16px; /* Prevents iOS zoom on focus */
+  min-height: 44px; /* Touch target */
 }
 
 .library-content {
@@ -115,7 +119,7 @@
 
 .type-badge {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   padding: 2px 6px;
   border-radius: var(--radius-sm);

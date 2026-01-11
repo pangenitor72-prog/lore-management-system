@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
 from fastapi import APIRouter, HTTPException, Request, status, Depends, File, UploadFile, Query
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 from src.lms.db.neo4j_adapter import Neo4jDatabase
@@ -58,6 +59,9 @@ except ImportError:
 from src.lms.suggestions.action_engine import generate_action_suggestions, PlayerMode
 
 logger = logging.getLogger(__name__)
+
+from src.lms.services.broadcaster import broadcaster
+from src.lms.services.audit_log import AuditLogger
 
 # Shared lore parsing agent for extracting entities from gameplay
 _lore_parser: Optional[LoreParsingAgent] = None
@@ -148,6 +152,7 @@ router = APIRouter(prefix="/game", tags=["Game"])
 # ============================================================
 # INVITE CODE SYSTEM (for controlled alpha testing)
 # ============================================================
+# Force server reload to clear invite code cache
 
 # Path to invite codes configuration
 INVITE_CODES_FILE = Path(__file__).parent.parent.parent.parent / "data" / "invite_codes.json"
@@ -156,24 +161,32 @@ INVITE_CODES_FILE = Path(__file__).parent.parent.parent.parent / "data" / "invit
 _invite_codes_cache: Optional[Dict[str, Any]] = None
 
 
-def _load_invite_codes() -> Dict[str, Any]:
-    """Load invite codes from file."""
+def _load_invite_codes_sync() -> Dict[str, Any]:
+    """Load invite codes from file (synchronous). Always reload to ensure updates are picked up."""
     global _invite_codes_cache
-    if _invite_codes_cache is None:
-        try:
-            if INVITE_CODES_FILE.exists():
-                with open(INVITE_CODES_FILE, "r", encoding="utf-8") as f:
-                    _invite_codes_cache = json.load(f)
-            else:
-                _invite_codes_cache = {"max_testers": 20, "codes": []}
-        except Exception as e:
-            logger.error(f"Failed to load invite codes: {e}")
+    # Always reload from file to catch manual updates
+    try:
+        if INVITE_CODES_FILE.exists():
+            with open(INVITE_CODES_FILE, "r", encoding="utf-8") as f:
+                _invite_codes_cache = json.load(f)
+        else:
             _invite_codes_cache = {"max_testers": 20, "codes": []}
+    except Exception as e:
+        logger.error(f"Failed to load invite codes: {e}")
+        # Fallback to existing cache if file read fails, or empty if no cache
+        if _invite_codes_cache is None:
+            _invite_codes_cache = {"max_testers": 20, "codes": []}
+            
     return _invite_codes_cache
 
 
-def _save_invite_codes() -> None:
-    """Save invite codes to file."""
+async def _load_invite_codes() -> Dict[str, Any]:
+    """Load invite codes from file (async wrapper)."""
+    return await run_in_threadpool(_load_invite_codes_sync)
+
+
+def _save_invite_codes_sync() -> None:
+    """Save invite codes to file (synchronous)."""
     if _invite_codes_cache:
         try:
             INVITE_CODES_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -181,6 +194,11 @@ def _save_invite_codes() -> None:
                 json.dump(_invite_codes_cache, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save invite codes: {e}")
+
+
+async def _save_invite_codes() -> None:
+    """Save invite codes to file (async wrapper)."""
+    await run_in_threadpool(_save_invite_codes_sync)
 
 
 class InviteCodeRequest(BaseModel):
@@ -204,49 +222,66 @@ async def validate_invite_code(request: InviteCodeRequest):
     Returns success if the code is valid and not yet at max capacity.
     Codes are single-use per tester slot.
     """
-    codes_data = _load_invite_codes()
+    codes_data = await _load_invite_codes()
     max_testers = codes_data.get("max_testers", 20)
     codes = codes_data.get("codes", [])
 
     # Count active testers
     active_count = sum(1 for c in codes if c.get("activated", False))
+    
+    # DEBUG LOGGING
+    code_upper = request.code.strip().upper()
+    AuditLogger.log_sync(f"[INVITE DEBUG] Validating code: '{request.code}' -> Normalized: '{code_upper}'")
+    AuditLogger.log_sync(f"[INVITE DEBUG] Active testers: {active_count}/{max_testers}")
 
     # Check if at capacity
     if active_count >= max_testers:
-        return InviteCodeResponse(
-            valid=False,
-            message="Sorry, we've reached capacity for alpha testers. Please check back later!",
-            testers_remaining=0
-        )
+        # Check if the user is ALREADY activated with this code (allow re-entry)
+        is_existing_user = False
+        for c in codes:
+            if c.get("code", "").upper() == code_upper and c.get("activated", False):
+                is_existing_user = True
+                break
+        
+        if not is_existing_user:
+            AuditLogger.log_sync(f"[INVITE DEBUG] Capacity reached ({active_count}/{max_testers}). Rejecting new user.")
+            return InviteCodeResponse(
+                valid=False,
+                message="Sorry, we've reached capacity for alpha testers. Please check back later!",
+                testers_remaining=0
+            )
 
     # Find the code
-    code_upper = request.code.strip().upper()
     for code_entry in codes:
-        if code_entry.get("code", "").upper() == code_upper:
+        stored_code = code_entry.get("code", "").upper()
+        
+        if stored_code == code_upper:
             if code_entry.get("activated", False):
                 # Already activated - still valid (same tester returning)
+                AuditLogger.log_sync(f"[INVITE DEBUG] Welcome back existing user: {code_entry.get('name')}")
                 return InviteCodeResponse(
                     valid=True,
                     message=f"Welcome back, {code_entry.get('name', 'Tester')}!",
-                    tester_name=code_entry.get("name"),
+                    tester_name=code_entry.get('name'),
                     testers_remaining=max_testers - active_count
                 )
             else:
                 # Activate the code
                 code_entry["activated"] = True
                 code_entry["activated_at"] = datetime.now(timezone.utc).isoformat()
-                _save_invite_codes()
+                await _save_invite_codes()
 
-                logger.info(f"Invite code activated: {code_entry.get('name', 'unknown')}")
+                AuditLogger.log_sync(f"[INVITE DEBUG] Activating NEW user: {code_entry.get('name')}")
 
                 return InviteCodeResponse(
                     valid=True,
                     message=f"Welcome to the alpha test, {code_entry.get('name', 'Tester')}!",
-                    tester_name=code_entry.get("name"),
+                    tester_name=code_entry.get('name'),
                     testers_remaining=max_testers - active_count - 1
                 )
 
     # Code not found
+    AuditLogger.log_sync(f"[INVITE DEBUG] Code not found in list: '{code_upper}'")
     return InviteCodeResponse(
         valid=False,
         message="Invalid invite code. Please check your code and try again.",
@@ -261,7 +296,7 @@ async def get_invite_status():
 
     Returns capacity information for display.
     """
-    codes_data = _load_invite_codes()
+    codes_data = await _load_invite_codes()
     max_testers = codes_data.get("max_testers", 20)
     codes = codes_data.get("codes", [])
 
@@ -288,7 +323,7 @@ async def get_analytics(http_request: Request):
     from collections import defaultdict
 
     # Load invite codes (still from file - these are static config)
-    codes_data = _load_invite_codes()
+    codes_data = await _load_invite_codes()
     codes = codes_data.get("codes", [])
     activated_testers = [c for c in codes if c.get("activated", False)]
 
@@ -507,61 +542,77 @@ async def update_lore_base_content(
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON body")
 
-    # Find the JSON file for this lore base
-    lore_file = None
-    for json_file in LORE_BASES_DIR.glob("*.json"):
-        try:
-            with open(json_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                if data.get("id") == lore_id:
-                    lore_file = json_file
-                    break
-        except Exception:
-            continue
-
-    if not lore_file:
-        # Check seeds directory
-        for json_file in SEEDS_DIR.glob("*.json"):
+    # Helper for synchronous file operations
+    def _update_lore_file_sync(lid: str, content: str) -> Optional[Path]:
+        # Find the JSON file for this lore base
+        found_file = None
+        for json_file in LORE_BASES_DIR.glob("*.json"):
             try:
                 with open(json_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    if data.get("id") == lore_id:
-                        lore_file = json_file
+                    if data.get("id") == lid:
+                        found_file = json_file
                         break
             except Exception:
                 continue
 
-    # Update the file or create one for Neo4j-sourced worlds
-    try:
-        if lore_file:
+        if not found_file:
+            # Check seeds directory
+            for json_file in SEEDS_DIR.glob("*.json"):
+                try:
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        if data.get("id") == lid:
+                            found_file = json_file
+                            break
+                except Exception:
+                    continue
+
+        # Update the file or create one for Neo4j-sourced worlds
+        if found_file:
             # Update existing JSON file
-            with open(lore_file, 'r', encoding='utf-8') as f:
+            with open(found_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
-            data["lore_content"] = new_lore
+            data["lore_content"] = content
 
-            with open(lore_file, 'w', encoding='utf-8') as f:
+            with open(found_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            return found_file
         else:
             # No JSON file - create one for this Neo4j-sourced world
-            base_data = LORE_BASES.get(lore_id, {})
+            base_data = LORE_BASES.get(lid, {})
             data = {
-                "id": lore_id,
-                "name": base_data.get("name", lore_id),
+                "id": lid,
+                "name": base_data.get("name", lid),
                 "description": base_data.get("description", ""),
                 "genre": base_data.get("genre", "fantasy"),
                 "genre_hints": base_data.get("genre_hints", []),
                 "tone_hints": base_data.get("tone_hints", []),
                 "seed_prompt": base_data.get("seed_prompt", ""),
-                "lore_content": new_lore,
+                "lore_content": content,
             }
 
             # Create new JSON file in lore_bases directory
-            new_file = LORE_BASES_DIR / f"{lore_id}.json"
+            new_file = LORE_BASES_DIR / f"{lid}.json"
             with open(new_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            return new_file
 
-            logger.info(f"Created new JSON file for Neo4j-sourced world: {new_file}")
+    try:
+        # Run file operations in thread pool
+        lore_file = await run_in_threadpool(_update_lore_file_sync, lore_id, new_lore)
+        if not lore_file and not LORE_BASES.get(lore_id):
+             # Should be handled by _update_lore_file_sync creating new file if needed, 
+             # but check logic again
+             pass 
+
+        if lore_file:
+             logger.info(f"Updated JSON file: {lore_file}")
+        else:
+             logger.info(f"Created new JSON file for Neo4j-sourced world")
 
         # Update in-memory cache
         LORE_BASES[lore_id]["lore_content"] = new_lore

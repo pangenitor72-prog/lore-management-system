@@ -13,13 +13,12 @@ venv/
 __pycache__/
 .pytest_cache/
 build/
-dist/
 *.egg-info/
 
 # Node
 frontend/node_modules
 .npm
-# Note: frontend/dist is included - it contains the game UI
+# IMPORTANT: frontend/dist is NOT ignored - it contains the built React app
 
 # IDE / Editor
 .vscode/

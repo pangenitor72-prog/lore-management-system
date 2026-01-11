@@ -19,10 +19,29 @@ const STORED_VERSION_KEY = 'lms_app_version'
  * Provides layout shell with navigation between Chat and Dashboard views.
  */
 
+// Announcement banner config - set to null to hide
+const ANNOUNCEMENT = {
+  id: 'jan-2026-update',  // Change this to show a new announcement
+  message: "Sorry for any recent downtime! We've been debugging, adding new features, and improving the game. Thanks for your patience!",
+  type: 'info'  // 'info', 'warning', 'success'
+}
+
 function App() {
   const { connectionState } = useWebSocket()
   const { newCount } = useAuditor()
   const [updateAvailable, setUpdateAvailable] = useState(false)
+  const [showAnnouncement, setShowAnnouncement] = useState(() => {
+    if (!ANNOUNCEMENT) return false
+    const dismissed = localStorage.getItem(`announcement_dismissed_${ANNOUNCEMENT.id}`)
+    return !dismissed
+  })
+
+  const dismissAnnouncement = () => {
+    if (ANNOUNCEMENT) {
+      localStorage.setItem(`announcement_dismissed_${ANNOUNCEMENT.id}`, 'true')
+    }
+    setShowAnnouncement(false)
+  }
 
   const checkForUpdates = useCallback(async () => {
     try {
@@ -63,6 +82,16 @@ function App() {
 
   return (
     <div className="app">
+      {/* Announcement Banner */}
+      {showAnnouncement && ANNOUNCEMENT && (
+        <div className={`announcement-banner announcement-banner--${ANNOUNCEMENT.type}`}>
+          <span className="announcement-banner__message">{ANNOUNCEMENT.message}</span>
+          <button onClick={dismissAnnouncement} className="announcement-banner__dismiss" aria-label="Dismiss">
+            &times;
+          </button>
+        </div>
+      )}
+
       {/* Update Available Banner */}
       {updateAvailable && (
         <div className="update-banner">
@@ -76,8 +105,8 @@ function App() {
       {/* Navigation Sidebar */}
       <nav className="app-nav">
         <div className="app-nav__brand">
-          <span className="brand-icon">📚</span>
-          <span className="brand-text">LMS</span>
+          <span className="brand-icon">🧥</span>
+          <span className="brand-text">Mantle</span>
         </div>
 
         <div className="app-nav__links">

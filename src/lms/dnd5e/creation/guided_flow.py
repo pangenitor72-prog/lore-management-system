@@ -6,16 +6,71 @@ from pydantic import BaseModel
 
 from ..models.ability_scores import AbilityScores, AbilityName
 from ..models.races import RaceName, RACES
-from ..models.classes import ClassName, CLASSES, get_starting_hp
+from ..models.archetypes import ClassName, CLASSES, get_starting_hp, get_archetypes_for_genre, get_archetype
+from ..models.origins import get_origins_for_genre
 from ..models.character_sheet import CharacterSheet
+from ..genre.config import get_genre
+
+
+# Genre-specific default equipment based on proficiencies
+GENRE_EQUIPMENT_DEFAULTS = {
+    "modern": {
+        "firearms": ["pistol", "ammunition (box)"],
+        "pistols": ["pistol", "ammunition (box)"],
+        "simple": ["utility knife"],
+        "light": ["leather jacket"],
+        "medium": ["tactical vest"],
+        "default": ["smartphone", "wallet", "keys", "casual clothing"],
+    },
+    "scifi": {
+        "firearms": ["laser pistol", "power cell"],
+        "pistols": ["laser pistol", "power cell"],
+        "rifles": ["plasma rifle", "power cell (2)"],
+        "simple": ["utility tool"],
+        "light": ["flight suit"],
+        "medium": ["combat armor"],
+        "heavy": ["power armor"],
+        "default": ["communicator", "datapad", "credit chip"],
+    },
+    "western": {
+        "firearms": ["revolver", "ammunition (20)"],
+        "pistols": ["revolver", "ammunition (20)"],
+        "rifles": ["rifle", "ammunition (20)"],
+        "simple": ["hunting knife"],
+        "light": ["leather duster"],
+        "default": ["bedroll", "canteen", "rope (50 ft)"],
+    },
+    "cyberpunk": {
+        "firearms": ["smartgun", "ammunition (box)"],
+        "pistols": ["heavy pistol", "ammunition (box)"],
+        "simple": ["monoblade"],
+        "light": ["armored jacket"],
+        "medium": ["corporate security armor"],
+        "default": ["agent (phone)", "credstick", "interface plugs"],
+    },
+    "noir": {
+        "firearms": ["snub-nose revolver", "ammunition (12)"],
+        "pistols": ["snub-nose revolver", "ammunition (12)"],
+        "simple": ["switchblade"],
+        "light": ["trench coat"],
+        "default": ["cigarettes", "lighter", "notepad", "business cards"],
+    },
+    "horror": {
+        "firearms": ["shotgun", "shells (12)"],
+        "pistols": ["revolver", "ammunition (12)"],
+        "simple": ["crowbar"],
+        "light": ["heavy coat"],
+        "default": ["flashlight", "first aid kit", "rope"],
+    },
+}
 
 
 class GuidedCreationState(BaseModel):
     """Tracks state through guided creation flow."""
     step: int = 0
     name: Optional[str] = None
-    race: Optional[RaceName] = None
-    character_class: Optional[ClassName] = None
+    race: Optional[str] = None  # Now stores origin ID (genre-agnostic)
+    character_class: Optional[str] = None  # Now stores archetype ID (genre-agnostic)
     playstyle: Optional[str] = None  # "warrior", "skilled", "caster"
     ability_priority: Optional[str] = None  # Primary stat preference
     skill_proficiencies: List[str] = []
@@ -69,77 +124,66 @@ class GuidedCreationFlow:
             }
 
         elif step == 1:
+            # Get genre-specific origins instead of hardcoded D&D races
+            genre_config = get_genre(self.genre)
+            origins = get_origins_for_genre(self.genre)
+
+            # Build options from origins
+            options = []
+            for origin in origins:
+                # Format ability bonuses as hint
+                if origin.ability_bonuses:
+                    bonus_parts = [f"+{v} {k.title()}" for k, v in origin.ability_bonuses.items() if v > 0]
+                    mechanical_hint = ", ".join(bonus_parts[:3])  # Limit to 3 for readability
+                    if len(bonus_parts) > 3:
+                        mechanical_hint += " and more"
+                else:
+                    mechanical_hint = "Balanced abilities"
+
+                options.append({
+                    "id": origin.id,
+                    "name": origin.display_name,
+                    "tagline": origin.personality_hint.split(",")[0] if origin.personality_hint else origin.description[:50],
+                    "description": origin.description,
+                    "mechanical_hint": mechanical_hint,
+                })
+
+            # Use genre-appropriate terminology
+            origin_term = genre_config.terminology.origin
+
             return {
                 "step": "ancestry",
-                "question": "What ancestry calls to you?",
-                "hint": "Your ancestry shapes your natural abilities and heritage.",
-                "options": [
-                    {
-                        "id": "human",
-                        "name": "Human",
-                        "tagline": "Versatile and ambitious",
-                        "description": "Humans are adaptable and driven. They excel at anything they put their mind to.",
-                        "mechanical_hint": "Bonus to all abilities - good at everything",
-                    },
-                    {
-                        "id": "elf",
-                        "name": "Elf",
-                        "tagline": "Graceful and perceptive",
-                        "description": "Elves have keen senses and natural agility. They see in darkness and resist enchantments.",
-                        "mechanical_hint": "Bonus to Dexterity - nimble and precise",
-                    },
-                    {
-                        "id": "dwarf",
-                        "name": "Dwarf",
-                        "tagline": "Tough and resilient",
-                        "description": "Dwarves are hardy folk with poison resistance and darkvision. They endure what breaks others.",
-                        "mechanical_hint": "Bonus to Constitution - hard to take down",
-                    },
-                    {
-                        "id": "halfling",
-                        "name": "Halfling",
-                        "tagline": "Lucky and brave",
-                        "description": "Halflings have uncanny luck and surprising courage. Misfortune tends to miss them.",
-                        "mechanical_hint": "Bonus to Dexterity + reroll 1s - fortune favors you",
-                    },
-                ],
+                "question": f"What {origin_term.lower()} calls to you?",
+                "hint": f"Your {origin_term.lower()} shapes your natural abilities and heritage.",
+                "options": options,
             }
 
         elif step == 2:
+            # Get genre-specific archetypes instead of hardcoded D&D classes
+            # NOTE: has_powers can mean magic, tech, psionics, ki, etc. depending on genre
+            # The genre-specific archetypes already have appropriate powers for their setting
+            genre_config = get_genre(self.genre)
+            archetypes = get_archetypes_for_genre(self.genre)
+
+            # Build options from archetypes
+            options = []
+            for arch in archetypes:
+                options.append({
+                    "id": arch.id,
+                    "name": arch.display_name,
+                    "tagline": arch.playstyle_hint.split(",")[0] if arch.playstyle_hint else arch.description[:50],
+                    "description": arch.description,
+                    "playstyle": arch.playstyle_hint or "Versatile adventurer",
+                })
+
+            # Use genre-appropriate terminology
+            archetype_term = genre_config.terminology.archetype
+
             return {
                 "step": "calling",
-                "question": "What is your calling?",
+                "question": f"What is your {archetype_term.lower()}?",
                 "hint": "How do you face the challenges ahead?",
-                "options": [
-                    {
-                        "id": "fighter",
-                        "name": "Fighter",
-                        "tagline": "Master of martial combat",
-                        "description": "You solve problems with steel and determination. Tough, versatile, and deadly in combat.",
-                        "playstyle": "Direct confrontation, protecting allies",
-                    },
-                    {
-                        "id": "rogue",
-                        "name": "Rogue",
-                        "tagline": "Cunning and precise",
-                        "description": "You prefer guile over brute force. Strike from shadows, pick locks, and talk your way out of trouble.",
-                        "playstyle": "Stealth, skills, and opportunistic strikes",
-                    },
-                    {
-                        "id": "cleric",
-                        "name": "Cleric",
-                        "tagline": "Divine power and healing",
-                        "description": "You channel divine magic to heal allies and smite foes. A beacon of hope in dark places.",
-                        "playstyle": "Support, healing, and divine wrath",
-                    },
-                    {
-                        "id": "wizard",
-                        "name": "Wizard",
-                        "tagline": "Arcane knowledge and power",
-                        "description": "You've studied the arcane arts. Versatile magic lets you control the battlefield.",
-                        "playstyle": "Powerful spells, utility, and knowledge",
-                    },
-                ],
+                "options": options,
             }
 
         elif step == 3:
@@ -176,41 +220,74 @@ class GuidedCreationFlow:
             }
 
         elif step == 4:
-            class_data = CLASSES[self.state.character_class]
+            # Skills - use archetype data for genre compatibility
+            archetype = get_archetype(self.state.character_class, self.genre)
+            if archetype:
+                skill_choices = archetype.skill_choices
+                num_choices = archetype.num_skill_choices
+            else:
+                # Fallback to fantasy classes
+                class_data = CLASSES.get(self.state.character_class)
+                skill_choices = class_data.skill_choices if class_data else []
+                num_choices = class_data.num_skill_choices if class_data else 2
+
             return {
                 "step": "skills",
                 "question": "What are you especially good at?",
-                "hint": f"Choose {class_data.num_skill_choices} skills that fit your character.",
-                "num_choices": class_data.num_skill_choices,
+                "hint": f"Choose {num_choices} skills that fit your character.",
+                "num_choices": num_choices,
                 "options": [
-                    self._skill_to_option(skill) for skill in class_data.skill_choices
+                    self._skill_to_option(skill) for skill in skill_choices
                 ],
             }
 
         elif step == 5:
-            # Spell selection step (casters only)
-            class_data = CLASSES[self.state.character_class]
-            if not class_data.spellcasting:
+            # Spell/power selection step - genre and archetype aware
+            genre_config = get_genre(self.genre)
+
+            # For non-magic genres, powers are automatic features (tech, ki, psionics)
+            # not chosen spells, so skip this selection step
+            if not genre_config.has_magic:
+                self.state.step = 6
+                return self.get_step_content()
+
+            # Get archetype to check if it has powers
+            archetype = get_archetype(self.state.character_class, self.genre)
+            if archetype and not archetype.has_powers:
                 # Non-casters skip spell selection, go to equipment
                 self.state.step = 6
                 return self.get_step_content()
+
+            # Fallback check for fantasy classes
+            if not archetype:
+                class_data = CLASSES.get(self.state.character_class)
+                if not class_data or not class_data.spellcasting:
+                    self.state.step = 6
+                    return self.get_step_content()
 
             from ..data.loader import get_srd_loader
             loader = get_srd_loader()
 
             # Get cantrips and level 1 spells for this class
-            class_id = self.state.character_class.value
+            class_id = self.state.character_class
             cantrips = loader.get_cantrips_for_class(class_id)
             level_1_spells = [s for s in loader.get_spells_for_class(class_id) if s.get("level") == 1]
 
-            # Calculate how many spells to prepare (ability mod + level, min 1)
-            num_cantrips = class_data.cantrips_known
+            # Calculate how many spells to prepare
+            if archetype:
+                num_cantrips = archetype.cantrips_known
+            else:
+                class_data = CLASSES.get(self.state.character_class)
+                num_cantrips = class_data.cantrips_known if class_data else 2
             num_prepared = self._get_prepared_spell_count()
+
+            # Use genre-appropriate terminology
+            power_term = genre_config.terminology.ability_power if hasattr(genre_config.terminology, 'ability_power') else "spells"
 
             return {
                 "step": "spells",
-                "question": "Choose your spells",
-                "hint": f"Select {num_cantrips} cantrips and {num_prepared} prepared spells.",
+                "question": f"Choose your {power_term.lower()}",
+                "hint": f"Select {num_cantrips} cantrips and {num_prepared} prepared {power_term.lower()}.",
                 "cantrips": {
                     "options": [self._spell_to_option(s) for s in cantrips],
                     "num_choices": num_cantrips,
@@ -224,34 +301,76 @@ class GuidedCreationFlow:
             }
 
         elif step == 6:
-            # Equipment selection step
-            from ..data.loader import get_srd_loader
-            loader = get_srd_loader()
-            class_id = self.state.character_class.value
-            equipment_choices = loader.get_equipment_choices_for_class(class_id)
+            # Equipment selection step - genre-aware
+            genre_config = get_genre(self.genre)
 
-            if not equipment_choices:
-                # No choices for this class, skip to background
-                self.state.step = 7
-                return self.get_step_content()
+            if self.genre == "fantasy":
+                # Fantasy uses SRD equipment data
+                from ..data.loader import get_srd_loader
+                loader = get_srd_loader()
+                class_id = self.state.character_class
+                equipment_choices = loader.get_equipment_choices_for_class(class_id)
 
-            choices = []
-            for key, choice in equipment_choices.items():
-                if key.startswith("choice_"):
-                    choices.append({
-                        "choice_id": key,
-                        "prompt": choice.get("prompt", "Choose equipment"),
-                        "options": choice.get("options", []),
-                        "selected": self.state.selected_equipment.get(key),
-                    })
+                if not equipment_choices:
+                    # No choices for this class, skip to background
+                    self.state.step = 7
+                    return self.get_step_content()
 
-            return {
-                "step": "equipment",
-                "question": "Choose your starting equipment",
-                "hint": "Select your gear from the options below.",
-                "choices": choices,
-                "fixed": equipment_choices.get("fixed", []),
-            }
+                choices = []
+                for key, choice in equipment_choices.items():
+                    if key.startswith("choice_"):
+                        choices.append({
+                            "choice_id": key,
+                            "prompt": choice.get("prompt", "Choose equipment"),
+                            "options": choice.get("options", []),
+                            "selected": self.state.selected_equipment.get(key),
+                        })
+
+                return {
+                    "step": "equipment",
+                    "question": "Choose your starting equipment",
+                    "hint": "Select your gear from the options below.",
+                    "choices": choices,
+                    "fixed": equipment_choices.get("fixed", []),
+                }
+            else:
+                # Non-fantasy: generate equipment from archetype proficiencies
+                archetype = get_archetype(self.state.character_class, self.genre)
+                genre_equipment = GENRE_EQUIPMENT_DEFAULTS.get(self.genre, {})
+
+                fixed_equipment = []
+
+                # Add default items for this genre
+                fixed_equipment.extend(genre_equipment.get("default", []))
+
+                # Add weapon based on proficiencies
+                if archetype:
+                    for prof in archetype.weapon_proficiencies:
+                        if prof in genre_equipment:
+                            fixed_equipment.extend(genre_equipment[prof])
+                            break  # Only add one weapon type
+
+                    # Add armor based on proficiencies
+                    for armor_type in ["heavy", "medium", "light"]:
+                        if armor_type in archetype.armor_proficiencies and armor_type in genre_equipment:
+                            fixed_equipment.extend(genre_equipment[armor_type])
+                            break  # Only add one armor type
+
+                # Remove duplicates while preserving order
+                seen = set()
+                unique_equipment = []
+                for item in fixed_equipment:
+                    if item not in seen:
+                        seen.add(item)
+                        unique_equipment.append(item)
+
+                return {
+                    "step": "equipment",
+                    "question": f"Your starting {genre_config.terminology.ability_power.lower() if hasattr(genre_config.terminology, 'ability_power') else 'gear'}",
+                    "hint": f"Standard equipment for a {archetype.display_name if archetype else 'character'} in this setting.",
+                    "choices": [],  # No choices for non-fantasy - streamlined
+                    "fixed": unique_equipment,
+                }
 
         elif step == 7:
             # Background selection step
@@ -304,14 +423,22 @@ class GuidedCreationFlow:
         # Generate abilities to get the modifier
         abilities = self._generate_abilities()
 
-        if self.state.character_class == ClassName.CLERIC:
+        # character_class is now a string ID
+        if self.state.character_class == "cleric":
             # Cleric prepares WIS mod + level spells (min 1)
             wis_mod = abilities.get_modifier(AbilityName.WIS)
             return max(1, wis_mod + 1)  # +1 for level 1
-        elif self.state.character_class == ClassName.WIZARD:
+        elif self.state.character_class == "wizard":
             # Wizard prepares INT mod + level spells (min 1)
             int_mod = abilities.get_modifier(AbilityName.INT)
             return max(1, int_mod + 1)  # +1 for level 1
+
+        # For other archetypes with powers, use archetype's power_ability
+        archetype = get_archetype(self.state.character_class, self.genre)
+        if archetype and archetype.power_ability:
+            ability_name = AbilityName(archetype.power_ability.upper()[:3])
+            mod = abilities.get_modifier(ability_name)
+            return max(1, mod + 1)
 
         return 2  # Default for other casters
 
@@ -348,20 +475,16 @@ class GuidedCreationFlow:
         return True
 
     def set_race(self, race: str) -> bool:
-        try:
-            self.state.race = RaceName(race.lower())
-            self.state.step = 2
-            return True
-        except ValueError:
-            return False
+        # Store origin ID directly (genre-agnostic)
+        self.state.race = race.lower()
+        self.state.step = 2
+        return True
 
     def set_class(self, character_class: str) -> bool:
-        try:
-            self.state.character_class = ClassName(character_class.lower())
-            self.state.step = 3
-            return True
-        except ValueError:
-            return False
+        # Store archetype ID directly (genre-agnostic)
+        self.state.character_class = character_class.lower()
+        self.state.step = 3
+        return True
 
     def set_strength_priority(self, priority: str) -> bool:
         valid = ["physical", "agility", "intellect", "presence"]
@@ -372,10 +495,23 @@ class GuidedCreationFlow:
         return True
 
     def set_skills(self, skills: List[str]) -> bool:
-        class_data = CLASSES[self.state.character_class]
-        if len(skills) != class_data.num_skill_choices:
+        # Get archetype data for skill validation
+        archetype = get_archetype(self.state.character_class, self.genre)
+        if archetype:
+            num_choices = archetype.num_skill_choices
+            available = [s.lower() for s in archetype.skill_choices]
+        else:
+            # Fallback for fantasy classes
+            class_data = CLASSES.get(ClassName(self.state.character_class)) if self.state.character_class in [c.value for c in ClassName] else None
+            if class_data:
+                num_choices = class_data.num_skill_choices
+                available = [s.lower() for s in class_data.skill_choices]
+            else:
+                num_choices = 2
+                available = skills  # Accept whatever was provided
+
+        if len(skills) != num_choices:
             return False
-        available = [s.lower() for s in class_data.skill_choices]
         for skill in skills:
             if skill.lower() not in available:
                 return False
@@ -385,15 +521,24 @@ class GuidedCreationFlow:
 
     def set_spells(self, cantrips: List[str], spells: List[str]) -> bool:
         """Set selected cantrips and spells."""
-        class_data = CLASSES[self.state.character_class]
+        # Get archetype data
+        archetype = get_archetype(self.state.character_class, self.genre)
 
         # Non-casters don't select spells
-        if not class_data.spellcasting:
+        if archetype and not archetype.has_powers:
             self.state.step = 6  # Go to equipment
             return True
 
+        # Get expected cantrip count
+        if archetype:
+            expected_cantrips = archetype.cantrips_known
+        else:
+            # Fallback for fantasy classes
+            class_data = CLASSES.get(ClassName(self.state.character_class)) if self.state.character_class in [c.value for c in ClassName] else None
+            expected_cantrips = class_data.cantrips_known if class_data else 0
+
         # Validate cantrip count
-        if len(cantrips) != class_data.cantrips_known:
+        if len(cantrips) != expected_cantrips:
             return False
 
         # Validate spell count
@@ -401,22 +546,23 @@ class GuidedCreationFlow:
         if len(spells) != num_prepared:
             return False
 
-        # Validate selections are available to this class
-        from ..data.loader import get_srd_loader
-        loader = get_srd_loader()
-        class_id = self.state.character_class.value
+        # Validate selections are available to this class (fantasy only - has SRD data)
+        if self.genre == "fantasy":
+            from ..data.loader import get_srd_loader
+            loader = get_srd_loader()
+            class_id = self.state.character_class
 
-        available_cantrips = {s.get("id", s.get("name", "").lower().replace(" ", "_"))
-                             for s in loader.get_cantrips_for_class(class_id)}
-        available_spells = {s.get("id", s.get("name", "").lower().replace(" ", "_"))
-                           for s in loader.get_spells_for_class(class_id) if s.get("level") == 1}
+            available_cantrips = {s.get("id", s.get("name", "").lower().replace(" ", "_"))
+                                 for s in loader.get_cantrips_for_class(class_id)}
+            available_spells = {s.get("id", s.get("name", "").lower().replace(" ", "_"))
+                               for s in loader.get_spells_for_class(class_id) if s.get("level") == 1}
 
-        for c in cantrips:
-            if c not in available_cantrips:
-                return False
-        for s in spells:
-            if s not in available_spells:
-                return False
+            for c in cantrips:
+                if c not in available_cantrips:
+                    return False
+            for s in spells:
+                if s not in available_spells:
+                    return False
 
         self.state.selected_cantrips = cantrips
         self.state.selected_spells = spells
@@ -427,7 +573,7 @@ class GuidedCreationFlow:
         """Set selected equipment choices."""
         from ..data.loader import get_srd_loader
         loader = get_srd_loader()
-        class_id = self.state.character_class.value
+        class_id = self.state.character_class
         equipment_data = loader.get_equipment_choices_for_class(class_id)
 
         if not equipment_data:
@@ -565,7 +711,7 @@ class GuidedCreationFlow:
         """Build equipment list from selected choices and fixed items."""
         from ..data.loader import get_srd_loader
         loader = get_srd_loader()
-        class_id = self.state.character_class.value
+        class_id = self.state.character_class
         equipment_data = loader.get_equipment_choices_for_class(class_id)
 
         equipment = []
@@ -583,14 +729,52 @@ class GuidedCreationFlow:
                         break
         else:
             # Fallback for classes without equipment data
-            if self.state.character_class == ClassName.FIGHTER:
+            # Use string comparisons since character_class is now a string
+            class_id = self.state.character_class
+            if class_id == "fighter":
                 equipment = ["chain mail", "longsword", "shield"]
-            elif self.state.character_class == ClassName.ROGUE:
+            elif class_id == "rogue":
                 equipment = ["leather armor", "rapier", "shortbow"]
-            elif self.state.character_class == ClassName.CLERIC:
+            elif class_id == "cleric":
                 equipment = ["scale mail", "mace", "shield", "holy symbol"]
-            else:  # Wizard
+            elif class_id == "wizard":
                 equipment = ["quarterstaff", "spellbook", "arcane focus"]
+            elif class_id == "barbarian":
+                equipment = ["greataxe", "handaxe", "explorer's pack"]
+            elif class_id == "bard":
+                equipment = ["rapier", "lute", "leather armor", "dagger"]
+            elif class_id == "druid":
+                equipment = ["wooden shield", "scimitar", "leather armor", "druidic focus"]
+            elif class_id == "monk":
+                equipment = ["shortsword", "dungeoneer's pack", "10 darts"]
+            elif class_id == "paladin":
+                equipment = ["chain mail", "longsword", "shield", "holy symbol"]
+            elif class_id == "ranger":
+                equipment = ["scale mail", "shortsword", "shortsword", "longbow", "20 arrows"]
+            elif class_id == "sorcerer":
+                equipment = ["light crossbow", "20 bolts", "arcane focus", "daggers"]
+            elif class_id == "warlock":
+                equipment = ["leather armor", "light crossbow", "20 bolts", "arcane focus", "daggers"]
+            else:
+                # For non-fantasy archetypes, use genre equipment defaults
+                genre_equipment = GENRE_EQUIPMENT_DEFAULTS.get(self.genre, {})
+                archetype = get_archetype(class_id, self.genre)
+
+                if genre_equipment:
+                    equipment = list(genre_equipment.get("default", []))
+                    # Add weapon based on archetype proficiencies
+                    if archetype:
+                        for prof in archetype.weapon_proficiencies:
+                            if prof in genre_equipment:
+                                equipment.extend(genre_equipment[prof])
+                                break
+                        for armor_type in ["heavy", "medium", "light"]:
+                            if armor_type in archetype.armor_proficiencies and armor_type in genre_equipment:
+                                equipment.extend(genre_equipment[armor_type])
+                                break
+                else:
+                    # Generic fallback
+                    equipment = ["dagger", "explorer's pack"]
 
         return equipment
 

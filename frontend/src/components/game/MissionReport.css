@@ -160,7 +160,7 @@
 }
 
 .stat-tile__label {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;

@@ -238,7 +238,7 @@
   height: 16px;
   background: var(--color-success);
   border-radius: 50%;
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: white;
   display: flex;
@@ -414,7 +414,7 @@
 
 .ability-name {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   letter-spacing: 0.05em;
 }
@@ -468,7 +468,7 @@
   background: var(--color-accent);
   border-radius: var(--radius-full);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-bg);
   display: flex;

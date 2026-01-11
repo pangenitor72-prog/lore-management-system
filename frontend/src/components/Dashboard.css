@@ -111,7 +111,7 @@
 
 .stat-card__label {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -230,7 +230,7 @@
   background: var(--color-accent);
   color: var(--color-bg);
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-weight: 600;
   padding: 2px 6px;
   border-radius: var(--radius-sm);
@@ -247,7 +247,7 @@
 
 .severity-badge {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
@@ -306,7 +306,7 @@
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -322,7 +322,7 @@
   border-radius: var(--radius-sm);
   padding: 2px 6px;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -593,6 +593,79 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* ============================================================
+   Mobile Responsiveness
+   ============================================================ */
+@media (max-width: 768px) {
+  .dashboard {
+    height: auto; /* Let it grow */
+    min-height: 100%;
+  }
+
+  .dashboard-header {
+    padding: var(--space-3);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .dashboard-header__title h1 {
+    font-size: 1.25rem;
+  }
+
+  .dashboard-stats {
+    flex-wrap: wrap;
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .stat-card {
+    flex: 1 1 40%;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .stat-card__value {
+    font-size: 1.5rem;
+  }
+
+  /* Stack Grid */
+  .dashboard-content {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-3);
+    overflow: visible; /* Let body scroll */
+    gap: var(--space-4);
+  }
+
+  .dashboard-panel {
+    height: 400px; /* Fixed height for scrollable areas within panels */
+    flex: none;
+  }
+
+  .panel-header {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .severity-filter {
+    padding: 2px 6px;
+  }
+
+  /* Modal Mobile */
+  .detail-modal {
+    width: 95%;
+    height: 90vh;
+    max-height: 90vh;
+  }
+  
+  .detail-modal__header {
+    padding: var(--space-3);
+  }
+  
+  .detail-modal__content {
+    padding: var(--space-3);
   }
 }
 
