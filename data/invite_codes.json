@@ -1,5 +1,5 @@
 {
-  "max_testers": 30,
+  "max_testers": 35,
   "codes": [
     {"code": "DEV-ADMIN", "name": "Developer (Admin)", "activated": false, "activated_at": null},
     {"code": "DEB2025", "name": "Deb Wood", "activated": false, "activated_at": null},
@@ -31,6 +31,8 @@
     {"code": "FRIEND-05", "name": "Guest Tester", "activated": false, "activated_at": null},
     {"code": "AIRPG-BETA", "name": "Public Beta", "activated": false, "activated_at": null},
     {"code": "JAKE2026", "name": "Jake", "activated": false, "activated_at": null},
-    {"code": "TIM2026", "name": "Tim", "activated": false, "activated_at": null}
+    {"code": "TIM2026", "name": "Tim", "activated": false, "activated_at": null},
+    {"code": "KENDYLL2026", "name": "Kendyll", "activated": false, "activated_at": null},
+    {"code": "KAMRYN2026", "name": "Kamryn", "activated": false, "activated_at": null}
   ]
 }
