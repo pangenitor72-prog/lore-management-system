@@ -1,5 +1,5 @@
 {
-  "max_testers": 35,
+  "max_testers": 50,
   "codes": [
     {"code": "DEV-ADMIN", "name": "Developer (Admin)", "activated": false, "activated_at": null},
     {"code": "DEB2025", "name": "Deb Wood", "activated": false, "activated_at": null},
