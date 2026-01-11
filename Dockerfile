@@ -25,6 +25,8 @@ COPY src/ ./src/
 COPY docs/ ./docs/
 COPY CLAUDE.md ./
 
+# Cache-bust for data directory (changes with each deploy)
+ARG CACHEBUST=1
 # Copy data directory (lore bases, etc.)
 COPY data/ ./data/
 
