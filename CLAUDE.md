@@ -49,12 +49,13 @@ npm run dev
 
 ## Architecture
 
-### Two-System Design
+### System Architecture
 
 1. **LMS (src/lms/)** - Lore management with contradiction detection
-   - `api/routes.py` - FastAPI endpoints
+   - `api/` - FastAPI endpoints (routes.py, game_routes.py)
    - `db/neo4j_adapter.py` - Async Neo4j database layer
    - `agents/` - AI agents (auditor, query, dm, boundary enforcement)
+   - `ingestion/` - Smart Ingestor pipeline (segment → detect → extract → personality → build → drift → embed → save)
    - `services/` - Business logic (contradictions, embeddings)
    - `core/models.py` - Pydantic v2 models and enums
 
@@ -63,7 +64,13 @@ npm run dev
    - `runtime/` - Session management, gameplay rules, orchestration
    - Follows strict "Pressure-First Development" doctrine (see `docs/airpg/AIRPG_DEV_DOCTRINE.md`)
 
-3. **D&D 5e Rules (src/lms/dnd5e/)** - Mechanical rules layer
+3. **Shared (src/shared/)** - Cross-cutting utilities
+   - `config/` - Configuration management
+   - `database/` - Database clients (neo4j_client.py)
+   - `llm/` - LLM utilities
+   - `utils/` - General utilities
+
+4. **D&D 5e Rules (src/lms/dnd5e/)** - Mechanical rules layer
    - `models/` - Character sheets, abilities, races, classes, archetypes
    - `engine/` - Dice rolling, skill checks, combat resolution
    - `creation/` - Character creation flows (Concept, Guided, Classic)

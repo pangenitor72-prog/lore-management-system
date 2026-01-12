@@ -3,7 +3,7 @@
 # LMS Audit Dossier — Post-Refactor Stability Review  
 **Author:** Metis  
 **Date:** 2025-12-03  
-**Status:** 🟡 Stable (Runnable but still vulnerable to silent failure)
+**Status:** 🟢 Stable (Core infrastructure issues resolved)
 
 ---
 
@@ -49,43 +49,28 @@ This fix unblocked the entire semantic-LLM pipeline and restored async safety.
 
 ---
 
-## ⚠️ Silent Failure Risk (Critical)
+## ✅ Silent Failure Risk — RESOLVED
 
-### ❗ Problem
-In `src/db/neo4j_adapter.py`, the `execute()` method still catches all exceptions and returns:
+### Original Problem (Fixed)
+The `execute()` method in `src/db/neo4j_adapter.py` previously caught all exceptions and returned `[]` silently.
 
+### Current Status: FIXED
+The current implementation properly handles all exceptions:
 ```python
-return []
+except ServiceUnavailable:
+    logger.error("Neo4j ServiceUnavailable", exc_info=True, ...)
+    raise
 
-No logging.
-No raised exception.
-No signal that anything is wrong.
+except Neo4jError:
+    logger.error("Neo4jError occurred", exc_info=True, ...)
+    raise
 
-❗ Why It Is Dangerous
+except Exception:
+    logger.error("Unexpected Neo4j exception", exc_info=True, ...)
+    raise
+```
 
-If Neo4j goes offline:
-
-The DM Agent receives empty datasets
-
-SemanticAuditor thinks “no contradictions found”
-
-Decoherence Engine receives zero entities and may hallucinate logical structure
-
-System behaves incorrectly but silently
-
-
-Silent failure is worse than a crash — it corrupts logic without warning.
-
-✔️ Required Fix
-
-Replace the blanket return with:
-
-structured error logging
-
-re-raising the original exception
-
-
-Hardening Phase Step 1 addresses this.
+All database errors are now logged with full stack traces and re-raised to callers.
 
 
 ---
@@ -195,10 +180,18 @@ segment → detect → extract → personality → build → DRIFT → EMBED →
 - Tier 1 (Configuration) and Tier 2 (Infrastructure) changes now bypass module-by-module audit
 - Maintains architectural governance for Tier 3+ changes
 
-### Remaining Critical Blockers (Now Unblocked)
+### Silent Failure in neo4j_adapter.py: RESOLVED ✅
+**Date:** 2026-01-11
+**Issue:** The `execute()` method was catching all exceptions and returning `[]` silently.
+
+**Current Status:** ALREADY FIXED. The current implementation properly:
+- Logs all exceptions with `exc_info=True` for full stack traces
+- Re-raises `ServiceUnavailable`, `Neo4jError`, and general `Exception`
+- No silent `return []` patterns remain in the database layer
+
+### Remaining Blockers (Now Unblocked)
 Per `PRIORITY_IMPROVEMENTS.md`, these can now proceed under Hotfix Protocol:
 1. ⬜ Gemini API Timeout (Tier 2 - Infrastructure)
 2. ⬜ Session Persistence (Tier 3 - Operational Feature)
 3. ⬜ Health Check Tuning (Tier 1 - Configuration)
-4. ⬜ Silent Failure Fixes (Tier 2 - Infrastructure)
 
