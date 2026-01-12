@@ -71,11 +71,36 @@
   --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.6);
   --shadow-glow: 0 0 20px rgba(212, 165, 74, 0.15);
-  
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease-out;
   --transition-slow: 400ms ease-out;
+
+  /* Duration aliases (for game components) */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* Easing functions */
+  --ease-standard: ease-out;
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Z-index scale */
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+  --z-tooltip: 400;
+
+  /* Spacing aliases (legacy support) */
+  --space-lg: var(--space-8);
+  --space-xl: var(--space-12);
+
+  /* Color aliases */
+  --color-primary: var(--color-accent);
+  --color-backdrop: rgba(0, 0, 0, 0.6);
+  --color-warning-muted: rgba(251, 191, 36, 0.15);
+  --color-accent-strong: #e5b85c;
 }
 
 /* Base Styles */

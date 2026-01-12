@@ -57,10 +57,7 @@ export default function AIRpg() {
   }
 
   const handlePlay = (sessionId) => {
-    console.log(`Loading session ${sessionId}`)
-    // In a real app, we'd store this ID in context/localstorage
-    // For now, we just navigate to the chat interface
-    // The ChatInterface would need to read the session ID from somewhere
+    // Navigate to chat interface with session ID
     navigate('/', { state: { sessionId } })
   }
 
@@ -68,7 +65,7 @@ export default function AIRpg() {
     e.stopPropagation()
     if (confirm("Are you sure you want to delete this save? (Admin only)")) {
       // TODO: Implement delete endpoint
-      console.log("Delete not implemented for alpha")
+      alert("Delete not implemented yet")
     }
   }
 

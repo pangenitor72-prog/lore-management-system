@@ -10,18 +10,23 @@ Uses 4-tier retrieval strategy:
   4. Keyword Search (fallback)
 """
 
+# Standard Library
 from typing import Dict, List, Any, Optional
+from datetime import datetime
+import asyncio
 import json
-import google.generativeai as genai
-from src.lms.services.audit_log import AuditLogger
 import logging
+
+# Third Party
+import google.generativeai as genai
 from fastapi import WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 from starlette.concurrency import run_in_threadpool
-import asyncio
-from src.lms.services.broadcaster import broadcaster
-from datetime import datetime
+
+# Local
 from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.audit_log import AuditLogger
+from src.lms.services.broadcaster import broadcaster
 from src.lms.services.vector_service import VectorService
 from src.lms.services.embedding_orchestrator import EmbeddingOrchestrator
 from src.lms.prompts import QueryPrompts

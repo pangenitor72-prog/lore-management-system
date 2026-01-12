@@ -3,7 +3,7 @@
 # DEPRECATED: This Streamlit UI is no longer the primary interface.
 #
 # The main frontend is now the React app served at http://localhost:8000
-# Run with: uvicorn src.api:app --reload
+# Run with: uvicorn src.lms.api:app --reload
 #
 # This file is kept for reference and legacy compatibility only.
 # ==============================================================================

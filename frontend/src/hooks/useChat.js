@@ -103,7 +103,8 @@ export function useChat() {
         break
 
       default:
-        console.warn('[useChat] Unknown message type:', type, payload)
+        // Silently ignore unknown message types
+        break
     }
   }, [streamingMessageId, generateMessageId])
 

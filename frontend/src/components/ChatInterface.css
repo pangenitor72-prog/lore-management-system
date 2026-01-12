@@ -452,46 +452,24 @@
   color: var(--text-muted);
 }
 
-/* User vs DM Message Styling */
-.chat-message--user {
-  flex-direction: row-reverse;
-}
-
-.chat-message--user .chat-message__content {
+/* Game Mode: User vs DM Message Styling (scoped overrides) */
+.chat-interface--game .chat-message--user .chat-message__content {
   align-items: flex-end;
 }
 
-.chat-message--user .chat-message__text {
+.chat-interface--game .chat-message--user .chat-message__text {
   background: var(--color-accent-soft);
   border-color: rgba(74, 222, 128, 0.3);
 }
 
-.chat-message--assistant .chat-message__text {
+.chat-interface--game .chat-message--assistant .chat-message__text {
   background: var(--surface-secondary);
   border: 1px solid var(--border-subtle);
-}
-
-/* DM Narrative Style */
-.chat-message--assistant .chat-message__text {
   font-size: 0.9375rem;
   line-height: 1.7;
-  white-space: pre-wrap;
 }
 
-/* Avatar styling */
-.chat-message__avatar {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-tertiary);
-  border-radius: 50%;
-  font-size: 1.125rem;
-}
-
-.chat-message--user .chat-message__avatar {
+.chat-interface--game .chat-message--user .chat-message__avatar {
   background: var(--color-accent-soft);
 }
 

@@ -768,6 +768,124 @@
             color: var(--accent-gold);
         }
 
+        /* Mood Cards (Storyteller simplified flow) */
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 650px;
+        }
+
+        .mood-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 25px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .mood-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+            transform: translateY(-3px);
+        }
+
+        .mood-card .mood-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .mood-card .mood-name {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .mood-card .mood-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        /* Genre selection within mood */
+        .genre-subgrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+            max-width: 550px;
+        }
+
+        .genre-subcard {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 18px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .genre-subcard:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-warm);
+        }
+
+        .genre-subcard.selected {
+            border-color: var(--accent-gold);
+            background: var(--bg-hover);
+        }
+
+        .genre-subcard .subicon {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .genre-subcard .sublabel {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .genre-subcard.selected .sublabel {
+            color: var(--accent-gold);
+        }
+
+        /* Breadcrumb navigation */
+        .story-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .story-breadcrumb .crumb {
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .story-breadcrumb .crumb:hover {
+            color: var(--accent-warm);
+        }
+
+        .story-breadcrumb .crumb.active {
+            color: var(--accent-gold);
+            cursor: default;
+        }
+
+        .story-breadcrumb .separator {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+
         /* Buttons */
         .btn {
             padding: 14px 32px;
@@ -2256,6 +2374,131 @@
         }
 
         /* Ingest Screen */
+        .ingest-stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .ingest-stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .ingest-stat-card .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .entity-preview-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .entity-preview-card:hover {
+            border-color: var(--accent-warm);
+        }
+
+        .entity-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .entity-preview-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .entity-preview-type {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .entity-preview-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .entity-preview-source {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent-warm);
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 10px;
+        }
+
+        .entity-preview-source::before {
+            content: 'Source: ';
+            font-style: normal;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .entity-preview-traits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .entity-preview-trait {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            background: rgba(232, 196, 124, 0.15);
+            border-radius: 4px;
+            color: var(--accent-warm);
+        }
+
+        .entity-preview-ocean {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .ocean-mini {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            color: var(--text-muted);
+        }
+
+        .relationship-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .relationship-chip .rel-arrow {
+            color: var(--accent-warm);
+            margin: 0 6px;
+        }
+
         #ingest {
             padding: 20px 0;
         }
@@ -3961,6 +4204,59 @@
         .dice-result-label.critical {
             background: rgba(232, 196, 124, 0.2);
             color: var(--accent-gold);
+        }
+
+        /* Modifier explanation - shows WHERE the bonus comes from */
+        .dice-modifier-explain {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 6px 10px;
+            margin: 4px 0 8px 0;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+
+        .dice-modifier-explain .mod-part {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 2px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .dice-modifier-explain .mod-part.positive {
+            color: var(--accent-sage);
+        }
+
+        .dice-modifier-explain .mod-part.negative {
+            color: var(--accent-rose);
+        }
+
+        /* DC Display - shows what you needed to beat */
+        .dice-dc-display {
+            font-size: 0.8rem;
+            text-align: center;
+            margin: 8px 0 4px 0;
+            padding: 4px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            color: var(--text-muted);
+        }
+
+        .dice-dc-display .dc-value {
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .dice-dc-display .dc-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 4px;
+            opacity: 0.7;
         }
 
         /* Dice Animation */
@@ -5739,96 +6035,55 @@
             </div>
         </div>
 
-        <!-- Welcome Screen -->
+        <!-- Welcome Screen (Storyteller Mode - Mood-based flow) -->
         <div id="welcome" class="screen">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                <div class="welcome-intro" style="margin-bottom: 0;">
-                    <h2>What kind of story calls to you?</h2>
-                    <p>Select one or more genres to blend together.</p>
-                </div>
-                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px; white-space: nowrap;">← Home</button>
+            <!-- Breadcrumb navigation -->
+            <div class="story-breadcrumb" id="story-breadcrumb">
+                <span class="crumb active" onclick="showMoodSelection()">Mood</span>
             </div>
 
-            <div class="genre-grid" style="max-width: 650px;">
-                <!-- Story-Focused Genres -->
-                <div class="genre-card" data-genre="romance" onclick="selectGenre('romance')">
-                    <span class="icon">💕</span>
-                    <span class="label">Romance</span>
+            <div class="welcome-intro" style="margin-bottom: 20px;">
+                <h2 id="welcome-title">What kind of story are you in the mood for?</h2>
+                <p id="welcome-subtitle">Pick a vibe, then we'll narrow it down.</p>
+            </div>
+
+            <!-- Mood Selection (Phase 1) -->
+            <div id="mood-selection" class="mood-grid">
+                <div class="mood-card" onclick="selectMood('cozy')">
+                    <span class="mood-icon">💕</span>
+                    <span class="mood-name">Cozy</span>
+                    <span class="mood-desc">Romance, drama, heartfelt moments</span>
                 </div>
-                <div class="genre-card" data-genre="mystery" onclick="selectGenre('mystery')">
-                    <span class="icon">🔍</span>
-                    <span class="label">Mystery</span>
+                <div class="mood-card" onclick="selectMood('epic')">
+                    <span class="mood-icon">⚔️</span>
+                    <span class="mood-name">Epic</span>
+                    <span class="mood-desc">Heroes, quests, legendary tales</span>
                 </div>
-                <div class="genre-card" data-genre="drama" onclick="selectGenre('drama')">
-                    <span class="icon">🎭</span>
-                    <span class="label">Drama</span>
+                <div class="mood-card" onclick="selectMood('gritty')">
+                    <span class="mood-icon">🌃</span>
+                    <span class="mood-name">Gritty</span>
+                    <span class="mood-desc">Street-level, noir, hard-boiled</span>
                 </div>
-                <div class="genre-card" data-genre="adventure" onclick="selectGenre('adventure')">
-                    <span class="icon">🗺️</span>
-                    <span class="label">Adventure</span>
+                <div class="mood-card" onclick="selectMood('dark')">
+                    <span class="mood-icon">👻</span>
+                    <span class="mood-name">Dark</span>
+                    <span class="mood-desc">Horror, dread, survival</span>
                 </div>
-                <!-- Classic Genres -->
-                <div class="genre-card" data-genre="fantasy" onclick="selectGenre('fantasy')">
-                    <span class="icon">⚔️</span>
-                    <span class="label">Fantasy</span>
-                </div>
-                <div class="genre-card" data-genre="scifi" onclick="selectGenre('scifi')">
-                    <span class="icon">🚀</span>
-                    <span class="label">Sci-Fi</span>
-                </div>
-                <div class="genre-card" data-genre="horror" onclick="selectGenre('horror')">
-                    <span class="icon">👻</span>
-                    <span class="label">Horror</span>
-                </div>
-                <div class="genre-card" data-genre="modern" onclick="selectGenre('modern')">
-                    <span class="icon">🏙️</span>
-                    <span class="label">Modern</span>
-                </div>
-                <!-- Magic-Focused Genres -->
-                <div class="genre-card" data-genre="urban_fantasy" onclick="selectGenre('urban_fantasy')">
-                    <span class="icon">🔮</span>
-                    <span class="label">Urban Fantasy</span>
-                </div>
-                <div class="genre-card" data-genre="gothic" onclick="selectGenre('gothic')">
-                    <span class="icon">🦇</span>
-                    <span class="label">Gothic</span>
-                </div>
-                <!-- Historical & Cultural -->
-                <div class="genre-card" data-genre="western" onclick="selectGenre('western')">
-                    <span class="icon">🤠</span>
-                    <span class="label">Western</span>
-                </div>
-                <div class="genre-card" data-genre="noir" onclick="selectGenre('noir')">
-                    <span class="icon">🕵️</span>
-                    <span class="label">Noir</span>
-                </div>
-                <div class="genre-card" data-genre="mythology" onclick="selectGenre('mythology')">
-                    <span class="icon">🏛️</span>
-                    <span class="label">Mythology</span>
-                </div>
-                <div class="genre-card" data-genre="wuxia" onclick="selectGenre('wuxia')">
-                    <span class="icon">🥋</span>
-                    <span class="label">Wuxia</span>
-                </div>
-                <!-- Speculative Genres -->
-                <div class="genre-card" data-genre="cyberpunk" onclick="selectGenre('cyberpunk')">
-                    <span class="icon">🌃</span>
-                    <span class="label">Cyberpunk</span>
-                </div>
-                <div class="genre-card" data-genre="steampunk" onclick="selectGenre('steampunk')">
-                    <span class="icon">⚙️</span>
-                    <span class="label">Steampunk</span>
-                </div>
-                <div class="genre-card" data-genre="postapoc" onclick="selectGenre('postapoc')">
-                    <span class="icon">☢️</span>
-                    <span class="label">Post-Apoc</span>
-                </div>
-                <div class="genre-card" data-genre="superhero" onclick="selectGenre('superhero')">
-                    <span class="icon">🦸</span>
-                    <span class="label">Superhero</span>
+                <div class="mood-card" onclick="selectMood('strange')">
+                    <span class="mood-icon">🚀</span>
+                    <span class="mood-name">Strange</span>
+                    <span class="mood-desc">Sci-fi, weird, otherworldly</span>
                 </div>
             </div>
 
+            <!-- Genre Selection (Phase 2 - hidden initially) -->
+            <div id="genre-selection" style="display: none;">
+                <div id="genre-subgrid" class="genre-subgrid">
+                    <!-- Populated by JS based on mood -->
+                </div>
+            </div>
+
+            <!-- Continue button -->
             <div class="btn-group">
                 <button class="btn btn-primary" id="begin-btn" onclick="showScreen('setup')" disabled>Continue</button>
             </div>
@@ -5841,7 +6096,9 @@
             <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
                 <a href="#" onclick="showScreen('onboarding'); return false;" style="color: var(--text-muted);">How does this work?</a>
                 <span style="margin: 0 10px;">|</span>
-                <a href="#" onclick="showPinModal(); return false;" style="color: var(--text-muted);">Admin / File Manager</a>
+                <a href="#" onclick="showAllGenres(); return false;" style="color: var(--text-muted);">Show all genres</a>
+                <span style="margin: 0 10px;">|</span>
+                <a href="#" onclick="showScreen('start'); return false;" style="color: var(--text-muted);">← Home</a>
             </p>
         </div>
 
@@ -6354,9 +6611,33 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <div id="ingest-results" class="ingest-results">
-                <h4 style="color: var(--accent-warm); margin-bottom: 15px;">What We Learned</h4>
-                <div id="entities-list"></div>
-                <div id="relationships-list" style="margin-top: 15px;"></div>
+                <!-- Summary Stats -->
+                <div id="ingest-summary" style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                </div>
+
+                <h4 style="color: var(--accent-warm); margin-bottom: 15px;">Entities We Found</h4>
+                <p id="ingest-hint" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">
+                    Review what we extracted from your lore. Click "Confirm Import" to save these to your world.
+                </p>
+                <div id="entities-list" style="display: grid; gap: 12px;"></div>
+
+                <div id="relationships-section" style="margin-top: 25px; display: none;">
+                    <h4 style="color: var(--accent-warm); margin-bottom: 15px;">Relationships Detected</h4>
+                    <div id="relationships-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                </div>
+
+                <!-- Commit button -->
+                <div id="ingest-commit-section" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <button class="btn btn-primary" id="confirm-ingest-btn" onclick="commitIngestedLore()" style="background: var(--accent-gold); color: var(--bg-primary);">
+                            ✓ Confirm Import
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearIngestPreview()">
+                            ✗ Cancel
+                        </button>
+                        <span id="ingest-commit-status" style="color: var(--text-muted); font-size: 0.9rem;"></span>
+                    </div>
+                </div>
             </div>
 
             <div class="btn-group" style="margin-top: 30px;">
@@ -7300,7 +7581,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         </div>
         <div id="dice-roll-type" class="dice-formula">Skill Check</div>
         <div id="dice-breakdown" class="dice-breakdown">[--] + --</div>
+        <div id="dice-modifier-explain" class="dice-modifier-explain" style="display: none;"></div>
         <div id="dice-total" class="dice-total dice-rolling">--</div>
+        <div id="dice-dc-display" class="dice-dc-display" style="display: none;"></div>
         <div id="dice-result-label" class="dice-result-label" style="display: none;"></div>
     </div>
 
@@ -9306,7 +9589,201 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
-        // Genre Selection (supports mixing multiple genres)
+        // Mood-to-Genre mapping for Storyteller mode
+        const moodGenres = {
+            cozy: [
+                { id: 'romance', icon: '💕', label: 'Romance' },
+                { id: 'drama', icon: '🎭', label: 'Drama' },
+                { id: 'mystery', icon: '🔍', label: 'Mystery' }
+            ],
+            epic: [
+                { id: 'fantasy', icon: '⚔️', label: 'Fantasy' },
+                { id: 'adventure', icon: '🗺️', label: 'Adventure' },
+                { id: 'mythology', icon: '🏛️', label: 'Mythology' },
+                { id: 'wuxia', icon: '🥋', label: 'Wuxia' }
+            ],
+            gritty: [
+                { id: 'noir', icon: '🕵️', label: 'Noir' },
+                { id: 'western', icon: '🤠', label: 'Western' },
+                { id: 'modern', icon: '🏙️', label: 'Modern' },
+                { id: 'cyberpunk', icon: '🌃', label: 'Cyberpunk' }
+            ],
+            dark: [
+                { id: 'horror', icon: '👻', label: 'Horror' },
+                { id: 'gothic', icon: '🦇', label: 'Gothic' },
+                { id: 'postapoc', icon: '☢️', label: 'Post-Apoc' }
+            ],
+            strange: [
+                { id: 'scifi', icon: '🚀', label: 'Sci-Fi' },
+                { id: 'steampunk', icon: '⚙️', label: 'Steampunk' },
+                { id: 'superhero', icon: '🦸', label: 'Superhero' },
+                { id: 'urban_fantasy', icon: '🔮', label: 'Urban Fantasy' }
+            ]
+        };
+
+        const moodNames = {
+            cozy: 'Cozy',
+            epic: 'Epic',
+            gritty: 'Gritty',
+            dark: 'Dark',
+            strange: 'Strange'
+        };
+
+        let selectedMood = null;
+
+        function selectMood(mood) {
+            selectedMood = mood;
+            const genres = moodGenres[mood];
+
+            // Update breadcrumb
+            document.getElementById('story-breadcrumb').innerHTML = `
+                <span class="crumb" onclick="showMoodSelection()">Mood</span>
+                <span class="separator">›</span>
+                <span class="crumb active">${moodNames[mood]}</span>
+            `;
+
+            // Update title
+            document.getElementById('welcome-title').textContent = `What kind of ${moodNames[mood].toLowerCase()} story?`;
+            document.getElementById('welcome-subtitle').textContent = 'Pick one to get started, or go back to explore other moods.';
+
+            // Hide mood selection, show genre selection
+            document.getElementById('mood-selection').style.display = 'none';
+            document.getElementById('genre-selection').style.display = 'block';
+
+            // Populate genre subgrid
+            const subgrid = document.getElementById('genre-subgrid');
+            subgrid.innerHTML = genres.map(g => `
+                <div class="genre-subcard" data-genre="${g.id}" onclick="selectGenreFromMood('${g.id}')">
+                    <span class="subicon">${g.icon}</span>
+                    <span class="sublabel">${g.label}</span>
+                </div>
+            `).join('');
+
+            // Reset selection
+            selectedGenres = [];
+            selectedGenre = null;
+            document.getElementById('begin-btn').disabled = true;
+        }
+
+        function selectGenreFromMood(genre) {
+            // Single selection in mood flow (simpler)
+            selectedGenres = [genre];
+            selectedGenre = genre;
+            rulesGenre = getRulesGenre(genre);
+
+            // Update UI
+            document.querySelectorAll('.genre-subcard').forEach(card => {
+                card.classList.toggle('selected', card.dataset.genre === genre);
+            });
+
+            // Update breadcrumb to show selected genre
+            const genreInfo = moodGenres[selectedMood].find(g => g.id === genre);
+            document.getElementById('story-breadcrumb').innerHTML = `
+                <span class="crumb" onclick="showMoodSelection()">Mood</span>
+                <span class="separator">›</span>
+                <span class="crumb" onclick="selectMood('${selectedMood}')">${moodNames[selectedMood]}</span>
+                <span class="separator">›</span>
+                <span class="crumb active">${genreInfo?.label || genre}</span>
+            `;
+
+            document.getElementById('begin-btn').disabled = false;
+        }
+
+        function showMoodSelection() {
+            selectedMood = null;
+            selectedGenres = [];
+            selectedGenre = null;
+
+            // Reset breadcrumb
+            document.getElementById('story-breadcrumb').innerHTML = `
+                <span class="crumb active">Mood</span>
+            `;
+
+            // Reset titles
+            document.getElementById('welcome-title').textContent = 'What kind of story are you in the mood for?';
+            document.getElementById('welcome-subtitle').textContent = 'Pick a vibe, then we\'ll narrow it down.';
+
+            // Show mood selection, hide genre selection
+            document.getElementById('mood-selection').style.display = 'grid';
+            document.getElementById('genre-selection').style.display = 'none';
+
+            document.getElementById('begin-btn').disabled = true;
+        }
+
+        function showAllGenres() {
+            // Show all genres in a flat grid (power user mode)
+            selectedMood = 'all';
+
+            document.getElementById('story-breadcrumb').innerHTML = `
+                <span class="crumb" onclick="showMoodSelection()">Mood</span>
+                <span class="separator">›</span>
+                <span class="crumb active">All Genres</span>
+            `;
+
+            document.getElementById('welcome-title').textContent = 'Pick your genre';
+            document.getElementById('welcome-subtitle').textContent = 'Select one or more to blend together (max 3).';
+
+            // Hide mood selection, show genre selection
+            document.getElementById('mood-selection').style.display = 'none';
+            document.getElementById('genre-selection').style.display = 'block';
+
+            // Populate with ALL genres
+            const allGenres = [
+                { id: 'romance', icon: '💕', label: 'Romance' },
+                { id: 'mystery', icon: '🔍', label: 'Mystery' },
+                { id: 'drama', icon: '🎭', label: 'Drama' },
+                { id: 'adventure', icon: '🗺️', label: 'Adventure' },
+                { id: 'fantasy', icon: '⚔️', label: 'Fantasy' },
+                { id: 'scifi', icon: '🚀', label: 'Sci-Fi' },
+                { id: 'horror', icon: '👻', label: 'Horror' },
+                { id: 'modern', icon: '🏙️', label: 'Modern' },
+                { id: 'urban_fantasy', icon: '🔮', label: 'Urban Fantasy' },
+                { id: 'gothic', icon: '🦇', label: 'Gothic' },
+                { id: 'western', icon: '🤠', label: 'Western' },
+                { id: 'noir', icon: '🕵️', label: 'Noir' },
+                { id: 'mythology', icon: '🏛️', label: 'Mythology' },
+                { id: 'wuxia', icon: '🥋', label: 'Wuxia' },
+                { id: 'cyberpunk', icon: '🌃', label: 'Cyberpunk' },
+                { id: 'steampunk', icon: '⚙️', label: 'Steampunk' },
+                { id: 'postapoc', icon: '☢️', label: 'Post-Apoc' },
+                { id: 'superhero', icon: '🦸', label: 'Superhero' }
+            ];
+
+            const subgrid = document.getElementById('genre-subgrid');
+            subgrid.innerHTML = allGenres.map(g => `
+                <div class="genre-subcard" data-genre="${g.id}" onclick="toggleGenreInAllMode('${g.id}')">
+                    <span class="subicon">${g.icon}</span>
+                    <span class="sublabel">${g.label}</span>
+                </div>
+            `).join('');
+
+            selectedGenres = [];
+            selectedGenre = null;
+            document.getElementById('begin-btn').disabled = true;
+        }
+
+        function toggleGenreInAllMode(genre) {
+            const idx = selectedGenres.indexOf(genre);
+            if (idx >= 0) {
+                selectedGenres.splice(idx, 1);
+            } else if (selectedGenres.length < 3) {
+                selectedGenres.push(genre);
+            }
+
+            selectedGenre = selectedGenres[0] || null;
+            if (selectedGenre) {
+                rulesGenre = getRulesGenre(selectedGenre);
+            }
+
+            // Update UI
+            document.querySelectorAll('.genre-subcard').forEach(card => {
+                card.classList.toggle('selected', selectedGenres.includes(card.dataset.genre));
+            });
+
+            document.getElementById('begin-btn').disabled = selectedGenres.length === 0;
+        }
+
+        // Genre Selection (supports mixing multiple genres) - Legacy for TTRPG mode
         function selectGenre(genre) {
             const idx = selectedGenres.indexOf(genre);
             if (idx >= 0) {
@@ -10043,17 +10520,105 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             return modifier;
         }
 
+        // Get modifier breakdown for display (e.g., [{name: 'Wisdom', value: 2}, {name: 'Prof', value: 2}])
+        function getSkillModifierBreakdown(skillName) {
+            if (!dndCharacter) return [];
+
+            const skill = DND_SKILLS.find(s => s.name === skillName);
+            if (!skill) return [];
+
+            const parts = [];
+            const abilities = dndCharacter.ability_scores || {};
+            const abilityScore = abilities[skill.ability] || 10;
+            const abilityMod = getAbilityModifier(abilityScore);
+
+            // Capitalize ability name
+            const abilityName = skill.ability.charAt(0).toUpperCase() + skill.ability.slice(1, 3).toUpperCase();
+            parts.push({ name: abilityName, value: abilityMod });
+
+            // Check for proficiency
+            const proficiencies = dndCharacter.skill_proficiencies || [];
+            if (proficiencies.includes(skillName.toLowerCase())) {
+                const level = dndCharacter.level || 1;
+                const profBonus = Math.ceil(level / 4) + 1;
+                parts.push({ name: 'Prof', value: profBonus });
+            }
+
+            return parts;
+        }
+
+        // Get ability modifier breakdown for display
+        function getAbilityModifierBreakdown(ability) {
+            if (!dndCharacter) return [];
+
+            const abilities = dndCharacter.ability_scores || {};
+            const score = abilities[ability.toLowerCase()] || 10;
+            const modifier = getAbilityModifier(score);
+
+            const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1, 3).toUpperCase();
+            return [{ name: abilityName, value: modifier }];
+        }
+
+        // Get saving throw modifier breakdown
+        function getSaveModifierBreakdown(ability) {
+            if (!dndCharacter) return [];
+
+            const parts = [];
+            const abilities = dndCharacter.ability_scores || {};
+            const score = abilities[ability.toLowerCase()] || 10;
+            const abilityMod = getAbilityModifier(score);
+
+            const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1, 3).toUpperCase();
+            parts.push({ name: abilityName, value: abilityMod });
+
+            // Check for saving throw proficiency
+            const saveProficiencies = dndCharacter.saving_throw_proficiencies || [];
+            if (saveProficiencies.includes(ability.toLowerCase())) {
+                const level = dndCharacter.level || 1;
+                const profBonus = Math.ceil(level / 4) + 1;
+                parts.push({ name: 'Prof', value: profBonus });
+            }
+
+            return parts;
+        }
+
         // Show dice tray with result
-        function showDiceTray(rollType, formula, breakdown, total, dc = null) {
+        // modifierParts: array of {name: 'Strength', value: 2} or null
+        // dcLabel: optional label like 'Moderate' or null
+        function showDiceTray(rollType, formula, breakdown, total, dc = null, modifierParts = null, dcLabel = null) {
             const tray = document.getElementById('dice-tray');
             const rollTypeEl = document.getElementById('dice-roll-type');
             const breakdownEl = document.getElementById('dice-breakdown');
             const totalEl = document.getElementById('dice-total');
             const labelEl = document.getElementById('dice-result-label');
+            const modExplainEl = document.getElementById('dice-modifier-explain');
+            const dcDisplayEl = document.getElementById('dice-dc-display');
 
             // Set content
             rollTypeEl.textContent = rollType;
             breakdownEl.textContent = breakdown;
+
+            // Show modifier explanation if provided
+            if (modifierParts && modifierParts.length > 0) {
+                const partsHtml = modifierParts.map(part => {
+                    const sign = part.value >= 0 ? '+' : '';
+                    const cls = part.value >= 0 ? 'positive' : 'negative';
+                    return `<span class="mod-part ${cls}">${part.name} ${sign}${part.value}</span>`;
+                }).join(' ');
+                modExplainEl.innerHTML = partsHtml;
+                modExplainEl.style.display = 'block';
+            } else {
+                modExplainEl.style.display = 'none';
+            }
+
+            // Show DC if provided
+            if (dc !== null) {
+                const label = dcLabel ? `<span class="dc-label">(${dcLabel})</span>` : '';
+                dcDisplayEl.innerHTML = `Target: <span class="dc-value">DC ${dc}</span>${label}`;
+                dcDisplayEl.style.display = 'block';
+            } else {
+                dcDisplayEl.style.display = 'none';
+            }
 
             // Animate the total
             totalEl.classList.remove('success', 'failure', 'critical', 'dice-rolling');
@@ -10069,14 +10634,27 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 // Apply result styling
                 if (dc !== null) {
+                    const margin = total - dc;
                     if (total >= dc) {
                         totalEl.classList.add('success');
-                        labelEl.textContent = 'Success!';
+                        if (margin >= 10) {
+                            labelEl.textContent = 'Great Success!';
+                        } else if (margin >= 5) {
+                            labelEl.textContent = 'Success!';
+                        } else {
+                            labelEl.textContent = 'Success (close!)';
+                        }
                         labelEl.className = 'dice-result-label success';
                         labelEl.style.display = 'block';
                     } else {
                         totalEl.classList.add('failure');
-                        labelEl.textContent = 'Failure';
+                        if (margin <= -10) {
+                            labelEl.textContent = 'Critical Failure';
+                        } else if (margin <= -5) {
+                            labelEl.textContent = 'Failure';
+                        } else {
+                            labelEl.textContent = 'Failure (so close!)';
+                        }
                         labelEl.className = 'dice-result-label failure';
                         labelEl.style.display = 'block';
                     }
@@ -10140,13 +10718,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         // Roll a skill check
-        function rollSkillCheck(skillName, advantage = false, disadvantage = false) {
+        function rollSkillCheck(skillName, advantage = false, disadvantage = false, dc = null, dcLabel = null) {
             if (!dndCharacter) {
                 showNoCharacterMessage();
                 return;
             }
 
             const modifier = getSkillModifier(skillName);
+            const modifierParts = getSkillModifierBreakdown(skillName);
             let roll;
 
             if (advantage && !disadvantage) {
@@ -10165,7 +10744,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const modStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
             const breakdown = `[${roll}] ${modStr}`;
 
-            showDiceTray(`${skillName} Check`, `1d20 ${modStr}`, breakdown, total);
+            showDiceTray(`${skillName} Check`, `1d20 ${modStr}`, breakdown, total, dc, modifierParts, dcLabel);
 
             // Log to story (optional)
             console.log(`${skillName} Check: ${breakdown} = ${total}`);
@@ -10174,7 +10753,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         // Roll ability check
-        function rollAbilityCheck(ability) {
+        function rollAbilityCheck(ability, dc = null, dcLabel = null) {
             if (!dndCharacter) {
                 showNoCharacterMessage();
                 return;
@@ -10183,6 +10762,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const abilities = dndCharacter.ability_scores || {};
             const score = abilities[ability.toLowerCase()] || 10;
             const modifier = getAbilityModifier(score);
+            const modifierParts = getAbilityModifierBreakdown(ability);
 
             const roll = rollDie(20);
             const total = roll + modifier;
@@ -10190,13 +10770,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const breakdown = `[${roll}] ${modStr}`;
 
             const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1);
-            showDiceTray(`${abilityName} Check`, `1d20 ${modStr}`, breakdown, total);
+            showDiceTray(`${abilityName} Check`, `1d20 ${modStr}`, breakdown, total, dc, modifierParts, dcLabel);
 
             return { roll, modifier, total };
         }
 
         // Roll saving throw
-        function rollSavingThrow(ability = null) {
+        function rollSavingThrow(ability = null, dc = null, dcLabel = null) {
             if (!dndCharacter) {
                 showNoCharacterMessage();
                 return;
@@ -10217,6 +10797,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const abilities = dndCharacter.ability_scores || {};
             const score = abilities[ability.toLowerCase()] || 10;
             let modifier = getAbilityModifier(score);
+            const modifierParts = getSaveModifierBreakdown(ability);
 
             // Add proficiency if proficient in this save
             const saveProficiencies = dndCharacter.saving_throw_proficiencies || [];
@@ -10232,13 +10813,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const breakdown = `[${roll}] ${modStr}`;
 
             const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1);
-            showDiceTray(`${abilityName} Save`, `1d20 ${modStr}`, breakdown, total);
+            showDiceTray(`${abilityName} Save`, `1d20 ${modStr}`, breakdown, total, dc, modifierParts, dcLabel);
 
             return { roll, modifier, total };
         }
 
         // Roll attack
-        function rollAttack() {
+        function rollAttack(targetAC = null) {
             if (!dndCharacter) {
                 showNoCharacterMessage();
                 return;
@@ -10257,12 +10838,19 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const profBonus = Math.ceil(level / 4) + 1;
             const modifier = abilityMod + profBonus;
 
+            // Build modifier breakdown
+            const abilityName = usesDex ? 'DEX' : 'STR';
+            const modifierParts = [
+                { name: abilityName, value: abilityMod },
+                { name: 'Prof', value: profBonus }
+            ];
+
             const roll = rollDie(20);
             const total = roll + modifier;
             const modStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
             const breakdown = `[${roll}] ${modStr}`;
 
-            showDiceTray('Attack Roll', `1d20 ${modStr}`, breakdown, total);
+            showDiceTray('Attack Roll', `1d20 ${modStr}`, breakdown, total, targetAC, modifierParts, targetAC ? 'Target AC' : null);
 
             return { roll, modifier, total, critical: roll === 20, fumble: roll === 1 };
         }
@@ -10328,13 +10916,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const abilities = dndCharacter.ability_scores || {};
             const dexScore = abilities.dexterity || 10;
             const modifier = getAbilityModifier(dexScore);
+            const modifierParts = [{ name: 'DEX', value: modifier }];
 
             const roll = rollDie(20);
             const total = roll + modifier;
             const modStr = modifier >= 0 ? `+ ${modifier}` : `- ${Math.abs(modifier)}`;
             const breakdown = `[${roll}] ${modStr}`;
 
-            showDiceTray('Initiative', `1d20 ${modStr}`, breakdown, total);
+            showDiceTray('Initiative', `1d20 ${modStr}`, breakdown, total, null, modifierParts, null);
 
             // Enter combat mode
             enterCombatMode();
@@ -13319,7 +13908,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             });
         }
 
-        // Lore Ingestion
+        // Lore Ingestion - Preview Flow
+        let pendingIngestData = null; // Store preview data for commit
+
         async function ingestLore() {
             const content = document.getElementById('lore-content').value.trim();
             const sourceName = document.getElementById('source-name').value.trim() || 'imported_lore';
@@ -13330,12 +13921,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             clearStatus('ingest-status');
-            showStatus('ingest-status', '<span class="loading"></span> Learning from your lore...', 'info');
+            showStatus('ingest-status', '<span class="loading"></span> Analyzing your lore...', 'info');
             document.getElementById('ingest-results').classList.remove('visible');
 
             try {
-                // Note: /ingest endpoint is not under /api prefix
-                const response = await fetch(window.location.origin + '/ingest', {
+                // First, get a PREVIEW (no database write)
+                const response = await fetch(window.location.origin + '/api/ingest/preview', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -13346,36 +13937,176 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.detail || 'Import failed');
+                    throw new Error(err.detail || 'Analysis failed');
                 }
 
                 const data = await response.json();
-                showStatus('ingest-status',
-                    'Successfully learned ' + data.nodes_created + ' entities from your lore.',
-                    'success'
-                );
 
-                // Display results
-                const resultsDiv = document.getElementById('ingest-results');
+                // Store for commit
+                pendingIngestData = {
+                    source_name: sourceName,
+                    entities: data.entities,
+                    content: content
+                };
+
+                // Show summary stats
+                const summaryDiv = document.getElementById('ingest-summary');
+                const summary = data.summary || {};
+                let statsHtml = `
+                    <div class="ingest-stat-card">
+                        <div class="stat-value">${summary.total_entities || 0}</div>
+                        <div class="stat-label">Entities</div>
+                    </div>
+                    <div class="ingest-stat-card">
+                        <div class="stat-value">${summary.total_relationships || 0}</div>
+                        <div class="stat-label">Relationships</div>
+                    </div>
+                `;
+                // Add type counts
+                ['Character', 'Location', 'Faction', 'Item', 'Event', 'Concept'].forEach(type => {
+                    if (summary[type]) {
+                        statsHtml += `
+                            <div class="ingest-stat-card">
+                                <div class="stat-value">${summary[type]}</div>
+                                <div class="stat-label">${type}s</div>
+                            </div>
+                        `;
+                    }
+                });
+                summaryDiv.innerHTML = statsHtml;
+
+                // Show entity preview cards
                 const entitiesList = document.getElementById('entities-list');
-
                 if (data.entities && data.entities.length > 0) {
-                    entitiesList.innerHTML = data.entities.map(e =>
-                        '<div class="entity-item">' +
-                        '<span class="entity-name">' + (e.name || 'Unknown') + '</span>' +
-                        '<span class="entity-type">' + (e.type || 'Entity') + '</span>' +
-                        (e.content ? '<p style="margin-top: 8px; color: var(--text-muted); font-size: 0.9rem;">' + e.content + '</p>' : '') +
-                        '</div>'
-                    ).join('');
+                    entitiesList.innerHTML = data.entities.map(e => renderEntityPreviewCard(e)).join('');
                 } else {
-                    entitiesList.innerHTML = '<p style="color: var(--text-muted);">No entities extracted yet.</p>';
+                    entitiesList.innerHTML = '<p style="color: var(--text-muted);">No entities found. Try adding more detail to your lore.</p>';
                 }
 
-                resultsDiv.classList.add('visible');
+                // Show relationships
+                const relSection = document.getElementById('relationships-section');
+                const relList = document.getElementById('relationships-list');
+                if (data.relationships && data.relationships.length > 0) {
+                    relSection.style.display = 'block';
+                    relList.innerHTML = data.relationships.map(r => `
+                        <span class="relationship-chip">
+                            ${r.source}<span class="rel-arrow">→</span>${r.type}<span class="rel-arrow">→</span>${r.target}
+                        </span>
+                    `).join('');
+                } else {
+                    relSection.style.display = 'none';
+                }
+
+                // Show results section
+                document.getElementById('ingest-results').classList.add('visible');
+                showStatus('ingest-status',
+                    `Found ${summary.total_entities || 0} entities. Review below and click "Confirm Import" to save.`,
+                    'success'
+                );
 
             } catch (err) {
                 showStatus('ingest-status', 'Error: ' + err.message, 'error');
             }
+        }
+
+        function renderEntityPreviewCard(entity) {
+            const oceanHtml = entity.ocean ? `
+                <div class="entity-preview-ocean">
+                    <span class="ocean-mini">O: ${(entity.ocean.openness * 100).toFixed(0)}%</span>
+                    <span class="ocean-mini">C: ${(entity.ocean.conscientiousness * 100).toFixed(0)}%</span>
+                    <span class="ocean-mini">E: ${(entity.ocean.extraversion * 100).toFixed(0)}%</span>
+                    <span class="ocean-mini">A: ${(entity.ocean.agreeableness * 100).toFixed(0)}%</span>
+                    <span class="ocean-mini">N: ${(entity.ocean.neuroticism * 100).toFixed(0)}%</span>
+                </div>
+            ` : '';
+
+            const traitsHtml = entity.traits && entity.traits.length > 0 ? `
+                <div class="entity-preview-traits">
+                    ${entity.traits.map(t => `<span class="entity-preview-trait">${t}</span>`).join('')}
+                </div>
+            ` : '';
+
+            const sourceHtml = entity.verbatim_text ? `
+                <div class="entity-preview-source">${escapeHtml(entity.verbatim_text.substring(0, 200))}${entity.verbatim_text.length > 200 ? '...' : ''}</div>
+            ` : '';
+
+            return `
+                <div class="entity-preview-card">
+                    <div class="entity-preview-header">
+                        <span class="entity-preview-name">${escapeHtml(entity.name)}</span>
+                        <span class="entity-preview-type">${entity.type}</span>
+                    </div>
+                    ${entity.description ? `<div class="entity-preview-desc">${escapeHtml(entity.description)}</div>` : ''}
+                    ${sourceHtml}
+                    ${traitsHtml}
+                    ${oceanHtml}
+                </div>
+            `;
+        }
+
+        async function commitIngestedLore() {
+            if (!pendingIngestData) {
+                showStatus('ingest-status', 'No data to commit. Please analyze lore first.', 'error');
+                return;
+            }
+
+            const commitBtn = document.getElementById('confirm-ingest-btn');
+            const statusSpan = document.getElementById('ingest-commit-status');
+
+            commitBtn.disabled = true;
+            statusSpan.textContent = 'Saving...';
+
+            try {
+                // Now actually save to database using the original /ingest endpoint
+                const response = await fetch(window.location.origin + '/ingest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: pendingIngestData.content,
+                        source_name: pendingIngestData.source_name
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Import failed');
+                }
+
+                const data = await response.json();
+
+                showStatus('ingest-status',
+                    `✓ Successfully imported ${data.nodes_created} entities and ${data.relationships_created || 0} relationships!`,
+                    'success'
+                );
+
+                statusSpan.textContent = 'Import complete!';
+                document.getElementById('continue-to-story').style.display = 'inline-block';
+                document.getElementById('ingest-hint').textContent = 'Your lore has been saved. You can now use it in your story!';
+
+                // Clear pending data
+                pendingIngestData = null;
+
+            } catch (err) {
+                showStatus('ingest-status', 'Error: ' + err.message, 'error');
+                statusSpan.textContent = '';
+                commitBtn.disabled = false;
+            }
+        }
+
+        function clearIngestPreview() {
+            pendingIngestData = null;
+            document.getElementById('ingest-results').classList.remove('visible');
+            document.getElementById('ingest-summary').innerHTML = '';
+            document.getElementById('entities-list').innerHTML = '';
+            document.getElementById('relationships-list').innerHTML = '';
+            clearStatus('ingest-status');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // ==========================================

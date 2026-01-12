@@ -136,7 +136,6 @@ export function ChatInterface({
     if (sessionEnded) return
     if (!text.trim()) return
 
-    console.log('UI: sending', text)
     try {
       const result = await sendMessage('query', { 
         query: text,

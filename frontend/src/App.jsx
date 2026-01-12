@@ -59,9 +59,8 @@ function App() {
           setUpdateAvailable(true)
         }
       }
-    } catch (e) {
+    } catch {
       // Silent fail - don't disrupt user experience
-      console.debug('Version check failed:', e)
     }
   }, [])
 

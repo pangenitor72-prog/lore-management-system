@@ -265,8 +265,8 @@ async def lifespan(app: FastAPI):
     # -------------------------
     try:
         await app.state.neo4j_db.close()
-    except:
-        pass
+    except Exception:
+        pass  # Graceful shutdown - ignore close errors
 
     await AuditLogger.log("Application shutdown…")
 
@@ -396,8 +396,8 @@ async def websocket_gemini_endpoint(websocket: WebSocket, client_id: str = Query
         finally:
             try:
                 await websocket.close()
-            except:
-                pass
+            except Exception:
+                pass  # Already closed or disconnected
 
 
 # ============================================================
@@ -425,8 +425,8 @@ async def websocket_auditor_endpoint(websocket: WebSocket):
         broadcaster.unsubscribe("auditor_events", queue)
         try:
             await websocket.close()
-        except:
-            pass
+        except Exception:
+            pass  # Already closed or disconnected
 
 
 # ============================================================
@@ -516,7 +516,7 @@ async def health_check(request: Request):
 async def debug_status(request: Request):
     try:
         neo4j_ok = request.app.state.neo4j_db.test_connection()
-    except:
+    except Exception:
         neo4j_ok = False
 
     return {
@@ -623,7 +623,7 @@ async def get_entity(canon_id: str, db: Neo4jDatabase = Depends(get_neo4j_db)):
         if k not in reserved:
             try:
                 approved_fields[k] = json.loads(v)
-            except:
+            except (json.JSONDecodeError, TypeError, ValueError):
                 approved_fields[k] = v
 
     return EntityResponse(
@@ -700,7 +700,7 @@ async def list_entities(
             if k not in reserved:
                 try:
                     approved_fields[k] = json.loads(v)
-                except:
+                except (json.JSONDecodeError, TypeError, ValueError):
                     approved_fields[k] = v
 
         # Handle date parsing - may be ISO string or Neo4j datetime

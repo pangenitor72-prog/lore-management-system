@@ -58,6 +58,7 @@ class AuditorAgent:
         gemini_api_key: str,
         rule_based_auditor: RuleBasedAuditor,
         semantic_auditor: SemanticAuditor,
+        campaign_context: Optional[Dict[str, Any]] = None,
     ):
         self.db = neo4j_db
         self.rule_based_auditor = rule_based_auditor
@@ -72,8 +73,8 @@ class AuditorAgent:
             self.personality_model = None
             AuditLogger.log_sync(f"AuditorAgent: Failed to initialize Gemini model: {e}")
 
-        # Load campaign context (placeholder for now, ideally from config)
-        self.campaign_context = {"campaign_name": "Aethermoor"}
+        # Campaign context - configurable, defaults to Aethermoor for legacy support
+        self.campaign_context = campaign_context or {"campaign_name": "Aethermoor"}
         self.system_prompt = AuditorPrompts.get_system_prompt(self.campaign_context)
 
         AuditLogger.log_sync("AuditorAgent: Initialized.")

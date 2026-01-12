@@ -23,7 +23,7 @@ pip install -r requirements.txt
 docker-compose up -d
 
 # Run FastAPI server (serves React frontend at http://localhost:8000)
-uvicorn src.api:app --reload
+uvicorn src.lms.api:app --reload
 ```
 
 ### Testing
@@ -52,12 +52,22 @@ npm run dev
 ### System Architecture
 
 1. **LMS (src/lms/)** - Lore management with contradiction detection
-   - `api/` - FastAPI endpoints (routes.py, game_routes.py)
-   - `db/neo4j_adapter.py` - Async Neo4j database layer
+   - `api/` - FastAPI endpoints (routes.py, game_routes.py, dnd_routes.py, memory_routes.py)
    - `agents/` - AI agents (auditor, query, dm, boundary enforcement)
+   - `arc/` - Story arc management (tension tracking, beat suggestions, episode management)
+   - `auditor/` - Contradiction detection (rule-based + semantic auditors)
+   - `core/` - Pydantic v2 models, enums, entity factory, OCEAN profiles, normalization
+   - `db/` - Async Neo4j database layer (neo4j_adapter.py)
+   - `dnd5e/` - D&D 5e rules engine (see below)
+   - `guardrails/` - Circuit breaker, token budget management
    - `ingestion/` - Smart Ingestor pipeline (segment → detect → extract → personality → build → drift → embed → save)
-   - `services/` - Business logic (contradictions, embeddings)
-   - `core/models.py` - Pydantic v2 models and enums
+   - `memory/` - Experiential memory (SQLite-backed session memory)
+   - `orchestrator/` - LLM orchestration and CLI tools
+   - `prompts/` - AI prompt templates (auditor, query, DM)
+   - `services/` - Business logic (contradictions, embeddings, vector search, audit logging)
+   - `suggestions/` - Action suggestion engine
+   - `templates/` - HTML templates
+   - `ui/` - UI utilities and API client
 
 2. **AIRPG (src/airpg/)** - AI RPG engine (pressure-tested cognitive simulation)
    - `engine/` - Scene generation, belief propagation, information flow
@@ -75,6 +85,7 @@ npm run dev
    - `engine/` - Dice rolling, skill checks, combat resolution
    - `creation/` - Character creation flows (Concept, Guided, Classic)
    - `presentation/` - Visibility filtering (Storyteller → Tactician)
+   - `data/` - Static game data (spells, equipment, backgrounds)
 
 ### Key Patterns
 
@@ -179,7 +190,7 @@ The player is treated as a regular node with no privileged logic.
 3.  **The "Tactical" Look:** Use borders, monospace fonts, and high-contrast accents to evoke a "Sci-Fi Terminal" or "RPG HUD" aesthetic.
 4.  **Component Strategy:**
     *   Never put game logic in `App.jsx`. Use dedicated components (`GameClient`, `InventoryDrawer`).
-    *   Use CSS Variables from `src/styles/tokens.css` for all colors.
+    *   Use CSS Variables from `frontend/src/styles/globals.css` for all colors.
     *   State management: Use React Context for global game state (Inventory, Turn Count).
 
 **Visual Reference:**

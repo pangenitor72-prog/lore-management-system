@@ -113,11 +113,11 @@ export function useAuditor() {
 
       case AuditorEventType.ENTITY_FLAGGED:
         // Could trigger a notification or update entity list
-        console.log('[useAuditor] Entity flagged:', data)
         break
 
       default:
-        console.warn('[useAuditor] Unknown event type:', type, payload)
+        // Silently ignore unknown event types
+        break
     }
   }, [generateEventId])
 
