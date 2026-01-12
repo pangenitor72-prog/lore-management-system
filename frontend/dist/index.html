@@ -7601,6 +7601,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let ttrpgVisibility = 'classic';
         let selectedTTRPGWorld = null;
         let ttrpgWorldsLoaded = false;
+        let ttrpgWorldsData = [];  // Store loaded worlds so we can look up genre_hints
 
         // ==========================================
         // PLAYER PSYCHOLOGY SYSTEM
@@ -8023,6 +8024,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 container.style.maxHeight = '400px';
                 container.style.overflowY = 'auto';
                 container.innerHTML = worldsHtml;
+                ttrpgWorldsData = worlds;  // Store worlds data for genre lookup
                 ttrpgWorldsLoaded = true;
             } catch (err) {
                 console.log('Could not load TTRPG curated worlds:', err);
@@ -8044,7 +8046,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // Select this world
             element.classList.add('selected');
             selectedTTRPGWorld = worldId;
-            ttrpgGenre = null;  // Clear genre when world is selected
+
+            // Look up the world's genre_hints and use the first one as the genre
+            const world = ttrpgWorldsData.find(w => w.id === worldId);
+            if (world && world.genre_hints && world.genre_hints.length > 0) {
+                ttrpgGenre = world.genre_hints[0];  // Use primary genre from world
+                curatedWorldGenres = [...world.genre_hints];  // Store all hints
+                console.log('[TTRPG] World selected:', worldId, '-> genre:', ttrpgGenre);
+            } else {
+                ttrpgGenre = null;  // Clear genre if world has no hints
+                curatedWorldGenres = [];
+            }
         }
 
         // Quick Play - start game immediately with selected genre
@@ -8103,19 +8115,22 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function beginTTRPGStory() {
             const concept = document.getElementById('ttrpg-character-concept')?.value?.trim() || '';
 
-            // Use selected world or fall back to genre (default to 'fantasy' if neither selected)
-            const effectiveGenre = ttrpgGenre || 'fantasy';
+            // Use selected genre, or world's genre hints, or default to 'fantasy'
+            const effectiveGenre = ttrpgGenre || (curatedWorldGenres.length > 0 ? curatedWorldGenres[0] : 'fantasy');
 
             console.log('[TTRPG] Starting with:', {
                 ttrpgCreationMode,
                 ttrpgGenre,
+                curatedWorldGenres,
+                effectiveGenre,
                 ttrpgVisibility,
                 concept
             });
 
             // Set up TTRPG config
-            selectedGenres = [effectiveGenre];
+            selectedGenres = curatedWorldGenres.length > 0 ? [...curatedWorldGenres] : [effectiveGenre];
             selectedGenre = effectiveGenre;
+            blendGenres = curatedWorldGenres.length > 0 ? [...curatedWorldGenres] : [];  // Pass all genre hints to character creation
             selectedTone = 'dramatic';
             selectedStyle = 'guided';
             rulesMode = 'dnd';
@@ -8124,7 +8139,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             creationMode = ttrpgCreationMode;
             sessionScope = 'medium';
 
-            console.log('[TTRPG] creationMode set to:', creationMode);
+            console.log('[TTRPG] creationMode set to:', creationMode, 'blendGenres:', blendGenres);
 
             // If a curated world is selected, use it
             if (selectedTTRPGWorld) {
@@ -10929,26 +10944,87 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 case 1: // Review AI-generated character
                     title.textContent = 'Your Character';
-                    subtitle.textContent = 'We generated a character based on your description. Review and adjust as needed.';
+                    subtitle.textContent = 'Here is your complete character. Ready to begin?';
 
                     const abilities = charCreationData.generatedChar?.ability_scores || {};
                     const abilityNames = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
                     const abilityLabels = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 
+                    // Calculate derived stats
+                    const dexMod1 = Math.floor(((abilities.dexterity || 10) - 10) / 2);
+                    const conMod1 = Math.floor(((abilities.constitution || 10) - 10) / 2);
+                    const hp1 = charCreationData.generatedChar?.max_hit_points || (10 + conMod1);
+                    const ac1 = 10 + dexMod1;
+                    const init1 = dexMod1 >= 0 ? '+' + dexMod1 : dexMod1.toString();
+
+                    // Auto-assign genre-appropriate background for Quick Start
+                    const QUICK_START_BACKGROUNDS = {
+                        fantasy: { name: 'Wanderer', description: 'You have traveled far and seen much.', feature: 'Traveler\'s Instinct' },
+                        wuxia: { name: 'Wandering Swordsman', description: 'You roam the jianghu seeking purpose.', feature: 'Wanderer\'s Welcome' },
+                        cyberpunk: { name: 'Street Kid', description: 'You grew up in the urban jungle.', feature: 'Street Cred' },
+                        scifi: { name: 'Spacer', description: 'You\'ve spent your life among the stars.', feature: 'Zero-G Adapted' },
+                        horror: { name: 'Survivor', description: 'You\'ve seen things that would break most people.', feature: 'Hardened' },
+                        western: { name: 'Drifter', description: 'You go where the wind takes you.', feature: 'Trail Wisdom' },
+                        noir: { name: 'Down on Your Luck', description: 'Life hasn\'t been kind, but you keep going.', feature: 'Nothing Left to Lose' },
+                        steampunk: { name: 'Tinker', description: 'You\'ve always had a knack for machines.', feature: 'Mechanical Intuition' },
+                        mystery: { name: 'Curious Mind', description: 'You can\'t resist a puzzle.', feature: 'Eye for Detail' },
+                        romance: { name: 'Hopeful Heart', description: 'You believe in the power of connection.', feature: 'Charming Presence' },
+                        adventure: { name: 'Thrill Seeker', description: 'Danger is just another word for excitement.', feature: 'Fortune Favors the Bold' }
+                    };
+
+                    // Auto-assign genre-appropriate starting equipment for Quick Start
+                    const QUICK_START_EQUIPMENT = {
+                        fantasy: ['Longsword', 'Leather armor', 'Backpack', 'Rations (3 days)', 'Waterskin', '10 gold'],
+                        wuxia: ['Jian (straight sword)', 'Traveling robes', 'Bedroll', 'Waterskin', 'Rice and tea', '5 silver taels'],
+                        cyberpunk: ['Heavy pistol', 'Ammo clips (2)', 'Armored jacket', 'Agent (smartphone)', 'Credstick (500eb)'],
+                        scifi: ['Laser pistol', 'Power cells (2)', 'Flight suit', 'Communicator', 'Datapad', '200 credits'],
+                        horror: ['Flashlight', 'Crowbar', 'First aid kit', 'Rope (50 ft)', 'Matches', 'Journal'],
+                        western: ['Revolver', 'Ammunition (24)', 'Duster coat', 'Canteen', 'Bedroll', '$20'],
+                        noir: ['Snub-nose revolver', 'Ammunition (12)', 'Trench coat', 'Fedora', 'Cigarettes', 'Notepad'],
+                        steampunk: ['Steam pistol', 'Pressure canisters (6)', 'Goggles', 'Tinker\'s tools', 'Notebook', '15 shillings'],
+                        mystery: ['Magnifying glass', 'Notebook', 'Pen', 'Camera', 'Lockpicks', 'Business cards'],
+                        romance: ['Fine clothes', 'Perfume', 'Love letters', 'Locket', 'Journal', 'Spending money'],
+                        adventure: ['Machete', 'Leather jacket', 'Rope (50 ft)', 'Grappling hook', 'Torch', 'Map']
+                    };
+
+                    const currentGenre1 = selectedGenres[0] || selectedGenre || 'fantasy';
+                    const autoBackground = QUICK_START_BACKGROUNDS[currentGenre1] || QUICK_START_BACKGROUNDS.fantasy;
+                    const autoEquipment = QUICK_START_EQUIPMENT[currentGenre1] || QUICK_START_EQUIPMENT.fantasy;
+
+                    // Store auto-assigned data for finalization
+                    charCreationData.autoBackground = autoBackground;
+                    charCreationData.autoEquipment = autoEquipment;
+
                     content.innerHTML = `
-                        <div class="char-summary">
-                            <div class="summary-header">
-                                <div>
-                                    <div class="summary-name" id="gen-char-name">${charCreationData.generatedChar?.name || 'Character'}</div>
-                                    <div class="summary-class">${charCreationData.generatedChar?.race || charCreationData.generatedChar?.origin || ''} ${charCreationData.generatedChar?.character_class || charCreationData.generatedChar?.archetype || ''}</div>
+                        <div class="char-summary" style="max-height: 60vh; overflow-y: auto;">
+                            <div class="summary-header" style="text-align: center; margin-bottom: 15px;">
+                                <div class="summary-name" id="gen-char-name" style="font-size: 1.5rem; color: var(--accent-gold);">${charCreationData.generatedChar?.name || 'Character'}</div>
+                                <div class="summary-class" style="color: var(--text-secondary);">${charCreationData.generatedChar?.race || charCreationData.generatedChar?.origin || ''} ${charCreationData.generatedChar?.character_class || charCreationData.generatedChar?.archetype || ''}, Level 1</div>
+                            </div>
+
+                            <!-- Core Stats Bar -->
+                            <div style="display: flex; justify-content: space-around; background: var(--bg-card); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.3rem; color: var(--accent-rose); font-weight: bold;">${hp1}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">HP</div>
                                 </div>
-                                <div style="color: var(--accent-rose); font-size: 1.1rem;">
-                                    ${charCreationData.generatedChar?.max_hit_points || 10} HP
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.3rem; color: var(--accent-blue); font-weight: bold;">${ac1}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">AC</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.3rem; color: var(--text-primary); font-weight: bold;">30ft</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Speed</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.3rem; color: var(--accent-warm); font-weight: bold;">${init1}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Init</div>
                                 </div>
                             </div>
 
+                            <!-- Abilities -->
                             <div style="margin-bottom: 15px;">
-                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">Abilities</div>
+                                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Abilities</div>
                                 <div class="ability-grid">
                                     ${abilityNames.map((ab, i) => {
                                         const score = abilities[ab] || 10;
@@ -10965,23 +11041,40 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 </div>
                             </div>
 
+                            <!-- Skills -->
                             <div style="margin-bottom: 15px;">
-                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">Skills</div>
-                                <div>${(charCreationData.generatedChar?.skill_proficiencies || []).map(s =>
-                                    `<span class="skill-option selected" style="cursor: default;">${s.replace(/_/g, ' ')}</span>`
+                                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Skills</div>
+                                <div>${(charCreationData.generatedChar?.skill_proficiencies || ['Perception', 'Athletics']).map(s =>
+                                    `<span class="skill-option selected" style="cursor: default; font-size: 0.85rem;">${s.replace(/_/g, ' ')}</span>`
                                 ).join('')}</div>
+                            </div>
+
+                            <!-- Background -->
+                            <div style="margin-bottom: 15px; background: var(--bg-card); padding: 12px; border-radius: 8px;">
+                                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Background</div>
+                                <div style="color: var(--accent-warm); font-weight: 600; margin-bottom: 4px;">${autoBackground.name}</div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; font-style: italic; margin-bottom: 6px;">"${autoBackground.description}"</div>
+                                <div style="color: var(--text-muted); font-size: 0.8rem;">Feature: ${autoBackground.feature}</div>
+                            </div>
+
+                            <!-- Equipment -->
+                            <div style="margin-bottom: 15px;">
+                                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Starting Equipment</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    ${autoEquipment.map(item => `<span style="background: var(--bg-card); padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; color: var(--text-primary);">${item}</span>`).join('')}
+                                </div>
                             </div>
                         </div>
 
-                        <div style="background: var(--bg-card); padding: 15px; border-radius: 10px;">
-                            <p style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.9rem;">Want to adjust anything?</p>
-                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                                <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="charCreationStep = 0; renderCreationStep();">Change Concept</button>
-                                <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;" onclick="switchToGuidedMode();">Manual Adjustments</button>
+                        <div style="background: var(--bg-card); padding: 12px; border-radius: 10px; margin-top: 10px;">
+                            <p style="color: var(--text-muted); margin-bottom: 10px; font-size: 0.85rem; text-align: center;">Want to customize?</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="charCreationStep = 0; renderCreationStep();">Change Concept</button>
+                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="switchToGuidedMode();">Full Customization</button>
                             </div>
                         </div>
                     `;
-                    nextBtn.textContent = 'Accept & Begin';
+                    nextBtn.textContent = 'Begin Adventure';
                     break;
 
                 case 2: // Finalize
@@ -11241,23 +11334,85 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     title.textContent = 'Choose Your Background';
                     subtitle.textContent = 'Your background describes your life before adventuring.';
 
-                    // Load backgrounds if not already loaded, or use fallback
+                    // Genre-specific background fallbacks
+                    const GENRE_BACKGROUNDS = {
+                        fantasy: [
+                            { id: 'acolyte', name: 'Acolyte', description: 'You spent your life in a temple.', skill_proficiencies: ['insight', 'religion'], feature_name: 'Shelter of the Faithful' },
+                            { id: 'criminal', name: 'Criminal', description: 'You lived a life of crime.', skill_proficiencies: ['deception', 'stealth'], feature_name: 'Criminal Contact' },
+                            { id: 'folk_hero', name: 'Folk Hero', description: 'You are a champion of the common people.', skill_proficiencies: ['animal_handling', 'survival'], feature_name: 'Rustic Hospitality' },
+                            { id: 'noble', name: 'Noble', description: 'You were born into privilege.', skill_proficiencies: ['history', 'persuasion'], feature_name: 'Position of Privilege' },
+                            { id: 'sage', name: 'Sage', description: 'You spent years studying the world.', skill_proficiencies: ['arcana', 'history'], feature_name: 'Researcher' },
+                            { id: 'soldier', name: 'Soldier', description: 'You served in an army.', skill_proficiencies: ['athletics', 'intimidation'], feature_name: 'Military Rank' }
+                        ],
+                        steampunk: [
+                            { id: 'factory_worker', name: 'Factory Worker', description: 'You toiled in the great industrial works.', skill_proficiencies: ['athletics', 'tinker'], feature_name: 'Union Solidarity' },
+                            { id: 'airship_crew', name: 'Airship Crew', description: 'You served aboard the great sky vessels.', skill_proficiencies: ['acrobatics', 'perception'], feature_name: 'Sky Legs' },
+                            { id: 'inventors_apprentice', name: "Inventor's Apprentice", description: 'You learned at the knee of a great mind.', skill_proficiencies: ['arcana', 'investigation'], feature_name: 'Technical Education' },
+                            { id: 'university_scholar', name: 'University Scholar', description: 'You studied at a prestigious institution.', skill_proficiencies: ['history', 'investigation'], feature_name: 'Academic Connections' },
+                            { id: 'street_urchin', name: 'Street Urchin', description: 'You survived the smog-choked alleys.', skill_proficiencies: ['sleight_of_hand', 'stealth'], feature_name: 'City Secrets' },
+                            { id: 'aristocrat', name: 'Aristocrat', description: 'You were born to wealth and privilege.', skill_proficiencies: ['history', 'persuasion'], feature_name: 'High Society' }
+                        ],
+                        cyberpunk: [
+                            { id: 'corpo', name: 'Corporate Drone', description: 'You worked for a megacorp before getting out.', skill_proficiencies: ['deception', 'persuasion'], feature_name: 'Corporate Contacts' },
+                            { id: 'street_kid', name: 'Street Kid', description: 'You grew up in the urban jungle.', skill_proficiencies: ['stealth', 'streetwise'], feature_name: 'Street Cred' },
+                            { id: 'nomad', name: 'Nomad', description: 'You ran with a family outside the cities.', skill_proficiencies: ['survival', 'mechanics'], feature_name: 'Family Bonds' },
+                            { id: 'media', name: 'Media', description: 'You chased stories that mattered.', skill_proficiencies: ['investigation', 'persuasion'], feature_name: 'Press Pass' },
+                            { id: 'fixer', name: 'Fixer', description: 'You made deals and knew everyone.', skill_proficiencies: ['insight', 'persuasion'], feature_name: 'Network' },
+                            { id: 'military', name: 'Ex-Military', description: 'You served in the corporate wars.', skill_proficiencies: ['athletics', 'intimidation'], feature_name: 'Brothers in Arms' }
+                        ],
+                        western: [
+                            { id: 'homesteader', name: 'Homesteader', description: 'You worked the land on the frontier.', skill_proficiencies: ['animal_handling', 'survival'], feature_name: 'Salt of the Earth' },
+                            { id: 'outlaw', name: 'Outlaw', description: 'You rode outside the law.', skill_proficiencies: ['deception', 'stealth'], feature_name: 'Wanted Poster' },
+                            { id: 'lawman', name: 'Former Lawman', description: 'You once wore a badge.', skill_proficiencies: ['insight', 'investigation'], feature_name: 'Old Authority' },
+                            { id: 'prospector', name: 'Prospector', description: 'You searched for fortune in the hills.', skill_proficiencies: ['perception', 'survival'], feature_name: 'Nose for Gold' },
+                            { id: 'cavalry', name: 'Cavalry Veteran', description: 'You served in the Indian Wars.', skill_proficiencies: ['animal_handling', 'athletics'], feature_name: 'Military Bearing' },
+                            { id: 'saloon', name: 'Saloon Worker', description: 'You worked where secrets flow like whiskey.', skill_proficiencies: ['insight', 'persuasion'], feature_name: 'Heard It All' }
+                        ],
+                        noir: [
+                            { id: 'war_vet', name: 'War Veteran', description: 'The Great War changed you forever.', skill_proficiencies: ['athletics', 'intimidation'], feature_name: 'Shell Shock' },
+                            { id: 'beat_cop', name: 'Former Beat Cop', description: 'You walked the streets in blue.', skill_proficiencies: ['investigation', 'perception'], feature_name: 'Old Badge' },
+                            { id: 'journalist', name: 'Newspaper Reporter', description: 'You chased headlines in the city room.', skill_proficiencies: ['investigation', 'persuasion'], feature_name: 'Press Credentials' },
+                            { id: 'mobster', name: 'Ex-Mobster', description: 'You had connections to the wrong people.', skill_proficiencies: ['intimidation', 'deception'], feature_name: 'Made Man' },
+                            { id: 'socialite', name: 'Fallen Socialite', description: 'You once had it all.', skill_proficiencies: ['persuasion', 'insight'], feature_name: 'Old Money Contacts' },
+                            { id: 'immigrant', name: 'Immigrant', description: 'You came seeking the American Dream.', skill_proficiencies: ['perception', 'survival'], feature_name: 'Community Ties' }
+                        ],
+                        horror: [
+                            { id: 'academic', name: 'Academic', description: 'You studied things best left unknown.', skill_proficiencies: ['arcana', 'history'], feature_name: 'Research Library' },
+                            { id: 'clergy', name: 'Clergy', description: 'You serve a higher power.', skill_proficiencies: ['insight', 'religion'], feature_name: 'Sanctuary' },
+                            { id: 'journalist', name: 'Journalist', description: 'You investigate what others fear.', skill_proficiencies: ['investigation', 'persuasion'], feature_name: 'Press Access' },
+                            { id: 'doctor', name: 'Doctor', description: 'You heal the body, but what of the soul?', skill_proficiencies: ['medicine', 'investigation'], feature_name: 'Medical Practice' },
+                            { id: 'drifter', name: 'Drifter', description: 'You never stay in one place long.', skill_proficiencies: ['survival', 'stealth'], feature_name: 'Unremarkable' },
+                            { id: 'antiquarian', name: 'Antiquarian', description: 'You deal in old things with dark histories.', skill_proficiencies: ['history', 'investigation'], feature_name: 'Collector Network' }
+                        ],
+                        wuxia: [
+                            { id: 'martial_school', name: 'Martial School Student', description: 'You trained at a renowned martial arts school.', skill_proficiencies: ['acrobatics', 'athletics'], feature_name: 'School Brotherhood' },
+                            { id: 'wanderer', name: 'Wandering Swordsman', description: 'You roam the jianghu seeking purpose.', skill_proficiencies: ['survival', 'perception'], feature_name: "Wanderer's Welcome" },
+                            { id: 'noble_house', name: 'Noble House Scion', description: 'You were born into a great martial clan.', skill_proficiencies: ['history', 'persuasion'], feature_name: 'Family Name' },
+                            { id: 'temple', name: 'Temple Disciple', description: 'You grew up in a monastery.', skill_proficiencies: ['insight', 'religion'], feature_name: 'Monastic Network' },
+                            { id: 'merchant', name: 'Traveling Merchant', description: 'You traded goods along dangerous roads.', skill_proficiencies: ['insight', 'persuasion'], feature_name: 'Trade Contacts' },
+                            { id: 'peasant', name: 'Peasant Hero', description: 'You rose from humble origins.', skill_proficiencies: ['athletics', 'survival'], feature_name: 'Common Touch' }
+                        ]
+                    };
+
+                    // Get genre-appropriate backgrounds
+                    const currentGenre7 = selectedGenres[0] || selectedGenre || 'fantasy';
+                    const genreBackgrounds = GENRE_BACKGROUNDS[currentGenre7] || GENRE_BACKGROUNDS.fantasy;
+
+                    // Load backgrounds if not already loaded, or use genre fallback
                     if (availableBackgrounds.length === 0) {
+                        // First try API
                         loadBackgrounds();
-                        // Provide fallback backgrounds if API fails/empty after 2 seconds
+                        // Use genre-specific fallback after timeout or if API returns fantasy-only
                         setTimeout(() => {
-                            if (availableBackgrounds.length === 0) {
-                                availableBackgrounds = [
-                                    { id: 'acolyte', name: 'Acolyte', description: 'You spent your life in a temple.', skill_proficiencies: ['insight', 'religion'], feature_name: 'Shelter of the Faithful' },
-                                    { id: 'criminal', name: 'Criminal', description: 'You lived a life of crime.', skill_proficiencies: ['deception', 'stealth'], feature_name: 'Criminal Contact' },
-                                    { id: 'folk_hero', name: 'Folk Hero', description: 'You are a champion of the common people.', skill_proficiencies: ['animal_handling', 'survival'], feature_name: 'Rustic Hospitality' },
-                                    { id: 'noble', name: 'Noble', description: 'You were born into privilege.', skill_proficiencies: ['history', 'persuasion'], feature_name: 'Position of Privilege' },
-                                    { id: 'sage', name: 'Sage', description: 'You spent years studying the world.', skill_proficiencies: ['arcana', 'history'], feature_name: 'Researcher' },
-                                    { id: 'soldier', name: 'Soldier', description: 'You served in an army.', skill_proficiencies: ['athletics', 'intimidation'], feature_name: 'Military Rank' }
-                                ];
+                            // If no backgrounds loaded OR we have a non-fantasy genre (API only has fantasy backgrounds)
+                            if (availableBackgrounds.length === 0 || (currentGenre7 !== 'fantasy' && !GENRE_BACKGROUNDS[currentGenre7]?.some(gb => availableBackgrounds.some(ab => ab.id === gb.id)))) {
+                                availableBackgrounds = genreBackgrounds;
                                 renderCreationStep();
                             }
-                        }, 2000);
+                        }, 1500);
+                    } else if (currentGenre7 !== 'fantasy') {
+                        // For non-fantasy genres, always use genre-specific backgrounds
+                        availableBackgrounds = genreBackgrounds;
                     }
 
                     content.innerHTML = `
@@ -11550,6 +11705,136 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             return 2;  // Default for other casters
         }
 
+        // Genre-specific equipment fallbacks for non-D&D archetypes
+        const GENRE_EQUIPMENT_FALLBACKS = {
+            steampunk: {
+                choices: {
+                    choice_1: {
+                        prompt: 'Choose your primary tool:',
+                        options: [
+                            { id: 'tinker', name: 'Tinker\'s Kit', items: ['Tinker\'s tools', 'Spare gears', 'Oil can'] },
+                            { id: 'clockwork', name: 'Clockwork Kit', items: ['Clockwork tools', 'Precision gears', 'Magnifying lens'] },
+                            { id: 'alchemist', name: 'Alchemist\'s Kit', items: ['Alchemist\'s supplies', 'Vials (6)', 'Reagent pouch'] }
+                        ]
+                    },
+                    choice_2: {
+                        prompt: 'Choose your weapon:',
+                        options: [
+                            { id: 'pistol', name: 'Steam Pistol', items: ['Steam pistol', 'Pressure canisters (10)'] },
+                            { id: 'wrench', name: 'Heavy Wrench', items: ['Heavy wrench (versatile)', 'Utility knife'] },
+                            { id: 'shock', name: 'Shock Prod', items: ['Shock prod', 'Battery pack'] }
+                        ]
+                    }
+                },
+                fixed: ['Goggles', 'Leather apron', 'Notebook', 'Pencils']
+            },
+            cyberpunk: {
+                choices: {
+                    choice_1: {
+                        prompt: 'Choose your tech:',
+                        options: [
+                            { id: 'deck', name: 'Cyberdeck', items: ['Cyberdeck', 'Data cables', 'ICE breakers (3)'] },
+                            { id: 'toolkit', name: 'Tech Toolkit', items: ['Repair kit', 'Soldering iron', 'Spare parts'] },
+                            { id: 'medkit', name: 'Street Medkit', items: ['Trauma kit', 'Stim injectors (3)', 'Bandages'] }
+                        ]
+                    },
+                    choice_2: {
+                        prompt: 'Choose your weapon:',
+                        options: [
+                            { id: 'pistol', name: 'Heavy Pistol', items: ['Heavy pistol', 'Ammo clips (3)'] },
+                            { id: 'smg', name: 'Compact SMG', items: ['Compact SMG', 'Ammo clips (2)'] },
+                            { id: 'blade', name: 'Monoblade', items: ['Monoblade', 'Sheath'] }
+                        ]
+                    }
+                },
+                fixed: ['Agent (smartphone)', 'Credstick', 'Armored jacket']
+            },
+            western: {
+                choices: {
+                    choice_1: {
+                        prompt: 'Choose your sidearm:',
+                        options: [
+                            { id: 'revolver', name: 'Six-Shooter', items: ['Revolver', 'Ammunition (24)', 'Holster'] },
+                            { id: 'rifle', name: 'Lever-Action Rifle', items: ['Rifle', 'Ammunition (20)', 'Rifle scabbard'] },
+                            { id: 'shotgun', name: 'Coach Gun', items: ['Shotgun', 'Shells (12)', 'Bandolier'] }
+                        ]
+                    },
+                    choice_2: {
+                        prompt: 'Choose your gear:',
+                        options: [
+                            { id: 'horse', name: 'Trail Gear', items: ['Saddle', 'Saddlebags', 'Bedroll', 'Rope (50 ft)'] },
+                            { id: 'gambler', name: 'Gambler\'s Kit', items: ['Playing cards', 'Dice set', 'Flask', 'Fine clothes'] },
+                            { id: 'lawman', name: 'Lawman\'s Kit', items: ['Badge', 'Manacles', 'Whistle', 'Notebook'] }
+                        ]
+                    }
+                },
+                fixed: ['Duster coat', 'Hat', 'Canteen', 'Knife']
+            },
+            noir: {
+                choices: {
+                    choice_1: {
+                        prompt: 'Choose your piece:',
+                        options: [
+                            { id: 'revolver', name: 'Snub-Nose', items: ['Snub-nose revolver', 'Ammunition (12)'] },
+                            { id: 'auto', name: 'Automatic', items: ['Semi-automatic pistol', 'Ammunition (14)'] },
+                            { id: 'none', name: 'No Gun', items: ['Brass knuckles', 'Switchblade'] }
+                        ]
+                    },
+                    choice_2: {
+                        prompt: 'Choose your tools:',
+                        options: [
+                            { id: 'detective', name: 'Detective Kit', items: ['Magnifying glass', 'Notebook', 'Camera', 'Lockpicks'] },
+                            { id: 'social', name: 'Social Kit', items: ['Fine suit', 'Business cards', 'Flask', 'Cigarette case'] },
+                            { id: 'muscle', name: 'Muscle Kit', items: ['Leather gloves', 'Crowbar', 'Rope', 'Flashlight'] }
+                        ]
+                    }
+                },
+                fixed: ['Trench coat', 'Fedora', 'Cigarettes', 'Lighter']
+            },
+            horror: {
+                choices: {
+                    choice_1: {
+                        prompt: 'Choose your protection:',
+                        options: [
+                            { id: 'holy', name: 'Holy Items', items: ['Holy symbol', 'Holy water (3)', 'Prayer book'] },
+                            { id: 'occult', name: 'Occult Items', items: ['Occult tome', 'Candles (6)', 'Chalk', 'Salt'] },
+                            { id: 'practical', name: 'Practical Items', items: ['Flashlight', 'Batteries (6)', 'First aid kit', 'Radio'] }
+                        ]
+                    },
+                    choice_2: {
+                        prompt: 'Choose your weapon:',
+                        options: [
+                            { id: 'shotgun', name: 'Shotgun', items: ['Shotgun', 'Shells (12)'] },
+                            { id: 'melee', name: 'Melee Weapons', items: ['Crowbar', 'Hatchet'] },
+                            { id: 'improvised', name: 'Improvised', items: ['Baseball bat', 'Kitchen knife', 'Molotov cocktails (2)'] }
+                        ]
+                    }
+                },
+                fixed: ['Backpack', 'Rope (50 ft)', 'Matches', 'Notebook']
+            },
+            wuxia: {
+                choices: {
+                    choice_1: {
+                        prompt: 'Choose your weapon:',
+                        options: [
+                            { id: 'sword', name: 'Jian (Straight Sword)', items: ['Jian', 'Sword scabbard', 'Maintenance kit'] },
+                            { id: 'dao', name: 'Dao (Saber)', items: ['Dao', 'Sword scabbard', 'Whetstone'] },
+                            { id: 'staff', name: 'Gun (Staff)', items: ['Quarterstaff', 'Traveling case'] }
+                        ]
+                    },
+                    choice_2: {
+                        prompt: 'Choose your supplies:',
+                        options: [
+                            { id: 'healer', name: 'Healer\'s Kit', items: ['Acupuncture needles', 'Herbal pouch', 'Bandages', 'Salves'] },
+                            { id: 'scholar', name: 'Scholar\'s Kit', items: ['Calligraphy set', 'Scrolls (5)', 'Ink', 'Seal'] },
+                            { id: 'wanderer', name: 'Wanderer\'s Kit', items: ['Bedroll', 'Waterskin', 'Rice', 'Tea set'] }
+                        ]
+                    }
+                },
+                fixed: ['Robes', 'Sandals', 'Pouch', 'Incense']
+            }
+        };
+
         async function loadEquipmentForClass(classId) {
             try {
                 const response = await fetch(`/api/dnd/equipment/class/${classId}`);
@@ -11557,14 +11842,41 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     const data = await response.json();
                     availableEquipment.choices = data.choices || null;
                     availableEquipment.fixed = data.fixed || [];
+
+                    // If no choices from API, try genre-specific fallbacks
+                    if (!availableEquipment.choices || Object.keys(availableEquipment.choices).length === 0) {
+                        const genre = selectedGenres[0] || selectedGenre || 'fantasy';
+                        const fallback = GENRE_EQUIPMENT_FALLBACKS[genre];
+                        if (fallback) {
+                            console.log('[Equipment] Using genre fallback for:', genre);
+                            availableEquipment.choices = fallback.choices;
+                            availableEquipment.fixed = fallback.fixed;
+                        }
+                    }
                     renderCreationStep();
                 } else {
                     console.warn('Failed to load equipment:', response.status);
-                    availableEquipment = { choices: null, fixed: [] };
+                    // Try genre fallback on API failure
+                    const genre = selectedGenres[0] || selectedGenre || 'fantasy';
+                    const fallback = GENRE_EQUIPMENT_FALLBACKS[genre];
+                    if (fallback) {
+                        availableEquipment = { choices: fallback.choices, fixed: fallback.fixed };
+                    } else {
+                        availableEquipment = { choices: null, fixed: [] };
+                    }
+                    renderCreationStep();
                 }
             } catch (error) {
                 console.error('Error loading equipment:', error);
-                availableEquipment = { choices: null, fixed: [] };
+                // Try genre fallback on error
+                const genre = selectedGenres[0] || selectedGenre || 'fantasy';
+                const fallback = GENRE_EQUIPMENT_FALLBACKS[genre];
+                if (fallback) {
+                    availableEquipment = { choices: fallback.choices, fixed: fallback.fixed };
+                } else {
+                    availableEquipment = { choices: null, fixed: [] };
+                }
+                renderCreationStep();
             }
         }
 
