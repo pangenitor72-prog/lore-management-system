@@ -10598,6 +10598,90 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         { id: 'occultist', display_name: 'Occultist', description: 'Forbidden knowledge', hit_die: 'd6', has_powers: true },
                         { id: 'survivor', display_name: 'Survivor', description: 'Endurance and will', hit_die: 'd10', has_powers: false }
                     ]
+                },
+                postapoc: {
+                    origins: [
+                        { id: 'human', display_name: 'Human', description: 'Enduring despite everything' },
+                        { id: 'mutant', display_name: 'Mutant', description: 'Changed by radiation or toxins' },
+                        { id: 'vault_born', display_name: 'Vault-Born', description: 'Raised in a shelter' },
+                        { id: 'tribal', display_name: 'Tribal', description: 'Born to the new world' }
+                    ],
+                    archetypes: [
+                        { id: 'scavenger', display_name: 'Scavenger', description: 'Finder and trader of relics', hit_die: 'd8', has_powers: false },
+                        { id: 'road_warrior', display_name: 'Road Warrior', description: 'Vehicle combat specialist', hit_die: 'd10', has_powers: false },
+                        { id: 'wastelander', display_name: 'Wastelander', description: 'Desert survival expert', hit_die: 'd10', has_powers: false },
+                        { id: 'tech_hunter', display_name: 'Tech Hunter', description: 'Seeker of old-world technology', hit_die: 'd8', has_powers: true }
+                    ]
+                },
+                steampunk: {
+                    origins: [
+                        { id: 'human', display_name: 'Human', description: 'Citizen of the Empire' },
+                        { id: 'automaton', display_name: 'Automaton', description: 'Clockwork construct with a soul' },
+                        { id: 'changed', display_name: 'Aether-Touched', description: 'Altered by aetheric exposure' },
+                        { id: 'hybrid', display_name: 'Augmented', description: 'Part flesh, part machine' }
+                    ],
+                    archetypes: [
+                        { id: 'inventor', display_name: 'Inventor', description: 'Creator of wondrous devices', hit_die: 'd8', has_powers: true },
+                        { id: 'aeronaut', display_name: 'Aeronaut', description: 'Airship pilot and explorer', hit_die: 'd10', has_powers: false },
+                        { id: 'detective', display_name: 'Detective', description: 'Investigator of mysteries', hit_die: 'd8', has_powers: false },
+                        { id: 'pugilist', display_name: 'Pugilist', description: 'Bare-knuckle brawler', hit_die: 'd10', has_powers: false }
+                    ]
+                },
+                cyberpunk: {
+                    origins: [
+                        { id: 'human', display_name: 'Natural', description: 'Baseline human, unchipped' },
+                        { id: 'cyborg', display_name: 'Cyborg', description: 'Heavily augmented with chrome' },
+                        { id: 'clone', display_name: 'Clone', description: 'Corporate-grown replica' },
+                        { id: 'ai', display_name: 'Digital', description: 'AI in a synthetic shell' }
+                    ],
+                    archetypes: [
+                        { id: 'netrunner', display_name: 'Netrunner', description: 'Hacker of the digital frontier', hit_die: 'd6', has_powers: true },
+                        { id: 'solo', display_name: 'Solo', description: 'Combat specialist for hire', hit_die: 'd10', has_powers: false },
+                        { id: 'fixer', display_name: 'Fixer', description: 'Dealmaker and information broker', hit_die: 'd8', has_powers: false },
+                        { id: 'tech', display_name: 'Tech', description: 'Mechanic and gadgeteer', hit_die: 'd8', has_powers: true }
+                    ]
+                },
+                western: {
+                    origins: [
+                        { id: 'settler', display_name: 'Settler', description: 'Frontier homesteader' },
+                        { id: 'native', display_name: 'Native', description: 'Indigenous peoples' },
+                        { id: 'immigrant', display_name: 'Immigrant', description: 'Seeking a new life' },
+                        { id: 'freedman', display_name: 'Freedman', description: 'Former slave, now free' }
+                    ],
+                    archetypes: [
+                        { id: 'gunslinger', display_name: 'Gunslinger', description: 'Quick draw, quicker wit', hit_die: 'd10', has_powers: false },
+                        { id: 'outlaw', display_name: 'Outlaw', description: 'Living outside the law', hit_die: 'd8', has_powers: false },
+                        { id: 'lawman', display_name: 'Lawman', description: 'Badge and justice', hit_die: 'd10', has_powers: false },
+                        { id: 'frontier_doc', display_name: 'Frontier Doc', description: 'Healer on the range', hit_die: 'd8', has_powers: true }
+                    ]
+                },
+                noir: {
+                    origins: [
+                        { id: 'veteran', display_name: 'War Veteran', description: 'Scarred by the Great War' },
+                        { id: 'immigrant', display_name: 'Immigrant', description: 'Chasing the American Dream' },
+                        { id: 'fallen', display_name: 'Fallen Elite', description: 'Once had it all' },
+                        { id: 'street', display_name: 'Street Bred', description: 'Born in the gutter' }
+                    ],
+                    archetypes: [
+                        { id: 'private_eye', display_name: 'Private Eye', description: 'Gumshoe detective', hit_die: 'd8', has_powers: false },
+                        { id: 'femme_fatale', display_name: 'Femme Fatale', description: 'Dangerous and alluring', hit_die: 'd6', has_powers: false },
+                        { id: 'enforcer', display_name: 'Enforcer', description: 'Muscle for hire', hit_die: 'd10', has_powers: false },
+                        { id: 'grifter', display_name: 'Grifter', description: 'Con artist and smooth talker', hit_die: 'd8', has_powers: false }
+                    ]
+                },
+                wuxia: {
+                    origins: [
+                        { id: 'mortal', display_name: 'Mortal', description: 'Ordinary person with potential' },
+                        { id: 'cultivator', display_name: 'Cultivator', description: 'Walking the path of cultivation' },
+                        { id: 'spirit_touched', display_name: 'Spirit-Touched', description: 'Blessed by supernatural forces' },
+                        { id: 'noble_blood', display_name: 'Noble Blood', description: 'Born into a martial clan' }
+                    ],
+                    archetypes: [
+                        { id: 'swordsman', display_name: 'Swordsman', description: 'Master of the blade', hit_die: 'd10', has_powers: false },
+                        { id: 'monk', display_name: 'Monk', description: 'Internal arts practitioner', hit_die: 'd8', has_powers: true },
+                        { id: 'assassin', display_name: 'Assassin', description: 'Shadow arts specialist', hit_die: 'd8', has_powers: false },
+                        { id: 'healer', display_name: 'Healer', description: 'Medicine and qi restoration', hit_die: 'd8', has_powers: true }
+                    ]
                 }
             };
 
@@ -10969,7 +11053,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         steampunk: { name: 'Tinker', description: 'You\'ve always had a knack for machines.', feature: 'Mechanical Intuition' },
                         mystery: { name: 'Curious Mind', description: 'You can\'t resist a puzzle.', feature: 'Eye for Detail' },
                         romance: { name: 'Hopeful Heart', description: 'You believe in the power of connection.', feature: 'Charming Presence' },
-                        adventure: { name: 'Thrill Seeker', description: 'Danger is just another word for excitement.', feature: 'Fortune Favors the Bold' }
+                        adventure: { name: 'Thrill Seeker', description: 'Danger is just another word for excitement.', feature: 'Fortune Favors the Bold' },
+                        postapoc: { name: 'Wasteland Survivor', description: 'You\'ve endured the collapse and emerged hardened.', feature: 'Scavenger\'s Eye' }
                     };
 
                     // Auto-assign genre-appropriate starting equipment for Quick Start
@@ -10984,7 +11069,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         steampunk: ['Steam pistol', 'Pressure canisters (6)', 'Goggles', 'Tinker\'s tools', 'Notebook', '15 shillings'],
                         mystery: ['Magnifying glass', 'Notebook', 'Pen', 'Camera', 'Lockpicks', 'Business cards'],
                         romance: ['Fine clothes', 'Perfume', 'Love letters', 'Locket', 'Journal', 'Spending money'],
-                        adventure: ['Machete', 'Leather jacket', 'Rope (50 ft)', 'Grappling hook', 'Torch', 'Map']
+                        adventure: ['Machete', 'Leather jacket', 'Rope (50 ft)', 'Grappling hook', 'Torch', 'Map'],
+                        postapoc: ['Machete', 'Worn clothes', 'Canteen', 'First aid kit', 'Lighter', 'Rations (3 days)']
                     };
 
                     const currentGenre1 = selectedGenres[0] || selectedGenre || 'fantasy';
@@ -11391,6 +11477,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                             { id: 'temple', name: 'Temple Disciple', description: 'You grew up in a monastery.', skill_proficiencies: ['insight', 'religion'], feature_name: 'Monastic Network' },
                             { id: 'merchant', name: 'Traveling Merchant', description: 'You traded goods along dangerous roads.', skill_proficiencies: ['insight', 'persuasion'], feature_name: 'Trade Contacts' },
                             { id: 'peasant', name: 'Peasant Hero', description: 'You rose from humble origins.', skill_proficiencies: ['athletics', 'survival'], feature_name: 'Common Touch' }
+                        ],
+                        postapoc: [
+                            { id: 'wasteland_survivor', name: 'Wasteland Survivor', description: 'You\'ve survived the collapse and learned to endure.', skill_proficiencies: ['survival', 'perception'], feature_name: 'Scavenger\'s Eye' },
+                            { id: 'vault_dweller', name: 'Vault Dweller', description: 'You grew up in an underground shelter.', skill_proficiencies: ['medicine', 'technology'], feature_name: 'Shelter Knowledge' },
+                            { id: 'road_warrior', name: 'Road Warrior', description: 'You\'ve driven the dangerous highways.', skill_proficiencies: ['vehicles', 'intimidation'], feature_name: 'Fuel Sense' },
+                            { id: 'tribal', name: 'Tribal', description: 'Your people rebuilt from the ashes.', skill_proficiencies: ['survival', 'athletics'], feature_name: 'Tribal Bonds' },
+                            { id: 'raider_reformed', name: 'Reformed Raider', description: 'You once took what you needed by force.', skill_proficiencies: ['intimidation', 'stealth'], feature_name: 'Raider Contacts' },
+                            { id: 'settlement_guard', name: 'Settlement Guard', description: 'You protected one of the last safe places.', skill_proficiencies: ['perception', 'athletics'], feature_name: 'Watchful Eye' }
                         ]
                     };
 
@@ -11832,6 +11926,27 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     }
                 },
                 fixed: ['Robes', 'Sandals', 'Pouch', 'Incense']
+            },
+            postapoc: {
+                choices: {
+                    choice_1: {
+                        prompt: 'Choose your weapon:',
+                        options: [
+                            { id: 'pipe_rifle', name: 'Pipe Rifle', items: ['Pipe rifle', 'Scrap ammo (12)', 'Cleaning rod'] },
+                            { id: 'machete', name: 'Machete', items: ['Machete', 'Sharpening stone', 'Leather sheath'] },
+                            { id: 'nail_bat', name: 'Nail Bat', items: ['Nail bat', 'Spare nails', 'Duct tape'] }
+                        ]
+                    },
+                    choice_2: {
+                        prompt: 'Choose your survival gear:',
+                        options: [
+                            { id: 'scavenger', name: 'Scavenger Kit', items: ['Crowbar', 'Bolt cutters', 'Empty sack', 'Lockpicks'] },
+                            { id: 'medic', name: 'Medic Kit', items: ['First aid kit', 'Antibiotics (3)', 'Bandages', 'Splint'] },
+                            { id: 'scout', name: 'Scout Kit', items: ['Binoculars', 'Signal mirror', 'Compass', 'Map (tattered)'] }
+                        ]
+                    }
+                },
+                fixed: ['Worn clothes', 'Canteen', 'Lighter', 'Rations (3 days)']
             }
         };
 
@@ -12070,6 +12185,42 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     protector: /\b(protector|guardian|soldier|cop|veteran|fighter)\b/,
                     occultist: /\b(occultist|mystic|psychic|medium|witch|sorcerer)\b/,
                     survivor: /\b(survivor|everyman|ordinary|civilian|victim)\b/
+                },
+                postapoc: {
+                    scavenger: /\b(scavenger|scrounger|salvager|looter|picker|finder)\b/,
+                    road_warrior: /\b(road warrior|driver|racer|gearhead|mechanic|pilot)\b/,
+                    wastelander: /\b(wastelander|wanderer|nomad|survivor|drifter|scout)\b/,
+                    tech_hunter: /\b(tech hunter|technician|engineer|hacker|scientist|researcher)\b/
+                },
+                steampunk: {
+                    inventor: /\b(inventor|tinker|engineer|scientist|gadgeteer|maker)\b/,
+                    aeronaut: /\b(aeronaut|pilot|airship|captain|navigator|aviator)\b/,
+                    detective: /\b(detective|investigator|inspector|sleuth|analyst)\b/,
+                    pugilist: /\b(pugilist|boxer|brawler|fighter|bruiser|enforcer)\b/
+                },
+                cyberpunk: {
+                    netrunner: /\b(netrunner|hacker|decker|programmer|coder|console cowboy)\b/,
+                    solo: /\b(solo|mercenary|soldier|bodyguard|killer|street samurai)\b/,
+                    fixer: /\b(fixer|dealer|broker|middleman|contact|fence)\b/,
+                    tech: /\b(tech|mechanic|ripperdoc|engineer|gadgeteer|inventor)\b/
+                },
+                western: {
+                    gunslinger: /\b(gunslinger|gunfighter|pistolero|shooter|quickdraw)\b/,
+                    outlaw: /\b(outlaw|bandit|rustler|robber|desperado|criminal)\b/,
+                    lawman: /\b(lawman|sheriff|marshal|deputy|ranger|bounty hunter)\b/,
+                    frontier_doc: /\b(doctor|doc|healer|physician|medic|sawbones)\b/
+                },
+                noir: {
+                    private_eye: /\b(private eye|detective|investigator|gumshoe|shamus|dick)\b/,
+                    femme_fatale: /\b(femme fatale|seductress|dame|siren|temptress)\b/,
+                    enforcer: /\b(enforcer|muscle|thug|goon|heavy|bruiser)\b/,
+                    grifter: /\b(grifter|con|swindler|cheat|hustler|shark)\b/
+                },
+                wuxia: {
+                    swordsman: /\b(swordsman|swordswoman|blade|sword|jian|dao)\b/,
+                    monk: /\b(monk|shaolin|martial|kung fu|internal arts|chi)\b/,
+                    assassin: /\b(assassin|shadow|killer|ninja|death|silent)\b/,
+                    healer: /\b(healer|doctor|physician|medicine|herbalist|acupuncture)\b/
                 }
             };
 
@@ -12103,6 +12254,42 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     'survivor': /\b(survivor|veteran|scarred|hardened)\b/,
                     'touched': /\b(touched|cursed|haunted|marked|psychic)\b/,
                     'innocent': /\b(innocent|naive|pure|untainted|young)\b/
+                },
+                postapoc: {
+                    'human': /\b(human|person|survivor|wastelander)\b/,
+                    'mutant': /\b(mutant|mutated|changed|twisted|freak|ghoul)\b/,
+                    'vault_born': /\b(vault|shelter|bunker|underground|protected)\b/,
+                    'tribal': /\b(tribal|tribe|clan|pack|family|native)\b/
+                },
+                steampunk: {
+                    'human': /\b(human|citizen|victorian|british|londoner)\b/,
+                    'automaton': /\b(automaton|clockwork|robot|mechanical|construct|machine)\b/,
+                    'changed': /\b(aether|changed|touched|altered|mutated|transformed)\b/,
+                    'hybrid': /\b(augmented|hybrid|enhanced|modified|prosthetic|mechanical arm)\b/
+                },
+                cyberpunk: {
+                    'human': /\b(human|natural|baseline|organic|meat)\b/,
+                    'cyborg': /\b(cyborg|chrome|augmented|enhanced|modified|borged)\b/,
+                    'clone': /\b(clone|replica|copy|vat-grown|manufactured)\b/,
+                    'ai': /\b(ai|artificial|digital|synthetic|program|construct)\b/
+                },
+                western: {
+                    'settler': /\b(settler|pioneer|homesteader|farmer|rancher)\b/,
+                    'native': /\b(native|indian|indigenous|tribal|apache|comanche|sioux)\b/,
+                    'immigrant': /\b(immigrant|irish|chinese|mexican|foreigner)\b/,
+                    'freedman': /\b(freedman|freed|former slave|emancipated|black)\b/
+                },
+                noir: {
+                    'veteran': /\b(veteran|soldier|war|military|shellshock|ptsd)\b/,
+                    'immigrant': /\b(immigrant|foreign|irish|italian|jewish|newcomer)\b/,
+                    'fallen': /\b(fallen|former|ex-|disgraced|ruined|bankrupt)\b/,
+                    'street': /\b(street|poor|orphan|slum|gutter|tough)\b/
+                },
+                wuxia: {
+                    'mortal': /\b(mortal|ordinary|common|peasant|simple)\b/,
+                    'cultivator': /\b(cultivator|disciple|student|practitioner|adept)\b/,
+                    'spirit_touched': /\b(spirit|blessed|cursed|supernatural|gifted|chosen)\b/,
+                    'noble_blood': /\b(noble|clan|family|house|lineage|bloodline)\b/
                 }
             };
 
