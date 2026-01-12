@@ -2,14 +2,20 @@
 Smart Ingestor Orchestrator — Stage 7 of LMS/MANTLE ingestion pipeline.
 
 Coordinates all stages:
-segment -> detect -> extract -> personality -> build -> write
+segment -> detect -> extract -> personality -> build -> drift -> embed -> write
+
+NOTE: Embeddings are generated AFTER personality drift to ensure semantic search
+returns entities with their drifted personalities, not their original traits.
+This prevents "Vector-Graph Dissonance" where search retrieves pre-drift entities.
 """
 
 import logging
 import os
-from typing import Dict, Any, List
+import asyncio
+from typing import Dict, Any, List, Optional
 
 from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.lms.services.embedding_service import EmbeddingService
 
 from .segmenter import segment_text
 from .detector import detect_many
@@ -22,14 +28,100 @@ from src.lms.ingestion.relationship_inference import RelationshipInferenceEngine
 
 logger = logging.getLogger(__name__)
 
-async def ingest_text(raw_text: str, neo4j_db: Neo4jDatabase) -> Dict[str, Any]:
+
+async def generate_entity_embedding(
+    entity_data: Dict[str, Any],
+    embedding_service: EmbeddingService
+) -> Optional[List[float]]:
+    """
+    Generate embedding for an entity using its current (post-drift) properties.
+
+    The embedding is based on:
+    - canonical_name
+    - entity_type
+    - description
+    - OCEAN personality traits (if present)
+
+    This ensures semantic search will find entities based on their DRIFTED
+    personality, not their original extracted traits.
+    """
+    parts = []
+
+    # Name
+    name = entity_data.get("canonical_name") or entity_data.get("name")
+    if name:
+        parts.append(f"Name: {name}")
+
+    # Type
+    entity_type = entity_data.get("entity_type")
+    if entity_type:
+        parts.append(f"Type: {entity_type}")
+
+    # Description (main content)
+    description = entity_data.get("description")
+    if description:
+        parts.append(f"Description: {description}")
+
+    # OCEAN personality (post-drift) - include in embedding for personality-aware search
+    ocean = entity_data.get("ocean_profile")
+    if ocean:
+        personality_parts = []
+        if hasattr(ocean, 'openness'):
+            personality_parts.append(f"openness={ocean.openness:.2f}")
+            personality_parts.append(f"conscientiousness={ocean.conscientiousness:.2f}")
+            personality_parts.append(f"extraversion={ocean.extraversion:.2f}")
+            personality_parts.append(f"agreeableness={ocean.agreeableness:.2f}")
+            personality_parts.append(f"neuroticism={ocean.neuroticism:.2f}")
+        elif isinstance(ocean, dict):
+            for trait, value in ocean.items():
+                if value is not None:
+                    personality_parts.append(f"{trait}={float(value):.2f}")
+        if personality_parts:
+            parts.append(f"Personality: {', '.join(personality_parts)}")
+
+    # Aliases
+    aliases = entity_data.get("aliases", [])
+    if aliases:
+        parts.append(f"Also known as: {', '.join(aliases)}")
+
+    if not parts:
+        return None
+
+    combined_text = "\n".join(parts)
+
+    # Run embedding generation in executor to avoid blocking
+    loop = asyncio.get_event_loop()
+    try:
+        embedding = await loop.run_in_executor(
+            None,
+            lambda: embedding_service.embed_text(combined_text, task_type="RETRIEVAL_DOCUMENT")
+        )
+        return embedding
+    except Exception as e:
+        logger.error(f"Embedding generation failed for {name}: {e}")
+        return None
+
+async def ingest_text(
+    raw_text: str,
+    neo4j_db: Neo4jDatabase,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Full ingestion pipeline for raw text.
+
+    Args:
+        raw_text: The lore text to ingest
+        neo4j_db: Database connection
+        api_key: Optional Gemini API key for embedding generation.
+                 If provided, embeddings are generated AFTER personality drift
+                 to ensure semantic search returns personality-accurate entities.
+
     Returns structured debug info:
     - segments
     - detected entities
     - extracted properties
     - IDs of created entities
+    - embeddings_generated: count of entities with embeddings (if api_key provided)
     """
     if not raw_text or not raw_text.strip():
         logger.warning("Empty text provided to ingest_text.")
@@ -185,6 +277,41 @@ async def ingest_text(raw_text: str, neo4j_db: Neo4jDatabase) -> Dict[str, Any]:
                     "sentence": rel.sentence
                 })
 
+    # 5b. Generate Embeddings (AFTER personality drift)
+    # This ensures semantic search returns entities with their drifted personalities
+    embeddings_generated = 0
+    if api_key:
+        try:
+            embedding_service = EmbeddingService(api_key=api_key)
+            logger.info("Stage 5b: Generating embeddings for entities (post-drift)...")
+
+            for built in built_entities:
+                entity = built.entity
+
+                # Build entity data dict for embedding
+                entity_data = {
+                    "canonical_name": entity.canonical_name,
+                    "entity_type": entity.entity_type.value if hasattr(entity.entity_type, 'value') else str(entity.entity_type),
+                    "description": entity.approved_fields.get("description", ""),
+                    "ocean_profile": entity.approved_fields.get("ocean_profile"),
+                    "aliases": entity.aliases
+                }
+
+                embedding = await generate_entity_embedding(entity_data, embedding_service)
+
+                if embedding:
+                    entity.approved_fields["embedding"] = embedding
+                    embeddings_generated += 1
+                    logger.debug(f"Generated embedding for {entity.canonical_name} ({len(embedding)} dims)")
+
+            logger.info(f"Stage 5b: Generated {embeddings_generated}/{len(built_entities)} embeddings")
+
+        except Exception as e:
+            logger.error(f"Embedding generation stage failed: {e}")
+            # Continue without embeddings - don't block ingestion
+    else:
+        logger.debug("Skipping embedding generation (no API key provided)")
+
     # 6. Save to Neo4j
     ids = await save_many(neo4j_db, built_entities)
     logger.info(f"Stage 6: Persisted {len(ids)} entities to Neo4j.")
@@ -193,13 +320,23 @@ async def ingest_text(raw_text: str, neo4j_db: Neo4jDatabase) -> Dict[str, Any]:
         "segments": segments,
         "detected": detection_results,
         "extracted": extracted,
-        "entity_ids": ids
+        "entity_ids": ids,
+        "embeddings_generated": embeddings_generated
     }
 
-async def ingest_file(file_path: str, neo4j_db: Neo4jDatabase) -> Dict[str, Any]:
+async def ingest_file(
+    file_path: str,
+    neo4j_db: Neo4jDatabase,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Load a file from disk (.txt, .md, .pdf if already converted),
     then call ingest_text.
+
+    Args:
+        file_path: Path to the file to ingest
+        neo4j_db: Database connection
+        api_key: Optional Gemini API key for embedding generation
     """
     if not os.path.exists(file_path):
         logger.error(f"File not found: {file_path}")
@@ -210,7 +347,7 @@ async def ingest_file(file_path: str, neo4j_db: Neo4jDatabase) -> Dict[str, Any]
             raw_text = f.read()
             
         logger.info(f"Read file {file_path}, size: {len(raw_text)} chars.")
-        return await ingest_text(raw_text, neo4j_db)
+        return await ingest_text(raw_text, neo4j_db, api_key=api_key)
         
     except Exception as e:
         logger.error(f"Failed to read file {file_path}: {e}")

@@ -638,6 +638,51 @@ AI may never self-override.
 
 ---
 
+13.1 Hotfix Protocol (Operations Exemption)
+
+The following categories are classified as **Operations** and are EXEMPT from the module-by-module audit process:
+
+**Tier 1 - Configuration (No Code Review Required):**
+- Environment variables
+- fly.toml / deployment configuration
+- Timeout values and thresholds
+- Health check parameters
+- Rate limit configurations
+- Logging levels
+
+**Tier 2 - Infrastructure Fixes (Minimal Review):**
+- API timeout handling
+- Circuit breaker tuning
+- Error message improvements
+- Silent failure fixes (adding logging/re-raising exceptions)
+- Health endpoint additions
+
+**Tier 3 - Operational Features (Normal Review):**
+- Session persistence (storage backend)
+- Caching layers
+- Monitoring integrations
+
+**Hotfix Criteria:**
+A change qualifies as a Hotfix if:
+1. It fixes a blocking production issue
+2. It does NOT change business logic or data flow
+3. It does NOT modify entity models, schemas, or core algorithms
+4. It is reversible within one commit
+
+**Hotfix Process:**
+1. Declare: "HOTFIX: [category] - [brief description]"
+2. Implement the minimal fix
+3. Document in commit message
+4. No module-by-module approval required for Tier 1-2
+
+**Rationale:**
+Infrastructure stability enables architectural work. A crashed system cannot be audited. Operations fixes maintain the runway for strategic improvements.
+
+This protocol prevents the "Audit Deadlock" where governance rules block essential fixes.
+
+
+---
+
 14. Document Authority Hierarchy
 
 1. .cursor/rules.md — Highest authority

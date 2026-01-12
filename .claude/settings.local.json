@@ -67,7 +67,9 @@
       "Bash(timeout 180 fly deploy:*)",
       "Bash(timeout 20 curl:*)",
       "Bash(npm run build:*)",
-      "Bash(timeout 20 fly logs:*)"
+      "Bash(timeout 20 fly logs:*)",
+      "Bash(git checkout:*)",
+      "Bash(flyctl deploy:*)"
     ]
   }
 }

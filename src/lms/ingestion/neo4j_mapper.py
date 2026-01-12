@@ -87,6 +87,10 @@ async def save_entity(neo4j_db: Neo4jDatabase, built: BuiltEntity) -> str:
             "neuroticism": None
         }
 
+    # Embedding (768-dimensional vector, generated AFTER personality drift)
+    embedding = entity.approved_fields.get("embedding")
+    # Neo4j can store lists directly; None if not generated
+
     # Sanitize label
     safe_label = entity_type if entity_type.isalnum() else "Entity"
     
@@ -108,10 +112,11 @@ async def save_entity(neo4j_db: Neo4jDatabase, built: BuiltEntity) -> str:
         e.conscientiousness = $conscientiousness,
         e.extraversion = $extraversion,
         e.agreeableness = $agreeableness,
-        e.neuroticism = $neuroticism
+        e.neuroticism = $neuroticism,
+        e.embedding = $embedding
     RETURN e.canon_id
     """
-    
+
     params = {
         "canon_id": canon_id,
         "name": name,
@@ -123,6 +128,7 @@ async def save_entity(neo4j_db: Neo4jDatabase, built: BuiltEntity) -> str:
         "approval_status": entity.approval_status.value,
         "confidence_level": entity.confidence_level.value,
         "party_knowledge": entity.party_knowledge.value,
+        "embedding": embedding,
         **ocean_props
     }
     
