@@ -31,8 +31,11 @@ class CheckResult(BaseModel):
     narrative_outcome: str = ""  # "success", "failure", "critical_success", etc.
 
 
-# Skill to Ability mapping (5e standard)
+# Skill to Ability mapping (5e standard + genre extensions)
 SKILL_TO_ABILITY = {
+    # ===================
+    # STANDARD 5e SKILLS
+    # ===================
     # Strength
     "athletics": AbilityName.STR,
     # Dexterity
@@ -56,6 +59,52 @@ SKILL_TO_ABILITY = {
     "intimidation": AbilityName.CHA,
     "performance": AbilityName.CHA,
     "persuasion": AbilityName.CHA,
+
+    # ===================
+    # GENRE-SPECIFIC SKILLS
+    # ===================
+    # Tech/Sci-Fi/Cyberpunk (Intelligence-based)
+    "hacking": AbilityName.INT,
+    "computers": AbilityName.INT,
+    "electronics": AbilityName.INT,
+    "science": AbilityName.INT,
+    "demolitions": AbilityName.INT,
+    "engineering": AbilityName.INT,
+
+    # Mechanical/Vehicle (Dexterity-based)
+    "mechanics": AbilityName.DEX,
+    "piloting": AbilityName.DEX,
+    "vehicles": AbilityName.DEX,
+    "driving": AbilityName.DEX,
+
+    # Street/Urban (Wisdom or Charisma-based)
+    "streetwise": AbilityName.WIS,
+    "contacts": AbilityName.CHA,
+
+    # Medical (Wisdom-based, extends medicine)
+    "first_aid": AbilityName.WIS,
+    "surgery": AbilityName.WIS,
+
+    # Combat/Physical (various)
+    "firearms": AbilityName.DEX,
+    "martial_arts": AbilityName.DEX,
+    "brawling": AbilityName.STR,
+
+    # Artisan/Craft (Dexterity or Intelligence)
+    "calligraphy": AbilityName.DEX,
+    "forgery": AbilityName.DEX,
+    "tinker": AbilityName.INT,
+
+    # Social/Subterfuge (Charisma-based)
+    "disguise": AbilityName.CHA,
+    "etiquette": AbilityName.CHA,
+    "gambling": AbilityName.CHA,
+    "interrogation": AbilityName.CHA,
+
+    # Wilderness/Survival variants
+    "tracking": AbilityName.WIS,
+    "navigation": AbilityName.WIS,
+    "riding": AbilityName.DEX,
 }
 
 ALL_SKILLS = list(SKILL_TO_ABILITY.keys())
