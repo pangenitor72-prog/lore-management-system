@@ -12,6 +12,58 @@ The Lore Management System (LMS) is a knowledge management system for maintainin
 - **Frontend:** React (served from `frontend/dist/index.html`)
 - **Rules Engine:** D&D 5e mechanics with visibility scaling (Storyteller → Tactician)
 
+## The Narrow Path (Core Philosophy)
+
+**The system doesn't matter. What matters is that the player believes the system matters. The real product is the story.**
+
+### Why This Matters
+
+Players need to believe their choices create outcomes. If they know the DM always makes it work out, success feels hollow. But if they believe:
+- Their choices (stats, abilities, skills) created an advantage
+- The system could have said no
+- And it said YES
+
+Then that success belongs to *them*. The dice are a ritual that transfers ownership from the DM to the player.
+
+### The Narrow Path Problem
+
+Every DM walks a tightrope:
+- **Too much control** → Players feel like passengers. Victories are hollow.
+- **Too much chaos** → Story falls apart. Deaths feel arbitrary. Investment gets punished.
+
+Human DMs fudge dice, adjust HP, have enemies miss at dramatic moments. They lie constantly to maintain the illusion. This is hard. Even experienced DMs struggle with it.
+
+### AI's Advantage
+
+AI has absorbed millions of stories, player feedback, DM advice, narrative theory. It knows the *shape* of human satisfaction without explicit rules. It doesn't need a flowchart for "when to let the player win" - it understands what earned victories feel like.
+
+### How To Leverage This
+
+The implementation is a **context-gathering system**, not a rules engine:
+
+| Signal | What It Reveals |
+|--------|-----------------|
+| Character choices | What fantasy they want |
+| Actions taken | What they pursue |
+| Questions asked | What they want to know more about |
+| Things named | What they've claimed as theirs |
+| Time lingered | What scenes they care about |
+
+Feed this context to the AI with the goal: *"Honor their choices. Maintain tension. Make outcomes feel earned. Never get caught."*
+
+Don't code rules for the narrow path. Give the AI rich context about player investment and trust its pattern-matched intuition.
+
+### Working With The Project Creator
+
+The creator thinks in intuitions, not specifications. They know when something is right by feel. When they struggle to articulate something, your job is to:
+1. Read their signals (words, project context, priorities)
+2. Synthesize into something coherent
+3. Reflect it back: "Is this what you mean?"
+
+They will recognize truth when they see it reflected back. This is the same capability the AI DM uses for players.
+
+**See also:** `docs/airpg/THE_NARROW_PATH.md` for full philosophy, `docs/airpg/SESSION_INSIGHT_2026-01-13.md` for the conversation that led to these insights.
+
 ## Commands
 
 ### Development

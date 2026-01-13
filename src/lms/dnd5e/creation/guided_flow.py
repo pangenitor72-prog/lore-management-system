@@ -1,15 +1,40 @@
 """Guided character creation flow with explanations."""
 
+import json
 import uuid
+from pathlib import Path
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 
 from ..models.ability_scores import AbilityScores, AbilityName
 from ..models.races import RaceName, RACES
 from ..models.archetypes import ClassName, CLASSES, get_starting_hp, get_archetypes_for_genre, get_archetype
-from ..models.origins import get_origins_for_genre
+from ..models.origins import get_origins_for_genre, get_origin
 from ..models.character_sheet import CharacterSheet
 from ..genre.config import get_genre
+
+
+# Cache for genre powers data
+_genre_powers_cache: Optional[Dict[str, Any]] = None
+
+
+def get_genre_powers() -> Dict[str, Any]:
+    """Load genre-specific abilities from genre_powers.json."""
+    global _genre_powers_cache
+    if _genre_powers_cache is None:
+        data_path = Path(__file__).parent.parent / "data" / "genre_powers.json"
+        if data_path.exists():
+            with open(data_path, "r", encoding="utf-8") as f:
+                _genre_powers_cache = json.load(f)
+        else:
+            _genre_powers_cache = {}
+    return _genre_powers_cache
+
+
+def get_powers_for_genre(genre: str) -> Optional[Dict[str, Any]]:
+    """Get the powers/abilities data for a specific genre."""
+    powers = get_genre_powers()
+    return powers.get(genre)
 
 
 # Genre-specific default equipment based on proficiencies
@@ -314,63 +339,96 @@ class GuidedCreationFlow:
             }
 
         elif step == 5:
-            # Spell/power selection step - genre and archetype aware
+            # Spell/power/ability selection step - genre and archetype aware
+            # Every character should get meaningful ability choices appropriate to their genre
             genre_config = get_genre(self.genre)
-
-            # For non-magic genres, powers are automatic features (tech, ki, psionics)
-            # not chosen spells, so skip this selection step
-            if not genre_config.has_magic:
-                self.state.step = 6
-                return self.get_step_content()
-
-            # Get archetype to check if it has powers
             archetype = get_archetype(self.state.character_class, self.genre)
-            if archetype and not archetype.has_powers:
-                # Non-casters skip spell selection, go to equipment
-                self.state.step = 6
-                return self.get_step_content()
 
-            # Fallback check for fantasy classes
-            if not archetype:
-                class_data = CLASSES.get(self.state.character_class)
-                if not class_data or not class_data.spellcasting:
+            # Check for genre-specific powers (wuxia techniques, noir methods, etc.)
+            genre_powers = get_powers_for_genre(self.genre)
+
+            # For fantasy genre with casters, use SRD spells
+            if self.genre == "fantasy":
+                # Non-casters in fantasy don't select spells
+                if archetype and not archetype.has_powers:
                     self.state.step = 6
                     return self.get_step_content()
 
-            from ..data.loader import get_srd_loader
-            loader = get_srd_loader()
+                # Fallback check for fantasy classes
+                if not archetype:
+                    class_data = CLASSES.get(self.state.character_class)
+                    if not class_data or not class_data.spellcasting:
+                        self.state.step = 6
+                        return self.get_step_content()
 
-            # Get cantrips and level 1 spells for this class
-            class_id = self.state.character_class
-            cantrips = loader.get_cantrips_for_class(class_id)
-            level_1_spells = [s for s in loader.get_spells_for_class(class_id) if s.get("level") == 1]
+                from ..data.loader import get_srd_loader
+                loader = get_srd_loader()
 
-            # Calculate how many spells to prepare
-            if archetype:
-                num_cantrips = archetype.cantrips_known
-            else:
-                class_data = CLASSES.get(self.state.character_class)
-                num_cantrips = class_data.cantrips_known if class_data else 2
-            num_prepared = self._get_prepared_spell_count()
+                # Get cantrips and level 1 spells for this class
+                class_id = self.state.character_class
+                cantrips = loader.get_cantrips_for_class(class_id)
+                level_1_spells = [s for s in loader.get_spells_for_class(class_id) if s.get("level") == 1]
 
-            # Use genre-appropriate terminology
-            power_term = genre_config.terminology.ability_power if hasattr(genre_config.terminology, 'ability_power') else "spells"
+                # Calculate how many spells to prepare
+                if archetype:
+                    num_cantrips = archetype.cantrips_known
+                else:
+                    class_data = CLASSES.get(self.state.character_class)
+                    num_cantrips = class_data.cantrips_known if class_data else 2
+                num_prepared = self._get_prepared_spell_count()
 
-            return {
-                "step": "spells",
-                "question": f"Choose your {power_term.lower()}",
-                "hint": f"Select {num_cantrips} cantrips and {num_prepared} prepared {power_term.lower()}.",
-                "cantrips": {
-                    "options": [self._spell_to_option(s) for s in cantrips],
-                    "num_choices": num_cantrips,
-                    "selected": self.state.selected_cantrips,
-                },
-                "spells": {
-                    "options": [self._spell_to_option(s) for s in level_1_spells],
-                    "num_choices": num_prepared,
-                    "selected": self.state.selected_spells,
-                },
-            }
+                # Skip if no spells available
+                if num_cantrips == 0 and not level_1_spells:
+                    self.state.step = 6
+                    return self.get_step_content()
+
+                return {
+                    "step": "spells",
+                    "question": "Choose your spells",
+                    "hint": f"Select {num_cantrips} cantrips and {num_prepared} prepared spells.",
+                    "cantrips": {
+                        "options": [self._spell_to_option(s) for s in cantrips],
+                        "num_choices": num_cantrips,
+                        "selected": self.state.selected_cantrips,
+                    },
+                    "spells": {
+                        "options": [self._spell_to_option(s) for s in level_1_spells],
+                        "num_choices": num_prepared,
+                        "selected": self.state.selected_spells,
+                    },
+                }
+
+            # For non-fantasy genres, use genre-specific abilities
+            # This ensures even "grounded" genres feel powerful through specialties/tricks/methods
+            if genre_powers:
+                power_term = genre_powers.get("power_term", "Abilities")
+                cantrip_term = genre_powers.get("cantrip_term", "Basic Abilities")
+                basic_forms = genre_powers.get("basic_forms", [])
+                techniques = genre_powers.get("techniques", [])
+                num_basic = genre_powers.get("default_basic", 2)
+                num_techniques = genre_powers.get("default_techniques", 2)
+
+                return {
+                    "step": "abilities",
+                    "question": f"Choose your {power_term.lower()}",
+                    "hint": f"Select {num_basic} {cantrip_term.lower()} and {num_techniques} {power_term.lower()}. These define what makes your character special.",
+                    "power_term": power_term,
+                    "cantrip_term": cantrip_term,
+                    "cantrips": {
+                        "options": [self._power_to_option(p) for p in basic_forms],
+                        "num_choices": num_basic,
+                        "selected": self.state.selected_cantrips,
+                    },
+                    "spells": {
+                        "options": [self._power_to_option(p) for p in techniques],
+                        "num_choices": num_techniques,
+                        "selected": self.state.selected_spells,
+                    },
+                }
+
+            # Fallback: skip if no abilities defined for this genre
+            self.state.step = 6
+            return self.get_step_content()
 
         elif step == 6:
             # Equipment selection step - genre-aware
@@ -485,6 +543,14 @@ class GuidedCreationFlow:
             "range": spell.get("range", "Self"),
             "concentration": spell.get("concentration", False),
             "duration": spell.get("duration", "Instantaneous"),
+        }
+
+    def _power_to_option(self, power: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert genre power data to user-friendly option."""
+        return {
+            "id": power.get("id", power.get("name", "").lower().replace(" ", "_")),
+            "name": power.get("name", "Unknown"),
+            "description": power.get("description", ""),
         }
 
     def _get_prepared_spell_count(self) -> int:
@@ -637,34 +703,34 @@ class GuidedCreationFlow:
         return True
 
     def set_spells(self, cantrips: List[str], spells: List[str]) -> bool:
-        """Set selected cantrips and spells."""
+        """Set selected cantrips/basic forms and spells/techniques."""
         # Get archetype data
         archetype = get_archetype(self.state.character_class, self.genre)
 
-        # Non-casters don't select spells
-        if archetype and not archetype.has_powers:
-            self.state.step = 6  # Go to equipment
-            return True
-
-        # Get expected cantrip count
-        if archetype:
-            expected_cantrips = archetype.cantrips_known
-        else:
-            # Fallback for fantasy classes
-            class_data = CLASSES.get(ClassName(self.state.character_class)) if self.state.character_class in [c.value for c in ClassName] else None
-            expected_cantrips = class_data.cantrips_known if class_data else 0
-
-        # Validate cantrip count
-        if len(cantrips) != expected_cantrips:
-            return False
-
-        # Validate spell count
-        num_prepared = self._get_prepared_spell_count()
-        if len(spells) != num_prepared:
-            return False
-
-        # Validate selections are available to this class (fantasy only - has SRD data)
+        # For fantasy, check if non-caster
         if self.genre == "fantasy":
+            if archetype and not archetype.has_powers:
+                self.state.step = 6  # Go to equipment
+                return True
+
+            # Get expected cantrip count
+            if archetype:
+                expected_cantrips = archetype.cantrips_known
+            else:
+                # Fallback for fantasy classes
+                class_data = CLASSES.get(ClassName(self.state.character_class)) if self.state.character_class in [c.value for c in ClassName] else None
+                expected_cantrips = class_data.cantrips_known if class_data else 0
+
+            # Validate cantrip count
+            if len(cantrips) != expected_cantrips:
+                return False
+
+            # Validate spell count
+            num_prepared = self._get_prepared_spell_count()
+            if len(spells) != num_prepared:
+                return False
+
+            # Validate selections are available to this class
             from ..data.loader import get_srd_loader
             loader = get_srd_loader()
             class_id = self.state.character_class
@@ -680,6 +746,38 @@ class GuidedCreationFlow:
             for s in spells:
                 if s not in available_spells:
                     return False
+
+            self.state.selected_cantrips = cantrips
+            self.state.selected_spells = spells
+            self.state.step = 6
+            return True
+
+        # For non-fantasy genres, validate against genre powers
+        genre_powers = get_powers_for_genre(self.genre)
+        if not genre_powers:
+            # No powers for this genre, skip
+            self.state.step = 6
+            return True
+
+        # Validate counts
+        expected_basic = genre_powers.get("default_basic", 2)
+        expected_techniques = genre_powers.get("default_techniques", 2)
+
+        if len(cantrips) != expected_basic:
+            return False
+        if len(spells) != expected_techniques:
+            return False
+
+        # Validate selections exist in genre powers
+        available_basic = {p.get("id") for p in genre_powers.get("basic_forms", [])}
+        available_techniques = {p.get("id") for p in genre_powers.get("techniques", [])}
+
+        for c in cantrips:
+            if c not in available_basic:
+                return False
+        for s in spells:
+            if s not in available_techniques:
+                return False
 
         self.state.selected_cantrips = cantrips
         self.state.selected_spells = spells
@@ -740,23 +838,34 @@ class GuidedCreationFlow:
 
         base_scores = priority_map.get(self.state.ability_priority, priority_map["physical"])
 
-        # Adjust for class primary ability
-        class_data = CLASSES[self.state.character_class]
-        primary = class_data.primary_ability
+        # Adjust for class primary ability - use genre-aware archetype lookup
+        archetype = get_archetype(self.state.character_class, self.genre)
+        if archetype:
+            primary = archetype.primary_ability
+        else:
+            class_data = CLASSES.get(self.state.character_class)
+            primary = class_data.primary_ability if class_data else "strength"
 
         # Ensure primary ability is at least 14
-        if base_scores[primary] < 14:
+        if base_scores.get(primary, 10) < 14:
             # Swap with the 14
             for ability, score in base_scores.items():
                 if score == 14:
-                    base_scores[ability] = base_scores[primary]
+                    base_scores[ability] = base_scores.get(primary, 10)
                     base_scores[primary] = 14
                     break
 
-        # Apply racial bonuses
-        race_data = RACES[self.state.race]
-        for ability, bonus in race_data.ability_bonuses.items():
-            base_scores[ability] = min(20, base_scores[ability] + bonus)
+        # Apply origin bonuses - use genre-aware origin lookup
+        origin_data = get_origin(self.state.race, self.genre)
+        if origin_data and origin_data.ability_bonuses:
+            for ability, bonus in origin_data.ability_bonuses.items():
+                if ability in base_scores:
+                    base_scores[ability] = min(20, base_scores[ability] + bonus)
+        elif self.state.race in RACES:
+            # Fallback to fantasy RACES if origin not found
+            race_data = RACES[self.state.race]
+            for ability, bonus in race_data.ability_bonuses.items():
+                base_scores[ability] = min(20, base_scores[ability] + bonus)
 
         return AbilityScores(**base_scores)
 
@@ -765,7 +874,10 @@ class GuidedCreationFlow:
         if self.state.step != 8:
             raise ValueError("Character creation not complete")
 
-        race_data = RACES[self.state.race]
+        # Use genre-aware origin lookup with fallback to fantasy RACES
+        origin_data = get_origin(self.state.race, self.genre)
+        if not origin_data and self.state.race in RACES:
+            origin_data = RACES[self.state.race]
 
         # Use genre-aware archetype lookup with fallback to CLASSES
         archetype = get_archetype(self.state.character_class, self.genre)
@@ -773,14 +885,14 @@ class GuidedCreationFlow:
             class_data = archetype
             is_caster = archetype.has_powers
         else:
-            class_data = CLASSES[self.state.character_class]
-            is_caster = getattr(class_data, 'spellcasting', False) or getattr(class_data, 'has_powers', False)
+            class_data = CLASSES.get(self.state.character_class)
+            is_caster = getattr(class_data, 'spellcasting', False) or getattr(class_data, 'has_powers', False) if class_data else False
 
         abilities = self._generate_abilities()
 
         con_mod = abilities.get_modifier(AbilityName.CON)
         dex_mod = abilities.get_modifier(AbilityName.DEX)
-        starting_hp = get_starting_hp(self.state.character_class, con_mod)
+        starting_hp = get_starting_hp(self.state.character_class, con_mod, self.genre)
 
         # Build equipment from selections
         equipment = self._build_equipment_list(dex_mod)
@@ -808,6 +920,9 @@ class GuidedCreationFlow:
                     if skill not in all_skills:
                         all_skills.append(skill)
 
+        # Get speed from origin (default 30 if not found)
+        speed = origin_data.speed if origin_data and hasattr(origin_data, 'speed') else 30
+
         return CharacterSheet(
             character_id=str(uuid.uuid4()),
             name=self.state.name,
@@ -819,18 +934,19 @@ class GuidedCreationFlow:
             max_hit_points=starting_hp,
             current_hit_points=starting_hp,
             armor_class=base_ac,
-            speed=race_data.speed,
+            speed=speed,
             skill_proficiencies=all_skills,
-            saving_throw_proficiencies=class_data.saving_throw_proficiencies,
-            armor_proficiencies=class_data.armor_proficiencies,
-            weapon_proficiencies=class_data.weapon_proficiencies,
+            saving_throw_proficiencies=class_data.saving_throw_proficiencies if class_data else [],
+            armor_proficiencies=class_data.armor_proficiencies if class_data else [],
+            weapon_proficiencies=class_data.weapon_proficiencies if class_data else [],
             equipment=equipment,
             spell_slots_max=spell_slots,
             cantrips_known=cantrips,
             spells_known=spells_known,
-            features=class_data.features_by_level.get(1, []),
+            features=class_data.features_by_level.get(1, []) if class_data else [],
             background=self.state.selected_background or "",
             rules_visibility="guided",
+            genre=self.genre,
         )
 
     def _build_equipment_list(self, dex_mod: int) -> List[str]:
@@ -925,13 +1041,19 @@ class GuidedCreationFlow:
     def _build_narrative_summary(self) -> Dict[str, Any]:
         """Build a narrative summary for review."""
         abilities = self._generate_abilities()
-        race_data = RACES[self.state.race]
-        class_data = CLASSES[self.state.character_class]
+
+        # Use genre-aware lookups
+        origin_data = get_origin(self.state.race, self.genre)
+        archetype = get_archetype(self.state.character_class, self.genre)
+
+        # Get display names with fallbacks
+        origin_name = origin_data.display_name if origin_data else self.state.race.title()
+        archetype_name = archetype.display_name if archetype else self.state.character_class.title()
 
         con_mod = abilities.get_modifier(AbilityName.CON)
-        hp = get_starting_hp(self.state.character_class, con_mod)
+        hp = get_starting_hp(self.state.character_class, con_mod, self.genre)
 
-        narrative = f"{self.state.name} is a {race_data.display_name} {class_data.display_name}. "
+        narrative = f"{self.state.name} is a {origin_name} {archetype_name}. "
 
         if self.state.ability_priority == "physical":
             narrative += "Strong and tough, they face challenges head-on. "
@@ -946,9 +1068,11 @@ class GuidedCreationFlow:
 
         return {
             "name": self.state.name,
-            "race": race_data.display_name,
-            "class": class_data.display_name,
+            "race": origin_name,
+            "class": archetype_name,
             "narrative": narrative,
             "hit_points": hp,
             "skills": self.state.skill_proficiencies,
+            "cantrips": self.state.selected_cantrips,
+            "spells": self.state.selected_spells,
         }

@@ -1,0 +1,384 @@
+{
+  "_meta": {
+    "description": "Genre-specific abilities that characters can choose during creation",
+    "principle": "Every character gets meaningful choices - spells, techniques, powers, knacks, or specialties"
+  },
+
+  "wuxia": {
+    "power_term": "Techniques",
+    "cantrip_term": "Basic Forms",
+    "basic_forms": [
+      {"id": "iron_fist", "name": "Iron Fist", "description": "Harden your fist with chi to deal extra damage."},
+      {"id": "feather_step", "name": "Feather Step", "description": "Move silently, leaving no tracks."},
+      {"id": "chi_sense", "name": "Chi Sense", "description": "Detect living creatures nearby."},
+      {"id": "inner_calm", "name": "Inner Calm", "description": "Center yourself for advantage on focus checks."},
+      {"id": "stone_stance", "name": "Stone Stance", "description": "Root yourself, resisting forced movement."},
+      {"id": "swift_draw", "name": "Swift Draw", "description": "Draw and strike in one fluid motion."}
+    ],
+    "techniques": [
+      {"id": "flying_swallow", "name": "Flying Swallow Strike", "description": "Leap and strike from above."},
+      {"id": "lotus_blade", "name": "Lotus Blade Dance", "description": "Spinning defense that deflects attacks."},
+      {"id": "dragon_coil", "name": "Dragon Coil", "description": "Grapple and strike simultaneously."},
+      {"id": "tiger_pounce", "name": "Tiger Pounce", "description": "Explosive rush that knocks enemies prone."},
+      {"id": "crane_wings", "name": "Crane Wings", "description": "Redirect attacks to nearby enemies."},
+      {"id": "serpent_strike", "name": "Serpent Strike", "description": "Pressure point attack causing paralysis."},
+      {"id": "shadow_step", "name": "Shadow Step", "description": "Teleport between shadows."},
+      {"id": "iron_body", "name": "Iron Body", "description": "Resist physical damage."},
+      {"id": "lightness_kung_fu", "name": "Lightness Kung Fu", "description": "Run on water, up walls."},
+      {"id": "chi_healing", "name": "Chi Healing", "description": "Heal wounds with internal energy."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "superhero": {
+    "power_term": "Powers",
+    "cantrip_term": "Minor Abilities",
+    "basic_forms": [
+      {"id": "enhanced_senses", "name": "Enhanced Senses", "description": "See in darkness, hear whispers."},
+      {"id": "danger_sense", "name": "Danger Sense", "description": "Precognitive threat awareness."},
+      {"id": "quick_healing", "name": "Quick Healing", "description": "Recover faster than normal."},
+      {"id": "intimidating_presence", "name": "Intimidating Presence", "description": "Unnerve enemies with your aura."},
+      {"id": "perfect_balance", "name": "Perfect Balance", "description": "Impossible equilibrium."},
+      {"id": "minor_telekinesis", "name": "Minor Telekinesis", "description": "Move small objects with your mind."}
+    ],
+    "techniques": [
+      {"id": "super_strength", "name": "Super Strength", "description": "Lift cars, punch through walls."},
+      {"id": "invulnerability", "name": "Invulnerability", "description": "Resistant to physical damage."},
+      {"id": "energy_blast", "name": "Energy Blast", "description": "Project destructive energy."},
+      {"id": "elemental_control", "name": "Elemental Control", "description": "Command fire, ice, or lightning."},
+      {"id": "super_speed", "name": "Super Speed", "description": "Move faster than sight."},
+      {"id": "flight", "name": "Flight", "description": "Soar through the air."},
+      {"id": "telepathy", "name": "Telepathy", "description": "Read minds, communicate mentally."},
+      {"id": "force_field", "name": "Force Field", "description": "Generate protective barriers."},
+      {"id": "shapeshifting", "name": "Shapeshifting", "description": "Transform your body."},
+      {"id": "phasing", "name": "Phasing", "description": "Pass through solid matter."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "cyberpunk": {
+    "power_term": "Programs & Implants",
+    "cantrip_term": "Basic Hacks",
+    "basic_forms": [
+      {"id": "quick_hack", "name": "Quick Hack", "description": "Instantly breach weak security."},
+      {"id": "data_scan", "name": "Data Scan", "description": "Analyze electronic systems nearby."},
+      {"id": "comm_intercept", "name": "Comm Intercept", "description": "Listen to nearby communications."},
+      {"id": "system_ping", "name": "System Ping", "description": "Detect networked devices."},
+      {"id": "face_scramble", "name": "Face Scramble", "description": "Blur your face on cameras."},
+      {"id": "quick_interface", "name": "Quick Interface", "description": "Jack in faster than normal."}
+    ],
+    "techniques": [
+      {"id": "ice_breaker", "name": "ICE Breaker", "description": "Bypass corporate security programs."},
+      {"id": "neural_overload", "name": "Neural Overload", "description": "Fry an enemy's cyberware."},
+      {"id": "system_takeover", "name": "System Takeover", "description": "Seize control of a device."},
+      {"id": "ghost_protocol", "name": "Ghost Protocol", "description": "Become invisible to sensors."},
+      {"id": "reflex_boost", "name": "Reflex Booster", "description": "Cybernetic speed enhancement."},
+      {"id": "dermal_armor", "name": "Dermal Armor", "description": "Subdermal plating for protection."},
+      {"id": "mantis_blades", "name": "Mantis Blades", "description": "Retractable arm blades."},
+      {"id": "smart_link", "name": "Smartgun Link", "description": "Neural connection to firearms."},
+      {"id": "memory_wipe", "name": "Memory Wipe", "description": "Erase recent memories from a target."},
+      {"id": "viral_payload", "name": "Viral Payload", "description": "Deploy destructive malware."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "western": {
+    "power_term": "Tricks",
+    "cantrip_term": "Knacks",
+    "basic_forms": [
+      {"id": "quick_draw", "name": "Quick Draw", "description": "Draw and fire before they blink."},
+      {"id": "dead_eye", "name": "Dead Eye", "description": "Steady aim, ignore distractions."},
+      {"id": "trail_sense", "name": "Trail Sense", "description": "Read tracks and signs."},
+      {"id": "poker_face", "name": "Poker Face", "description": "Hide your intentions completely."},
+      {"id": "campfire_cook", "name": "Campfire Cook", "description": "Make any provisions taste good."},
+      {"id": "horse_whisperer", "name": "Horse Whisperer", "description": "Calm and command horses."}
+    ],
+    "techniques": [
+      {"id": "fan_the_hammer", "name": "Fan the Hammer", "description": "Rapid fire all six shots."},
+      {"id": "ricochet_shot", "name": "Ricochet Shot", "description": "Bounce bullets around corners."},
+      {"id": "intimidating_stare", "name": "Intimidating Stare", "description": "Make enemies back down."},
+      {"id": "last_stand", "name": "Last Stand", "description": "Fight on when you should be dead."},
+      {"id": "snake_oil", "name": "Snake Oil Charm", "description": "Sell anyone on anything."},
+      {"id": "dynamite_expert", "name": "Dynamite Expert", "description": "Precise explosive placement."},
+      {"id": "lasso_master", "name": "Lasso Master", "description": "Rope tricks and captures."},
+      {"id": "dust_devil", "name": "Dust Devil", "description": "Kick up blinding dust clouds."},
+      {"id": "sure_shot", "name": "Sure Shot", "description": "Called shots to specific targets."},
+      {"id": "frontier_medicine", "name": "Frontier Medicine", "description": "Heal with limited supplies."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "noir": {
+    "power_term": "Methods",
+    "cantrip_term": "Street Smarts",
+    "basic_forms": [
+      {"id": "read_the_room", "name": "Read the Room", "description": "Instantly assess social dynamics."},
+      {"id": "shadow_tail", "name": "Shadow Tail", "description": "Follow someone undetected."},
+      {"id": "liquid_courage", "name": "Liquid Courage", "description": "Drinks steady your nerves."},
+      {"id": "hard_boiled", "name": "Hard Boiled", "description": "Resist intimidation and pain."},
+      {"id": "street_contacts", "name": "Street Contacts", "description": "Know someone everywhere."},
+      {"id": "sixth_sense", "name": "Sixth Sense", "description": "Feel when something's wrong."}
+    ],
+    "techniques": [
+      {"id": "interrogation", "name": "Interrogation", "description": "Break someone with questions."},
+      {"id": "frame_job", "name": "Frame Job", "description": "Plant evidence convincingly."},
+      {"id": "blackmail", "name": "Blackmail", "description": "Leverage secrets for control."},
+      {"id": "dirty_fighting", "name": "Dirty Fighting", "description": "No rules in a back alley."},
+      {"id": "femme_fatale", "name": "Femme/Homme Fatale", "description": "Seduce for information."},
+      {"id": "paper_trail", "name": "Paper Trail", "description": "Follow the money anywhere."},
+      {"id": "double_cross", "name": "Double Cross", "description": "Betray at the perfect moment."},
+      {"id": "tough_talk", "name": "Tough Talk", "description": "Intimidate with words alone."},
+      {"id": "hidden_piece", "name": "Hidden Piece", "description": "Always have a backup weapon."},
+      {"id": "vanishing_act", "name": "Vanishing Act", "description": "Disappear when heat's on."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "horror": {
+    "power_term": "Rituals",
+    "cantrip_term": "Occult Lore",
+    "basic_forms": [
+      {"id": "sense_supernatural", "name": "Sense the Unnatural", "description": "Feel when something's wrong."},
+      {"id": "ward_evil", "name": "Ward Against Evil", "description": "Create small protected spaces."},
+      {"id": "read_omens", "name": "Read Omens", "description": "Interpret signs of danger."},
+      {"id": "steady_nerves", "name": "Steady Nerves", "description": "Resist fear and madness."},
+      {"id": "folklore", "name": "Folklore Knowledge", "description": "Know monster weaknesses."},
+      {"id": "last_rites", "name": "Last Rites", "description": "Put the dead to rest."}
+    ],
+    "techniques": [
+      {"id": "banishment", "name": "Banishment", "description": "Force entities back to their origin."},
+      {"id": "binding", "name": "Binding Circle", "description": "Trap supernatural creatures."},
+      {"id": "exorcism", "name": "Exorcism", "description": "Drive out possessing spirits."},
+      {"id": "seance", "name": "Seance", "description": "Contact the dead."},
+      {"id": "silver_tongue", "name": "Silver Tongue", "description": "Bargain with dark forces."},
+      {"id": "true_sight", "name": "True Sight", "description": "See through illusions and disguises."},
+      {"id": "sanctuary", "name": "Sanctuary", "description": "Create a safe haven."},
+      {"id": "purification", "name": "Purification", "description": "Cleanse corruption."},
+      {"id": "spirit_trap", "name": "Spirit Trap", "description": "Capture entities in objects."},
+      {"id": "blood_ward", "name": "Blood Ward", "description": "Powerful protection at a cost."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 1
+  },
+
+  "scifi": {
+    "power_term": "Tech Abilities",
+    "cantrip_term": "Basic Tech",
+    "basic_forms": [
+      {"id": "scanner_sweep", "name": "Scanner Sweep", "description": "Analyze surroundings with tech."},
+      {"id": "comm_boost", "name": "Comm Boost", "description": "Extend communication range."},
+      {"id": "field_repair", "name": "Field Repair", "description": "Quick-fix damaged equipment."},
+      {"id": "data_access", "name": "Data Access", "description": "Interface with computer systems."},
+      {"id": "med_scan", "name": "Medical Scan", "description": "Diagnose injuries and illness."},
+      {"id": "zero_g_adapt", "name": "Zero-G Training", "description": "Move freely in weightlessness."}
+    ],
+    "techniques": [
+      {"id": "combat_stim", "name": "Combat Stim", "description": "Chemical boost to combat ability."},
+      {"id": "holo_decoy", "name": "Holo Decoy", "description": "Project convincing holograms."},
+      {"id": "emp_pulse", "name": "EMP Pulse", "description": "Disable electronics in an area."},
+      {"id": "energy_shield", "name": "Energy Shield", "description": "Personal force field."},
+      {"id": "jetpack", "name": "Jetpack", "description": "Personal flight system."},
+      {"id": "cloaking", "name": "Cloaking Device", "description": "Become invisible."},
+      {"id": "neural_jack", "name": "Neural Jack", "description": "Direct brain-computer interface."},
+      {"id": "nano_heal", "name": "Nanite Healing", "description": "Microscopic medical robots."},
+      {"id": "targeting_ai", "name": "Targeting AI", "description": "Computer-assisted aiming."},
+      {"id": "power_armor", "name": "Power Armor", "description": "Enhanced exoskeleton suit."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "space_opera": {
+    "power_term": "Talents",
+    "cantrip_term": "Spacer Skills",
+    "basic_forms": [
+      {"id": "astrogation", "name": "Astrogation", "description": "Plot hyperspace courses."},
+      {"id": "ship_sense", "name": "Ship Sense", "description": "Feel your vessel's condition."},
+      {"id": "alien_empathy", "name": "Alien Empathy", "description": "Read non-human emotions."},
+      {"id": "void_legs", "name": "Void Legs", "description": "Never get spacesick."},
+      {"id": "trade_tongue", "name": "Trade Tongue", "description": "Communicate across species."},
+      {"id": "salvage_eye", "name": "Salvage Eye", "description": "Spot valuable components."}
+    ],
+    "techniques": [
+      {"id": "force_push", "name": "Psi Push", "description": "Telekinetic force blast."},
+      {"id": "mind_trick", "name": "Mind Trick", "description": "Influence weak minds."},
+      {"id": "battle_precog", "name": "Battle Precognition", "description": "Sense attacks before they come."},
+      {"id": "ace_maneuver", "name": "Ace Maneuver", "description": "Impossible piloting feats."},
+      {"id": "lucky_shot", "name": "Lucky Shot", "description": "One in a million hits."},
+      {"id": "inspiring_speech", "name": "Inspiring Speech", "description": "Rally allies with words."},
+      {"id": "smuggler_trick", "name": "Smuggler's Trick", "description": "Hide cargo from any scan."},
+      {"id": "bounty_mark", "name": "Bounty Mark", "description": "Track a target anywhere."},
+      {"id": "tech_intuition", "name": "Tech Intuition", "description": "Understand any device."},
+      {"id": "reputation", "name": "Fearsome Reputation", "description": "Your name precedes you."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "steampunk": {
+    "power_term": "Inventions",
+    "cantrip_term": "Gadgets",
+    "basic_forms": [
+      {"id": "goggles", "name": "Enhanced Goggles", "description": "See in dark, through smoke."},
+      {"id": "pocket_watch", "name": "Precision Timepiece", "description": "Always know the exact time."},
+      {"id": "toolkit", "name": "Concealed Toolkit", "description": "Tools hidden in your clothes."},
+      {"id": "spark_lighter", "name": "Spark Lighter", "description": "Create fire or sparks instantly."},
+      {"id": "speaking_tube", "name": "Speaking Tube", "description": "Communicate at distance."},
+      {"id": "pressure_gauge", "name": "Pressure Gauge", "description": "Sense mechanical stress."}
+    ],
+    "techniques": [
+      {"id": "clockwork_arm", "name": "Clockwork Prosthetic", "description": "Mechanical limb with gadgets."},
+      {"id": "steam_pack", "name": "Steam Jetpack", "description": "Brief powered flight."},
+      {"id": "shock_glove", "name": "Shock Glove", "description": "Electrical discharge weapon."},
+      {"id": "analytical_engine", "name": "Portable Analytical Engine", "description": "Mechanical computer."},
+      {"id": "automaton", "name": "Personal Automaton", "description": "Clockwork servant."},
+      {"id": "grappling_gun", "name": "Grappling Gun", "description": "Rapid vertical movement."},
+      {"id": "smoke_bombs", "name": "Alchemical Smoke", "description": "Instant concealment."},
+      {"id": "spring_heels", "name": "Spring-Heeled Boots", "description": "Enhanced jumping."},
+      {"id": "ray_gun", "name": "Aetheric Ray Gun", "description": "Energy weapon."},
+      {"id": "difference_engine", "name": "Cryptographic Engine", "description": "Break any code."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "postapoc": {
+    "power_term": "Survival Skills",
+    "cantrip_term": "Wasteland Tricks",
+    "basic_forms": [
+      {"id": "scrounge", "name": "Scrounge", "description": "Find useful items in ruins."},
+      {"id": "rad_sense", "name": "Rad Sense", "description": "Feel radiation levels."},
+      {"id": "water_finder", "name": "Water Finder", "description": "Locate clean water."},
+      {"id": "jury_rig", "name": "Jury Rig", "description": "Make things work temporarily."},
+      {"id": "danger_instinct", "name": "Danger Instinct", "description": "Sense ambushes."},
+      {"id": "barter_savvy", "name": "Barter Savvy", "description": "Get better trades."}
+    ],
+    "techniques": [
+      {"id": "mutation_control", "name": "Mutation Control", "description": "Use your mutations at will."},
+      {"id": "rad_immunity", "name": "Rad Immunity", "description": "Survive in hot zones."},
+      {"id": "beast_master", "name": "Beast Master", "description": "Tame mutant creatures."},
+      {"id": "tech_savant", "name": "Tech Savant", "description": "Understand old world tech."},
+      {"id": "settlement_leader", "name": "Settlement Leader", "description": "Command survivors' loyalty."},
+      {"id": "death_dealer", "name": "Death Dealer", "description": "Lethal combat efficiency."},
+      {"id": "wasteland_medic", "name": "Wasteland Medic", "description": "Heal with scavenged supplies."},
+      {"id": "road_warrior", "name": "Road Warrior", "description": "Vehicle combat expert."},
+      {"id": "ghost_walker", "name": "Ghost Walker", "description": "Move unseen through ruins."},
+      {"id": "tribal_lore", "name": "Tribal Lore", "description": "Ancient survival knowledge."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "pirate": {
+    "power_term": "Sea Dog Tricks",
+    "cantrip_term": "Sailor's Arts",
+    "basic_forms": [
+      {"id": "sea_legs", "name": "Sea Legs", "description": "Balance on any deck."},
+      {"id": "weather_eye", "name": "Weather Eye", "description": "Predict storms and winds."},
+      {"id": "rope_work", "name": "Rope Work", "description": "Knots, swings, and bindings."},
+      {"id": "grog_constitution", "name": "Grog Constitution", "description": "Hold your liquor."},
+      {"id": "sea_shanty", "name": "Sea Shanty", "description": "Boost crew morale."},
+      {"id": "treasure_sense", "name": "Treasure Sense", "description": "Spot hidden valuables."}
+    ],
+    "techniques": [
+      {"id": "boarding_action", "name": "Boarding Action", "description": "Lead ship-to-ship assaults."},
+      {"id": "cutlass_master", "name": "Cutlass Master", "description": "Deadly blade work."},
+      {"id": "cannon_expert", "name": "Cannon Expert", "description": "Devastating artillery."},
+      {"id": "swim_like_fish", "name": "Swim Like a Fish", "description": "Underwater mobility."},
+      {"id": "intimidating_flag", "name": "Dread Pirate", "description": "Ships surrender at your flag."},
+      {"id": "buried_treasure", "name": "Hidden Stash", "description": "Always have emergency resources."},
+      {"id": "parley", "name": "Parley", "description": "Negotiate even with enemies."},
+      {"id": "sea_curse", "name": "Sea Curse", "description": "Invoke supernatural vengeance."},
+      {"id": "navigation_master", "name": "Master Navigator", "description": "Find any port."},
+      {"id": "escape_artist", "name": "Escape Artist", "description": "Slip any bonds or brig."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "mythology": {
+    "power_term": "Divine Gifts",
+    "cantrip_term": "Blessings",
+    "basic_forms": [
+      {"id": "divine_favor", "name": "Divine Favor", "description": "The gods smile upon you."},
+      {"id": "heroic_presence", "name": "Heroic Presence", "description": "Inspire awe in mortals."},
+      {"id": "omen_reading", "name": "Omen Reading", "description": "Interpret divine signs."},
+      {"id": "monster_lore", "name": "Monster Lore", "description": "Know mythical creatures."},
+      {"id": "epic_endurance", "name": "Epic Endurance", "description": "Push beyond mortal limits."},
+      {"id": "fate_touched", "name": "Fate Touched", "description": "Destiny guides your path."}
+    ],
+    "techniques": [
+      {"id": "godly_strength", "name": "Godly Strength", "description": "Strength of the divine."},
+      {"id": "prophetic_vision", "name": "Prophetic Vision", "description": "See the future."},
+      {"id": "divine_weapon", "name": "Divine Weapon", "description": "Weapon blessed by gods."},
+      {"id": "animal_form", "name": "Animal Form", "description": "Transform into beasts."},
+      {"id": "elemental_mastery", "name": "Elemental Mastery", "description": "Command an element."},
+      {"id": "underworld_passage", "name": "Underworld Passage", "description": "Journey to death's realm."},
+      {"id": "immortal_fame", "name": "Immortal Fame", "description": "Your legend spreads."},
+      {"id": "divine_protection", "name": "Divine Protection", "description": "Immune to mortal weapons."},
+      {"id": "curse_breaker", "name": "Curse Breaker", "description": "End supernatural afflictions."},
+      {"id": "monster_slayer", "name": "Monster Slayer", "description": "Deal extra damage to beasts."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "modern": {
+    "power_term": "Specialties",
+    "cantrip_term": "Training",
+    "basic_forms": [
+      {"id": "situational_awareness", "name": "Situational Awareness", "description": "Notice details others miss."},
+      {"id": "first_aid", "name": "First Aid", "description": "Emergency medical care."},
+      {"id": "tech_savvy", "name": "Tech Savvy", "description": "Use modern devices expertly."},
+      {"id": "street_smart", "name": "Street Smart", "description": "Navigate urban environments."},
+      {"id": "professional_network", "name": "Professional Network", "description": "Know useful people."},
+      {"id": "cool_under_pressure", "name": "Cool Under Pressure", "description": "Stay calm in crisis."}
+    ],
+    "techniques": [
+      {"id": "tactical_training", "name": "Tactical Training", "description": "Military combat expertise."},
+      {"id": "forensic_analysis", "name": "Forensic Analysis", "description": "Analyze crime scenes."},
+      {"id": "social_engineering", "name": "Social Engineering", "description": "Manipulate through psychology."},
+      {"id": "combat_driving", "name": "Combat Driving", "description": "Vehicle pursuit expert."},
+      {"id": "hacking", "name": "Hacking", "description": "Break into computer systems."},
+      {"id": "surveillance", "name": "Surveillance Expert", "description": "Watch without being seen."},
+      {"id": "interrogation", "name": "Interrogation", "description": "Extract information."},
+      {"id": "demolitions", "name": "Demolitions", "description": "Explosives expertise."},
+      {"id": "trauma_surgery", "name": "Trauma Surgery", "description": "Save lives under fire."},
+      {"id": "undercover", "name": "Undercover Work", "description": "Assume false identities."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  },
+
+  "dark_fantasy": {
+    "power_term": "Dark Arts",
+    "cantrip_term": "Grim Knowledge",
+    "basic_forms": [
+      {"id": "sense_corruption", "name": "Sense Corruption", "description": "Feel taint and evil."},
+      {"id": "pain_tolerance", "name": "Pain Tolerance", "description": "Endure suffering."},
+      {"id": "dark_vision", "name": "Dark Vision", "description": "See in supernatural darkness."},
+      {"id": "iron_will", "name": "Iron Will", "description": "Resist mental corruption."},
+      {"id": "death_sense", "name": "Death Sense", "description": "Know when death is near."},
+      {"id": "grim_determination", "name": "Grim Determination", "description": "Fight on despite wounds."}
+    ],
+    "techniques": [
+      {"id": "blood_magic", "name": "Blood Magic", "description": "Power spells with life force."},
+      {"id": "witch_fire", "name": "Witch Fire", "description": "Flames that burn the soul."},
+      {"id": "corpse_speech", "name": "Corpse Speech", "description": "Question the dead."},
+      {"id": "hex_curse", "name": "Hex Curse", "description": "Afflict enemies with misfortune."},
+      {"id": "shadow_walk", "name": "Shadow Walk", "description": "Travel through darkness."},
+      {"id": "demon_pact", "name": "Demon Pact", "description": "Bargain for dark power."},
+      {"id": "silver_purge", "name": "Silver Purge", "description": "Destroy corrupted creatures."},
+      {"id": "plague_touch", "name": "Plague Touch", "description": "Spread supernatural disease."},
+      {"id": "soul_sight", "name": "Soul Sight", "description": "See true nature of beings."},
+      {"id": "final_death", "name": "Final Death", "description": "Kill things that won't die."}
+    ],
+    "default_basic": 2,
+    "default_techniques": 2
+  }
+}
