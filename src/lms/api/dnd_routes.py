@@ -528,25 +528,62 @@ class GuidedStartRequest(BaseModel):
     """Request to start guided creation."""
     genre: str = "fantasy"
     player_id: str = ""
+    world_id: Optional[str] = None  # If provided, world's genre overrides user's genre
+    flavor_genres: List[str] = []  # Additional genres for narrative flavor only
 
 
 @router.post("/characters/guided/start")
 async def start_guided_creation(request: GuidedStartRequest = None, player_id: str = "", genre: str = "fantasy"):
-    """Start a guided character creation flow."""
+    """
+    Start a guided character creation flow.
+
+    Genre Resolution (world dominates):
+    1. If world_id provided → world's genre is used for mechanics
+    2. User's genre selection → fallback if no world, or adds narrative flavor
+    3. flavor_genres → narrative tone only, never affects mechanics
+    """
+    # Import here to avoid circular dependency
+    from .game_routes import LORE_BASES
+
     # Handle both body and query params
-    actual_genre = request.genre if request else genre
+    user_genre = request.genre if request else genre
     actual_player_id = request.player_id if request else player_id
+    world_id = request.world_id if request else None
+    flavor_genres = request.flavor_genres if request else []
+
+    # WORLD GENRE DOMINATES for mechanical purposes
+    if world_id and world_id in LORE_BASES:
+        world_data = LORE_BASES[world_id]
+        world_genre = world_data.get("genre")
+        if not world_genre:
+            # Try genre_hints as fallback
+            hints = world_data.get("genre_hints", [])
+            world_genre = hints[0] if hints else None
+
+        if world_genre:
+            actual_genre = world_genre
+            # User's genre becomes flavor if different from world
+            if user_genre and user_genre.lower() != world_genre.lower():
+                flavor_genres = [user_genre] + flavor_genres
+        else:
+            actual_genre = user_genre
+    else:
+        actual_genre = user_genre
 
     flow = GuidedCreationFlow(genre=actual_genre)
     flow_id = f"guided_{actual_player_id or 'anon'}_{len(_creation_flows)}"
     _creation_flows[flow_id] = {
         "flow": flow,
         "genre": actual_genre,
+        "flavor_genres": flavor_genres,
+        "world_id": world_id,
     }
 
     return {
         "flow_id": flow_id,
         "genre": actual_genre,
+        "flavor_genres": flavor_genres,
+        "world_id": world_id,
         "step": flow.get_current_step(),
         "content": flow.get_step_content(),
     }

@@ -1837,7 +1837,7 @@ ARCHETYPES_BY_GENRE: Dict[str, Dict[str, ArchetypeData]] = {
 
 
 def _get_fantasy_archetypes_from_srd() -> Dict[str, ArchetypeData]:
-    """Load fantasy archetypes from SRD data."""
+    """Load fantasy archetypes from SRD data, merged with hardcoded skill data."""
     try:
         from ..data.loader import get_srd_loader
         loader = get_srd_loader()
@@ -1846,6 +1846,9 @@ def _get_fantasy_archetypes_from_srd() -> Dict[str, ArchetypeData]:
         archetypes = {}
         for class_data in srd_classes:
             class_id = class_data.get("id", "")
+
+            # Get hardcoded data for skill choices and other complete info
+            hardcoded = FANTASY_ARCHETYPES.get(class_id)
 
             # Parse hit die
             hit_die_str = class_data.get("hit_die", "1d8")
@@ -1862,6 +1865,13 @@ def _get_fantasy_archetypes_from_srd() -> Dict[str, ArchetypeData]:
             spellcasting_ability = class_data.get("spellcasting_ability")
             has_powers = spellcasting_ability is not None and spellcasting_ability != ""
 
+            # Merge skill data from hardcoded FANTASY_ARCHETYPES
+            skill_choices = hardcoded.skill_choices if hardcoded else []
+            num_skill_choices = hardcoded.num_skill_choices if hardcoded else 2
+            features = hardcoded.features_by_level if hardcoded else {}
+            playstyle = hardcoded.playstyle_hint if hardcoded else ""
+            cantrips = hardcoded.cantrips_known if hardcoded else 0
+
             archetypes[class_id] = ArchetypeData(
                 id=class_id,
                 display_name=class_data.get("display_name", class_id.title()),
@@ -1871,8 +1881,13 @@ def _get_fantasy_archetypes_from_srd() -> Dict[str, ArchetypeData]:
                 saving_throw_proficiencies=saving_throws,
                 armor_proficiencies=class_data.get("armor_proficiencies", []),
                 weapon_proficiencies=class_data.get("weapon_proficiencies", []),
+                skill_choices=skill_choices,
+                num_skill_choices=num_skill_choices,
+                features_by_level=features,
                 has_powers=has_powers,
                 power_ability=spellcasting_ability.lower() if spellcasting_ability else None,
+                cantrips_known=cantrips,
+                playstyle_hint=playstyle,
                 genre="fantasy",
             )
 

@@ -508,7 +508,16 @@ class GuidedCreationFlow:
         # For other archetypes with powers, use archetype's power_ability
         archetype = get_archetype(self.state.character_class, self.genre)
         if archetype and archetype.power_ability:
-            ability_name = AbilityName(archetype.power_ability.upper()[:3])
+            # Map full ability name to AbilityName enum (lowercase 3-letter code)
+            ability_map = {
+                "strength": AbilityName.STR,
+                "dexterity": AbilityName.DEX,
+                "constitution": AbilityName.CON,
+                "intelligence": AbilityName.INT,
+                "wisdom": AbilityName.WIS,
+                "charisma": AbilityName.CHA,
+            }
+            ability_name = ability_map.get(archetype.power_ability.lower(), AbilityName.INT)
             mod = abilities.get_modifier(ability_name)
             return max(1, mod + 1)
 
@@ -757,7 +766,16 @@ class GuidedCreationFlow:
             raise ValueError("Character creation not complete")
 
         race_data = RACES[self.state.race]
-        class_data = CLASSES[self.state.character_class]
+
+        # Use genre-aware archetype lookup with fallback to CLASSES
+        archetype = get_archetype(self.state.character_class, self.genre)
+        if archetype:
+            class_data = archetype
+            is_caster = archetype.has_powers
+        else:
+            class_data = CLASSES[self.state.character_class]
+            is_caster = getattr(class_data, 'spellcasting', False) or getattr(class_data, 'has_powers', False)
+
         abilities = self._generate_abilities()
 
         con_mod = abilities.get_modifier(AbilityName.CON)
@@ -774,7 +792,7 @@ class GuidedCreationFlow:
         spell_slots = {}
         cantrips = []
         spells_known = []
-        if class_data.spellcasting:
+        if is_caster:
             spell_slots = {1: 2}
             cantrips = self.state.selected_cantrips
             spells_known = self.state.selected_spells

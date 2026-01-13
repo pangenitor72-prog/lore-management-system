@@ -170,6 +170,67 @@
     }
   },
   "class_choices": {
+    "barbarian": {
+      "choice_1": {
+        "prompt": "Choose your primary weapon",
+        "options": [
+          {"id": "greataxe", "name": "Greataxe", "items": ["greataxe"]},
+          {"id": "martial", "name": "Any Martial Melee Weapon", "items": ["longsword"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your secondary weapons",
+        "options": [
+          {"id": "handaxes", "name": "Two Handaxes", "items": ["handaxe", "handaxe"]},
+          {"id": "simple", "name": "Any Simple Weapon", "items": ["javelin", "javelin"]}
+        ]
+      },
+      "fixed": ["explorer's pack", "javelin", "javelin", "javelin", "javelin"]
+    },
+    "bard": {
+      "choice_1": {
+        "prompt": "Choose your weapon",
+        "options": [
+          {"id": "rapier", "name": "Rapier", "items": ["rapier"]},
+          {"id": "longsword", "name": "Longsword", "items": ["longsword"]},
+          {"id": "simple", "name": "Any Simple Weapon", "items": ["dagger"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "diplomat", "name": "Diplomat's Pack", "items": ["diplomat's pack"]},
+          {"id": "entertainer", "name": "Entertainer's Pack", "items": ["entertainer's pack"]}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your instrument",
+        "options": [
+          {"id": "lute", "name": "Lute", "items": ["lute"]},
+          {"id": "lyre", "name": "Lyre", "items": ["lyre"]},
+          {"id": "flute", "name": "Flute", "items": ["flute"]}
+        ]
+      },
+      "fixed": ["leather", "dagger"]
+    },
+    "druid": {
+      "choice_1": {
+        "prompt": "Choose your off-hand",
+        "options": [
+          {"id": "shield", "name": "Wooden Shield", "items": ["wooden shield"]},
+          {"id": "simple", "name": "Any Simple Weapon", "items": ["quarterstaff"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your weapon",
+        "options": [
+          {"id": "scimitar", "name": "Scimitar", "items": ["scimitar"]},
+          {"id": "club", "name": "Club", "items": ["club"]},
+          {"id": "spear", "name": "Spear", "items": ["spear"]}
+        ]
+      },
+      "fixed": ["leather", "explorer's pack", "druidic focus"]
+    },
     "fighter": {
       "choice_1": {
         "prompt": "Choose your armor",
@@ -243,6 +304,120 @@
         ]
       },
       "fixed": ["shield", "holy symbol"]
+    },
+    "monk": {
+      "choice_1": {
+        "prompt": "Choose your weapon",
+        "options": [
+          {"id": "shortsword", "name": "Shortsword", "items": ["shortsword"]},
+          {"id": "quarterstaff", "name": "Quarterstaff", "items": ["quarterstaff"]},
+          {"id": "spear", "name": "Spear", "items": ["spear"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "dungeoneer", "name": "Dungeoneer's Pack", "items": ["dungeoneer's pack"]},
+          {"id": "explorer", "name": "Explorer's Pack", "items": ["explorer's pack"]}
+        ]
+      },
+      "fixed": ["dart", "dart", "dart", "dart", "dart", "dart", "dart", "dart", "dart", "dart"]
+    },
+    "paladin": {
+      "choice_1": {
+        "prompt": "Choose your weapons",
+        "options": [
+          {"id": "sword_shield", "name": "Martial Weapon & Shield", "items": ["longsword", "shield"]},
+          {"id": "two_weapons", "name": "Two Martial Weapons", "items": ["longsword", "shortsword"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your ranged option",
+        "options": [
+          {"id": "javelins", "name": "Five Javelins", "items": ["javelin", "javelin", "javelin", "javelin", "javelin"]},
+          {"id": "simple", "name": "Any Simple Melee Weapon", "items": ["mace"]}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "priest", "name": "Priest's Pack", "items": ["priest's pack"]},
+          {"id": "explorer", "name": "Explorer's Pack", "items": ["explorer's pack"]}
+        ]
+      },
+      "fixed": ["chain_mail", "holy symbol"]
+    },
+    "ranger": {
+      "choice_1": {
+        "prompt": "Choose your armor",
+        "options": [
+          {"id": "scale_mail", "name": "Scale Mail", "items": ["scale_mail"], "ac": 14},
+          {"id": "leather", "name": "Leather Armor", "items": ["leather"], "ac": "11 + DEX"}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your melee weapons",
+        "options": [
+          {"id": "shortswords", "name": "Two Shortswords", "items": ["shortsword", "shortsword"]},
+          {"id": "simple", "name": "Two Simple Melee Weapons", "items": ["handaxe", "handaxe"]}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "dungeoneer", "name": "Dungeoneer's Pack", "items": ["dungeoneer's pack"]},
+          {"id": "explorer", "name": "Explorer's Pack", "items": ["explorer's pack"]}
+        ]
+      },
+      "fixed": ["longbow", "20 arrows"]
+    },
+    "sorcerer": {
+      "choice_1": {
+        "prompt": "Choose your weapon",
+        "options": [
+          {"id": "crossbow", "name": "Light Crossbow & 20 Bolts", "items": ["light_crossbow", "20 bolts"]},
+          {"id": "simple", "name": "Any Simple Weapon", "items": ["quarterstaff"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your arcane focus",
+        "options": [
+          {"id": "pouch", "name": "Component Pouch", "items": ["component pouch"]},
+          {"id": "focus", "name": "Arcane Focus", "items": ["arcane focus"]}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "dungeoneer", "name": "Dungeoneer's Pack", "items": ["dungeoneer's pack"]},
+          {"id": "explorer", "name": "Explorer's Pack", "items": ["explorer's pack"]}
+        ]
+      },
+      "fixed": ["dagger", "dagger"]
+    },
+    "warlock": {
+      "choice_1": {
+        "prompt": "Choose your weapon",
+        "options": [
+          {"id": "crossbow", "name": "Light Crossbow & 20 Bolts", "items": ["light_crossbow", "20 bolts"]},
+          {"id": "simple", "name": "Any Simple Weapon", "items": ["quarterstaff"]}
+        ]
+      },
+      "choice_2": {
+        "prompt": "Choose your arcane focus",
+        "options": [
+          {"id": "pouch", "name": "Component Pouch", "items": ["component pouch"]},
+          {"id": "focus", "name": "Arcane Focus", "items": ["arcane focus"]}
+        ]
+      },
+      "choice_3": {
+        "prompt": "Choose your pack",
+        "options": [
+          {"id": "scholar", "name": "Scholar's Pack", "items": ["scholar's pack"]},
+          {"id": "dungeoneer", "name": "Dungeoneer's Pack", "items": ["dungeoneer's pack"]}
+        ]
+      },
+      "fixed": ["leather", "dagger", "dagger", "quarterstaff"]
     },
     "wizard": {
       "choice_1": {
