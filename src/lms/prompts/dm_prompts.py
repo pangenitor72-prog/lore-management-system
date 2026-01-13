@@ -28,17 +28,19 @@ class DMPrompts:
 
 === TONE & STYLE ===
 World: {world_tone}
-Narrative: Vivid, atmospheric, slightly unsettling
+Narrative: Vivid, atmospheric, grounded in character
 NPCs: Morally complex, never purely good/evil
-Magic: Powerful but always has consequences
 Pace: Let players drive, but keep tension
 
 === WORLDBUILDING CONSTRAINTS ===
 Setting: {setting_description}
 Year: {current_date}
-Tech Level: Medieval fantasy (no guns, no modern tech)
+Tech Level: {tech_level}
 Naming: {naming_conventions}
 Theme: Every choice has weight, nothing is free
+
+=== MAGIC/REALISM ===
+{magic_rules}
 
 === PLAYER BOUNDARIES ===
 Players control: Their character's attempted actions
@@ -124,13 +126,19 @@ JSON output:"""
         """Get DM system prompt by version."""
         if context is None:
             context = {
-                "campaign_name": "Fantasy",
-                "world_tone": "High Adventure",
-                "setting_description": "A magical world",
+                "campaign_name": "Campaign",
+                "world_tone": "Dramatic",
+                "setting_description": "A world of adventure",
                 "current_date": "Unknown Era",
-                "naming_conventions": "Standard Fantasy"
+                "naming_conventions": "Contextually appropriate",
+                "tech_level": "Appropriate to the setting",
+                "magic_rules": "Follow the genre's conventions for supernatural elements"
             }
-            
+
+        # Ensure all required keys exist with defaults
+        context.setdefault("tech_level", "Appropriate to the setting")
+        context.setdefault("magic_rules", "Follow the genre's conventions for supernatural elements")
+
         if version == "2.4":
             return DMPrompts.SYSTEM_V2_4.format(**context)
         else:

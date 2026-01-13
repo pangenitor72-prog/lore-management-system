@@ -2129,47 +2129,61 @@ def _extract_events_from_narrative(
 
 
 def _get_genre_guidance(genre: str) -> Dict[str, str]:
-    """Get narrative guidance specific to each genre."""
+    """Get narrative guidance specific to each genre.
+
+    IMPORTANT: 'magic' field explicitly defines whether supernatural elements exist.
+    - "yes": Magic/supernatural is core to the genre
+    - "no": Grounded in reality - NO magic, NO supernatural (enforce strictly)
+    - "optional": Can include supernatural horror OR psychological horror
+    """
     guidance = {
         "fantasy": {
-            "elements": "magic, ancient prophecies, mystical creatures, heroic quests",
+            "elements": "magic, mystical creatures, wonder, the impossible made real",
             "hooks": "something unexpected that demands attention - a person, an event, a discovery, or a problem",
-            "voice": "evocative and wonderous, with a sense of destiny",
+            "voice": "evocative and wondrous, grounded in character rather than destiny",
+            "magic": "yes",
         },
         "romance": {
             "elements": "emotional tension, meaningful glances, past connections, unspoken feelings",
             "hooks": "a moment of connection or tension with another person",
             "voice": "warm and intimate, focused on feelings and connections between people",
+            "magic": "no",
         },
         "mystery": {
             "elements": "clues, secrets, suspicious characters, hidden motives, puzzles",
             "hooks": "something that feels wrong or out of place",
             "voice": "atmospheric and intriguing, building tension through details",
+            "magic": "no",
         },
         "horror": {
             "elements": "dread, the unknown, isolation, things not quite right, building unease",
             "hooks": "a subtle wrongness that grows more unsettling",
             "voice": "unsettling and atmospheric, letting imagination fill the shadows",
+            "magic": "optional",
         },
         "adventure": {
             "elements": "exploration, discovery, challenges, exotic locations, bold action",
             "hooks": "an opportunity or challenge that beckons",
             "voice": "exciting and propulsive, full of momentum and possibility",
+            "magic": "no",
         },
         "drama": {
             "elements": "complex relationships, moral dilemmas, personal stakes, family secrets",
             "hooks": "a moment of emotional weight or decision",
             "voice": "emotionally resonant, focused on human complexity and growth",
+            "magic": "no",
         },
         "urban_fantasy": {
             "elements": "hidden magic in modern cities, secret societies, mundane meets magical, parallel supernatural world, magical creatures disguised among humans",
             "hooks": "the veil between worlds thinning, a magical intrusion into normal life, or discovering the truth behind the mundane",
             "voice": "grounded in familiar reality but threaded with wonder and danger, where the magical world exists alongside our own",
+            "magic": "yes",
         },
         "gothic": {
             "elements": "vampires, werewolves, mages, supernatural politics, personal horror, the beast within, ancient conspiracies, tragic immortality",
             "hooks": "a threat to one's humanity, a breach in the supernatural order, or the eternal struggle between monster and man",
             "voice": "dark and atmospheric, where monsters are the protagonists wrestling with their nature, and power comes at a terrible cost",
+            "magic": "yes",
         },
     }
     return guidance.get(genre, guidance["fantasy"])
@@ -2225,6 +2239,41 @@ async def _generate_opening(session: Dict[str, Any], model) -> str:
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
 
+    # Get world rules from session (user's explicit choice) or fall back to genre defaults
+    world_rules = session.get("world_rules", {})
+    has_magic = world_rules.get("magic", genre_info.get("magic") == "yes")
+    has_supernatural = world_rules.get("supernatural", genre_info.get("magic") in ["yes", "optional"])
+    is_grounded = world_rules.get("grounded", genre_info.get("magic") == "no")
+
+    # Build magic/realism guidance based on user's world rules
+    if has_magic and has_supernatural:
+        magic_guidance = """
+WORLD RULES - MAGIC & SUPERNATURAL:
+- Magic exists in this world as a real force
+- Supernatural beings and phenomena are possible
+- The impossible can become reality through magical means"""
+    elif has_magic:
+        magic_guidance = """
+WORLD RULES - MAGIC EXISTS:
+- Magic exists in this world as a real force
+- Focus on magic systems rather than ghosts/monsters
+- The impossible can become reality through magical means"""
+    elif has_supernatural:
+        magic_guidance = """
+WORLD RULES - SUPERNATURAL:
+- Supernatural forces exist (ghosts, spirits, monsters, curses)
+- Magic as a learnable system does NOT exist
+- Horror and the uncanny are valid, but not wizard spells"""
+    elif is_grounded:
+        magic_guidance = """
+REALISM CONSTRAINT - THIS IS A GROUNDED WORLD:
+- NO magic, NO supernatural elements, NO fantasy creatures
+- Everything must have a real-world explanation
+- No prophetic dreams, mystical abilities, or unexplained phenomena
+- Keep it grounded in reality"""
+    else:
+        magic_guidance = ""  # No specific constraints
+
     # Build world context from lore_content if available
     world_context = ""
     if world_lore:
@@ -2238,11 +2287,12 @@ The following is the established lore for this world. Use these characters, loca
 
 IMPORTANT: Stay true to these characters and this setting. The player is entering THIS world with THESE people."""
 
-    prompt = f"""You are a master storyteller, welcoming someone into their personal mythology.
+    prompt = f"""You are a master storyteller, beginning someone's story.
 
 GENRE: {genre.upper()}
 Genre elements to weave in: {genre_info['elements']}
 Narrative voice: {genre_info['voice']}
+{magic_guidance}
 
 TONE: {tone}
 STORYTELLING STYLE: {style}
@@ -2252,16 +2302,22 @@ STORYTELLING STYLE: {style}
 SETTING: {setting if setting else f"Use the world lore above, or create an evocative {genre} setting"}
 CHARACTER: {character if character else "Introduce the player gently - let them discover who they are through the scene"}
 
+IMPORTANT - AVOID "CHOSEN ONE" SYNDROME:
+- The protagonist is a PERSON, not a prophesied hero (unless the user explicitly requested that)
+- Start them in an ordinary moment - heroism emerges from choices, not destiny
+- No mysterious marks, ancient prophecies, or cosmic significance unless earned
+- Small stakes can be compelling - not every story needs to save the world
+- Let them BE someone before they DO something important
+
 Write an opening that:
 1. Begins IN THE MOMENT - no preamble, drop them right into a scene
 2. Uses characters and locations from the world lore above (if provided)
 3. Engages the senses - what do they see, hear, feel?
 4. Creates intrigue through {genre_info['hooks']} (be creative and varied - avoid clichés like mysterious letters or marks appearing)
-5. Makes them feel like they belong in this world
+5. Grounds them in ordinary humanity FIRST - they have a life, relationships, problems
 6. Ends at a natural pause - DO NOT suggest choices or ask questions
 
 Length: 2-3 paragraphs. Write ONLY the narrative, no meta-commentary.
-Make it feel personal - this is THEIR story beginning.
 IMPORTANT: End the scene naturally. Do NOT list options, ask what they want to do, or suggest choices.
 CRITICAL: Always complete your thoughts. Never end mid-sentence. If approaching your response limit, wrap up naturally rather than cutting off abruptly."""
 
@@ -2308,6 +2364,24 @@ async def _handle_active_play(
 
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
+
+    # Get world rules from session (user's explicit choice) or fall back to genre defaults
+    world_rules = session.get("world_rules", {})
+    has_magic = world_rules.get("magic", genre_info.get("magic") == "yes")
+    has_supernatural = world_rules.get("supernatural", genre_info.get("magic") in ["yes", "optional"])
+    is_grounded = world_rules.get("grounded", genre_info.get("magic") == "no")
+
+    # Build magic/realism guidance based on user's world rules
+    if has_magic and has_supernatural:
+        magic_guidance = ""  # Full magic world - no restrictions needed
+    elif has_magic:
+        magic_guidance = "\nWORLD RULE: Magic exists, but focus on magic systems rather than supernatural horror."
+    elif has_supernatural:
+        magic_guidance = "\nWORLD RULE: Supernatural forces exist, but learnable magic does NOT."
+    elif is_grounded:
+        magic_guidance = "\nREALISM: NO magic or supernatural - keep everything grounded in reality."
+    else:
+        magic_guidance = ""
 
     # Format history for context with tiered detail:
     # - Most recent exchanges get full context (crucial for continuity)
@@ -2397,11 +2471,12 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
     # Handle genre blending
     genre_display = session.get("genre_blend", genre)
 
-    prompt = f"""You are a master storyteller continuing someone's personal mythology.
+    prompt = f"""You are a master storyteller continuing someone's story.
 
 GENRE: {genre_display.upper()}
 Genre elements: {genre_info['elements']}
 Narrative voice: {genre_info['voice']}
+{magic_guidance}
 
 TONE: {tone}
 STORYTELLING STYLE: {style}
@@ -2436,6 +2511,7 @@ Continue the narrative:
 - Never speak for the player or assume their thoughts
 - If they're exploring, reward their curiosity with interesting details
 - If they're taking action, show meaningful consequences
+- Let heroism EMERGE from choices - don't declare the protagonist special
 - Keep response 2-3 short paragraphs
 - End at a natural pause point
 

@@ -6267,6 +6267,20 @@
                 </p>
             </div>
 
+            <!-- WORLD RULES SECTION -->
+            <div class="setup-section" id="world-rules-section">
+                <h3>World Rules</h3>
+                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                    What kind of world is this? Defaults based on your genre.
+                </p>
+                <div id="world-rules-chips" class="tone-options" style="flex-wrap: wrap; gap: 8px;">
+                    <span class="tone-chip world-rule-chip" data-rule="magic" onclick="toggleWorldRule('magic')">✨ Magic</span>
+                    <span class="tone-chip world-rule-chip" data-rule="supernatural" onclick="toggleWorldRule('supernatural')">👻 Supernatural</span>
+                    <span class="tone-chip world-rule-chip" data-rule="grounded" onclick="toggleWorldRule('grounded')">🌍 Grounded Reality</span>
+                </div>
+                <p id="world-rules-hint" style="color: var(--text-muted); margin-top: 10px; font-size: 0.8rem; font-style: italic;"></p>
+            </div>
+
             <!-- MAIN SECTION: Your Character -->
             <div class="setup-section">
                 <h3>Who Are You?</h3>
@@ -7869,6 +7883,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let selectedLoreBase = null;
         let blendGenres = [];  // Custom genre blend for setup screen
         let curatedWorldGenres = [];  // Store genre hints from selected curated world
+        let worldRules = { magic: false, supernatural: false, grounded: true };  // World rules with defaults
+        let worldRulesUserOverride = false;  // Track if user manually changed rules
         let currentSessionId = null;
         let currentPhase = null;
         let playerInventory = [];  // Track player's inventory items
@@ -10032,6 +10048,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 blendGenres.splice(index, 1);
             }
             updateGenreBlendDisplay();
+            updateWorldRulesFromGenres();  // Update world rules based on new genre selection
         }
 
         // Update the genre blend display
@@ -10071,6 +10088,115 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 headingEl.textContent = 'Add More Genres?';
                 hintEl.textContent = 'Optional: blend in additional genres like romance, mystery, or horror. Or skip this and jump right in!';
             }
+        }
+
+        // ==========================================
+        // WORLD RULES (Magic/Supernatural/Grounded)
+        // ==========================================
+
+        // Genre defaults for world rules
+        const genreWorldRuleDefaults = {
+            fantasy: { magic: true, supernatural: true, grounded: false },
+            urban_fantasy: { magic: true, supernatural: true, grounded: false },
+            gothic: { magic: false, supernatural: true, grounded: false },
+            horror: { magic: false, supernatural: false, grounded: true },  // Default to psychological horror
+            scifi: { magic: false, supernatural: false, grounded: true },
+            romance: { magic: false, supernatural: false, grounded: true },
+            mystery: { magic: false, supernatural: false, grounded: true },
+            drama: { magic: false, supernatural: false, grounded: true },
+            adventure: { magic: false, supernatural: false, grounded: true },
+            noir: { magic: false, supernatural: false, grounded: true },
+            western: { magic: false, supernatural: false, grounded: true },
+            modern: { magic: false, supernatural: false, grounded: true },
+            mythology: { magic: true, supernatural: true, grounded: false },
+            wuxia: { magic: true, supernatural: false, grounded: false },  // Chi/internal power, not magic
+        };
+
+        // Toggle a world rule
+        function toggleWorldRule(rule) {
+            worldRulesUserOverride = true;  // User has manually changed rules
+            worldRules[rule] = !worldRules[rule];
+
+            // Handle mutually exclusive rules
+            if (rule === 'grounded' && worldRules.grounded) {
+                // Grounded disables magic and supernatural
+                worldRules.magic = false;
+                worldRules.supernatural = false;
+            } else if ((rule === 'magic' || rule === 'supernatural') && worldRules[rule]) {
+                // Enabling magic or supernatural disables grounded
+                worldRules.grounded = false;
+            }
+
+            // If all are off, default to grounded
+            if (!worldRules.magic && !worldRules.supernatural && !worldRules.grounded) {
+                worldRules.grounded = true;
+            }
+
+            updateWorldRulesDisplay();
+        }
+
+        // Update world rules based on selected genres (only if user hasn't overridden)
+        function updateWorldRulesFromGenres() {
+            if (worldRulesUserOverride) return;  // Don't override user's choice
+
+            // Combine all selected genres
+            const effectiveGenres = blendGenres.length > 0 ? blendGenres :
+                                    curatedWorldGenres.length > 0 ? curatedWorldGenres :
+                                    selectedGenres.length > 0 ? selectedGenres :
+                                    selectedGenre ? [selectedGenre] : [];
+
+            // Check if ANY genre has magic/supernatural
+            let hasMagic = false;
+            let hasSupernatural = false;
+
+            for (const genre of effectiveGenres) {
+                const defaults = genreWorldRuleDefaults[genre];
+                if (defaults) {
+                    if (defaults.magic) hasMagic = true;
+                    if (defaults.supernatural) hasSupernatural = true;
+                }
+            }
+
+            worldRules = {
+                magic: hasMagic,
+                supernatural: hasSupernatural,
+                grounded: !hasMagic && !hasSupernatural
+            };
+
+            updateWorldRulesDisplay();
+        }
+
+        // Update the world rules chip display
+        function updateWorldRulesDisplay() {
+            document.querySelectorAll('.world-rule-chip').forEach(chip => {
+                const rule = chip.dataset.rule;
+                if (worldRules[rule]) {
+                    chip.classList.add('selected');
+                } else {
+                    chip.classList.remove('selected');
+                }
+            });
+
+            // Update hint text
+            const hintEl = document.getElementById('world-rules-hint');
+            if (worldRules.grounded) {
+                hintEl.textContent = 'A realistic world with no magic or supernatural elements.';
+            } else if (worldRules.magic && worldRules.supernatural) {
+                hintEl.textContent = 'A world where magic and supernatural forces shape reality.';
+            } else if (worldRules.magic) {
+                hintEl.textContent = 'A world where magic exists, but not necessarily ghosts or monsters.';
+            } else if (worldRules.supernatural) {
+                hintEl.textContent = 'A world with supernatural forces, but magic as a system does not exist.';
+            } else {
+                hintEl.textContent = '';
+            }
+        }
+
+        // Reset world rules (call when starting fresh)
+        function resetWorldRules() {
+            worldRules = { magic: false, supernatural: false, grounded: true };
+            worldRulesUserOverride = false;
+            updateWorldRulesDisplay();
         }
 
         // World Preset Selection
@@ -12480,6 +12606,27 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         // Genre-specific equipment fallbacks for non-D&D archetypes
         const GENRE_EQUIPMENT_FALLBACKS = {
+            fantasy: {
+                choices: {
+                    choice_1: {
+                        prompt: 'Choose your weapon:',
+                        options: [
+                            { id: 'sword', name: 'Longsword', items: ['Longsword', 'Scabbard'] },
+                            { id: 'bow', name: 'Shortbow', items: ['Shortbow', 'Quiver', 'Arrows (20)'] },
+                            { id: 'staff', name: 'Quarterstaff', items: ['Quarterstaff', 'Component pouch'] }
+                        ]
+                    },
+                    choice_2: {
+                        prompt: 'Choose your gear:',
+                        options: [
+                            { id: 'explorer', name: "Explorer's Pack", items: ['Backpack', 'Bedroll', 'Rations (10 days)', 'Waterskin', 'Rope (50 ft)'] },
+                            { id: 'dungeoneer', name: "Dungeoneer's Pack", items: ['Backpack', 'Crowbar', 'Hammer', 'Pitons (10)', 'Torches (10)', 'Tinderbox'] },
+                            { id: 'scholar', name: "Scholar's Pack", items: ['Backpack', 'Book of lore', 'Ink', 'Quill', 'Parchment (10 sheets)'] }
+                        ]
+                    }
+                },
+                fixed: ['Common clothes', 'Belt pouch', '10 gold pieces']
+            },
             steampunk: {
                 choices: {
                     choice_1: {
@@ -13343,6 +13490,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             switch (screenId) {
                 case 'setup':
                     await loadSetupCuratedWorlds();
+                    updateWorldRulesFromGenres();  // Set world rules defaults based on selected genres
                     break;
                 case 'worldbuilder':
                     await loadWorldbuilderLoreBases();
@@ -13624,7 +13772,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 storytelling_style: selectedStyle,
                 session_scope: sessionScope,
                 max_turns: maxTurnsForScope[sessionScope] || 20,
-                tester: localStorage.getItem('airpg_tester_name') || null  // Link tester to session
+                tester: localStorage.getItem('airpg_tester_name') || null,  // Link tester to session
+                world_rules: { ...worldRules }  // User's explicit magic/supernatural/grounded choices
             };
 
             if (selectedCuratedWorld) {
