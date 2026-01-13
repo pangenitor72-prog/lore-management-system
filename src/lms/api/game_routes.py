@@ -2462,15 +2462,16 @@ The following is the established lore for this world. Use these characters, loca
 IMPORTANT: Stay true to these characters and this setting. The player is entering THIS world with THESE people."""
 
     prompt = f"""You are a master storyteller, beginning someone's story.
+
+YOUR JOB: Understand what experience they're seeking - not just what they say, but what they actually want to feel. Read their character concept for the fantasy underneath. A "humble farmer" wants the underdog journey. A "legendary warrior" wants to feel powerful. An "orphan with mysterious past" wants to discover they're special. Give them the story they came for.
 {scope_guidance}
 
 GENRE: {genre.upper()}
-Genre elements to weave in: {genre_info['elements']}
-Narrative voice: {genre_info['voice']}
+Genre elements: {genre_info['elements']}
+Voice: {genre_info['voice']}
 {magic_guidance}
 
 TONE: {tone}
-STORYTELLING STYLE: {style}
 {style_instructions}
 {world_context}
 
@@ -2479,14 +2480,13 @@ CHARACTER: {character if character else "Introduce the player gently - let them 
 
 Write an opening that:
 1. Begins IN THE MOMENT - drop them into a lived moment, not exposition
-2. Uses characters and locations from the world lore above (if provided)
+2. Uses characters and locations from the world lore (if provided)
 3. Engages the senses - what do they see, hear, feel?
 4. Creates intrigue through {genre_info['hooks']}
-5. Shows who this person IS through their world, not who they'll become
+5. Honors the fantasy their character concept implies
 6. Ends at a natural pause - DO NOT suggest choices or ask questions
 
-Length: 2-3 paragraphs. Write ONLY the narrative, no meta-commentary.
-End the scene naturally. DO NOT list options or suggest choices.
+Length: 2-3 paragraphs. Write ONLY the narrative.
 Complete your thoughts - never end mid-sentence."""
 
     logger.info(f"[OPENING] Calling protected_ai_call with prompt of {len(prompt)} chars")
@@ -2648,15 +2648,15 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
     genre_display = session.get("genre_blend", genre)
 
     prompt = f"""You are a master storyteller continuing someone's story.
+
+YOUR JOB: Read between the lines. When they act, ask yourself what experience they're seeking. "I attack the dragon" might mean they want to feel brave, or test if you'll let them be bold. "I look around carefully" means they want to be rewarded for caution. "I try to talk to them" means they want diplomacy to matter. Give them what they're actually asking for, not just the literal response.
 {scope_guidance}
 {arc_context_str}
 GENRE: {genre_display.upper()}
-Genre elements: {genre_info['elements']}
-Narrative voice: {genre_info['voice']}
+Voice: {genre_info['voice']}
 {magic_guidance}
 
 TONE: {tone}
-{style_instructions}
 {world_context}
 {db_context}
 
@@ -2666,7 +2666,7 @@ PROTAGONIST: {character if character else 'the protagonist'}
 STORY SO FAR:
 {history_text if history_text else 'The story is just beginning.'}
 
-CURRENT SCENE (the player is responding to THIS):
+CURRENT SCENE:
 {last_dm_response if last_dm_response else 'The story is just beginning.'}
 
 PLAYER'S ACTION: {player_input}
@@ -2674,14 +2674,12 @@ PLAYER'S ACTION: {player_input}
 {_get_guidance_instruction(needs_guidance)}
 {f'''STORYTELLING ADJUSTMENT: {adaptive_context}
 ''' if adaptive_context else ''}
-Continue the narrative:
-- Pick up EXACTLY where the last scene left off
-- React naturally to what the player did or said
-- Stay in the current scene - don't jump locations unless they moved
-- Stay consistent with world lore and established characters
-- Show consequences of choices
-- 2-3 short paragraphs, end at a natural pause
-- DO NOT suggest choices or ask questions
+Continue:
+- Pick up EXACTLY where the scene left off
+- Honor what they're trying to do - match their energy
+- Show consequences that feel meaningful
+- 2-3 paragraphs, natural pause
+- NO suggestions or questions
 
 Write ONLY the narrative:"""
 
