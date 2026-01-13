@@ -62,6 +62,78 @@ GENRE_EQUIPMENT_DEFAULTS = {
         "light": ["heavy coat"],
         "default": ["flashlight", "first aid kit", "rope"],
     },
+    "fantasy": {
+        "martial": ["longsword"],
+        "simple": ["quarterstaff", "dagger"],
+        "light": ["leather armor"],
+        "medium": ["scale mail"],
+        "heavy": ["chain mail"],
+        "shields": ["shield"],
+        "default": ["backpack", "bedroll", "waterskin", "rations (3 days)"],
+    },
+    "steampunk": {
+        "firearms": ["pepperbox pistol", "ammunition (20)"],
+        "martial": ["cavalry saber"],
+        "simple": ["walking cane"],
+        "light": ["leather coat"],
+        "medium": ["reinforced vest"],
+        "default": ["pocket watch", "goggles", "tool kit", "10 shillings"],
+    },
+    "postapoc": {
+        "firearms": ["pipe rifle", "scrap ammunition (20)"],
+        "martial": ["machete"],
+        "simple": ["makeshift club"],
+        "light": ["scrap leather"],
+        "medium": ["salvaged armor"],
+        "default": ["water canteen", "rad counter", "rope", "fire starter"],
+    },
+    "superhero": {
+        "simple": ["collapsible baton"],
+        "default": ["costume", "communicator", "secret identity gear"],
+    },
+    "mythology": {
+        "martial": ["bronze spear", "xiphos (short sword)"],
+        "simple": ["staff"],
+        "light": ["chiton (robes)"],
+        "medium": ["bronze cuirass"],
+        "heavy": ["bronze armor"],
+        "shields": ["aspis (round shield)"],
+        "default": ["travel cloak", "waterskin", "sacred token", "10 drachmas"],
+    },
+    "wuxia": {
+        "martial": ["jian (straight sword)", "dao (saber)"],
+        "monk": ["iron palm gloves"],
+        "simple": ["bo staff"],
+        "light": ["traveling robes"],
+        "default": ["waterskin", "rice", "bedroll", "5 taels silver"],
+    },
+    "pirate": {
+        "firearms": ["flintlock pistol", "powder and shot (20)"],
+        "martial": ["cutlass"],
+        "simple": ["belaying pin"],
+        "light": ["sailor's garb"],
+        "medium": ["leather jerkin"],
+        "default": ["compass", "rope (50 ft)", "grappling hook", "10 pieces of eight"],
+    },
+    "dark_fantasy": {
+        "firearms": ["crossbow", "bolts (20)"],
+        "martial": ["longsword"],
+        "simple": ["torch", "dagger"],
+        "light": ["leather armor"],
+        "medium": ["chain shirt"],
+        "heavy": ["plate armor"],
+        "shields": ["shield"],
+        "default": ["bedroll", "flint and steel", "holy symbol", "5 crowns"],
+    },
+    "space_opera": {
+        "blasters": ["blaster pistol", "power cell"],
+        "heavy": ["blaster rifle", "power cell (2)"],
+        "simple": ["vibroblade"],
+        "light": ["flight suit"],
+        "medium": ["combat armor"],
+        "powered": ["power armor"],
+        "default": ["communicator", "datapad", "ration packs (3)", "500 credits"],
+    },
 }
 
 
@@ -445,6 +517,7 @@ class GuidedCreationFlow:
     def _skill_to_option(self, skill: str) -> Dict[str, str]:
         """Convert skill name to user-friendly option."""
         skill_descriptions = {
+            # Standard 5e Skills
             "athletics": ("Athletics", "Climbing, jumping, swimming, feats of strength"),
             "acrobatics": ("Acrobatics", "Balance, tumbling, escaping grapples"),
             "stealth": ("Stealth", "Moving silently and hiding"),
@@ -463,8 +536,43 @@ class GuidedCreationFlow:
             "intimidation": ("Intimidation", "Threatening and coercing"),
             "performance": ("Performance", "Entertaining and captivating audiences"),
             "persuasion": ("Persuasion", "Convincing others with charm and logic"),
+            # Tech/Sci-Fi Skills
+            "hacking": ("Hacking", "Breaking into computer systems and networks"),
+            "computers": ("Computers", "Using and programming digital systems"),
+            "electronics": ("Electronics", "Working with circuits and electrical devices"),
+            "science": ("Science", "Applied physics, chemistry, and biology"),
+            "demolitions": ("Demolitions", "Setting and disarming explosives"),
+            "engineering": ("Engineering", "Designing and building structures/machines"),
+            # Vehicle/Mechanical Skills
+            "mechanics": ("Mechanics", "Repairing and maintaining machinery"),
+            "piloting": ("Piloting", "Flying aircraft, spacecraft, or other vehicles"),
+            "vehicles": ("Vehicles", "Operating cars, bikes, boats, and other transports"),
+            "driving": ("Driving", "Maneuvering ground vehicles at speed"),
+            "navigation": ("Navigation", "Finding your way using maps, stars, or tech"),
+            # Street/Urban Skills
+            "streetwise": ("Streetwise", "Knowing the streets, gangs, and underworld"),
+            "contacts": ("Contacts", "Knowing people who can get things done"),
+            # Medical Skills
+            "first_aid": ("First Aid", "Emergency medical treatment in the field"),
+            "surgery": ("Surgery", "Performing medical operations"),
+            # Combat Skills
+            "firearms": ("Firearms", "Using guns and ranged weapons effectively"),
+            "martial_arts": ("Martial Arts", "Unarmed combat techniques and styles"),
+            "brawling": ("Brawling", "Dirty fighting and bar room tactics"),
+            # Craft/Artisan Skills
+            "calligraphy": ("Calligraphy", "Beautiful writing and document creation"),
+            "forgery": ("Forgery", "Creating fake documents and signatures"),
+            "tinker": ("Tinker", "Building and modifying small gadgets"),
+            # Social/Subterfuge Skills
+            "disguise": ("Disguise", "Changing appearance to pass as another"),
+            "etiquette": ("Etiquette", "Proper conduct in formal social settings"),
+            "gambling": ("Gambling", "Games of chance and reading opponents"),
+            "interrogation": ("Interrogation", "Extracting information through questioning"),
+            # Wilderness Skills
+            "tracking": ("Tracking", "Following trails and hunting prey"),
+            "riding": ("Riding", "Controlling mounts and mounted combat"),
         }
-        name, desc = skill_descriptions.get(skill, (skill.title(), ""))
+        name, desc = skill_descriptions.get(skill, (skill.replace("_", " ").title(), ""))
         return {"id": skill, "name": name, "description": desc}
 
     def set_name(self, name: str) -> bool:
