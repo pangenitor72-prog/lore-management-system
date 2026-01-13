@@ -1622,21 +1622,24 @@ async def create_session(
                 detail=e.to_dict(),
             )
 
-    # Build genre blend string for storytelling
-    genre_blend = session_req.genre or "fantasy"
-    if session_req.genres and len(session_req.genres) > 1:
-        genre_blend = " + ".join(session_req.genres)
-
     # Fetch lore_content from selected world (if any)
+    # IMPORTANT: World determines genre - it's the source of truth
     world_lore_content = ""
     world_name = ""
+    world_genre = None
+    world_genre_hints = []
     if session_req.world_id:
         # Use the global LORE_BASES dict (loaded at startup from seed files)
         if session_req.world_id in LORE_BASES:
             world_data = LORE_BASES[session_req.world_id]
             world_lore_content = world_data.get("lore_content", "")
             world_name = world_data.get("name", "")
-            logger.info(f"Loaded lore_content for world '{session_req.world_id}': {len(world_lore_content)} chars")
+            # World's genre is authoritative
+            world_genre = world_data.get("genre")
+            world_genre_hints = world_data.get("genre_hints", [])
+            if not world_genre and world_genre_hints:
+                world_genre = world_genre_hints[0]
+            logger.info(f"Loaded world '{session_req.world_id}': genre={world_genre}, hints={world_genre_hints}, lore={len(world_lore_content)} chars")
         else:
             # World ID provided but not found - return error instead of silently continuing
             logger.warning(f"World '{session_req.world_id}' not found in LORE_BASES")
@@ -1659,6 +1662,31 @@ async def create_session(
     base_world_id = session_req.world_id or "custom"
     session_world_id = f"{base_world_id}_{session_id[:8]}"
 
+    # GENRE RESOLUTION: World is the source of truth
+    # 1. If world selected → world's genre is primary
+    # 2. User's genre selection can add flavor but doesn't override world
+    # 3. No world → user's selection is used
+    if world_genre:
+        # World determines primary genre
+        primary_genre = world_genre
+        # Build genre list: world's hints + any user additions that aren't already included
+        all_genres = list(world_genre_hints) if world_genre_hints else [world_genre]
+        if session_req.genres:
+            for g in session_req.genres:
+                if g.lower() not in [x.lower() for x in all_genres]:
+                    all_genres.append(g)
+        elif session_req.genre and session_req.genre.lower() not in [x.lower() for x in all_genres]:
+            all_genres.append(session_req.genre)
+    else:
+        # No world selected - use user's choice
+        primary_genre = session_req.genre or "fantasy"
+        all_genres = session_req.genres or [primary_genre]
+
+    # Build genre blend string for storytelling
+    genre_blend = primary_genre
+    if len(all_genres) > 1:
+        genre_blend = " + ".join(all_genres)
+
     session_data = {
         "session_id": session_id,
         "world_id": session_req.world_id,  # Original lore base ID (for loading seed lore)
@@ -1668,8 +1696,8 @@ async def create_session(
         "character_concept": session_req.character_concept,
         "setting_preference": session_req.setting_preference,
         "tone_preference": session_req.tone_preference,
-        "genre": session_req.genre or "fantasy",
-        "genres": session_req.genres or [session_req.genre or "fantasy"],
+        "genre": primary_genre,
+        "genres": all_genres,
         "genre_blend": genre_blend,
         "storytelling_style": session_req.storytelling_style or "guided",
         "phase": phase,
@@ -1717,7 +1745,7 @@ async def create_session(
                 "world_id": session_req.world_id or "",
                 "session_world_id": session_world_id,
                 "phase": phase,
-                "genre": session_req.genre or "fantasy",
+                "genre": primary_genre,
                 "character_name": session_req.character_name or session_req.character_concept or "",
                 "tester": session_req.tester or "",
                 "style": session_req.storytelling_style or "guided",
@@ -1737,8 +1765,8 @@ async def create_session(
         # Include full session context for frontend
         world_id=session_req.world_id,
         world_name=world_name,
-        genre=session_req.genre or "fantasy",
-        genres=session_req.genres or [session_req.genre or "fantasy"],
+        genre=primary_genre,
+        genres=all_genres,
         rules_mode=session_req.rules_mode or "narrative",
         rules_visibility=session_req.rules_visibility or "guided",
         character_concept=session_req.character_concept,
