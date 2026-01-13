@@ -991,6 +991,15 @@ class SessionCreateRequest(BaseModel):
         default="guided",
         description="How much mechanical info to show: storyteller, guided, classic, tactician"
     )
+    # Story Length / Pacing
+    session_scope: Optional[str] = Field(
+        default="one_shot",
+        description="Story length: one_shot (~100 turns), short (~150), medium (~250), long (~400), campaign (unlimited)"
+    )
+    max_turns: Optional[int] = Field(
+        default=100,
+        description="Expected maximum turns for this story scope"
+    )
 
 
 class SessionResponse(BaseModel):
@@ -1709,6 +1718,9 @@ async def create_session(
         "character_id": session_req.character_id,
         "rules_mode": session_req.rules_mode or "narrative",
         "rules_visibility": session_req.rules_visibility or "guided",
+        # Story Length / Pacing
+        "session_scope": session_req.session_scope or "one_shot",
+        "max_turns": session_req.max_turns or 100,
         # Arc Engine for narrative pacing (per-session instance)
         "arc_engine": ArcEngine(session_id=session_id) if ARC_ENGINE_AVAILABLE else None,
     }
@@ -2156,6 +2168,117 @@ def _extract_events_from_narrative(
     return events
 
 
+def _get_story_scope_guidance(scope: str, turn_count: int, max_turns: int) -> str:
+    """
+    Get pacing guidance based on story scope and current progress.
+
+    IMPORTANT: Different scopes use DIFFERENT narrative structures:
+    - One-shots: Compressed 5-act (Hook → Complication → Rising → Climax → Resolution)
+    - Campaigns: Full Hero's Journey (12 stages across many sessions)
+    """
+    if max_turns <= 0:
+        max_turns = 1000  # Campaign mode - no real limit
+
+    progress = turn_count / max_turns if max_turns > 0 else 0
+
+    # CAMPAIGNS: Full Hero's Journey, episodic pacing
+    if scope == "campaign":
+        return f"""
+=== STORY SCOPE: CAMPAIGN ===
+Pace for the LONG HAUL. Follow the Hero's Journey across many sessions.
+- Build slowly. Plant seeds that pay off sessions later.
+- Breathing room matters - not every scene needs high stakes.
+- Develop subplots, recurring characters, evolving relationships.
+- Each session: a satisfying beat in a larger tapestry.
+Turn: {turn_count} (ongoing - no set ending)"""
+
+    # ONE-SHOTS: Compressed structure, immediate engagement
+    if scope == "one_shot":
+        if progress < 0.10:
+            phase = "HOOK"
+            guidance = "Drop them into the moment. Character through action, not backstory. Something immediately interesting."
+        elif progress < 0.25:
+            phase = "COMPLICATION"
+            guidance = "The situation demands response. A choice, a problem, a discovery. Personal stakes, clear and present."
+        elif progress < 0.60:
+            phase = "RISING TENSION"
+            guidance = "Consequences compound. Choices matter. Tension builds through what they DO, not destiny."
+        elif progress < 0.85:
+            phase = "CLIMAX"
+            guidance = "The confrontation. Everything comes to a head. This is what it's all been building toward."
+        else:
+            phase = "RESOLUTION"
+            guidance = "Aftermath and change. Show who they've become. END with '**THE END**' when the story is complete."
+
+        return f"""
+=== STORY: ONE-SHOT ({turn_count}/{max_turns} turns, {progress:.0%}) ===
+Phase: {phase}
+{guidance}
+REMEMBER: One-shots are COMPLETE stories. No sequel-baiting. Satisfying endings."""
+
+    # SHORT/MEDIUM: Slightly expanded structure
+    if scope in ("short", "medium"):
+        if progress < 0.12:
+            phase = "OPENING"
+            guidance = "Establish character and world through lived experience. Who they are before anything changes."
+        elif progress < 0.25:
+            phase = "INCITING"
+            guidance = "Something disrupts the ordinary. A choice to engage."
+        elif progress < 0.50:
+            phase = "RISING"
+            guidance = "Complications. Allies and enemies. Stakes rise through consequence."
+        elif progress < 0.75:
+            phase = "CRISIS"
+            guidance = "A major turning point. Something changes that can't be undone."
+        elif progress < 0.90:
+            phase = "CLIMAX"
+            guidance = "The confrontation approaches and peaks."
+        else:
+            phase = "RESOLUTION"
+            guidance = "Aftermath. Change. Consider ending with '**THE END**'."
+
+        label = "SHORT STORY" if scope == "short" else "MEDIUM ADVENTURE"
+        return f"""
+=== STORY: {label} ({turn_count}/{max_turns} turns, {progress:.0%}) ===
+Phase: {phase}
+{guidance}"""
+
+    # LONG: More room for development, closer to campaign pacing
+    if scope == "long":
+        if progress < 0.10:
+            phase = "ORDINARY WORLD"
+            guidance = "Establish who they are, what they want, what's missing."
+        elif progress < 0.20:
+            phase = "CALL"
+            guidance = "Something beckons. A problem, opportunity, or discovery."
+        elif progress < 0.35:
+            phase = "THRESHOLD"
+            guidance = "They commit. Cross into the unknown. No going back."
+        elif progress < 0.50:
+            phase = "TESTS & ALLIES"
+            guidance = "Challenges, new relationships, learning the rules of this new world."
+        elif progress < 0.65:
+            phase = "ORDEAL"
+            guidance = "The major crisis. Face what they fear. Transformation."
+        elif progress < 0.80:
+            phase = "REWARD & ROAD BACK"
+            guidance = "They've changed. Now they must return with what they've gained."
+        elif progress < 0.90:
+            phase = "RESURRECTION"
+            guidance = "Final test. Everything on the line. Who have they become?"
+        else:
+            phase = "RETURN"
+            guidance = "Resolution. The world changed, or they have. Consider '**THE END**'."
+
+        return f"""
+=== STORY: EXTENDED ({turn_count}/{max_turns} turns, {progress:.0%}) ===
+Phase: {phase}
+{guidance}"""
+
+    # Fallback
+    return f"Turn: {turn_count}/{max_turns}"
+
+
 def _get_genre_guidance(genre: str) -> Dict[str, str]:
     """Get narrative guidance specific to each genre.
 
@@ -2262,10 +2385,16 @@ async def _generate_opening(session: Dict[str, Any], model) -> str:
     world_lore = session.get("world_lore_content", "")
     world_name = session.get("world_name", "")
 
-    logger.info(f"[OPENING] genre={genre}, tone={tone}, style={style}, world_lore_len={len(world_lore)}")
+    # Get story scope for pacing guidance
+    session_scope = session.get("session_scope", "one_shot")
+    max_turns = session.get("max_turns", 100)
+    turn_count = len(session.get("history", [])) // 2  # Rough turn count
+
+    logger.info(f"[OPENING] genre={genre}, tone={tone}, style={style}, scope={session_scope}, world_lore_len={len(world_lore)}")
 
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
+    scope_guidance = _get_story_scope_guidance(session_scope, turn_count, max_turns)
 
     # Get world rules from session (user's explicit choice) or fall back to genre defaults
     world_rules = session.get("world_rules", {})
@@ -2316,6 +2445,7 @@ The following is the established lore for this world. Use these characters, loca
 IMPORTANT: Stay true to these characters and this setting. The player is entering THIS world with THESE people."""
 
     prompt = f"""You are a master storyteller, beginning someone's story.
+{scope_guidance}
 
 GENRE: {genre.upper()}
 Genre elements to weave in: {genre_info['elements']}
@@ -2330,24 +2460,17 @@ STORYTELLING STYLE: {style}
 SETTING: {setting if setting else f"Use the world lore above, or create an evocative {genre} setting"}
 CHARACTER: {character if character else "Introduce the player gently - let them discover who they are through the scene"}
 
-IMPORTANT - AVOID "CHOSEN ONE" SYNDROME:
-- The protagonist is a PERSON, not a prophesied hero (unless the user explicitly requested that)
-- Start them in an ordinary moment - heroism emerges from choices, not destiny
-- No mysterious marks, ancient prophecies, or cosmic significance unless earned
-- Small stakes can be compelling - not every story needs to save the world
-- Let them BE someone before they DO something important
-
 Write an opening that:
-1. Begins IN THE MOMENT - no preamble, drop them right into a scene
+1. Begins IN THE MOMENT - drop them into a lived moment, not exposition
 2. Uses characters and locations from the world lore above (if provided)
 3. Engages the senses - what do they see, hear, feel?
-4. Creates intrigue through {genre_info['hooks']} (be creative and varied - avoid clichés like mysterious letters or marks appearing)
-5. Grounds them in ordinary humanity FIRST - they have a life, relationships, problems
+4. Creates intrigue through {genre_info['hooks']}
+5. Shows who this person IS through their world, not who they'll become
 6. Ends at a natural pause - DO NOT suggest choices or ask questions
 
 Length: 2-3 paragraphs. Write ONLY the narrative, no meta-commentary.
-IMPORTANT: End the scene naturally. Do NOT list options, ask what they want to do, or suggest choices.
-CRITICAL: Always complete your thoughts. Never end mid-sentence. If approaching your response limit, wrap up naturally rather than cutting off abruptly."""
+End the scene naturally. DO NOT list options or suggest choices.
+Complete your thoughts - never end mid-sentence."""
 
     logger.info(f"[OPENING] Calling protected_ai_call with prompt of {len(prompt)} chars")
 
@@ -2390,8 +2513,14 @@ async def _handle_active_play(
 
     history = session.get("history", [])[-20:]  # Last 20 messages for better continuity
 
+    # Get story scope for pacing guidance
+    session_scope = session.get("session_scope", "one_shot")
+    max_turns = session.get("max_turns", 100)
+    turn_count = len(session.get("history", [])) // 2  # Rough turn count (user+assistant pairs)
+
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
+    scope_guidance = _get_story_scope_guidance(session_scope, turn_count, max_turns)
 
     # Get world rules from session (user's explicit choice) or fall back to genre defaults
     world_rules = session.get("world_rules", {})
@@ -2500,53 +2629,40 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
     genre_display = session.get("genre_blend", genre)
 
     prompt = f"""You are a master storyteller continuing someone's story.
-
+{scope_guidance}
+{arc_context_str}
 GENRE: {genre_display.upper()}
 Genre elements: {genre_info['elements']}
 Narrative voice: {genre_info['voice']}
 {magic_guidance}
 
 TONE: {tone}
-STORYTELLING STYLE: {style}
 {style_instructions}
 {world_context}
 {db_context}
 
-SETTING: {setting if setting else 'the world described above'}
 PROTAGONIST: {character if character else 'the protagonist'}
 {char_context}
 
 STORY SO FAR:
 {history_text if history_text else 'The story is just beginning.'}
 
-CURRENT SCENE (what just happened - the player is responding to THIS):
+CURRENT SCENE (the player is responding to THIS):
 {last_dm_response if last_dm_response else 'The story is just beginning.'}
 
 PLAYER'S ACTION: {player_input}
 {mechanical_context}
 {_get_guidance_instruction(needs_guidance)}
-{f'''
-STORYTELLING ADJUSTMENT (based on player preferences - apply subtly):
-{adaptive_context}
-''' if adaptive_context else ''}{arc_context_str}
+{f'''STORYTELLING ADJUSTMENT: {adaptive_context}
+''' if adaptive_context else ''}
 Continue the narrative:
-- CRITICAL: Pick up EXACTLY where the last scene left off. If the Narrator just described a location, characters, or situation - respond to the player's action within THAT scene.
-- React naturally and immediately to what the player did or said
-- Maintain the same characters, location, and situation from the previous exchange - do NOT jump to a new scene
-- USE THE CHARACTERS AND LOCATIONS FROM THE WORLD LORE ABOVE - stay consistent!
-- Use sensory details that fit the {genre_display} genre
-- Maintain the {tone} tone throughout
-- Never speak for the player or assume their thoughts
-- If they're exploring, reward their curiosity with interesting details
-- If they're taking action, show meaningful consequences
-- Let heroism EMERGE from choices - don't declare the protagonist special
-- Keep response 2-3 short paragraphs
-- End at a natural pause point
-
-IMPORTANT: Do NOT suggest choices, list options, or ask what they want to do.
-Just describe what happens and let the scene breathe. Trust the reader to respond.
-Do NOT introduce new scenes or locations unless the player's action explicitly moves them there.
-CRITICAL: Always complete your thoughts. Never end mid-sentence. If approaching your response limit, wrap up naturally rather than cutting off abruptly.
+- Pick up EXACTLY where the last scene left off
+- React naturally to what the player did or said
+- Stay in the current scene - don't jump locations unless they moved
+- Stay consistent with world lore and established characters
+- Show consequences of choices
+- 2-3 short paragraphs, end at a natural pause
+- DO NOT suggest choices or ask questions
 
 Write ONLY the narrative:"""
 
