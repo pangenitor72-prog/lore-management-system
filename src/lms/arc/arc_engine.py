@@ -261,12 +261,13 @@ class ArcEngine:
 
     # === DM GUIDANCE ===
 
-    def get_dm_context_injection(self) -> str:
+    def get_dm_context_injection(self, subtle: bool = False) -> str:
         """
         Get text to inject into the DM's prompt for arc awareness.
 
-        This provides the DM with phase-appropriate guidance without
-        being overly prescriptive.
+        Args:
+            subtle: If True, provide gentle guidance without explicit phase names.
+                   Use for campaigns where structure should emerge naturally.
 
         Returns:
             Context string for prompt injection
@@ -275,23 +276,23 @@ class ArcEngine:
         tension = self.current_tension
         trend = self._tension_tracker.trend
 
+        if subtle:
+            # For campaigns: guidance without explicit structure
+            tension_word = "calm" if tension < 0.3 else "building" if tension < 0.6 else "high"
+            return f"""
+Narrative energy: {tension_word}, {trend}
+{phase.description}"""
+
+        # For finite stories: more explicit structure helps pacing
         lines = [
-            f"\n=== NARRATIVE ARC CONTEXT ===",
-            f"Current Phase: {phase.value.replace('_', ' ').title()}",
-            f"Act: {phase.act.value.title()}",
+            f"\n=== NARRATIVE ARC ===",
+            f"Phase: {phase.value.replace('_', ' ').title()} ({phase.act.value.title()})",
             f"Tension: {tension:.0%} ({self.tension_level.value}), {trend}",
-            f"",
-            f"Phase Guidance: {phase.description}",
-            f"",
         ]
 
-        # Add expected beats
-        expected_beats = self._phase_manager.get_expected_beats()
-        if expected_beats:
-            lines.append("Expected Story Elements:")
-            for beat in expected_beats[:3]:
-                lines.append(f"  - {beat}")
-            lines.append("")
+        # Add phase guidance
+        if phase.description:
+            lines.append(f"Focus: {phase.description}")
 
         # Add pacing guidance
         pacing_note = self._tension_tracker.get_pacing_guidance(phase)

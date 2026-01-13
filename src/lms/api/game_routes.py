@@ -2181,16 +2181,33 @@ def _get_story_scope_guidance(scope: str, turn_count: int, max_turns: int) -> st
 
     progress = turn_count / max_turns if max_turns > 0 else 0
 
-    # CAMPAIGNS: Full Hero's Journey, episodic pacing
+    # CAMPAIGNS: Subtle, principle-based guidance (not prescriptive)
     if scope == "campaign":
-        return f"""
-=== STORY SCOPE: CAMPAIGN ===
-Pace for the LONG HAUL. Follow the Hero's Journey across many sessions.
-- Build slowly. Plant seeds that pay off sessions later.
-- Breathing room matters - not every scene needs high stakes.
-- Develop subplots, recurring characters, evolving relationships.
-- Each session: a satisfying beat in a larger tapestry.
-Turn: {turn_count} (ongoing - no set ending)"""
+        # Early campaign: focus on foundation, not structure
+        if turn_count < 20:
+            return f"""
+=== CAMPAIGN (Turn {turn_count}) ===
+Let them LIVE in this world first. No rush.
+- Who are they? What do they care about? Who do they know?
+- Small moments reveal character better than grand events
+- Plant seeds casually - a name mentioned, a detail noticed
+- Trust that significance will emerge from play"""
+        elif turn_count < 50:
+            return f"""
+=== CAMPAIGN (Turn {turn_count}) ===
+The world is taking shape through their choices.
+- Consequences ripple from earlier decisions
+- Recurring faces, familiar places, building history
+- Threads can dangle - not everything resolves quickly
+- Let their interests guide what becomes important"""
+        else:
+            return f"""
+=== CAMPAIGN (Turn {turn_count}) ===
+A story is emerging from the accumulated choices.
+- Honor what came before - callbacks reward attention
+- Subplots can simmer, main threads can breathe
+- Not every session needs crisis - quiet moments matter
+- The shape of their journey reveals itself through play"""
 
     # ONE-SHOTS: Compressed structure, immediate engagement
     if scope == "one_shot":
@@ -2617,11 +2634,13 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
 - Skills: {', '.join(dnd_char.skill_proficiencies[:4])}"""
 
     # Build arc context for narrative pacing (Hero's Journey phases, tension)
+    # Campaigns use subtle mode - structure should emerge naturally, not be announced
     arc_context_str = ""
     if arc_engine:
         try:
-            arc_context_str = arc_engine.get_dm_context_injection()
-            logger.debug(f"[ARC] Injecting context: phase={arc_engine.current_phase.value}, tension={arc_engine.tension_level.value}")
+            use_subtle = session_scope == "campaign"
+            arc_context_str = arc_engine.get_dm_context_injection(subtle=use_subtle)
+            logger.debug(f"[ARC] Injecting context (subtle={use_subtle}): phase={arc_engine.current_phase.value}, tension={arc_engine.tension_level.value}")
         except Exception as e:
             logger.warning(f"[ARC] Failed to get context injection: {e}")
 
