@@ -1,40 +1,131 @@
-# AIRPG World Creator Guide
+# Mantle World Creator Guide
 
 ## Welcome, Worldsmith!
 
-You have access to create curated worlds that players can explore. This guide will get you up and running.
+You have access to create and import worlds that players can explore. This guide covers everything you need to know.
 
 ---
 
 ## Getting Started
 
-### Step 1: Access the World Creator
+### Accessing the App
 
 1. Go to: **https://lore-management-system.fly.dev/**
-2. Press **Ctrl + Shift + A** (this is the secret admin shortcut)
-3. Enter the password: **worldsmith**
-4. You're in! Scroll down to the **World Creator** section (gold border)
+2. Enter your invite code: **JIM-ADMIN** (or your assigned code)
+3. You'll see the main landing page with the raven mascot
+
+### Admin Access
+
+For admin features:
+1. Press **Ctrl + Shift + A** (secret admin shortcut)
+2. Enter the password: **worldsmith**
+3. Scroll down to see admin tools
 
 ---
 
-## Creating a World
+## The World Creator
+
+From the main landing, click **"World Creator"** to access the world creation flow.
+
+### Two Ways to Create Worlds
+
+#### Option 1: Choose a Curated World
+Browse the pre-made worlds organized by genre:
+- Fantasy, Horror, Sci-Fi, Mystery, Romance
+- Click any world card to select it
+- Or choose "Fresh Canvas" to start from nothing
+
+#### Option 2: Import Your Own Lore
+Use the **File Explorer** to import your own world-building notes.
+
+---
+
+## The File Explorer (New!)
+
+The File Explorer lets you import your lore files easily.
+
+### How to Use It
+
+1. **Navigate to:** World Creator → "Import Your Own" section
+2. **Add files using any method:**
+   - **Drag & Drop:** Drag files or entire folders onto the drop zone
+   - **Browse Files:** Click "+ Add Files" to pick individual files
+   - **Browse Folder:** Click "+ Add Folder" to select a whole folder
+
+3. **Manage your files:**
+   - Files appear in a list with checkboxes
+   - **Toggle checkboxes** to include/exclude specific files
+   - **Click "Preview"** to see a file's contents before importing
+   - **Click X** to remove a file from the list
+   - Use "Select All" / "Deselect All" for bulk selection
+
+4. **Start the import:**
+   - Click **"Preview Extraction"**
+   - AI will analyze and extract entities from your lore
+
+### Supported File Types
+- `.txt` - Plain text files
+- `.md` - Markdown files
+- `.json` - JSON files (will extract `lore_content` if present)
+- `.pdf` - PDF documents
+
+### Tips for File Organization
+- Group related lore into separate files (characters.txt, locations.txt, etc.)
+- Use descriptive filenames - they'll appear in the file list
+- You can add multiple batches - files won't duplicate
+
+---
+
+## The Entity Review Panel (Human-in-the-Loop)
+
+After clicking "Preview Extraction", the AI analyzes your lore and shows what it found.
+
+### What You'll See
+- **Entity cards** for each character, location, faction, item, or concept found
+- Each card has a checkbox (checked = will be imported)
+- Entity type and description shown on each card
+
+### How to Review
+
+1. **Select/Deselect entities:**
+   - Click individual checkboxes
+   - Use "Select All" / "Deselect All" buttons
+   - Filter by type (Characters, Locations, etc.)
+
+2. **Edit entities:**
+   - Click on a name to edit it inline
+   - Fix AI mistakes before importing
+
+3. **Watch for warnings:**
+   - Cards with orange borders indicate possible duplicates
+   - Review these carefully - the AI flags similar names
+
+4. **Complete the import:**
+   - Click **"Import Selected Entities"**
+   - Only checked entities are saved to the database
+
+---
+
+## Creating Curated Worlds (Admin)
+
+With admin access, you can create curated worlds that appear in the world browser.
 
 ### The Fields
 
 | Field | What to Enter |
 |-------|---------------|
-| **World Name** | The display name players see (e.g., "The Shattered Isles") |
-| **World ID** | Auto-generated from name - leave as is, or customize |
-| **Short Description** | 1-2 sentences that entice players. This appears when they browse worlds |
-| **Genre(s)** | Click to select which genres this world fits. Can select multiple |
-| **Tone(s)** | The mood of your world. Select what fits |
+| **World Name** | Display name players see (e.g., "The Shattered Isles") |
+| **World ID** | Auto-generated from name, or customize it |
+| **Short Description** | 1-2 enticing sentences for the browse view |
+| **Genre(s)** | Select which genres fit (can pick multiple) |
+| **Tone(s)** | The mood of your world |
 | **The Lore** | The big text box - this is where your world lives |
 
 ---
 
 ## Writing Great Lore
 
-The lore content is what the AI uses to bring your world to life. Include:
+The lore content is what the AI uses to bring your world to life.
 
 ### Characters
 Give them personality, not just descriptions:
@@ -52,10 +143,6 @@ What makes the world interesting?
 Give the AI ammunition to create intrigue:
 > *"Someone has been sending anonymous letters to the heirs of both houses. The letters contain information that no one should know."*
 
-### History That Matters
-Not a textbook - living history:
-> *"Fifteen years ago, the Great Storm reshaped the coastline. Some say it was natural. Others say it was summoned. The bodies of three wizards washed ashore the next morning."*
-
 ---
 
 ## Tips for Success
@@ -64,13 +151,11 @@ Not a textbook - living history:
 2. **Characters need flaws and desires** - perfect people are boring
 3. **Leave mysteries unsolved** - the AI will work with players to explore them
 4. **Mix genres if it fits** - a romance can have mystery, adventure can have horror
-5. **Aim for 500-2000 characters** - enough detail to be rich, not so much it overwhelms
+5. **Use the file explorer** for large amounts of content - easier than pasting
 
 ---
 
 ## Example World
-
-Here's a complete example:
 
 **Name:** The Last Library
 **Description:** A forgotten library at the edge of reality, where lost books find their way home.
@@ -83,20 +168,29 @@ Here's a complete example:
 > The Librarian is old - impossibly old - with kind eyes and ink-stained fingers. They never give their name. They speak in riddles but always mean well. They know every book that has ever been lost, and they know which one you're looking for before you do.
 >
 > The stacks go on forever. The deeper you go, the older the books become. Some of the books down there aren't written in any human language. Some of them whisper when you walk past. The Librarian warns against going past the Seventh Reading Room - not because it's forbidden, but because those who do rarely come back the same.
->
-> There are others here. Lost readers who found their way in and chose to stay. They trade stories like currency. A good story can get you anything - a rare book, a warm meal, directions to the Cartography Section.
->
-> Something is wrong lately. Books are going missing. Not just any books - the ones that can't be replaced. The Librarian is worried but won't say why. They've started looking over their shoulder when they think no one is watching.
 
 ---
 
-## After You Create
+## The Knowledge Graph
 
-Once you hit "Create World":
-- The world is immediately available to players
-- It will show up when they select matching genres
-- You can create more worlds anytime
-- If something goes wrong, reach out and we'll fix it
+After importing entities, you can visualize them:
+1. Click **"View Lore Graph"** from the ingest screen
+2. Or navigate to the Graph screen from the main menu
+3. See all entities and their relationships as a visual network
+4. Click any node to inspect its details
+
+---
+
+## Quick Reference
+
+| Action | How |
+|--------|-----|
+| Access app | https://lore-management-system.fly.dev/ |
+| Admin mode | Ctrl + Shift + A, password: worldsmith |
+| Import files | World Creator → Import Your Own → File Explorer |
+| Review entities | After Preview Extraction, check/uncheck cards |
+| View graph | Click "View Lore Graph" after import |
+| Browse worlds | World Creator → Curated Worlds section |
 
 ---
 
