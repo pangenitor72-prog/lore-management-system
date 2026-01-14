@@ -2123,6 +2123,234 @@
         }
 
         /* ============================================
+           File Explorer (Drag & Drop)
+           ============================================ */
+        .file-explorer {
+            background: var(--bg-card);
+            border: 2px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .file-explorer.drag-over {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .file-explorer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .file-explorer-header h4 {
+            color: var(--accent-warm);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .file-explorer-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .file-explorer-actions button {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            background: var(--bg-page);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-explorer-actions button:hover {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .drop-zone {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.6;
+        }
+
+        .drop-zone p {
+            margin: 5px 0;
+        }
+
+        .drop-zone .hint {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .file-tree {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            background: var(--bg-page);
+        }
+
+        .file-tree:empty {
+            display: none;
+        }
+
+        .file-tree-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-subtle);
+            gap: 10px;
+            transition: background 0.2s;
+        }
+
+        .file-tree-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-tree-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .file-tree-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent-gold);
+        }
+
+        .file-tree-item .file-icon {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        .file-tree-item .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-tree-item .file-name {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-tree-item .file-size {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .file-tree-item .file-preview-btn {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-tree-item .file-preview-btn:hover {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .file-tree-item .file-remove-btn {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-tree-item .file-remove-btn:hover {
+            color: var(--accent-rose);
+        }
+
+        .file-tree-footer {
+            padding: 12px 15px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .file-preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .file-preview-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            max-width: 800px;
+            max-height: 80vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .file-preview-header h4 {
+            margin: 0;
+            color: var(--accent-warm);
+        }
+
+        .file-preview-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .file-preview-body pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ============================================
            Entity Review Panel (Human-in-the-Loop)
            ============================================ */
         .review-panel {
@@ -6625,24 +6853,35 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
             </div>
 
-            <!-- Custom Import -->
+            <!-- Custom Import with File Explorer -->
             <div class="setup-section">
                 <h3>Import Your Own</h3>
                 <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    Have your own world-building notes? Upload a file or paste text.
+                    Have your own world-building notes? Drag files or folders, or paste text directly.
                 </p>
 
-                <!-- File Upload -->
-                <div class="form-group">
-                    <label>Upload Files</label>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="file" id="lore-file" accept=".txt,.md,.json" multiple style="display: none;" onchange="handleFileSelect(event)">
-                        <button class="btn btn-secondary" onclick="document.getElementById('lore-file').click()" style="padding: 12px 20px;">
-                            Choose Files
-                        </button>
-                        <span id="file-name" style="color: var(--text-muted); font-size: 0.9rem;">No files selected</span>
+                <!-- File Explorer -->
+                <div class="file-explorer" id="file-explorer">
+                    <div class="file-explorer-header">
+                        <h4>&#128193; File Explorer</h4>
+                        <div class="file-explorer-actions">
+                            <input type="file" id="lore-file" accept=".txt,.md,.json,.pdf" multiple style="display: none;" onchange="handleExplorerFileSelect(event)">
+                            <input type="file" id="lore-folder" webkitdirectory style="display: none;" onchange="handleExplorerFolderSelect(event)">
+                            <button onclick="document.getElementById('lore-file').click()">+ Add Files</button>
+                            <button onclick="document.getElementById('lore-folder').click()">+ Add Folder</button>
+                            <button onclick="clearExplorerFiles()">Clear All</button>
+                        </div>
                     </div>
-                    <p class="hint">Supported: .txt, .md, .json files (select multiple with Ctrl+click)</p>
+
+                    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('lore-file').click()">
+                        <div class="drop-zone-icon">&#128451;</div>
+                        <p><strong>Drag & drop files or folders here</strong></p>
+                        <p class="hint">Or click to browse. Supports .txt, .md, .json, .pdf</p>
+                    </div>
+
+                    <div class="file-tree" id="file-tree">
+                        <!-- Files will be listed here dynamically -->
+                    </div>
                 </div>
 
                 <div style="text-align: center; color: var(--text-muted); margin: 15px 0;">— or —</div>
@@ -13053,57 +13292,156 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
-        // File Upload Handler
-        let selectedFiles = [];
+        // ============================================
+        // File Explorer System
+        // ============================================
 
-        async function handleFileSelect(event) {
-            const files = Array.from(event.target.files);
-            if (!files.length) {
-                selectedFiles = [];
-                document.getElementById('file-name').textContent = 'No files selected';
-                return;
-            }
+        // Store files with their metadata and content
+        let explorerFiles = [];
 
-            selectedFiles = files;
+        // Initialize drag-and-drop on page load
+        function initFileExplorer() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileExplorer = document.getElementById('file-explorer');
 
-            if (files.length === 1) {
-                document.getElementById('file-name').textContent = files[0].name;
-            } else {
-                document.getElementById('file-name').textContent = `${files.length} files selected`;
-            }
+            if (!dropZone || !fileExplorer) return;
 
-            showStatus('ingest-status', '<span class="loading"></span> Reading files...', 'info');
-
-            // Read all files
-            const fileContents = await Promise.all(files.map(file => readFileContent(file)));
-
-            // Combine all content with separators
-            let combinedContent = '';
-            let sourceName = '';
-
-            fileContents.forEach((result, index) => {
-                if (index > 0) {
-                    combinedContent += '\n\n---\n\n';  // Separator between files
-                }
-                combinedContent += `[Source: ${result.name}]\n\n${result.content}`;
-
-                // Use first file's name as source if not set
-                if (index === 0) {
-                    sourceName = result.sourceName;
-                }
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileExplorer.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
             });
 
-            document.getElementById('lore-content').value = combinedContent;
+            // Highlight drop zone when dragging over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileExplorer.addEventListener(eventName, () => fileExplorer.classList.add('drag-over'), false);
+            });
 
-            if (!document.getElementById('source-name').value) {
-                document.getElementById('source-name').value = files.length > 1 ? 'multi_import' : sourceName;
-            }
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileExplorer.addEventListener(eventName, () => fileExplorer.classList.remove('drag-over'), false);
+            });
 
-            const fileNames = files.map(f => f.name).join(', ');
-            showStatus('ingest-status', `Loaded ${files.length} file(s): ${fileNames}. Click "Preview Extraction" to analyze.`, 'success');
+            // Handle dropped files
+            fileExplorer.addEventListener('drop', handleFileDrop, false);
         }
 
-        function readFileContent(file) {
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Handle file drop
+        async function handleFileDrop(e) {
+            const items = e.dataTransfer.items;
+            const files = [];
+
+            // Process all items (files and folders)
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i].webkitGetAsEntry();
+                if (item) {
+                    const foundFiles = await traverseFileTree(item);
+                    files.push(...foundFiles);
+                }
+            }
+
+            if (files.length > 0) {
+                addFilesToExplorer(files);
+            }
+        }
+
+        // Recursively traverse file tree for folders
+        async function traverseFileTree(item, path = '') {
+            const files = [];
+
+            if (item.isFile) {
+                const file = await new Promise(resolve => item.file(resolve));
+                if (isValidFileType(file.name)) {
+                    file.relativePath = path + file.name;
+                    files.push(file);
+                }
+            } else if (item.isDirectory) {
+                const dirReader = item.createReader();
+                const entries = await new Promise(resolve => {
+                    const allEntries = [];
+                    const readEntries = () => {
+                        dirReader.readEntries(entries => {
+                            if (entries.length === 0) {
+                                resolve(allEntries);
+                            } else {
+                                allEntries.push(...entries);
+                                readEntries();
+                            }
+                        });
+                    };
+                    readEntries();
+                });
+
+                for (const entry of entries) {
+                    const subFiles = await traverseFileTree(entry, path + item.name + '/');
+                    files.push(...subFiles);
+                }
+            }
+
+            return files;
+        }
+
+        function isValidFileType(filename) {
+            const validExtensions = ['.txt', '.md', '.json', '.pdf'];
+            return validExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+        }
+
+        // Handle file input selection
+        function handleExplorerFileSelect(event) {
+            const files = Array.from(event.target.files).filter(f => isValidFileType(f.name));
+            if (files.length > 0) {
+                addFilesToExplorer(files);
+            }
+            event.target.value = ''; // Reset for re-selection
+        }
+
+        // Handle folder selection
+        function handleExplorerFolderSelect(event) {
+            const files = Array.from(event.target.files).filter(f => isValidFileType(f.name));
+            if (files.length > 0) {
+                addFilesToExplorer(files);
+            }
+            event.target.value = ''; // Reset for re-selection
+        }
+
+        // Add files to the explorer
+        async function addFilesToExplorer(files) {
+            showStatus('ingest-status', '<span class="loading"></span> Reading files...', 'info');
+
+            for (const file of files) {
+                // Check for duplicates
+                const existingIndex = explorerFiles.findIndex(f => f.name === file.name);
+                if (existingIndex !== -1) {
+                    continue; // Skip duplicates
+                }
+
+                try {
+                    const content = await readFileContentAsync(file);
+                    explorerFiles.push({
+                        id: Date.now() + Math.random(),
+                        name: file.relativePath || file.webkitRelativePath || file.name,
+                        displayName: file.name,
+                        size: file.size,
+                        content: content.content,
+                        sourceName: content.sourceName,
+                        selected: true
+                    });
+                } catch (err) {
+                    console.error(`Failed to read ${file.name}:`, err);
+                }
+            }
+
+            renderFileTree();
+            updateLoreContentFromFiles();
+            showStatus('ingest-status', `${explorerFiles.length} file(s) loaded. Select which to include, then click "Preview Extraction".`, 'success');
+        }
+
+        // Read file content (async version)
+        function readFileContentAsync(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
 
@@ -13132,6 +13470,181 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
                 reader.readAsText(file);
             });
+        }
+
+        // Render the file tree UI
+        function renderFileTree() {
+            const tree = document.getElementById('file-tree');
+            const dropZone = document.getElementById('drop-zone');
+
+            if (explorerFiles.length === 0) {
+                tree.innerHTML = '';
+                dropZone.style.display = 'block';
+                return;
+            }
+
+            dropZone.style.display = 'none';
+
+            const selectedCount = explorerFiles.filter(f => f.selected).length;
+            const totalSize = explorerFiles.reduce((sum, f) => sum + f.size, 0);
+
+            let html = '';
+            explorerFiles.forEach((file, index) => {
+                const icon = getFileIcon(file.displayName);
+                const sizeStr = formatFileSize(file.size);
+
+                html += `
+                    <div class="file-tree-item">
+                        <input type="checkbox"
+                               ${file.selected ? 'checked' : ''}
+                               onchange="toggleExplorerFile(${index})">
+                        <span class="file-icon">${icon}</span>
+                        <div class="file-info">
+                            <div class="file-name" title="${file.name}">${file.name}</div>
+                            <div class="file-size">${sizeStr}</div>
+                        </div>
+                        <button class="file-preview-btn" onclick="previewExplorerFile(${index})">Preview</button>
+                        <button class="file-remove-btn" onclick="removeExplorerFile(${index})">&#10005;</button>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="file-tree-footer">
+                    <span>${selectedCount} of ${explorerFiles.length} files selected (${formatFileSize(totalSize)})</span>
+                    <span style="display: flex; gap: 10px;">
+                        <button onclick="selectAllExplorerFiles()" style="padding: 4px 10px; font-size: 0.75rem; background: transparent; border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-muted); cursor: pointer;">Select All</button>
+                        <button onclick="deselectAllExplorerFiles()" style="padding: 4px 10px; font-size: 0.75rem; background: transparent; border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-muted); cursor: pointer;">Deselect All</button>
+                    </span>
+                </div>
+            `;
+
+            tree.innerHTML = html;
+        }
+
+        function getFileIcon(filename) {
+            if (filename.endsWith('.json')) return '&#128196;'; // Document
+            if (filename.endsWith('.md')) return '&#128221;'; // Memo
+            if (filename.endsWith('.pdf')) return '&#128213;'; // Book
+            return '&#128196;'; // Default document
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Toggle file selection
+        function toggleExplorerFile(index) {
+            explorerFiles[index].selected = !explorerFiles[index].selected;
+            renderFileTree();
+            updateLoreContentFromFiles();
+        }
+
+        // Select/deselect all
+        function selectAllExplorerFiles() {
+            explorerFiles.forEach(f => f.selected = true);
+            renderFileTree();
+            updateLoreContentFromFiles();
+        }
+
+        function deselectAllExplorerFiles() {
+            explorerFiles.forEach(f => f.selected = false);
+            renderFileTree();
+            updateLoreContentFromFiles();
+        }
+
+        // Remove a file
+        function removeExplorerFile(index) {
+            explorerFiles.splice(index, 1);
+            renderFileTree();
+            updateLoreContentFromFiles();
+        }
+
+        // Clear all files
+        function clearExplorerFiles() {
+            explorerFiles = [];
+            renderFileTree();
+            document.getElementById('lore-content').value = '';
+            document.getElementById('source-name').value = '';
+            showStatus('ingest-status', '', 'info');
+        }
+
+        // Preview a single file
+        function previewExplorerFile(index) {
+            const file = explorerFiles[index];
+
+            const modal = document.createElement('div');
+            modal.className = 'file-preview-modal';
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+
+            const content = file.content.length > 10000
+                ? file.content.substring(0, 10000) + '\n\n... (truncated, ' + formatFileSize(file.size) + ' total)'
+                : file.content;
+
+            modal.innerHTML = `
+                <div class="file-preview-content">
+                    <div class="file-preview-header">
+                        <h4>${file.displayName}</h4>
+                        <button onclick="this.closest('.file-preview-modal').remove()"
+                                style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">
+                            &#10005;
+                        </button>
+                    </div>
+                    <div class="file-preview-body">
+                        <pre>${escapeHtml(content)}</pre>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Update lore content textarea from selected files
+        function updateLoreContentFromFiles() {
+            const selectedFiles = explorerFiles.filter(f => f.selected);
+
+            if (selectedFiles.length === 0) {
+                // Don't clear - user might have pasted text
+                return;
+            }
+
+            let combinedContent = '';
+            selectedFiles.forEach((file, index) => {
+                if (index > 0) {
+                    combinedContent += '\n\n---\n\n';
+                }
+                combinedContent += `[Source: ${file.displayName}]\n\n${file.content}`;
+            });
+
+            document.getElementById('lore-content').value = combinedContent;
+
+            if (!document.getElementById('source-name').value) {
+                document.getElementById('source-name').value = selectedFiles.length > 1 ? 'multi_import' : selectedFiles[0].sourceName;
+            }
+        }
+
+        // Initialize on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', initFileExplorer);
+
+        // Legacy handler (backwards compat)
+        let selectedFiles = [];
+        async function handleFileSelect(event) {
+            // Redirect to new explorer system
+            handleExplorerFileSelect(event);
+        }
+
+        function readFileContent(file) {
+            return readFileContentAsync(file);
         }
 
         // ============================================
