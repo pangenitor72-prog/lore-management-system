@@ -158,17 +158,19 @@ All game API endpoints use `/api/game/...` prefix:
 
 ## File Explorer Usage (for Jim)
 
-1. Navigate to **World Creator** → **Import Your Own**
-2. **Add Files:**
+1. Access **Admin Panel** (Ctrl+Shift+A, password: worldsmith)
+2. Scroll to **🌍 World Creator** section
+3. Click **"📁 Open Full World Creator (File Explorer)"**
+4. **Add Files:**
    - Click "+ Add Files" to browse
    - Click "+ Add Folder" to add entire folder
    - Or drag & drop files/folders onto the drop zone
-3. **Manage Files:**
+5. **Manage Files:**
    - Files appear in a list with checkboxes
    - Toggle checkboxes to include/exclude
    - Click "Preview" to see file contents
    - Click X to remove a file
-4. **Import:**
+6. **Import:**
    - Click "Preview Extraction" to analyze
    - Review extracted entities (edit/select/deselect)
    - Click "Import Selected Entities" to save

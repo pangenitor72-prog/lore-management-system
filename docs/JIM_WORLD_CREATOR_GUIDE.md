@@ -14,18 +14,19 @@ You have access to create and import worlds that players can explore. This guide
 2. Enter your invite code: **JIM-ADMIN** (or your assigned code)
 3. You'll see the main landing page with the raven mascot
 
-### Admin Access
+### Admin Access (Required for World Creator)
 
-For admin features:
+The World Creator is an admin-only feature. To access it:
 1. Press **Ctrl + Shift + A** (secret admin shortcut)
 2. Enter the password: **worldsmith**
-3. Scroll down to see admin tools
+3. Scroll down to the **"🌍 World Creator"** section
+4. Click **"📁 Open Full World Creator (File Explorer)"**
 
 ---
 
 ## The World Creator
 
-From the main landing, click **"World Creator"** to access the world creation flow.
+From the Admin panel, click **"Open Full World Creator"** to access the world creation flow.
 
 ### Two Ways to Create Worlds
 
@@ -187,6 +188,7 @@ After importing entities, you can visualize them:
 |--------|-----|
 | Access app | https://lore-management-system.fly.dev/ |
 | Admin mode | Ctrl + Shift + A, password: worldsmith |
+| World Creator | Admin → 🌍 World Creator → Open Full World Creator |
 | Import files | World Creator → Import Your Own → File Explorer |
 | Review entities | After Preview Extraction, check/uncheck cards |
 | View graph | Click "View Lore Graph" after import |
