@@ -92,12 +92,43 @@ pytest -v
 # pytest.ini already configures pythonpath = . src
 ```
 
-### Frontend (React)
+### Frontend
+
+**CRITICAL: Two Frontend Systems**
+
+This project has TWO different frontends - understanding this prevents a recurring issue:
+
+1. **Production UI (Static)** - `frontend/dist/index.html`
+   - Self-contained 16k-line HTML file with inline CSS/JS
+   - Features the raven logo landing page ("Mantle - Your Story Awaits")
+   - This is what users see at localhost:8000
+   - **DO NOT OVERWRITE THIS FILE**
+
+2. **React App (Development)** - `frontend/src/`
+   - React components (WorldManager.jsx, AIRpg.jsx, etc.)
+   - For development/prototyping only
+   - Builds to `frontend/dist-react/` (NOT dist/)
+
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev      # React dev server on port 3000
+npm run build    # Builds to dist-react/ (safe - won't overwrite production UI)
 ```
+
+**Why This Matters:**
+- Running `npm run build` used to overwrite the static landing page
+- Vite config now outputs to `dist-react/` to prevent this
+- If the raven landing page disappears, run: `git restore frontend/dist/`
+
+**Static UI Modifications:**
+- To modify the production UI, edit `frontend/dist/index.html` directly
+- The ingest screen (line ~6275) handles world selection and lore import
+- All screens are `<div class="screen">` elements switched via `showScreen()`
+
+**API Routes:**
+- All game API routes use `/api/game/...` prefix
+- Example: `/api/game/lore-bases`, `/api/game/session`
 
 ## Architecture
 

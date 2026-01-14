@@ -2914,6 +2914,7 @@ class LoreBaseResponse(BaseModel):
     # Additional fields for frontend visibility
     has_lore_content: bool = False  # True if lore_content exists and is non-empty
     ingested: bool = False  # True if lore has been processed into entities
+    entities_created: int = 0  # Number of entities created in this request
 
 
 @router.get("/lore-bases", response_model=List[LoreBaseResponse])
@@ -3083,6 +3084,14 @@ async def ingest_lore_base(
         )
 
 
+class ApprovedEntity(BaseModel):
+    """An entity that has been reviewed and approved by the user."""
+    name: str
+    type: str
+    description: Optional[str] = None
+    traits: Optional[List[str]] = None
+
+
 class LoreBaseUploadRequest(BaseModel):
     """Request to create a new lore base."""
     id: str = Field(..., min_length=1, max_length=50, pattern=r"^[a-z0-9_]+$")
@@ -3092,6 +3101,10 @@ class LoreBaseUploadRequest(BaseModel):
     tone_hints: List[str] = Field(default_factory=list)
     seed_prompt: str = Field(default="")
     lore_content: str = Field(default="", description="Full lore text for entity extraction")
+    approved_entities: Optional[List[ApprovedEntity]] = Field(
+        default=None,
+        description="Pre-approved entities from review step - bypasses AI extraction"
+    )
 
 
 @router.post("/lore-bases", response_model=LoreBaseResponse)
@@ -3167,8 +3180,56 @@ async def create_lore_base(
     # Add to in-memory dict
     LORE_BASES[lore_base.id] = new_base
 
-    # AUTO-INGEST: Parse the lore content and create entities immediately
-    if lore_base.lore_content and len(lore_base.lore_content.strip()) >= 50:
+    entities_created = 0
+
+    # HUMAN-REVIEWED ENTITIES: If approved_entities provided, create those directly
+    if lore_base.approved_entities and len(lore_base.approved_entities) > 0:
+        logger.info(f"Creating {len(lore_base.approved_entities)} pre-approved entities for {lore_base.id}")
+        try:
+            for entity in lore_base.approved_entities:
+                entity_type = entity.type.capitalize()
+                canon_id = f"{lore_base.id}:{entity.name.lower().replace(' ', '_')}"
+
+                # Create the entity node in Neo4j
+                await db.execute(f"""
+                    MERGE (e:{entity_type} {{canon_id: $canon_id}})
+                    SET e.name = $name,
+                        e.description = $description,
+                        e.world_id = $world_id,
+                        e.curated_world_id = $curated_world_id,
+                        e.source = $source,
+                        e.genre = $genre,
+                        e.created_at = datetime()
+                """, {
+                    "canon_id": canon_id,
+                    "name": entity.name,
+                    "description": entity.description or "",
+                    "world_id": lore_base.id,
+                    "curated_world_id": lore_base.id,
+                    "source": f"lore_base:{lore_base.id}:reviewed",
+                    "genre": primary_genre,
+                })
+                entities_created += 1
+
+            # Update counts
+            new_base["ingested"] = True
+            new_base["entities_count"] = entities_created
+            LORE_BASES[lore_base.id] = new_base
+
+            # Update Neo4j node
+            await db.execute("""
+                MATCH (lb:LoreBase {lore_id: $id})
+                SET lb.ingested = true,
+                    lb.entities_count = $count
+            """, {"id": lore_base.id, "count": entities_created})
+
+            logger.info(f"Created {entities_created} reviewed entities for {lore_base.id}")
+
+        except Exception as e:
+            logger.error(f"Failed to create reviewed entities for {lore_base.id}: {e}")
+
+    # FALLBACK: If no approved_entities but has lore_content, do AI extraction
+    elif lore_base.lore_content and len(lore_base.lore_content.strip()) >= 50:
         try:
             from src.lms.agents.lore_parsing_agent import LoreParsingAgent
 
@@ -3187,6 +3248,7 @@ async def create_lore_base(
             # Update counts
             new_base["ingested"] = True
             new_base["entities_count"] = result.entities_stored
+            entities_created = result.entities_stored
             LORE_BASES[lore_base.id] = new_base
 
             # Update Neo4j node
@@ -3205,6 +3267,7 @@ async def create_lore_base(
             logger.error(f"Auto-ingest failed for {lore_base.id}: {e}")
             # World is still created, just not ingested
 
+    new_base["entities_created"] = entities_created
     return LoreBaseResponse(**new_base)
 
 
@@ -3278,6 +3341,405 @@ async def upload_lore_base_file(file: UploadFile = File(...)):
         "has_lore_content": bool(new_base["lore_content"]),
         "next_step": f"Call POST /api/game/lore-bases/{lore_id}/ingest to process entities"
     }
+
+
+class LoreBaseUpdateRequest(BaseModel):
+    """Request to update a lore base."""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, min_length=10, max_length=500)
+    genre: Optional[str] = None
+    genre_hints: Optional[List[str]] = None
+    tone_hints: Optional[List[str]] = None
+    seed_prompt: Optional[str] = None
+    lore_content: Optional[str] = None
+    approved_entities: Optional[List[ApprovedEntity]] = Field(
+        default=None,
+        description="Pre-approved entities from review step - creates new entities"
+    )
+
+
+@router.put("/lore-bases/{lore_id}", response_model=LoreBaseResponse)
+async def update_lore_base(
+    lore_id: str,
+    update: LoreBaseUpdateRequest,
+    request: Request,
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
+    """
+    Update an existing lore base's properties.
+
+    Only provided fields will be updated. To add new lore content
+    and re-ingest entities, call the /ingest endpoint after updating.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    base = LORE_BASES[lore_id]
+
+    # Update only provided fields
+    if update.name is not None:
+        base["name"] = update.name
+    if update.description is not None:
+        base["description"] = update.description
+    if update.genre is not None:
+        base["genre"] = update.genre
+    if update.genre_hints is not None:
+        base["genre_hints"] = update.genre_hints
+    if update.tone_hints is not None:
+        base["tone_hints"] = update.tone_hints
+    if update.seed_prompt is not None:
+        base["seed_prompt"] = update.seed_prompt
+    if update.lore_content is not None:
+        base["lore_content"] = update.lore_content
+        base["ingested"] = False  # Mark for re-ingestion
+
+    LORE_BASES[lore_id] = base
+
+    # Update Neo4j if exists
+    try:
+        await db.execute("""
+            MATCH (lb:LoreBase {lore_id: $id})
+            SET lb.name = $name,
+                lb.description = $description,
+                lb.genre = $genre,
+                lb.genre_hints = $genre_hints,
+                lb.tone_hints = $tone_hints,
+                lb.seed_prompt = $seed_prompt,
+                lb.lore_content = $lore_content,
+                lb.ingested = $ingested,
+                lb.updated_at = datetime()
+        """, {
+            "id": lore_id,
+            "name": base.get("name", ""),
+            "description": base.get("description", ""),
+            "genre": base.get("genre", ""),
+            "genre_hints": base.get("genre_hints", []),
+            "tone_hints": base.get("tone_hints", []),
+            "seed_prompt": base.get("seed_prompt", ""),
+            "lore_content": base.get("lore_content", ""),
+            "ingested": base.get("ingested", False),
+        })
+    except Exception as e:
+        logger.warning(f"Failed to update LoreBase in Neo4j: {e}")
+
+    # Also update JSON file if it exists
+    try:
+        file_path = LORE_BASES_DIR / f"{lore_id}.json"
+        if file_path.exists():
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(base, f, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to update lore base file: {e}")
+
+    # Create approved entities if provided
+    entities_created = 0
+    if update.approved_entities and len(update.approved_entities) > 0:
+        logger.info(f"Creating {len(update.approved_entities)} pre-approved entities for {lore_id}")
+        primary_genre = base.get("genre", "fantasy")
+        try:
+            for entity in update.approved_entities:
+                entity_type = entity.type.capitalize()
+                canon_id = f"{lore_id}:{entity.name.lower().replace(' ', '_')}"
+
+                # Create the entity node in Neo4j
+                await db.execute(f"""
+                    MERGE (e:{entity_type} {{canon_id: $canon_id}})
+                    SET e.name = $name,
+                        e.description = $description,
+                        e.world_id = $world_id,
+                        e.curated_world_id = $curated_world_id,
+                        e.source = $source,
+                        e.genre = $genre,
+                        e.created_at = datetime()
+                """, {
+                    "canon_id": canon_id,
+                    "name": entity.name,
+                    "description": entity.description or "",
+                    "world_id": lore_id,
+                    "curated_world_id": lore_id,
+                    "source": f"lore_base:{lore_id}:reviewed",
+                    "genre": primary_genre,
+                })
+                entities_created += 1
+
+            # Update entity count
+            current_count = base.get("entities_count", 0)
+            base["entities_count"] = current_count + entities_created
+            base["ingested"] = True
+            LORE_BASES[lore_id] = base
+
+            # Update Neo4j node
+            await db.execute("""
+                MATCH (lb:LoreBase {lore_id: $id})
+                SET lb.ingested = true,
+                    lb.entities_count = $count
+            """, {"id": lore_id, "count": base["entities_count"]})
+
+            logger.info(f"Created {entities_created} reviewed entities for {lore_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to create reviewed entities for {lore_id}: {e}")
+
+    return LoreBaseResponse(
+        id=base["id"],
+        name=base["name"],
+        description=base.get("description", ""),
+        genre=base.get("genre"),
+        genre_hints=base.get("genre_hints", []),
+        tone_hints=base.get("tone_hints", []),
+        entities_count=base.get("entities_count", 0),
+        seed_prompt=base.get("seed_prompt", ""),
+        is_seed=base.get("is_seed", False),
+        has_lore_content=bool(base.get("lore_content", "").strip()),
+        ingested=base.get("ingested", False),
+        entities_created=entities_created,
+    )
+
+
+class LoreBaseDeleteResponse(BaseModel):
+    """Response after deleting a lore base."""
+    lore_id: str
+    message: str
+    entities_deleted: int
+    relationships_deleted: int
+
+
+@router.delete("/lore-bases/{lore_id}", response_model=LoreBaseDeleteResponse)
+async def delete_lore_base(
+    lore_id: str,
+    request: Request,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+    delete_entities: bool = Query(True, description="Also delete all entities belonging to this world")
+):
+    """
+    Delete a lore base and optionally all its entities.
+
+    Args:
+        lore_id: ID of the lore base to delete
+        delete_entities: If True (default), also deletes all entities with this world_id
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    entities_deleted = 0
+    relationships_deleted = 0
+
+    # Delete entities if requested
+    if delete_entities:
+        try:
+            # Count entities first
+            count_result = await db.execute("""
+                MATCH (e:Entity {world_id: $world_id})
+                RETURN count(e) as count
+            """, {"world_id": lore_id})
+
+            if count_result:
+                entities_deleted = count_result[0].get("count", 0)
+
+            # Delete entities and their relationships
+            await db.execute("""
+                MATCH (e:Entity {world_id: $world_id})
+                DETACH DELETE e
+            """, {"world_id": lore_id})
+
+            # Also delete by curated_world_id
+            await db.execute("""
+                MATCH (e:Entity {curated_world_id: $world_id})
+                DETACH DELETE e
+            """, {"world_id": lore_id})
+
+            logger.info(f"Deleted {entities_deleted} entities for world {lore_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to delete entities for {lore_id}: {e}")
+
+    # Delete the LoreBase node from Neo4j
+    try:
+        await db.execute("""
+            MATCH (lb:LoreBase {lore_id: $id})
+            DETACH DELETE lb
+        """, {"id": lore_id})
+    except Exception as e:
+        logger.warning(f"Failed to delete LoreBase node: {e}")
+
+    # Delete JSON file if exists
+    try:
+        file_path = LORE_BASES_DIR / f"{lore_id}.json"
+        if file_path.exists():
+            file_path.unlink()
+            logger.info(f"Deleted lore base file: {file_path}")
+    except Exception as e:
+        logger.warning(f"Failed to delete lore base file: {e}")
+
+    # Also check seeds directory
+    try:
+        seed_path = SEEDS_DIR / f"{lore_id}.json"
+        if seed_path.exists():
+            seed_path.unlink()
+            logger.info(f"Deleted seed file: {seed_path}")
+    except Exception as e:
+        logger.warning(f"Failed to delete seed file: {e}")
+
+    # Remove from in-memory dict
+    del LORE_BASES[lore_id]
+
+    logger.info(f"Deleted lore base: {lore_id}")
+
+    return LoreBaseDeleteResponse(
+        lore_id=lore_id,
+        message=f"Successfully deleted world '{lore_id}'",
+        entities_deleted=entities_deleted,
+        relationships_deleted=relationships_deleted,
+    )
+
+
+class LorePreviewRequest(BaseModel):
+    """Request to preview lore extraction."""
+    lore_content: str = Field(..., min_length=10, description="Lore text to preview")
+
+
+class LorePreviewResponse(BaseModel):
+    """Response with previewed entities."""
+    entities: List[Dict[str, Any]]
+    summary: Dict[str, int]
+
+
+@router.post("/lore-bases/{lore_id}/preview", response_model=LorePreviewResponse)
+async def preview_lore_extraction(
+    lore_id: str,
+    preview_req: LorePreviewRequest,
+    request: Request,
+):
+    """
+    Preview what entities would be extracted from lore content.
+
+    This does NOT save anything - it just shows what the AI would extract.
+    Use this to verify extraction before committing.
+
+    Note: lore_id can be a placeholder (e.g., "preview") for new worlds
+    that don't exist yet. Preview only needs the lore content.
+    """
+    # Note: We don't require lore_id to exist - preview works for new worlds too
+    # The lore_id is just for context/routing, the actual extraction only needs text
+
+    try:
+        from src.lms.agents.lore_parsing_agent import LoreParsingAgent
+
+        agent = LoreParsingAgent()
+
+        # Parse WITHOUT storing
+        result = await agent.parse_lore(preview_req.lore_content)
+
+        # Format entities for preview
+        entities = []
+        summary = {
+            "characters": 0,
+            "locations": 0,
+            "factions": 0,
+            "items": 0,
+            "events": 0,
+            "concepts": 0,
+        }
+
+        for entity in result.entities:
+            entity_type = entity.entity_type.lower()
+            # Map singular to plural for summary
+            type_key = entity_type + "s" if entity_type != "concept" else "concepts"
+            if type_key in summary:
+                summary[type_key] += 1
+
+            entity_dict = {
+                "name": entity.name,
+                "type": entity.entity_type,
+                "description": entity.description,
+                "traits": entity.traits if entity.traits else [],
+            }
+
+            entities.append(entity_dict)
+
+        return LorePreviewResponse(
+            entities=entities,
+            summary=summary,
+        )
+
+    except Exception as e:
+        logger.error(f"Preview extraction failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Preview failed: {str(e)}"
+        )
+
+
+@router.get("/lore-bases/{lore_id}/entities")
+async def get_world_entities(
+    lore_id: str,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+    entity_type: Optional[str] = None,
+    limit: int = Query(100, le=500),
+):
+    """
+    Get all entities belonging to a specific world.
+
+    Returns entities filtered by world_id or curated_world_id.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    try:
+        query = """
+            MATCH (e:Entity)
+            WHERE e.world_id = $world_id OR e.curated_world_id = $world_id
+        """
+        params = {"world_id": lore_id}
+
+        if entity_type:
+            query += " AND e.entity_type = $entity_type"
+            params["entity_type"] = entity_type
+
+        query += """
+            RETURN e.canon_id as id,
+                   e.name as name,
+                   e.entity_type as type,
+                   e.description as description,
+                   e.confidence_level as confidence
+            ORDER BY e.entity_type, e.name
+            LIMIT $limit
+        """
+        params["limit"] = limit
+
+        result = await db.execute(query, params)
+
+        entities = []
+        for record in result:
+            entities.append({
+                "id": record.get("id"),
+                "name": record.get("name"),
+                "type": record.get("type"),
+                "description": record.get("description", "")[:200],
+                "confidence": record.get("confidence"),
+            })
+
+        return {
+            "world_id": lore_id,
+            "count": len(entities),
+            "entities": entities,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get entities for {lore_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get entities: {str(e)}"
+        )
 
 
 # ============================================================
