@@ -6208,12 +6208,7 @@
                 </div>
             </div>
 
-            <!-- Secondary Actions -->
-            <div class="landing-secondary">
-                <button class="landing-secondary-btn" onclick="showScreen('worldbuilder')">
-                    <span>🏰</span> World Builder
-                </button>
-            </div>
+            <!-- Secondary Actions (Admin features now in Admin panel) -->
 
             <!-- Footer links -->
             <p class="landing-footer">
@@ -6248,8 +6243,6 @@
                     <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">CREATE</div>
                     <a href="#" onclick="closeSiteMap(); showScreen('welcome'); return false;" class="sitemap-link">🎭 Genre Selection</a>
                     <a href="#" onclick="closeSiteMap(); showScreen('setup'); return false;" class="sitemap-link">⚙️ Story Setup</a>
-                    <a href="#" onclick="closeSiteMap(); showScreen('world-builder'); return false;" class="sitemap-link">🏰 World Builder</a>
-                    <a href="#" onclick="closeSiteMap(); showScreen('ingest'); return false;" class="sitemap-link">🌍 Curated Worlds</a>
 
                     <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">EXPLORE</div>
                     <a href="#" onclick="closeSiteMap(); showScreen('graph'); return false;" class="sitemap-link">🔗 Lore Graph</a>
@@ -6761,7 +6754,8 @@
         </div>
 
         <!-- Worldbuilder Screen -->
-        <div id="worldbuilder" class="screen">
+        <!-- DEPRECATED: Use ingest screen (World Creator) instead -->
+        <div id="worldbuilder" class="screen" style="display: none !important;">
             <div class="worldbuilder-header">
                 <h2>Worldbuilder</h2>
                 <p>Import your lore, preview entities, and build your world</p>
@@ -6851,15 +6845,14 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
         </div>
 
-        <!-- Ingest Screen -->
+        <!-- World Creator Screen (Admin Only) -->
         <div id="ingest" class="screen">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h2 style="color: var(--accent-warm); margin-bottom: 0; font-weight: normal;">Choose Your World</h2>
-                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Home</button>
+                <h2 style="color: var(--accent-gold); margin-bottom: 0; font-weight: normal;">🌍 World Creator</h2>
+                <button class="btn btn-secondary" onclick="showScreen('admin')" style="padding: 6px 15px;">← Admin</button>
             </div>
             <p style="color: var(--text-secondary); margin-bottom: 25px;">
-                Every great story needs a foundation. Choose from our curated worlds, or bring your own
-                universe to life.
+                Every great story needs a foundation. Choose from curated worlds, or import your own lore files.
             </p>
 
             <div id="ingest-status"></div>
@@ -7005,7 +6998,6 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             <div class="btn-group" style="margin-top: 30px;">
                 <button class="btn btn-primary" id="continue-to-story" style="display: none;" onclick="showScreen('setup')">Continue to Story Setup</button>
                 <button class="btn btn-secondary" onclick="showScreen('graph')">View Lore Graph</button>
-                <button class="btn btn-secondary" onclick="showScreen('world-builder')">← Back</button>
             </div>
         </div>
 
@@ -7164,7 +7156,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
 
             <div class="btn-group" style="margin-top: 20px;">
                 <button class="btn btn-secondary" onclick="loadGraphData()">Refresh</button>
-                <button class="btn btn-secondary" onclick="showScreen('world-builder')">← Back</button>
+                <button class="btn btn-secondary" onclick="showScreen('ingest')">← Back to World Creator</button>
             </div>
         </div>
 
@@ -7271,10 +7263,18 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
 
             <!-- World Creator (for Jim) -->
             <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
-                <h3 style="color: var(--accent-gold); margin-bottom: 5px;">World Creator</h3>
+                <h3 style="color: var(--accent-gold); margin-bottom: 5px;">🌍 World Creator</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
-                    Create a new curated world for players to explore.
+                    Import lore files, browse curated worlds, or create new worlds from scratch.
                 </p>
+
+                <button class="btn btn-primary" onclick="showScreen('ingest')" style="margin-bottom: 20px; background: var(--accent-gold); color: var(--bg-primary);">
+                    📁 Open Full World Creator (File Explorer)
+                </button>
+
+                <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 20px 0;">
+
+                <h4 style="color: var(--text-secondary); margin-bottom: 15px; font-weight: normal;">Quick Create New World</h4>
 
                 <div id="world-creator-status"></div>
 
@@ -7403,8 +7403,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             </div>
         </div>
 
-        <!-- World Builder Screen -->
-        <div id="world-builder" class="screen">
+        <!-- DEPRECATED: Use ingest screen (World Creator) instead -->
+        <div id="world-builder" class="screen" style="display: none !important;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h2 style="color: var(--accent-sage); margin-bottom: 0; font-weight: normal;">🏰 World Builder</h2>
                 <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back</button>
