@@ -1,38 +1,209 @@
 {
   "max_testers": 50,
   "codes": [
-    {"code": "DEV-ADMIN", "name": "Developer (Admin)", "activated": false, "activated_at": null},
-    {"code": "DEB2025", "name": "Deb Wood", "activated": false, "activated_at": null},
-    {"code": "MOM2025", "name": "Deb Wood", "activated": false, "activated_at": null},
-    {"code": "CAITLIN2025", "name": "Caitlin Byers", "activated": false, "activated_at": null},
-    {"code": "LAURA2025", "name": "Laura Wood", "activated": false, "activated_at": null},
-    {"code": "DAVID2025", "name": "David King", "activated": false, "activated_at": null},
-    {"code": "JIM-ADMIN", "name": "Jim (Admin)", "activated": false, "activated_at": null},
-    {"code": "JIM2026", "name": "Jim", "activated": false, "activated_at": null},
-    {"code": "MARIA2025", "name": "Maria", "activated": false, "activated_at": null},
-    {"code": "COREY2025", "name": "Corey", "activated": false, "activated_at": null},
-    {"code": "ERIK2025", "name": "Erik Olm", "activated": false, "activated_at": null},
-    {"code": "KATE2025", "name": "Kate Olm", "activated": false, "activated_at": null},
-    {"code": "JEREMY2025", "name": "Jeremy Painter", "activated": false, "activated_at": null},
-    {"code": "JOE2025", "name": "Joe Konklin", "activated": false, "activated_at": null},
-    {"code": "JEN2025", "name": "Jen Kitchen", "activated": false, "activated_at": null},
-    {"code": "SHAWN2025", "name": "Shawn", "activated": false, "activated_at": null},
-    {"code": "JEN2026", "name": "Jen", "activated": false, "activated_at": null},
-    {"code": "BOBBY2026", "name": "Bobby", "activated": false, "activated_at": null},
-    {"code": "YUSUF2026", "name": "Yusuf", "activated": false, "activated_at": null},
-    {"code": "DAREN2026", "name": "Daren", "activated": false, "activated_at": null},
-    {"code": "GRIFF2026", "name": "Griff", "activated": false, "activated_at": null},
-    {"code": "MIKE2026", "name": "Mike", "activated": false, "activated_at": null},
-    {"code": "AXE2026", "name": "Axe", "activated": false, "activated_at": null},
-    {"code": "FRIEND-01", "name": "Guest Tester", "activated": false, "activated_at": null},
-    {"code": "FRIEND-02", "name": "Guest Tester", "activated": false, "activated_at": null},
-    {"code": "FRIEND-03", "name": "Guest Tester", "activated": false, "activated_at": null},
-    {"code": "FRIEND-04", "name": "Guest Tester", "activated": false, "activated_at": null},
-    {"code": "FRIEND-05", "name": "Guest Tester", "activated": false, "activated_at": null},
-    {"code": "AIRPG-BETA", "name": "Public Beta", "activated": false, "activated_at": null},
-    {"code": "JAKE2026", "name": "Jake", "activated": false, "activated_at": null},
-    {"code": "TIM2026", "name": "Tim", "activated": false, "activated_at": null},
-    {"code": "KENDYLL2026", "name": "Kendyll", "activated": false, "activated_at": null},
-    {"code": "KAMRYN2026", "name": "Kamryn", "activated": false, "activated_at": null}
+    {
+      "code": "WORLDSMITH",
+      "name": "Worldsmith (Admin)",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "DEV-ADMIN",
+      "name": "Developer (Admin)",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "DEB2025",
+      "name": "Deb Wood",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "MOM2025",
+      "name": "Deb Wood",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "CAITLIN2025",
+      "name": "Caitlin Byers",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "LAURA2025",
+      "name": "Laura Wood",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "DAVID2025",
+      "name": "David King",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "JIM-ADMIN",
+      "name": "Jim (Admin)",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "JIM2026",
+      "name": "Jim",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "MARIA2025",
+      "name": "Maria",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "COREY2025",
+      "name": "Corey",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "ERIK2025",
+      "name": "Erik Olm",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "KATE2025",
+      "name": "Kate Olm",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "JEREMY2025",
+      "name": "Jeremy Painter",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "JOE2025",
+      "name": "Joe Konklin",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "JEN2025",
+      "name": "Jen Kitchen",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "SHAWN2025",
+      "name": "Shawn",
+      "activated": true,
+      "activated_at": "2026-01-14T07:22:46.451239+00:00"
+    },
+    {
+      "code": "JEN2026",
+      "name": "Jen",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "BOBBY2026",
+      "name": "Bobby",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "YUSUF2026",
+      "name": "Yusuf",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "DAREN2026",
+      "name": "Daren",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "GRIFF2026",
+      "name": "Griff",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "MIKE2026",
+      "name": "Mike",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "AXE2026",
+      "name": "Axe",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "FRIEND-01",
+      "name": "Guest Tester",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "FRIEND-02",
+      "name": "Guest Tester",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "FRIEND-03",
+      "name": "Guest Tester",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "FRIEND-04",
+      "name": "Guest Tester",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "FRIEND-05",
+      "name": "Guest Tester",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "AIRPG-BETA",
+      "name": "Public Beta",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "JAKE2026",
+      "name": "Jake",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "TIM2026",
+      "name": "Tim",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "KENDYLL2026",
+      "name": "Kendyll",
+      "activated": false,
+      "activated_at": null
+    },
+    {
+      "code": "KAMRYN2026",
+      "name": "Kamryn",
+      "activated": false,
+      "activated_at": null
+    }
   ]
 }
