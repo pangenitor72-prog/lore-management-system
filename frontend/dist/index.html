@@ -6893,7 +6893,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back to Start</button>
             </div>
             <p style="color: var(--text-secondary); margin-bottom: 25px;">
-                System administration and database management. Scroll down for <strong style="color: var(--accent-lavender);">Lore File Manager</strong>.
+                System administration and database management.
             </p>
 
             <div id="admin-status"></div>
@@ -7081,53 +7081,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     </button>
                     <button class="btn btn-secondary" onclick="clearWorldForm()">Clear Form</button>
                     <span id="wc-char-count" style="color: var(--text-muted); font-size: 0.85rem; margin-left: auto;">0 characters</span>
-                </div>
-            </div>
-
-            <!-- Lore File Manager -->
-            <div class="setup-section" style="border: 2px solid var(--accent-lavender); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
-                <h3 style="color: var(--accent-lavender); margin-bottom: 5px;">Lore File Manager</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
-                    Upload world-building documents, character backstories, and lore files. Supports .txt, .md, .json, and .pdf files.
-                </p>
-
-                <div id="file-manager-status"></div>
-
-                <!-- File Upload Area -->
-                <div id="file-drop-zone" class="file-drop-zone" onclick="document.getElementById('file-input').click()">
-                    <div class="file-drop-icon">📁</div>
-                    <div class="file-drop-text">
-                        <strong>Drop files here</strong> or click to browse
-                    </div>
-                    <div class="file-drop-hint">Multiple files supported</div>
-                    <input type="file" id="file-input" multiple accept=".txt,.md,.json,.pdf" style="display: none;" onchange="handleFileSelect(event)">
-                </div>
-
-                <!-- Upload Queue -->
-                <div id="upload-queue" style="display: none; margin-top: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Files to upload:</span>
-                        <button class="btn btn-secondary" onclick="clearUploadQueue()" style="padding: 6px 12px; font-size: 0.8rem;">Clear All</button>
-                    </div>
-                    <div id="upload-queue-list" style="max-height: 200px; overflow-y: auto;">
-                        <!-- Files listed here -->
-                    </div>
-                    <button class="btn btn-primary" onclick="uploadFiles()" style="width: 100%; margin-top: 15px;">
-                        Upload Files
-                    </button>
-                </div>
-
-                <!-- Uploaded Files List -->
-                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Uploaded Lore Files</span>
-                        <button class="btn btn-secondary" onclick="refreshFileList()" style="padding: 6px 12px; font-size: 0.8rem;">Refresh</button>
-                    </div>
-                    <div id="uploaded-files-list" style="background: var(--bg-primary); border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto;">
-                        <div style="color: var(--text-muted); text-align: center; padding: 20px;">
-                            <span class="loading"></span> Loading files...
-                        </div>
-                    </div>
                 </div>
             </div>
 
