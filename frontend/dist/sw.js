@@ -1,6 +1,6 @@
 // Mantle Service Worker - Enables offline functionality and app-like experience
 // IMPORTANT: Update this version string on every deploy to bust caches!
-const CACHE_VERSION = '2026-01-14-v21';
+const CACHE_VERSION = '2026-01-14-v22';
 const CACHE_NAME = `mantle-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
