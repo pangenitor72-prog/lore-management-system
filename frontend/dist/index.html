@@ -318,14 +318,15 @@
         }
 
         .invite-box {
-            background: var(--bg-card);
-            border: 2px solid var(--border-subtle);
-            border-radius: 20px;
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-medium);
             padding: 40px;
             max-width: 450px;
             width: 100%;
             position: relative;
             z-index: 1;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.3), 0 8px 32px rgba(0,0,0,0.4);
         }
 
         .invite-box h2 {
@@ -392,7 +393,7 @@
             background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
             color: var(--bg-primary);
             padding: 4px 12px;
-            border-radius: 20px;
+            border-radius: var(--radius-sharp);
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -433,10 +434,17 @@
         }
 
         .landing-mascot {
-            width: 180px;
+            width: 160px;
             height: auto;
             margin-bottom: 15px;
-            filter: drop-shadow(0 0 20px rgba(232, 196, 124, 0.3));
+            padding: 15px;
+            border: 2px solid var(--accent-gold);
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, var(--bg-card) 0%, var(--bg-primary) 100%);
+            box-shadow:
+                0 0 20px rgba(212, 175, 55, 0.2),
+                inset 0 0 30px rgba(0, 0, 0, 0.4);
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.3));
             animation: float 6s ease-in-out infinite;
         }
 
@@ -524,6 +532,7 @@
                 width: 100px !important;
                 height: auto !important;
                 margin-bottom: 15px !important;
+                padding: 10px !important;
             }
 
             .mantle-logo-container {
@@ -558,20 +567,21 @@
         }
 
         .landing-card {
-            background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
-            border: 2px solid var(--border-subtle);
-            border-radius: 20px;
+            background: linear-gradient(180deg, var(--bg-card) 0%, rgba(22,22,26,0.95) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-medium);
             padding: 30px 20px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             text-align: center;
             position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
         }
 
         .landing-card:hover {
             border-color: var(--accent-warm);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-3px);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3), 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .landing-card.ttrpg-card {
@@ -608,7 +618,7 @@
             color: var(--accent-gold);
             font-size: 0.75rem;
             padding: 4px 12px;
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             letter-spacing: 0.03em;
         }
 
@@ -628,7 +638,7 @@
             border: 1px solid var(--border-subtle);
             color: var(--text-secondary);
             padding: 12px 25px;
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -767,7 +777,7 @@
         .genre-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 20px 15px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -869,7 +879,7 @@
 
         .tutorial-card {
             background: var(--bg-secondary);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             padding: 40px;
             max-width: 550px;
             width: 90%;
@@ -923,7 +933,7 @@
 
         .tutorial-example {
             background: var(--bg-card);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 20px;
             margin: 20px 0;
             text-align: left;
@@ -1013,7 +1023,7 @@
         .example-prompts {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 15px;
             margin-bottom: 15px;
         }
@@ -1037,7 +1047,7 @@
             padding: 8px 14px;
             background: var(--bg-secondary);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             font-size: 0.85rem;
             color: var(--text-secondary);
             cursor: pointer;
@@ -1053,7 +1063,7 @@
         #suggested-actions-panel {
             background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
             border: 1px solid var(--border-accent);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 12px 15px;
             margin-top: 10px;
             display: none;
@@ -1083,7 +1093,7 @@
             padding: 8px 16px;
             background: var(--bg-primary);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             font-size: 0.9rem;
             color: var(--text-secondary);
             cursor: pointer;
@@ -1198,7 +1208,7 @@
             padding: 16px;
             background: var(--bg-card);
             border: 2px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -1344,7 +1354,7 @@
 
         .passage {
             padding: 20px;
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             line-height: 1.8;
             animation: fadeIn 0.4s ease;
         }
@@ -1410,7 +1420,7 @@
             gap: 4px;
             padding: 12px 16px;
             background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             border-left: 3px solid var(--accent-warm);
         }
 
@@ -1493,7 +1503,7 @@
         .character-hud {
             background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 12px 16px;
             margin-bottom: 15px;
             display: none;
@@ -1622,7 +1632,7 @@
             padding: 8px 14px;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             color: var(--text-secondary);
             font-size: 0.85rem;
             cursor: pointer;
@@ -1842,7 +1852,7 @@
             padding: 8px 16px;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             color: var(--text-secondary);
             cursor: pointer;
             font-size: 0.85rem;
@@ -1871,7 +1881,7 @@
         .lore-base-item {
             background: var(--bg-card);
             border: 2px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 20px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -1927,7 +1937,7 @@
             padding: 16px;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             color: var(--text-primary);
             font-family: inherit;
             font-size: 1rem;
@@ -1971,7 +1981,7 @@
         .entity-preview-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 20px;
             margin-top: 20px;
             display: none;
@@ -2052,7 +2062,7 @@
             font-size: 0.75rem;
             padding: 3px 10px;
             background: var(--bg-secondary);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             color: var(--text-muted);
             text-transform: uppercase;
         }
@@ -2161,7 +2171,7 @@
         .file-explorer {
             background: var(--bg-card);
             border: 2px dashed var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 20px;
             margin-bottom: 20px;
             transition: all 0.3s ease;
@@ -2346,7 +2356,7 @@
         .file-preview-content {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             max-width: 800px;
             max-height: 80vh;
             width: 100%;
@@ -2389,7 +2399,7 @@
         .review-panel {
             background: var(--bg-secondary);
             border: 2px solid var(--accent-gold);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 20px;
             margin-top: 20px;
             display: none;
@@ -2580,7 +2590,7 @@
             font-size: 0.7rem;
             padding: 3px 10px;
             background: var(--bg-secondary);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             color: var(--text-muted);
             text-transform: uppercase;
             white-space: nowrap;
@@ -2696,7 +2706,7 @@
         .wb-entity-card {
             background: var(--bg-card);
             border: 2px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 16px;
             margin-bottom: 12px;
             transition: all 0.2s ease;
@@ -2734,7 +2744,7 @@
             font-size: 0.75rem;
             padding: 3px 10px;
             background: var(--bg-secondary);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             color: var(--text-muted);
             text-transform: uppercase;
         }
@@ -2834,7 +2844,7 @@
             margin-top: 25px;
             padding: 20px;
             background: var(--bg-card);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             display: none;
         }
 
@@ -2876,7 +2886,7 @@
             padding: 8px 16px;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.2s ease;
@@ -2915,7 +2925,7 @@
         .save-slot {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 18px 20px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -3013,7 +3023,7 @@
             padding: 16px 20px;
             background: var(--bg-card);
             border: 2px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: left;
@@ -3090,7 +3100,7 @@
             height: 500px;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             margin: 20px 0;
         }
 
@@ -3136,7 +3146,7 @@
         /* Character Creation Modal */
         .creation-step {
             padding: 6px 12px;
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -3500,7 +3510,7 @@
         .char-review-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 20px;
         }
 
@@ -3599,7 +3609,7 @@
         .review-skill {
             background: var(--bg-secondary);
             padding: 4px 10px;
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             font-size: 0.85rem;
             color: var(--text-secondary);
         }
@@ -3645,7 +3655,7 @@
             padding: 8px 14px;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             margin: 4px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -3665,7 +3675,7 @@
 
         .char-summary {
             background: var(--bg-secondary);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 20px;
             margin-bottom: 15px;
         }
@@ -3793,7 +3803,7 @@
             width: 100%;
             text-align: left;
             cursor: pointer;
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             transition: background 0.2s ease;
         }
 
@@ -4054,7 +4064,7 @@
                 padding: 16px;
                 background: var(--bg-card);
                 border: 1px solid var(--border-subtle);
-                border-radius: 12px;
+                border-radius: var(--radius-soft);
                 color: var(--text-primary);
                 font-family: inherit;
                 font-size: 1rem;
@@ -4175,7 +4185,7 @@
                 margin-bottom: 10px;
                 padding: 12px;
                 background: var(--bg-card);
-                border-radius: 12px;
+                border-radius: var(--radius-soft);
                 border: 1px solid var(--border-subtle);
             }
 
@@ -4187,7 +4197,7 @@
                 padding: 12px 16px;
                 background: var(--bg-secondary);
                 border: 1px solid var(--border-subtle);
-                border-radius: 20px;
+                border-radius: var(--radius-medium);
                 color: var(--text-primary);
                 font-size: 0.9rem;
                 cursor: pointer;
@@ -4514,7 +4524,7 @@
             text-align: center;
             letter-spacing: 0.1em;
             padding: 4px 12px;
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             margin-top: 8px;
         }
 
@@ -4803,7 +4813,7 @@
         .death-saves-container {
             background: linear-gradient(135deg, rgba(91, 32, 32, 0.3), rgba(139, 61, 61, 0.2));
             border: 1px solid var(--accent-rose);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 15px;
             margin: 15px 0;
         }
@@ -4897,7 +4907,7 @@
             padding: 4px 10px;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             font-size: 0.75rem;
             color: var(--text-muted);
             cursor: pointer;
@@ -5020,7 +5030,7 @@
         /* File Drop Zone */
         .file-drop-zone {
             border: 2px dashed var(--border-accent);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 40px 20px;
             text-align: center;
             cursor: pointer;
@@ -5302,7 +5312,7 @@
         .feedback-modal {
             background: var(--bg-card);
             border: 2px solid var(--accent-rose);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             padding: 30px;
             max-width: 450px;
             width: 100%;
@@ -5340,7 +5350,7 @@
         .feedback-category {
             padding: 8px 16px;
             border: 2px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             background: var(--bg-secondary);
             color: var(--text-secondary);
             font-size: 0.85rem;
@@ -5366,7 +5376,7 @@
             padding: 15px;
             background: var(--bg-secondary);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             color: var(--text-primary);
             font-family: inherit;
             font-size: 1rem;
@@ -5761,7 +5771,7 @@
         .scene-card {
             background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            border-radius: var(--radius-soft);
             padding: 16px 20px;
             margin-bottom: 16px;
             position: relative;
@@ -5857,7 +5867,7 @@
             gap: 4px;
             background: var(--bg-hover);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: var(--radius-medium);
             padding: 4px 10px;
             font-size: 0.8rem;
             color: var(--text-secondary);
@@ -6781,7 +6791,7 @@
                 </div>
 
                 <div id="wb-selected-world" style="margin-top: 20px; display: none;">
-                    <div style="background: var(--bg-card); border-radius: 12px; padding: 20px; border: 1px solid var(--accent-gold);">
+                    <div style="background: var(--bg-card); border-radius: var(--radius-soft); padding: 20px; border: 1px solid var(--accent-gold);">
                         <h3 style="color: var(--accent-gold); margin-bottom: 10px;" id="wb-selected-name">Selected World</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 15px;" id="wb-selected-desc">Description</p>
                         <div class="btn-group">
@@ -6879,7 +6889,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
 
                 <!-- Fresh Canvas always available -->
-                <div class="lore-base-card" onclick="selectLoreBase('empty')" data-lore="empty" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease; max-width: 300px;">
+                <div class="lore-base-card" onclick="selectLoreBase('empty')" data-lore="empty" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-soft); padding: 20px; cursor: pointer; transition: all 0.3s ease; max-width: 300px;">
                     <span style="font-size: 1.5rem;">&#10024;</span>
                     <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">Fresh Canvas</h4>
                     <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Start with nothing. Let the world emerge organically from your story.</p>
@@ -7014,7 +7024,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             <div class="graph-filters" style="
                 background: var(--bg-card);
                 border: 1px solid var(--border-subtle);
-                border-radius: 12px;
+                border-radius: var(--radius-soft);
                 padding: 20px;
                 margin-bottom: 20px;
             ">
@@ -7173,14 +7183,14 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             <!-- Database Stats -->
             <div class="setup-section">
                 <h3>Database Status</h3>
-                <div id="db-stats" style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <div id="db-stats" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-soft); margin-bottom: 20px;">
                     <span class="loading"></span> Loading...
                 </div>
                 <button class="btn btn-secondary" onclick="loadDbStats()">Refresh Stats</button>
             </div>
 
             <!-- API Usage / Cost Tracking -->
-            <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+            <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-gold); margin-bottom: 5px;">💰 API Usage & Costs</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
                     Real-time Gemini API usage. Daily limit: $2.00 (resets at midnight UTC).
@@ -7196,7 +7206,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- Analytics Dashboard -->
-            <div class="setup-section" style="border: 2px solid var(--accent-sage); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+            <div class="setup-section" style="border: 2px solid var(--accent-sage); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-sage); margin-bottom: 5px;">📊 Tester Analytics</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
                     Real-time engagement data from your testers.
@@ -7212,7 +7222,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- Feedback Viewer -->
-            <div class="setup-section" style="border: 2px solid var(--accent-rose); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+            <div class="setup-section" style="border: 2px solid var(--accent-rose); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-rose); margin-bottom: 5px;">💬 Tester Feedback</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
                     Feedback submitted by playtesters.
@@ -7228,7 +7238,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- World Manager - View/Edit existing curated worlds -->
-            <div class="setup-section" style="border: 2px solid var(--accent-lavender); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+            <div class="setup-section" style="border: 2px solid var(--accent-lavender); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-lavender); margin-bottom: 5px;">🌍 World Manager</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
                     View and edit lore for all curated worlds. See entity counts and clean up orphan data.
@@ -7260,7 +7270,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- World Creator (for Jim) -->
-            <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: 12px; padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+            <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-gold); margin-bottom: 5px;">World Creator</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
                     Create a new curated world for players to explore.
@@ -7357,7 +7367,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             </div>
 
             <!-- Danger Zone -->
-            <div class="setup-section" style="border: 1px solid var(--accent-rose); border-radius: 12px; padding: 20px; margin-top: 30px;">
+            <div class="setup-section" style="border: 1px solid var(--accent-rose); border-radius: var(--radius-soft); padding: 20px; margin-top: 30px;">
                 <h3 style="color: var(--accent-rose);">Danger Zone</h3>
                 <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
                     These actions are destructive and cannot be undone. Use with caution.
@@ -7423,7 +7433,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             </div>
 
             <!-- Import Lore Section -->
-            <div class="setup-section" style="border: 2px solid var(--accent-sage); border-radius: 12px; padding: 25px;">
+            <div class="setup-section" style="border: 2px solid var(--accent-sage); border-radius: var(--radius-soft); padding: 25px;">
                 <h3 style="color: var(--accent-sage); margin-bottom: 15px;">Quick Import</h3>
                 <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
                     Paste lore text directly to extract characters, locations, and relationships.
@@ -9391,7 +9401,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     <div class="lore-base-card ${isSelected ? 'selected' : ''}"
                          onclick="selectLoreBase('${world.id}')"
                          data-lore="${world.id}"
-                         style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s ease;">
+                         style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-soft); padding: 20px; cursor: pointer; transition: all 0.3s ease;">
                         <div class="world-card-genre">${genre.toUpperCase()}</div>
                         <span class="world-card-icon">${icon}</span>
                         <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">${world.name}</h4>
@@ -15225,7 +15235,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         background: ${typeColor};
                         color: var(--bg-primary);
                         padding: 4px 12px;
-                        border-radius: 20px;
+                        border-radius: var(--radius-medium);
                         font-size: 0.8rem;
                         font-weight: 600;
                     ">${entity.entity_type}</span>
@@ -15328,7 +15338,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         background: ${typeColor};
                         color: var(--bg-primary);
                         padding: 4px 12px;
-                        border-radius: 20px;
+                        border-radius: var(--radius-medium);
                         font-size: 0.8rem;
                         font-weight: 600;
                     ">${data.entity_type}</span>
