@@ -2633,6 +2633,71 @@
             color: var(--accent-lavender);
         }
 
+        .review-entity-aliases {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 6px;
+        }
+
+        .review-entity-aliases::before {
+            content: "Also known as: ";
+            color: var(--text-secondary);
+            font-style: normal;
+        }
+
+        .review-entity-temporal {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .review-temporal-tag {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            background: rgba(212, 175, 55, 0.15);
+            border-radius: 6px;
+            color: var(--accent-gold);
+        }
+
+        .review-temporal-tag::before {
+            content: "⏱ ";
+        }
+
+        .review-entity-source {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--bg-primary);
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+            border-left: 2px solid var(--border-subtle);
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
+        .review-entity-source::before {
+            content: "📜 Source: ";
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .review-entity-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .review-tag {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            background: rgba(138, 180, 137, 0.2);
+            border-radius: 6px;
+            color: var(--accent-sage);
+        }
+
         .review-entity-actions {
             display: flex;
             gap: 6px;
@@ -6219,7 +6284,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v21</span>
+                <span style="opacity: 0.5;">v23</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
@@ -13811,6 +13876,22 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     '<span class="review-trait-tag">' + t + '</span>'
                 ).join('');
 
+                const aliases = (entity.aliases || []).length > 0
+                    ? '<div class="review-entity-aliases">' + entity.aliases.join(', ') + '</div>'
+                    : '';
+
+                const tags = (entity.tags || []).map(t =>
+                    '<span class="review-tag">' + t + '</span>'
+                ).join('');
+
+                const temporalCues = (entity.temporal_cues || []).map(t =>
+                    '<span class="review-temporal-tag">' + t + '</span>'
+                ).join('');
+
+                const sourceText = entity.verbatim_text
+                    ? '<div class="review-entity-source">' + entity.verbatim_text + '</div>'
+                    : '';
+
                 return `
                     <div class="${cardClasses}" data-index="${index}" data-type="${entity.type.toLowerCase()}">
                         <div class="review-checkbox">
@@ -13827,11 +13908,15 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 }
                                 <span class="review-entity-type-badge">${entity.type}</span>
                             </div>
+                            ${aliases}
                             ${entity.editing
                                 ? '<textarea class="review-entity-description editable" onblur="saveEntityEdit(' + index + ', \'description\', this.value)">' + (entity.description || '') + '</textarea>'
                                 : '<p class="review-entity-description">' + (entity.description || '<em>No description</em>') + '</p>'
                             }
+                            ${tags ? '<div class="review-entity-tags">' + tags + '</div>' : ''}
                             ${traits ? '<div class="review-entity-traits">' + traits + '</div>' : ''}
+                            ${temporalCues ? '<div class="review-entity-temporal">' + temporalCues + '</div>' : ''}
+                            ${sourceText}
                         </div>
                         <div class="review-entity-actions">
                             <button class="review-action-btn ${entity.editing ? 'editing' : ''}"

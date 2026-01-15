@@ -3659,6 +3659,10 @@ async def preview_lore_extraction(
                 "type": entity.entity_type,
                 "description": entity.description,
                 "traits": entity.traits if entity.traits else [],
+                "aliases": entity.aliases if entity.aliases else [],
+                "tags": entity.tags if entity.tags else [],
+                "temporal_cues": entity.temporal_cues if entity.temporal_cues else [],
+                "verbatim_text": entity.verbatim_text if entity.verbatim_text else "",
             }
 
             entities.append(entity_dict)

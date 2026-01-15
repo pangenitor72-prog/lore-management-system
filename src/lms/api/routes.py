@@ -957,7 +957,9 @@ async def preview_extraction(
                 "type": entity_type,
                 "description": entity.description,
                 "traits": entity.traits,
+                "aliases": entity.aliases if entity.aliases else [],
                 "tags": entity.tags,
+                "temporal_cues": entity.temporal_cues if entity.temporal_cues else [],
                 "verbatim_text": entity.verbatim_text,
                 "ocean": ocean,
             })
