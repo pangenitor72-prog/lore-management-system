@@ -6392,7 +6392,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v35</span>
+                <span style="opacity: 0.5;">v36</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
@@ -16445,7 +16445,23 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                             <div style="flex: 1;">
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <span style="font-size: 1.2rem; transition: transform 0.2s; transform: rotate(${isExpanded ? '90deg' : '0deg'});">▶</span>
-                                    <strong style="color: var(--text-primary); font-size: 1.1rem;">${world.name}</strong>
+                                    <span id="world-name-display-${world.id}">
+                                        <strong style="color: var(--text-primary); font-size: 1.1rem;">${escapeHtml(world.name)}</strong>
+                                        <button onclick="event.stopPropagation(); editWorldName('${world.id}', '${escapeHtml(world.name).replace(/'/g, "\\'")}')"
+                                                style="background: none; border: none; cursor: pointer; padding: 2px 6px; margin-left: 4px; color: var(--text-muted); font-size: 0.85rem; opacity: 0.6; transition: opacity 0.2s;"
+                                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'"
+                                                title="Edit world name">✏️</button>
+                                    </span>
+                                    <span id="world-name-editor-${world.id}" style="display: none;">
+                                        <input type="text" id="world-name-input-${world.id}"
+                                               style="padding: 4px 8px; font-size: 1rem; font-weight: 600; background: var(--bg-secondary); border: 1px solid var(--accent-gold); border-radius: 4px; color: var(--text-primary); width: 200px;"
+                                               onclick="event.stopPropagation()"
+                                               onkeydown="if(event.key==='Enter'){saveWorldName('${world.id}');event.preventDefault()}else if(event.key==='Escape'){cancelWorldNameEdit('${world.id}')}">
+                                        <button onclick="event.stopPropagation(); saveWorldName('${world.id}')"
+                                                style="background: var(--accent-sage); border: none; cursor: pointer; padding: 4px 8px; margin-left: 4px; color: var(--bg-primary); font-size: 0.8rem; border-radius: 4px;">Save</button>
+                                        <button onclick="event.stopPropagation(); cancelWorldNameEdit('${world.id}')"
+                                                style="background: none; border: 1px solid var(--border-subtle); cursor: pointer; padding: 4px 8px; margin-left: 2px; color: var(--text-muted); font-size: 0.8rem; border-radius: 4px;">Cancel</button>
+                                    </span>
                                     <span style="color: var(--text-muted); font-size: 0.85rem;">${world.id}</span>
                                 </div>
                                 <div style="color: var(--text-secondary); font-size: 0.9rem; margin: 5px 0 5px 28px;">${world.description}</div>
@@ -16869,6 +16885,83 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             } catch (err) {
                 showStatus('wm-add-lore-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        // World name editing functions
+        function editWorldName(worldId, currentName) {
+            const displaySpan = document.getElementById(`world-name-display-${worldId}`);
+            const editorSpan = document.getElementById(`world-name-editor-${worldId}`);
+            const input = document.getElementById(`world-name-input-${worldId}`);
+
+            if (displaySpan && editorSpan && input) {
+                displaySpan.style.display = 'none';
+                editorSpan.style.display = 'inline';
+                input.value = currentName;
+                input.focus();
+                input.select();
+            }
+        }
+
+        function cancelWorldNameEdit(worldId) {
+            const displaySpan = document.getElementById(`world-name-display-${worldId}`);
+            const editorSpan = document.getElementById(`world-name-editor-${worldId}`);
+
+            if (displaySpan && editorSpan) {
+                displaySpan.style.display = 'inline';
+                editorSpan.style.display = 'none';
+            }
+        }
+
+        async function saveWorldName(worldId) {
+            const input = document.getElementById(`world-name-input-${worldId}`);
+            const displaySpan = document.getElementById(`world-name-display-${worldId}`);
+            const editorSpan = document.getElementById(`world-name-editor-${worldId}`);
+
+            if (!input) return;
+
+            const newName = input.value.trim();
+            if (!newName) {
+                alert('World name cannot be empty');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to update world name');
+                }
+
+                // Update the display
+                if (displaySpan) {
+                    displaySpan.innerHTML = `
+                        <strong style="color: var(--text-primary); font-size: 1.1rem;">${escapeHtml(newName)}</strong>
+                        <button onclick="event.stopPropagation(); editWorldName('${worldId}', '${escapeHtml(newName).replace(/'/g, "\\'")}')"
+                                style="background: none; border: none; cursor: pointer; padding: 2px 6px; margin-left: 4px; color: var(--text-muted); font-size: 0.85rem; opacity: 0.6; transition: opacity 0.2s;"
+                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'"
+                                title="Edit world name">✏️</button>
+                    `;
+                    displaySpan.style.display = 'inline';
+                }
+                if (editorSpan) {
+                    editorSpan.style.display = 'none';
+                }
+
+                // Update in worldManagerData cache
+                if (worldManagerData && worldManagerData.worlds) {
+                    const world = worldManagerData.worlds.find(w => w.id === worldId);
+                    if (world) world.name = newName;
+                }
+
+                showToast(`World renamed to "${newName}"`);
+            } catch (err) {
+                alert(`Error: ${err.message}`);
             }
         }
 
