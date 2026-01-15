@@ -13904,18 +13904,25 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('ingest-results').classList.remove('visible');
 
             try {
+                console.log('[Preview] Starting extraction for:', sourceName);
+                console.log('[Preview] Content length:', content.length);
+
                 const response = await fetch(window.location.origin + '/api/game/lore-bases/' + sourceName + '/preview', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lore_content: content })
                 });
 
+                console.log('[Preview] Response status:', response.status);
+
                 if (!response.ok) {
                     const err = await response.json().catch(() => ({ detail: 'Preview failed' }));
+                    console.error('[Preview] Error response:', err);
                     throw new Error(err.detail || 'Preview failed');
                 }
 
                 const data = await response.json();
+                console.log('[Preview] Received:', data.entities?.length || 0, 'entities,', data.relationships?.length || 0, 'relationships');
 
                 if (!data.entities || data.entities.length === 0) {
                     showStatus('ingest-status', 'No entities found in the lore. Try adding more detailed content.', 'warning');
@@ -13962,8 +13969,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 document.getElementById('entity-review-panel').classList.add('visible');
 
             } catch (e) {
-                console.error('Preview error:', e);
-                showStatus('ingest-status', 'Preview failed: ' + e.message, 'error');
+                console.error('[Preview] Error:', e);
+                showStatus('ingest-status', '❌ Preview failed: ' + e.message + '<br><small style="color: var(--text-muted);">Check browser console (F12) for details.</small>', 'error');
             }
         }
 
