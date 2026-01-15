@@ -6392,7 +6392,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v24</span>
+                <span style="opacity: 0.5;">v35</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
@@ -7420,7 +7420,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             <div class="setup-section" style="border: 2px solid var(--accent-lavender); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-lavender); margin-bottom: 5px;">🌍 World Manager</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
-                    View and edit lore for all curated worlds. See entity counts and clean up orphan data.
+                    Full control over curated worlds: view entities, add/remove lore, delete worlds.
                 </p>
 
                 <div id="world-manager-status"></div>
@@ -7436,7 +7436,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
 
                 <!-- World List -->
-                <div id="world-manager-list" style="max-height: 600px; overflow-y: auto;">
+                <div id="world-manager-list" style="max-height: none; overflow-y: visible;">
                     <div style="text-align: center; padding: 30px;">
                         <span class="loading"></span> Loading worlds...
                     </div>
@@ -7445,6 +7445,55 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
                     <button class="btn btn-secondary" onclick="loadWorldManagerData()">Refresh</button>
                     <button class="btn btn-primary" onclick="ingestAllUnprocessed()" style="background: var(--accent-gold); color: var(--bg-primary);">⚡ Ingest All Unprocessed</button>
+                </div>
+            </div>
+
+            <!-- World Manager Modals -->
+            <div id="wm-delete-modal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 500px;">
+                    <h3 style="color: var(--accent-rose); margin-bottom: 15px;">🗑️ Delete World</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        You are about to delete <strong id="wm-delete-world-name" style="color: var(--text-primary);"></strong>.
+                    </p>
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px;">
+                            <input type="radio" name="delete-mode" value="world-only" checked>
+                            <span><strong>Delete world definition only</strong><br><small style="color: var(--text-muted);">Keep all entities in the database</small></span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="radio" name="delete-mode" value="world-and-entities">
+                            <span><strong style="color: var(--accent-rose);">Delete world AND all entities</strong><br><small style="color: var(--text-muted);">Permanently removes all <span id="wm-delete-entity-count">0</span> entities</small></span>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="closeDeleteWorldModal()">Cancel</button>
+                        <button class="btn" onclick="confirmDeleteWorld()" style="background: var(--accent-rose); color: white;">Delete</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="wm-add-lore-modal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 700px;">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 15px;">📁 Add Lore to <span id="wm-add-lore-world-name"></span></h3>
+                    <div id="wm-add-lore-status"></div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: var(--text-secondary); margin-bottom: 8px;">Upload Files</label>
+                        <div id="wm-add-lore-dropzone" style="border: 2px dashed var(--border-subtle); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s;"
+                             ondragover="event.preventDefault(); this.style.borderColor='var(--accent-gold)'; this.style.background='rgba(212,175,55,0.1)';"
+                             ondragleave="this.style.borderColor='var(--border-subtle)'; this.style.background='transparent';"
+                             ondrop="handleAddLoreFileDrop(event)"
+                             onclick="document.getElementById('wm-add-lore-file-input').click()">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                            <div style="color: var(--text-secondary);">Drop files here or click to browse</div>
+                            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">.txt, .md files supported</div>
+                        </div>
+                        <input type="file" id="wm-add-lore-file-input" multiple accept=".txt,.md" style="display: none;" onchange="handleAddLoreFileSelect(event)">
+                    </div>
+                    <div id="wm-add-lore-files" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;"></div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="closeAddLoreModal()">Cancel</button>
+                        <button class="btn btn-primary" id="wm-add-lore-submit" onclick="submitAddLore()" disabled style="background: var(--accent-gold); color: var(--bg-primary);">Add Lore & Extract</button>
+                    </div>
                 </div>
             </div>
 
@@ -9751,10 +9800,40 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             previewPanel.style.display = 'block';
-            entityList.innerHTML = '<div class="wb-loading"><div class="typing-indicator"><span></span><span></span><span></span></div><p>AI is analyzing your lore...</p></div>';
+
+            // Progress timer with live updates
+            const startTime = Date.now();
+            const wordCount = text.split(/\s+/).length;
+            const progressMessages = [
+                'AI is analyzing your lore...',
+                'Scanning for entities...',
+                'Extracting characters & locations...',
+                'Mapping relationships...',
+                'Building knowledge graph...',
+                'Almost there...',
+                'Still working...',
+            ];
+            let msgIndex = 0;
+
+            const updateProgress = () => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const mins = Math.floor(elapsed / 60);
+                const secs = elapsed % 60;
+                const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+                const msg = progressMessages[Math.min(msgIndex, progressMessages.length - 1)];
+                entityList.innerHTML = `<div class="wb-loading">
+                    <div class="typing-indicator"><span></span><span></span><span></span></div>
+                    <p>${msg}</p>
+                    <p style="opacity: 0.6; font-size: 0.85rem; margin-top: 8px;">${timeStr} elapsed • ${wordCount.toLocaleString()} words</p>
+                </div>`;
+                msgIndex++;
+            };
+
+            updateProgress();
+            const progressInterval = setInterval(updateProgress, 5000);
 
             try {
-                const response = await fetch(API_BASE.replace('/api', '') + '/ingest/preview', {
+                const response = await fetch(API_BASE + '/ingest/preview', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -9763,6 +9842,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     })
                 });
 
+                clearInterval(progressInterval);
+
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.detail || 'Preview failed');
@@ -9770,13 +9851,20 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 const result = await response.json();
 
+                // Calculate total time
+                const totalElapsed = Math.floor((Date.now() - startTime) / 1000);
+                const totalMins = Math.floor(totalElapsed / 60);
+                const totalSecs = totalElapsed % 60;
+                const totalTimeStr = totalMins > 0 ? `${totalMins}m ${totalSecs}s` : `${totalSecs}s`;
+
                 // Store entities for approval workflow
                 previewedEntities = result.entities || [];
                 approvedEntities = new Set(previewedEntities.map((_, i) => i));
                 rejectedEntities = new Set();
 
-                renderEntityPreview('Extracted Entities', previewedEntities, result.relationships, result.summary);
+                renderEntityPreview(`Extracted Entities (${totalTimeStr})`, previewedEntities, result.relationships, result.summary);
             } catch (err) {
+                clearInterval(progressInterval);
                 console.error('Preview failed:', err);
                 entityList.innerHTML = `<p class="wb-error">Analysis failed: ${err.message}</p>`;
             }
@@ -13897,7 +13985,36 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             clearStatus('ingest-status');
-            showStatus('ingest-status', '<span class="loading"></span> Analyzing your lore...', 'info');
+
+            // Progress timer
+            const startTime = Date.now();
+            const wordCount = content.split(/\s+/).length;
+            const progressMessages = [
+                'Analyzing your lore...',
+                'Scanning for entities...',
+                'Extracting characters...',
+                'Mapping relationships...',
+                'Building knowledge graph...',
+                'Almost there...',
+                'Still working...',
+            ];
+            let msgIndex = 0;
+
+            const updateProgress = () => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const mins = Math.floor(elapsed / 60);
+                const secs = elapsed % 60;
+                const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+                const msg = progressMessages[Math.min(msgIndex, progressMessages.length - 1)];
+                showStatus('ingest-status',
+                    `<span class="loading"></span> ${msg} <span style="opacity: 0.6; margin-left: 8px;">(${timeStr} • ${wordCount.toLocaleString()} words)</span>`,
+                    'info'
+                );
+                msgIndex++;
+            };
+
+            updateProgress();
+            const progressInterval = setInterval(updateProgress, 5000); // Update every 5 seconds
 
             // Hide review panel while loading
             document.getElementById('entity-review-panel').classList.remove('visible');
@@ -13954,10 +14071,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const relCount = reviewRelationships.length;
                 const relSummary = relCount > 0 ? ` and <strong>${relCount}</strong> relationships` : '';
 
+                // Calculate elapsed time
+                const totalElapsed = Math.floor((Date.now() - startTime) / 1000);
+                const totalMins = Math.floor(totalElapsed / 60);
+                const totalSecs = totalElapsed % 60;
+                const totalTimeStr = totalMins > 0 ? `${totalMins}m ${totalSecs}s` : `${totalSecs}s`;
+
                 // Show review panel
                 clearStatus('ingest-status');
                 showStatus('ingest-status',
-                    `<strong>&#10003; Extraction Complete!</strong> Found ${typeSummary}${relSummary}. Review below before importing.`,
+                    `<strong>&#10003; Extraction Complete!</strong> Found ${typeSummary}${relSummary} in ${totalTimeStr}. Review below before importing.`,
                     'success'
                 );
 
@@ -13968,7 +14091,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 document.getElementById('entity-review-panel').classList.add('visible');
 
+                clearInterval(progressInterval);
+
             } catch (e) {
+                clearInterval(progressInterval);
                 console.error('[Preview] Error:', e);
                 showStatus('ingest-status', '❌ Preview failed: ' + e.message + '<br><small style="color: var(--text-muted);">Check browser console (F12) for details.</small>', 'error');
             }
@@ -15194,7 +15320,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             statsEl.innerHTML = '<span class="loading"></span> Loading graph data...';
 
             // Build URL with all filters
-            let url = API_BASE + '/game/graph?limit=2000';
+            let url = API_BASE + '/game/graph?limit=10000';
             const activeFilters = [];
 
             if (curatedWorldFilter && curatedWorldFilter.value) {
@@ -16276,6 +16402,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
+        // Track expanded worlds and their loaded data
+        let expandedWorlds = new Set();
+        let worldEntitiesCache = {};
+        let worldSourcesCache = {};
+        let wmDeleteWorldId = null;
+        let wmAddLoreWorldId = null;
+        let wmAddLoreFiles = [];
+
         function renderWorldManager(data) {
             const container = document.getElementById('world-manager-list');
             if (!container) return;
@@ -16299,45 +16433,73 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             `;
 
             worlds.forEach(world => {
+                const isExpanded = expandedWorlds.has(world.id);
                 const genreChips = (world.genre_hints || []).map(g =>
                     `<span style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: var(--text-muted);">${g}</span>`
                 ).join(' ');
 
                 html += `
                     <div class="world-manager-item" style="background: var(--bg-primary); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 3px solid var(--accent-lavender);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                            <div>
-                                <strong style="color: var(--text-primary); font-size: 1.1rem;">${world.name}</strong>
-                                <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 10px;">${world.id}</span>
+                        <!-- Header Row - Click to expand -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer;" onclick="toggleWorldExpand('${world.id}')">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 1.2rem; transition: transform 0.2s; transform: rotate(${isExpanded ? '90deg' : '0deg'});">▶</span>
+                                    <strong style="color: var(--text-primary); font-size: 1.1rem;">${world.name}</strong>
+                                    <span style="color: var(--text-muted); font-size: 0.85rem;">${world.id}</span>
+                                </div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem; margin: 5px 0 5px 28px;">${world.description}</div>
+                                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-left: 28px;">${genreChips}</div>
                             </div>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <span style="background: ${world.entity_count > 0 ? 'var(--accent-sage)' : 'var(--accent-rose)'}; color: var(--bg-primary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
+                            <div style="display: flex; gap: 8px; align-items: center;" onclick="event.stopPropagation();">
+                                <span style="background: ${world.entity_count > 0 ? 'var(--accent-sage)' : 'var(--bg-secondary)'}; color: ${world.entity_count > 0 ? 'var(--bg-primary)' : 'var(--text-muted)'}; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
                                     ${world.entity_count} entities
                                 </span>
-                                ${world.has_lore_content ? `
-                                    <button class="btn btn-secondary" onclick="ingestWorldLore('${world.id}')" style="padding: 4px 10px; font-size: 0.85rem; ${world.entity_count === 0 ? 'background: var(--accent-gold); color: var(--bg-primary);' : ''}">
-                                        ${world.entity_count === 0 ? '⚡ Ingest' : '🔄 Re-ingest'}
-                                    </button>
-                                ` : ''}
-                                <button class="btn btn-secondary" onclick="toggleWorldLoreEditor('${world.id}')" style="padding: 4px 10px; font-size: 0.85rem;">
-                                    Edit Lore
-                                </button>
                             </div>
                         </div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px;">${world.description}</div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">${genreChips}</div>
-                        <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 8px;">
-                            ${world.lore_char_count} characters of lore
-                        </div>
 
-                        <!-- Lore Editor (hidden by default) -->
-                        <div id="lore-editor-${world.id}" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
-                            <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">Lore Content:</label>
-                            <textarea id="lore-textarea-${world.id}" rows="10" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; line-height: 1.5; resize: vertical;">${escapeHtml(world.lore_content || '')}</textarea>
-                            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                <button class="btn btn-primary" onclick="saveWorldLore('${world.id}')" style="padding: 8px 16px;">Save Lore</button>
-                                <button class="btn btn-secondary" onclick="toggleWorldLoreEditor('${world.id}')" style="padding: 8px 16px;">Cancel</button>
-                                <span id="lore-status-${world.id}" style="margin-left: auto; color: var(--text-muted); font-size: 0.85rem;"></span>
+                        <!-- Expanded Content -->
+                        <div id="world-expand-${world.id}" style="display: ${isExpanded ? 'block' : 'none'}; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
+                            <!-- Action Buttons -->
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+                                <button class="btn btn-secondary" onclick="openAddLoreModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem;">
+                                    📁 Add Lore Files
+                                </button>
+                                <button class="btn btn-secondary" onclick="toggleWorldLoreEditor('${world.id}')" style="padding: 6px 12px; font-size: 0.85rem;">
+                                    ✏️ Edit Raw Lore
+                                </button>
+                                ${world.has_lore_content ? `
+                                    <button class="btn btn-secondary" onclick="ingestWorldLore('${world.id}')" style="padding: 6px 12px; font-size: 0.85rem; ${world.entity_count === 0 ? 'background: var(--accent-gold); color: var(--bg-primary);' : ''}">
+                                        ${world.entity_count === 0 ? '⚡ Ingest Lore' : '🔄 Re-ingest'}
+                                    </button>
+                                ` : ''}
+                                <button class="btn" onclick="openDeleteWorldModal('${world.id}', '${escapeHtml(world.name)}', ${world.entity_count})" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
+                                    🗑️ Delete World
+                                </button>
+                            </div>
+
+                            <!-- Lore Editor (hidden by default) -->
+                            <div id="lore-editor-${world.id}" style="display: none; margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                                <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.9rem;">Raw Lore Content (${world.lore_char_count} chars):</label>
+                                <textarea id="lore-textarea-${world.id}" rows="10" style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; line-height: 1.5; resize: vertical;">${escapeHtml(world.lore_content || '')}</textarea>
+                                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                    <button class="btn btn-primary" onclick="saveWorldLore('${world.id}')" style="padding: 8px 16px;">Save Lore</button>
+                                    <button class="btn btn-secondary" onclick="toggleWorldLoreEditor('${world.id}')" style="padding: 8px 16px;">Cancel</button>
+                                    <span id="lore-status-${world.id}" style="margin-left: auto; color: var(--text-muted); font-size: 0.85rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Entity Sources & Entities -->
+                            <div id="world-entities-${world.id}">
+                                ${world.entity_count > 0 ? `
+                                    <div style="text-align: center; padding: 20px;">
+                                        <span class="loading"></span> Loading entities...
+                                    </div>
+                                ` : `
+                                    <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                                        No entities yet. Add lore and ingest to create entities.
+                                    </div>
+                                `}
                             </div>
                         </div>
                     </div>
@@ -16345,6 +16507,369 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             });
 
             container.innerHTML = html;
+
+            // Load entities for any expanded worlds
+            expandedWorlds.forEach(worldId => {
+                const world = worlds.find(w => w.id === worldId);
+                if (world && world.entity_count > 0) {
+                    loadWorldEntities(worldId);
+                }
+            });
+        }
+
+        async function toggleWorldExpand(worldId) {
+            const expandDiv = document.getElementById(`world-expand-${worldId}`);
+            if (!expandDiv) return;
+
+            if (expandedWorlds.has(worldId)) {
+                expandedWorlds.delete(worldId);
+                expandDiv.style.display = 'none';
+                // Update arrow
+                const item = expandDiv.closest('.world-manager-item');
+                if (item) {
+                    const arrow = item.querySelector('span[style*="transform"]');
+                    if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
+            } else {
+                expandedWorlds.add(worldId);
+                expandDiv.style.display = 'block';
+                // Update arrow
+                const item = expandDiv.closest('.world-manager-item');
+                if (item) {
+                    const arrow = item.querySelector('span[style*="transform"]');
+                    if (arrow) arrow.style.transform = 'rotate(90deg)';
+                }
+                // Load entities if world has any
+                const world = worldManagerData?.worlds?.find(w => w.id === worldId);
+                if (world && world.entity_count > 0) {
+                    loadWorldEntities(worldId);
+                }
+            }
+        }
+
+        async function loadWorldEntities(worldId) {
+            const container = document.getElementById(`world-entities-${worldId}`);
+            if (!container) return;
+
+            container.innerHTML = `<div style="text-align: center; padding: 20px;"><span class="loading"></span> Loading entities...</div>`;
+
+            try {
+                // Load sources and entities
+                const [sourcesRes, entitiesRes] = await Promise.all([
+                    fetch(API_BASE + `/game/lore-bases/${worldId}/sources`),
+                    fetch(API_BASE + `/game/lore-bases/${worldId}/entities?limit=5000`)
+                ]);
+
+                if (!sourcesRes.ok || !entitiesRes.ok) throw new Error('Failed to load data');
+
+                const sourcesData = await sourcesRes.json();
+                const entitiesData = await entitiesRes.json();
+
+                worldSourcesCache[worldId] = sourcesData.sources;
+                worldEntitiesCache[worldId] = entitiesData.entities;
+
+                renderWorldEntities(worldId);
+            } catch (err) {
+                container.innerHTML = `<div style="color: var(--accent-rose); padding: 20px;">Error: ${err.message}</div>`;
+            }
+        }
+
+        function renderWorldEntities(worldId) {
+            const container = document.getElementById(`world-entities-${worldId}`);
+            if (!container) return;
+
+            const sources = worldSourcesCache[worldId] || [];
+            const entities = worldEntitiesCache[worldId] || [];
+
+            if (entities.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">No entities found.</div>`;
+                return;
+            }
+
+            // Group entities by source
+            const bySource = {};
+            entities.forEach(e => {
+                const src = e.source_name || 'unknown';
+                if (!bySource[src]) bySource[src] = [];
+                bySource[src].push(e);
+            });
+
+            let html = `
+                <div style="margin-bottom: 10px; color: var(--text-secondary); font-size: 0.9rem;">
+                    <strong>${entities.length}</strong> entities from <strong>${Object.keys(bySource).length}</strong> source${Object.keys(bySource).length !== 1 ? 's' : ''}
+                </div>
+            `;
+
+            Object.entries(bySource).forEach(([sourceName, sourceEntities]) => {
+                const sourceId = sourceName.replace(/[^a-zA-Z0-9]/g, '_');
+                html += `
+                    <div style="background: var(--bg-secondary); border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; cursor: pointer; background: var(--bg-card);" onclick="toggleSourceExpand('${worldId}', '${sourceId}')">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span id="source-arrow-${worldId}-${sourceId}" style="transition: transform 0.2s;">▶</span>
+                                <span style="color: var(--text-primary); font-weight: 500;">📄 ${sourceName}</span>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">(${sourceEntities.length} entities)</span>
+                            </div>
+                            <button class="btn" onclick="event.stopPropagation(); deleteSourceEntities('${worldId}', '${sourceName}')" style="padding: 4px 10px; font-size: 0.8rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
+                                Delete All
+                            </button>
+                        </div>
+                        <div id="source-entities-${worldId}-${sourceId}" style="display: none; padding: 10px 15px; max-height: 400px; overflow-y: auto;">
+                            ${sourceEntities.map(e => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--bg-primary); border-radius: 6px; margin-bottom: 5px;">
+                                    <div style="flex: 1; min-width: 0;">
+                                        <span style="color: var(--text-primary); font-weight: 500;">${e.name}</span>
+                                        <span style="background: var(--accent-lavender); color: var(--bg-primary); padding: 1px 6px; border-radius: 3px; font-size: 0.7rem; margin-left: 8px;">${e.type}</span>
+                                        <div style="color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px;">${e.description || 'No description'}</div>
+                                    </div>
+                                    <button onclick="deleteEntity('${worldId}', '${e.id}', '${escapeHtml(e.name)}')" style="padding: 4px 8px; font-size: 0.75rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose); border-radius: 4px; cursor: pointer; flex-shrink: 0; margin-left: 10px;">
+                                        ✕
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleSourceExpand(worldId, sourceId) {
+            const container = document.getElementById(`source-entities-${worldId}-${sourceId}`);
+            const arrow = document.getElementById(`source-arrow-${worldId}-${sourceId}`);
+            if (!container) return;
+
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                if (arrow) arrow.style.transform = 'rotate(90deg)';
+            } else {
+                container.style.display = 'none';
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        async function deleteEntity(worldId, entityId, entityName) {
+            if (!confirm(`Delete entity "${entityName}"? This cannot be undone.`)) return;
+
+            showStatus('world-manager-status', `<span class="loading"></span> Deleting ${entityName}...`, 'info');
+
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}/entities/${entityId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Delete failed');
+                }
+
+                showStatus('world-manager-status', `✓ Deleted "${entityName}"`, 'success');
+
+                // Refresh entities for this world
+                await loadWorldEntities(worldId);
+                // Refresh world manager to update counts
+                loadWorldManagerData();
+            } catch (err) {
+                showStatus('world-manager-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function deleteSourceEntities(worldId, sourceName) {
+            const count = (worldEntitiesCache[worldId] || []).filter(e => e.source_name === sourceName).length;
+            if (!confirm(`Delete ALL ${count} entities from "${sourceName}"? This cannot be undone.`)) return;
+
+            showStatus('world-manager-status', `<span class="loading"></span> Deleting ${count} entities from ${sourceName}...`, 'info');
+
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}/entities?source_name=${encodeURIComponent(sourceName)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Delete failed');
+                }
+
+                const result = await response.json();
+                showStatus('world-manager-status', `✓ ${result.message}`, 'success');
+
+                // Refresh
+                await loadWorldEntities(worldId);
+                loadWorldManagerData();
+            } catch (err) {
+                showStatus('world-manager-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        // Delete World Modal
+        function openDeleteWorldModal(worldId, worldName, entityCount) {
+            wmDeleteWorldId = worldId;
+            document.getElementById('wm-delete-world-name').textContent = worldName;
+            document.getElementById('wm-delete-entity-count').textContent = entityCount;
+            document.getElementById('wm-delete-modal').style.display = 'flex';
+            // Reset to default option
+            document.querySelector('input[name="delete-mode"][value="world-only"]').checked = true;
+        }
+
+        function closeDeleteWorldModal() {
+            document.getElementById('wm-delete-modal').style.display = 'none';
+            wmDeleteWorldId = null;
+        }
+
+        async function confirmDeleteWorld() {
+            if (!wmDeleteWorldId) return;
+
+            const deleteEntities = document.querySelector('input[name="delete-mode"]:checked').value === 'world-and-entities';
+
+            closeDeleteWorldModal();
+            showStatus('world-manager-status', `<span class="loading"></span> Deleting world...`, 'info');
+
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${wmDeleteWorldId}?delete_entities=${deleteEntities}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Delete failed');
+                }
+
+                const result = await response.json();
+                showStatus('world-manager-status', `✓ ${result.message}`, 'success');
+
+                // Clear from expanded set and caches
+                expandedWorlds.delete(wmDeleteWorldId);
+                delete worldEntitiesCache[wmDeleteWorldId];
+                delete worldSourcesCache[wmDeleteWorldId];
+
+                // Refresh
+                loadWorldManagerData();
+            } catch (err) {
+                showStatus('world-manager-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        // Add Lore Modal
+        function openAddLoreModal(worldId, worldName) {
+            wmAddLoreWorldId = worldId;
+            wmAddLoreFiles = [];
+            document.getElementById('wm-add-lore-world-name').textContent = worldName;
+            document.getElementById('wm-add-lore-files').innerHTML = '';
+            document.getElementById('wm-add-lore-submit').disabled = true;
+            clearStatus('wm-add-lore-status');
+            document.getElementById('wm-add-lore-modal').style.display = 'flex';
+        }
+
+        function closeAddLoreModal() {
+            document.getElementById('wm-add-lore-modal').style.display = 'none';
+            wmAddLoreWorldId = null;
+            wmAddLoreFiles = [];
+        }
+
+        function handleAddLoreFileDrop(event) {
+            event.preventDefault();
+            event.target.style.borderColor = 'var(--border-subtle)';
+            event.target.style.background = 'transparent';
+
+            const files = event.dataTransfer.files;
+            processAddLoreFiles(files);
+        }
+
+        function handleAddLoreFileSelect(event) {
+            processAddLoreFiles(event.target.files);
+        }
+
+        async function processAddLoreFiles(files) {
+            for (const file of files) {
+                if (!file.name.match(/\.(txt|md)$/i)) continue;
+
+                const content = await file.text();
+                wmAddLoreFiles.push({
+                    name: file.name,
+                    content: content,
+                    size: content.length
+                });
+            }
+
+            renderAddLoreFiles();
+        }
+
+        function renderAddLoreFiles() {
+            const container = document.getElementById('wm-add-lore-files');
+            const submitBtn = document.getElementById('wm-add-lore-submit');
+
+            if (wmAddLoreFiles.length === 0) {
+                container.innerHTML = '';
+                submitBtn.disabled = true;
+                return;
+            }
+
+            submitBtn.disabled = false;
+
+            container.innerHTML = wmAddLoreFiles.map((f, i) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-primary); border-radius: 6px; margin-bottom: 5px;">
+                    <div>
+                        <span style="color: var(--text-primary);">📄 ${f.name}</span>
+                        <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 10px;">${f.size.toLocaleString()} chars</span>
+                    </div>
+                    <button onclick="removeAddLoreFile(${i})" style="background: transparent; border: none; color: var(--accent-rose); cursor: pointer; padding: 4px 8px;">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeAddLoreFile(index) {
+            wmAddLoreFiles.splice(index, 1);
+            renderAddLoreFiles();
+        }
+
+        async function submitAddLore() {
+            if (!wmAddLoreWorldId || wmAddLoreFiles.length === 0) return;
+
+            const totalContent = wmAddLoreFiles.map(f => `\n\n--- SOURCE: ${f.name} ---\n\n${f.content}`).join('');
+            const fileNames = wmAddLoreFiles.map(f => f.name).join(', ');
+
+            showStatus('wm-add-lore-status', `<span class="loading"></span> Adding lore and extracting entities...`, 'info');
+
+            try {
+                // First, append to existing lore
+                const world = worldManagerData?.worlds?.find(w => w.id === wmAddLoreWorldId);
+                const existingLore = world?.lore_content || '';
+                const newLore = existingLore + totalContent;
+
+                const updateRes = await fetch(API_BASE + `/game/admin/lore-bases/${wmAddLoreWorldId}/lore`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lore_content: newLore })
+                });
+
+                if (!updateRes.ok) throw new Error('Failed to update lore');
+
+                // Then ingest to extract entities
+                showStatus('wm-add-lore-status', `<span class="loading"></span> Extracting entities (this may take a minute)...`, 'info');
+
+                const ingestRes = await fetch(API_BASE + `/game/lore-bases/${wmAddLoreWorldId}/ingest`, {
+                    method: 'POST'
+                });
+
+                if (!ingestRes.ok) throw new Error('Failed to ingest lore');
+
+                const result = await ingestRes.json();
+
+                showStatus('wm-add-lore-status', `✓ Added lore from ${fileNames}. Extracted ${result.entities_stored} entities.`, 'success');
+
+                // Refresh after delay
+                setTimeout(() => {
+                    closeAddLoreModal();
+                    loadWorldManagerData();
+                    if (expandedWorlds.has(wmAddLoreWorldId)) {
+                        loadWorldEntities(wmAddLoreWorldId);
+                    }
+                }, 2000);
+
+            } catch (err) {
+                showStatus('wm-add-lore-status', `Error: ${err.message}`, 'error');
+            }
         }
 
         function toggleWorldLoreEditor(worldId) {
@@ -17632,14 +18157,38 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         let deferredPrompt = null;
 
-        // Register service worker with aggressive update checking
+        // IMMEDIATE UPDATE CHECK - runs as soon as script loads
+        // This is the FIRST thing the app does upon opening
+        if ('serviceWorker' in navigator) {
+            console.log('[SW] Checking for updates immediately on app open...');
+
+            // Check for existing service worker and trigger update
+            navigator.serviceWorker.getRegistration().then((existingReg) => {
+                if (existingReg) {
+                    console.log('[SW] Existing SW found, checking for updates...');
+                    existingReg.update().then(() => {
+                        console.log('[SW] Update check complete');
+                    }).catch((err) => {
+                        console.log('[SW] Update check failed:', err);
+                    });
+                }
+            });
+
+            // Handle controller change (new SW activated)
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('[SW] Controller changed, reloading...');
+                window.location.reload();
+            });
+        }
+
+        // Register service worker after page loads (for first-time visitors)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then((registration) => {
                         console.log('Service Worker registered:', registration.scope);
 
-                        // Check for updates immediately
+                        // Check for updates again after registration
                         registration.update();
 
                         // Check for updates every 60 seconds
@@ -17662,12 +18211,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     .catch((error) => {
                         console.log('Service Worker registration failed:', error);
                     });
-            });
-
-            // Handle controller change (new SW activated)
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                console.log('[SW] Controller changed, reloading...');
-                window.location.reload();
             });
         }
 

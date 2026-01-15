@@ -646,7 +646,7 @@ async def list_entities(
     entity_type: Optional[EntityType] = None,
     approval_status: Optional[ApprovalStatus] = None,
     world_id: Optional[str] = Query(default=None, description="Filter by world/lore base ID"),
-    limit: int = Query(default=100, le=2000, description="Max entities to return (up to 2000)"),
+    limit: int = Query(default=100, le=10000, description="Max entities to return (up to 10000)"),
 ):
 
     query = "MATCH (n:Entity)"

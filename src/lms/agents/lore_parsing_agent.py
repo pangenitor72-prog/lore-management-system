@@ -448,9 +448,23 @@ TEXT TO ANALYZE:
 
         if self.api_key:
             import google.generativeai as genai
+            from google.generativeai.types import HarmCategory, HarmBlockThreshold
+
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel("gemini-2.0-flash-exp")
-            logger.info("LoreParsingAgent initialized with Gemini")
+
+            # Safety settings for fiction/RPG content (war, violence in lore is OK)
+            safety_settings = {
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+            }
+
+            self.model = genai.GenerativeModel(
+                "gemini-2.0-flash-exp",
+                safety_settings=safety_settings,
+            )
+            logger.info("LoreParsingAgent initialized with Gemini (fiction-safe settings)")
         else:
             logger.warning("LoreParsingAgent: No API key, will use fallback parsing")
 
@@ -481,21 +495,55 @@ TEXT TO ANALYZE:
         return cleaned.strip()
 
     def _parse_extraction_response(self, text: str) -> Dict[str, Any]:
-        """Parse Gemini's extraction response."""
+        """Parse Gemini's extraction response with robust error handling."""
         cleaned = self._clean_json_response(text)
 
+        # Try direct parse first
         try:
             return json.loads(cleaned)
-        except json.JSONDecodeError:
-            # Try to extract JSON from response
-            match = re.search(r"\{[\s\S]*\}", cleaned)
-            if match:
-                try:
-                    return json.loads(match.group())
-                except json.JSONDecodeError:
-                    pass
+        except json.JSONDecodeError as e:
+            logger.warning(f"Direct JSON parse failed: {e}")
 
-        logger.error("Failed to parse extraction response")
+        # Try to extract JSON object from response
+        match = re.search(r"\{[\s\S]*\}", cleaned)
+        if match:
+            json_str = match.group()
+            try:
+                return json.loads(json_str)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Extracted JSON parse failed: {e}")
+
+                # Try to repair truncated JSON (common with large outputs)
+                # Find where entities array ends and try to salvage
+                try:
+                    # Look for the last complete entity
+                    entities_match = re.search(r'"entities"\s*:\s*\[([\s\S]*)', json_str)
+                    if entities_match:
+                        entities_content = entities_match.group(1)
+                        # Find all complete entity objects
+                        entity_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+                        entities = re.findall(entity_pattern, entities_content)
+
+                        if entities:
+                            logger.info(f"Salvaged {len(entities)} entities from truncated response")
+                            salvaged_entities = []
+                            for ent_str in entities:
+                                try:
+                                    ent = json.loads(ent_str)
+                                    if "name" in ent:  # Valid entity
+                                        salvaged_entities.append(ent)
+                                except:
+                                    continue
+
+                            if salvaged_entities:
+                                return {"entities": salvaged_entities, "relationships": []}
+
+                except Exception as repair_err:
+                    logger.warning(f"JSON repair failed: {repair_err}")
+
+        # Log a sample of what we got for debugging
+        logger.error(f"Failed to parse extraction response. First 500 chars: {cleaned[:500]}")
+        logger.error(f"Last 500 chars: {cleaned[-500:]}")
         return {"entities": [], "relationships": []}
 
     async def parse_lore(self, text: str) -> ParsedLoreResult:
@@ -517,6 +565,13 @@ TEXT TO ANALYZE:
 
         prompt = self.EXTRACTION_PROMPT.format(text=text)
 
+        # Check document size - warn for very large docs
+        word_count = len(text.split())
+        logger.info(f"LoreParsingAgent: Processing {word_count} words, {len(text)} chars")
+
+        if word_count > 5000:
+            logger.warning(f"Large document detected ({word_count} words). May require chunking.")
+
         try:
             loop = asyncio.get_event_loop()
 
@@ -529,12 +584,33 @@ TEXT TO ANALYZE:
                     }
                 )
 
+            # Generous timeout - only admins use this, let it cook
+            timeout_seconds = 600.0  # 10 minutes - take your time, Gemini
+            logger.info(f"LoreParsingAgent: Using {timeout_seconds}s timeout")
+
             response = await asyncio.wait_for(
                 loop.run_in_executor(_executor, _sync_generate),
-                timeout=120.0  # More time for thorough extraction
+                timeout=timeout_seconds
             )
 
+            logger.info(f"LoreParsingAgent: Gemini returned {len(response.text)} chars")
+
             parsed = self._parse_extraction_response(response.text)
+
+            if not parsed.get("entities"):
+                logger.error("Gemini returned no entities - may have failed silently")
+                # Return empty result with error indicator instead of garbage fallback
+                return ParsedLoreResult(
+                    entities=[ExtractedEntity(
+                        name="EXTRACTION_FAILED",
+                        entity_type="Concept",
+                        description="The AI extraction returned no entities. The document may be too large or malformed. Try with a smaller section.",
+                        traits=[],
+                        tags=["error"],
+                        verbatim_text="",
+                    )],
+                    relationships=[],
+                )
 
             entities = []
             for e in parsed.get("entities", []):
@@ -566,11 +642,33 @@ TEXT TO ANALYZE:
             )
 
         except asyncio.TimeoutError:
-            logger.error("Gemini extraction timed out")
-            return await self._fallback_parse(text)
+            logger.error(f"Gemini extraction timed out after {timeout_seconds}s for {word_count} word document")
+            # Return clear error instead of garbage fallback
+            return ParsedLoreResult(
+                entities=[ExtractedEntity(
+                    name="TIMEOUT_ERROR",
+                    entity_type="Concept",
+                    description=f"Extraction timed out after {timeout_seconds} seconds. The document ({word_count} words) may be too large. Try splitting it into smaller sections.",
+                    traits=[],
+                    tags=["error"],
+                    verbatim_text="",
+                )],
+                relationships=[],
+            )
         except Exception as e:
-            logger.error(f"Extraction failed: {e}")
-            return await self._fallback_parse(text)
+            logger.error(f"Extraction failed: {e}", exc_info=True)
+            # Return clear error instead of garbage fallback
+            return ParsedLoreResult(
+                entities=[ExtractedEntity(
+                    name="EXTRACTION_ERROR",
+                    entity_type="Concept",
+                    description=f"Extraction failed with error: {str(e)}. Please try again or use a smaller document.",
+                    traits=[],
+                    tags=["error"],
+                    verbatim_text="",
+                )],
+                relationships=[],
+            )
 
     async def _fallback_parse(self, text: str) -> ParsedLoreResult:
         """Simple regex-based fallback when Gemini is unavailable."""

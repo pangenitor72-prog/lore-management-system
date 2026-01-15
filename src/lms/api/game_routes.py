@@ -3699,12 +3699,14 @@ async def get_world_entities(
     lore_id: str,
     db: Neo4jDatabase = Depends(get_neo4j_db),
     entity_type: Optional[str] = None,
-    limit: int = Query(100, le=500),
+    source_name: Optional[str] = None,
+    limit: int = Query(1000, le=5000),
 ):
     """
     Get all entities belonging to a specific world.
 
     Returns entities filtered by world_id or curated_world_id.
+    Includes source_name for grouping by import source.
     """
     if lore_id not in LORE_BASES:
         raise HTTPException(
@@ -3723,13 +3725,19 @@ async def get_world_entities(
             query += " AND e.entity_type = $entity_type"
             params["entity_type"] = entity_type
 
+        if source_name:
+            query += " AND e.source_name = $source_name"
+            params["source_name"] = source_name
+
         query += """
             RETURN e.canon_id as id,
                    e.name as name,
                    e.entity_type as type,
                    e.description as description,
-                   e.confidence_level as confidence
-            ORDER BY e.entity_type, e.name
+                   e.confidence_level as confidence,
+                   e.source_name as source_name,
+                   e.created_at as created_at
+            ORDER BY e.source_name, e.entity_type, e.name
             LIMIT $limit
         """
         params["limit"] = limit
@@ -3742,8 +3750,10 @@ async def get_world_entities(
                 "id": record.get("id"),
                 "name": record.get("name"),
                 "type": record.get("type"),
-                "description": record.get("description", "")[:200],
+                "description": record.get("description", "")[:200] if record.get("description") else "",
                 "confidence": record.get("confidence"),
+                "source_name": record.get("source_name", "unknown"),
+                "created_at": record.get("created_at"),
             })
 
         return {
@@ -3757,6 +3767,212 @@ async def get_world_entities(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get entities: {str(e)}"
+        )
+
+
+@router.get("/lore-bases/{lore_id}/sources")
+async def get_world_sources(
+    lore_id: str,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Get all unique source names for entities in a world.
+
+    Useful for grouping entities by import source file.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    try:
+        query = """
+            MATCH (e:Entity)
+            WHERE e.world_id = $world_id OR e.curated_world_id = $world_id
+            WITH e.source_name as source, count(e) as count
+            RETURN source, count
+            ORDER BY count DESC
+        """
+
+        result = await db.execute(query, {"world_id": lore_id})
+
+        sources = []
+        for record in result:
+            sources.append({
+                "source_name": record.get("source") or "unknown",
+                "entity_count": record.get("count", 0),
+            })
+
+        return {
+            "world_id": lore_id,
+            "sources": sources,
+            "total_sources": len(sources),
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get sources for {lore_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get sources: {str(e)}"
+        )
+
+
+@router.delete("/lore-bases/{lore_id}/entities/{entity_id}")
+async def delete_world_entity(
+    lore_id: str,
+    entity_id: str,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Delete a single entity from a world.
+
+    Also deletes any relationships connected to this entity.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    try:
+        # First verify entity exists and belongs to this world
+        check_query = """
+            MATCH (e:Entity {canon_id: $entity_id})
+            WHERE e.world_id = $world_id OR e.curated_world_id = $world_id
+            RETURN e.name as name
+        """
+        check_result = await db.execute(check_query, {
+            "entity_id": entity_id,
+            "world_id": lore_id,
+        })
+
+        records = list(check_result)
+        if not records:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Entity '{entity_id}' not found in world '{lore_id}'"
+            )
+
+        entity_name = records[0].get("name", entity_id)
+
+        # Delete entity and its relationships
+        delete_query = """
+            MATCH (e:Entity {canon_id: $entity_id})
+            DETACH DELETE e
+            RETURN count(e) as deleted
+        """
+        delete_result = await db.execute(delete_query, {"entity_id": entity_id})
+
+        logger.info(f"Deleted entity {entity_id} ({entity_name}) from world {lore_id}")
+
+        return {
+            "success": True,
+            "message": f"Deleted entity '{entity_name}'",
+            "entity_id": entity_id,
+            "world_id": lore_id,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete entity {entity_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete entity: {str(e)}"
+        )
+
+
+@router.delete("/lore-bases/{lore_id}/entities")
+async def delete_world_entities_bulk(
+    lore_id: str,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+    source_name: Optional[str] = Query(None, description="Delete only entities from this source"),
+    entity_type: Optional[str] = Query(None, description="Delete only entities of this type"),
+):
+    """
+    Bulk delete entities from a world.
+
+    Can filter by source_name (import file) and/or entity_type.
+    If no filters provided, deletes ALL entities in the world.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    try:
+        # Build the filter description for logging/response
+        filters = []
+        if source_name:
+            filters.append(f"source='{source_name}'")
+        if entity_type:
+            filters.append(f"type='{entity_type}'")
+        filter_desc = ", ".join(filters) if filters else "all entities"
+
+        # First count how many will be deleted
+        count_query = """
+            MATCH (e:Entity)
+            WHERE (e.world_id = $world_id OR e.curated_world_id = $world_id)
+        """
+        params = {"world_id": lore_id}
+
+        if source_name:
+            count_query += " AND e.source_name = $source_name"
+            params["source_name"] = source_name
+
+        if entity_type:
+            count_query += " AND e.entity_type = $entity_type"
+            params["entity_type"] = entity_type
+
+        count_query += " RETURN count(e) as count"
+        count_result = await db.execute(count_query, params)
+        count_records = list(count_result)
+        entity_count = count_records[0].get("count", 0) if count_records else 0
+
+        if entity_count == 0:
+            return {
+                "success": True,
+                "message": f"No entities found matching criteria ({filter_desc})",
+                "deleted_count": 0,
+                "world_id": lore_id,
+            }
+
+        # Delete entities and their relationships
+        delete_query = """
+            MATCH (e:Entity)
+            WHERE (e.world_id = $world_id OR e.curated_world_id = $world_id)
+        """
+
+        if source_name:
+            delete_query += " AND e.source_name = $source_name"
+
+        if entity_type:
+            delete_query += " AND e.entity_type = $entity_type"
+
+        delete_query += " DETACH DELETE e RETURN count(e) as deleted"
+
+        await db.execute(delete_query, params)
+
+        logger.info(f"Bulk deleted {entity_count} entities from world {lore_id} ({filter_desc})")
+
+        return {
+            "success": True,
+            "message": f"Deleted {entity_count} entities ({filter_desc})",
+            "deleted_count": entity_count,
+            "world_id": lore_id,
+            "filters": {
+                "source_name": source_name,
+                "entity_type": entity_type,
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to bulk delete entities from {lore_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete entities: {str(e)}"
         )
 
 
