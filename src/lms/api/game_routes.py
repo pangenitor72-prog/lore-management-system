@@ -3605,8 +3605,9 @@ class LorePreviewRequest(BaseModel):
 
 
 class LorePreviewResponse(BaseModel):
-    """Response with previewed entities."""
+    """Response with previewed entities and relationships."""
     entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]] = []
     summary: Dict[str, int]
 
 
@@ -3667,8 +3668,21 @@ async def preview_lore_extraction(
 
             entities.append(entity_dict)
 
+        # Format relationships for preview
+        relationships = []
+        for rel in result.relationships:
+            relationships.append({
+                "source": rel.source,
+                "target": rel.target,
+                "relationship_type": rel.relationship_type,
+                "description": rel.description if rel.description else "",
+            })
+
+        summary["relationships"] = len(relationships)
+
         return LorePreviewResponse(
             entities=entities,
+            relationships=relationships,
             summary=summary,
         )
 

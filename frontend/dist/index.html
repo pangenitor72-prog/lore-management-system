@@ -2698,6 +2698,114 @@
             color: var(--accent-sage);
         }
 
+        /* Relationships Section */
+        .review-relationships-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .review-relationships-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .review-relationship-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .review-rel-source,
+        .review-rel-target {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .review-rel-type {
+            color: var(--accent-gold);
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            background: rgba(212, 175, 55, 0.15);
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .review-rel-arrow {
+            color: var(--text-muted);
+        }
+
+        .review-rel-desc {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-left: auto;
+            font-style: italic;
+        }
+
+        /* Extraction Summary Banner */
+        .extraction-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .extraction-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .extraction-stat-count {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .extraction-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Confidence Indicator */
+        .confidence-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .confidence-high {
+            background: rgba(138, 180, 137, 0.2);
+            color: var(--accent-sage);
+        }
+
+        .confidence-medium {
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--accent-gold);
+        }
+
+        .confidence-low {
+            background: rgba(225, 132, 132, 0.2);
+            color: var(--accent-rose);
+        }
+
         .review-entity-actions {
             display: flex;
             gap: 6px;
@@ -6284,7 +6392,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v23</span>
+                <span style="opacity: 0.5;">v24</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
@@ -7038,6 +7146,20 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
 
                 <div class="review-entity-list" id="review-entity-list">
                     <!-- Entity cards dynamically generated -->
+                </div>
+
+                <!-- Extracted Relationships Section -->
+                <div id="review-relationships-section" class="review-relationships-section" style="display: none;">
+                    <h4 style="color: var(--accent-gold); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px;">
+                        <span>&#128279;</span> Extracted Relationships
+                        <span id="review-relationships-count" style="font-size: 0.8rem; background: var(--accent-gold); color: var(--bg-primary); padding: 2px 8px; border-radius: 10px;">0</span>
+                    </h4>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">
+                        These connections between entities will be created automatically when you import.
+                    </p>
+                    <div id="review-relationships-list" class="review-relationships-list">
+                        <!-- Relationship items dynamically generated -->
+                    </div>
                 </div>
 
                 <div class="review-panel-footer">
@@ -13761,6 +13883,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         // Global state for entity review
         let reviewEntities = [];
+        let reviewRelationships = [];
         let activeTypeFilter = 'all';
 
         // Preview lore extraction without committing
@@ -13808,14 +13931,31 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     possibleDuplicate: detectPossibleDuplicate(entity, data.entities, index)
                 }));
 
+                // Store relationships
+                reviewRelationships = data.relationships || [];
+
+                // Build summary message
+                const entityTypeCounts = {};
+                reviewEntities.forEach(e => {
+                    entityTypeCounts[e.type] = (entityTypeCounts[e.type] || 0) + 1;
+                });
+
+                const typeSummary = Object.entries(entityTypeCounts)
+                    .map(([type, count]) => `${count} ${type}${count > 1 ? 's' : ''}`)
+                    .join(', ');
+
+                const relCount = reviewRelationships.length;
+                const relSummary = relCount > 0 ? ` and <strong>${relCount}</strong> relationships` : '';
+
                 // Show review panel
                 clearStatus('ingest-status');
                 showStatus('ingest-status',
-                    'Found <strong>' + reviewEntities.length + '</strong> entities. Review them below before importing.',
+                    `<strong>&#10003; Extraction Complete!</strong> Found ${typeSummary}${relSummary}. Review below before importing.`,
                     'success'
                 );
 
                 renderReviewEntities();
+                renderReviewRelationships();
                 updateTypeFilterButtons();
                 updateReviewCounts();
 
@@ -13930,6 +14070,35 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }).join('');
         }
 
+        // Render relationships in review panel
+        function renderReviewRelationships() {
+            const section = document.getElementById('review-relationships-section');
+            const container = document.getElementById('review-relationships-list');
+            const countEl = document.getElementById('review-relationships-count');
+
+            if (!reviewRelationships || reviewRelationships.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            countEl.textContent = reviewRelationships.length;
+
+            container.innerHTML = reviewRelationships.map(rel => {
+                const relType = (rel.relationship_type || rel.type || 'RELATED_TO').replace(/_/g, ' ');
+                return `
+                    <div class="review-relationship-item">
+                        <span class="review-rel-source">${rel.source}</span>
+                        <span class="review-rel-arrow">→</span>
+                        <span class="review-rel-type">${relType}</span>
+                        <span class="review-rel-arrow">→</span>
+                        <span class="review-rel-target">${rel.target}</span>
+                        ${rel.description ? '<span class="review-rel-desc">' + rel.description + '</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
         // Toggle entity selection
         function toggleEntitySelection(index) {
             reviewEntities[index].selected = !reviewEntities[index].selected;
@@ -14021,8 +14190,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Cancel review and reset
         function cancelReview() {
             reviewEntities = [];
+            reviewRelationships = [];
             activeTypeFilter = 'all';
             document.getElementById('entity-review-panel').classList.remove('visible');
+            document.getElementById('review-relationships-section').style.display = 'none';
             clearStatus('ingest-status');
         }
 
