@@ -1,1 +1,1 @@
-v38-20260116-world-connectivity
+v39-20260116-entity-world-isolation

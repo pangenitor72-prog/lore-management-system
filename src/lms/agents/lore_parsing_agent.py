@@ -796,20 +796,22 @@ TEXT TO ANALYZE:
                 if label not in ["Character", "Location", "Faction", "Item", "Event", "Concept"]:
                     label = "Entity"
 
+                # MERGE on canon_id to ensure world isolation
+                # canon_id includes world ID, so "Captain Varn" in World A is distinct from World B
                 await db.execute(f"""
-                    MERGE (e:`{label}` {{name: $name}})
+                    MERGE (e:`{label}` {{canon_id: $canon_id}})
                     SET e += $props
                     SET e:Entity
-                """, {"name": entity.name, "props": props})
+                """, {"canon_id": canon_id, "props": props})
 
                 # Create EXISTS_IN relationship to LoreBase for graph connectivity
                 if curated_world_id:
                     try:
                         await db.execute("""
-                            MATCH (e:Entity {name: $name, curated_world_id: $world_id})
+                            MATCH (e:Entity {canon_id: $canon_id})
                             MATCH (lb:LoreBase {lore_id: $world_id})
                             MERGE (e)-[:EXISTS_IN]->(lb)
-                        """, {"name": entity.name, "world_id": curated_world_id})
+                        """, {"canon_id": canon_id, "world_id": curated_world_id})
                     except Exception as e:
                         logger.warning(f"Failed to create EXISTS_IN relationship for {entity.name}: {e}")
 
