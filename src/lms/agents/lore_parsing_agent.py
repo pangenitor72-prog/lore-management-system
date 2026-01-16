@@ -725,6 +725,22 @@ TEXT TO ANALYZE:
         entities_stored = 0
         characters_with_ocean = 0
 
+        # Ensure LoreBase node exists if we have a curated world
+        if curated_world_id:
+            try:
+                await db.execute("""
+                    MERGE (lb:LoreBase {lore_id: $lore_id})
+                    ON CREATE SET lb.created_at = $timestamp,
+                                  lb.name = $lore_id,
+                                  lb.entity_type = 'World',
+                                  lb.world_id = $lore_id,
+                                  lb.curated_world_id = $lore_id
+                    SET lb.last_ingested = $timestamp
+                """, {"lore_id": curated_world_id, "timestamp": timestamp})
+                logger.info(f"Ensured LoreBase node exists for {curated_world_id}")
+            except Exception as e:
+                logger.warning(f"Failed to create LoreBase node: {e}")
+
         # Extract world_id from source if not provided
         if not world_id and source_name:
             if source_name.startswith("lore_base:"):
@@ -785,6 +801,17 @@ TEXT TO ANALYZE:
                     SET e += $props
                     SET e:Entity
                 """, {"name": entity.name, "props": props})
+
+                # Create EXISTS_IN relationship to LoreBase for graph connectivity
+                if curated_world_id:
+                    try:
+                        await db.execute("""
+                            MATCH (e:Entity {name: $name, curated_world_id: $world_id})
+                            MATCH (lb:LoreBase {lore_id: $world_id})
+                            MERGE (e)-[:EXISTS_IN]->(lb)
+                        """, {"name": entity.name, "world_id": curated_world_id})
+                    except Exception as e:
+                        logger.warning(f"Failed to create EXISTS_IN relationship for {entity.name}: {e}")
 
                 entities_stored += 1
 
