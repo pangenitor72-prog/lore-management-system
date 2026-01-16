@@ -3187,6 +3187,130 @@
             border: 1px solid var(--border-accent);
         }
 
+        /* World Characteristics Modal Styles */
+        .wc-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: var(--radius-medium);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .wc-section-header {
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--accent-lavender);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .wc-field {
+            margin-bottom: 15px;
+        }
+
+        .wc-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .wc-field label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .wc-field-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .wc-field-row .wc-field {
+            flex: 1;
+        }
+
+        .wc-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sharp);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .wc-select:focus {
+            outline: none;
+            border-color: var(--accent-lavender);
+        }
+
+        .wc-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sharp);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .wc-textarea:focus {
+            outline: none;
+            border-color: var(--accent-lavender);
+        }
+
+        .wc-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .wc-multi-select-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .wc-chip {
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .wc-chip:hover {
+            border-color: var(--accent-lavender);
+            color: var(--text-primary);
+        }
+
+        .wc-chip.selected {
+            background: var(--accent-lavender);
+            border-color: var(--accent-lavender);
+            color: var(--bg-primary);
+        }
+
+        @media (max-width: 600px) {
+            .wc-field-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+
         /* Continue/New Chapter Modal Options */
         .continue-option-btn {
             display: flex;
@@ -7442,9 +7566,10 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
                     <button class="btn btn-secondary" onclick="loadWorldManagerData()">Refresh</button>
                     <button class="btn btn-primary" onclick="ingestAllUnprocessed()" style="background: var(--accent-gold); color: var(--bg-primary);">⚡ Ingest All Unprocessed</button>
+                    <button class="btn btn-secondary" onclick="reingestAll()" style="background: var(--accent-lavender); color: var(--bg-primary);">🔄 Reingest All (Apply Updates)</button>
                 </div>
             </div>
 
@@ -8090,6 +8215,225 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     <button id="char-prev-btn" class="btn btn-secondary" onclick="charCreationPrev()" style="display: none;">Back</button>
                     <div style="flex: 1;"></div>
                     <button id="char-next-btn" class="btn btn-primary" onclick="charCreationNext()">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- World Characteristics Modal -->
+        <div id="world-characteristics-modal" class="modal-overlay" onclick="closeWorldCharacteristicsModal(event)">
+            <div class="modal" onclick="event.stopPropagation()" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0;">
+                        <span style="color: var(--accent-lavender);">⚙️</span>
+                        World Settings: <span id="wc-world-name" style="color: var(--accent-gold);"></span>
+                    </h3>
+                    <button onclick="closeWorldCharacteristicsModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">×</button>
+                </div>
+
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 25px;">
+                    Define the canonical characteristics of this world. These settings guide AI storytelling and ensure consistency across all player experiences.
+                </p>
+
+                <div id="wc-loading" style="text-align: center; padding: 40px; display: none;">
+                    <span class="loading"></span> Loading options...
+                </div>
+
+                <form id="wc-form" style="display: none;">
+                    <!-- Core Identity -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">Core Identity</div>
+
+                        <div class="wc-field">
+                            <label for="wc-primary-genre">Primary Genre</label>
+                            <select id="wc-primary-genre" class="wc-select">
+                                <option value="">-- Select --</option>
+                            </select>
+                        </div>
+
+                        <div class="wc-field">
+                            <label for="wc-sub-genres">Sub-genres</label>
+                            <div id="wc-sub-genres-container" class="wc-multi-select-container"></div>
+                            <p class="wc-hint">Click to toggle. Mix and match for unique flavor.</p>
+                        </div>
+                    </div>
+
+                    <!-- World Rules -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">World Rules</div>
+
+                        <div class="wc-field-row">
+                            <div class="wc-field">
+                                <label for="wc-magic-level">Magic Level</label>
+                                <select id="wc-magic-level" class="wc-select">
+                                    <option value="">-- Select --</option>
+                                </select>
+                            </div>
+
+                            <div class="wc-field">
+                                <label for="wc-technology-level">Technology Level</label>
+                                <select id="wc-technology-level" class="wc-select">
+                                    <option value="">-- Select --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="wc-field">
+                            <label for="wc-supernatural">Supernatural Presence</label>
+                            <select id="wc-supernatural" class="wc-select">
+                                <option value="">-- Select --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tone & Stakes -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">Tone & Stakes</div>
+
+                        <div class="wc-field-row">
+                            <div class="wc-field">
+                                <label for="wc-tone">Tone</label>
+                                <select id="wc-tone" class="wc-select">
+                                    <option value="">-- Select --</option>
+                                </select>
+                            </div>
+
+                            <div class="wc-field">
+                                <label for="wc-lethality">Lethality</label>
+                                <select id="wc-lethality" class="wc-select">
+                                    <option value="">-- Select --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="wc-field">
+                            <label for="wc-moral-complexity">Moral Complexity</label>
+                            <select id="wc-moral-complexity" class="wc-select">
+                                <option value="">-- Select --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Narrative Style -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">Narrative Style</div>
+
+                        <div class="wc-field">
+                            <label>Storytelling Approach</label>
+                            <div id="wc-narrative-style-container" class="wc-multi-select-container"></div>
+                            <p class="wc-hint">How should the story be told? Select 1-3 styles that define your world's narrative voice.</p>
+                        </div>
+                    </div>
+
+                    <!-- Scale & Scope -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">Scale & Scope</div>
+
+                        <div class="wc-field-row">
+                            <div class="wc-field">
+                                <label for="wc-power-scale">Power Scale</label>
+                                <select id="wc-power-scale" class="wc-select">
+                                    <option value="">-- Select --</option>
+                                </select>
+                            </div>
+
+                            <div class="wc-field">
+                                <label for="wc-scope">Story Scope</label>
+                                <select id="wc-scope" class="wc-select">
+                                    <option value="">-- Select --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Society -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">Society</div>
+
+                        <div class="wc-field">
+                            <label for="wc-social-structures">Social Structures</label>
+                            <div id="wc-social-structures-container" class="wc-multi-select-container"></div>
+                            <p class="wc-hint">Multiple power structures can coexist.</p>
+                        </div>
+                    </div>
+
+                    <!-- Themes -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">Themes</div>
+
+                        <div class="wc-field">
+                            <label>Central Themes</label>
+                            <div id="wc-themes-container" class="wc-multi-select-container"></div>
+                            <p class="wc-hint">Select 2-5 themes that define your world's stories.</p>
+                        </div>
+                    </div>
+
+                    <!-- World Constants (free-form) -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">World Constants</div>
+
+                        <div class="wc-field">
+                            <label for="wc-constants">Hard Rules</label>
+                            <textarea id="wc-constants" class="wc-textarea" placeholder="One rule per line, e.g.:&#10;Magic always has a cost&#10;The dead cannot be truly brought back&#10;Dragons are extinct"></textarea>
+                            <p class="wc-hint">Inviolable truths about your world. AI will never contradict these.</p>
+                        </div>
+                    </div>
+
+                    <!-- Cultural Details (free-form) -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">Cultural Details</div>
+
+                        <div class="wc-field">
+                            <label for="wc-customs">Customs</label>
+                            <textarea id="wc-customs" class="wc-textarea" rows="2" placeholder="e.g., Greeting with palm over heart, Never speak during a blood moon..."></textarea>
+                        </div>
+
+                        <div class="wc-field">
+                            <label for="wc-taboos">Taboos</label>
+                            <textarea id="wc-taboos" class="wc-textarea" rows="2" placeholder="e.g., Speaking the true name of the dead, Using fire magic indoors..."></textarea>
+                        </div>
+
+                        <div class="wc-field">
+                            <label for="wc-history-anchors">History Anchors</label>
+                            <textarea id="wc-history-anchors" class="wc-textarea" rows="2" placeholder="e.g., The Great Sundering 1000 years ago, The Fall of the Elder Empire..."></textarea>
+                            <p class="wc-hint">Key historical events that shaped the world.</p>
+                        </div>
+                    </div>
+
+                    <!-- Sensory Palette (free-form) -->
+                    <div class="wc-section">
+                        <div class="wc-section-header">Sensory Palette</div>
+
+                        <div class="wc-field">
+                            <label for="wc-sensory">Signature sensations</label>
+                            <textarea id="wc-sensory" class="wc-textarea" rows="2" placeholder="e.g., Perpetual mist, Smell of sulfur near magic, Echoing bells at dusk..."></textarea>
+                            <p class="wc-hint">Recurring sensory details that define the atmosphere.</p>
+                        </div>
+                    </div>
+
+                    <div class="btn-group" style="justify-content: flex-end; margin-top: 25px; gap: 10px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeWorldCharacteristicsModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="background: var(--accent-lavender);">Save World Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- What's New Modal (for admins) -->
+        <div id="whats-new-modal" class="modal-overlay" onclick="closeWhatsNewModal(event)">
+            <div class="modal" onclick="event.stopPropagation()" style="max-width: 550px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: var(--accent-gold);">🎉 What's New</h3>
+                    <button onclick="closeWhatsNewModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">×</button>
+                </div>
+
+                <div id="whats-new-version" style="font-size: 0.85rem; color: var(--accent-lavender); margin-bottom: 15px;"></div>
+
+                <div id="whats-new-content" style="max-height: 400px; overflow-y: auto; line-height: 1.6;">
+                    <!-- Content populated by JS -->
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <button class="btn btn-primary" onclick="closeWhatsNewModal()" style="background: var(--accent-gold);">Got it!</button>
                 </div>
             </div>
         </div>
@@ -9088,6 +9432,95 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         })();
 
+        // ============================================================
+        // WHAT'S NEW (CHANGELOG) FOR ADMINS
+        // ============================================================
+
+        const CHANGELOG = {
+            "v47": {
+                date: "2026-01-16",
+                changes: [
+                    { type: "feature", text: "❓ AI Uncertainty Flagging - AI now flags questions when it's unsure (ambiguous names, unclear relationships)" },
+                    { type: "feature", text: "📋 Uncertainty Review Modal - See all AI questions after ingestion with suggestions and context" },
+                    { type: "improvement", text: "Entity confidence levels - AI marks entities/relationships as high/medium/low confidence" },
+                ]
+            },
+            "v46": {
+                date: "2026-01-16",
+                changes: [
+                    { type: "feature", text: "📖 Narrative Style - New storytelling approach options (Epic, Intimate, Pulpy, Cinematic, etc.)" },
+                    { type: "feature", text: "🎭 Expanded Genres - Added Mystery, Thriller, Romance, Comedy, Drama, Adventure, Slice of Life" },
+                    { type: "feature", text: "📚 More Sub-genres - Cozy Fantasy, Portal Fantasy, LitRPG, Folk Horror, Heist, Pirate, and more" },
+                    { type: "feature", text: "🎨 More Tones - Added Optimistic, Melancholic, Whimsical, Campy, Satirical" },
+                    { type: "feature", text: "💭 More Themes - Grief & Loss, Loyalty, Forbidden Love, Discovery, Hope vs Despair" },
+                ]
+            },
+            "v44": {
+                date: "2026-01-16",
+                changes: [
+                    { type: "feature", text: "🌍 World Settings UI - Set genre, tone, magic level, themes, and more for each world" },
+                    { type: "feature", text: "🧠 Enhanced NPC Extraction - AI now extracts goals, secrets, and fears for characters" },
+                    { type: "feature", text: "🔄 Reingest All - One-click button to re-process all worlds with latest AI logic" },
+                    { type: "feature", text: "⚙️ Force Re-ingest - Clicking Ingest on already-processed worlds now updates entities" },
+                    { type: "feature", text: "🌐 World Characteristics Inference - AI auto-detects genre, tone, themes from lore text" },
+                    { type: "improvement", text: "OCEAN profiles now generated for ALL NPCs (not just those with traits)" },
+                    { type: "improvement", text: "Entities properly isolated by world - no cross-world confusion" },
+                ]
+            },
+            "v41": {
+                date: "2026-01-16",
+                changes: [
+                    { type: "feature", text: "✏️ Edit world names inline in World Manager" },
+                    { type: "feature", text: "🏷️ Edit genre tags for curated worlds" },
+                    { type: "fix", text: "Entities now linked to their world via EXISTS_IN relationships" },
+                ]
+            }
+        };
+
+        function showWhatsNewModal(appVersion) {
+            const lastSeenVersion = localStorage.getItem('airpg_last_seen_version');
+
+            // Extract version number (e.g., "v44-20260116-..." -> "v44")
+            const currentVersion = appVersion?.match(/^v\d+/)?.[0] || 'v44';
+
+            // If same version, don't show
+            if (lastSeenVersion === currentVersion) return;
+
+            const modal = document.getElementById('whats-new-modal');
+            const versionEl = document.getElementById('whats-new-version');
+            const contentEl = document.getElementById('whats-new-content');
+
+            versionEl.textContent = `Version: ${appVersion || 'Latest'}`;
+
+            // Build changelog HTML
+            let html = '';
+            for (const [version, info] of Object.entries(CHANGELOG)) {
+                html += `<div style="margin-bottom: 20px;">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                        ${version} <span style="color: var(--text-muted); font-weight: 400; font-size: 0.85rem;">(${info.date})</span>
+                    </div>
+                    <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary);">`;
+
+                for (const change of info.changes) {
+                    const icon = change.type === 'feature' ? '✨' :
+                                change.type === 'fix' ? '🔧' : '⬆️';
+                    html += `<li style="margin-bottom: 6px;">${change.text}</li>`;
+                }
+                html += '</ul></div>';
+            }
+
+            contentEl.innerHTML = html;
+            modal.classList.add('active');
+
+            // Mark as seen
+            localStorage.setItem('airpg_last_seen_version', currentVersion);
+        }
+
+        function closeWhatsNewModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('whats-new-modal').classList.remove('active');
+        }
+
         async function validateInviteCode() {
             const codeInput = document.getElementById('invite-code-input');
             const statusEl = document.getElementById('invite-status');
@@ -9113,6 +9546,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     // Save to localStorage
                     localStorage.setItem('airpg_invite_code', code);
                     localStorage.setItem('airpg_tester_name', data.tester_name || 'Tester');
+                    localStorage.setItem('airpg_is_admin', data.is_admin ? 'true' : 'false');
                     validatedTester = data.tester_name;
 
                     statusEl.innerHTML = '<div class="status success">' + data.message + '</div>';
@@ -9133,6 +9567,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         } else {
                             // Returning tester - go straight to start
                             showScreen('start');
+                        }
+
+                        // Show What's New for admins
+                        if (data.is_admin && data.app_version) {
+                            setTimeout(() => showWhatsNewModal(data.app_version), 500);
                         }
                     }, 1500);
                 } else {
@@ -16498,6 +16937,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         <div id="world-expand-${world.id}" style="display: ${isExpanded ? 'block' : 'none'}; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
                             <!-- Action Buttons -->
                             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+                                <button class="btn btn-secondary" onclick="openWorldCharacteristicsModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-lavender); color: var(--bg-primary);">
+                                    ⚙️ World Settings
+                                </button>
                                 <button class="btn btn-secondary" onclick="openAddLoreModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem;">
                                     📁 Add Lore Files
                                 </button>
@@ -16881,10 +17323,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 if (!updateRes.ok) throw new Error('Failed to update lore');
 
-                // Then ingest to extract entities
+                // Then ingest to extract entities (force=true to process new lore)
                 showStatus('wm-add-lore-status', `<span class="loading"></span> Extracting entities (this may take a minute)...`, 'info');
 
-                const ingestRes = await fetch(API_BASE + `/game/lore-bases/${wmAddLoreWorldId}/ingest`, {
+                const ingestRes = await fetch(API_BASE + `/game/lore-bases/${wmAddLoreWorldId}/ingest?force=true`, {
                     method: 'POST'
                 });
 
@@ -17066,6 +17508,170 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
+        // ===== World Characteristics Modal =====
+        let wcOptions = null;  // Cache for options
+        let wcCurrentWorldId = null;
+
+        async function openWorldCharacteristicsModal(worldId, worldName) {
+            wcCurrentWorldId = worldId;
+            const modal = document.getElementById('world-characteristics-modal');
+            const loading = document.getElementById('wc-loading');
+            const form = document.getElementById('wc-form');
+            const nameSpan = document.getElementById('wc-world-name');
+
+            nameSpan.textContent = worldName;
+            modal.classList.add('active');
+            loading.style.display = 'block';
+            form.style.display = 'none';
+
+            try {
+                // Fetch options if not cached
+                if (!wcOptions) {
+                    const optRes = await fetch(API_BASE + '/game/world-characteristics/options');
+                    if (!optRes.ok) throw new Error('Failed to load options');
+                    wcOptions = await optRes.json();
+                }
+
+                // Fetch current world data
+                const world = worldManagerData?.worlds?.find(w => w.id === worldId);
+                const currentChars = world?.world_characteristics || {};
+
+                // Populate dropdowns
+                populateWcSelect('wc-primary-genre', wcOptions.primary_genre, currentChars.primary_genre);
+                populateWcSelect('wc-magic-level', wcOptions.magic_level, currentChars.magic_level);
+                populateWcSelect('wc-technology-level', wcOptions.technology_level, currentChars.technology_level);
+                populateWcSelect('wc-supernatural', wcOptions.supernatural_presence, currentChars.supernatural_presence);
+                populateWcSelect('wc-tone', wcOptions.tone, currentChars.tone);
+                populateWcSelect('wc-lethality', wcOptions.lethality, currentChars.lethality);
+                populateWcSelect('wc-moral-complexity', wcOptions.moral_complexity, currentChars.moral_complexity);
+                populateWcSelect('wc-power-scale', wcOptions.power_scale, currentChars.power_scale);
+                populateWcSelect('wc-scope', wcOptions.scope, currentChars.scope);
+
+                // Populate multi-select chips
+                populateWcChips('wc-sub-genres-container', wcOptions.sub_genres, currentChars.sub_genres || []);
+                populateWcChips('wc-themes-container', wcOptions.themes, currentChars.themes || []);
+                populateWcChips('wc-social-structures-container', wcOptions.social_structures, currentChars.social_structures || []);
+                populateWcChips('wc-narrative-style-container', wcOptions.narrative_style, currentChars.narrative_style || []);
+
+                // Populate text areas
+                document.getElementById('wc-constants').value = (currentChars.world_constants || []).join('\n');
+                document.getElementById('wc-customs').value = (currentChars.customs || []).join('\n');
+                document.getElementById('wc-taboos').value = (currentChars.taboos || []).join('\n');
+                document.getElementById('wc-history-anchors').value = (currentChars.history_anchors || []).join('\n');
+                document.getElementById('wc-sensory').value = (currentChars.sensory_palette || []).join('\n');
+
+                loading.style.display = 'none';
+                form.style.display = 'block';
+            } catch (err) {
+                loading.innerHTML = `<span style="color: var(--accent-rose);">Error: ${err.message}</span>`;
+            }
+        }
+
+        function populateWcSelect(selectId, options, currentValue) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">-- Select --</option>';
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                if (opt === currentValue) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function populateWcChips(containerId, options, selectedValues) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = options.map(opt => {
+                const isSelected = selectedValues.includes(opt);
+                return `<span class="wc-chip ${isSelected ? 'selected' : ''}" onclick="toggleWcChip(this)">${opt}</span>`;
+            }).join('');
+        }
+
+        function toggleWcChip(chip) {
+            chip.classList.toggle('selected');
+        }
+
+        function getSelectedChips(containerId) {
+            const container = document.getElementById(containerId);
+            const selected = [];
+            container.querySelectorAll('.wc-chip.selected').forEach(chip => {
+                selected.push(chip.textContent);
+            });
+            return selected;
+        }
+
+        function parseTextareaToList(textareaId) {
+            const textarea = document.getElementById(textareaId);
+            return textarea.value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        }
+
+        function closeWorldCharacteristicsModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            const modal = document.getElementById('world-characteristics-modal');
+            modal.classList.remove('active');
+            wcCurrentWorldId = null;
+        }
+
+        // Form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const wcForm = document.getElementById('wc-form');
+            if (wcForm) {
+                wcForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    await saveWorldCharacteristics();
+                });
+            }
+        });
+
+        async function saveWorldCharacteristics() {
+            if (!wcCurrentWorldId) return;
+
+            const characteristics = {
+                primary_genre: document.getElementById('wc-primary-genre').value || null,
+                sub_genres: getSelectedChips('wc-sub-genres-container'),
+                magic_level: document.getElementById('wc-magic-level').value || null,
+                technology_level: document.getElementById('wc-technology-level').value || null,
+                supernatural_presence: document.getElementById('wc-supernatural').value || null,
+                tone: document.getElementById('wc-tone').value || null,
+                narrative_style: getSelectedChips('wc-narrative-style-container'),
+                moral_complexity: document.getElementById('wc-moral-complexity').value || null,
+                lethality: document.getElementById('wc-lethality').value || null,
+                themes: getSelectedChips('wc-themes-container'),
+                social_structures: getSelectedChips('wc-social-structures-container'),
+                power_scale: document.getElementById('wc-power-scale').value || null,
+                scope: document.getElementById('wc-scope').value || null,
+                world_constants: parseTextareaToList('wc-constants'),
+                sensory_palette: parseTextareaToList('wc-sensory'),
+                taboos: parseTextareaToList('wc-taboos'),
+                customs: parseTextareaToList('wc-customs'),
+                history_anchors: parseTextareaToList('wc-history-anchors')
+            };
+
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${wcCurrentWorldId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ world_characteristics: characteristics })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to save world characteristics');
+                }
+
+                // Update local cache
+                if (worldManagerData && worldManagerData.worlds) {
+                    const world = worldManagerData.worlds.find(w => w.id === wcCurrentWorldId);
+                    if (world) world.world_characteristics = characteristics;
+                }
+
+                showToast('World settings saved');
+                closeWorldCharacteristicsModal();
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
         function toggleWorldLoreEditor(worldId) {
             const editor = document.getElementById(`lore-editor-${worldId}`);
             if (editor) {
@@ -17130,16 +17736,19 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function ingestWorldLore(worldId) {
             const world = worldManagerData?.worlds?.find(w => w.id === worldId);
-            const action = world?.entity_count > 0 ? 're-ingest' : 'ingest';
+            const isReingest = world?.entity_count > 0;
+            const action = isReingest ? 're-ingest' : 'ingest';
 
-            if (world?.entity_count > 0) {
-                if (!confirm(`Re-ingesting will parse the lore again. Existing entities will remain. Continue?`)) return;
+            if (isReingest) {
+                if (!confirm(`Re-ingesting will parse the lore again with the latest AI logic.\n\nThis will UPDATE existing entities with:\n• New OCEAN profiles\n• Goals, secrets, fears\n• Updated descriptions\n\nContinue?`)) return;
             }
 
-            showStatus('world-manager-status', `<span class="loading"></span> Ingesting lore for ${worldId}... (this may take 30-60 seconds)`, 'info');
+            showStatus('world-manager-status', `<span class="loading"></span> ${isReingest ? 'Re-ingesting' : 'Ingesting'} lore for ${worldId}... (this may take 30-60 seconds)`, 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}/ingest`, {
+                // Use force=true for re-ingestion to apply latest parsing updates
+                const url = API_BASE + `/game/lore-bases/${worldId}/ingest${isReingest ? '?force=true' : ''}`;
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -17150,16 +17759,95 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 }
 
                 const result = await response.json();
-                showStatus('world-manager-status',
-                    `✓ Ingested ${result.entities_stored} entities (${result.characters_with_ocean} with personalities)`,
-                    'success'
-                );
+                let statusMsg = `✓ Ingested ${result.entities_created} entities (${result.npcs_with_ocean} with personalities)`;
+
+                // Show uncertainty count if any were flagged
+                if (result.uncertainties_count > 0) {
+                    statusMsg += ` - ${result.uncertainties_count} questions flagged`;
+                    // Store for viewing
+                    window.lastIngestUncertainties = result.uncertainties;
+                }
+
+                showStatus('world-manager-status', statusMsg, 'success');
+
+                // Show uncertainties modal if any
+                if (result.uncertainties && result.uncertainties.length > 0) {
+                    showUncertaintiesModal(worldId, result.uncertainties);
+                }
 
                 // Refresh data to show new entity count
                 loadWorldManagerData();
             } catch (err) {
                 showStatus('world-manager-status', `Error: ${err.message}`, 'error');
             }
+        }
+
+        function showUncertaintiesModal(worldId, uncertainties) {
+            // Create modal for viewing AI uncertainties
+            let modal = document.getElementById('uncertainties-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'uncertainties-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 700px;">
+                        <div class="modal-header">
+                            <h2>AI Questions for Review</h2>
+                            <button class="btn btn-ghost" onclick="closeUncertaintiesModal()">×</button>
+                        </div>
+                        <div class="modal-body" id="uncertainties-content" style="max-height: 60vh; overflow-y: auto;">
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeUncertaintiesModal()">Close</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            const content = document.getElementById('uncertainties-content');
+            content.innerHTML = `
+                <p style="margin-bottom: 1rem; color: var(--text-muted);">
+                    The AI flagged ${uncertainties.length} question(s) while parsing <strong>${worldId}</strong>.
+                    These are areas where the AI was uncertain and may need human clarification.
+                </p>
+                <div class="uncertainties-list">
+                    ${uncertainties.map((u, i) => `
+                        <div class="uncertainty-card" style="background: var(--surface-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <span class="badge" style="background: ${getCategoryColor(u.category)}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;">${u.category}</span>
+                            </div>
+                            <p style="font-weight: 500; margin-bottom: 0.5rem;">${u.question}</p>
+                            ${u.context ? `<p style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; margin-bottom: 0.5rem;">"${u.context}"</p>` : ''}
+                            ${u.suggestions && u.suggestions.length > 0 ? `
+                                <div style="margin-top: 0.5rem;">
+                                    <span style="color: var(--text-muted); font-size: 0.85rem;">Suggestions:</span>
+                                    <ul style="margin: 0.25rem 0 0 1.25rem; color: var(--text-secondary);">
+                                        ${u.suggestions.map(s => `<li>${s}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            modal.classList.add('visible');
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                'entity': '#3b82f6',      // blue
+                'relationship': '#8b5cf6', // purple
+                'world': '#10b981',        // green
+                'timeline': '#f59e0b'      // amber
+            };
+            return colors[category] || '#6b7280';
+        }
+
+        function closeUncertaintiesModal() {
+            const modal = document.getElementById('uncertainties-modal');
+            if (modal) modal.classList.remove('visible');
         }
 
         async function ingestAllUnprocessed() {
@@ -17214,6 +17902,72 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             } else {
                 showStatus('world-manager-status',
                     `✓ Successfully ingested ${processed} worlds with ${totalEntities} total entities!`,
+                    'success'
+                );
+            }
+
+            loadWorldManagerData();
+        }
+
+        async function reingestAll() {
+            if (!worldManagerData?.worlds) {
+                showStatus('world-manager-status', 'No world data loaded. Please refresh first.', 'error');
+                return;
+            }
+
+            // Only re-ingest worlds that have lore content
+            const worldsWithLore = worldManagerData.worlds.filter(w => w.has_lore_content);
+
+            if (worldsWithLore.length === 0) {
+                showStatus('world-manager-status', 'No worlds with lore content found.', 'warning');
+                return;
+            }
+
+            if (!confirm(`This will RE-INGEST ${worldsWithLore.length} world(s) with the latest AI logic.\n\nAll entities will be updated with:\n• New OCEAN profiles\n• Goals, secrets, fears\n• Updated descriptions\n• Inferred world characteristics\n\nThis may take several minutes. Continue?`)) {
+                return;
+            }
+
+            showStatus('world-manager-status',
+                `<span class="loading"></span> Re-ingesting ${worldsWithLore.length} worlds... This may take a while.`,
+                'info'
+            );
+
+            let processed = 0;
+            let totalEntities = 0;
+            let errors = [];
+
+            for (const world of worldsWithLore) {
+                try {
+                    showStatus('world-manager-status',
+                        `<span class="loading"></span> Re-ingesting ${world.name || world.id}... (${processed + 1}/${worldsWithLore.length})`,
+                        'info'
+                    );
+
+                    // Use force=true to re-ingest with latest parsing logic
+                    const response = await fetch(API_BASE + `/game/lore-bases/${world.id}/ingest?force=true`, {
+                        method: 'POST'
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        totalEntities += result.entities_stored || 0;
+                        processed++;
+                    } else {
+                        errors.push(world.name || world.id);
+                    }
+                } catch (err) {
+                    errors.push(world.name || world.id);
+                }
+            }
+
+            if (errors.length > 0) {
+                showStatus('world-manager-status',
+                    `Completed with errors. ${processed} worlds re-ingested (${totalEntities} entities updated). Failed: ${errors.join(', ')}`,
+                    'warning'
+                );
+            } else {
+                showStatus('world-manager-status',
+                    `✓ Successfully re-ingested ${processed} worlds! ${totalEntities} entities updated with latest AI logic.`,
                     'success'
                 );
             }

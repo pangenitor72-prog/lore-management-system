@@ -93,6 +93,13 @@ class ExtractedEntity(BaseModel):
     tags: List[str] = Field(default_factory=list)  # Role tags like "merchant", "warrior"
     temporal_cues: List[str] = Field(default_factory=list)  # Time references
     verbatim_text: str = ""  # Original text about this entity
+    # Character-specific deep fields
+    goals: List[str] = Field(default_factory=list)  # What they want (stated or inferred)
+    secrets: List[str] = Field(default_factory=list)  # What they're hiding
+    fears: List[str] = Field(default_factory=list)  # What they're afraid of
+    # Uncertainty flagging
+    confidence: str = "high"  # high, medium, low - how confident the AI is
+    uncertainties: List[str] = Field(default_factory=list)  # What the AI is unsure about
 
 
 class ExtractedRelationship(BaseModel):
@@ -101,6 +108,16 @@ class ExtractedRelationship(BaseModel):
     target: str
     relationship_type: str
     description: str = ""
+    confidence: str = "high"  # high, medium, low
+    uncertainty: Optional[str] = None  # What the AI is unsure about
+
+
+class UncertaintyFlag(BaseModel):
+    """A question or uncertainty the AI wants to flag for admin review."""
+    category: str  # entity, relationship, world, timeline
+    question: str  # The specific question
+    context: str  # Relevant text or context
+    suggestions: List[str] = Field(default_factory=list)  # Possible answers
 
 
 class OCEANProfile(BaseModel):
@@ -112,10 +129,31 @@ class OCEANProfile(BaseModel):
     neuroticism: float = 0.5
 
 
+class ExtractedWorldCharacteristics(BaseModel):
+    """World characteristics inferred from lore text."""
+    primary_genre: Optional[str] = None
+    sub_genres: List[str] = Field(default_factory=list)
+    magic_level: Optional[str] = None
+    technology_level: Optional[str] = None
+    supernatural_presence: Optional[str] = None
+    tone: Optional[str] = None
+    narrative_style: List[str] = Field(default_factory=list)
+    moral_complexity: Optional[str] = None
+    lethality: Optional[str] = None
+    themes: List[str] = Field(default_factory=list)
+    social_structures: List[str] = Field(default_factory=list)
+    power_scale: Optional[str] = None
+    scope: Optional[str] = None
+    world_constants: List[str] = Field(default_factory=list)
+    sensory_palette: List[str] = Field(default_factory=list)
+
+
 class ParsedLoreResult(BaseModel):
     """Result of parsing lore text."""
     entities: List[ExtractedEntity]
     relationships: List[ExtractedRelationship]
+    world_characteristics: Optional[ExtractedWorldCharacteristics] = None
+    uncertainties: List[UncertaintyFlag] = Field(default_factory=list)  # Questions for admin
     entities_stored: int = 0
     relationships_stored: int = 0
     characters_with_ocean: int = 0
@@ -135,7 +173,7 @@ class LoreParsingAgent:
 
     EXTRACTION_PROMPT = """You are an expert Lore Extraction Agent for a narrative RPG knowledge graph system.
 
-Your task: Extract EVERY entity and relationship from the lore text below. Be EXHAUSTIVE - missing entities breaks the game.
+Your task: Extract EVERY entity and relationship from the lore text below. Be EXHAUSTIVE - missing entities breaks the game. Also infer the world's characteristics from the narrative.
 
 ## EXTRACTION STRATEGY (Follow This Order)
 
@@ -164,6 +202,13 @@ Look for these patterns:
 - Temporal: "X happened during Y" → DURING
 - Causal: "X caused Y" → CAUSED
 
+**STEP 5: Infer World Characteristics**
+Analyze the text to determine the world's nature:
+- Genre signals: magic systems, technology, supernatural elements
+- Tone signals: descriptions of violence/peace, hope/despair, moral clarity
+- Themes: recurring topics (power, betrayal, redemption, etc.)
+- Social structures: mentions of governance, class, religion
+
 ## ENTITY TYPES & IDENTIFICATION
 
 | Type | Identify By | Examples |
@@ -175,16 +220,32 @@ Look for these patterns:
 | EVENT | Past/future occurrences, battles, ceremonies, disasters | "the Fall of Eldoria", "the Crimson Wedding", "the Great Flood" |
 | CONCEPT | Magic systems, prophecies, religions, abstract forces | "blood magic", "the Prophecy of Ash", "the Old Ways" |
 
-## CHARACTER PERSONALITY EXTRACTION
+## CHARACTER DEEP EXTRACTION
 
-For EVERY Character, infer personality traits from:
+For EVERY Character, extract:
+
+**Personality Traits** (3-6 traits from vocabulary below):
 - Direct descriptions ("she was cunning", "known for his kindness")
 - Actions ("he betrayed his allies" → treacherous, cunning)
 - Dialogue style ("spoke softly" → gentle, reserved)
 - Reputation ("feared by all" → intimidating, powerful)
-- Relationships ("beloved by the people" → charismatic, kind)
 
-**Trait Vocabulary (use these exact words when applicable):**
+**Goals** - What does this character want? Infer from:
+- Stated objectives ("seeks to reclaim the throne")
+- Actions that imply desire ("he gathered an army" → wants power/revenge)
+- Role expectations (a merchant wants profit, a knight wants honor)
+
+**Secrets** - What are they hiding? Infer from:
+- Explicit secrets ("unknown to all, she was...")
+- Contradictions between public and private actions
+- Hidden identities, loyalties, or knowledge
+
+**Fears** - What are they afraid of? Infer from:
+- Stated fears or anxieties
+- Protective behaviors ("never spoke of his past" → fears exposure)
+- Weaknesses that could be exploited
+
+**Trait Vocabulary:**
 ```
 OPENNESS: curious, creative, imaginative, wise, studious, traditional, practical, inventive, philosophical, artistic
 CONSCIENTIOUSNESS: methodical, disciplined, loyal, patient, calculating, ambitious, organized, careful, reckless, impulsive, scattered, lazy
@@ -203,9 +264,14 @@ NEUROTICISM: brave, calm, stoic, fearful, anxious, paranoid, confident, nervous,
             "entity_type": "Character|Location|Faction|Item|Event|Concept",
             "description": "2-3 sentence summary capturing essence and narrative role",
             "traits": ["trait1", "trait2", "trait3"],
+            "goals": ["primary goal", "secondary goal"],
+            "secrets": ["what they hide"],
+            "fears": ["what they fear"],
             "tags": ["role1", "role2"],
             "temporal_cues": ["time reference 1", "time reference 2"],
-            "verbatim_text": "Copy the EXACT sentences from the source that describe this entity"
+            "verbatim_text": "Copy the EXACT sentences from the source that describe this entity",
+            "confidence": "high|medium|low",
+            "uncertainties": ["What I'm unsure about regarding this entity"]
         }}
     ],
     "relationships": [
@@ -213,9 +279,36 @@ NEUROTICISM: brave, calm, stoic, fearful, anxious, paranoid, confident, nervous,
             "source": "Entity Name",
             "target": "Other Entity Name",
             "relationship_type": "TYPE",
-            "description": "How/why they are connected"
+            "description": "How/why they are connected",
+            "confidence": "high|medium|low",
+            "uncertainty": "What I'm unsure about (or null)"
         }}
-    ]
+    ],
+    "uncertainties": [
+        {{
+            "category": "entity|relationship|world|timeline",
+            "question": "The specific question for the admin",
+            "context": "Relevant text or reasoning",
+            "suggestions": ["Possible answer 1", "Possible answer 2"]
+        }}
+    ],
+    "world_characteristics": {{
+        "primary_genre": "Fantasy|Sci-Fi|Horror|Modern|Historical|etc or null",
+        "sub_genres": ["High Fantasy", "Grimdark", "etc"],
+        "magic_level": "None|Rare & Mythic|Low & Costly|Common|Pervasive or null",
+        "technology_level": "Primitive|Ancient|Medieval|Renaissance|Industrial|Modern|Near-Future|Far-Future|Magitech or null",
+        "supernatural_presence": "None|Hidden/Secretive|Known but Rare|Common|Dominant or null",
+        "tone": "Hopeful|Optimistic|Neutral|Serious|Melancholic|Dark|Grimdark|Whimsical|Campy|Satirical or null",
+        "narrative_style": ["Epic/Sweeping", "Intimate/Character-driven", "Action-packed", "Slow-burn", "Pulpy/Fun", "Literary/Poetic", "Cinematic", "etc"],
+        "moral_complexity": "Clear Good vs Evil|Mostly Clear|Gray Areas|Morally Ambiguous|No Clear Morality or null",
+        "lethality": "Plot Armor|Forgiving|Balanced|Dangerous|Brutal or null",
+        "themes": ["Political Intrigue", "Betrayal", "Redemption", "etc"],
+        "social_structures": ["Feudal", "Monarchic", "etc"],
+        "power_scale": "Street-level|Local/Regional|Kingdom/National|Continental|World-shaping|Cosmic or null",
+        "scope": "Intimate/Personal|Local Community|Regional|Continental|Global|Interplanetary|Cosmic or null",
+        "world_constants": ["Hard rules inferred: 'Magic requires blood sacrifice'", "etc"],
+        "sensory_palette": ["Recurring sensory details: 'perpetual twilight', 'smell of decay'"]
+    }}
 }}
 
 ## FIELD DEFINITIONS
@@ -227,6 +320,9 @@ NEUROTICISM: brave, calm, stoic, fearful, anxious, paranoid, confident, nervous,
 | entity_type | Yes | One of: Character, Location, Faction, Item, Event, Concept |
 | description | Yes | 2-3 sentences: who/what it is, why it matters to the narrative |
 | traits | Characters only | Personality traits from vocabulary above (3-6 traits) |
+| goals | Characters only | What they want (1-3 goals, inferred if not stated) |
+| secrets | Characters only | What they hide (can be empty if truly open) |
+| fears | Characters only | What they fear (can be empty if fearless) |
 | tags | Yes | Role/category tags: ["warrior", "noble", "haunted", "ancient", "criminal"] |
 | temporal_cues | If present | Time references: ["during the war", "500 years ago", "before the fall"] |
 | verbatim_text | Yes | EXACT quote from source text (for citation/verification) |
@@ -244,15 +340,27 @@ NEUROTICISM: brave, calm, stoic, fearful, anxious, paranoid, confident, nervous,
 
 1. **EXHAUSTIVE EXTRACTION**: If in doubt, extract it. A minor character mentioned once is still an entity.
 2. **NO INVENTED CONTENT**: Only extract what's in the text. Don't invent details not present.
-3. **VERBATIM REQUIRED**: Always include the exact source text for each entity.
-4. **INFER RELATIONSHIPS**: "the king's advisor" → SERVES relationship. "sworn enemies" → ENEMY_OF.
-5. **CHARACTER TRAITS REQUIRED**: Every Character MUST have 3-6 personality traits inferred from text.
-6. **HANDLE PRONOUNS**: Resolve "he", "she", "they" to actual entity names.
-7. **EXTRACT NESTED ENTITIES**: "the ruins of Old Valdris" → Extract BOTH "ruins" (Location) AND "Old Valdris" (Faction/Location).
+3. **INFER GOALS/SECRETS/FEARS**: For characters, you MAY infer these from context if not stated explicitly. Use narrative logic.
+4. **VERBATIM REQUIRED**: Always include the exact source text for each entity.
+5. **INFER RELATIONSHIPS**: "the king's advisor" → SERVES relationship. "sworn enemies" → ENEMY_OF.
+6. **CHARACTER TRAITS REQUIRED**: Every Character MUST have 3-6 personality traits inferred from text.
+7. **HANDLE PRONOUNS**: Resolve "he", "she", "they" to actual entity names.
+8. **EXTRACT NESTED ENTITIES**: "the ruins of Old Valdris" → Extract BOTH "ruins" (Location) AND "Old Valdris" (Faction/Location).
+9. **WORLD CHARACTERISTICS**: Always include world_characteristics. Use null for fields you cannot determine. Include only what the text supports.
+10. **FLAG UNCERTAINTIES**: When you're unsure about something, flag it!
+    - Mark entities/relationships with confidence: "low" or "medium" if uncertain
+    - Add specific uncertainties to the entity's "uncertainties" array
+    - Add major questions to the top-level "uncertainties" array
+    - Examples of things to flag:
+      * "Is this person alive or dead?"
+      * "Is this the same character mentioned earlier under a different name?"
+      * "Is this relationship romantic or familial?"
+      * "Is this location part of the larger region mentioned?"
+      * "Does 'the war' refer to a specific known event?"
 
 ## EXAMPLE
 
-Input: "Queen Mira the Wise ruled Thornhaven with an iron will but a kind heart. Her brother, Prince Caden, secretly plotted against her from his exile in the Shadowfen."
+Input: "Queen Mira the Wise ruled Thornhaven with an iron will but a kind heart. Her brother, Prince Caden, secretly plotted against her from his exile in the Shadowfen, nursing old wounds and gathering dark allies."
 
 Output:
 {{
@@ -263,9 +371,14 @@ Output:
             "entity_type": "Character",
             "description": "Ruler of Thornhaven known for her wisdom. Governs with strict authority but genuine compassion for her people.",
             "traits": ["wise", "disciplined", "kind", "authoritative", "compassionate"],
+            "goals": ["Maintain peace and prosperity in Thornhaven", "Protect her realm from threats"],
+            "secrets": [],
+            "fears": ["Her brother's treachery succeeding", "Being forced to harm family"],
             "tags": ["royalty", "ruler", "queen"],
             "temporal_cues": [],
-            "verbatim_text": "Queen Mira the Wise ruled Thornhaven with an iron will but a kind heart."
+            "verbatim_text": "Queen Mira the Wise ruled Thornhaven with an iron will but a kind heart.",
+            "confidence": "high",
+            "uncertainties": []
         }},
         {{
             "name": "Prince Caden",
@@ -273,9 +386,14 @@ Output:
             "entity_type": "Character",
             "description": "Queen Mira's brother, living in exile. Harbors treasonous ambitions against his sister's throne.",
             "traits": ["cunning", "ambitious", "treacherous", "secretive", "resentful"],
+            "goals": ["Reclaim what he believes is rightfully his", "Overthrow Queen Mira"],
+            "secrets": ["The true nature of his dark allies", "The extent of his network"],
+            "fears": ["Dying in obscurity", "Being forgotten", "His sister's forgiveness"],
             "tags": ["royalty", "exile", "conspirator"],
             "temporal_cues": [],
-            "verbatim_text": "Her brother, Prince Caden, secretly plotted against her from his exile in the Shadowfen."
+            "verbatim_text": "Her brother, Prince Caden, secretly plotted against her from his exile in the Shadowfen, nursing old wounds and gathering dark allies.",
+            "confidence": "high",
+            "uncertainties": ["What are his 'old wounds'? Possibly related to succession or past conflict"]
         }},
         {{
             "name": "Thornhaven",
@@ -283,6 +401,9 @@ Output:
             "entity_type": "Location",
             "description": "A realm or city ruled by Queen Mira. The seat of royal power.",
             "traits": [],
+            "goals": [],
+            "secrets": [],
+            "fears": [],
             "tags": ["kingdom", "capital", "ruled"],
             "temporal_cues": [],
             "verbatim_text": "Queen Mira the Wise ruled Thornhaven"
@@ -291,9 +412,12 @@ Output:
             "name": "Shadowfen",
             "aliases": [],
             "entity_type": "Location",
-            "description": "A remote region where Prince Caden lives in exile. Likely a frontier or lawless area.",
+            "description": "A remote, likely dangerous region where exiles and dark forces gather.",
             "traits": [],
-            "tags": ["exile location", "remote", "frontier"],
+            "goals": [],
+            "secrets": [],
+            "fears": [],
+            "tags": ["exile location", "remote", "frontier", "dark"],
             "temporal_cues": [],
             "verbatim_text": "from his exile in the Shadowfen"
         }}
@@ -303,7 +427,24 @@ Output:
         {{"source": "Prince Caden", "target": "Queen Mira", "relationship_type": "SIBLING_OF", "description": "Caden is Mira's brother"}},
         {{"source": "Prince Caden", "target": "Queen Mira", "relationship_type": "ENEMY_OF", "description": "Caden secretly plots against his sister"}},
         {{"source": "Prince Caden", "target": "Shadowfen", "relationship_type": "RESIDES_IN", "description": "Caden lives in exile in the Shadowfen"}}
-    ]
+    ],
+    "world_characteristics": {{
+        "primary_genre": "Fantasy",
+        "sub_genres": ["High Fantasy"],
+        "magic_level": null,
+        "technology_level": "Medieval",
+        "supernatural_presence": null,
+        "tone": "Serious",
+        "narrative_style": ["Intimate/Character-driven", "Slow-burn"],
+        "moral_complexity": "Gray Areas",
+        "lethality": null,
+        "themes": ["Political Intrigue", "Betrayal", "Family Conflict"],
+        "social_structures": ["Monarchic"],
+        "power_scale": "Kingdom/National",
+        "scope": "Regional",
+        "world_constants": [],
+        "sensory_palette": ["dark allies suggest shadow/ominous atmosphere"]
+    }}
 }}
 
 ---
@@ -789,6 +930,11 @@ TEXT TO ANALYZE:
                     tags=e.get("tags", []),
                     temporal_cues=e.get("temporal_cues", []),
                     verbatim_text=e.get("verbatim_text", ""),
+                    goals=e.get("goals", []),
+                    secrets=e.get("secrets", []),
+                    fears=e.get("fears", []),
+                    confidence=e.get("confidence", "high"),
+                    uncertainties=e.get("uncertainties", []),
                 ))
 
             relationships = []
@@ -798,13 +944,50 @@ TEXT TO ANALYZE:
                     target=r.get("target", ""),
                     relationship_type=r.get("relationship_type", "RELATED_TO"),
                     description=r.get("description", ""),
+                    confidence=r.get("confidence", "high"),
+                    uncertainty=r.get("uncertainty"),
                 ))
 
-            logger.info(f"LoreParsingAgent extracted {len(entities)} entities, {len(relationships)} relationships")
+            # Parse top-level uncertainties (questions for admin review)
+            uncertainties = []
+            for u in parsed.get("uncertainties", []):
+                uncertainties.append(UncertaintyFlag(
+                    category=u.get("category", "entity"),
+                    question=u.get("question", ""),
+                    context=u.get("context", ""),
+                    suggestions=u.get("suggestions", []),
+                ))
+
+            # Parse world characteristics if present
+            world_chars = None
+            wc_data = parsed.get("world_characteristics")
+            if wc_data and isinstance(wc_data, dict):
+                world_chars = ExtractedWorldCharacteristics(
+                    primary_genre=wc_data.get("primary_genre"),
+                    sub_genres=wc_data.get("sub_genres", []),
+                    magic_level=wc_data.get("magic_level"),
+                    technology_level=wc_data.get("technology_level"),
+                    supernatural_presence=wc_data.get("supernatural_presence"),
+                    tone=wc_data.get("tone"),
+                    narrative_style=wc_data.get("narrative_style", []),
+                    moral_complexity=wc_data.get("moral_complexity"),
+                    lethality=wc_data.get("lethality"),
+                    themes=wc_data.get("themes", []),
+                    social_structures=wc_data.get("social_structures", []),
+                    power_scale=wc_data.get("power_scale"),
+                    scope=wc_data.get("scope"),
+                    world_constants=wc_data.get("world_constants", []),
+                    sensory_palette=wc_data.get("sensory_palette", []),
+                )
+                logger.info(f"LoreParsingAgent inferred world characteristics: genre={world_chars.primary_genre}, tone={world_chars.tone}")
+
+            logger.info(f"LoreParsingAgent extracted {len(entities)} entities, {len(relationships)} relationships, {len(uncertainties)} uncertainties")
 
             return ParsedLoreResult(
                 entities=entities,
                 relationships=relationships,
+                world_characteristics=world_chars,
+                uncertainties=uncertainties,
             )
 
         except asyncio.TimeoutError:
@@ -962,6 +1145,13 @@ TEXT TO ANALYZE:
                 props["neuroticism"] = ocean.neuroticism
                 if entity.traits:
                     props["personality_traits"] = entity.traits
+                # Store goals, secrets, fears for richer character data
+                if entity.goals:
+                    props["goals"] = entity.goals
+                if entity.secrets:
+                    props["secrets"] = entity.secrets
+                if entity.fears:
+                    props["fears"] = entity.fears
                 characters_with_ocean += 1
 
             try:
@@ -1023,6 +1213,38 @@ TEXT TO ANALYZE:
         result.entities_stored = entities_stored
         result.relationships_stored = relationships_stored
         result.characters_with_ocean = characters_with_ocean
+
+        # Store inferred world characteristics on LoreBase (if not already set by admin)
+        if curated_world_id and result.world_characteristics:
+            try:
+                wc = result.world_characteristics
+                wc_json = json.dumps({
+                    "primary_genre": wc.primary_genre,
+                    "sub_genres": wc.sub_genres,
+                    "magic_level": wc.magic_level,
+                    "technology_level": wc.technology_level,
+                    "supernatural_presence": wc.supernatural_presence,
+                    "tone": wc.tone,
+                    "narrative_style": wc.narrative_style,
+                    "moral_complexity": wc.moral_complexity,
+                    "lethality": wc.lethality,
+                    "themes": wc.themes,
+                    "social_structures": wc.social_structures,
+                    "power_scale": wc.power_scale,
+                    "scope": wc.scope,
+                    "world_constants": wc.world_constants,
+                    "sensory_palette": wc.sensory_palette,
+                })
+                # Only set if not already present (admin-set values take precedence)
+                await db.execute("""
+                    MATCH (lb:LoreBase {lore_id: $lore_id})
+                    WHERE lb.world_characteristics_json IS NULL
+                    SET lb.world_characteristics_json = $wc_json,
+                        lb.world_characteristics_source = 'AI_INFERRED'
+                """, {"lore_id": curated_world_id, "wc_json": wc_json})
+                logger.info(f"Stored inferred world characteristics for {curated_world_id}")
+            except Exception as e:
+                logger.warning(f"Failed to store world characteristics: {e}")
 
         logger.info(
             f"LoreParsingAgent stored {entities_stored} entities, "

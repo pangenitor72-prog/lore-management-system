@@ -75,6 +75,17 @@ def get_lore_parser() -> LoreParsingAgent:
     return _lore_parser
 
 
+def get_app_version() -> str:
+    """Get the current app version from deployed_version.txt."""
+    try:
+        version_file = Path(__file__).parent.parent.parent.parent / "data" / "deployed_version.txt"
+        if version_file.exists():
+            return version_file.read_text().strip().split('\n')[0]
+    except Exception:
+        pass
+    return "unknown"
+
+
 async def extract_and_store_gameplay_lore(
     narrative: str,
     session_id: str,
@@ -185,7 +196,11 @@ class WorldCharacteristics(BaseModel):
     # TONE & MOOD
     tone: Optional[str] = Field(
         None,
-        description="Overall tone: Hopeful, Neutral, Serious, Dark, Grimdark"
+        description="Overall tone: Hopeful, Optimistic, Neutral, Serious, Melancholic, Dark, Grimdark, Whimsical, Campy, Satirical"
+    )
+    narrative_style: List[str] = Field(
+        default_factory=list,
+        description="Storytelling approach: Epic/Sweeping, Intimate/Character-driven, Action-packed, Slow-burn, Pulpy/Fun, Literary/Poetic, Cinematic, etc."
     )
     moral_complexity: Optional[str] = Field(
         None,
@@ -250,14 +265,28 @@ class WorldCharacteristics(BaseModel):
 # Valid options for world characteristics (for UI dropdowns)
 WORLD_CHARACTERISTICS_OPTIONS = {
     "primary_genre": [
-        "Fantasy", "Sci-Fi", "Horror", "Modern", "Historical",
-        "Post-Apocalyptic", "Superhero", "Mythic", "Western", "Noir"
+        # Core genres
+        "Fantasy", "Sci-Fi", "Horror", "Mystery", "Thriller", "Romance",
+        "Historical", "Modern", "Western", "Noir",
+        # Hybrid/Specialty
+        "Post-Apocalyptic", "Superhero", "Mythic", "Comedy", "Drama",
+        "Adventure", "Slice of Life", "Supernatural"
     ],
     "sub_genres": [
-        "High Fantasy", "Low Fantasy", "Urban Fantasy", "Grimdark", "Sword & Sorcery",
-        "Space Opera", "Cyberpunk", "Steampunk", "Dieselpunk", "Hard Sci-Fi",
-        "Cosmic Horror", "Gothic Horror", "Survival Horror", "Noir", "Western",
-        "Wuxia", "Mythological", "Alternate History", "Military", "Romance"
+        # Fantasy variants
+        "High Fantasy", "Low Fantasy", "Urban Fantasy", "Dark Fantasy", "Grimdark",
+        "Sword & Sorcery", "Cozy Fantasy", "Portal Fantasy", "Progression Fantasy",
+        "Mythological", "Fairy Tale", "Arthurian",
+        # Sci-Fi variants
+        "Space Opera", "Hard Sci-Fi", "Cyberpunk", "Steampunk", "Dieselpunk",
+        "Solarpunk", "Biopunk", "Military Sci-Fi", "First Contact",
+        # Horror variants
+        "Cosmic Horror", "Gothic Horror", "Survival Horror", "Folk Horror",
+        "Body Horror", "Psychological Horror", "Southern Gothic",
+        # Other
+        "Noir", "Neo-Noir", "Western", "Weird Western", "Wuxia", "Xianxia",
+        "Heist", "Pirate/Nautical", "Alternate History", "Dark Academia",
+        "Cozy Mystery", "Romantic Fantasy", "LitRPG"
     ],
     "magic_level": [
         "None", "Rare & Mythic", "Low & Costly", "Common", "Pervasive"
@@ -270,7 +299,18 @@ WORLD_CHARACTERISTICS_OPTIONS = {
         "None", "Hidden/Secretive", "Known but Rare", "Common", "Dominant"
     ],
     "tone": [
-        "Hopeful", "Neutral", "Serious", "Dark", "Grimdark"
+        "Hopeful", "Optimistic", "Neutral", "Serious", "Melancholic",
+        "Dark", "Grimdark", "Whimsical", "Campy", "Satirical"
+    ],
+    "narrative_style": [
+        # Pacing & Structure
+        "Epic/Sweeping", "Intimate/Character-driven", "Action-packed", "Slow-burn",
+        # Voice & Feel
+        "Pulpy/Fun", "Literary/Poetic", "Cinematic", "Mythic/Legendary",
+        "Sardonic/Ironic", "Whimsical/Playful", "Gritty/Realistic",
+        # Focus
+        "Atmospheric/Moody", "Dialogue-heavy", "Procedural/Methodical",
+        "Ensemble-focused", "Unreliable Narrator"
     ],
     "moral_complexity": [
         "Clear Good vs Evil", "Mostly Clear", "Gray Areas", "Morally Ambiguous", "No Clear Morality"
@@ -279,14 +319,24 @@ WORLD_CHARACTERISTICS_OPTIONS = {
         "Plot Armor", "Forgiving", "Balanced", "Dangerous", "Brutal"
     ],
     "themes": [
-        "Political Intrigue", "War & Conflict", "Survival", "Exploration", "Mystery",
-        "Romance", "Redemption", "Corruption", "Revolution", "Faith & Religion",
-        "Nature vs Civilization", "Identity", "Power & Its Cost", "Legacy", "Fate vs Free Will",
-        "Class Struggle", "Coming of Age", "Revenge", "Found Family", "Betrayal"
+        # Power & Conflict
+        "Political Intrigue", "War & Conflict", "Revolution", "Power & Its Cost", "Class Struggle",
+        # Personal
+        "Survival", "Identity", "Coming of Age", "Redemption", "Revenge", "Grief & Loss",
+        # Relationships
+        "Romance", "Found Family", "Betrayal", "Loyalty", "Forbidden Love",
+        # Exploration
+        "Exploration", "Mystery", "Discovery", "The Unknown",
+        # Philosophy
+        "Fate vs Free Will", "Nature vs Civilization", "Faith & Religion", "Legacy",
+        "Corruption", "Hope vs Despair", "Humanity/What Makes Us Human",
+        # Other
+        "Colonialism/Empire", "Environmental", "Technology's Cost"
     ],
     "social_structures": [
         "Tribal", "Feudal", "Theocratic", "Monarchic", "Democratic",
-        "Corporate", "Anarchic", "Caste System", "Meritocratic", "Oligarchic"
+        "Corporate", "Anarchic", "Caste System", "Meritocratic", "Oligarchic",
+        "Colonial", "Guild-based", "Matriarchal", "Patriarchal"
     ],
     "power_scale": [
         "Street-level", "Local/Regional", "Kingdom/National", "Continental", "World-shaping", "Cosmic"
@@ -363,6 +413,8 @@ class InviteCodeResponse(BaseModel):
     message: str
     tester_name: Optional[str] = None
     testers_remaining: Optional[int] = None
+    is_admin: bool = False
+    app_version: Optional[str] = None
 
 
 @router.post("/invite/validate", response_model=InviteCodeResponse)
@@ -409,12 +461,15 @@ async def validate_invite_code(request: InviteCodeRequest):
         if stored_code == code_upper:
             if code_entry.get("activated", False):
                 # Already activated - still valid (same tester returning)
-                AuditLogger.log_sync(f"[INVITE DEBUG] Welcome back existing user: {code_entry.get('name')}")
+                is_admin_user = code_entry.get("is_admin", False)
+                AuditLogger.log_sync(f"[INVITE DEBUG] Welcome back existing user: {code_entry.get('name')} (admin={is_admin_user})")
                 return InviteCodeResponse(
                     valid=True,
                     message=f"Welcome back, {code_entry.get('name', 'Tester')}!",
                     tester_name=code_entry.get('name'),
-                    testers_remaining=max_testers - active_count
+                    testers_remaining=max_testers - active_count,
+                    is_admin=is_admin_user,
+                    app_version=get_app_version()
                 )
             else:
                 # Activate the code
@@ -422,13 +477,16 @@ async def validate_invite_code(request: InviteCodeRequest):
                 code_entry["activated_at"] = datetime.now(timezone.utc).isoformat()
                 await _save_invite_codes()
 
-                AuditLogger.log_sync(f"[INVITE DEBUG] Activating NEW user: {code_entry.get('name')}")
+                is_admin_user = code_entry.get("is_admin", False)
+                AuditLogger.log_sync(f"[INVITE DEBUG] Activating NEW user: {code_entry.get('name')} (admin={is_admin_user})")
 
                 return InviteCodeResponse(
                     valid=True,
                     message=f"Welcome to the alpha test, {code_entry.get('name', 'Tester')}!",
                     tester_name=code_entry.get('name'),
-                    testers_remaining=max_testers - active_count - 1
+                    testers_remaining=max_testers - active_count - 1,
+                    is_admin=is_admin_user,
+                    app_version=get_app_version()
                 )
 
     # Code not found
@@ -3165,12 +3223,22 @@ async def get_world_characteristics_options():
     return WORLD_CHARACTERISTICS_OPTIONS
 
 
+class UncertaintyFlagResponse(BaseModel):
+    """An uncertainty flagged by the AI for admin review."""
+    category: str  # entity, relationship, world, timeline
+    question: str
+    context: str
+    suggestions: List[str] = []
+
+
 class LoreBaseIngestResponse(BaseModel):
     """Response after ingesting a lore base."""
     lore_id: str
     entities_created: int
     relationships_created: int
     npcs_with_ocean: int
+    uncertainties_count: int = 0
+    uncertainties: List[UncertaintyFlagResponse] = []
     message: str
 
 
@@ -3178,6 +3246,7 @@ class LoreBaseIngestResponse(BaseModel):
 async def ingest_lore_base(
     lore_id: str,
     request: Request,
+    force: bool = False,
     db: Neo4jDatabase = Depends(get_neo4j_db)
 ):
     """
@@ -3186,10 +3255,13 @@ async def ingest_lore_base(
     This processes the lore_content field through the smart ingestor pipeline:
     - Extracts entities (Characters, Locations, Factions, Items, etc.)
     - Generates OCEAN personality profiles for NPCs
+    - Extracts goals, secrets, and fears for characters
+    - Infers world characteristics from narrative
     - Creates relationships between entities
     - Stores everything in Neo4j for the DM to use
 
-    Call this once when setting up a new campaign with a lore base.
+    Use force=true to re-ingest and apply any updates to parsing logic.
+    Re-ingesting will update existing entities with the latest extracted data.
     """
     if lore_id not in LORE_BASES:
         raise HTTPException(
@@ -3199,14 +3271,16 @@ async def ingest_lore_base(
 
     lore_base = LORE_BASES[lore_id]
 
-    # Check if already ingested
-    if lore_base.get("ingested", False):
+    # Check if already ingested (skip if force=True)
+    if lore_base.get("ingested", False) and not force:
         return LoreBaseIngestResponse(
             lore_id=lore_id,
             entities_created=lore_base.get("entities_count", 0),
             relationships_created=0,
             npcs_with_ocean=0,
-            message=f"Lore base '{lore_id}' was already ingested"
+            uncertainties_count=0,
+            uncertainties=[],
+            message=f"Lore base '{lore_id}' was already ingested. Use force=true to re-ingest."
         )
 
     lore_content = lore_base.get("lore_content", "")
@@ -3218,6 +3292,8 @@ async def ingest_lore_base(
             entities_created=0,
             relationships_created=0,
             npcs_with_ocean=0,
+            uncertainties_count=0,
+            uncertainties=[],
             message=f"Lore base '{lore_id}' has no lore content to ingest (use seed_prompt for generation instead)"
         )
 
@@ -3249,14 +3325,28 @@ async def ingest_lore_base(
         logger.info(
             f"Ingested lore base {lore_id}: {result.entities_stored} entities, "
             f"{result.relationships_stored} relationships, "
-            f"{result.characters_with_ocean} with OCEAN profiles"
+            f"{result.characters_with_ocean} with OCEAN profiles, "
+            f"{len(result.uncertainties)} uncertainties flagged"
         )
+
+        # Convert uncertainties to response format
+        uncertainty_responses = [
+            UncertaintyFlagResponse(
+                category=u.category,
+                question=u.question,
+                context=u.context,
+                suggestions=u.suggestions,
+            )
+            for u in result.uncertainties
+        ]
 
         return LoreBaseIngestResponse(
             lore_id=lore_id,
             entities_created=result.entities_stored,
             relationships_created=result.relationships_stored,
             npcs_with_ocean=result.characters_with_ocean,
+            uncertainties_count=len(result.uncertainties),
+            uncertainties=uncertainty_responses,
             message=f"Successfully ingested lore base '{lore_base['name']}' with AI parsing"
         )
 

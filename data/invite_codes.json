@@ -5,13 +5,15 @@
       "code": "WORLDSMITH",
       "name": "Worldsmith (Admin)",
       "activated": false,
-      "activated_at": null
+      "activated_at": null,
+      "is_admin": true
     },
     {
       "code": "DEV-ADMIN",
       "name": "Developer (Admin)",
       "activated": false,
-      "activated_at": null
+      "activated_at": null,
+      "is_admin": true
     },
     {
       "code": "DEB2025",
@@ -47,7 +49,8 @@
       "code": "JIM-ADMIN",
       "name": "Jim (Admin)",
       "activated": false,
-      "activated_at": null
+      "activated_at": null,
+      "is_admin": true
     },
     {
       "code": "JIM2026",
