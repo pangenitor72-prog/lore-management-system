@@ -627,15 +627,15 @@ async def get_arc_session_status(session_id: str):
     
     # Try to get session from game_routes
     try:
-        from src.lms.api.game_routes import _sessions
+        from src.lms.api.game_routes import _active_sessions
         
-        if session_id not in _sessions:
+        if session_id not in _active_sessions:
             raise HTTPException(
                 status_code=404,
                 detail=f"Session {session_id} not found"
             )
         
-        session_data = _sessions[session_id]
+        session_data = _active_sessions[session_id]
         arc_engine = session_data.get("arc_engine")
         
         if not arc_engine:

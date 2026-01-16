@@ -672,7 +672,6 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
                 logging.error(f"[ARC ENGINE] Error processing narrative: {e}")
                 import traceback
                 logging.error(f"[ARC ENGINE] Traceback:\n{traceback.format_exc()}")
-            )
 
         return response_text
 
