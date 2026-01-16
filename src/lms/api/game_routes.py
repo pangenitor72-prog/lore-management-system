@@ -146,6 +146,157 @@ def get_gemini_model():
     logger.info(f"Gemini model created: {GEMINI_MODEL}")
     return model
 
+
+# ============================================================
+# WORLD CHARACTERISTICS SCHEMA
+# ============================================================
+# Robust taxonomy for defining curated worlds
+# These are CANONICAL - set by admins, immutable during play
+
+class WorldCharacteristics(BaseModel):
+    """
+    Comprehensive world characteristics for curated settings.
+    These define what IS true about the world - the canonical rules.
+    """
+    # CORE GENRE
+    primary_genre: Optional[str] = Field(
+        None,
+        description="Primary genre: Fantasy, Sci-Fi, Horror, Modern, Historical, Post-Apocalyptic, Superhero, Mythic"
+    )
+    sub_genres: List[str] = Field(
+        default_factory=list,
+        description="Sub-genres: Grimdark, High Fantasy, Space Opera, Cyberpunk, Noir, etc."
+    )
+
+    # WORLD RULES
+    magic_level: Optional[str] = Field(
+        None,
+        description="Magic presence: None, Rare & Mythic, Low & Costly, Common, Pervasive"
+    )
+    technology_level: Optional[str] = Field(
+        None,
+        description="Tech level: Primitive, Ancient, Medieval, Renaissance, Industrial, Modern, Near-Future, Far-Future, Magitech"
+    )
+    supernatural_presence: Optional[str] = Field(
+        None,
+        description="Supernatural: None, Hidden/Secretive, Known but Rare, Common, Dominant"
+    )
+
+    # TONE & MOOD
+    tone: Optional[str] = Field(
+        None,
+        description="Overall tone: Hopeful, Neutral, Serious, Dark, Grimdark"
+    )
+    moral_complexity: Optional[str] = Field(
+        None,
+        description="Morality: Clear Good vs Evil, Mostly Clear, Gray Areas, Morally Ambiguous, No Clear Morality"
+    )
+    lethality: Optional[str] = Field(
+        None,
+        description="Danger level: Plot Armor, Forgiving, Balanced, Dangerous, Brutal"
+    )
+
+    # THEMES (multi-select)
+    themes: List[str] = Field(
+        default_factory=list,
+        description="Major themes: Political Intrigue, War, Survival, Exploration, Mystery, Romance, Redemption, etc."
+    )
+
+    # SOCIAL STRUCTURE
+    social_structures: List[str] = Field(
+        default_factory=list,
+        description="Social systems: Tribal, Feudal, Theocratic, Monarchic, Democratic, Corporate, Anarchic, etc."
+    )
+
+    # SCALE
+    power_scale: Optional[str] = Field(
+        None,
+        description="Power level: Street-level, Local/Regional, Kingdom/National, Continental, World-shaping, Cosmic"
+    )
+    scope: Optional[str] = Field(
+        None,
+        description="Story scope: Intimate/Personal, Local Community, Regional, Continental, Global, Interplanetary, Cosmic"
+    )
+
+    # WORLD CONSTANTS (immutable rules the AI must respect)
+    world_constants: List[str] = Field(
+        default_factory=list,
+        description="Hard rules: 'Magic always has a cost', 'The gods are silent', 'No one returns from the Wastes'"
+    )
+
+    # SENSORY PALETTE
+    sensory_palette: List[str] = Field(
+        default_factory=list,
+        description="What does this world feel like? 'Ash and smoke', 'Salt and sea', 'Pine and cold stone'"
+    )
+
+    # TABOOS & CUSTOMS
+    taboos: List[str] = Field(
+        default_factory=list,
+        description="Forbidden things: 'Speaking the dead king's name', 'Magic use in cities'"
+    )
+    customs: List[str] = Field(
+        default_factory=list,
+        description="Expected behaviors: 'Guests receive salt before business', 'Bow to nobility'"
+    )
+
+    # HISTORY ANCHORS
+    history_anchors: List[str] = Field(
+        default_factory=list,
+        description="Key events everyone references: 'The Sundering', 'When the Empire fell', 'Before the Plague'"
+    )
+
+
+# Valid options for world characteristics (for UI dropdowns)
+WORLD_CHARACTERISTICS_OPTIONS = {
+    "primary_genre": [
+        "Fantasy", "Sci-Fi", "Horror", "Modern", "Historical",
+        "Post-Apocalyptic", "Superhero", "Mythic", "Western", "Noir"
+    ],
+    "sub_genres": [
+        "High Fantasy", "Low Fantasy", "Urban Fantasy", "Grimdark", "Sword & Sorcery",
+        "Space Opera", "Cyberpunk", "Steampunk", "Dieselpunk", "Hard Sci-Fi",
+        "Cosmic Horror", "Gothic Horror", "Survival Horror", "Noir", "Western",
+        "Wuxia", "Mythological", "Alternate History", "Military", "Romance"
+    ],
+    "magic_level": [
+        "None", "Rare & Mythic", "Low & Costly", "Common", "Pervasive"
+    ],
+    "technology_level": [
+        "Primitive", "Ancient", "Medieval", "Renaissance", "Industrial",
+        "Modern", "Near-Future", "Far-Future", "Magitech"
+    ],
+    "supernatural_presence": [
+        "None", "Hidden/Secretive", "Known but Rare", "Common", "Dominant"
+    ],
+    "tone": [
+        "Hopeful", "Neutral", "Serious", "Dark", "Grimdark"
+    ],
+    "moral_complexity": [
+        "Clear Good vs Evil", "Mostly Clear", "Gray Areas", "Morally Ambiguous", "No Clear Morality"
+    ],
+    "lethality": [
+        "Plot Armor", "Forgiving", "Balanced", "Dangerous", "Brutal"
+    ],
+    "themes": [
+        "Political Intrigue", "War & Conflict", "Survival", "Exploration", "Mystery",
+        "Romance", "Redemption", "Corruption", "Revolution", "Faith & Religion",
+        "Nature vs Civilization", "Identity", "Power & Its Cost", "Legacy", "Fate vs Free Will",
+        "Class Struggle", "Coming of Age", "Revenge", "Found Family", "Betrayal"
+    ],
+    "social_structures": [
+        "Tribal", "Feudal", "Theocratic", "Monarchic", "Democratic",
+        "Corporate", "Anarchic", "Caste System", "Meritocratic", "Oligarchic"
+    ],
+    "power_scale": [
+        "Street-level", "Local/Regional", "Kingdom/National", "Continental", "World-shaping", "Cosmic"
+    ],
+    "scope": [
+        "Intimate/Personal", "Local Community", "Regional", "Continental", "Global", "Interplanetary", "Cosmic"
+    ],
+}
+
+
 router = APIRouter(prefix="/game", tags=["Game"])
 
 
@@ -2860,7 +3011,8 @@ async def load_lore_bases_from_neo4j(db) -> int:
                    lb.lore_content as lore_content,
                    lb.is_curated as is_curated,
                    lb.ingested as ingested,
-                   lb.entities_count as entities_count
+                   lb.entities_count as entities_count,
+                   lb.world_characteristics_json as wc_json
         """, {})
 
         loaded_count = 0
@@ -2873,6 +3025,15 @@ async def load_lore_bases_from_neo4j(db) -> int:
             if lore_id in LORE_BASES:
                 logger.debug(f"Skipping Neo4j lore base {lore_id} - already loaded from file")
                 continue
+
+            # Parse world_characteristics from JSON if present
+            wc_data = {}
+            wc_json = record.get("wc_json")
+            if wc_json:
+                try:
+                    wc_data = json.loads(wc_json)
+                except (json.JSONDecodeError, TypeError):
+                    pass
 
             # Load from Neo4j
             genre_hints = record.get("genre_hints") or []
@@ -2888,6 +3049,7 @@ async def load_lore_bases_from_neo4j(db) -> int:
                 "lore_content": record.get("lore_content", ""),
                 "ingested": record.get("ingested", False),
                 "is_curated": record.get("is_curated", True),
+                "world_characteristics": wc_data,
                 "source": "neo4j",  # Mark as loaded from DB
             }
             loaded_count += 1
@@ -2915,6 +3077,8 @@ class LoreBaseResponse(BaseModel):
     has_lore_content: bool = False  # True if lore_content exists and is non-empty
     ingested: bool = False  # True if lore has been processed into entities
     entities_created: int = 0  # Number of entities created in this request
+    # World characteristics - canonical world definition
+    world_characteristics: Optional[WorldCharacteristics] = None
 
 
 @router.get("/lore-bases", response_model=List[LoreBaseResponse])
@@ -2934,6 +3098,10 @@ async def list_lore_bases(genre: Optional[str] = None):
             if genre.lower() != base_genre.lower() and genre.lower() not in [g.lower() for g in base_genres]:
                 continue
 
+        # Build world characteristics from stored data
+        wc_data = base.get("world_characteristics", {})
+        world_chars = WorldCharacteristics(**wc_data) if wc_data else None
+
         bases.append(LoreBaseResponse(
             id=base["id"],
             name=base["name"],
@@ -2946,6 +3114,7 @@ async def list_lore_bases(genre: Optional[str] = None):
             is_seed=base.get("is_seed", False),
             has_lore_content=bool(base.get("lore_content", "").strip()),
             ingested=base.get("ingested", False),
+            world_characteristics=world_chars,
         ))
 
     return bases
@@ -2966,6 +3135,11 @@ async def get_lore_base(lore_id: str):
             detail=f"Lore base '{lore_id}' not found"
         )
     base = LORE_BASES[lore_id]
+
+    # Build world characteristics from stored data
+    wc_data = base.get("world_characteristics", {})
+    world_chars = WorldCharacteristics(**wc_data) if wc_data else None
+
     return LoreBaseResponse(
         id=base["id"],
         name=base["name"],
@@ -2978,7 +3152,17 @@ async def get_lore_base(lore_id: str):
         is_seed=base.get("is_seed", False),
         has_lore_content=bool(base.get("lore_content", "").strip()),
         ingested=base.get("ingested", False),
+        world_characteristics=world_chars,
     )
+
+
+@router.get("/world-characteristics/options")
+async def get_world_characteristics_options():
+    """
+    Get all valid options for world characteristics.
+    Used by the frontend to populate dropdowns and multi-selects.
+    """
+    return WORLD_CHARACTERISTICS_OPTIONS
 
 
 class LoreBaseIngestResponse(BaseModel):
@@ -3356,6 +3540,10 @@ class LoreBaseUpdateRequest(BaseModel):
         default=None,
         description="Pre-approved entities from review step - creates new entities"
     )
+    world_characteristics: Optional[WorldCharacteristics] = Field(
+        default=None,
+        description="Canonical world characteristics (genre, tone, magic level, etc.)"
+    )
 
 
 @router.put("/lore-bases/{lore_id}", response_model=LoreBaseResponse)
@@ -3395,11 +3583,16 @@ async def update_lore_base(
     if update.lore_content is not None:
         base["lore_content"] = update.lore_content
         base["ingested"] = False  # Mark for re-ingestion
+    if update.world_characteristics is not None:
+        base["world_characteristics"] = update.world_characteristics.model_dump()
 
     LORE_BASES[lore_id] = base
 
     # Update Neo4j if exists
     try:
+        # Store world_characteristics as JSON string in Neo4j
+        wc_json = json.dumps(base.get("world_characteristics", {})) if base.get("world_characteristics") else None
+
         await db.execute("""
             MATCH (lb:LoreBase {lore_id: $id})
             SET lb.name = $name,
@@ -3410,6 +3603,7 @@ async def update_lore_base(
                 lb.seed_prompt = $seed_prompt,
                 lb.lore_content = $lore_content,
                 lb.ingested = $ingested,
+                lb.world_characteristics_json = $wc_json,
                 lb.updated_at = datetime()
         """, {
             "id": lore_id,
@@ -3421,6 +3615,7 @@ async def update_lore_base(
             "seed_prompt": base.get("seed_prompt", ""),
             "lore_content": base.get("lore_content", ""),
             "ingested": base.get("ingested", False),
+            "wc_json": wc_json,
         })
     except Exception as e:
         logger.warning(f"Failed to update LoreBase in Neo4j: {e}")
