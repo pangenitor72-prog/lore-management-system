@@ -16,6 +16,7 @@ import os
 import re
 import json
 import uuid
+import random
 import logging
 import asyncio
 from typing import Dict, Any, List, Optional
@@ -486,6 +487,171 @@ TEXT TO ANALYZE:
 
         return OCEANProfile(**scores)
 
+    # Role/archetype to OCEAN tendencies for narrative-driven generation
+    ROLE_OCEAN_HINTS = {
+        # Leaders & Authority
+        "king": {"extraversion": 0.7, "conscientiousness": 0.7, "openness": 0.5},
+        "queen": {"extraversion": 0.6, "conscientiousness": 0.7, "agreeableness": 0.5},
+        "lord": {"extraversion": 0.6, "conscientiousness": 0.6, "neuroticism": 0.4},
+        "captain": {"extraversion": 0.7, "conscientiousness": 0.8, "neuroticism": 0.3},
+        "commander": {"extraversion": 0.7, "conscientiousness": 0.8, "agreeableness": 0.4},
+        "chief": {"extraversion": 0.7, "conscientiousness": 0.6, "openness": 0.5},
+
+        # Scholars & Mystics
+        "wizard": {"openness": 0.9, "conscientiousness": 0.6, "extraversion": 0.3},
+        "mage": {"openness": 0.85, "conscientiousness": 0.5, "extraversion": 0.4},
+        "sage": {"openness": 0.9, "conscientiousness": 0.7, "agreeableness": 0.6},
+        "scholar": {"openness": 0.85, "conscientiousness": 0.8, "extraversion": 0.3},
+        "priest": {"conscientiousness": 0.7, "agreeableness": 0.7, "openness": 0.5},
+        "oracle": {"openness": 0.9, "neuroticism": 0.6, "extraversion": 0.3},
+
+        # Rogues & Shadows
+        "assassin": {"conscientiousness": 0.7, "extraversion": 0.2, "agreeableness": 0.2},
+        "thief": {"openness": 0.6, "conscientiousness": 0.4, "agreeableness": 0.3},
+        "spy": {"openness": 0.7, "conscientiousness": 0.7, "extraversion": 0.5},
+        "rogue": {"openness": 0.6, "conscientiousness": 0.3, "agreeableness": 0.4},
+
+        # Warriors & Fighters
+        "warrior": {"conscientiousness": 0.6, "extraversion": 0.6, "neuroticism": 0.4},
+        "knight": {"conscientiousness": 0.8, "agreeableness": 0.6, "extraversion": 0.5},
+        "soldier": {"conscientiousness": 0.7, "extraversion": 0.5, "openness": 0.4},
+        "mercenary": {"conscientiousness": 0.5, "agreeableness": 0.3, "openness": 0.5},
+        "barbarian": {"extraversion": 0.7, "conscientiousness": 0.3, "openness": 0.4},
+        "guard": {"conscientiousness": 0.7, "extraversion": 0.4, "agreeableness": 0.5},
+
+        # Common Folk & Services
+        "merchant": {"extraversion": 0.7, "conscientiousness": 0.6, "agreeableness": 0.5},
+        "innkeeper": {"extraversion": 0.8, "agreeableness": 0.7, "openness": 0.5},
+        "bartender": {"extraversion": 0.7, "agreeableness": 0.6, "openness": 0.6},
+        "farmer": {"conscientiousness": 0.7, "agreeableness": 0.6, "openness": 0.3},
+        "blacksmith": {"conscientiousness": 0.8, "extraversion": 0.4, "openness": 0.4},
+        "healer": {"agreeableness": 0.8, "conscientiousness": 0.7, "openness": 0.6},
+
+        # Outcasts & Mysterious
+        "hermit": {"extraversion": 0.1, "openness": 0.7, "agreeableness": 0.4},
+        "wanderer": {"openness": 0.8, "extraversion": 0.4, "conscientiousness": 0.3},
+        "stranger": {"extraversion": 0.3, "openness": 0.6, "neuroticism": 0.5},
+        "exile": {"neuroticism": 0.6, "agreeableness": 0.4, "extraversion": 0.3},
+
+        # Villains & Antagonists
+        "villain": {"agreeableness": 0.2, "neuroticism": 0.6, "openness": 0.5},
+        "tyrant": {"agreeableness": 0.1, "extraversion": 0.7, "conscientiousness": 0.6},
+        "cultist": {"openness": 0.7, "conscientiousness": 0.6, "agreeableness": 0.3},
+    }
+
+    # Description keywords that hint at personality
+    DESCRIPTION_OCEAN_HINTS = {
+        # High Openness
+        "curious": {"openness": 0.2}, "creative": {"openness": 0.2}, "imaginative": {"openness": 0.2},
+        "mysterious": {"openness": 0.15}, "eccentric": {"openness": 0.2}, "unconventional": {"openness": 0.15},
+        # Low Openness
+        "traditional": {"openness": -0.15}, "practical": {"openness": -0.1}, "conventional": {"openness": -0.15},
+
+        # High Conscientiousness
+        "disciplined": {"conscientiousness": 0.2}, "meticulous": {"conscientiousness": 0.2},
+        "organized": {"conscientiousness": 0.15}, "dutiful": {"conscientiousness": 0.15},
+        # Low Conscientiousness
+        "chaotic": {"conscientiousness": -0.2}, "impulsive": {"conscientiousness": -0.15},
+        "reckless": {"conscientiousness": -0.2}, "carefree": {"conscientiousness": -0.1},
+
+        # High Extraversion
+        "outgoing": {"extraversion": 0.2}, "charismatic": {"extraversion": 0.2},
+        "loud": {"extraversion": 0.15}, "gregarious": {"extraversion": 0.2}, "boisterous": {"extraversion": 0.15},
+        # Low Extraversion
+        "quiet": {"extraversion": -0.15}, "reserved": {"extraversion": -0.15},
+        "solitary": {"extraversion": -0.2}, "withdrawn": {"extraversion": -0.2}, "shy": {"extraversion": -0.15},
+
+        # High Agreeableness
+        "kind": {"agreeableness": 0.2}, "gentle": {"agreeableness": 0.15}, "compassionate": {"agreeableness": 0.2},
+        "trusting": {"agreeableness": 0.15}, "helpful": {"agreeableness": 0.15}, "generous": {"agreeableness": 0.15},
+        # Low Agreeableness
+        "ruthless": {"agreeableness": -0.2}, "cold": {"agreeableness": -0.15}, "cruel": {"agreeableness": -0.2},
+        "suspicious": {"agreeableness": -0.15}, "selfish": {"agreeableness": -0.15}, "harsh": {"agreeableness": -0.1},
+
+        # High Neuroticism
+        "anxious": {"neuroticism": 0.2}, "paranoid": {"neuroticism": 0.2}, "fearful": {"neuroticism": 0.15},
+        "troubled": {"neuroticism": 0.15}, "tormented": {"neuroticism": 0.2}, "unstable": {"neuroticism": 0.2},
+        # Low Neuroticism
+        "calm": {"neuroticism": -0.15}, "stoic": {"neuroticism": -0.2}, "unflappable": {"neuroticism": -0.2},
+        "confident": {"neuroticism": -0.15}, "serene": {"neuroticism": -0.15}, "composed": {"neuroticism": -0.15},
+    }
+
+    def _generate_ocean_for_character(
+        self,
+        name: str,
+        description: str = "",
+        traits: List[str] = None,
+        role: str = ""
+    ) -> OCEANProfile:
+        """
+        Generate OCEAN profile for ANY character.
+
+        Priority:
+        1. Use explicit traits if available (most reliable)
+        2. Infer from role/title keywords
+        3. Infer from description keywords
+        4. Add narrative randomness to avoid bland 0.5 defaults
+
+        The result is always interesting - never just (0.5, 0.5, 0.5, 0.5, 0.5).
+        """
+        # Start with slight random variation around 0.5 (not flat)
+        scores = {
+            "openness": 0.5 + random.uniform(-0.15, 0.15),
+            "conscientiousness": 0.5 + random.uniform(-0.15, 0.15),
+            "extraversion": 0.5 + random.uniform(-0.15, 0.15),
+            "agreeableness": 0.5 + random.uniform(-0.15, 0.15),
+            "neuroticism": 0.5 + random.uniform(-0.15, 0.15),
+        }
+
+        hints_applied = 0
+
+        # 1. If we have explicit traits, use them (strongest signal)
+        if traits:
+            for trait in traits:
+                trait_lower = trait.lower().strip()
+                if trait_lower in self.TRAIT_TO_OCEAN:
+                    for dimension, delta in self.TRAIT_TO_OCEAN[trait_lower].items():
+                        scores[dimension] += delta
+                        hints_applied += 1
+
+        # 2. Check name/role for archetype hints
+        text_to_check = f"{name} {role}".lower()
+        for role_keyword, role_scores in self.ROLE_OCEAN_HINTS.items():
+            if role_keyword in text_to_check:
+                for dimension, value in role_scores.items():
+                    # Blend toward the archetype value
+                    scores[dimension] = scores[dimension] * 0.5 + value * 0.5
+                    hints_applied += 1
+                break  # Only apply one role archetype
+
+        # 3. Check description for personality hints
+        if description:
+            desc_lower = description.lower()
+            for keyword, deltas in self.DESCRIPTION_OCEAN_HINTS.items():
+                if keyword in desc_lower:
+                    for dimension, delta in deltas.items():
+                        scores[dimension] += delta
+                        hints_applied += 1
+
+        # 4. If we still have no strong signal, add more dramatic randomness
+        # This ensures every character is interesting, not bland
+        if hints_applied < 2:
+            # Pick 1-2 dimensions to make more extreme
+            dimensions = list(scores.keys())
+            extreme_dims = random.sample(dimensions, k=random.randint(1, 2))
+            for dim in extreme_dims:
+                # Push toward high or low
+                if random.random() > 0.5:
+                    scores[dim] = random.uniform(0.65, 0.85)  # High
+                else:
+                    scores[dim] = random.uniform(0.15, 0.35)  # Low
+
+        # Clamp all values to valid range
+        for dim in scores:
+            scores[dim] = max(0.0, min(1.0, scores[dim]))
+
+        return OCEANProfile(**scores)
+
     def _clean_json_response(self, text: str) -> str:
         """Clean markdown fences from LLM response."""
         cleaned = text.strip()
@@ -779,15 +945,23 @@ TEXT TO ANALYZE:
                 "temporal_cues": entity.temporal_cues,
             }
 
-            # Generate OCEAN profile for characters
-            if entity.entity_type == "Character" and entity.traits:
-                ocean = self._generate_ocean_from_traits(entity.traits)
+            # Generate OCEAN profile for ALL characters
+            # Uses traits if available, otherwise infers from name/description/role
+            # Never defaults to bland 0.5 across the board - always narratively interesting
+            if entity.entity_type == "Character":
+                ocean = self._generate_ocean_for_character(
+                    name=entity.name,
+                    description=entity.description or "",
+                    traits=entity.traits,
+                    role=""  # Could extract role from name/description in future
+                )
                 props["openness"] = ocean.openness
                 props["conscientiousness"] = ocean.conscientiousness
                 props["extraversion"] = ocean.extraversion
                 props["agreeableness"] = ocean.agreeableness
                 props["neuroticism"] = ocean.neuroticism
-                props["personality_traits"] = entity.traits
+                if entity.traits:
+                    props["personality_traits"] = entity.traits
                 characters_with_ocean += 1
 
             try:

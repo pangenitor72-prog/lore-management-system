@@ -1,1 +1,1 @@
-v39-20260116-entity-world-isolation
+v40-20260116-ocean-all-npcs
