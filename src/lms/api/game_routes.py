@@ -5227,3 +5227,368 @@ async def get_node_details(
     except Exception as e:
         logger.error(f"Node detail query failed: {e}")
         return {"error": str(e), "node_id": node_id}
+
+
+# ============================================================
+# DUPLICATE DETECTION & MERGE
+# ============================================================
+
+def _levenshtein_distance(s1: str, s2: str) -> int:
+    """Calculate Levenshtein distance between two strings."""
+    if len(s1) < len(s2):
+        return _levenshtein_distance(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+
+    return previous_row[-1]
+
+
+def _name_similarity(name1: str, name2: str) -> float:
+    """Calculate similarity between two names (0.0 to 1.0)."""
+    n1 = name1.lower().strip()
+    n2 = name2.lower().strip()
+
+    if n1 == n2:
+        return 1.0
+
+    # Check if one is substring of another
+    if n1 in n2 or n2 in n1:
+        return 0.85
+
+    # Levenshtein-based similarity
+    max_len = max(len(n1), len(n2))
+    if max_len == 0:
+        return 1.0
+
+    distance = _levenshtein_distance(n1, n2)
+    return 1.0 - (distance / max_len)
+
+
+def _check_alias_overlap(entity1: dict, entity2: dict) -> bool:
+    """Check if either entity's name appears in the other's aliases."""
+    name1 = (entity1.get("name") or "").lower().strip()
+    name2 = (entity2.get("name") or "").lower().strip()
+    aliases1 = [a.lower().strip() for a in (entity1.get("aliases") or [])]
+    aliases2 = [a.lower().strip() for a in (entity2.get("aliases") or [])]
+
+    # Check if name1 is in aliases2 or vice versa
+    if name1 and name1 in aliases2:
+        return True
+    if name2 and name2 in aliases1:
+        return True
+
+    # Check for alias overlap
+    for a1 in aliases1:
+        if a1 in aliases2:
+            return True
+
+    return False
+
+
+class DuplicatePair(BaseModel):
+    """A potential duplicate pair."""
+    entity1_id: str
+    entity1_name: str
+    entity1_type: str
+    entity1_description: str = ""
+    entity1_aliases: List[str] = []
+    entity2_id: str
+    entity2_name: str
+    entity2_type: str
+    entity2_description: str = ""
+    entity2_aliases: List[str] = []
+    similarity_score: float
+    match_reasons: List[str] = []
+
+
+class DuplicateDetectionResponse(BaseModel):
+    """Response from duplicate detection."""
+    world_id: str
+    total_entities: int
+    duplicates_found: int
+    pairs: List[DuplicatePair]
+
+
+@router.get("/lore-bases/{lore_id}/duplicates", response_model=DuplicateDetectionResponse)
+async def detect_duplicates(
+    lore_id: str,
+    threshold: float = Query(default=0.7, ge=0.5, le=1.0, description="Minimum similarity threshold"),
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
+    """
+    Detect potential duplicate entities within a lore base.
+
+    Uses multiple signals to find duplicates:
+    - Name similarity (Levenshtein distance)
+    - Alias overlap (one entity's name in another's aliases)
+    - Same entity type constraint
+
+    Returns pairs sorted by similarity score (highest first).
+    """
+    # Get all entities for this world
+    result = await db.execute("""
+        MATCH (e:Entity)
+        WHERE e.curated_world_id = $world_id OR e.world_id = $world_id
+        RETURN e.canon_id AS canon_id,
+               e.name AS name,
+               e.entity_type AS entity_type,
+               e.description AS description,
+               e.aliases AS aliases
+        ORDER BY e.name
+    """, {"world_id": lore_id})
+
+    entities = [dict(r) for r in result]
+    total_entities = len(entities)
+
+    if total_entities < 2:
+        return DuplicateDetectionResponse(
+            world_id=lore_id,
+            total_entities=total_entities,
+            duplicates_found=0,
+            pairs=[]
+        )
+
+    # Compare all pairs (same type only)
+    duplicate_pairs = []
+    seen_pairs = set()
+
+    for i, e1 in enumerate(entities):
+        for j, e2 in enumerate(entities):
+            if i >= j:
+                continue  # Skip self and already-compared pairs
+
+            # Only compare same entity types
+            if e1.get("entity_type") != e2.get("entity_type"):
+                continue
+
+            # Create pair key to avoid duplicates
+            pair_key = tuple(sorted([e1["canon_id"], e2["canon_id"]]))
+            if pair_key in seen_pairs:
+                continue
+            seen_pairs.add(pair_key)
+
+            # Calculate similarity
+            name_sim = _name_similarity(e1.get("name", ""), e2.get("name", ""))
+            alias_overlap = _check_alias_overlap(e1, e2)
+
+            # Determine final score and reasons
+            match_reasons = []
+            final_score = name_sim
+
+            if alias_overlap:
+                final_score = max(final_score, 0.9)  # Alias overlap is strong signal
+                match_reasons.append("Alias overlap")
+
+            if name_sim >= 0.8:
+                match_reasons.append(f"Name similarity: {name_sim:.0%}")
+            elif name_sim >= threshold:
+                match_reasons.append(f"Name similar: {name_sim:.0%}")
+
+            # Check if above threshold
+            if final_score >= threshold:
+                duplicate_pairs.append(DuplicatePair(
+                    entity1_id=e1["canon_id"],
+                    entity1_name=e1.get("name", "Unknown"),
+                    entity1_type=e1.get("entity_type", "Unknown"),
+                    entity1_description=(e1.get("description") or "")[:200],
+                    entity1_aliases=e1.get("aliases") or [],
+                    entity2_id=e2["canon_id"],
+                    entity2_name=e2.get("name", "Unknown"),
+                    entity2_type=e2.get("entity_type", "Unknown"),
+                    entity2_description=(e2.get("description") or "")[:200],
+                    entity2_aliases=e2.get("aliases") or [],
+                    similarity_score=round(final_score, 2),
+                    match_reasons=match_reasons,
+                ))
+
+    # Sort by similarity (highest first)
+    duplicate_pairs.sort(key=lambda p: p.similarity_score, reverse=True)
+
+    logger.info(f"Duplicate detection for {lore_id}: {len(duplicate_pairs)} pairs found from {total_entities} entities")
+
+    return DuplicateDetectionResponse(
+        world_id=lore_id,
+        total_entities=total_entities,
+        duplicates_found=len(duplicate_pairs),
+        pairs=duplicate_pairs
+    )
+
+
+class MergeEntitiesRequest(BaseModel):
+    """Request to merge two entities."""
+    primary_id: str = Field(..., description="The entity to keep (canon_id)")
+    secondary_id: str = Field(..., description="The entity to merge into primary and delete (canon_id)")
+    merge_descriptions: bool = Field(default=True, description="Combine descriptions")
+    merge_aliases: bool = Field(default=True, description="Combine aliases")
+    merge_traits: bool = Field(default=True, description="Combine personality traits")
+
+
+class MergeEntitiesResponse(BaseModel):
+    """Response after merging entities."""
+    success: bool
+    primary_id: str
+    deleted_id: str
+    aliases_added: int
+    relationships_transferred: int
+    message: str
+
+
+@router.post("/entities/merge", response_model=MergeEntitiesResponse)
+async def merge_entities(
+    merge_req: MergeEntitiesRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
+    """
+    Merge two entities into one.
+
+    The primary entity is kept, and the secondary entity's data is merged in:
+    - Secondary's name is added to primary's aliases
+    - Secondary's aliases are added to primary's aliases
+    - All relationships pointing to secondary are redirected to primary
+    - Optionally merges descriptions, traits, goals, secrets, fears
+    - Secondary entity is deleted
+
+    This follows the Gospel Principle: humans decide which entities to merge.
+    """
+    primary_id = merge_req.primary_id
+    secondary_id = merge_req.secondary_id
+
+    if primary_id == secondary_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot merge an entity with itself"
+        )
+
+    # Verify both entities exist
+    check_result = await db.execute("""
+        MATCH (p:Entity {canon_id: $primary_id})
+        MATCH (s:Entity {canon_id: $secondary_id})
+        RETURN p.name AS primary_name, p.aliases AS primary_aliases,
+               p.description AS primary_desc, p.goals AS primary_goals,
+               p.secrets AS primary_secrets, p.fears AS primary_fears,
+               p.personality_traits AS primary_traits,
+               s.name AS secondary_name, s.aliases AS secondary_aliases,
+               s.description AS secondary_desc, s.goals AS secondary_goals,
+               s.secrets AS secondary_secrets, s.fears AS secondary_fears,
+               s.personality_traits AS secondary_traits
+    """, {"primary_id": primary_id, "secondary_id": secondary_id})
+
+    if not check_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="One or both entities not found"
+        )
+
+    row = check_result[0]
+
+    # Build merged aliases
+    new_aliases = list(row.get("primary_aliases") or [])
+    secondary_name = row.get("secondary_name")
+    if secondary_name and secondary_name not in new_aliases:
+        new_aliases.append(secondary_name)
+    if merge_req.merge_aliases:
+        for alias in (row.get("secondary_aliases") or []):
+            if alias not in new_aliases:
+                new_aliases.append(alias)
+
+    aliases_added = len(new_aliases) - len(row.get("primary_aliases") or [])
+
+    # Build update properties
+    update_props = {"aliases": new_aliases}
+
+    if merge_req.merge_descriptions:
+        primary_desc = row.get("primary_desc") or ""
+        secondary_desc = row.get("secondary_desc") or ""
+        if secondary_desc and secondary_desc not in primary_desc:
+            # Append secondary description if different
+            if primary_desc:
+                update_props["description"] = f"{primary_desc}\n\n[Merged from {secondary_name}]: {secondary_desc}"
+            else:
+                update_props["description"] = secondary_desc
+
+    if merge_req.merge_traits:
+        # Merge goals, secrets, fears, traits
+        for field in ["goals", "secrets", "fears", "personality_traits"]:
+            primary_vals = list(row.get(f"primary_{field.replace('personality_', '')}") or [])
+            secondary_vals = row.get(f"secondary_{field.replace('personality_', '')}") or []
+            for val in secondary_vals:
+                if val not in primary_vals:
+                    primary_vals.append(val)
+            if primary_vals:
+                update_props[field] = primary_vals
+
+    # Update primary entity with merged data
+    await db.execute("""
+        MATCH (p:Entity {canon_id: $primary_id})
+        SET p += $props
+    """, {"primary_id": primary_id, "props": update_props})
+
+    # Transfer relationships from secondary to primary
+    # First, get all relationship types on the secondary entity
+    rel_types_result = await db.execute("""
+        MATCH (s:Entity {canon_id: $secondary_id})-[r]-()
+        RETURN DISTINCT type(r) AS rel_type
+    """, {"secondary_id": secondary_id})
+
+    relationships_transferred = 0
+
+    # For each relationship type, transfer relationships
+    for rel_row in rel_types_result:
+        rel_type = rel_row["rel_type"]
+        if not rel_type:
+            continue
+
+        # Outgoing: secondary -> target becomes primary -> target
+        await db.execute(f"""
+            MATCH (s:Entity {{canon_id: $secondary_id}})-[r:`{rel_type}`]->(target)
+            MATCH (p:Entity {{canon_id: $primary_id}})
+            WHERE NOT (p)-[:`{rel_type}`]->(target)
+            CREATE (p)-[nr:`{rel_type}`]->(target)
+            SET nr = properties(r)
+            DELETE r
+        """, {"primary_id": primary_id, "secondary_id": secondary_id})
+
+        # Incoming: source -> secondary becomes source -> primary
+        await db.execute(f"""
+            MATCH (source)-[r:`{rel_type}`]->(s:Entity {{canon_id: $secondary_id}})
+            MATCH (p:Entity {{canon_id: $primary_id}})
+            WHERE NOT (source)-[:`{rel_type}`]->(p) AND source <> p
+            CREATE (source)-[nr:`{rel_type}`]->(p)
+            SET nr = properties(r)
+            DELETE r
+        """, {"primary_id": primary_id, "secondary_id": secondary_id})
+
+        relationships_transferred += 1
+
+    # Clean up any remaining relationships on secondary
+    await db.execute("""
+        MATCH (s:Entity {canon_id: $secondary_id})-[r]-()
+        DELETE r
+    """, {"secondary_id": secondary_id})
+
+    # Delete secondary entity
+    await db.execute("""
+        MATCH (s:Entity {canon_id: $secondary_id})
+        DETACH DELETE s
+    """, {"secondary_id": secondary_id})
+
+    logger.info(f"Merged entity {secondary_id} into {primary_id}: +{aliases_added} aliases")
+
+    return MergeEntitiesResponse(
+        success=True,
+        primary_id=primary_id,
+        deleted_id=secondary_id,
+        aliases_added=aliases_added,
+        relationships_transferred=relationships_transferred,
+        message=f"Successfully merged '{secondary_name}' into primary entity. Added {aliases_added} aliases."
+    )
