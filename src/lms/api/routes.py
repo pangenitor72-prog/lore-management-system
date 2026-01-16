@@ -509,6 +509,22 @@ async def health_check(request: Request):
     out["features"]["ai_enabled"] = getattr(request.app.state, "ai_enabled", False)
     out["features"]["vector_search"] = getattr(request.app.state, "vector_search_enabled", False)
 
+    # Arc Engine check
+    try:
+        from src.lms.agents.dm_agent import ARC_ENGINE_ENABLED, ARC_ENGINE_AVAILABLE, ARC_ENGINE_IMPORT_ERROR
+        
+        if not ARC_ENGINE_ENABLED:
+            out["checks"]["arc_engine"] = "disabled"
+        elif ARC_ENGINE_AVAILABLE:
+            out["checks"]["arc_engine"] = "available"
+        else:
+            out["checks"]["arc_engine"] = "error"
+        
+        out["features"]["arc_engine_enabled"] = ARC_ENGINE_ENABLED and ARC_ENGINE_AVAILABLE
+    except Exception as e:
+        out["checks"]["arc_engine"] = f"check_failed: {str(e)[:50]}"
+        out["features"]["arc_engine_enabled"] = False
+
     return out
 
 
@@ -525,6 +541,180 @@ async def debug_status(request: Request):
         "gemini_key_present": bool(os.getenv("GEMINI_API_KEY")),
         "neo4j_connected": neo4j_ok,
     }
+
+
+# ============================================================
+# ARC ENGINE DIAGNOSTIC ENDPOINTS
+# ============================================================
+
+@router.get("/arc/status")
+async def get_arc_status():
+    """
+    Get Arc Engine status and diagnostic information.
+    
+    Returns detailed information about whether the Arc Engine is:
+    - Enabled via configuration
+    - Successfully imported
+    - Available for use
+    - Any import errors encountered
+    """
+    from src.lms.agents.dm_agent import (
+        ARC_ENGINE_ENABLED,
+        ARC_ENGINE_AVAILABLE,
+        ARC_ENGINE_IMPORT_ERROR
+    )
+    
+    response = {
+        "enabled": ARC_ENGINE_ENABLED,
+        "available": ARC_ENGINE_AVAILABLE,
+        "import_error": ARC_ENGINE_IMPORT_ERROR,
+        "dependencies_checked": {}
+    }
+    
+    # Determine reason
+    if not ARC_ENGINE_ENABLED:
+        response["reason"] = "Disabled via config (ENABLE_ARC_ENGINE=false)"
+    elif ARC_ENGINE_AVAILABLE:
+        response["reason"] = "Import successful"
+    else:
+        if ARC_ENGINE_IMPORT_ERROR:
+            response["reason"] = f"Import failed: {ARC_ENGINE_IMPORT_ERROR}"
+        else:
+            response["reason"] = "Import failed: Unknown error"
+    
+    # Check dependencies
+    try:
+        import pydantic
+        response["dependencies_checked"]["pydantic"] = pydantic.__version__
+    except ImportError:
+        response["dependencies_checked"]["pydantic"] = "missing"
+    
+    try:
+        import src.lms.arc.models
+        response["dependencies_checked"]["src.lms.arc.models"] = "available"
+    except ImportError as e:
+        response["dependencies_checked"]["src.lms.arc.models"] = f"missing: {str(e)}"
+    
+    return response
+
+
+@router.get("/arc/session/{session_id}")
+async def get_arc_session_status(session_id: str):
+    """
+    Get Arc Engine state for a specific game session.
+    
+    Returns detailed information about the narrative arc state including:
+    - Current phase (e.g., CALL_TO_ADVENTURE)
+    - Current act (DEPARTURE/INITIATION/RETURN)
+    - Tension level and value
+    - Journey progress
+    - Episode information
+    - Phase and tension guidance
+    """
+    from src.lms.agents.dm_agent import ARC_ENGINE_AVAILABLE, ARC_ENGINE_ENABLED
+    
+    if not ARC_ENGINE_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail="Arc Engine is disabled via configuration (ENABLE_ARC_ENGINE=false)"
+        )
+    
+    if not ARC_ENGINE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Arc Engine is not available (import failed)"
+        )
+    
+    # Try to get session from game_routes
+    try:
+        from src.lms.api.game_routes import _sessions
+        
+        if session_id not in _sessions:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Session {session_id} not found"
+            )
+        
+        session_data = _sessions[session_id]
+        arc_engine = session_data.get("arc_engine")
+        
+        if not arc_engine:
+            return {
+                "session_id": session_id,
+                "arc_engine_state": "not_initialized",
+                "message": "Arc Engine not initialized for this session"
+            }
+        
+        # Get arc state
+        try:
+            response = {
+                "session_id": session_id,
+                "current_phase": arc_engine.current_phase.value if hasattr(arc_engine, 'current_phase') else "unknown",
+                "current_act": arc_engine.current_act.value if hasattr(arc_engine, 'current_act') else "unknown",
+                "tension_level": arc_engine.tension_level.value if hasattr(arc_engine, 'tension_level') else "unknown",
+                "tension_value": float(arc_engine.current_tension) if hasattr(arc_engine, 'current_tension') else 0.0,
+                "journey_progress": float(arc_engine.journey_progress) if hasattr(arc_engine, 'journey_progress') else 0.0,
+                "episode_number": arc_engine.episode_number if hasattr(arc_engine, 'episode_number') else 1,
+            }
+            
+            # Try to get status dict if available
+            if hasattr(arc_engine, 'get_status'):
+                status = arc_engine.get_status()
+                if status:
+                    response.update(status)
+            
+            # Add guidance based on phase
+            phase_guidance = {
+                "ORDINARY_WORLD": "Establish the hero's normal life and comfort zone",
+                "CALL_TO_ADVENTURE": "Present the challenge or quest that disrupts normalcy",
+                "REFUSAL_OF_CALL": "Show hesitation and the stakes of refusing",
+                "MEETING_MENTOR": "Introduce guidance, wisdom, or magical aid",
+                "CROSSING_THRESHOLD": "Hero commits to the journey and enters the unknown",
+                "TESTS_ALLIES_ENEMIES": "Face challenges, make friends and enemies",
+                "APPROACH_INNERMOST_CAVE": "Prepare for the major challenge ahead",
+                "ORDEAL": "Face the greatest fear or challenge",
+                "REWARD": "Gain the treasure, knowledge, or victory",
+                "ROAD_BACK": "Begin the return journey with new challenges",
+                "RESURRECTION": "Face final test using all lessons learned",
+                "RETURN_WITH_ELIXIR": "Return home transformed with gifts for others"
+            }
+            
+            response["phase_guidance"] = phase_guidance.get(
+                response["current_phase"],
+                "Unknown phase"
+            )
+            
+            # Add tension guidance
+            tension_level = response["tension_level"]
+            tension_guidance = {
+                "CALM": "Peaceful moment, good for character development and world building",
+                "BUILDING": "Tension is rising, introduce complications or foreshadowing",
+                "HIGH": "Action and conflict should be prominent, stakes are clear",
+                "CLIMACTIC": "Peak moment of confrontation or revelation",
+                "RELEASE": "Resolution phase, consequences play out, breathing room"
+            }
+            
+            response["tension_guidance"] = tension_guidance.get(
+                tension_level,
+                "Monitor and adjust tension as needed"
+            )
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error getting arc state: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error reading arc state: {str(e)}"
+            )
+    
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="Game routes module not available"
+        )
 
 
 # ============================================================
