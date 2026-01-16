@@ -1,1 +1,1 @@
-v36-20260115-edit-world-name
+v37-20260116-edit-genre-tags

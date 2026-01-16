@@ -6392,7 +6392,7 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v36</span>
+                <span style="opacity: 0.5;">v37</span>
                 <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
@@ -16465,7 +16465,27 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                     <span style="color: var(--text-muted); font-size: 0.85rem;">${world.id}</span>
                                 </div>
                                 <div style="color: var(--text-secondary); font-size: 0.9rem; margin: 5px 0 5px 28px;">${world.description}</div>
-                                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-left: 28px;">${genreChips}</div>
+                                <div id="genre-display-${world.id}" style="display: flex; gap: 6px; flex-wrap: wrap; margin-left: 28px; align-items: center;">
+                                    ${genreChips}
+                                    <button onclick="event.stopPropagation(); editWorldGenres('${world.id}', ${JSON.stringify(world.genre_hints || []).replace(/"/g, '&quot;')})"
+                                            style="background: none; border: none; cursor: pointer; padding: 2px 6px; color: var(--text-muted); font-size: 0.75rem; opacity: 0.6; transition: opacity 0.2s;"
+                                            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'"
+                                            title="Edit genre tags">✏️</button>
+                                </div>
+                                <div id="genre-editor-${world.id}" style="display: none; margin-left: 28px; margin-top: 5px;">
+                                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                        <input type="text" id="genre-input-${world.id}"
+                                               placeholder="e.g., fantasy, dark, political"
+                                               style="padding: 4px 8px; font-size: 0.85rem; background: var(--bg-secondary); border: 1px solid var(--accent-gold); border-radius: 4px; color: var(--text-primary); width: 250px;"
+                                               onclick="event.stopPropagation()"
+                                               onkeydown="if(event.key==='Enter'){saveWorldGenres('${world.id}');event.preventDefault()}else if(event.key==='Escape'){cancelWorldGenresEdit('${world.id}')}">
+                                        <button onclick="event.stopPropagation(); saveWorldGenres('${world.id}')"
+                                                style="background: var(--accent-sage); border: none; cursor: pointer; padding: 4px 8px; color: var(--bg-primary); font-size: 0.8rem; border-radius: 4px;">Save</button>
+                                        <button onclick="event.stopPropagation(); cancelWorldGenresEdit('${world.id}')"
+                                                style="background: none; border: 1px solid var(--border-subtle); cursor: pointer; padding: 4px 8px; color: var(--text-muted); font-size: 0.8rem; border-radius: 4px;">Cancel</button>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Comma-separated tags</div>
+                                </div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;" onclick="event.stopPropagation();">
                                 <span style="background: ${world.entity_count > 0 ? 'var(--accent-sage)' : 'var(--bg-secondary)'}; color: ${world.entity_count > 0 ? 'var(--bg-primary)' : 'var(--text-muted)'}; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
@@ -16960,6 +16980,87 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 }
 
                 showToast(`World renamed to "${newName}"`);
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        // Genre tags editing functions
+        function editWorldGenres(worldId, currentGenres) {
+            const displayDiv = document.getElementById(`genre-display-${worldId}`);
+            const editorDiv = document.getElementById(`genre-editor-${worldId}`);
+            const input = document.getElementById(`genre-input-${worldId}`);
+
+            if (displayDiv && editorDiv && input) {
+                displayDiv.style.display = 'none';
+                editorDiv.style.display = 'block';
+                input.value = (currentGenres || []).join(', ');
+                input.focus();
+                input.select();
+            }
+        }
+
+        function cancelWorldGenresEdit(worldId) {
+            const displayDiv = document.getElementById(`genre-display-${worldId}`);
+            const editorDiv = document.getElementById(`genre-editor-${worldId}`);
+
+            if (displayDiv && editorDiv) {
+                displayDiv.style.display = 'flex';
+                editorDiv.style.display = 'none';
+            }
+        }
+
+        async function saveWorldGenres(worldId) {
+            const input = document.getElementById(`genre-input-${worldId}`);
+            const displayDiv = document.getElementById(`genre-display-${worldId}`);
+            const editorDiv = document.getElementById(`genre-editor-${worldId}`);
+
+            if (!input) return;
+
+            // Parse comma-separated tags, trim whitespace, filter empty
+            const newGenres = input.value
+                .split(',')
+                .map(g => g.trim())
+                .filter(g => g.length > 0);
+
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ genre_hints: newGenres })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to update genre tags');
+                }
+
+                // Update the display
+                if (displayDiv) {
+                    const genreChips = newGenres.map(g =>
+                        `<span style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(g)}</span>`
+                    ).join(' ');
+
+                    displayDiv.innerHTML = `
+                        ${genreChips}
+                        <button onclick="event.stopPropagation(); editWorldGenres('${worldId}', ${JSON.stringify(newGenres).replace(/"/g, '&quot;')})"
+                                style="background: none; border: none; cursor: pointer; padding: 2px 6px; color: var(--text-muted); font-size: 0.75rem; opacity: 0.6; transition: opacity 0.2s;"
+                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'"
+                                title="Edit genre tags">✏️</button>
+                    `;
+                    displayDiv.style.display = 'flex';
+                }
+                if (editorDiv) {
+                    editorDiv.style.display = 'none';
+                }
+
+                // Update in worldManagerData cache
+                if (worldManagerData && worldManagerData.worlds) {
+                    const world = worldManagerData.worlds.find(w => w.id === worldId);
+                    if (world) world.genre_hints = newGenres;
+                }
+
+                showToast(`Genre tags updated`);
             } catch (err) {
                 alert(`Error: ${err.message}`);
             }
