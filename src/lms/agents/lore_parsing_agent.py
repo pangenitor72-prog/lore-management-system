@@ -148,13 +148,27 @@ class ExtractedWorldCharacteristics(BaseModel):
     sensory_palette: List[str] = Field(default_factory=list)
 
 
+class PendingDuplicate(BaseModel):
+    """An entity that may be a duplicate - needs admin review before ingestion."""
+    new_entity: ExtractedEntity  # The entity from the new lore
+    existing_entity_id: str  # canon_id of the potential match
+    existing_entity_name: str
+    existing_entity_type: str
+    existing_description: str = ""
+    existing_aliases: List[str] = Field(default_factory=list)
+    similarity_score: float
+    match_reason: str  # "exact_name", "similar_name", "alias_match"
+
+
 class ParsedLoreResult(BaseModel):
     """Result of parsing lore text."""
     entities: List[ExtractedEntity]
     relationships: List[ExtractedRelationship]
     world_characteristics: Optional[ExtractedWorldCharacteristics] = None
     uncertainties: List[UncertaintyFlag] = Field(default_factory=list)  # Questions for admin
+    pending_duplicates: List[PendingDuplicate] = Field(default_factory=list)  # Need admin review
     entities_stored: int = 0
+    entities_auto_merged: int = 0  # Exact matches that were auto-merged
     relationships_stored: int = 0
     characters_with_ocean: int = 0
 
@@ -609,6 +623,143 @@ TEXT TO ANALYZE:
             logger.info("LoreParsingAgent initialized with Gemini (fiction-safe settings)")
         else:
             logger.warning("LoreParsingAgent: No API key, will use fallback parsing")
+
+    @staticmethod
+    def _levenshtein_distance(s1: str, s2: str) -> int:
+        """Calculate Levenshtein distance between two strings."""
+        if len(s1) < len(s2):
+            return LoreParsingAgent._levenshtein_distance(s2, s1)
+        if len(s2) == 0:
+            return len(s1)
+
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+
+        return previous_row[-1]
+
+    @staticmethod
+    def _name_similarity(name1: str, name2: str) -> float:
+        """Calculate similarity between two names (0.0 to 1.0)."""
+        n1 = name1.lower().strip()
+        n2 = name2.lower().strip()
+
+        if n1 == n2:
+            return 1.0
+
+        # Check if one is substring of another
+        if n1 in n2 or n2 in n1:
+            return 0.85
+
+        # Levenshtein-based similarity
+        max_len = max(len(n1), len(n2))
+        if max_len == 0:
+            return 1.0
+
+        distance = LoreParsingAgent._levenshtein_distance(n1, n2)
+        return 1.0 - (distance / max_len)
+
+    async def _find_existing_entity(
+        self,
+        entity: 'ExtractedEntity',
+        world_id: str,
+        db
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Check if an entity already exists in the given world.
+
+        Returns a dict with match info if found:
+        {
+            "canon_id": str,
+            "name": str,
+            "entity_type": str,
+            "description": str,
+            "aliases": list,
+            "similarity": float,
+            "match_type": "exact" | "similar" | "alias"
+        }
+        Returns None if no match found.
+        """
+        entity_name = entity.name.lower().strip()
+        entity_type = entity.entity_type
+
+        # Query existing entities in this world of the same type
+        result = await db.execute("""
+            MATCH (e:Entity)
+            WHERE (e.curated_world_id = $world_id OR e.world_id = $world_id)
+              AND e.entity_type = $entity_type
+            RETURN e.canon_id AS canon_id,
+                   e.name AS name,
+                   e.entity_type AS entity_type,
+                   e.description AS description,
+                   e.aliases AS aliases
+        """, {"world_id": world_id, "entity_type": entity_type})
+
+        best_match = None
+        best_score = 0.0
+
+        for row in result:
+            existing_name = (row.get("name") or "").lower().strip()
+            existing_aliases = [a.lower().strip() for a in (row.get("aliases") or [])]
+
+            # Check for exact name match
+            if entity_name == existing_name:
+                return {
+                    "canon_id": row["canon_id"],
+                    "name": row.get("name", ""),
+                    "entity_type": row.get("entity_type", ""),
+                    "description": row.get("description", ""),
+                    "aliases": row.get("aliases") or [],
+                    "similarity": 1.0,
+                    "match_type": "exact"
+                }
+
+            # Check if new entity name is in existing aliases
+            if entity_name in existing_aliases:
+                return {
+                    "canon_id": row["canon_id"],
+                    "name": row.get("name", ""),
+                    "entity_type": row.get("entity_type", ""),
+                    "description": row.get("description", ""),
+                    "aliases": row.get("aliases") or [],
+                    "similarity": 0.95,
+                    "match_type": "alias"
+                }
+
+            # Check if existing name is in new entity's aliases
+            new_aliases = [a.lower().strip() for a in (entity.aliases or [])]
+            if existing_name in new_aliases:
+                return {
+                    "canon_id": row["canon_id"],
+                    "name": row.get("name", ""),
+                    "entity_type": row.get("entity_type", ""),
+                    "description": row.get("description", ""),
+                    "aliases": row.get("aliases") or [],
+                    "similarity": 0.95,
+                    "match_type": "alias"
+                }
+
+            # Check for similar names (fuzzy match)
+            similarity = self._name_similarity(entity_name, existing_name)
+            if similarity > best_score and similarity >= 0.75:
+                best_score = similarity
+                best_match = {
+                    "canon_id": row["canon_id"],
+                    "name": row.get("name", ""),
+                    "entity_type": row.get("entity_type", ""),
+                    "description": row.get("description", ""),
+                    "aliases": row.get("aliases") or [],
+                    "similarity": similarity,
+                    "match_type": "similar"
+                }
+
+        return best_match
 
     def _generate_ocean_from_traits(self, traits: List[str]) -> OCEANProfile:
         """Convert personality traits to OCEAN profile."""
@@ -1121,37 +1272,102 @@ TEXT TO ANALYZE:
                 # For sessions, world_id should be passed explicitly
                 world_id = None
 
-        # Store entities
+        id_world = curated_world_id or world_id
+        pending_duplicates = []
+        entities_auto_merged = 0
+
+        # Store entities with smart duplicate detection
         logger.info(f"[LORE INGESTION] Storing {len(result.entities)} entities...")
         for idx, entity in enumerate(result.entities, 1):
             logger.debug(f"[LORE INGESTION] Processing entity {idx}/{len(result.entities)}: '{entity.name}' ({entity.entity_type})")
-            
+
             # Validate entity before storage
             try:
                 # Check required fields
                 if not entity.name or not entity.name.strip():
                     logger.error(f"[LORE INGESTION] Entity {idx} has empty name, skipping")
                     continue
-                
+
                 if not entity.entity_type or not entity.entity_type.strip():
                     logger.error(f"[LORE INGESTION] Entity '{entity.name}' has empty entity_type, skipping")
                     continue
-                
+
                 if not entity.description or not entity.description.strip():
                     logger.warning(f"[LORE INGESTION] Entity '{entity.name}' has empty description (will store anyway)")
-                
+
                 # Validate entity type is in valid list
                 valid_types = ["Character", "Location", "Faction", "Item", "Event", "Concept"]
                 if entity.entity_type not in valid_types:
                     logger.warning(f"[LORE INGESTION] Entity '{entity.name}' has invalid type '{entity.entity_type}', will be treated as Entity")
-                
+
             except Exception as ve:
                 logger.error(f"[LORE INGESTION] Validation failed for entity {idx}: {ve}", exc_info=True)
                 continue
-            
-            # Generate human-readable ID: {world}-{type}-{name}-{short_random}
-            # e.g., "eldoria-chr-captain-varn-7f3a"
-            id_world = curated_world_id or world_id
+
+            # Check for existing entity in this world BEFORE creating (duplicate detection)
+            existing = None
+            if id_world:
+                try:
+                    existing = await self._find_existing_entity(entity, id_world, db)
+                except Exception as e:
+                    logger.warning(f"Duplicate check failed for {entity.name}: {e}")
+
+            # Handle duplicates
+            if existing:
+                if existing["match_type"] == "exact" or existing["similarity"] >= 0.95:
+                    # EXACT MATCH or ALIAS MATCH - Auto-merge into existing entity
+                    logger.info(f"Auto-merging '{entity.name}' into existing entity '{existing['name']}' (match_type={existing['match_type']})")
+
+                    # Update existing entity with any new info
+                    update_props = {"updated_at": timestamp}
+
+                    # Merge aliases (add new entity's name and aliases if not present)
+                    existing_aliases = list(existing.get("aliases") or [])
+                    if entity.name not in existing_aliases and entity.name.lower() != existing["name"].lower():
+                        existing_aliases.append(entity.name)
+                    for alias in (entity.aliases or []):
+                        if alias not in existing_aliases:
+                            existing_aliases.append(alias)
+                    update_props["aliases"] = existing_aliases
+
+                    # Update description if new one is longer/more detailed
+                    if entity.description and len(entity.description) > len(existing.get("description") or ""):
+                        update_props["description"] = entity.description
+
+                    # Merge goals, secrets, fears for characters
+                    if entity.entity_type == "Character":
+                        for field in ["goals", "secrets", "fears"]:
+                            existing_vals = getattr(entity, field, []) or []
+                            if existing_vals:
+                                update_props[field] = existing_vals
+
+                    await db.execute("""
+                        MATCH (e:Entity {canon_id: $canon_id})
+                        SET e += $props
+                    """, {"canon_id": existing["canon_id"], "props": update_props})
+
+                    entities_auto_merged += 1
+                    if entity.entity_type == "Character":
+                        characters_with_ocean += 1  # Count for stats
+                    continue  # Skip to next entity
+
+                else:
+                    # PROBABLE MATCH - Flag for admin review, don't create
+                    logger.info(f"Flagging '{entity.name}' as potential duplicate of '{existing['name']}' (similarity={existing['similarity']:.0%})")
+
+                    pending_duplicates.append(PendingDuplicate(
+                        new_entity=entity,
+                        existing_entity_id=existing["canon_id"],
+                        existing_entity_name=existing["name"],
+                        existing_entity_type=existing["entity_type"],
+                        existing_description=existing.get("description", ""),
+                        existing_aliases=existing.get("aliases") or [],
+                        similarity_score=existing["similarity"],
+                        match_reason=existing["match_type"],
+                    ))
+                    continue  # Skip to next entity - don't create until admin approves
+
+            # NO MATCH - Create new entity
             try:
                 canon_id = _generate_human_readable_id(
                     name=entity.name,
@@ -1228,23 +1444,21 @@ TEXT TO ANALYZE:
                     logger.warning(f"[LORE INGESTION] Invalid label '{label}' for '{entity.name}', using 'Entity'")
                     label = "Entity"
 
-                # MERGE on canon_id to ensure world isolation
-                # canon_id includes world ID, so "Captain Varn" in World A is distinct from World B
+                # Create new entity (duplicates handled by _find_existing_entity above)
                 query = f"""
-                    MERGE (e:`{label}` {{canon_id: $canon_id}})
-                    SET e += $props
+                    CREATE (e:`{label}` $props)
                     SET e:Entity
                 """
-                logger.debug(f"[LORE INGESTION] Executing Neo4j MERGE for '{entity.name}'")
-                
+                logger.debug(f"[LORE INGESTION] Executing Neo4j CREATE for '{entity.name}'")
+
                 try:
-                    await db.execute(query, {"canon_id": canon_id, "props": props})
+                    await db.execute(query, {"props": props})
                     logger.debug(f"[LORE INGESTION] Successfully stored '{entity.name}' in Neo4j")
                 except Exception as db_err:
                     logger.error(
-                        f"[LORE INGESTION] Neo4j MERGE failed for '{entity.name}': {type(db_err).__name__}: {str(db_err)}\n"
+                        f"[LORE INGESTION] Neo4j CREATE failed for '{entity.name}': {type(db_err).__name__}: {str(db_err)}\n"
                         f"Query: {query[:200]}...\n"
-                        f"Params: canon_id={canon_id}, props keys={list(props.keys())}",
+                        f"Params: props keys={list(props.keys())}",
                         exc_info=True
                     )
                     raise  # Re-raise to be caught by outer try-catch
@@ -1313,8 +1527,10 @@ TEXT TO ANALYZE:
                 logger.error(f"[LORE INGESTION] Failed to store relationship '{rel.source}' -> '{rel.target}': {type(e).__name__}: {str(e)}", exc_info=True)
 
         result.entities_stored = entities_stored
+        result.entities_auto_merged = entities_auto_merged
         result.relationships_stored = relationships_stored
         result.characters_with_ocean = characters_with_ocean
+        result.pending_duplicates = pending_duplicates
 
         # Store inferred world characteristics on LoreBase (if not already set by admin)
         if curated_world_id and result.world_characteristics:
@@ -1349,9 +1565,11 @@ TEXT TO ANALYZE:
                 logger.warning(f"Failed to store world characteristics: {e}")
 
         logger.info(
-            f"LoreParsingAgent stored {entities_stored} entities, "
+            f"LoreParsingAgent: {entities_stored} new entities, "
+            f"{entities_auto_merged} auto-merged, "
+            f"{len(pending_duplicates)} pending review, "
             f"{relationships_stored} relationships, "
-            f"{characters_with_ocean} characters with OCEAN profiles"
+            f"{characters_with_ocean} characters with OCEAN"
         )
 
         return result

@@ -69,7 +69,8 @@
       "Bash(npm run build:*)",
       "Bash(timeout 20 fly logs:*)",
       "Bash(git checkout:*)",
-      "Bash(flyctl deploy:*)"
+      "Bash(flyctl deploy:*)",
+      "Bash(git reset:*)"
     ]
   }
 }

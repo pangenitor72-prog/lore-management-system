@@ -3231,14 +3231,32 @@ class UncertaintyFlagResponse(BaseModel):
     suggestions: List[str] = []
 
 
+class PendingDuplicateResponse(BaseModel):
+    """A potential duplicate entity that needs admin review."""
+    new_entity_name: str
+    new_entity_type: str
+    new_entity_description: str = ""
+    new_entity_aliases: List[str] = []
+    existing_entity_id: str
+    existing_entity_name: str
+    existing_entity_type: str
+    existing_description: str = ""
+    existing_aliases: List[str] = []
+    similarity_score: float
+    match_reason: str  # "exact_name", "similar_name", "alias_match"
+
+
 class LoreBaseIngestResponse(BaseModel):
     """Response after ingesting a lore base."""
     lore_id: str
     entities_created: int
+    entities_auto_merged: int = 0
     relationships_created: int
     npcs_with_ocean: int
     uncertainties_count: int = 0
     uncertainties: List[UncertaintyFlagResponse] = []
+    pending_duplicates_count: int = 0
+    pending_duplicates: List[PendingDuplicateResponse] = []
     message: str
 
 
@@ -3340,13 +3358,34 @@ async def ingest_lore_base(
             for u in result.uncertainties
         ]
 
+        # Convert pending duplicates to response format
+        pending_duplicate_responses = [
+            PendingDuplicateResponse(
+                new_entity_name=pd.new_entity.name,
+                new_entity_type=pd.new_entity.entity_type,
+                new_entity_description=pd.new_entity.description or "",
+                new_entity_aliases=pd.new_entity.aliases or [],
+                existing_entity_id=pd.existing_entity_id,
+                existing_entity_name=pd.existing_entity_name,
+                existing_entity_type=pd.existing_entity_type,
+                existing_description=pd.existing_description,
+                existing_aliases=pd.existing_aliases,
+                similarity_score=pd.similarity_score,
+                match_reason=pd.match_reason,
+            )
+            for pd in result.pending_duplicates
+        ]
+
         return LoreBaseIngestResponse(
             lore_id=lore_id,
             entities_created=result.entities_stored,
+            entities_auto_merged=result.entities_auto_merged,
             relationships_created=result.relationships_stored,
             npcs_with_ocean=result.characters_with_ocean,
             uncertainties_count=len(result.uncertainties),
             uncertainties=uncertainty_responses,
+            pending_duplicates_count=len(result.pending_duplicates),
+            pending_duplicates=pending_duplicate_responses,
             message=f"Successfully ingested lore base '{lore_base['name']}' with AI parsing"
         )
 
@@ -4229,22 +4268,23 @@ async def get_world_entities(
             params["source_name"] = source_name
 
         query += """
-            RETURN e.canon_id as id,
+            RETURN e.canon_id as canon_id,
                    e.name as name,
-                   e.canonical_name as canonical_name,
-                   e.entity_type as type,
+                   e.entity_type as entity_type,
                    e.description as description,
-                   e.confidence_level as confidence,
-                   e.source_name as source_name,
-                   e.created_at as created_at,
                    e.aliases as aliases,
+                   e.goals as goals,
+                   e.secrets as secrets,
+                   e.fears as fears,
                    e.openness as openness,
                    e.conscientiousness as conscientiousness,
                    e.extraversion as extraversion,
                    e.agreeableness as agreeableness,
                    e.neuroticism as neuroticism,
-                   properties(e) as all_props
-            ORDER BY e.source_name, e.entity_type, e.name
+                   e.confidence_level as confidence,
+                   coalesce(e.source_name, e.source) as source_name,
+                   e.created_at as created_at
+            ORDER BY e.source, e.entity_type, e.name
             LIMIT $limit
         """
         params["limit"] = limit
@@ -4253,87 +4293,39 @@ async def get_world_entities(
         result = await db.execute(query, params)
         logger.debug(f"Query returned {len(result) if result else 0} records")
 
-        # Get all entity names for duplicate detection
-        all_names = {}
-        for record in result:
-            name = record.get("name") or record.get("canonical_name", "")
-            entity_id = record.get("id")
-            entity_type = record.get("type")
-            if name and entity_id:
-                name_key = (name.lower().strip(), entity_type)
-                if name_key not in all_names:
-                    all_names[name_key] = []
-                all_names[name_key].append(entity_id)
-
         entities = []
         for record in result:
             try:
-                entity_type = record.get("type")
-                entity_id = record.get("id")
-                name = record.get("name") or record.get("canonical_name", "")
-                description = record.get("description", "")
-                aliases = record.get("aliases", [])
-                
-                # Quality indicators
-                quality_flags = {}
-                missing_fields = []
-                
-                # Check for missing description
-                if not description or not description.strip():
-                    missing_fields.append("description")
-                
-                # Check for duplicate names
-                name_key = (name.lower().strip(), entity_type)
-                if name_key in all_names and len(all_names[name_key]) > 1:
-                    quality_flags["possible_duplicate"] = True
-                else:
-                    quality_flags["possible_duplicate"] = False
-                
-                # Check for OCEAN profile on Characters
-                if entity_type == "Character":
-                    openness = record.get("openness")
-                    conscientiousness = record.get("conscientiousness")
-                    extraversion = record.get("extraversion")
-                    agreeableness = record.get("agreeableness")
-                    neuroticism = record.get("neuroticism")
-                    
-                    has_ocean = all([
-                        openness is not None,
-                        conscientiousness is not None,
-                        extraversion is not None,
-                        agreeableness is not None,
-                        neuroticism is not None
-                    ])
-                    quality_flags["has_ocean"] = has_ocean
-                    if not has_ocean:
-                        missing_fields.append("ocean_profile")
-                    
-                    # Include OCEAN values if present
-                    if has_ocean:
-                        quality_flags["ocean"] = {
-                            "openness": openness,
-                            "conscientiousness": conscientiousness,
-                            "extraversion": extraversion,
-                            "agreeableness": agreeableness,
-                            "neuroticism": neuroticism
-                        }
-                
-                quality_flags["missing_fields"] = missing_fields
-                quality_flags["is_complete"] = len(missing_fields) == 0
-                
-                entities.append({
-                    "id": entity_id,
-                    "name": name,
-                    "canonical_name": record.get("canonical_name", name),
-                    "type": entity_type,
-                    "description": description[:200] if description else "",
-                    "full_description": description,
+                entity_data = {
+                    "canon_id": record.get("canon_id"),
+                    "name": record.get("name"),
+                    "entity_type": record.get("entity_type"),
+                    "description": record.get("description") or "",
+                    "aliases": record.get("aliases") or [],
                     "confidence": record.get("confidence"),
                     "source_name": record.get("source_name", "unknown"),
                     "created_at": record.get("created_at"),
-                    "aliases": aliases or [],
-                    "quality": quality_flags,
-                })
+                }
+
+                # Include character-specific fields if present
+                if record.get("goals") is not None:
+                    entity_data["goals"] = record.get("goals") or []
+                if record.get("secrets") is not None:
+                    entity_data["secrets"] = record.get("secrets") or []
+                if record.get("fears") is not None:
+                    entity_data["fears"] = record.get("fears") or []
+                if record.get("openness") is not None:
+                    entity_data["openness"] = record.get("openness")
+                if record.get("conscientiousness") is not None:
+                    entity_data["conscientiousness"] = record.get("conscientiousness")
+                if record.get("extraversion") is not None:
+                    entity_data["extraversion"] = record.get("extraversion")
+                if record.get("agreeableness") is not None:
+                    entity_data["agreeableness"] = record.get("agreeableness")
+                if record.get("neuroticism") is not None:
+                    entity_data["neuroticism"] = record.get("neuroticism")
+
+                entities.append(entity_data)
             except Exception as parse_error:
                 logger.warning(f"Failed to parse entity record: {parse_error}")
                 continue
@@ -5900,3 +5892,291 @@ async def merge_entities(
         relationships_transferred=relationships_transferred,
         message=f"Successfully merged '{secondary_name}' into primary entity. Added {aliases_added} aliases."
     )
+
+
+class EntityUpdateRequest(BaseModel):
+    """Request to update an entity."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    aliases: Optional[List[str]] = None
+    goals: Optional[List[str]] = None
+    secrets: Optional[List[str]] = None
+    fears: Optional[List[str]] = None
+    openness: Optional[float] = None
+    conscientiousness: Optional[float] = None
+    extraversion: Optional[float] = None
+    agreeableness: Optional[float] = None
+    neuroticism: Optional[float] = None
+
+
+class EntityUpdateResponse(BaseModel):
+    """Response after updating an entity."""
+    success: bool
+    canon_id: str
+    message: str
+
+
+@router.put("/entities/{canon_id}", response_model=EntityUpdateResponse)
+async def update_entity(
+    canon_id: str,
+    update_req: EntityUpdateRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
+    """
+    Update an existing entity's properties.
+
+    Allows updating name, description, aliases, and for characters:
+    goals, secrets, fears, and OCEAN personality scores.
+    """
+    # Check entity exists
+    check_result = await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        RETURN e.name AS name, e.entity_type AS entity_type
+    """, {"canon_id": canon_id})
+
+    if not check_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity '{canon_id}' not found"
+        )
+
+    # Build update properties
+    update_props = {}
+
+    if update_req.name is not None:
+        update_props["name"] = update_req.name
+    if update_req.description is not None:
+        update_props["description"] = update_req.description
+    if update_req.aliases is not None:
+        update_props["aliases"] = update_req.aliases
+    if update_req.goals is not None:
+        update_props["goals"] = update_req.goals
+    if update_req.secrets is not None:
+        update_props["secrets"] = update_req.secrets
+    if update_req.fears is not None:
+        update_props["fears"] = update_req.fears
+    if update_req.openness is not None:
+        update_props["openness"] = update_req.openness
+    if update_req.conscientiousness is not None:
+        update_props["conscientiousness"] = update_req.conscientiousness
+    if update_req.extraversion is not None:
+        update_props["extraversion"] = update_req.extraversion
+    if update_req.agreeableness is not None:
+        update_props["agreeableness"] = update_req.agreeableness
+    if update_req.neuroticism is not None:
+        update_props["neuroticism"] = update_req.neuroticism
+
+    if not update_props:
+        return EntityUpdateResponse(
+            success=True,
+            canon_id=canon_id,
+            message="No changes provided"
+        )
+
+    await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        SET e += $props
+    """, {"canon_id": canon_id, "props": update_props})
+
+    logger.info(f"Updated entity {canon_id}: {list(update_props.keys())}")
+
+    return EntityUpdateResponse(
+        success=True,
+        canon_id=canon_id,
+        message=f"Updated {len(update_props)} properties"
+    )
+
+
+class ApplyPendingRequest(BaseModel):
+    """Request to apply pending entity data to existing entity."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    aliases: Optional[List[str]] = None
+
+
+class ApplyPendingResponse(BaseModel):
+    """Response after applying pending data."""
+    success: bool
+    canon_id: str
+    message: str
+
+
+@router.post("/entities/{canon_id}/apply-pending", response_model=ApplyPendingResponse)
+async def apply_pending_to_entity(
+    canon_id: str,
+    pending_req: ApplyPendingRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
+    """
+    Apply pending entity data to an existing entity (merge operation from pending duplicates).
+
+    This is used when a user confirms a pending duplicate should be merged into
+    an existing entity during ingestion review.
+    """
+    # Check entity exists
+    check_result = await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        RETURN e.name AS name, e.aliases AS aliases, e.description AS description
+    """, {"canon_id": canon_id})
+
+    if not check_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity '{canon_id}' not found"
+        )
+
+    row = check_result[0]
+    update_props = {}
+
+    # Merge aliases
+    if pending_req.aliases:
+        existing_aliases = list(row.get("aliases") or [])
+        for alias in pending_req.aliases:
+            if alias not in existing_aliases:
+                existing_aliases.append(alias)
+        # Also add the pending entity's name as an alias if different
+        if pending_req.name and pending_req.name != row.get("name") and pending_req.name not in existing_aliases:
+            existing_aliases.append(pending_req.name)
+        update_props["aliases"] = existing_aliases
+
+    # Update description if pending has a longer/more detailed one
+    if pending_req.description:
+        existing_desc = row.get("description") or ""
+        if len(pending_req.description) > len(existing_desc):
+            update_props["description"] = pending_req.description
+
+    if update_props:
+        await db.execute("""
+            MATCH (e:Entity {canon_id: $canon_id})
+            SET e += $props
+        """, {"canon_id": canon_id, "props": update_props})
+
+    logger.info(f"Applied pending data to entity {canon_id}")
+
+    return ApplyPendingResponse(
+        success=True,
+        canon_id=canon_id,
+        message=f"Merged pending entity data into '{row.get('name')}'"
+    )
+
+
+class CreatePendingRequest(BaseModel):
+    """Request to create a pending entity (user confirmed it's different)."""
+    world_id: str
+    name: str
+    entity_type: str
+    description: Optional[str] = None
+    aliases: Optional[List[str]] = None
+
+
+class CreatePendingResponse(BaseModel):
+    """Response after creating a pending entity."""
+    success: bool
+    canon_id: str
+    message: str
+
+
+@router.post("/entities/create-pending", response_model=CreatePendingResponse)
+async def create_pending_entity(
+    create_req: CreatePendingRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
+    """
+    Create an entity that was flagged as a pending duplicate.
+
+    This is used when a user confirms a pending duplicate is actually a
+    different entity and should be created separately.
+    """
+    from src.lms.agents.lore_parsing_agent import _generate_human_readable_id
+    from datetime import datetime, timezone
+
+    # Generate a unique canon_id
+    canon_id = _generate_human_readable_id(
+        name=create_req.name,
+        entity_type=create_req.entity_type,
+        world_id=create_req.world_id
+    )
+
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    props = {
+        "canon_id": canon_id,
+        "name": create_req.name,
+        "entity_type": create_req.entity_type,
+        "description": create_req.description or "",
+        "aliases": create_req.aliases or [],
+        "curated_world_id": create_req.world_id,
+        "world_id": create_req.world_id,
+        "confidence_level": "ADMIN_APPROVED",
+        "approval_status": "APPROVED",
+        "created_at": timestamp,
+        "source": "pending_duplicate_review",
+    }
+
+    # Determine label
+    label = create_req.entity_type.replace(" ", "_")
+    if label not in ["Character", "Location", "Faction", "Item", "Event", "Concept"]:
+        label = "Entity"
+
+    try:
+        await db.execute(f"""
+            CREATE (e:`{label}` $props)
+            SET e:Entity
+        """, {"props": props})
+
+        # Link to LoreBase
+        await db.execute("""
+            MATCH (e:Entity {canon_id: $canon_id})
+            MATCH (lb:LoreBase {lore_id: $world_id})
+            MERGE (e)-[:EXISTS_IN]->(lb)
+        """, {"canon_id": canon_id, "world_id": create_req.world_id})
+
+        logger.info(f"Created pending entity {canon_id} in world {create_req.world_id}")
+
+        return CreatePendingResponse(
+            success=True,
+            canon_id=canon_id,
+            message=f"Created '{create_req.name}' as a new entity"
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to create pending entity: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create entity: {str(e)}"
+        )
+
+
+@router.delete("/entities/{canon_id}")
+async def delete_entity(
+    canon_id: str,
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
+    """
+    Delete an entity by its canon_id.
+
+    This permanently removes the entity and all its relationships.
+    """
+    # Check entity exists
+    check_result = await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        RETURN e.name AS name
+    """, {"canon_id": canon_id})
+
+    if not check_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity '{canon_id}' not found"
+        )
+
+    entity_name = check_result[0].get("name", canon_id)
+
+    # Delete entity and all its relationships
+    await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        DETACH DELETE e
+    """, {"canon_id": canon_id})
+
+    logger.info(f"Deleted entity {canon_id} ({entity_name})")
+
+    return {"success": True, "message": f"Deleted entity '{entity_name}'"}

@@ -1,2 +1,2 @@
-v48-20260116-duplicate-detection-merge
+v49-20260117-entity-manager-duplicate-review
 

@@ -17346,6 +17346,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 <button class="btn btn-secondary" onclick="openWorldCharacteristicsModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-lavender); color: var(--bg-primary);">
                                     ⚙️ World Settings
                                 </button>
+                                ${world.entity_count > 0 ? `
+                                    <button class="btn btn-secondary" onclick="openEntityManager('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-sage); color: var(--bg-primary);">
+                                        📋 Entity Manager
+                                    </button>
+                                ` : ''}
                                 <button class="btn btn-secondary" onclick="openAddLoreModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem;">
                                     📁 Add Lore Files
                                 </button>
@@ -18758,7 +18763,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 }
 
                 const result = await response.json();
-                let statusMsg = `✓ Ingested ${result.entities_created} entities (${result.npcs_with_ocean} with personalities)`;
+                let statusMsg = `✓ Ingested ${result.entities_created} entities`;
+
+                // Show auto-merged count
+                if (result.entities_auto_merged > 0) {
+                    statusMsg += `, ${result.entities_auto_merged} auto-merged`;
+                }
+
+                statusMsg += ` (${result.npcs_with_ocean} with personalities)`;
 
                 // Show uncertainty count if any were flagged
                 if (result.uncertainties_count > 0) {
@@ -18767,10 +18779,19 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     window.lastIngestUncertainties = result.uncertainties;
                 }
 
+                // Show pending duplicates count if any need review
+                if (result.pending_duplicates_count > 0) {
+                    statusMsg += ` - ⚠️ ${result.pending_duplicates_count} need duplicate review`;
+                }
+
                 showStatus('world-manager-status', statusMsg, 'success');
 
-                // Show uncertainties modal if any
-                if (result.uncertainties && result.uncertainties.length > 0) {
+                // Show pending duplicates modal FIRST if any need review (higher priority)
+                if (result.pending_duplicates && result.pending_duplicates.length > 0) {
+                    showPendingDuplicatesModal(worldId, result.pending_duplicates);
+                }
+                // Then show uncertainties modal if any (can stack)
+                else if (result.uncertainties && result.uncertainties.length > 0) {
                     showUncertaintiesModal(worldId, result.uncertainties);
                 }
 
@@ -18847,6 +18868,532 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         function closeUncertaintiesModal() {
             const modal = document.getElementById('uncertainties-modal');
             if (modal) modal.classList.remove('visible');
+        }
+
+        // ============================================================
+        // PENDING DUPLICATES REVIEW (During Ingestion)
+        // ============================================================
+
+        let pendingDuplicatesQueue = [];
+        let currentPendingIndex = 0;
+        let pendingDuplicatesWorldId = null;
+
+        function showPendingDuplicatesModal(worldId, pendingDuplicates) {
+            pendingDuplicatesQueue = pendingDuplicates;
+            currentPendingIndex = 0;
+            pendingDuplicatesWorldId = worldId;
+
+            let modal = document.getElementById('pending-duplicates-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'pending-duplicates-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 900px;">
+                        <div class="modal-header">
+                            <h2>⚠️ Potential Duplicates Found During Ingestion</h2>
+                            <button class="btn btn-ghost" onclick="closePendingDuplicatesModal()">×</button>
+                        </div>
+                        <div class="modal-body" id="pending-duplicates-content" style="max-height: 70vh; overflow-y: auto;">
+                        </div>
+                        <div class="modal-footer" id="pending-duplicates-footer">
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            renderCurrentPendingDuplicate();
+            modal.classList.add('visible');
+        }
+
+        function renderCurrentPendingDuplicate() {
+            if (currentPendingIndex >= pendingDuplicatesQueue.length) {
+                // All reviewed
+                closePendingDuplicatesModal();
+                showStatus('world-manager-status', '✓ All pending duplicates reviewed', 'success');
+                loadWorldManagerData();
+                return;
+            }
+
+            const pd = pendingDuplicatesQueue[currentPendingIndex];
+            const content = document.getElementById('pending-duplicates-content');
+            const footer = document.getElementById('pending-duplicates-footer');
+
+            const matchReasonText = {
+                'similar_name': 'Similar name match',
+                'exact_name': 'Exact name match',
+                'alias_match': 'Alias match'
+            }[pd.match_reason] || pd.match_reason;
+
+            content.innerHTML = `
+                <p style="margin-bottom: 1rem; color: var(--text-muted);">
+                    Review ${currentPendingIndex + 1} of ${pendingDuplicatesQueue.length} •
+                    <strong style="color: var(--accent-gold);">${Math.round(pd.similarity_score * 100)}% match</strong> (${matchReasonText})
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <!-- New Entity (from ingestion) -->
+                    <div style="background: var(--bg-secondary); border: 2px solid var(--accent-gold); border-radius: 8px; padding: 1rem;">
+                        <div style="font-size: 0.75rem; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 0.5rem;">New (From Lore)</div>
+                        <h3 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">${escapeHtml(pd.new_entity_name)}</h3>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            <span class="badge" style="background: var(--accent-lavender); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">${pd.new_entity_type}</span>
+                        </div>
+                        ${pd.new_entity_description ? `<p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">${escapeHtml(pd.new_entity_description)}</p>` : ''}
+                        ${pd.new_entity_aliases && pd.new_entity_aliases.length > 0 ? `
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                <strong>Aliases:</strong> ${pd.new_entity_aliases.map(a => escapeHtml(a)).join(', ')}
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Existing Entity -->
+                    <div style="background: var(--bg-secondary); border: 2px solid var(--accent-sage); border-radius: 8px; padding: 1rem;">
+                        <div style="font-size: 0.75rem; color: var(--accent-sage); text-transform: uppercase; margin-bottom: 0.5rem;">Existing (In Database)</div>
+                        <h3 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">${escapeHtml(pd.existing_entity_name)}</h3>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            <span class="badge" style="background: var(--accent-lavender); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">${pd.existing_entity_type}</span>
+                            <code style="font-size: 0.7rem; color: var(--text-muted); margin-left: 0.5rem;">${pd.existing_entity_id}</code>
+                        </div>
+                        ${pd.existing_description ? `<p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">${escapeHtml(pd.existing_description)}</p>` : ''}
+                        ${pd.existing_aliases && pd.existing_aliases.length > 0 ? `
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                <strong>Aliases:</strong> ${pd.existing_aliases.map(a => escapeHtml(a)).join(', ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            footer.innerHTML = `
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; width: 100%;">
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn" onclick="handlePendingDuplicate('merge')" style="background: var(--accent-sage); color: var(--bg-primary);">
+                            🔀 Merge (Same Entity)
+                        </button>
+                        <button class="btn" onclick="handlePendingDuplicate('keep_new')" style="background: var(--accent-gold); color: var(--bg-primary);">
+                            ➕ Create New (Different)
+                        </button>
+                        <button class="btn btn-secondary" onclick="handlePendingDuplicate('skip')">
+                            ⏭️ Skip
+                        </button>
+                    </div>
+                    <button class="btn btn-ghost" onclick="closePendingDuplicatesModal()">
+                        Close (Review Later)
+                    </button>
+                </div>
+            `;
+        }
+
+        async function handlePendingDuplicate(action) {
+            const pd = pendingDuplicatesQueue[currentPendingIndex];
+
+            if (action === 'merge') {
+                // Merge: Use the merge endpoint to combine new info into existing entity
+                try {
+                    // Since the new entity wasn't created, we need to apply its data to the existing entity
+                    const response = await fetch(API_BASE + `/game/entities/${pd.existing_entity_id}/apply-pending`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: pd.new_entity_name,
+                            description: pd.new_entity_description,
+                            aliases: pd.new_entity_aliases
+                        })
+                    });
+                    // If endpoint doesn't exist, we'll just skip - the entity wasn't created anyway
+                    if (response.ok) {
+                        showStatus('world-manager-status', `✓ Merged "${pd.new_entity_name}" into "${pd.existing_entity_name}"`, 'success');
+                    }
+                } catch (e) {
+                    console.log('Merge apply failed (non-critical):', e);
+                }
+            } else if (action === 'keep_new') {
+                // Create the new entity - need an endpoint for this
+                try {
+                    const response = await fetch(API_BASE + `/game/entities/create-pending`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            world_id: pendingDuplicatesWorldId,
+                            name: pd.new_entity_name,
+                            entity_type: pd.new_entity_type,
+                            description: pd.new_entity_description,
+                            aliases: pd.new_entity_aliases
+                        })
+                    });
+                    if (response.ok) {
+                        showStatus('world-manager-status', `✓ Created "${pd.new_entity_name}" as a new entity`, 'success');
+                    }
+                } catch (e) {
+                    console.log('Create pending failed:', e);
+                }
+            }
+            // 'skip' does nothing - entity was already not created
+
+            currentPendingIndex++;
+            renderCurrentPendingDuplicate();
+        }
+
+        function closePendingDuplicatesModal() {
+            const modal = document.getElementById('pending-duplicates-modal');
+            if (modal) modal.classList.remove('visible');
+            pendingDuplicatesQueue = [];
+            currentPendingIndex = 0;
+        }
+
+        // ============================================================
+        // ENTITY MANAGER MODAL
+        // ============================================================
+
+        let entityManagerWorldId = null;
+        let entityManagerData = [];
+        let entityManagerFilter = 'all';
+
+        async function openEntityManager(worldId, worldName) {
+            entityManagerWorldId = worldId;
+            entityManagerFilter = 'all';
+
+            let modal = document.getElementById('entity-manager-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'entity-manager-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 1100px; max-height: 90vh;">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h2 id="entity-manager-title">Entity Manager</h2>
+                                <p id="entity-manager-subtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;"></p>
+                            </div>
+                            <button class="btn btn-ghost" onclick="closeEntityManager()">×</button>
+                        </div>
+                        <div style="padding: 0 1rem; display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
+                            <input type="text" id="entity-manager-search" placeholder="Search entities..."
+                                   style="flex: 1; min-width: 200px; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);"
+                                   oninput="filterEntityManager()">
+                            <select id="entity-manager-type-filter" onchange="filterEntityManager()"
+                                    style="padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);">
+                                <option value="all">All Types</option>
+                                <option value="Character">Characters</option>
+                                <option value="Location">Locations</option>
+                                <option value="Faction">Factions</option>
+                                <option value="Item">Items</option>
+                                <option value="Event">Events</option>
+                                <option value="Concept">Concepts</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="loadEntityManagerData()" style="padding: 8px 12px;">🔄 Refresh</button>
+                        </div>
+                        <div class="modal-body" id="entity-manager-content" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem;">
+                            <div style="text-align: center; padding: 30px;"><span class="loading"></span> Loading entities...</div>
+                        </div>
+                        <div class="modal-footer">
+                            <div id="entity-manager-status" style="flex: 1; font-size: 0.85rem;"></div>
+                            <button class="btn btn-secondary" onclick="closeEntityManager()">Close</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            document.getElementById('entity-manager-title').textContent = `Entity Manager: ${worldName}`;
+            document.getElementById('entity-manager-subtitle').textContent = worldId;
+            document.getElementById('entity-manager-search').value = '';
+            document.getElementById('entity-manager-type-filter').value = 'all';
+
+            modal.classList.add('visible');
+            await loadEntityManagerData();
+        }
+
+        async function loadEntityManagerData() {
+            const content = document.getElementById('entity-manager-content');
+            content.innerHTML = '<div style="text-align: center; padding: 30px;"><span class="loading"></span> Loading entities...</div>';
+
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${entityManagerWorldId}/entities?limit=5000`);
+                if (!response.ok) throw new Error('Failed to load entities');
+
+                const data = await response.json();
+                entityManagerData = data.entities || [];
+                renderEntityManager();
+            } catch (e) {
+                content.innerHTML = `<div style="text-align: center; padding: 30px; color: var(--accent-rose);">Error: ${e.message}</div>`;
+            }
+        }
+
+        function filterEntityManager() {
+            renderEntityManager();
+        }
+
+        function renderEntityManager() {
+            const content = document.getElementById('entity-manager-content');
+            const searchTerm = (document.getElementById('entity-manager-search')?.value || '').toLowerCase();
+            const typeFilter = document.getElementById('entity-manager-type-filter')?.value || 'all';
+
+            let filtered = entityManagerData.filter(e => {
+                const matchesSearch = !searchTerm ||
+                    e.name.toLowerCase().includes(searchTerm) ||
+                    (e.description || '').toLowerCase().includes(searchTerm) ||
+                    (e.aliases || []).some(a => a.toLowerCase().includes(searchTerm));
+                const matchesType = typeFilter === 'all' || e.entity_type === typeFilter;
+                return matchesSearch && matchesType;
+            });
+
+            // Sort by type, then name
+            filtered.sort((a, b) => {
+                if (a.entity_type !== b.entity_type) return a.entity_type.localeCompare(b.entity_type);
+                return a.name.localeCompare(b.name);
+            });
+
+            if (filtered.length === 0) {
+                content.innerHTML = `<div style="text-align: center; padding: 30px; color: var(--text-muted);">No entities found matching your criteria.</div>`;
+                return;
+            }
+
+            document.getElementById('entity-manager-subtitle').textContent =
+                `${entityManagerWorldId} • ${filtered.length} of ${entityManagerData.length} entities`;
+
+            const typeColors = {
+                'Character': '#3b82f6',
+                'Location': '#10b981',
+                'Faction': '#8b5cf6',
+                'Item': '#f59e0b',
+                'Event': '#ef4444',
+                'Concept': '#6b7280'
+            };
+
+            content.innerHTML = filtered.map(entity => {
+                const color = typeColors[entity.entity_type] || '#6b7280';
+                const hasOcean = entity.openness !== undefined;
+                const hasMotivations = (entity.goals?.length > 0) || (entity.secrets?.length > 0) || (entity.fears?.length > 0);
+
+                return `
+                    <div class="entity-manager-item" style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid ${color};">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <strong style="color: var(--text-primary);">${escapeHtml(entity.name)}</strong>
+                                    <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">${entity.entity_type}</span>
+                                    ${hasOcean ? '<span style="font-size: 0.7rem; color: var(--accent-sage);" title="Has OCEAN personality">🧠</span>' : ''}
+                                    ${hasMotivations ? '<span style="font-size: 0.7rem; color: var(--accent-gold);" title="Has goals/secrets/fears">💡</span>' : ''}
+                                </div>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0; max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    ${escapeHtml(entity.description || 'No description')}
+                                </p>
+                                ${entity.aliases && entity.aliases.length > 0 ? `
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                                        Also known as: ${entity.aliases.map(a => escapeHtml(a)).join(', ')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <button onclick="openEntityEditor('${entity.canon_id}')" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.8rem;" title="Edit">✏️</button>
+                                <button onclick="deleteEntityFromManager('${entity.canon_id}', '${escapeHtml(entity.name).replace(/'/g, "\\'")}', '${entity.entity_type}')" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.8rem; color: var(--accent-rose);" title="Delete">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function deleteEntityFromManager(canonId, entityName, entityType) {
+            if (!confirm(`Delete "${entityName}" (${entityType})?\n\nThis cannot be undone.`)) return;
+
+            document.getElementById('entity-manager-status').innerHTML = '<span class="loading"></span> Deleting...';
+
+            try {
+                const response = await fetch(API_BASE + `/game/entities/${canonId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error('Failed to delete');
+
+                document.getElementById('entity-manager-status').innerHTML = `<span style="color: var(--accent-sage);">✓ Deleted "${entityName}"</span>`;
+                entityManagerData = entityManagerData.filter(e => e.canon_id !== canonId);
+                renderEntityManager();
+            } catch (e) {
+                document.getElementById('entity-manager-status').innerHTML = `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
+            }
+        }
+
+        function openEntityEditor(canonId) {
+            const entity = entityManagerData.find(e => e.canon_id === canonId);
+            if (!entity) return;
+
+            let modal = document.getElementById('entity-editor-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'entity-editor-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 700px; max-height: 90vh;">
+                        <div class="modal-header">
+                            <h2>Edit Entity</h2>
+                            <button class="btn btn-ghost" onclick="closeEntityEditor()">×</button>
+                        </div>
+                        <div class="modal-body" id="entity-editor-content" style="max-height: 70vh; overflow-y: auto;">
+                        </div>
+                        <div class="modal-footer">
+                            <div id="entity-editor-status" style="flex: 1; font-size: 0.85rem;"></div>
+                            <button class="btn btn-secondary" onclick="closeEntityEditor()">Cancel</button>
+                            <button class="btn btn-primary" id="entity-editor-save" onclick="saveEntityEdits()">Save Changes</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            const content = document.getElementById('entity-editor-content');
+            content.innerHTML = `
+                <input type="hidden" id="edit-entity-id" value="${entity.canon_id}">
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">Name</label>
+                    <input type="text" id="edit-entity-name" value="${escapeHtml(entity.name)}"
+                           style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);">
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">Description</label>
+                    <textarea id="edit-entity-description" rows="3"
+                              style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary); resize: vertical;">${escapeHtml(entity.description || '')}</textarea>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">Aliases (comma-separated)</label>
+                    <input type="text" id="edit-entity-aliases" value="${(entity.aliases || []).join(', ')}"
+                           style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);">
+                </div>
+
+                ${entity.entity_type === 'Character' ? `
+                    <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 1.5rem 0;">
+                    <h3 style="color: var(--accent-lavender); margin-bottom: 1rem;">🧠 Character Details</h3>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">Goals (one per line)</label>
+                        <textarea id="edit-entity-goals" rows="2"
+                                  style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary); resize: vertical;">${(entity.goals || []).join('\n')}</textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">Secrets (one per line)</label>
+                        <textarea id="edit-entity-secrets" rows="2"
+                                  style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary); resize: vertical;">${(entity.secrets || []).join('\n')}</textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">Fears (one per line)</label>
+                        <textarea id="edit-entity-fears" rows="2"
+                                  style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary); resize: vertical;">${(entity.fears || []).join('\n')}</textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.85rem;">OCEAN Personality (0.0 - 1.0)</label>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                            <div>
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">Openness</label>
+                                <input type="number" id="edit-ocean-o" min="0" max="1" step="0.1" value="${entity.openness ?? 0.5}"
+                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">Conscient.</label>
+                                <input type="number" id="edit-ocean-c" min="0" max="1" step="0.1" value="${entity.conscientiousness ?? 0.5}"
+                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">Extraver.</label>
+                                <input type="number" id="edit-ocean-e" min="0" max="1" step="0.1" value="${entity.extraversion ?? 0.5}"
+                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">Agreeab.</label>
+                                <input type="number" id="edit-ocean-a" min="0" max="1" step="0.1" value="${entity.agreeableness ?? 0.5}"
+                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">Neurotic.</label>
+                                <input type="number" id="edit-ocean-n" min="0" max="1" step="0.1" value="${entity.neuroticism ?? 0.5}"
+                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('entity-editor-status').textContent = '';
+            modal.classList.add('visible');
+        }
+
+        async function saveEntityEdits() {
+            const canonId = document.getElementById('edit-entity-id').value;
+            const entity = entityManagerData.find(e => e.canon_id === canonId);
+            if (!entity) return;
+
+            const updates = {
+                name: document.getElementById('edit-entity-name').value.trim(),
+                description: document.getElementById('edit-entity-description').value.trim(),
+                aliases: document.getElementById('edit-entity-aliases').value.split(',').map(a => a.trim()).filter(a => a)
+            };
+
+            // Add character-specific fields if it's a character
+            if (entity.entity_type === 'Character') {
+                const goalsEl = document.getElementById('edit-entity-goals');
+                const secretsEl = document.getElementById('edit-entity-secrets');
+                const fearsEl = document.getElementById('edit-entity-fears');
+
+                if (goalsEl) updates.goals = goalsEl.value.split('\n').map(g => g.trim()).filter(g => g);
+                if (secretsEl) updates.secrets = secretsEl.value.split('\n').map(s => s.trim()).filter(s => s);
+                if (fearsEl) updates.fears = fearsEl.value.split('\n').map(f => f.trim()).filter(f => f);
+
+                const oEl = document.getElementById('edit-ocean-o');
+                const cEl = document.getElementById('edit-ocean-c');
+                const eEl = document.getElementById('edit-ocean-e');
+                const aEl = document.getElementById('edit-ocean-a');
+                const nEl = document.getElementById('edit-ocean-n');
+
+                if (oEl) updates.openness = parseFloat(oEl.value);
+                if (cEl) updates.conscientiousness = parseFloat(cEl.value);
+                if (eEl) updates.extraversion = parseFloat(eEl.value);
+                if (aEl) updates.agreeableness = parseFloat(aEl.value);
+                if (nEl) updates.neuroticism = parseFloat(nEl.value);
+            }
+
+            document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Saving...';
+
+            try {
+                const response = await fetch(API_BASE + `/game/entities/${canonId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to save');
+                }
+
+                document.getElementById('entity-editor-status').innerHTML = '<span style="color: var(--accent-sage);">✓ Saved!</span>';
+
+                // Update local data
+                Object.assign(entity, updates);
+                renderEntityManager();
+
+                setTimeout(closeEntityEditor, 500);
+            } catch (e) {
+                document.getElementById('entity-editor-status').innerHTML = `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
+            }
+        }
+
+        function closeEntityEditor() {
+            const modal = document.getElementById('entity-editor-modal');
+            if (modal) modal.classList.remove('visible');
+        }
+
+        function closeEntityManager() {
+            const modal = document.getElementById('entity-manager-modal');
+            if (modal) modal.classList.remove('visible');
+            // Refresh world manager to show updated counts
+            loadWorldManagerData();
         }
 
         // ============================================================
