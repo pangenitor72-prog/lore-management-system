@@ -1274,7 +1274,8 @@ async def update_entity_patch(
     # Build update query
     allowed_fields = {
         "canonical_name", "aliases", "confidence_level", "approval_status",
-        "party_knowledge", "approved_fields"
+        "party_knowledge", "approved_fields", "description", "entity_type",
+        "openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"
     }
     
     set_clauses = ["n.updated_at = datetime().epochMillis"]

@@ -4231,11 +4231,19 @@ async def get_world_entities(
         query += """
             RETURN e.canon_id as id,
                    e.name as name,
+                   e.canonical_name as canonical_name,
                    e.entity_type as type,
                    e.description as description,
                    e.confidence_level as confidence,
                    e.source_name as source_name,
-                   e.created_at as created_at
+                   e.created_at as created_at,
+                   e.aliases as aliases,
+                   e.openness as openness,
+                   e.conscientiousness as conscientiousness,
+                   e.extraversion as extraversion,
+                   e.agreeableness as agreeableness,
+                   e.neuroticism as neuroticism,
+                   properties(e) as all_props
             ORDER BY e.source_name, e.entity_type, e.name
             LIMIT $limit
         """
@@ -4245,17 +4253,86 @@ async def get_world_entities(
         result = await db.execute(query, params)
         logger.debug(f"Query returned {len(result) if result else 0} records")
 
+        # Get all entity names for duplicate detection
+        all_names = {}
+        for record in result:
+            name = record.get("name") or record.get("canonical_name", "")
+            entity_id = record.get("id")
+            entity_type = record.get("type")
+            if name and entity_id:
+                name_key = (name.lower().strip(), entity_type)
+                if name_key not in all_names:
+                    all_names[name_key] = []
+                all_names[name_key].append(entity_id)
+
         entities = []
         for record in result:
             try:
+                entity_type = record.get("type")
+                entity_id = record.get("id")
+                name = record.get("name") or record.get("canonical_name", "")
+                description = record.get("description", "")
+                aliases = record.get("aliases", [])
+                
+                # Quality indicators
+                quality_flags = {}
+                missing_fields = []
+                
+                # Check for missing description
+                if not description or not description.strip():
+                    missing_fields.append("description")
+                
+                # Check for duplicate names
+                name_key = (name.lower().strip(), entity_type)
+                if name_key in all_names and len(all_names[name_key]) > 1:
+                    quality_flags["possible_duplicate"] = True
+                else:
+                    quality_flags["possible_duplicate"] = False
+                
+                # Check for OCEAN profile on Characters
+                if entity_type == "Character":
+                    openness = record.get("openness")
+                    conscientiousness = record.get("conscientiousness")
+                    extraversion = record.get("extraversion")
+                    agreeableness = record.get("agreeableness")
+                    neuroticism = record.get("neuroticism")
+                    
+                    has_ocean = all([
+                        openness is not None,
+                        conscientiousness is not None,
+                        extraversion is not None,
+                        agreeableness is not None,
+                        neuroticism is not None
+                    ])
+                    quality_flags["has_ocean"] = has_ocean
+                    if not has_ocean:
+                        missing_fields.append("ocean_profile")
+                    
+                    # Include OCEAN values if present
+                    if has_ocean:
+                        quality_flags["ocean"] = {
+                            "openness": openness,
+                            "conscientiousness": conscientiousness,
+                            "extraversion": extraversion,
+                            "agreeableness": agreeableness,
+                            "neuroticism": neuroticism
+                        }
+                
+                quality_flags["missing_fields"] = missing_fields
+                quality_flags["is_complete"] = len(missing_fields) == 0
+                
                 entities.append({
-                    "id": record.get("id"),
-                    "name": record.get("name"),
-                    "type": record.get("type"),
-                    "description": record.get("description", "")[:200] if record.get("description") else "",
+                    "id": entity_id,
+                    "name": name,
+                    "canonical_name": record.get("canonical_name", name),
+                    "type": entity_type,
+                    "description": description[:200] if description else "",
+                    "full_description": description,
                     "confidence": record.get("confidence"),
                     "source_name": record.get("source_name", "unknown"),
                     "created_at": record.get("created_at"),
+                    "aliases": aliases or [],
+                    "quality": quality_flags,
                 })
             except Exception as parse_error:
                 logger.warning(f"Failed to parse entity record: {parse_error}")
