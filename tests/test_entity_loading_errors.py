@@ -2,6 +2,7 @@
 Tests for entity loading error handling improvements.
 
 Tests for Issue #1: HTTP 500 Error When Loading Entities
+Tests for Issue #2: Per-world entity import feature
 """
 import pytest
 from fastapi.testclient import TestClient
@@ -101,3 +102,88 @@ def test_get_world_entities_empty_result(client: TestClient):
     else:
         # If world doesn't exist, should be 404
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_import_entities_to_world_success(client: TestClient):
+    """Test successfully importing entities to a world."""
+    # Sample entities from preview
+    entities = [
+        {
+            "name": "Test Character",
+            "type": "Character",
+            "description": "A test character",
+            "traits": ["brave", "intelligent"],
+            "openness": 0.7,
+            "conscientiousness": 0.8,
+            "extraversion": 0.6,
+            "agreeableness": 0.5,
+            "neuroticism": 0.4
+        },
+        {
+            "name": "Test Location",
+            "type": "Location",
+            "description": "A test location",
+            "tags": ["city", "coastal"]
+        }
+    ]
+    
+    response = client.post(
+        "/api/game/lore-bases/shattered_kingdoms/entities",
+        json={
+            "entities": entities,
+            "source_name": "test_import"
+        }
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["entities_imported"] == 2
+    assert data["lore_id"] == "shattered_kingdoms"
+    assert data["source_name"] == "test_import"
+
+
+def test_import_entities_to_nonexistent_world(client: TestClient):
+    """Test importing entities to non-existent world returns 404."""
+    entities = [{"name": "Test", "type": "Character", "description": "Test"}]
+    
+    response = client.post(
+        "/api/game/lore-bases/nonexistent_world/entities",
+        json={"entities": entities}
+    )
+    
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert "not found" in response.json()["detail"].lower()
+
+
+def test_import_entities_no_entities_provided(client: TestClient):
+    """Test importing with no entities returns 400."""
+    response = client.post(
+        "/api/game/lore-bases/shattered_kingdoms/entities",
+        json={"entities": []}
+    )
+    
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "No entities provided" in response.json()["detail"]
+
+
+def test_import_entities_database_error(client: TestClient, mock_neo4j_db):
+    """Test that database errors during import are properly handled."""
+    original_execute = mock_neo4j_db.execute
+    
+    async def failing_execute(*args, **kwargs):
+        raise Exception("Database write failed")
+    
+    mock_neo4j_db.execute = failing_execute
+    
+    entities = [{"name": "Test", "type": "Character", "description": "Test"}]
+    
+    try:
+        response = client.post(
+            "/api/game/lore-bases/shattered_kingdoms/entities",
+            json={"entities": entities}
+        )
+        
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert "Failed to import entities" in response.json()["detail"]
+    finally:
+        mock_neo4j_db.execute = original_execute
