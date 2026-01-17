@@ -4284,7 +4284,8 @@ async def get_world_entities(
                    e.neuroticism as neuroticism,
                    e.confidence_level as confidence,
                    coalesce(e.source_name, e.source) as source_name,
-                   e.created_at as created_at
+                   e.created_at as created_at,
+                   e.director_notes as director_notes
             ORDER BY e.source, e.entity_type, e.name
             LIMIT $limit
         """
@@ -4325,6 +4326,11 @@ async def get_world_entities(
                     entity_data["agreeableness"] = record.get("agreeableness")
                 if record.get("neuroticism") is not None:
                     entity_data["neuroticism"] = record.get("neuroticism")
+
+                # Include director notes if present
+                director_notes = record.get("director_notes")
+                if director_notes:
+                    entity_data["director_notes"] = director_notes
 
                 entities.append(entity_data)
             except Exception as parse_error:
@@ -6181,3 +6187,152 @@ async def delete_entity(
     logger.info(f"Deleted entity {canon_id} ({entity_name})")
 
     return {"success": True, "message": f"Deleted entity '{entity_name}'"}
+
+
+# ============================================================
+# DIRECTOR NOTES - Admin guidance for AI behavior
+# ============================================================
+
+@router.post("/entities/{canon_id}/director-note")
+async def add_director_note(
+    canon_id: str,
+    http_request: Request,
+):
+    """
+    Add a director note to an entity.
+
+    Director notes are guidance for the AI on how to portray this entity.
+    They get injected into the AI's context when this entity is referenced.
+
+    Examples:
+    - "This character is paranoid and never trusts strangers"
+    - "This location is more rundown than the description suggests"
+    - "This faction would never ally with the Crown"
+    """
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if not db:
+        raise HTTPException(status_code=500, detail="Database not available")
+
+    try:
+        body = await http_request.json()
+        note = body.get("note", "").strip()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    if not note:
+        raise HTTPException(status_code=400, detail="Note cannot be empty")
+
+    # Check entity exists
+    check_result = await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        RETURN e.name AS name, e.director_notes AS existing_notes
+    """, {"canon_id": canon_id})
+
+    if not check_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity '{canon_id}' not found"
+        )
+
+    entity_name = check_result[0].get("name", canon_id)
+    existing_notes = check_result[0].get("existing_notes") or []
+
+    # Add the new note
+    new_notes = existing_notes + [note]
+
+    await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        SET e.director_notes = $notes
+    """, {"canon_id": canon_id, "notes": new_notes})
+
+    logger.info(f"Added director note to {canon_id} ({entity_name}): {note[:50]}...")
+
+    return {
+        "success": True,
+        "message": f"Added director note to '{entity_name}'",
+        "notes": new_notes,
+        "note_count": len(new_notes)
+    }
+
+
+@router.delete("/entities/{canon_id}/director-note/{note_index}")
+async def remove_director_note(
+    canon_id: str,
+    note_index: int,
+    http_request: Request,
+):
+    """
+    Remove a director note from an entity by index.
+    """
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if not db:
+        raise HTTPException(status_code=500, detail="Database not available")
+
+    # Get current notes
+    result = await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        RETURN e.name AS name, e.director_notes AS notes
+    """, {"canon_id": canon_id})
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity '{canon_id}' not found"
+        )
+
+    entity_name = result[0].get("name", canon_id)
+    notes = result[0].get("notes") or []
+
+    if note_index < 0 or note_index >= len(notes):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Note index {note_index} out of range (0-{len(notes)-1})"
+        )
+
+    removed_note = notes.pop(note_index)
+
+    await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        SET e.director_notes = $notes
+    """, {"canon_id": canon_id, "notes": notes})
+
+    logger.info(f"Removed director note {note_index} from {canon_id}: {removed_note[:50]}...")
+
+    return {
+        "success": True,
+        "message": f"Removed director note from '{entity_name}'",
+        "removed_note": removed_note,
+        "notes": notes,
+        "note_count": len(notes)
+    }
+
+
+@router.get("/entities/{canon_id}/director-notes")
+async def get_director_notes(
+    canon_id: str,
+    http_request: Request,
+):
+    """
+    Get all director notes for an entity.
+    """
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if not db:
+        raise HTTPException(status_code=500, detail="Database not available")
+
+    result = await db.execute("""
+        MATCH (e:Entity {canon_id: $canon_id})
+        RETURN e.name AS name, e.director_notes AS notes
+    """, {"canon_id": canon_id})
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity '{canon_id}' not found"
+        )
+
+    return {
+        "entity_name": result[0].get("name"),
+        "canon_id": canon_id,
+        "notes": result[0].get("notes") or [],
+        "note_count": len(result[0].get("notes") or [])
+    }

@@ -596,14 +596,14 @@ class QueryAgent:
     def _format_entity_context(self, entity: Dict[str, Any]) -> str:
         """Formats an entity and its relationships into readable context."""
         lines = [f"**{entity.get('name', 'Unknown')}** ({entity.get('type', 'Entity')})"]
-        
+
         # Add key properties
         props = entity.get("properties", {})
         important_keys = ["description", "content", "race", "class", "location", "birth_date", "death_date"]
         for key in important_keys:
             if key in props and props[key]:
                 lines.append(f"  - {key}: {props[key]}")
-        
+
         # Add relationships
         relationships = entity.get("relationships", [])
         if relationships:
@@ -611,7 +611,13 @@ class QueryAgent:
             for rel in relationships[:10]:  # Limit to 10 relationships
                 direction = "→" if rel.get("direction") == "outgoing" else "←"
                 lines.append(f"    {direction} {rel.get('relationship', 'RELATED_TO')} {rel.get('neighbor_name', '?')} ({rel.get('neighbor_type', '?')})")
-        
+
+        # Add director notes (admin guidance for AI behavior)
+        director_notes = props.get("director_notes") or []
+        if director_notes:
+            for note in director_notes:
+                lines.append(f"  - [DIRECTOR NOTE]: {note}")
+
         return "\n".join(lines)
 
     async def ask(self, query: str, campaign_id: Optional[str] = None) -> str:

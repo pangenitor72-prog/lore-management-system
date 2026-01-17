@@ -19017,6 +19017,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const color = typeColors[entity.entity_type] || '#6b7280';
                 const hasOcean = entity.openness !== undefined;
                 const hasMotivations = (entity.goals?.length > 0) || (entity.secrets?.length > 0) || (entity.fears?.length > 0);
+                const noteCount = (entity.director_notes || []).length;
                 const isSelected = entityManagerSelected.has(entity.canon_id);
 
                 return `
@@ -19032,6 +19033,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                         <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">${entity.entity_type}</span>
                                         ${hasOcean ? '<span style="font-size: 0.7rem; color: var(--accent-sage);" title="Has OCEAN personality">🧠</span>' : ''}
                                         ${hasMotivations ? '<span style="font-size: 0.7rem; color: var(--accent-gold);" title="Has goals/secrets/fears">💡</span>' : ''}
+                                        ${noteCount > 0 ? `<span style="font-size: 0.7rem; background: var(--accent-gold); color: var(--bg-primary); padding: 1px 5px; border-radius: 8px;" title="${noteCount} director note${noteCount > 1 ? 's' : ''}">📝${noteCount}</span>` : ''}
                                     </div>
                                     <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0; max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                         ${escapeHtml(entity.description || 'No description')}
@@ -19353,6 +19355,28 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         </div>
                     ` : ''}
                 ` : ''}
+
+                <!-- Director Notes (for all entity types) -->
+                <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 1.5rem 0;">
+                <h3 style="color: var(--accent-gold); margin-bottom: 0.5rem;">📝 Director Notes</h3>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;">
+                    Guide how the AI portrays this entity. Notes are injected into AI prompts when this entity is referenced.
+                </p>
+
+                <div id="director-notes-list" style="margin-bottom: 1rem;">
+                    ${(entity.director_notes || []).map((note, idx) => `
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--accent-gold); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px;">
+                            <div style="flex: 1; color: var(--text-primary); font-size: 0.9rem;">${escapeHtml(note)}</div>
+                            <button onclick="removeDirectorNote('${entity.canon_id}', ${idx})" class="btn btn-ghost" style="padding: 2px 6px; color: var(--accent-rose); font-size: 0.8rem;" title="Remove note">×</button>
+                        </div>
+                    `).join('') || '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No director notes yet.</div>'}
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="new-director-note" placeholder="e.g., This character should be more suspicious and paranoid..."
+                           style="flex: 1; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);">
+                    <button onclick="addDirectorNote('${entity.canon_id}')" class="btn btn-secondary" style="padding: 8px 16px; background: var(--accent-gold); color: var(--bg-primary);">Add Note</button>
+                </div>
             `;
 
             document.getElementById('entity-editor-status').textContent = '';
@@ -19432,6 +19456,80 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (modal) modal.classList.remove('active');
             // Refresh world manager to show updated counts
             loadWorldManagerData();
+        }
+
+        // ============================================================
+        // DIRECTOR NOTES - Admin guidance for AI behavior
+        // ============================================================
+
+        async function addDirectorNote(canonId) {
+            const input = document.getElementById('new-director-note');
+            const note = input?.value?.trim();
+
+            if (!note) {
+                alert('Please enter a note');
+                return;
+            }
+
+            document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Adding note...';
+
+            try {
+                const response = await fetch(API_BASE + `/game/entities/${canonId}/director-note`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to add note');
+                }
+
+                const result = await response.json();
+                document.getElementById('entity-editor-status').innerHTML = '<span style="color: var(--accent-sage);">✓ Note added</span>';
+
+                // Update local entity data and refresh editor
+                const entity = entityManagerData.find(e => e.canon_id === canonId);
+                if (entity) {
+                    entity.director_notes = result.notes;
+                    openEntityEditor(canonId); // Refresh the editor to show new note
+                }
+
+                renderEntityManager(); // Update the list to show note badge
+            } catch (e) {
+                document.getElementById('entity-editor-status').innerHTML = `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
+            }
+        }
+
+        async function removeDirectorNote(canonId, noteIndex) {
+            if (!confirm('Remove this director note?')) return;
+
+            document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Removing note...';
+
+            try {
+                const response = await fetch(API_BASE + `/game/entities/${canonId}/director-note/${noteIndex}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to remove note');
+                }
+
+                const result = await response.json();
+                document.getElementById('entity-editor-status').innerHTML = '<span style="color: var(--accent-sage);">✓ Note removed</span>';
+
+                // Update local entity data and refresh editor
+                const entity = entityManagerData.find(e => e.canon_id === canonId);
+                if (entity) {
+                    entity.director_notes = result.notes;
+                    openEntityEditor(canonId); // Refresh the editor
+                }
+
+                renderEntityManager(); // Update the list to show note badge
+            } catch (e) {
+                document.getElementById('entity-editor-status').innerHTML = `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
+            }
         }
 
         // ============================================================
