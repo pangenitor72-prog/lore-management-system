@@ -40,12 +40,56 @@ if TYPE_CHECKING:
     from src.airpg.runtime.game_events import GameEvent, Inventory
 
 # Arc Engine for narrative structure (optional - graceful fallback if not available)
-try:
-    from src.lms.arc import ArcEngine, StoryPhase, BeatType
-    ARC_ENGINE_AVAILABLE = True
-except ImportError:
-    ARC_ENGINE_AVAILABLE = False
-    ArcEngine = None
+# Check environment variable to enable/disable Arc Engine
+ARC_ENGINE_ENABLED = os.getenv("ENABLE_ARC_ENGINE", "false").lower() == "true"
+ARC_ENGINE_AVAILABLE = False
+ARC_ENGINE_IMPORT_ERROR = None
+ArcEngine = None
+StoryPhase = None
+BeatType = None
+
+if ARC_ENGINE_ENABLED:
+    logging.info("[ARC ENGINE] Attempting to import Arc Engine (ENABLE_ARC_ENGINE=true)...")
+    try:
+        from src.lms.arc import ArcEngine, StoryPhase, BeatType
+        ARC_ENGINE_AVAILABLE = True
+        logging.info("[ARC ENGINE] ✅ Arc Engine imported successfully")
+        logging.info(f"[ARC ENGINE] Version: {getattr(ArcEngine, '__version__', 'unknown')}")
+        logging.info(f"[ARC ENGINE] Available components: ArcEngine, StoryPhase, BeatType")
+    except ImportError as e:
+        ARC_ENGINE_AVAILABLE = False
+        ARC_ENGINE_IMPORT_ERROR = str(e)
+        logging.error(f"[ARC ENGINE] ❌ Import failed: {e}")
+        logging.error(f"[ARC ENGINE] Import error details: {type(e).__name__}: {e}")
+        
+        # Log missing dependencies
+        import sys
+        missing_deps = []
+        try:
+            import pydantic
+            logging.info(f"[ARC ENGINE] pydantic version: {pydantic.__version__}")
+        except ImportError:
+            missing_deps.append("pydantic")
+            logging.error("[ARC ENGINE] Missing dependency: pydantic")
+        
+        if missing_deps:
+            logging.error(f"[ARC ENGINE] Missing dependencies: {', '.join(missing_deps)}")
+        
+        # Check if arc module exists
+        try:
+            import src.lms.arc.models
+            logging.info("[ARC ENGINE] src.lms.arc.models is available")
+        except ImportError as arc_err:
+            logging.error(f"[ARC ENGINE] src.lms.arc.models not found: {arc_err}")
+    except Exception as e:
+        ARC_ENGINE_AVAILABLE = False
+        ARC_ENGINE_IMPORT_ERROR = str(e)
+        logging.error(f"[ARC ENGINE] ❌ Unexpected error during import: {e}")
+        logging.error(f"[ARC ENGINE] Error type: {type(e).__name__}")
+        import traceback
+        logging.error(f"[ARC ENGINE] Traceback:\n{traceback.format_exc()}")
+else:
+    logging.info("[ARC ENGINE] Disabled via config (ENABLE_ARC_ENGINE=false)")
 
 WORLDBUILDING_RULES_PATH = Path(__file__).parent.parent.parent / "docs" / "mantle" / "WORLDBUILDING_RULES.md"
 
@@ -142,6 +186,7 @@ class DMAgent:
         self._arc_engine: Optional[ArcEngine] = None
         if ARC_ENGINE_AVAILABLE:
             self._arc_engine = ArcEngine()
+            logging.info("[ARC ENGINE] Arc Engine initialized in DMAgent")
 
         # Dual-mode configuration (defaults to casual one-shot)
         self._game_config: Optional[GameConfig] = None
@@ -165,8 +210,12 @@ class DMAgent:
         Returns empty string if Arc Engine not available.
         """
         if not self._arc_engine:
+            logging.debug("[ARC ENGINE] get_arc_context() called but Arc Engine not available")
             return ""
-        return self._arc_engine.get_dm_context_injection()
+        
+        context = self._arc_engine.get_dm_context_injection()
+        logging.debug(f"[ARC ENGINE] get_arc_context() returned context (length: {len(context)})")
+        return context
 
     def get_arc_status(self) -> Optional[Dict[str, Any]]:
         """Get current arc status for external inspection."""
@@ -329,6 +378,7 @@ class DMAgent:
         # Initialize Arc Engine with session ID
         if ARC_ENGINE_AVAILABLE:
             self._arc_engine = ArcEngine(session_id=self.session.session_id)
+            logging.info(f"[ARC ENGINE] Arc Engine re-initialized for session {self.session.session_id}")
 
         return self.session.session_id
 
@@ -611,10 +661,17 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
 
         # Process response through Arc Engine for state updates
         if self._arc_engine:
-            self._arc_engine.process_narrative(
-                narrative_text=response_text,
-                player_action=player_input,
-            )
+            logging.info(f"[ARC ENGINE] Processing narrative through Arc Engine (player_action length: {len(player_input)})")
+            try:
+                self._arc_engine.process_narrative(
+                    narrative_text=response_text,
+                    player_action=player_input,
+                )
+                logging.info(f"[ARC ENGINE] Narrative processed - Phase: {self._arc_engine.current_phase.value if hasattr(self._arc_engine, 'current_phase') else 'unknown'}, Tension: {self._arc_engine.tension_level.value if hasattr(self._arc_engine, 'tension_level') else 'unknown'}")
+            except Exception as e:
+                logging.error(f"[ARC ENGINE] Error processing narrative: {e}")
+                import traceback
+                logging.error(f"[ARC ENGINE] Traceback:\n{traceback.format_exc()}")
 
         return response_text
 
