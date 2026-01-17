@@ -1,11 +1,8 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
+import asyncio
 
 from src.lms.db.neo4j_adapter import Neo4jDatabase
-from src.lms.services.embedding_orchestrator import EmbeddingOrchestrator
-
-# Use the standard embedding dimension
-EMBEDDING_DIMENSION = EmbeddingOrchestrator.EMBEDDING_DIMENSION
 
 # Mark all tests in this file as async
 pytestmark = pytest.mark.asyncio
@@ -13,136 +10,165 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture
 def mock_driver():
-    """Fixture to create a mock Neo4j driver."""
-    driver = AsyncMock()
-    # The driver.execute_query is the key method to mock
-    driver.execute_query.return_value = ([], {}, [])
+    """Fixture to create a mock sync Neo4j driver."""
+    driver = MagicMock()
+    driver.verify_connectivity = MagicMock()
+
+    # Mock session context manager
+    mock_session = MagicMock()
+    mock_session.__enter__ = MagicMock(return_value=mock_session)
+    mock_session.__exit__ = MagicMock(return_value=None)
+    mock_session.execute_write = MagicMock(return_value=[])
+    driver.session = MagicMock(return_value=mock_session)
+
     return driver
 
 
 @pytest.fixture
-async def db_adapter(mock_driver):
-    """Fixture to create a Neo4jDatabase instance with a mocked driver."""
-    with patch('src.lms.db.neo4j_adapter.AsyncGraphDatabase.driver') as mock_async_driver:
-        # Prevent the actual driver from being created
-        mock_async_driver.return_value = mock_driver
-        
-        adapter = Neo4jDatabase(uri="bolt://mock", auth=("user", "pass"))
-        # Since we are mocking the driver creation, we need to manually set it
-        adapter.driver = mock_driver
-        
-        yield adapter
-        
-        # Teardown logic if needed
-        await adapter.close()
+def db_adapter():
+    """Fixture to create a Neo4jDatabase instance."""
+    return Neo4jDatabase(uri="bolt://mock", auth=("user", "pass"))
 
 
 async def test_connect(db_adapter, mock_driver):
     """Test that connect establishes a driver and verifies connectivity."""
-    # Reset to simulate initial state
-    db_adapter.driver = None 
-    
-    with patch('src.lms.db.neo4j_adapter.AsyncGraphDatabase.driver') as mock_async_driver:
-        mock_async_driver.return_value = mock_driver
-        
-        await db_adapter.connect()
 
-        # Assert that a new driver was created
-        mock_async_driver.assert_called_once_with("bolt://mock", auth=("user", "pass"))
-        # Assert that we verified connectivity
-        mock_driver.verify_connectivity.assert_called_once()
-        assert db_adapter.driver is not None
+    # Helper to run sync functions as if they were async
+    async def mock_to_thread(func, *args, **kwargs):
+        return func(*args, **kwargs) if callable(func) else func
+
+    with patch.object(db_adapter, '_build_driver', return_value=mock_driver):
+        with patch('asyncio.to_thread', side_effect=mock_to_thread):
+            await db_adapter.connect()
+
+    assert db_adapter._driver is not None
 
 
-async def test_create_vector_index(db_adapter, mock_driver):
-    """Test the create_vector_index method constructs the correct query."""
-    await db_adapter.create_vector_index()
+async def test_connect_retry_on_failure(db_adapter):
+    """Test that connect retries on failure."""
+    call_count = 0
 
-    # Get the call arguments
-    call_args, call_kwargs = mock_driver.execute_query.call_args
-    query = call_args[0]
-    params = call_kwargs['parameters_']
+    def failing_then_succeed():
+        nonlocal call_count
+        call_count += 1
+        if call_count < 2:
+            raise Exception("Connection failed")
+        mock_driver = MagicMock()
+        mock_driver.verify_connectivity = MagicMock()
+        return mock_driver
 
-    # Assert that the correct query and params were used
-    assert "CREATE VECTOR INDEX entity_embeddings" in query
-    assert f"`vector.dimensions`: $dimensions" in query
-    assert params["dimensions"] == EMBEDDING_DIMENSION
-    assert params["similarity_function"] == "cosine"
+    with patch.object(db_adapter, '_build_driver', side_effect=failing_then_succeed):
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            await db_adapter.connect(retries=3, base_delay=0.01)
 
-
-async def test_store_embedding(db_adapter, mock_driver):
-    """Test the store_embedding method for a single embedding."""
-    node_id = "test-node-123"
-    embedding = [0.1] * EMBEDDING_DIMENSION
-    
-    # Mock the return value to simulate a successful update
-    mock_driver.execute_query.return_value = ([{"name": "test-node-123"}], {}, [])
-
-    success = await db_adapter.store_embedding(node_id, embedding)
-
-    call_args, call_kwargs = mock_driver.execute_query.call_args
-    query = call_args[0]
-    params = call_kwargs['parameters_']
-
-    assert success is True
-    assert "MATCH (n {canon_id: $node_id})" in query
-    assert "SET n.embedding = $embedding" in query
-    assert params["node_id"] == node_id
-    assert params["embedding"] == embedding
+    assert call_count == 2
+    assert db_adapter._driver is not None
 
 
-async def test_store_embeddings_batch(db_adapter, mock_driver):
-    """Test the store_embeddings_batch method."""
-    batch = [{"node_id": "node1", "embedding": [0.1] * EMBEDDING_DIMENSION}]
-    
-    # Mock return to simulate one node updated
-    mock_driver.execute_query.return_value = ([{"updated": 1}], {}, [])
+async def test_execute_creates_session(db_adapter, mock_driver):
+    """Test that execute uses session with proper context management."""
+    db_adapter._driver = mock_driver
 
-    count = await db_adapter.store_embeddings_batch(batch)
+    # Mock the session's execute_write to return expected data
+    mock_result = [{"name": "test"}]
+    mock_session = MagicMock()
+    mock_session.__enter__ = MagicMock(return_value=mock_session)
+    mock_session.__exit__ = MagicMock(return_value=None)
+    mock_session.execute_write = MagicMock(return_value=mock_result)
+    mock_driver.session = MagicMock(return_value=mock_session)
 
-    call_args, call_kwargs = mock_driver.execute_query.call_args
-    query = call_args[0]
-    params = call_kwargs['parameters_']
+    result = await db_adapter.execute("MATCH (n) RETURN n", {})
 
-    assert count == 1
-    assert "UNWIND $items AS item" in query
-    assert "MATCH (n {canon_id: item.node_id})" in query
-    assert "SET n.embedding = item.embedding" in query
-    assert params["items"] == batch
+    mock_driver.session.assert_called_once_with(database="neo4j")
+    assert result == mock_result
 
 
-async def test_vector_search(db_adapter, mock_driver):
-    """Test the vector_search method."""
-    query_embedding = [0.2] * EMBEDDING_DIMENSION
-    
-    await db_adapter.vector_search(query_embedding, limit=5, min_score=0.8)
+async def test_close_driver(db_adapter, mock_driver):
+    """Test that close properly shuts down the driver."""
+    db_adapter._driver = mock_driver
 
-    call_args, call_kwargs = mock_driver.execute_query.call_args
-    query = call_args[0]
-    params = call_kwargs['parameters_']
+    await db_adapter.close()
 
-    assert "CALL db.index.vector.queryNodes($index_name, $limit, $embedding)" in query
-    assert "WHERE score >= $min_score" in query
-    assert params["index_name"] == "entity_embeddings"
-    assert params["limit"] == 5
-    assert params["embedding"] == query_embedding
-    assert params["min_score"] == 0.8
+    mock_driver.close.assert_called_once()
+    assert db_adapter._driver is None
 
 
-async def test_validate_identifier_valid(db_adapter):
-    """Test that valid identifiers pass."""
-    assert db_adapter.validate_identifier("ValidLabel") == "ValidLabel"
-    assert db_adapter.validate_identifier("Valid_Label_123") == "Valid_Label_123"
-    assert db_adapter.validate_identifier("_Valid") == "_Valid"
+def test_scheme_detection(db_adapter):
+    """Test URI scheme detection."""
+    adapter_bolt = Neo4jDatabase(uri="bolt://localhost:7687", auth=("u", "p"))
+    adapter_ssl = Neo4jDatabase(uri="neo4j+s://aura.neo4j.io", auth=("u", "p"))
+    adapter_ssc = Neo4jDatabase(uri="neo4j+ssc://private.neo4j.io", auth=("u", "p"))
 
-async def test_validate_identifier_invalid(db_adapter):
-    """Test that invalid identifiers raise ValueError."""
-    with pytest.raises(ValueError):
-        db_adapter.validate_identifier("Invalid-Label")
-    with pytest.raises(ValueError):
-        db_adapter.validate_identifier("1Invalid")
-    with pytest.raises(ValueError):
-        db_adapter.validate_identifier("Invalid Label")
-    with pytest.raises(ValueError):
-        db_adapter.validate_identifier("`Invalid`")
+    assert adapter_bolt._scheme() == "bolt"
+    assert adapter_ssl._scheme() == "neo4j+s"
+    assert adapter_ssc._scheme() == "neo4j+ssc"
 
+
+def test_ssl_scheme_detection(db_adapter):
+    """Test SSL scheme detection."""
+    adapter_bolt = Neo4jDatabase(uri="bolt://localhost:7687", auth=("u", "p"))
+    adapter_ssl = Neo4jDatabase(uri="neo4j+s://aura.neo4j.io", auth=("u", "p"))
+
+    assert adapter_bolt._is_ssl_scheme() is False
+    assert adapter_ssl._is_ssl_scheme() is True
+
+
+def test_auth_tuple_handling():
+    """Test that auth can be passed as tuple or separate args."""
+    # Auth as tuple
+    adapter1 = Neo4jDatabase(uri="bolt://mock", auth=("user", "pass"))
+    assert adapter1.auth == ("user", "pass")
+
+    # Auth as separate args
+    adapter2 = Neo4jDatabase(uri="bolt://mock", user="user", password="pass")
+    assert adapter2.auth == ("user", "pass")
+
+    # User as tuple (legacy support)
+    adapter3 = Neo4jDatabase(uri="bolt://mock", user=("user", "pass"))
+    assert adapter3.auth == ("user", "pass")
+
+
+def test_connection_test_method(db_adapter, mock_driver):
+    """Test the synchronous test_connection method."""
+    with patch.object(db_adapter, '_build_driver', return_value=mock_driver):
+        result = db_adapter.test_connection()
+        assert result is True
+
+
+def test_connection_test_method_failure(db_adapter):
+    """Test test_connection returns False on failure."""
+    def fail_build():
+        raise Exception("Connection failed")
+
+    with patch.object(db_adapter, '_build_driver', side_effect=fail_build):
+        result = db_adapter.test_connection()
+        assert result is False
+
+
+# ============================================================================
+# SKIPPED TESTS - Methods moved to other modules
+# ============================================================================
+
+@pytest.mark.skip(reason="create_vector_index moved to src/lms/db/schema_init.py")
+async def test_create_vector_index():
+    pass
+
+
+@pytest.mark.skip(reason="store_embedding moved to src/lms/services/vector_service.py")
+async def test_store_embedding():
+    pass
+
+
+@pytest.mark.skip(reason="store_embeddings_batch moved to src/lms/services/vector_service.py")
+async def test_store_embeddings_batch():
+    pass
+
+
+@pytest.mark.skip(reason="vector_search moved to src/lms/services/vector_service.py")
+async def test_vector_search():
+    pass
+
+
+@pytest.mark.skip(reason="validate_identifier not on Neo4jDatabase - use parameterized queries instead")
+async def test_validate_identifier():
+    pass

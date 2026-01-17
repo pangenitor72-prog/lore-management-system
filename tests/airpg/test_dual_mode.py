@@ -253,26 +253,47 @@ class TestPacingPhases:
         assert config.get_pacing_phase(1) == "INTRO"
         assert config.get_pacing_phase(2) == "INTRO"
 
-    def test_rising_phase_turns_3_14(self):
-        """Turns 3-14 should be RISING phase."""
-        config = GameConfig(session_scope="ONE_SHOT")
+    def test_rising_phase_default_thresholds(self):
+        """Turns 3 to climax_start_turn-1 should be RISING phase (default: 3-74)."""
+        config = GameConfig(session_scope="ONE_SHOT")  # defaults: climax=75, max=100
 
         assert config.get_pacing_phase(3) == "RISING"
         assert config.get_pacing_phase(10) == "RISING"
+        assert config.get_pacing_phase(50) == "RISING"
+        assert config.get_pacing_phase(74) == "RISING"
+
+    def test_climax_phase_default_thresholds(self):
+        """Turns climax_start_turn to max_turns-1 should be CLIMAX phase (default: 75-99)."""
+        config = GameConfig(session_scope="ONE_SHOT")  # defaults: climax=75, max=100
+
+        assert config.get_pacing_phase(75) == "CLIMAX"
+        assert config.get_pacing_phase(85) == "CLIMAX"
+        assert config.get_pacing_phase(99) == "CLIMAX"
+
+    def test_end_phase_default_thresholds(self):
+        """Turn max_turns+ should be END phase (default: 100+)."""
+        config = GameConfig(session_scope="ONE_SHOT")  # defaults: climax=75, max=100
+
+        assert config.get_pacing_phase(100) == "END"
+        assert config.get_pacing_phase(150) == "END"
+
+    def test_custom_pacing_thresholds(self):
+        """Custom climax_start_turn and max_turns should be respected."""
+        config = GameConfig(
+            session_scope="ONE_SHOT",
+            climax_start_turn=15,
+            max_turns=20,
+        )
+
+        # INTRO: 0-2
+        assert config.get_pacing_phase(2) == "INTRO"
+        # RISING: 3-14
+        assert config.get_pacing_phase(3) == "RISING"
         assert config.get_pacing_phase(14) == "RISING"
-
-    def test_climax_phase_turns_15_19(self):
-        """Turns 15-19 should be CLIMAX phase."""
-        config = GameConfig(session_scope="ONE_SHOT")
-
+        # CLIMAX: 15-19
         assert config.get_pacing_phase(15) == "CLIMAX"
-        assert config.get_pacing_phase(17) == "CLIMAX"
         assert config.get_pacing_phase(19) == "CLIMAX"
-
-    def test_end_phase_turn_20_plus(self):
-        """Turn 20+ should be END phase."""
-        config = GameConfig(session_scope="ONE_SHOT")
-
+        # END: 20+
         assert config.get_pacing_phase(20) == "END"
         assert config.get_pacing_phase(25) == "END"
 

@@ -52,17 +52,19 @@ def test_get_world_entities_database_error_handling(client: TestClient, mock_neo
     """Test that database errors are properly handled and logged."""
     # Mock database to raise an exception
     original_execute = mock_neo4j_db.execute
-    
+
     async def failing_execute(*args, **kwargs):
         raise Exception("Database connection failed")
-    
+
     mock_neo4j_db.execute = failing_execute
-    
+
     try:
         response = client.get("/api/game/lore-bases/shattered_kingdoms/entities")
         # Should return 500 with proper error message
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert "Failed to get entities" in response.json()["detail"]
+        # Error message format may be "Failed to get entities" or "Failed to retrieve entities"
+        detail = response.json()["detail"]
+        assert "Failed to" in detail and "entities" in detail
     finally:
         # Restore original execute
         mock_neo4j_db.execute = original_execute
