@@ -17301,6 +17301,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
+        // Track selected entities for bulk operations
+        let selectedEntities = {};
+
         function renderWorldEntities(worldId) {
             const container = document.getElementById(`world-entities-${worldId}`);
             if (!container) return;
@@ -17308,58 +17311,325 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const sources = worldSourcesCache[worldId] || [];
             const entities = worldEntitiesCache[worldId] || [];
 
+            // Initialize selection tracking for this world
+            if (!selectedEntities[worldId]) {
+                selectedEntities[worldId] = new Set();
+            }
+
             if (entities.length === 0) {
                 container.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">No entities found.</div>`;
                 return;
             }
 
-            // Group entities by source
-            const bySource = {};
+            // Group entities by type for better organization
+            const byType = {};
             entities.forEach(e => {
-                const src = e.source_name || 'unknown';
-                if (!bySource[src]) bySource[src] = [];
-                bySource[src].push(e);
+                const type = e.type || 'Unknown';
+                if (!byType[type]) byType[type] = [];
+                byType[type].push(e);
             });
 
+            const selectedCount = selectedEntities[worldId]?.size || 0;
+            const selectedTypes = new Set();
+            selectedEntities[worldId]?.forEach(id => {
+                const entity = entities.find(e => e.id === id);
+                if (entity) selectedTypes.add(entity.type);
+            });
+            const canMerge = selectedCount >= 2 && selectedTypes.size === 1;
+
             let html = `
-                <div style="margin-bottom: 10px; color: var(--text-secondary); font-size: 0.9rem;">
-                    <strong>${entities.length}</strong> entities from <strong>${Object.keys(bySource).length}</strong> source${Object.keys(bySource).length !== 1 ? 's' : ''}
+                <!-- Entity Manager Header -->
+                <div style="background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid var(--accent-gold);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: var(--accent-gold);">📋 Entity Manager</h4>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                <strong>${entities.length}</strong> entities
+                                ${selectedCount > 0 ? `| <strong style="color: var(--accent-gold);">${selectedCount}</strong> selected` : ''}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                            <select id="entity-type-filter-${worldId}" onchange="filterEntitiesByType('${worldId}')" style="padding: 6px 10px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary); font-size: 0.85rem;">
+                                <option value="">All Types</option>
+                                ${Object.keys(byType).sort().map(type => `<option value="${type}">${type}</option>`).join('')}
+                            </select>
+                            ${selectedCount === 0 ? `
+                                <button class="btn btn-secondary" onclick="selectAllEntities('${worldId}')" style="padding: 6px 12px; font-size: 0.85rem;">
+                                    ✓ Select All
+                                </button>
+                            ` : `
+                                <button class="btn btn-secondary" onclick="deselectAllEntities('${worldId}')" style="padding: 6px 12px; font-size: 0.85rem;">
+                                    ✗ Deselect All
+                                </button>
+                                ${canMerge ? `
+                                    <button class="btn btn-primary" onclick="openMergeModal('${worldId}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-lavender); color: var(--bg-primary);">
+                                        🔗 Merge Selected (${selectedCount})
+                                    </button>
+                                ` : ''}
+                                <button class="btn" onclick="bulkDeleteEntities('${worldId}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-rose); color: white;">
+                                    🗑️ Delete Selected (${selectedCount})
+                                </button>
+                            `}
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Entity List by Type -->
+                <div id="entity-list-${worldId}">
             `;
 
-            Object.entries(bySource).forEach(([sourceName, sourceEntities]) => {
-                const sourceId = sourceName.replace(/[^a-zA-Z0-9]/g, '_');
+            Object.entries(byType).sort().forEach(([typeName, typeEntities]) => {
+                const typeId = typeName.replace(/[^a-zA-Z0-9]/g, '_');
                 html += `
-                    <div style="background: var(--bg-secondary); border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; cursor: pointer; background: var(--bg-card);" onclick="toggleSourceExpand('${worldId}', '${sourceId}')">
+                    <div class="entity-type-group" data-type="${typeName}" style="background: var(--bg-secondary); border-radius: 8px; margin-bottom: 10px; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; cursor: pointer; background: var(--bg-card);" onclick="toggleTypeExpand('${worldId}', '${typeId}')">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <span id="source-arrow-${worldId}-${sourceId}" style="transition: transform 0.2s;">▶</span>
-                                <span style="color: var(--text-primary); font-weight: 500;">📄 ${sourceName}</span>
-                                <span style="color: var(--text-muted); font-size: 0.85rem;">(${sourceEntities.length} entities)</span>
+                                <span id="type-arrow-${worldId}-${typeId}" style="transition: transform 0.2s;">▶</span>
+                                <span style="color: var(--text-primary); font-weight: 500;">${typeName}</span>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">(${typeEntities.length} entities)</span>
                             </div>
-                            <button class="btn" onclick="event.stopPropagation(); deleteSourceEntities('${worldId}', '${sourceName}')" style="padding: 4px 10px; font-size: 0.8rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
-                                Delete All
-                            </button>
                         </div>
-                        <div id="source-entities-${worldId}-${sourceId}" style="display: none; padding: 10px 15px; max-height: 400px; overflow-y: auto;">
-                            ${sourceEntities.map(e => `
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--bg-primary); border-radius: 6px; margin-bottom: 5px;">
-                                    <div style="flex: 1; min-width: 0;">
-                                        <span style="color: var(--text-primary); font-weight: 500;">${e.name}</span>
-                                        <span style="background: var(--accent-lavender); color: var(--bg-primary); padding: 1px 6px; border-radius: 3px; font-size: 0.7rem; margin-left: 8px;">${e.type}</span>
-                                        <div style="color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px;">${e.description || 'No description'}</div>
+                        <div id="type-entities-${worldId}-${typeId}" style="display: none; padding: 10px 15px; max-height: 500px; overflow-y: auto;">
+                            ${typeEntities.map(e => {
+                                const isSelected = selectedEntities[worldId]?.has(e.id);
+                                return `
+                                <div class="entity-card" data-entity-id="${e.id}" style="display: flex; gap: 10px; align-items: flex-start; padding: 10px; background: var(--bg-primary); border-radius: 6px; margin-bottom: 8px; border: 1px solid ${isSelected ? 'var(--accent-gold)' : 'transparent'}; transition: border-color 0.2s;">
+                                    <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleEntitySelection('${worldId}', '${e.id}')" style="margin-top: 4px; cursor: pointer; width: 18px; height: 18px;">
+                                    <div style="flex: 1; min-width: 0;" onclick="toggleEntityDetails('${worldId}', '${e.id}')" style="cursor: pointer;">
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                            <span style="color: var(--text-primary); font-weight: 500; font-size: 0.95rem;">${escapeHtml(e.name)}</span>
+                                            <button onclick="event.stopPropagation(); editEntityInline('${worldId}', '${e.id}')" style="background: none; border: none; cursor: pointer; padding: 2px 4px; color: var(--text-muted); font-size: 0.75rem; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Edit entity">✏️</button>
+                                        </div>
+                                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">
+                                            ${e.description || 'No description'}
+                                        </div>
+                                        <div style="display: flex; gap: 8px; font-size: 0.75rem; color: var(--text-muted);">
+                                            <span>Source: ${e.source_name || 'unknown'}</span>
+                                            ${e.confidence ? `<span>Confidence: ${e.confidence}</span>` : ''}
+                                        </div>
+                                        <div id="entity-details-${worldId}-${e.id}" style="display: none; margin-top: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 4px; font-size: 0.85rem;">
+                                            <div><strong>ID:</strong> ${e.id}</div>
+                                            <div><strong>Type:</strong> ${e.type}</div>
+                                            <div><strong>Created:</strong> ${e.created_at || 'unknown'}</div>
+                                        </div>
                                     </div>
-                                    <button onclick="deleteEntity('${worldId}', '${e.id}', '${escapeHtml(e.name)}')" style="padding: 4px 8px; font-size: 0.75rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose); border-radius: 4px; cursor: pointer; flex-shrink: 0; margin-left: 10px;">
+                                    <button onclick="deleteEntity('${worldId}', '${e.id}', '${escapeHtml(e.name).replace(/'/g, "\\'")}')" style="padding: 4px 8px; font-size: 0.75rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose); border-radius: 4px; cursor: pointer; flex-shrink: 0;">
                                         ✕
                                     </button>
                                 </div>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </div>
                     </div>
                 `;
             });
 
+            html += `</div>`;
             container.innerHTML = html;
+        }
+
+        function toggleTypeExpand(worldId, typeId) {
+            const container = document.getElementById(`type-entities-${worldId}-${typeId}`);
+            const arrow = document.getElementById(`type-arrow-${worldId}-${typeId}`);
+            if (!container) return;
+
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                if (arrow) arrow.style.transform = 'rotate(90deg)';
+            } else {
+                container.style.display = 'none';
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleEntitySelection(worldId, entityId) {
+            if (!selectedEntities[worldId]) {
+                selectedEntities[worldId] = new Set();
+            }
+
+            if (selectedEntities[worldId].has(entityId)) {
+                selectedEntities[worldId].delete(entityId);
+            } else {
+                selectedEntities[worldId].add(entityId);
+            }
+
+            // Re-render to update UI
+            renderWorldEntities(worldId);
+        }
+
+        function selectAllEntities(worldId) {
+            const entities = worldEntitiesCache[worldId] || [];
+            if (!selectedEntities[worldId]) {
+                selectedEntities[worldId] = new Set();
+            }
+
+            // Get current filter
+            const filterSelect = document.getElementById(`entity-type-filter-${worldId}`);
+            const filterType = filterSelect ? filterSelect.value : '';
+
+            // Select all visible entities (respecting filter)
+            entities.forEach(e => {
+                if (!filterType || e.type === filterType) {
+                    selectedEntities[worldId].add(e.id);
+                }
+            });
+
+            renderWorldEntities(worldId);
+        }
+
+        function deselectAllEntities(worldId) {
+            if (selectedEntities[worldId]) {
+                selectedEntities[worldId].clear();
+            }
+            renderWorldEntities(worldId);
+        }
+
+        function filterEntitiesByType(worldId) {
+            const filterSelect = document.getElementById(`entity-type-filter-${worldId}`);
+            const filterType = filterSelect ? filterSelect.value : '';
+            
+            const typeGroups = document.querySelectorAll(`#entity-list-${worldId} .entity-type-group`);
+            typeGroups.forEach(group => {
+                const groupType = group.getAttribute('data-type');
+                if (!filterType || groupType === filterType) {
+                    group.style.display = 'block';
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleEntityDetails(worldId, entityId) {
+            const detailsDiv = document.getElementById(`entity-details-${worldId}-${entityId}`);
+            if (detailsDiv) {
+                detailsDiv.style.display = detailsDiv.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        async function editEntityInline(worldId, entityId) {
+            const entities = worldEntitiesCache[worldId] || [];
+            const entity = entities.find(e => e.id === entityId);
+            if (!entity) return;
+
+            const newName = prompt('Edit entity name:', entity.name);
+            if (!newName || newName === entity.name) return;
+
+            showStatus('world-manager-status', `<span class="loading"></span> Updating "${entity.name}"...`, 'info');
+
+            try {
+                const response = await fetch(API_BASE + `/entities/${entityId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ canonical_name: newName })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Update failed');
+                }
+
+                showStatus('world-manager-status', `✓ Updated "${entity.name}" to "${newName}"`, 'success');
+
+                // Refresh entities
+                await loadWorldEntities(worldId);
+            } catch (err) {
+                showStatus('world-manager-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function bulkDeleteEntities(worldId) {
+            const selected = selectedEntities[worldId];
+            if (!selected || selected.size === 0) return;
+
+            const count = selected.size;
+            if (!confirm(`Delete ${count} selected entit${count === 1 ? 'y' : 'ies'}? This cannot be undone.`)) return;
+
+            showStatus('world-manager-status', `<span class="loading"></span> Deleting ${count} entities...`, 'info');
+
+            try {
+                const entityIds = Array.from(selected);
+                const response = await fetch(API_BASE + `/entities/bulk`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        entity_ids: entityIds,
+                        delete_orphaned_relationships: true
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Bulk delete failed');
+                }
+
+                const result = await response.json();
+                showStatus('world-manager-status', `✓ Deleted ${count} entities`, 'success');
+
+                // Clear selection and refresh
+                selectedEntities[worldId].clear();
+                await loadWorldEntities(worldId);
+                loadWorldManagerData();
+            } catch (err) {
+                showStatus('world-manager-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function openMergeModal(worldId) {
+            const selected = selectedEntities[worldId];
+            if (!selected || selected.size < 2) {
+                alert('Please select at least 2 entities of the same type to merge.');
+                return;
+            }
+
+            const entities = worldEntitiesCache[worldId] || [];
+            const selectedEntitiesData = Array.from(selected).map(id => entities.find(e => e.id === id)).filter(e => e);
+
+            // Verify all are same type
+            const types = new Set(selectedEntitiesData.map(e => e.type));
+            if (types.size !== 1) {
+                alert('All selected entities must be of the same type to merge.');
+                return;
+            }
+
+            const entityList = selectedEntitiesData.map(e => `• ${e.name} (${e.type})`).join('\n');
+            const primaryName = prompt(
+                `Merging ${selectedEntitiesData.length} entities:\n\n${entityList}\n\nEnter the canonical name for the merged entity:`,
+                selectedEntitiesData[0].name
+            );
+
+            if (!primaryName) return;
+
+            showStatus('world-manager-status', `<span class="loading"></span> Merging ${selectedEntitiesData.length} entities...`, 'info');
+
+            try {
+                // Use the game_routes merge endpoint with simplified parameters
+                const response = await fetch(API_BASE + `/game/entities/merge`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        primary_id: selectedEntitiesData[0].id,
+                        secondary_id: selectedEntitiesData[1].id,
+                        merge_descriptions: true,
+                        merge_aliases: true,
+                        merge_traits: true
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Merge failed');
+                }
+
+                const result = await response.json();
+                showStatus('world-manager-status', `✓ ${result.message}`, 'success');
+
+                // Clear selection and refresh
+                selectedEntities[worldId].clear();
+                await loadWorldEntities(worldId);
+                loadWorldManagerData();
+            } catch (err) {
+                showStatus('world-manager-status', `Error: ${err.message}`, 'error');
+            }
         }
 
         function toggleSourceExpand(worldId, sourceId) {

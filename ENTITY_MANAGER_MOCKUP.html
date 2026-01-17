@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entity Manager UI Mockup</title>
+    <style>
+        :root {
+            --bg-primary: #0f0f12;
+            --bg-secondary: #16161a;
+            --bg-card: #1a1a1f;
+            --text-primary: #e0e0e3;
+            --text-secondary: #b8a99a;
+            --text-muted: #72747e;
+            --accent-gold: #D4AF37;
+            --accent-lavender: #a08bc9;
+            --accent-sage: #8ba88b;
+            --accent-rose: #c98b8b;
+            --border-subtle: #2a2a2f;
+            --radius-soft: 12px;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--accent-gold);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .world-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-soft);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 3px solid var(--accent-lavender);
+        }
+
+        .world-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .world-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .entity-count-badge {
+            background: var(--accent-sage);
+            color: var(--bg-primary);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .entity-manager {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid var(--accent-gold);
+        }
+
+        .em-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .em-title {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .em-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .btn-danger {
+            background: var(--accent-rose);
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        select {
+            padding: 6px 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+
+        .type-group {
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .type-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            cursor: pointer;
+            background: var(--bg-primary);
+        }
+
+        .type-header:hover {
+            background: #1f1f24;
+        }
+
+        .type-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .type-count {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .entity-list {
+            padding: 10px 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .entity-card {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .entity-card.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .entity-card:hover {
+            background: #1a1a1f;
+        }
+
+        .entity-checkbox {
+            margin-top: 4px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .entity-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .entity-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .entity-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .entity-type-badge {
+            background: var(--accent-lavender);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 4px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .edit-btn:hover {
+            opacity: 1;
+        }
+
+        .entity-description {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .entity-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .delete-btn {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            background: transparent;
+            border: 1px solid var(--accent-rose);
+            color: var(--accent-rose);
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover {
+            background: rgba(201, 139, 139, 0.1);
+        }
+
+        .info-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .selected-count {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .arrow {
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .arrow.expanded {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Entity Manager - UI Mockup</h1>
+        
+        <div class="world-card">
+            <div class="world-header">
+                <div>
+                    <div class="world-name">Eldoria - The Shattered Realms</div>
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">
+                        A high fantasy world of political intrigue and ancient magic
+                    </div>
+                </div>
+                <div class="entity-count-badge">
+                    127 entities
+                </div>
+            </div>
+
+            <div class="entity-manager">
+                <div class="em-header">
+                    <div>
+                        <h4 class="em-title">📋 Entity Manager</h4>
+                        <div class="info-text">
+                            <strong>127</strong> entities | <span class="selected-count">3</span> selected
+                        </div>
+                    </div>
+                    <div class="em-controls">
+                        <select>
+                            <option value="">All Types</option>
+                            <option value="Character">Character</option>
+                            <option value="Location" selected>Location</option>
+                            <option value="Faction">Faction</option>
+                            <option value="Item">Item</option>
+                            <option value="Event">Event</option>
+                        </select>
+                        <button class="btn btn-secondary">✗ Deselect All</button>
+                        <button class="btn btn-secondary" style="background: var(--accent-lavender); color: var(--bg-primary);">
+                            🔗 Merge Selected (3)
+                        </button>
+                        <button class="btn btn-danger">
+                            🗑️ Delete Selected (3)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Character Type Group -->
+                <div class="type-group">
+                    <div class="type-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="arrow expanded">▶</span>
+                            <span class="type-name">Character</span>
+                            <span class="type-count">(45 entities)</span>
+                        </div>
+                    </div>
+                    <div class="entity-list">
+                        <!-- Entity 1 - Selected -->
+                        <div class="entity-card selected">
+                            <input type="checkbox" class="entity-checkbox" checked>
+                            <div class="entity-content">
+                                <div class="entity-name-row">
+                                    <span class="entity-name">Aldric the Wise</span>
+                                    <button class="edit-btn" title="Edit entity">✏️</button>
+                                </div>
+                                <div class="entity-description">
+                                    A veteran archmage with deep knowledge of the Old Ways. Serves as advisor to the High Council...
+                                </div>
+                                <div class="entity-meta">
+                                    <span>Source: eldoria_characters.txt</span>
+                                    <span>Confidence: high</span>
+                                </div>
+                            </div>
+                            <button class="delete-btn">✕</button>
+                        </div>
+
+                        <!-- Entity 2 - Selected -->
+                        <div class="entity-card selected">
+                            <input type="checkbox" class="entity-checkbox" checked>
+                            <div class="entity-content">
+                                <div class="entity-name-row">
+                                    <span class="entity-name">Aldric</span>
+                                    <button class="edit-btn" title="Edit entity">✏️</button>
+                                </div>
+                                <div class="entity-description">
+                                    The old wizard who guides the heroes on their quest...
+                                </div>
+                                <div class="entity-meta">
+                                    <span>Source: eldoria_story.txt</span>
+                                    <span>Confidence: medium</span>
+                                </div>
+                            </div>
+                            <button class="delete-btn">✕</button>
+                        </div>
+
+                        <!-- Entity 3 - Selected (Duplicate to merge) -->
+                        <div class="entity-card selected">
+                            <input type="checkbox" class="entity-checkbox" checked>
+                            <div class="entity-content">
+                                <div class="entity-name-row">
+                                    <span class="entity-name">Aldric the Archmage</span>
+                                    <button class="edit-btn" title="Edit entity">✏️</button>
+                                </div>
+                                <div class="entity-description">
+                                    Master of elemental magic and member of the High Council...
+                                </div>
+                                <div class="entity-meta">
+                                    <span>Source: eldoria_lore.txt</span>
+                                    <span>Confidence: high</span>
+                                </div>
+                            </div>
+                            <button class="delete-btn">✕</button>
+                        </div>
+
+                        <!-- Entity 4 - Not selected -->
+                        <div class="entity-card">
+                            <input type="checkbox" class="entity-checkbox">
+                            <div class="entity-content">
+                                <div class="entity-name-row">
+                                    <span class="entity-name">Lyra Moonwhisper</span>
+                                    <button class="edit-btn" title="Edit entity">✏️</button>
+                                </div>
+                                <div class="entity-description">
+                                    Elven ranger with a mysterious past. Known for her exceptional tracking skills...
+                                </div>
+                                <div class="entity-meta">
+                                    <span>Source: eldoria_characters.txt</span>
+                                    <span>Confidence: high</span>
+                                </div>
+                            </div>
+                            <button class="delete-btn">✕</button>
+                        </div>
+
+                        <!-- Entity 5 - Not selected -->
+                        <div class="entity-card">
+                            <input type="checkbox" class="entity-checkbox">
+                            <div class="entity-content">
+                                <div class="entity-name-row">
+                                    <span class="entity-name">Lord Vex</span>
+                                    <button class="edit-btn" title="Edit entity">✏️</button>
+                                </div>
+                                <div class="entity-description">
+                                    Ruthless warlord seeking to unite the fractured kingdoms under his iron rule...
+                                </div>
+                                <div class="entity-meta">
+                                    <span>Source: eldoria_villains.txt</span>
+                                    <span>Confidence: high</span>
+                                </div>
+                            </div>
+                            <button class="delete-btn">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Type Group (Collapsed) -->
+                <div class="type-group">
+                    <div class="type-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="arrow">▶</span>
+                            <span class="type-name">Location</span>
+                            <span class="type-count">(38 entities)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faction Type Group (Collapsed) -->
+                <div class="type-group">
+                    <div class="type-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="arrow">▶</span>
+                            <span class="type-name">Faction</span>
+                            <span class="type-count">(22 entities)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item Type Group (Collapsed) -->
+                <div class="type-group">
+                    <div class="type-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="arrow">▶</span>
+                            <span class="type-name">Item</span>
+                            <span class="type-count">(12 entities)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Type Group (Collapsed) -->
+                <div class="type-group">
+                    <div class="type-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="arrow">▶</span>
+                            <span class="type-name">Event</span>
+                            <span class="type-count">(10 entities)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: var(--bg-card); border-radius: 8px; border-left: 3px solid var(--accent-gold);">
+            <h3 style="color: var(--accent-gold); margin-top: 0;">Usage Example: Merging Duplicate Entities</h3>
+            <p style="color: var(--text-secondary);">
+                In this mockup, we have 3 entities selected that appear to be the same character (Aldric) appearing in different sources:
+            </p>
+            <ul style="color: var(--text-secondary); line-height: 1.8;">
+                <li><strong>"Aldric the Wise"</strong> from eldoria_characters.txt</li>
+                <li><strong>"Aldric"</strong> from eldoria_story.txt</li>
+                <li><strong>"Aldric the Archmage"</strong> from eldoria_lore.txt</li>
+            </ul>
+            <p style="color: var(--text-secondary);">
+                The admin can:
+            </p>
+            <ol style="color: var(--text-secondary); line-height: 1.8;">
+                <li>Select all three entities using the checkboxes</li>
+                <li>Click the <strong>"Merge Selected (3)"</strong> button</li>
+                <li>Choose the canonical name (e.g., "Aldric the Wise")</li>
+                <li>The system will merge all three into one entity, combining their descriptions, adding variant names as aliases, and consolidating all relationships</li>
+            </ol>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 20px;">
+                Note: The merge function currently merges 2 entities at a time, so for 3 entities, it would need to be called twice. Future enhancement could support multi-entity merge in one operation.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
