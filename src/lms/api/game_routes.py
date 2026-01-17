@@ -3894,12 +3894,12 @@ async def delete_lore_base(
     Args:
         lore_id: ID of the lore base to delete
         delete_entities: If True (default), also deletes all entities with this world_id
+
+    Note: Will proceed with deletion even if world not in LORE_BASES (handles
+    dynamically created worlds or server restarts).
     """
-    if lore_id not in LORE_BASES:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Lore base '{lore_id}' not found"
-        )
+    in_memory = lore_id in LORE_BASES
+    logger.info(f"Delete request for world '{lore_id}' (in_memory={in_memory}, delete_entities={delete_entities})")
 
     entities_deleted = 0
     relationships_deleted = 0
@@ -3960,14 +3960,18 @@ async def delete_lore_base(
     except Exception as e:
         logger.warning(f"Failed to delete seed file: {e}")
 
-    # Remove from in-memory dict
-    del LORE_BASES[lore_id]
+    # Remove from in-memory dict (if present)
+    LORE_BASES.pop(lore_id, None)
 
     logger.info(f"Deleted lore base: {lore_id}")
 
+    message = f"Successfully deleted world '{lore_id}'"
+    if entities_deleted > 0:
+        message += f" and {entities_deleted} entities"
+
     return LoreBaseDeleteResponse(
         lore_id=lore_id,
-        message=f"Successfully deleted world '{lore_id}'",
+        message=message,
         entities_deleted=entities_deleted,
         relationships_deleted=relationships_deleted,
     )
