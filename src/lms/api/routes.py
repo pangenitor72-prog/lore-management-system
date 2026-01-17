@@ -473,8 +473,19 @@ def get_app_version():
 
 @router.get("/health")
 async def health_check(request: Request):
+    # Read version from file
+    version_file = Path("data/deployed_version.txt")
+    version = "unknown"
+    if version_file.exists():
+        try:
+            version = version_file.read_text().strip()
+        except Exception:
+            version = "error_reading_version"
+    
     out = {
         "status": "healthy",
+        "version": version,
+        "deployed_at": version,  # For backwards compatibility
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "checks": {},
         "features": {}
