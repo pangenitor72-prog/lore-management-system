@@ -9620,7 +9620,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Skip invite screen, show main landing
                 setTimeout(() => {
                     showScreen('start');
-                    showFeedbackButton();  // Show feedback for returning testers
+                    if (typeof showFeedbackButton === 'function') {
+                        showFeedbackButton();  // Show feedback for returning testers
+                    }
                 }, 100);
             } else {
                 // Show invite code screen
@@ -9758,7 +9760,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     statusEl.innerHTML = '<div class="status success">' + data.message + '</div>';
 
                     // Show feedback button for playtesters
-                    showFeedbackButton();
+                    if (typeof showFeedbackButton === 'function') {
+                        showFeedbackButton();
+                    }
 
                     // Check if this is their first time (no saved sessions)
                     const hasPlayedBefore = localStorage.getItem('airpg_has_played');
@@ -13670,11 +13674,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             newScreen.classList.add('active');
 
             // Log screen transition for session analytics
-            logSessionEvent('screen_view', {
-                screen: screenId,
-                previous_screen: prevScreenId,
-                time_on_previous: timeOnPrevScreen
-            });
+            if (typeof logSessionEvent === 'function') {
+                logSessionEvent('screen_view', {
+                    screen: screenId,
+                    previous_screen: prevScreenId,
+                    time_on_previous: timeOnPrevScreen
+                });
+            }
             lastScreenTransition = Date.now();
 
             // Screen-specific hooks (consolidated)
