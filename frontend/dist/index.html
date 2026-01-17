@@ -7606,21 +7606,6 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
             </div>
 
-            <!-- Entity Management -->
-            <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
-                <h3 style="color: var(--accent-gold); margin-bottom: 5px;">🔧 Entity Management</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
-                    Clean up and organize entities. Find duplicates, merge similar entities, and bulk delete.
-                </p>
-                <button 
-                    class="btn btn-primary" 
-                    onclick="showScreen('entity-management'); loadEntitiesForManagement();"
-                    style="padding: 12px 24px; margin-bottom: 20px; background: var(--accent-gold); color: var(--bg-primary);"
-                >
-                    📋 Open Entity Manager
-                </button>
-            </div>
-
             <!-- World Manager Modals -->
             <div id="wm-delete-modal" class="modal" style="display: none;">
                 <div class="modal-content" style="max-width: 500px;">
@@ -7881,151 +7866,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             <div class="btn-group" style="margin-top: 30px;">
                 <button class="btn btn-secondary" onclick="showScreen('start')">Back to Home</button>
-            </div>
-        </div>
-
-        <!-- Entity Management Screen -->
-        <div id="entity-management" class="screen">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h2 style="color: var(--accent-gold); margin-bottom: 0; font-weight: normal;">🔧 Entity Management</h2>
-                <button class="btn btn-secondary" onclick="showScreen('admin')" style="padding: 6px 15px;">← Back to Admin Panel</button>
-            </div>
-            <p style="color: var(--text-secondary); margin-bottom: 20px;">
-                Clean up and organize entities. Find duplicates, merge similar entities, and bulk delete unwanted ones.
-                <span style="color: var(--text-muted); font-size: 0.9rem;">Entities sorted by confidence (lowest first).</span>
-            </p>
-
-            <!-- Status Messages -->
-            <div id="entity-mgmt-status"></div>
-
-            <!-- Filters and Actions -->
-            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-soft); padding: 20px; margin-bottom: 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                    <!-- Search -->
-                    <div>
-                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Search</label>
-                        <input id="entity-search" type="text" placeholder="Search by name or alias..." onkeyup="filterEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem;">
-                    </div>
-
-                    <!-- Entity Type Filter -->
-                    <div>
-                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Entity Type</label>
-                        <select id="entity-mgmt-type-filter" onchange="filterEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; cursor: pointer;">
-                            <option value="">All Types</option>
-                            <option value="Character">Character</option>
-                            <option value="Location">Location</option>
-                            <option value="Faction">Faction</option>
-                            <option value="Item">Item</option>
-                            <option value="Event">Event</option>
-                            <option value="Concept">Concept</option>
-                        </select>
-                    </div>
-
-                    <!-- Confidence Filter -->
-                    <div>
-                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Confidence Level</label>
-                        <select id="entity-mgmt-confidence-filter" onchange="filterEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; cursor: pointer;">
-                            <option value="">All Levels</option>
-                            <option value="UNCERTAIN">Uncertain</option>
-                            <option value="SPECULATIVE">Speculative</option>
-                            <option value="PROBABLE">Probable</option>
-                            <option value="AI_GENERATED">AI Generated</option>
-                            <option value="CONFIRMED">Confirmed</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-secondary" onclick="loadEntitiesForManagement()" style="padding: 8px 15px;">🔄 Refresh</button>
-                    <button class="btn btn-secondary" onclick="toggleSelectAll()" style="padding: 8px 15px;" id="select-all-btn">✓ Select All</button>
-                    <button class="btn btn-secondary" onclick="findDuplicates()" style="padding: 8px 15px;">🔍 Find Duplicates</button>
-                    <button class="btn btn-danger" onclick="bulkDeleteSelected()" style="padding: 8px 15px; background: #dc3545; color: white;" id="bulk-delete-btn" disabled>🗑️ Delete Selected (<span id="selected-count">0</span>)</button>
-                </div>
-            </div>
-
-            <!-- Duplicate Groups (initially hidden) -->
-            <div id="duplicate-groups-container" style="display: none; margin-bottom: 20px;">
-                <div style="background: var(--bg-card); border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="color: var(--accent-gold); margin: 0;">Potential Duplicates</h3>
-                        <button class="btn btn-secondary" onclick="hideDuplicates()" style="padding: 6px 12px;">Close</button>
-                    </div>
-                    <div id="duplicate-groups"></div>
-                </div>
-            </div>
-
-            <!-- Entity List -->
-            <div id="entity-list-container">
-                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                    <span class="loading"></span> Loading entities...
-                </div>
-            </div>
-        </div>
-
-        <!-- World-Specific Entity Manager (Full Screen) -->
-        <div id="world-entity-manager" class="screen">
-            <div style="max-width: 1400px; margin: 0 auto;">
-                <!-- Header -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <div>
-                        <h2 style="color: var(--accent-gold); margin: 0 0 5px 0; font-weight: normal;">🔧 Entity Manager</h2>
-                        <div id="world-em-world-name" style="color: var(--text-secondary); font-size: 0.95rem;"></div>
-                    </div>
-                    <button class="btn btn-secondary" onclick="closeWorldEntityManager()" style="padding: 8px 20px;">← Back to World Manager</button>
-                </div>
-
-                <!-- Status Messages -->
-                <div id="world-em-status"></div>
-
-                <!-- Toolbar -->
-                <div style="background: var(--bg-card); border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 20px; margin-bottom: 20px;">
-                    <!-- Search and Filters Row -->
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                        <div>
-                            <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Search by name</label>
-                            <input id="world-em-search" type="text" placeholder="Search entities..." onkeyup="filterWorldEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem;">
-                        </div>
-                        <div>
-                            <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Filter by type</label>
-                            <select id="world-em-type-filter" onchange="filterWorldEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; cursor: pointer;">
-                                <option value="">All Types</option>
-                                <option value="Character">Character</option>
-                                <option value="Location">Location</option>
-                                <option value="Faction">Faction</option>
-                                <option value="Item">Item</option>
-                                <option value="Event">Event</option>
-                                <option value="Concept">Concept</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Filter by quality</label>
-                            <select id="world-em-quality-filter" onchange="filterWorldEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; cursor: pointer;">
-                                <option value="">All Entities</option>
-                                <option value="complete">✅ Complete</option>
-                                <option value="missing_ocean">❌ Missing OCEAN</option>
-                                <option value="missing_description">❌ Missing Description</option>
-                                <option value="duplicate">⚠️ Possible Duplicate</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons Row -->
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                        <button class="btn btn-secondary" onclick="loadWorldEntityManager()" style="padding: 8px 15px;">🔄 Refresh</button>
-                        <button class="btn btn-secondary" onclick="toggleWorldEmSelectAll()" style="padding: 8px 15px;" id="world-em-select-all-btn">✓ Select All</button>
-                        <div style="flex: 1;"></div>
-                        <span id="world-em-selected-info" style="color: var(--text-secondary); font-size: 0.9rem;"></span>
-                        <button class="btn btn-primary" onclick="mergeWorldEmSelected()" style="padding: 8px 15px; background: var(--accent-lavender); color: var(--bg-primary);" id="world-em-merge-btn" disabled>🔗 Merge Selected</button>
-                        <button class="btn btn-danger" onclick="bulkDeleteWorldEmSelected()" style="padding: 8px 15px; background: var(--accent-rose); color: white;" id="world-em-delete-btn" disabled>🗑️ Delete Selected</button>
-                    </div>
-                </div>
-
-                <!-- Entity List -->
-                <div id="world-em-entity-list" style="min-height: 300px;">
-                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                        <span class="loading"></span> Loading entities...
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -17354,14 +17194,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 <button class="btn btn-secondary" onclick="openAddLoreModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem;">
                                     📁 Add Lore Files
                                 </button>
-                                <button class="btn btn-secondary" onclick="openImportEntitiesModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-gold); color: var(--bg-primary);">
-                                    📦 Import Entities
-                                </button>
-                                ${world.entity_count > 0 ? `
-                                    <button class="btn btn-secondary" onclick="openWorldEntityManager('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-sage); color: var(--bg-primary);">
-                                        🔧 Manage Entities (${world.entity_count})
-                                    </button>
-                                ` : ''}
                                 <button class="btn btn-secondary" onclick="toggleWorldLoreEditor('${world.id}')" style="padding: 6px 12px; font-size: 0.85rem;">
                                     ✏️ Edit Raw Lore
                                 </button>
