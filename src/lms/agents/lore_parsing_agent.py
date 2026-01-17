@@ -807,22 +807,29 @@ TEXT TO ANALYZE:
 
         # Try direct parse first
         try:
-            return json.loads(cleaned)
+            data = json.loads(cleaned)
+            logger.debug(f"[JSON PARSE] Successfully parsed JSON directly ({len(cleaned)} chars)")
+            return data
         except json.JSONDecodeError as e:
-            logger.warning(f"Direct JSON parse failed: {e}")
+            logger.warning(f"[JSON PARSE] Direct JSON parse failed at position {e.pos}: {e.msg}")
+            logger.debug(f"[JSON PARSE] Failed text sample (first 200 chars): {cleaned[:200]}")
 
         # Try to extract JSON object from response
         match = re.search(r"\{[\s\S]*\}", cleaned)
         if match:
             json_str = match.group()
+            logger.debug(f"[JSON PARSE] Extracted JSON object from text ({len(json_str)} chars)")
             try:
-                return json.loads(json_str)
+                data = json.loads(json_str)
+                logger.debug(f"[JSON PARSE] Successfully parsed extracted JSON")
+                return data
             except json.JSONDecodeError as e:
-                logger.warning(f"Extracted JSON parse failed: {e}")
+                logger.warning(f"[JSON PARSE] Extracted JSON parse failed at position {e.pos}: {e.msg}")
 
                 # Try to repair truncated JSON (common with large outputs)
                 # Find where entities array ends and try to salvage
                 try:
+                    logger.debug(f"[JSON PARSE] Attempting to salvage entities from malformed JSON")
                     # Look for the last complete entity
                     entities_match = re.search(r'"entities"\s*:\s*\[([\s\S]*)', json_str)
                     if entities_match:
@@ -832,25 +839,29 @@ TEXT TO ANALYZE:
                         entities = re.findall(entity_pattern, entities_content)
 
                         if entities:
-                            logger.info(f"Salvaged {len(entities)} entities from truncated response")
+                            logger.info(f"[JSON PARSE] Salvaged {len(entities)} entities from truncated response")
                             salvaged_entities = []
                             for ent_str in entities:
                                 try:
                                     ent = json.loads(ent_str)
                                     if "name" in ent:  # Valid entity
                                         salvaged_entities.append(ent)
-                                except:
+                                except Exception as entity_err:
+                                    logger.debug(f"[JSON PARSE] Failed to parse salvaged entity: {entity_err}")
                                     continue
 
                             if salvaged_entities:
+                                logger.info(f"[JSON PARSE] Successfully salvaged {len(salvaged_entities)} valid entities")
                                 return {"entities": salvaged_entities, "relationships": []}
 
                 except Exception as repair_err:
-                    logger.warning(f"JSON repair failed: {repair_err}")
+                    logger.warning(f"[JSON PARSE] JSON repair attempt failed: {repair_err}")
 
         # Log a sample of what we got for debugging
-        logger.error(f"Failed to parse extraction response. First 500 chars: {cleaned[:500]}")
-        logger.error(f"Last 500 chars: {cleaned[-500:]}")
+        logger.error(f"[JSON PARSE] FAILED to parse extraction response")
+        logger.error(f"[JSON PARSE] First 500 chars: {cleaned[:500]}")
+        logger.error(f"[JSON PARSE] Last 500 chars: {cleaned[-500:]}")
+        logger.error(f"[JSON PARSE] Total length: {len(cleaned)} chars")
         return {"entities": [], "relationships": []}
 
     async def parse_lore(self, text: str) -> ParsedLoreResult:
@@ -1065,17 +1076,29 @@ TEXT TO ANALYZE:
         Returns:
             ParsedLoreResult with storage counts
         """
-        result = await self.parse_lore(text)
+        logger.info(f"[LORE INGESTION] Starting parse_and_store: source='{source_name}', world_id='{world_id}', curated='{curated_world_id}'")
+        logger.info(f"[LORE INGESTION] Text length: {len(text)} chars, {len(text.split())} words")
+        
+        try:
+            result = await self.parse_lore(text)
+            logger.info(f"[LORE INGESTION] Parse completed: {len(result.entities)} entities extracted")
+        except Exception as e:
+            logger.error(f"[LORE INGESTION] Parse failed: {type(e).__name__}: {str(e)}", exc_info=True)
+            raise
 
         if not result.entities:
+            logger.info("[LORE INGESTION] No entities extracted, returning empty result")
             return result
 
         timestamp = datetime.now(timezone.utc).isoformat()
         entities_stored = 0
         characters_with_ocean = 0
 
+        logger.info(f"[LORE INGESTION] Beginning storage phase: {len(result.entities)} entities, {len(result.relationships)} relationships")
+
         # Ensure LoreBase node exists if we have a curated world
         if curated_world_id:
+            logger.info(f"[LORE INGESTION] Creating/updating LoreBase node for '{curated_world_id}'")
             try:
                 await db.execute("""
                     MERGE (lb:LoreBase {lore_id: $lore_id})
@@ -1099,15 +1122,46 @@ TEXT TO ANALYZE:
                 world_id = None
 
         # Store entities
-        for entity in result.entities:
+        logger.info(f"[LORE INGESTION] Storing {len(result.entities)} entities...")
+        for idx, entity in enumerate(result.entities, 1):
+            logger.debug(f"[LORE INGESTION] Processing entity {idx}/{len(result.entities)}: '{entity.name}' ({entity.entity_type})")
+            
+            # Validate entity before storage
+            try:
+                # Check required fields
+                if not entity.name or not entity.name.strip():
+                    logger.error(f"[LORE INGESTION] Entity {idx} has empty name, skipping")
+                    continue
+                
+                if not entity.entity_type or not entity.entity_type.strip():
+                    logger.error(f"[LORE INGESTION] Entity '{entity.name}' has empty entity_type, skipping")
+                    continue
+                
+                if not entity.description or not entity.description.strip():
+                    logger.warning(f"[LORE INGESTION] Entity '{entity.name}' has empty description (will store anyway)")
+                
+                # Validate entity type is in valid list
+                valid_types = ["Character", "Location", "Faction", "Item", "Event", "Concept"]
+                if entity.entity_type not in valid_types:
+                    logger.warning(f"[LORE INGESTION] Entity '{entity.name}' has invalid type '{entity.entity_type}', will be treated as Entity")
+                
+            except Exception as ve:
+                logger.error(f"[LORE INGESTION] Validation failed for entity {idx}: {ve}", exc_info=True)
+                continue
+            
             # Generate human-readable ID: {world}-{type}-{name}-{short_random}
             # e.g., "eldoria-chr-captain-varn-7f3a"
             id_world = curated_world_id or world_id
-            canon_id = _generate_human_readable_id(
-                name=entity.name,
-                entity_type=entity.entity_type,
-                world_id=id_world
-            )
+            try:
+                canon_id = _generate_human_readable_id(
+                    name=entity.name,
+                    entity_type=entity.entity_type,
+                    world_id=id_world
+                )
+                logger.debug(f"[LORE INGESTION] Generated canon_id: {canon_id}")
+            except Exception as id_err:
+                logger.error(f"[LORE INGESTION] Failed to generate canon_id for '{entity.name}': {id_err}", exc_info=True)
+                continue
 
             props = {
                 "canon_id": canon_id,
@@ -1132,41 +1186,68 @@ TEXT TO ANALYZE:
             # Uses traits if available, otherwise infers from name/description/role
             # Never defaults to bland 0.5 across the board - always narratively interesting
             if entity.entity_type == "Character":
-                ocean = self._generate_ocean_for_character(
-                    name=entity.name,
-                    description=entity.description or "",
-                    traits=entity.traits,
-                    role=""  # Could extract role from name/description in future
-                )
-                props["openness"] = ocean.openness
-                props["conscientiousness"] = ocean.conscientiousness
-                props["extraversion"] = ocean.extraversion
-                props["agreeableness"] = ocean.agreeableness
-                props["neuroticism"] = ocean.neuroticism
-                if entity.traits:
-                    props["personality_traits"] = entity.traits
-                # Store goals, secrets, fears for richer character data
-                if entity.goals:
-                    props["goals"] = entity.goals
-                if entity.secrets:
-                    props["secrets"] = entity.secrets
-                if entity.fears:
-                    props["fears"] = entity.fears
-                characters_with_ocean += 1
+                try:
+                    logger.debug(f"[LORE INGESTION] Generating OCEAN profile for character '{entity.name}'")
+                    ocean = self._generate_ocean_for_character(
+                        name=entity.name,
+                        description=entity.description or "",
+                        traits=entity.traits,
+                        role=""  # Could extract role from name/description in future
+                    )
+                    
+                    # Validate OCEAN scores
+                    for key in ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]:
+                        value = getattr(ocean, key, 0.5)
+                        if not isinstance(value, (int, float)):
+                            logger.error(f"[LORE INGESTION] OCEAN {key} for '{entity.name}' is not numeric: {type(value)}")
+                            value = 0.5
+                        if value < 0.0 or value > 1.0:
+                            logger.warning(f"[LORE INGESTION] OCEAN {key} for '{entity.name}' out of range ({value}), clamping to [0.0, 1.0]")
+                            value = max(0.0, min(1.0, value))
+                        props[key] = value
+                    
+                    if entity.traits:
+                        props["personality_traits"] = entity.traits
+                    # Store goals, secrets, fears for richer character data
+                    if entity.goals:
+                        props["goals"] = entity.goals
+                    if entity.secrets:
+                        props["secrets"] = entity.secrets
+                    if entity.fears:
+                        props["fears"] = entity.fears
+                    characters_with_ocean += 1
+                    logger.debug(f"[LORE INGESTION] OCEAN profile generated successfully for '{entity.name}'")
+                except Exception as ocean_err:
+                    logger.error(f"[LORE INGESTION] OCEAN generation failed for '{entity.name}': {ocean_err}", exc_info=True)
+                    # Continue without OCEAN profile rather than failing the entire entity
 
             try:
                 # Use parameterized label (safe because we control entity_type values)
                 label = entity.entity_type.replace(" ", "_")
                 if label not in ["Character", "Location", "Faction", "Item", "Event", "Concept"]:
+                    logger.warning(f"[LORE INGESTION] Invalid label '{label}' for '{entity.name}', using 'Entity'")
                     label = "Entity"
 
                 # MERGE on canon_id to ensure world isolation
                 # canon_id includes world ID, so "Captain Varn" in World A is distinct from World B
-                await db.execute(f"""
+                query = f"""
                     MERGE (e:`{label}` {{canon_id: $canon_id}})
                     SET e += $props
                     SET e:Entity
-                """, {"canon_id": canon_id, "props": props})
+                """
+                logger.debug(f"[LORE INGESTION] Executing Neo4j MERGE for '{entity.name}'")
+                
+                try:
+                    await db.execute(query, {"canon_id": canon_id, "props": props})
+                    logger.debug(f"[LORE INGESTION] Successfully stored '{entity.name}' in Neo4j")
+                except Exception as db_err:
+                    logger.error(
+                        f"[LORE INGESTION] Neo4j MERGE failed for '{entity.name}': {type(db_err).__name__}: {str(db_err)}\n"
+                        f"Query: {query[:200]}...\n"
+                        f"Params: canon_id={canon_id}, props keys={list(props.keys())}",
+                        exc_info=True
+                    )
+                    raise  # Re-raise to be caught by outer try-catch
 
                 # Create EXISTS_IN relationship to LoreBase for graph connectivity
                 if curated_world_id:
@@ -1176,39 +1257,60 @@ TEXT TO ANALYZE:
                             MATCH (lb:LoreBase {lore_id: $world_id})
                             MERGE (e)-[:EXISTS_IN]->(lb)
                         """, {"canon_id": canon_id, "world_id": curated_world_id})
-                    except Exception as e:
-                        logger.warning(f"Failed to create EXISTS_IN relationship for {entity.name}: {e}")
+                        logger.debug(f"[LORE INGESTION] Created EXISTS_IN relationship for '{entity.name}'")
+                    except Exception as rel_err:
+                        logger.warning(f"[LORE INGESTION] Failed to create EXISTS_IN relationship for '{entity.name}': {rel_err}")
 
                 entities_stored += 1
 
             except Exception as e:
-                logger.error(f"Failed to store entity {entity.name}: {e}")
+                logger.error(f"[LORE INGESTION] Failed to store entity '{entity.name}': {type(e).__name__}: {str(e)}", exc_info=True)
 
         # Store relationships
         relationships_stored = 0
-        for rel in result.relationships:
+        logger.info(f"[LORE INGESTION] Storing {len(result.relationships)} relationships...")
+        for idx, rel in enumerate(result.relationships, 1):
             try:
+                logger.debug(f"[LORE INGESTION] Processing relationship {idx}/{len(result.relationships)}: '{rel.source}' -> '{rel.target}' ({rel.relationship_type})")
+                
+                # Validate relationship
+                if not rel.source or not rel.target:
+                    logger.warning(f"[LORE INGESTION] Relationship {idx} has empty source or target, skipping")
+                    continue
+                
                 rel_type = rel.relationship_type.upper().replace(" ", "_")
                 if not re.match(r"^[A-Z_]+$", rel_type):
+                    logger.warning(f"[LORE INGESTION] Invalid relationship type '{rel.relationship_type}', using RELATED_TO")
                     rel_type = "RELATED_TO"
 
-                await db.execute(f"""
+                query = f"""
                     MATCH (a {{name: $source}})
                     MATCH (b {{name: $target}})
                     MERGE (a)-[r:`{rel_type}`]->(b)
                     SET r.description = $description
                     SET r.source = $source_name
-                """, {
+                """
+                params = {
                     "source": rel.source,
                     "target": rel.target,
                     "description": rel.description,
                     "source_name": source_name,
-                })
-
-                relationships_stored += 1
+                }
+                
+                try:
+                    await db.execute(query, params)
+                    logger.debug(f"[LORE INGESTION] Stored relationship '{rel.source}' -> '{rel.target}'")
+                    relationships_stored += 1
+                except Exception as db_err:
+                    logger.error(
+                        f"[LORE INGESTION] Neo4j relationship storage failed: {type(db_err).__name__}: {str(db_err)}\n"
+                        f"Query: {query[:200]}...\n"
+                        f"Params: {params}",
+                        exc_info=True
+                    )
 
             except Exception as e:
-                logger.error(f"Failed to store relationship {rel.source} -> {rel.target}: {e}")
+                logger.error(f"[LORE INGESTION] Failed to store relationship '{rel.source}' -> '{rel.target}': {type(e).__name__}: {str(e)}", exc_info=True)
 
         result.entities_stored = entities_stored
         result.relationships_stored = relationships_stored
