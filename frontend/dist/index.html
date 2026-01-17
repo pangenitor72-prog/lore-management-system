@@ -18889,10 +18889,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let entityManagerWorldId = null;
         let entityManagerData = [];
         let entityManagerFilter = 'all';
+        let entityManagerSelected = new Set();
 
         async function openEntityManager(worldId, worldName) {
             entityManagerWorldId = worldId;
             entityManagerFilter = 'all';
+            entityManagerSelected.clear();
 
             let modal = document.getElementById('entity-manager-modal');
             if (!modal) {
@@ -18908,7 +18910,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                             </div>
                             <button class="btn btn-ghost" onclick="closeEntityManager()">×</button>
                         </div>
-                        <div style="padding: 0 1rem; display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
+                        <div style="padding: 0 1rem; display: flex; gap: 8px; margin-bottom: 0.5rem; flex-wrap: wrap; align-items: center;">
                             <input type="text" id="entity-manager-search" placeholder="Search entities..."
                                    style="flex: 1; min-width: 200px; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);"
                                    oninput="filterEntityManager()">
@@ -18924,7 +18926,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                             </select>
                             <button class="btn btn-secondary" onclick="loadEntityManagerData()" style="padding: 8px 12px;">🔄 Refresh</button>
                         </div>
-                        <div class="modal-body" id="entity-manager-content" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem;">
+                        <!-- Bulk Actions Bar -->
+                        <div id="entity-manager-bulk-bar" style="padding: 0 1rem; margin-bottom: 0.5rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button class="btn btn-ghost" onclick="emSelectAll()" style="padding: 6px 10px; font-size: 0.8rem;">☑️ Select All</button>
+                            <button class="btn btn-ghost" onclick="emSelectNone()" style="padding: 6px 10px; font-size: 0.8rem;">☐ Clear</button>
+                            <span id="em-selection-count" style="color: var(--text-muted); font-size: 0.85rem; margin-left: 8px;">0 selected</span>
+                            <div style="flex: 1;"></div>
+                            <button class="btn btn-secondary" onclick="emMergeSelected()" id="em-merge-btn" style="padding: 6px 12px; font-size: 0.8rem; display: none;">🔗 Merge Selected</button>
+                            <button class="btn btn-secondary" onclick="emDeleteSelected()" id="em-delete-btn" style="padding: 6px 12px; font-size: 0.8rem; color: var(--accent-rose); display: none;">🗑️ Delete Selected</button>
+                        </div>
+                        <div class="modal-body" id="entity-manager-content" style="max-height: 55vh; overflow-y: auto; padding: 0 1rem;">
                             <div style="text-align: center; padding: 30px;"><span class="loading"></span> Loading entities...</div>
                         </div>
                         <div class="modal-footer">
@@ -19006,25 +19017,31 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const color = typeColors[entity.entity_type] || '#6b7280';
                 const hasOcean = entity.openness !== undefined;
                 const hasMotivations = (entity.goals?.length > 0) || (entity.secrets?.length > 0) || (entity.fears?.length > 0);
+                const isSelected = entityManagerSelected.has(entity.canon_id);
 
                 return `
-                    <div class="entity-manager-item" style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid ${color};">
+                    <div class="entity-manager-item" style="background: ${isSelected ? 'var(--bg-hover)' : 'var(--bg-secondary)'}; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid ${color}; ${isSelected ? 'box-shadow: 0 0 0 2px var(--accent-gold);' : ''}">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div style="flex: 1;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <strong style="color: var(--text-primary);">${escapeHtml(entity.name)}</strong>
-                                    <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">${entity.entity_type}</span>
-                                    ${hasOcean ? '<span style="font-size: 0.7rem; color: var(--accent-sage);" title="Has OCEAN personality">🧠</span>' : ''}
-                                    ${hasMotivations ? '<span style="font-size: 0.7rem; color: var(--accent-gold);" title="Has goals/secrets/fears">💡</span>' : ''}
-                                </div>
-                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0; max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    ${escapeHtml(entity.description || 'No description')}
-                                </p>
-                                ${entity.aliases && entity.aliases.length > 0 ? `
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-                                        Also known as: ${entity.aliases.map(a => escapeHtml(a)).join(', ')}
+                            <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1;">
+                                <input type="checkbox" ${isSelected ? 'checked' : ''}
+                                       onchange="emToggleSelect('${entity.canon_id}')"
+                                       style="width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--accent-gold);">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                        <strong style="color: var(--text-primary);">${escapeHtml(entity.name)}</strong>
+                                        <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">${entity.entity_type}</span>
+                                        ${hasOcean ? '<span style="font-size: 0.7rem; color: var(--accent-sage);" title="Has OCEAN personality">🧠</span>' : ''}
+                                        ${hasMotivations ? '<span style="font-size: 0.7rem; color: var(--accent-gold);" title="Has goals/secrets/fears">💡</span>' : ''}
                                     </div>
-                                ` : ''}
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0; max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${escapeHtml(entity.description || 'No description')}
+                                    </p>
+                                    ${entity.aliases && entity.aliases.length > 0 ? `
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                                            Also known as: ${entity.aliases.map(a => escapeHtml(a)).join(', ')}
+                                        </div>
+                                    ` : ''}
+                                </div>
                             </div>
                             <div style="display: flex; gap: 4px;">
                                 <button onclick="openEntityEditor('${entity.canon_id}')" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.8rem;" title="Edit">✏️</button>
@@ -19034,6 +19051,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     </div>
                 `;
             }).join('');
+
+            updateEmSelectionUI();
         }
 
         async function deleteEntityFromManager(canonId, entityName, entityType) {
@@ -19049,9 +19068,184 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 document.getElementById('entity-manager-status').innerHTML = `<span style="color: var(--accent-sage);">✓ Deleted "${entityName}"</span>`;
                 entityManagerData = entityManagerData.filter(e => e.canon_id !== canonId);
+                entityManagerSelected.delete(canonId);
                 renderEntityManager();
             } catch (e) {
                 document.getElementById('entity-manager-status').innerHTML = `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
+            }
+        }
+
+        // Entity Manager Selection Functions
+        function emToggleSelect(canonId) {
+            if (entityManagerSelected.has(canonId)) {
+                entityManagerSelected.delete(canonId);
+            } else {
+                entityManagerSelected.add(canonId);
+            }
+            renderEntityManager();
+        }
+
+        function emSelectAll() {
+            const searchTerm = (document.getElementById('entity-manager-search')?.value || '').toLowerCase();
+            const typeFilter = document.getElementById('entity-manager-type-filter')?.value || 'all';
+
+            entityManagerData.forEach(e => {
+                const matchesSearch = !searchTerm ||
+                    e.name.toLowerCase().includes(searchTerm) ||
+                    (e.description || '').toLowerCase().includes(searchTerm);
+                const matchesType = typeFilter === 'all' || e.entity_type === typeFilter;
+                if (matchesSearch && matchesType) {
+                    entityManagerSelected.add(e.canon_id);
+                }
+            });
+            renderEntityManager();
+        }
+
+        function emSelectNone() {
+            entityManagerSelected.clear();
+            renderEntityManager();
+        }
+
+        function updateEmSelectionUI() {
+            const count = entityManagerSelected.size;
+            const countEl = document.getElementById('em-selection-count');
+            const mergeBtn = document.getElementById('em-merge-btn');
+            const deleteBtn = document.getElementById('em-delete-btn');
+
+            if (countEl) countEl.textContent = `${count} selected`;
+            if (mergeBtn) mergeBtn.style.display = count >= 2 ? 'inline-block' : 'none';
+            if (deleteBtn) deleteBtn.style.display = count >= 1 ? 'inline-block' : 'none';
+        }
+
+        async function emDeleteSelected() {
+            const count = entityManagerSelected.size;
+            if (count === 0) return;
+
+            const entities = entityManagerData.filter(e => entityManagerSelected.has(e.canon_id));
+            const names = entities.slice(0, 5).map(e => e.name).join(', ');
+            const moreText = count > 5 ? ` and ${count - 5} more` : '';
+
+            if (!confirm(`Delete ${count} entities?\n\n${names}${moreText}\n\nThis cannot be undone.`)) return;
+
+            document.getElementById('entity-manager-status').innerHTML = `<span class="loading"></span> Deleting ${count} entities...`;
+
+            let deleted = 0;
+            let errors = 0;
+
+            for (const canonId of entityManagerSelected) {
+                try {
+                    const response = await fetch(API_BASE + `/game/entities/${canonId}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        deleted++;
+                        entityManagerData = entityManagerData.filter(e => e.canon_id !== canonId);
+                    } else {
+                        errors++;
+                    }
+                } catch (e) {
+                    errors++;
+                }
+            }
+
+            entityManagerSelected.clear();
+            renderEntityManager();
+
+            if (errors > 0) {
+                document.getElementById('entity-manager-status').innerHTML =
+                    `<span style="color: var(--accent-gold);">✓ Deleted ${deleted} entities, ${errors} failed</span>`;
+            } else {
+                document.getElementById('entity-manager-status').innerHTML =
+                    `<span style="color: var(--accent-sage);">✓ Deleted ${deleted} entities</span>`;
+            }
+        }
+
+        async function emMergeSelected() {
+            const count = entityManagerSelected.size;
+            if (count < 2) {
+                alert('Select at least 2 entities to merge');
+                return;
+            }
+
+            const entities = entityManagerData.filter(e => entityManagerSelected.has(e.canon_id));
+
+            // Check all are same type
+            const types = new Set(entities.map(e => e.entity_type));
+            if (types.size > 1) {
+                alert('Can only merge entities of the same type.\n\nSelected types: ' + [...types].join(', '));
+                return;
+            }
+
+            // Show merge dialog
+            const entityList = entities.map(e => `• ${e.name}`).join('\n');
+            const primaryName = prompt(
+                `Merging ${count} entities:\n\n${entityList}\n\nEnter the canonical name for the merged entity:`,
+                entities[0].name
+            );
+
+            if (!primaryName) return;
+
+            document.getElementById('entity-manager-status').innerHTML = `<span class="loading"></span> Merging ${count} entities...`;
+
+            try {
+                // Use first entity as primary, merge all others into it
+                const primary = entities[0];
+                const secondaries = entities.slice(1);
+
+                // Collect all aliases, descriptions
+                let allAliases = new Set(primary.aliases || []);
+                let allDescriptions = [primary.description || ''];
+                let allGoals = [...(primary.goals || [])];
+                let allSecrets = [...(primary.secrets || [])];
+                let allFears = [...(primary.fears || [])];
+
+                for (const sec of secondaries) {
+                    // Add secondary name as alias
+                    allAliases.add(sec.name);
+                    // Add secondary aliases
+                    (sec.aliases || []).forEach(a => allAliases.add(a));
+                    // Collect descriptions
+                    if (sec.description) allDescriptions.push(sec.description);
+                    // Collect motivations
+                    (sec.goals || []).forEach(g => { if (!allGoals.includes(g)) allGoals.push(g); });
+                    (sec.secrets || []).forEach(s => { if (!allSecrets.includes(s)) allSecrets.push(s); });
+                    (sec.fears || []).forEach(f => { if (!allFears.includes(f)) allFears.push(f); });
+                }
+
+                // Remove primary name from aliases if present
+                allAliases.delete(primaryName);
+
+                // Update primary entity
+                const updateResponse = await fetch(API_BASE + `/game/entities/${primary.canon_id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: primaryName,
+                        aliases: [...allAliases],
+                        description: allDescriptions.filter(d => d).join(' | '),
+                        goals: allGoals,
+                        secrets: allSecrets,
+                        fears: allFears
+                    })
+                });
+
+                if (!updateResponse.ok) throw new Error('Failed to update primary entity');
+
+                // Delete secondary entities
+                for (const sec of secondaries) {
+                    await fetch(API_BASE + `/game/entities/${sec.canon_id}`, {
+                        method: 'DELETE'
+                    });
+                }
+
+                document.getElementById('entity-manager-status').innerHTML =
+                    `<span style="color: var(--accent-sage);">✓ Merged ${count} entities into "${primaryName}"</span>`;
+
+                entityManagerSelected.clear();
+                await loadEntityManagerData();
+            } catch (e) {
+                document.getElementById('entity-manager-status').innerHTML =
+                    `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
             }
         }
 
