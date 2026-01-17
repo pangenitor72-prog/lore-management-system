@@ -3907,31 +3907,32 @@ async def delete_lore_base(
     # Delete entities if requested
     if delete_entities:
         try:
-            # Count entities first
+            # Count entities first (check both world_id and curated_world_id)
             count_result = await db.execute("""
-                MATCH (e:Entity {world_id: $world_id})
+                MATCH (e:Entity)
+                WHERE e.world_id = $world_id OR e.curated_world_id = $world_id
                 RETURN count(e) as count
             """, {"world_id": lore_id})
 
             if count_result:
                 entities_deleted = count_result[0].get("count", 0)
 
-            # Delete entities and their relationships
-            await db.execute("""
-                MATCH (e:Entity {world_id: $world_id})
-                DETACH DELETE e
-            """, {"world_id": lore_id})
+            logger.info(f"Found {entities_deleted} entities to delete for world {lore_id}")
 
-            # Also delete by curated_world_id
-            await db.execute("""
-                MATCH (e:Entity {curated_world_id: $world_id})
-                DETACH DELETE e
-            """, {"world_id": lore_id})
+            # Delete all entities matching either world_id or curated_world_id
+            if entities_deleted > 0:
+                delete_result = await db.execute("""
+                    MATCH (e:Entity)
+                    WHERE e.world_id = $world_id OR e.curated_world_id = $world_id
+                    DETACH DELETE e
+                    RETURN count(*) as deleted
+                """, {"world_id": lore_id})
 
-            logger.info(f"Deleted {entities_deleted} entities for world {lore_id}")
+                actual_deleted = delete_result[0].get("deleted", 0) if delete_result else 0
+                logger.info(f"Actually deleted {actual_deleted} entities for world {lore_id}")
 
         except Exception as e:
-            logger.error(f"Failed to delete entities for {lore_id}: {e}")
+            logger.error(f"Failed to delete entities for {lore_id}: {e}", exc_info=True)
 
     # Delete the LoreBase node from Neo4j
     try:
@@ -3961,9 +3962,12 @@ async def delete_lore_base(
         logger.warning(f"Failed to delete seed file: {e}")
 
     # Remove from in-memory dict (if present)
-    LORE_BASES.pop(lore_id, None)
+    was_in_memory = lore_id in LORE_BASES
+    removed = LORE_BASES.pop(lore_id, None)
+    logger.info(f"Removed '{lore_id}' from LORE_BASES: was_present={was_in_memory}, removed={removed is not None}")
+    logger.info(f"LORE_BASES now has {len(LORE_BASES)} worlds")
 
-    logger.info(f"Deleted lore base: {lore_id}")
+    logger.info(f"Delete complete for lore base: {lore_id}")
 
     message = f"Successfully deleted world '{lore_id}'"
     if entities_deleted > 0:
