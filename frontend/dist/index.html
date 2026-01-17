@@ -17738,14 +17738,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 return;
             }
 
+            // Save world ID before closing modal (closeDeleteWorldModal sets wmDeleteWorldId to null)
+            const worldIdToDelete = wmDeleteWorldId;
             const deleteEntities = document.querySelector('input[name="delete-mode"]:checked').value === 'world-and-entities';
-            console.log('[DeleteWorld] Delete entities:', deleteEntities);
+            console.log('[DeleteWorld] Delete entities:', deleteEntities, 'for world:', worldIdToDelete);
 
             closeDeleteWorldModal();
             showStatus('world-manager-status', `<span class="loading"></span> Deleting world...`, 'info');
 
             try {
-                const url = API_BASE + `/game/lore-bases/${wmDeleteWorldId}?delete_entities=${deleteEntities}`;
+                const url = API_BASE + `/game/lore-bases/${worldIdToDelete}?delete_entities=${deleteEntities}`;
                 console.log('[DeleteWorld] Calling DELETE:', url);
                 const response = await fetch(url, {
                     method: 'DELETE'
@@ -17760,9 +17762,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 showStatus('world-manager-status', `✓ ${result.message}`, 'success');
 
                 // Clear from expanded set and caches
-                expandedWorlds.delete(wmDeleteWorldId);
-                delete worldEntitiesCache[wmDeleteWorldId];
-                delete worldSourcesCache[wmDeleteWorldId];
+                expandedWorlds.delete(worldIdToDelete);
+                delete worldEntitiesCache[worldIdToDelete];
+                delete worldSourcesCache[worldIdToDelete];
 
                 // Refresh
                 loadWorldManagerData();
