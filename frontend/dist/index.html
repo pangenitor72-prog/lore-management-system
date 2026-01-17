@@ -17065,9 +17065,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Load world details
+                console.log('[WorldManager] Fetching from:', API_BASE + '/game/admin/lore-bases/details');
                 const worldsRes = await fetch(API_BASE + '/game/admin/lore-bases/details');
-                if (!worldsRes.ok) throw new Error('Failed to load world details');
+                console.log('[WorldManager] Response status:', worldsRes.status, worldsRes.ok);
+                if (!worldsRes.ok) {
+                    const errorText = await worldsRes.text();
+                    console.error('[WorldManager] Error response:', errorText.substring(0, 200));
+                    throw new Error('Failed to load world details (status: ' + worldsRes.status + ')');
+                }
                 worldManagerData = await worldsRes.json();
+                console.log('[WorldManager] Loaded', worldManagerData.worlds?.length, 'worlds');
 
                 // Load orphan count
                 const orphansRes = await fetch(API_BASE + '/game/admin/entities/orphans');
