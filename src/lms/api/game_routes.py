@@ -3364,6 +3364,19 @@ class ApprovedEntity(BaseModel):
     type: str
     description: Optional[str] = None
     traits: Optional[List[str]] = None
+    aliases: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    goals: Optional[List[str]] = None
+    secrets: Optional[List[str]] = None
+    fears: Optional[List[str]] = None
+    temporal_cues: Optional[List[str]] = None
+    verbatim_text: Optional[str] = None
+    # OCEAN profile fields (for characters)
+    openness: Optional[float] = None
+    conscientiousness: Optional[float] = None
+    extraversion: Optional[float] = None
+    agreeableness: Optional[float] = None
+    neuroticism: Optional[float] = None
 
 
 class LoreBaseUploadRequest(BaseModel):
@@ -3464,17 +3477,8 @@ async def create_lore_base(
                 entity_type = entity.type.capitalize()
                 canon_id = f"{lore_base.id}:{entity.name.lower().replace(' ', '_')}"
 
-                # Create the entity node in Neo4j
-                await db.execute(f"""
-                    MERGE (e:{entity_type} {{canon_id: $canon_id}})
-                    SET e.name = $name,
-                        e.description = $description,
-                        e.world_id = $world_id,
-                        e.curated_world_id = $curated_world_id,
-                        e.source = $source,
-                        e.genre = $genre,
-                        e.created_at = datetime()
-                """, {
+                # Build properties dict with all available fields
+                props = {
                     "canon_id": canon_id,
                     "name": entity.name,
                     "description": entity.description or "",
@@ -3482,6 +3486,51 @@ async def create_lore_base(
                     "curated_world_id": lore_base.id,
                     "source": f"lore_base:{lore_base.id}:reviewed",
                     "genre": primary_genre,
+                    "entity_type": entity_type,
+                    "approval_status": "APPROVED",
+                    "confidence_level": "HUMAN_REVIEWED",
+                }
+
+                # Add optional fields if present
+                if entity.traits:
+                    props["personality_traits"] = entity.traits
+                if entity.aliases:
+                    props["aliases"] = entity.aliases
+                if entity.tags:
+                    props["tags"] = entity.tags
+                if entity.goals:
+                    props["goals"] = entity.goals
+                if entity.secrets:
+                    props["secrets"] = entity.secrets
+                if entity.fears:
+                    props["fears"] = entity.fears
+                if entity.temporal_cues:
+                    props["temporal_cues"] = entity.temporal_cues
+                if entity.verbatim_text:
+                    props["content"] = entity.verbatim_text
+
+                # Add OCEAN profile for characters
+                if entity_type == "Character":
+                    if entity.openness is not None:
+                        props["openness"] = entity.openness
+                    if entity.conscientiousness is not None:
+                        props["conscientiousness"] = entity.conscientiousness
+                    if entity.extraversion is not None:
+                        props["extraversion"] = entity.extraversion
+                    if entity.agreeableness is not None:
+                        props["agreeableness"] = entity.agreeableness
+                    if entity.neuroticism is not None:
+                        props["neuroticism"] = entity.neuroticism
+
+                # Create the entity node in Neo4j with all properties
+                await db.execute(f"""
+                    MERGE (e:{entity_type} {{canon_id: $canon_id}})
+                    SET e += $props
+                    SET e.created_at = datetime()
+                    SET e:Entity
+                """, {
+                    "canon_id": canon_id,
+                    "props": props,
                 })
                 entities_created += 1
 
@@ -3949,7 +3998,19 @@ async def preview_lore_extraction(
                 "tags": entity.tags if entity.tags else [],
                 "temporal_cues": entity.temporal_cues if entity.temporal_cues else [],
                 "verbatim_text": entity.verbatim_text if entity.verbatim_text else "",
+                "goals": entity.goals if entity.goals else [],
+                "secrets": entity.secrets if entity.secrets else [],
+                "fears": entity.fears if entity.fears else [],
             }
+
+            # Add OCEAN profile for characters
+            if entity.entity_type == "Character" and entity.traits:
+                ocean = agent._generate_ocean_from_traits(entity.traits)
+                entity_dict["openness"] = ocean.openness
+                entity_dict["conscientiousness"] = ocean.conscientiousness
+                entity_dict["extraversion"] = ocean.extraversion
+                entity_dict["agreeableness"] = ocean.agreeableness
+                entity_dict["neuroticism"] = ocean.neuroticism
 
             entities.append(entity_dict)
 
