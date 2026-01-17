@@ -4241,19 +4241,25 @@ async def get_world_entities(
         """
         params["limit"] = limit
 
+        logger.debug(f"Executing query with params: {params}")
         result = await db.execute(query, params)
+        logger.debug(f"Query returned {len(result) if result else 0} records")
 
         entities = []
         for record in result:
-            entities.append({
-                "id": record.get("id"),
-                "name": record.get("name"),
-                "type": record.get("type"),
-                "description": record.get("description", "")[:200] if record.get("description") else "",
-                "confidence": record.get("confidence"),
-                "source_name": record.get("source_name", "unknown"),
-                "created_at": record.get("created_at"),
-            })
+            try:
+                entities.append({
+                    "id": record.get("id"),
+                    "name": record.get("name"),
+                    "type": record.get("type"),
+                    "description": record.get("description", "")[:200] if record.get("description") else "",
+                    "confidence": record.get("confidence"),
+                    "source_name": record.get("source_name", "unknown"),
+                    "created_at": record.get("created_at"),
+                })
+            except Exception as parse_error:
+                logger.warning(f"Failed to parse entity record: {parse_error}")
+                continue
 
         logger.info(f"Successfully fetched {len(entities)} entities for world {lore_id}")
         
@@ -4263,11 +4269,20 @@ async def get_world_entities(
             "entities": entities,
         }
 
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except AttributeError as e:
+        logger.error(f"Database method not available for {lore_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database service error - please try again"
+        )
     except Exception as e:
         logger.error(f"Failed to get entities for {lore_id}: {type(e).__name__}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get entities: {str(e)}"
+            detail=f"Failed to retrieve entities: {type(e).__name__}"
         )
 
 
