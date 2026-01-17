@@ -3,12 +3,15 @@ from src.lms.core.models import EntityType, ApprovalStatus, ConfidenceLevel, Par
 
 @pytest.mark.asyncio
 async def test_health_check(client):
-    """Verify health check endpoint works."""
+    """Verify health check endpoint works and includes version."""
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
     assert data["checks"]["neo4j"] == "connected"
+    assert "version" in data
+    assert "deployed_at" in data  # Backwards compatibility field
+    assert "timestamp" in data
 
 @pytest.mark.asyncio
 async def test_entity_creation_mock(client):

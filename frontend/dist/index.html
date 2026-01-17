@@ -6346,6 +6346,38 @@
         #story.theme-wilderness .scene-card::after { border-color: var(--biome-accent); }
         #story.theme-wilderness .scene-card__location { color: var(--biome-text-highlight); }
 
+        /* Version Info Display */
+        .version-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 6px 12px;
+            background: rgba(15, 15, 18, 0.85);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            font-size: 11px;
+            font-family: var(--font-ui);
+            border-radius: var(--radius-sharp);
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+            z-index: 9998;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(212, 175, 55, 0.1);
+        }
+        .version-info:hover {
+            opacity: 1;
+        }
+        .version-label {
+            color: var(--text-muted);
+            margin-right: 6px;
+        }
+        .version-number {
+            color: var(--accent-gold);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
     </style>
 </head>
 <body>
@@ -19502,6 +19534,31 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         if (window.matchMedia('(display-mode: standalone)').matches) {
             console.log('Running as installed PWA');
         }
+
+        // Load and display version info
+        async function loadVersion() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                const versionElement = document.getElementById('versionNumber');
+                if (versionElement) {
+                    versionElement.textContent = data.version || 'Unknown';
+                }
+            } catch (e) {
+                console.error('Failed to load version:', e);
+                const versionElement = document.getElementById('versionNumber');
+                if (versionElement) {
+                    versionElement.textContent = 'Error';
+                }
+            }
+        }
+        loadVersion();
     </script>
+
+    <!-- Version Info Display -->
+    <div class="version-info" id="versionInfo">
+        <span class="version-label">Version:</span>
+        <span class="version-number" id="versionNumber">Loading...</span>
+    </div>
 </body>
 </html>
