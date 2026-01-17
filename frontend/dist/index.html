@@ -7607,8 +7607,8 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- World Manager Modals -->
-            <div id="wm-delete-modal" class="modal" style="display: none;">
-                <div class="modal-content" style="max-width: 500px;">
+            <div id="wm-delete-modal" class="modal-overlay">
+                <div class="modal" style="max-width: 500px;">
                     <h3 style="color: var(--accent-rose); margin-bottom: 15px;">🗑️ Delete World</h3>
                     <p style="color: var(--text-secondary); margin-bottom: 20px;">
                         You are about to delete <strong id="wm-delete-world-name" style="color: var(--text-primary);"></strong>.
@@ -7630,8 +7630,8 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
             </div>
 
-            <div id="wm-add-lore-modal" class="modal" style="display: none;">
-                <div class="modal-content" style="max-width: 700px;">
+            <div id="wm-add-lore-modal" class="modal-overlay">
+                <div class="modal" style="max-width: 700px;">
                     <h3 style="color: var(--accent-gold); margin-bottom: 15px;">📁 Add Lore to <span id="wm-add-lore-world-name"></span></h3>
                     <div id="wm-add-lore-status"></div>
                     <div style="margin-bottom: 20px;">
@@ -7656,8 +7656,8 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- Import Entities Modal (for per-world entity import) -->
-            <div id="wm-import-entities-modal" class="modal" style="display: none;">
-                <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div id="wm-import-entities-modal" class="modal-overlay">
+                <div class="modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
                     <h3 style="color: var(--accent-gold); margin-bottom: 15px;">📦 Import Entities to <span id="wm-import-world-name"></span></h3>
                     <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
                         Import entities from lore files or text. Entities will be extracted and you can review them before importing.
@@ -7870,8 +7870,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         </div>
 
         <!-- Entity Edit Modal -->
-        <div id="entity-edit-modal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div id="entity-edit-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 style="color: var(--accent-gold); margin: 0;">✏️ Edit Entity</h3>
                     <button onclick="closeEntityEditModal()" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 0; width: 30px; height: 30px;">&times;</button>
@@ -17214,7 +17214,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                         🔍 Find Duplicates
                                     </button>
                                 ` : ''}
-                                <button class="btn" onclick="openDeleteWorldModal('${world.id}', '${escapeHtml(world.name)}', ${world.entity_count})" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
+                                <button class="btn" onclick="openDeleteWorldModal('${world.id}', '${escapeHtml(world.name).replace(/'/g, "\\'")}', ${world.entity_count})" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
                                     🗑️ Delete World
                                 </button>
                             </div>
@@ -17717,29 +17717,37 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         // Delete World Modal
         function openDeleteWorldModal(worldId, worldName, entityCount) {
+            console.log('[DeleteWorld] Opening modal for:', worldId, worldName, entityCount);
             wmDeleteWorldId = worldId;
             document.getElementById('wm-delete-world-name').textContent = worldName;
             document.getElementById('wm-delete-entity-count').textContent = entityCount;
-            document.getElementById('wm-delete-modal').style.display = 'flex';
+            document.getElementById('wm-delete-modal').classList.add('active');
             // Reset to default option
             document.querySelector('input[name="delete-mode"][value="world-only"]').checked = true;
         }
 
         function closeDeleteWorldModal() {
-            document.getElementById('wm-delete-modal').style.display = 'none';
+            document.getElementById('wm-delete-modal').classList.remove('active');
             wmDeleteWorldId = null;
         }
 
         async function confirmDeleteWorld() {
-            if (!wmDeleteWorldId) return;
+            console.log('[DeleteWorld] Confirming delete for:', wmDeleteWorldId);
+            if (!wmDeleteWorldId) {
+                console.error('[DeleteWorld] No world ID set!');
+                return;
+            }
 
             const deleteEntities = document.querySelector('input[name="delete-mode"]:checked').value === 'world-and-entities';
+            console.log('[DeleteWorld] Delete entities:', deleteEntities);
 
             closeDeleteWorldModal();
             showStatus('world-manager-status', `<span class="loading"></span> Deleting world...`, 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${wmDeleteWorldId}?delete_entities=${deleteEntities}`, {
+                const url = API_BASE + `/game/lore-bases/${wmDeleteWorldId}?delete_entities=${deleteEntities}`;
+                console.log('[DeleteWorld] Calling DELETE:', url);
+                const response = await fetch(url, {
                     method: 'DELETE'
                 });
 
@@ -17771,11 +17779,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('wm-add-lore-files').innerHTML = '';
             document.getElementById('wm-add-lore-submit').disabled = true;
             clearStatus('wm-add-lore-status');
-            document.getElementById('wm-add-lore-modal').style.display = 'flex';
+            document.getElementById('wm-add-lore-modal').classList.add('active');
         }
 
         function closeAddLoreModal() {
-            document.getElementById('wm-add-lore-modal').style.display = 'none';
+            document.getElementById('wm-add-lore-modal').classList.remove('active');
             wmAddLoreWorldId = null;
             wmAddLoreFiles = [];
         }
@@ -17896,20 +17904,20 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             wmImportWorldName = worldName;
             wmImportEntities = [];
             wmImportMethod = 'text';
-            
+
             document.getElementById('wm-import-world-name').textContent = worldName;
             document.getElementById('wm-import-lore-text').value = '';
             document.getElementById('wm-import-file-name').textContent = '';
             document.getElementById('wm-import-review-panel').style.display = 'none';
             document.getElementById('wm-import-commit-btn').disabled = true;
             clearStatus('wm-import-status');
-            
+
             switchImportMethod('text');
-            document.getElementById('wm-import-entities-modal').style.display = 'flex';
+            document.getElementById('wm-import-entities-modal').classList.add('active');
         }
 
         function closeImportEntitiesModal() {
-            document.getElementById('wm-import-entities-modal').style.display = 'none';
+            document.getElementById('wm-import-entities-modal').classList.remove('active');
             wmImportWorldId = null;
             wmImportWorldName = null;
             wmImportEntities = [];
@@ -20899,12 +20907,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             // Show modal
-            document.getElementById('entity-edit-modal').style.display = 'flex';
+            document.getElementById('entity-edit-modal').classList.add('active');
         }
 
         function closeEntityEditModal() {
             currentEditEntityId = null;
-            document.getElementById('entity-edit-modal').style.display = 'none';
+            document.getElementById('entity-edit-modal').classList.remove('active');
             document.getElementById('entity-edit-form').reset();
         }
 
@@ -20919,14 +20927,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const description = document.getElementById('edit-entity-description').value.trim();
             const aliasesText = document.getElementById('edit-entity-aliases').value;
             const aliases = aliasesText.split('\n').map(a => a.trim()).filter(a => a);
-            const confidence = document.getElementById('edit-entity-confidence').value;
 
             const updates = {
-                canonical_name: name,
-                entity_type: type,
+                name: name,
                 description: description,
-                aliases: aliases,
-                confidence_level: confidence
+                aliases: aliases
             };
 
             // Add OCEAN if it's a Character
@@ -20947,8 +20952,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('entity-edit-status', '<span class="loading"></span> Saving changes...', 'info');
 
             try {
-                const response = await fetch(`/api/entities/${entityId}`, {
-                    method: 'PATCH',
+                const response = await fetch(API_BASE + `/game/entities/${entityId}`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updates)
                 });

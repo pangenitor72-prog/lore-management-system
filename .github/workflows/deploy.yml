@@ -22,7 +22,9 @@ jobs:
       - name: Generate version
         id: version
         run: |
-          VERSION="v1.5.$(date +%Y%m%d-%H%M)"
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          SHORT_HASH=$(git rev-parse --short HEAD)
+          VERSION="v${COMMIT_COUNT}-${SHORT_HASH}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "$VERSION" > data/deployed_version.txt
           

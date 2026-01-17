@@ -5,8 +5,10 @@ set -e  # Exit on error
 
 echo "🚀 Starting deployment process..."
 
-# Generate version
-VERSION="v1.5.$(date +%Y%m%d-%H%M)"
+# Generate version using git commit count + short hash
+COMMIT_COUNT=$(git rev-list --count HEAD)
+SHORT_HASH=$(git rev-parse --short HEAD)
+VERSION="v${COMMIT_COUNT}-${SHORT_HASH}"
 echo "📦 Version: $VERSION"
 
 # Update version file
