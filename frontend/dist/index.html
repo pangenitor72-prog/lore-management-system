@@ -6743,8 +6743,6 @@
             <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
                 <a href="#" onclick="showScreen('onboarding'); return false;" style="color: var(--text-muted);">How does this work?</a>
                 <span style="margin: 0 10px;">|</span>
-                <a href="#" onclick="showScreen('entity-management'); loadEntitiesForManagement(); return false;" style="color: var(--text-muted);">Entity Manager</a>
-                <span style="margin: 0 10px;">|</span>
                 <a href="#" onclick="showPinModal(); return false;" style="color: var(--text-muted);">Admin / File Manager</a>
             </p>
         </div>
@@ -7608,6 +7606,21 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
             </div>
 
+            <!-- Entity Management -->
+            <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
+                <h3 style="color: var(--accent-gold); margin-bottom: 5px;">🔧 Entity Management</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                    Clean up and organize entities. Find duplicates, merge similar entities, and bulk delete.
+                </p>
+                <button 
+                    class="btn btn-primary" 
+                    onclick="showScreen('entity-management'); loadEntitiesForManagement();"
+                    style="padding: 12px 24px; margin-bottom: 20px; background: var(--accent-gold); color: var(--bg-primary);"
+                >
+                    📋 Open Entity Manager
+                </button>
+            </div>
+
             <!-- World Manager Modals -->
             <div id="wm-delete-modal" class="modal" style="display: none;">
                 <div class="modal-content" style="max-width: 500px;">
@@ -7803,7 +7816,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         <div id="entity-management" class="screen">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h2 style="color: var(--accent-gold); margin-bottom: 0; font-weight: normal;">🔧 Entity Management</h2>
-                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back to Home</button>
+                <button class="btn btn-secondary" onclick="showScreen('admin')" style="padding: 6px 15px;">← Back to Admin Panel</button>
             </div>
             <p style="color: var(--text-secondary); margin-bottom: 20px;">
                 Clean up and organize entities. Find duplicates, merge similar entities, and bulk delete unwanted ones.
