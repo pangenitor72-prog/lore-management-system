@@ -4,8 +4,8 @@
     {
       "code": "WORLDSMITH",
       "name": "Worldsmith (Admin)",
-      "activated": false,
-      "activated_at": null,
+      "activated": true,
+      "activated_at": "2026-01-17T03:51:10.926440+00:00",
       "is_admin": true
     },
     {
