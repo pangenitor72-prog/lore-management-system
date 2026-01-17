@@ -1062,6 +1062,8 @@ async def ingest_text_endpoint(
         )
 
     try:
+        await AuditLogger.log(f"Text ingestion started: {len(ingest_req.content)} chars from source '{ingest_req.source_name}'")
+        
         # Use LoreParsingAgent for proper AI-based entity extraction
         agent = LoreParsingAgent(api_key=gemini_key)
         source_name = ingest_req.source_name or "direct_input"
@@ -1091,6 +1093,11 @@ async def ingest_text_endpoint(
                 "type": rel.relationship_type
             })
 
+        await AuditLogger.log(
+            f"Text ingestion completed: {result.entities_stored} entities, "
+            f"{result.relationships_stored} relationships stored"
+        )
+
         return IngestTextResponse(
             status="success",
             source_name=source_name,
@@ -1100,12 +1107,60 @@ async def ingest_text_endpoint(
             relationships=relationships,
         )
 
-    except Exception as e:
-        logger.error(f"Text ingestion failed: {e}")
+    except json.JSONDecodeError as e:
+        error_msg = f"Failed to parse AI response as JSON: {str(e)}"
+        await AuditLogger.log(f"Ingestion JSON error: {error_msg}", level=logging.ERROR)
+        logger.error(f"JSON parsing error in ingestion: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ingestion failed: {str(e)}"
+            detail={
+                "error_type": "json_parse_error",
+                "message": "The AI returned an improperly formatted response. Please try again.",
+                "details": error_msg,
+                "step_failed": "parsing"
+            }
         )
+    except ValueError as e:
+        # Validation errors
+        error_msg = f"Data validation failed: {str(e)}"
+        await AuditLogger.log(f"Ingestion validation error: {error_msg}", level=logging.ERROR)
+        logger.error(f"Validation error in ingestion: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error_type": "validation_error",
+                "message": "The extracted data failed validation checks.",
+                "details": error_msg,
+                "step_failed": "validation"
+            }
+        )
+    except Exception as e:
+        error_type = type(e).__name__
+        error_msg = str(e)
+        await AuditLogger.log(f"Text ingestion failed: {error_type}: {error_msg}", level=logging.ERROR)
+        logger.error(f"Text ingestion failed: {e}", exc_info=True)
+        
+        # Check for database errors
+        if "neo4j" in error_msg.lower() or "database" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error_type": "neo4j_error",
+                    "message": "Failed to save data to the database. Please try again.",
+                    "details": f"{error_type}: {error_msg}",
+                    "step_failed": "storage"
+                }
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error_type": "unknown_error",
+                    "message": f"Ingestion failed: {error_msg}",
+                    "details": f"{error_type}: {error_msg}",
+                    "step_failed": "extraction"
+                }
+            )
 
 
 class PreviewResponse(BaseModel):
@@ -1136,6 +1191,8 @@ async def preview_extraction(
         )
 
     try:
+        await AuditLogger.log(f"Preview extraction started: {len(ingest_req.content)} chars")
+        
         agent = LoreParsingAgent(api_key=gemini_key)
 
         # Parse WITHOUT storing - just extract
@@ -1175,6 +1232,8 @@ async def preview_extraction(
                 "description": rel.description,
             })
 
+        await AuditLogger.log(f"Preview extraction completed: {len(entities)} entities, {len(relationships)} relationships")
+
         return PreviewResponse(
             entities=entities,
             relationships=relationships,
@@ -1185,11 +1244,32 @@ async def preview_extraction(
             }
         )
 
-    except Exception as e:
-        logger.error(f"Preview extraction failed: {e}")
+    except json.JSONDecodeError as e:
+        error_msg = f"Failed to parse AI response as JSON: {str(e)}"
+        await AuditLogger.log(f"Preview JSON error: {error_msg}", level=logging.ERROR)
+        logger.error(f"JSON parsing error in preview: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Preview failed: {str(e)}"
+            detail={
+                "error_type": "json_parse_error",
+                "message": "The AI returned an improperly formatted response. Please try again.",
+                "details": error_msg,
+                "step_failed": "parsing"
+            }
+        )
+    except Exception as e:
+        error_type = type(e).__name__
+        error_msg = str(e)
+        await AuditLogger.log(f"Preview extraction failed: {error_type}: {error_msg}", level=logging.ERROR)
+        logger.error(f"Preview extraction failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error_type": "extraction_error",
+                "message": f"Preview failed: {error_msg}",
+                "details": f"{error_type}: {error_msg}",
+                "step_failed": "extraction"
+            }
         )
 
 
@@ -1749,6 +1829,8 @@ async def import_lore_file(
         )
 
     try:
+        await AuditLogger.log(f"Lore file import started: {file_meta['filename']} (file_id={file_id})")
+        
         # Read file content
         if file_path.suffix == ".pdf":
             # TODO: Add PDF parsing support
@@ -1758,6 +1840,7 @@ async def import_lore_file(
             )
 
         content = file_path.read_text(encoding="utf-8")
+        logger.info(f"Read file {file_meta['filename']}: {len(content)} chars")
 
         # Use LoreParsingAgent for extraction
         agent = LoreParsingAgent(api_key=gemini_key)
@@ -1785,7 +1868,7 @@ async def import_lore_file(
 
         _save_lore_metadata(metadata)
 
-        logger.info(f"Lore file imported: {file_meta['filename']} - {result.entities_stored} entities, {result.relationships_stored} relationships")
+        await AuditLogger.log(f"Lore file imported successfully: {file_meta['filename']} - {result.entities_stored} entities, {result.relationships_stored} relationships")
 
         return {
             "status": "success",
@@ -1798,18 +1881,93 @@ async def import_lore_file(
 
     except HTTPException:
         raise
+    except json.JSONDecodeError as e:
+        error_msg = f"Failed to parse AI response as JSON: {str(e)}"
+        await AuditLogger.log(f"Import JSON error for {file_meta['filename']}: {error_msg}", level=logging.ERROR)
+        logger.error(f"JSON parsing error in import: {e}", exc_info=True)
+        
+        # Update metadata with failure
+        for m in metadata:
+            if m["id"] == file_id:
+                m["status"] = "failed"
+                m["import_result"] = {
+                    "error": error_msg,
+                    "error_type": "json_parse_error"
+                }
+                break
+        _save_lore_metadata(metadata)
+        
+        raise HTTPException(
+            status_code=500, 
+            detail={
+                "error_type": "json_parse_error",
+                "message": "The AI returned an improperly formatted response. Please try again.",
+                "details": error_msg,
+                "step_failed": "parsing"
+            }
+        )
+    except UnicodeDecodeError as e:
+        error_msg = f"Failed to read file as text: {str(e)}"
+        await AuditLogger.log(f"Import file encoding error for {file_meta['filename']}: {error_msg}", level=logging.ERROR)
+        
+        # Update metadata with failure
+        for m in metadata:
+            if m["id"] == file_id:
+                m["status"] = "failed"
+                m["import_result"] = {
+                    "error": error_msg,
+                    "error_type": "encoding_error"
+                }
+                break
+        _save_lore_metadata(metadata)
+        
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_type": "encoding_error",
+                "message": "File could not be read as text. Please ensure it's a valid text file.",
+                "details": error_msg,
+                "step_failed": "file_reading"
+            }
+        )
     except Exception as e:
-        logger.error(f"Import failed for {file_meta['filename']}: {e}")
+        error_type = type(e).__name__
+        error_msg = str(e)
+        await AuditLogger.log(f"Import failed for {file_meta['filename']}: {error_type}: {error_msg}", level=logging.ERROR)
+        logger.error(f"Import failed: {e}", exc_info=True)
 
         # Update metadata with failure
         for m in metadata:
             if m["id"] == file_id:
                 m["status"] = "failed"
-                m["import_result"] = {"error": str(e)}
+                m["import_result"] = {
+                    "error": error_msg,
+                    "error_type": error_type
+                }
                 break
         _save_lore_metadata(metadata)
 
-        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
+        # Check for database errors
+        if "neo4j" in error_msg.lower() or "database" in error_msg.lower():
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "error_type": "neo4j_error",
+                    "message": "Failed to save data to the database. Please try again.",
+                    "details": f"{error_type}: {error_msg}",
+                    "step_failed": "storage"
+                }
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "error_type": "import_error",
+                    "message": f"Import failed: {error_msg}",
+                    "details": f"{error_type}: {error_msg}",
+                    "step_failed": "extraction"
+                }
+            )
 
 
 @app.delete("/admin/lore/files/{file_id}")
