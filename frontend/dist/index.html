@@ -6743,6 +6743,8 @@
             <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
                 <a href="#" onclick="showScreen('onboarding'); return false;" style="color: var(--text-muted);">How does this work?</a>
                 <span style="margin: 0 10px;">|</span>
+                <a href="#" onclick="showScreen('entity-management'); loadEntitiesForManagement(); return false;" style="color: var(--text-muted);">Entity Manager</a>
+                <span style="margin: 0 10px;">|</span>
                 <a href="#" onclick="showPinModal(); return false;" style="color: var(--text-muted);">Admin / File Manager</a>
             </p>
         </div>
@@ -7794,6 +7796,84 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             <div class="btn-group" style="margin-top: 30px;">
                 <button class="btn btn-secondary" onclick="showScreen('start')">Back to Home</button>
+            </div>
+        </div>
+
+        <!-- Entity Management Screen -->
+        <div id="entity-management" class="screen">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="color: var(--accent-gold); margin-bottom: 0; font-weight: normal;">🔧 Entity Management</h2>
+                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px;">← Back to Home</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Clean up and organize entities. Find duplicates, merge similar entities, and bulk delete unwanted ones.
+                <span style="color: var(--text-muted); font-size: 0.9rem;">Entities sorted by confidence (lowest first).</span>
+            </p>
+
+            <!-- Status Messages -->
+            <div id="entity-mgmt-status"></div>
+
+            <!-- Filters and Actions -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-soft); padding: 20px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                    <!-- Search -->
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Search</label>
+                        <input id="entity-search" type="text" placeholder="Search by name or alias..." onkeyup="filterEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem;">
+                    </div>
+
+                    <!-- Entity Type Filter -->
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Entity Type</label>
+                        <select id="entity-mgmt-type-filter" onchange="filterEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; cursor: pointer;">
+                            <option value="">All Types</option>
+                            <option value="Character">Character</option>
+                            <option value="Location">Location</option>
+                            <option value="Faction">Faction</option>
+                            <option value="Item">Item</option>
+                            <option value="Event">Event</option>
+                            <option value="Concept">Concept</option>
+                        </select>
+                    </div>
+
+                    <!-- Confidence Filter -->
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 5px;">Confidence Level</label>
+                        <select id="entity-mgmt-confidence-filter" onchange="filterEntities()" style="width: 100%; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; cursor: pointer;">
+                            <option value="">All Levels</option>
+                            <option value="UNCERTAIN">Uncertain</option>
+                            <option value="SPECULATIVE">Speculative</option>
+                            <option value="PROBABLE">Probable</option>
+                            <option value="AI_GENERATED">AI Generated</option>
+                            <option value="CONFIRMED">Confirmed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="loadEntitiesForManagement()" style="padding: 8px 15px;">🔄 Refresh</button>
+                    <button class="btn btn-secondary" onclick="toggleSelectAll()" style="padding: 8px 15px;" id="select-all-btn">✓ Select All</button>
+                    <button class="btn btn-secondary" onclick="findDuplicates()" style="padding: 8px 15px;">🔍 Find Duplicates</button>
+                    <button class="btn btn-danger" onclick="bulkDeleteSelected()" style="padding: 8px 15px; background: #dc3545; color: white;" id="bulk-delete-btn" disabled>🗑️ Delete Selected (<span id="selected-count">0</span>)</button>
+                </div>
+            </div>
+
+            <!-- Duplicate Groups (initially hidden) -->
+            <div id="duplicate-groups-container" style="display: none; margin-bottom: 20px;">
+                <div style="background: var(--bg-card); border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: var(--accent-gold); margin: 0;">Potential Duplicates</h3>
+                        <button class="btn btn-secondary" onclick="hideDuplicates()" style="padding: 6px 12px;">Close</button>
+                    </div>
+                    <div id="duplicate-groups"></div>
+                </div>
+            </div>
+
+            <!-- Entity List -->
+            <div id="entity-list-container">
+                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <span class="loading"></span> Loading entities...
+                </div>
             </div>
         </div>
 
@@ -19589,6 +19669,332 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
         loadVersion();
+
+        // ============================================================
+        // ENTITY MANAGEMENT FUNCTIONS
+        // ============================================================
+
+        let allEntities = [];
+        let selectedEntities = new Set();
+
+        async function loadEntitiesForManagement() {
+            const container = document.getElementById('entity-list-container');
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><span class="loading"></span> Loading entities...</div>';
+            
+            try {
+                const response = await fetch('/entities/manage');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                allEntities = await response.json();
+                selectedEntities.clear();
+                updateSelectedCount();
+                renderEntities(allEntities);
+                
+                showStatus('entity-mgmt-status', `✓ Loaded ${allEntities.length} entities`, 'success');
+            } catch (error) {
+                console.error('Failed to load entities:', error);
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-danger);">Failed to load entities: ${error.message}</div>`;
+                showStatus('entity-mgmt-status', `✗ Failed to load entities: ${error.message}`, 'error');
+            }
+        }
+
+        function renderEntities(entities) {
+            const container = document.getElementById('entity-list-container');
+            
+            if (entities.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">No entities found</div>';
+                return;
+            }
+            
+            let html = '<div style="display: grid; gap: 15px;">';
+            
+            entities.forEach(entity => {
+                const confidenceColor = getConfidenceColor(entity.confidence_level);
+                const confidenceBadge = `<span style="background: ${confidenceColor}; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${entity.confidence_level}</span>`;
+                const isSelected = selectedEntities.has(entity.canon_id);
+                
+                html += `
+                <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-soft); padding: 15px; ${isSelected ? 'border-color: var(--accent-gold); border-width: 2px;' : ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                            <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleEntitySelection('${entity.canon_id}')" style="width: 18px; height: 18px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 5px 0; color: var(--text-primary);">${escapeHtml(entity.canonical_name)}</h4>
+                                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                    <span style="color: var(--text-muted); font-size: 0.85rem;">${entity.entity_type}</span>
+                                    ${confidenceBadge}
+                                    <span style="color: var(--text-muted); font-size: 0.85rem;">🔗 ${entity.relationship_count || 0} relationships</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ${entity.aliases && entity.aliases.length > 0 ? `
+                    <div style="margin-top: 8px;">
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">Aliases:</span>
+                        ${entity.aliases.map(alias => `<span style="background: var(--bg-page); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: var(--text-secondary); margin-left: 5px;">${escapeHtml(alias)}</span>`).join('')}
+                    </div>
+                    ` : ''}
+                    <div style="margin-top: 10px; font-size: 0.75rem; color: var(--text-muted);">
+                        ID: ${entity.canon_id}
+                    </div>
+                </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function getConfidenceColor(level) {
+            const colors = {
+                'UNCERTAIN': '#dc3545',
+                'SPECULATIVE': '#fd7e14',
+                'PROBABLE': '#0dcaf0',
+                'AI_GENERATED': '#0d6efd',
+                'CONFIRMED': '#198754'
+            };
+            return colors[level] || '#6c757d';
+        }
+
+        function toggleEntitySelection(canonId) {
+            if (selectedEntities.has(canonId)) {
+                selectedEntities.delete(canonId);
+            } else {
+                selectedEntities.add(canonId);
+            }
+            updateSelectedCount();
+            renderEntities(getFilteredEntities());
+        }
+
+        function toggleSelectAll() {
+            const filtered = getFilteredEntities();
+            const allSelected = filtered.every(e => selectedEntities.has(e.canon_id));
+            
+            if (allSelected) {
+                filtered.forEach(e => selectedEntities.delete(e.canon_id));
+            } else {
+                filtered.forEach(e => selectedEntities.add(e.canon_id));
+            }
+            
+            updateSelectedCount();
+            renderEntities(filtered);
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selected-count').textContent = selectedEntities.size;
+            document.getElementById('bulk-delete-btn').disabled = selectedEntities.size === 0;
+        }
+
+        function getFilteredEntities() {
+            const search = document.getElementById('entity-search').value.toLowerCase();
+            const typeFilter = document.getElementById('entity-mgmt-type-filter').value;
+            const confidenceFilter = document.getElementById('entity-mgmt-confidence-filter').value;
+            
+            return allEntities.filter(entity => {
+                if (search && !entity.canonical_name.toLowerCase().includes(search) && 
+                    !entity.aliases.some(a => a.toLowerCase().includes(search))) {
+                    return false;
+                }
+                if (typeFilter && entity.entity_type !== typeFilter) {
+                    return false;
+                }
+                if (confidenceFilter && entity.confidence_level !== confidenceFilter) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function filterEntities() {
+            const filtered = getFilteredEntities();
+            renderEntities(filtered);
+        }
+
+        async function findDuplicates() {
+            showStatus('entity-mgmt-status', '<span class="loading"></span> Finding duplicates...', 'info');
+            
+            try {
+                const response = await fetch('/entities/duplicates');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                
+                if (data.total_groups === 0) {
+                    showStatus('entity-mgmt-status', '✓ No duplicates found!', 'success');
+                    return;
+                }
+                
+                displayDuplicateGroups(data.duplicate_groups);
+                showStatus('entity-mgmt-status', `✓ Found ${data.total_groups} potential duplicate group(s)`, 'success');
+            } catch (error) {
+                console.error('Failed to find duplicates:', error);
+                showStatus('entity-mgmt-status', `✗ Failed to find duplicates: ${error.message}`, 'error');
+            }
+        }
+
+        function displayDuplicateGroups(groups) {
+            const container = document.getElementById('duplicate-groups');
+            const groupsContainer = document.getElementById('duplicate-groups-container');
+            
+            groupsContainer.style.display = 'block';
+            
+            let html = '';
+            groups.forEach((group, idx) => {
+                html += `
+                <div style="background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                    <h4 style="color: var(--text-primary); margin: 0 0 10px 0;">Group ${idx + 1} - ${group.entity_type}</h4>
+                    <div style="display: grid; gap: 10px;">
+                `;
+                
+                group.entities.forEach(entity => {
+                    const confidenceColor = getConfidenceColor(entity.confidence_level);
+                    html += `
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">${escapeHtml(entity.canonical_name)}</div>
+                                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                    <span style="background: ${confidenceColor}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem;">${entity.confidence_level}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">Similarity: ${(entity.similarity_score * 100).toFixed(0)}%</span>
+                                </div>
+                                ${entity.aliases && entity.aliases.length > 0 ? `
+                                <div style="margin-top: 5px; font-size: 0.75rem; color: var(--text-muted);">
+                                    Aliases: ${entity.aliases.join(', ')}
+                                </div>
+                                ` : ''}
+                                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">ID: ${entity.canon_id}</div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="selectEntityForMerge('${entity.canon_id}')" style="padding: 4px 10px; font-size: 0.8rem;">Select</button>
+                        </div>
+                    </div>
+                    `;
+                });
+                
+                html += `
+                    </div>
+                    <button class="btn btn-primary" onclick="mergeGroup(${JSON.stringify(group.entities.map(e => e.canon_id)).replace(/"/g, '&quot;')})" style="margin-top: 10px; padding: 8px 15px;">Merge All in Group</button>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function hideDuplicates() {
+            document.getElementById('duplicate-groups-container').style.display = 'none';
+        }
+
+        function selectEntityForMerge(canonId) {
+            selectedEntities.add(canonId);
+            updateSelectedCount();
+            renderEntities(getFilteredEntities());
+            showStatus('entity-mgmt-status', `✓ Selected entity for merge. Total selected: ${selectedEntities.size}`, 'info');
+        }
+
+        async function mergeGroup(entityIds) {
+            if (entityIds.length < 2) {
+                showStatus('entity-mgmt-status', '✗ Need at least 2 entities to merge', 'error');
+                return;
+            }
+            
+            // Find the entities to merge
+            const entitiesToMerge = allEntities.filter(e => entityIds.includes(e.canon_id));
+            
+            if (entitiesToMerge.length === 0) {
+                showStatus('entity-mgmt-status', '✗ Entities not found', 'error');
+                return;
+            }
+            
+            // Use the first entity's name and highest confidence
+            const targetName = entitiesToMerge[0].canonical_name;
+            const allAliases = [...new Set(entitiesToMerge.flatMap(e => e.aliases))];
+            
+            // Find highest confidence level
+            const confidenceLevels = ['UNCERTAIN', 'SPECULATIVE', 'PROBABLE', 'AI_GENERATED', 'CONFIRMED'];
+            const maxConfidence = entitiesToMerge.reduce((max, e) => {
+                const idx = confidenceLevels.indexOf(e.confidence_level);
+                const maxIdx = confidenceLevels.indexOf(max);
+                return idx > maxIdx ? e.confidence_level : max;
+            }, 'UNCERTAIN');
+            
+            if (!confirm(`Merge ${entitiesToMerge.length} entities into "${targetName}"?\n\nThis will combine all properties and update relationships.`)) {
+                return;
+            }
+            
+            showStatus('entity-mgmt-status', '<span class="loading"></span> Merging entities...', 'info');
+            
+            try {
+                const response = await fetch('/entities/merge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        entity_ids: entityIds,
+                        target_canonical_name: targetName,
+                        target_aliases: allAliases,
+                        target_confidence_level: maxConfidence
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || `HTTP ${response.status}`);
+                }
+                
+                showStatus('entity-mgmt-status', `✓ Successfully merged ${entitiesToMerge.length} entities`, 'success');
+                hideDuplicates();
+                await loadEntitiesForManagement();
+            } catch (error) {
+                console.error('Failed to merge entities:', error);
+                showStatus('entity-mgmt-status', `✗ Failed to merge: ${error.message}`, 'error');
+            }
+        }
+
+        async function bulkDeleteSelected() {
+            if (selectedEntities.size === 0) {
+                showStatus('entity-mgmt-status', '✗ No entities selected', 'error');
+                return;
+            }
+            
+            const entityIds = Array.from(selectedEntities);
+            const confirmMsg = `Delete ${entityIds.length} selected entit${entityIds.length === 1 ? 'y' : 'ies'}?\n\nThis action cannot be undone.`;
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            showStatus('entity-mgmt-status', `<span class="loading"></span> Deleting ${entityIds.length} entities...`, 'info');
+            
+            try {
+                const response = await fetch('/entities/bulk', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        entity_ids: entityIds,
+                        delete_orphaned_relationships: true
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || `HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                showStatus('entity-mgmt-status', `✓ Successfully deleted ${result.deleted_count} entities`, 'success');
+                selectedEntities.clear();
+                await loadEntitiesForManagement();
+            } catch (error) {
+                console.error('Failed to delete entities:', error);
+                showStatus('entity-mgmt-status', `✗ Failed to delete: ${error.message}`, 'error');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
     </script>
 
     <!-- Version Info Display -->
