@@ -789,6 +789,510 @@ async def create_entity(entity_data: EntityCreate, db: Neo4jDatabase = Depends(g
         raise HTTPException(status_code=500, detail=f"Failed to create entity: {e}")
 
 
+# ============================================================
+# ENTITY MANAGEMENT ENDPOINTS
+# ============================================================
+
+from difflib import SequenceMatcher
+
+def calculate_name_similarity(name1: str, name2: str) -> float:
+    """Calculate string similarity ratio between two names."""
+    return SequenceMatcher(None, name1.lower(), name2.lower()).ratio()
+
+
+@router.get("/entities/manage")
+async def get_entities_for_management(
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+    world_id: Optional[str] = Query(default=None, description="Filter by world/lore base ID"),
+    entity_type: Optional[EntityType] = Query(default=None, description="Filter by entity type"),
+    confidence_level: Optional[ConfidenceLevel] = Query(default=None, description="Filter by confidence level"),
+    search: Optional[str] = Query(default=None, description="Search by name or alias"),
+):
+    """
+    Get all entities for the management view.
+    Returns entities sorted by confidence level (least to most confident).
+    Confidence order: UNCERTAIN → SPECULATIVE → PROBABLE → AI_GENERATED → CONFIRMED
+    """
+    query = "MATCH (n:Entity)"
+    where = []
+    params = {}
+
+    if world_id:
+        where.append("n.world_id = $world_id")
+        params["world_id"] = world_id
+
+    if entity_type:
+        where.append("n.entity_type = $type")
+        params["type"] = entity_type.value
+
+    if confidence_level:
+        where.append("n.confidence_level = $confidence")
+        params["confidence"] = confidence_level.value
+
+    if search:
+        where.append("(toLower(n.canonical_name) CONTAINS toLower($search) OR any(alias IN n.aliases WHERE toLower(alias) CONTAINS toLower($search)))")
+        params["search"] = search
+
+    if where:
+        query += " WHERE " + " AND ".join(where)
+
+    # Custom ORDER BY to sort by confidence level (least to most confident)
+    query += """
+    RETURN n.canon_id AS canon_id,
+           n.entity_type AS entity_type,
+           COALESCE(n.canonical_name, n.name) AS canonical_name,
+           COALESCE(n.aliases, []) AS aliases,
+           COALESCE(n.approval_status, 'PENDING') AS approval_status,
+           COALESCE(n.confidence_level, 'AI_GENERATED') AS confidence_level,
+           n.party_knowledge AS party_knowledge,
+           COALESCE(n.created_at, datetime().epochMillis) AS created_at,
+           COALESCE(n.updated_at, n.created_at, datetime().epochMillis) AS updated_at,
+           properties(n) AS all_props,
+           size((n)-[]->()) + size((n)<-[]-()) AS relationship_count
+    ORDER BY 
+        CASE n.confidence_level
+            WHEN 'UNCERTAIN' THEN 1
+            WHEN 'SPECULATIVE' THEN 2
+            WHEN 'PROBABLE' THEN 3
+            WHEN 'AI_GENERATED' THEN 4
+            WHEN 'CONFIRMED' THEN 5
+            ELSE 0
+        END ASC,
+        n.canonical_name ASC
+    """
+
+    rows = await db.execute(query, params)
+
+    reserved = {
+        "canon_id", "entity_type", "canonical_name", "aliases",
+        "approval_status", "confidence_level", "party_knowledge",
+        "created_at", "updated_at", "name", "embedding",
+    }
+
+    # Handle date parsing - may be ISO string or Neo4j datetime
+    def parse_date(val):
+        if val is None:
+            return datetime.now(timezone.utc)
+        if isinstance(val, str):
+            return datetime.fromisoformat(val.replace('Z', '+00:00'))
+        if isinstance(val, (int, float)):
+            return datetime.fromtimestamp(val / 1000, tz=timezone.utc)
+        return datetime.now(timezone.utc)
+
+    out = []
+    for row in rows:
+        all_props = row["all_props"]
+        approved_fields = {}
+
+        for k, v in all_props.items():
+            if k not in reserved:
+                try:
+                    approved_fields[k] = json.loads(v)
+                except (json.JSONDecodeError, TypeError, ValueError):
+                    approved_fields[k] = v
+
+        entity_dict = {
+            "canon_id": row["canon_id"],
+            "entity_type": row["entity_type"],
+            "canonical_name": row["canonical_name"] or "Unknown",
+            "aliases": row["aliases"] or [],
+            "approved_fields": approved_fields,
+            "approval_status": row["approval_status"],
+            "confidence_level": row["confidence_level"],
+            "party_knowledge": row.get("party_knowledge") or "KNOWN",
+            "created_at": parse_date(row.get("created_at")),
+            "updated_at": parse_date(row.get("updated_at")),
+            "relationship_count": row.get("relationship_count", 0)
+        }
+        out.append(entity_dict)
+
+    return out
+
+
+@router.get("/entities/duplicates")
+async def find_duplicate_entities(
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+    world_id: Optional[str] = Query(default=None, description="Filter by world/lore base ID"),
+    similarity_threshold: float = Query(default=0.8, ge=0.0, le=1.0, description="Similarity threshold (0.0 to 1.0)"),
+):
+    """
+    Find potential duplicate entities based on name similarity, type, and aliases.
+    Returns groups of entities that might be duplicates.
+    """
+    # Get all entities
+    query = "MATCH (n:Entity)"
+    params = {}
+    
+    if world_id:
+        query += " WHERE n.world_id = $world_id"
+        params["world_id"] = world_id
+    
+    query += """
+    RETURN n.canon_id AS canon_id,
+           n.entity_type AS entity_type,
+           COALESCE(n.canonical_name, n.name) AS canonical_name,
+           COALESCE(n.aliases, []) AS aliases,
+           n.confidence_level AS confidence_level
+    """
+    
+    rows = await db.execute(query, params)
+    
+    # Group entities by type first
+    entities_by_type = {}
+    for row in rows:
+        entity_type = row["entity_type"]
+        if entity_type not in entities_by_type:
+            entities_by_type[entity_type] = []
+        entities_by_type[entity_type].append({
+            "canon_id": row["canon_id"],
+            "entity_type": entity_type,
+            "canonical_name": row["canonical_name"],
+            "aliases": row["aliases"] or [],
+            "confidence_level": row.get("confidence_level", "AI_GENERATED")
+        })
+    
+    # Find duplicates within each type
+    duplicate_groups = []
+    
+    for entity_type, entities in entities_by_type.items():
+        seen = set()
+        
+        for i, entity1 in enumerate(entities):
+            if entity1["canon_id"] in seen:
+                continue
+                
+            potential_duplicates = [entity1]
+            seen.add(entity1["canon_id"])
+            
+            for j, entity2 in enumerate(entities):
+                if i >= j or entity2["canon_id"] in seen:
+                    continue
+                
+                # Calculate name similarity
+                name_similarity = calculate_name_similarity(
+                    entity1["canonical_name"],
+                    entity2["canonical_name"]
+                )
+                
+                # Check for overlapping aliases
+                aliases1 = set([a.lower() for a in entity1["aliases"]])
+                aliases2 = set([a.lower() for a in entity2["aliases"]])
+                alias_overlap = len(aliases1 & aliases2) > 0
+                
+                # Consider them duplicates if name similarity is high or they share aliases
+                if name_similarity >= similarity_threshold or alias_overlap:
+                    potential_duplicates.append(entity2)
+                    seen.add(entity2["canon_id"])
+            
+            # Only add groups with 2+ entities
+            if len(potential_duplicates) >= 2:
+                # Calculate similarity scores for the group
+                group_with_scores = []
+                for entity in potential_duplicates:
+                    max_similarity = max(
+                        calculate_name_similarity(entity["canonical_name"], other["canonical_name"])
+                        for other in potential_duplicates if other["canon_id"] != entity["canon_id"]
+                    )
+                    group_with_scores.append({
+                        **entity,
+                        "similarity_score": round(max_similarity, 2)
+                    })
+                
+                duplicate_groups.append({
+                    "entity_type": entity_type,
+                    "entities": group_with_scores
+                })
+    
+    return {
+        "duplicate_groups": duplicate_groups,
+        "total_groups": len(duplicate_groups)
+    }
+
+
+class EntityMergeRequest(BaseModel):
+    """Request model for merging entities."""
+    entity_ids: List[str] = Field(min_length=2, description="List of entity IDs to merge (minimum 2)")
+    target_canonical_name: str = Field(min_length=1, description="Canonical name for merged entity")
+    target_aliases: List[str] = Field(default_factory=list, description="Aliases for merged entity")
+    target_confidence_level: ConfidenceLevel = Field(description="Confidence level for merged entity")
+
+
+@router.post("/entities/merge")
+async def merge_entities(
+    merge_request: EntityMergeRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Merge multiple entities into one.
+    - Combines all properties intelligently
+    - Preserves all source references
+    - Updates relationships to point to the merged entity
+    - Keeps the highest confidence level
+    - Maintains audit trail
+    """
+    if len(merge_request.entity_ids) < 2:
+        raise HTTPException(status_code=400, detail="At least 2 entities required for merge")
+    
+    # Fetch all entities to merge
+    query = """
+    MATCH (n:Entity)
+    WHERE n.canon_id IN $entity_ids
+    RETURN n.canon_id AS canon_id,
+           n.entity_type AS entity_type,
+           n.canonical_name AS canonical_name,
+           n.aliases AS aliases,
+           n.confidence_level AS confidence_level,
+           n.approval_status AS approval_status,
+           n.party_knowledge AS party_knowledge,
+           properties(n) AS all_props
+    """
+    
+    entities = await db.execute(query, {"entity_ids": merge_request.entity_ids})
+    
+    if len(entities) != len(merge_request.entity_ids):
+        raise HTTPException(status_code=404, detail="Some entities not found")
+    
+    # Ensure all entities are the same type
+    entity_types = set(e["entity_type"] for e in entities)
+    if len(entity_types) > 1:
+        raise HTTPException(status_code=400, detail=f"Cannot merge entities of different types: {entity_types}")
+    
+    entity_type = entities[0]["entity_type"]
+    
+    # Determine the target entity (use the first one or create new ID)
+    target_canon_id = entities[0]["canon_id"]
+    
+    # Combine aliases from all entities
+    combined_aliases = set(merge_request.target_aliases)
+    for entity in entities:
+        combined_aliases.update(entity.get("aliases") or [])
+        # Add canonical names as aliases (except the target name)
+        if entity["canonical_name"] and entity["canonical_name"] != merge_request.target_canonical_name:
+            combined_aliases.add(entity["canonical_name"])
+    
+    # Remove target canonical name from aliases
+    combined_aliases.discard(merge_request.target_canonical_name)
+    
+    # Merge approved_fields
+    reserved = {
+        "canon_id", "entity_type", "canonical_name", "aliases",
+        "approval_status", "confidence_level", "party_knowledge",
+        "created_at", "updated_at", "name", "embedding",
+    }
+    
+    merged_fields = {}
+    for entity in entities:
+        all_props = entity["all_props"]
+        for k, v in all_props.items():
+            if k not in reserved and v is not None:
+                # If key exists, prefer non-empty values
+                if k not in merged_fields or (not merged_fields[k] and v):
+                    merged_fields[k] = v
+    
+    # Update the target entity
+    update_query = """
+    MATCH (target:Entity {canon_id: $target_id})
+    SET target.canonical_name = $canonical_name,
+        target.aliases = $aliases,
+        target.confidence_level = $confidence_level,
+        target.updated_at = datetime().epochMillis
+    """
+    
+    # Add merged fields to the update
+    for key, value in merged_fields.items():
+        update_query += f"\nSET target.{key} = ${key}"
+    
+    update_params = {
+        "target_id": target_canon_id,
+        "canonical_name": merge_request.target_canonical_name,
+        "aliases": list(combined_aliases),
+        "confidence_level": merge_request.target_confidence_level.value,
+        **merged_fields
+    }
+    
+    await db.execute(update_query, update_params)
+    
+    # Redirect all relationships from source entities to target
+    source_ids = [e["canon_id"] for e in entities if e["canon_id"] != target_canon_id]
+    
+    if source_ids:
+        # Redirect outgoing relationships
+        redirect_out_query = """
+        MATCH (source:Entity)-[r]->(other)
+        WHERE source.canon_id IN $source_ids
+        WITH source, r, other, type(r) AS rel_type, properties(r) AS rel_props
+        MATCH (target:Entity {canon_id: $target_id})
+        WHERE NOT (target)-[]->(other)  // Avoid duplicate relationships
+        CREATE (target)-[new_r:RELATED_TO]->(other)
+        SET new_r = rel_props
+        DELETE r
+        """
+        
+        await db.execute(redirect_out_query, {
+            "source_ids": source_ids,
+            "target_id": target_canon_id
+        })
+        
+        # Redirect incoming relationships
+        redirect_in_query = """
+        MATCH (other)-[r]->(source:Entity)
+        WHERE source.canon_id IN $source_ids
+        WITH source, r, other, type(r) AS rel_type, properties(r) AS rel_props
+        MATCH (target:Entity {canon_id: $target_id})
+        WHERE NOT (other)-[]->(target)  // Avoid duplicate relationships
+        CREATE (other)-[new_r:RELATED_TO]->(target)
+        SET new_r = rel_props
+        DELETE r
+        """
+        
+        await db.execute(redirect_in_query, {
+            "source_ids": source_ids,
+            "target_id": target_canon_id
+        })
+        
+        # Delete source entities
+        delete_query = """
+        MATCH (n:Entity)
+        WHERE n.canon_id IN $source_ids
+        DELETE n
+        """
+        
+        await db.execute(delete_query, {"source_ids": source_ids})
+    
+    await AuditLogger.log(
+        f"Merged entities {merge_request.entity_ids} into {target_canon_id}",
+        level=logging.INFO
+    )
+    
+    # Return the merged entity
+    return await get_entity(target_canon_id, db=db)
+
+
+class EntityBulkDeleteRequest(BaseModel):
+    """Request model for bulk entity deletion."""
+    entity_ids: List[str] = Field(min_length=1, description="List of entity IDs to delete")
+    delete_orphaned_relationships: bool = Field(default=True, description="Whether to delete orphaned relationships")
+
+
+@router.delete("/entities/bulk")
+async def bulk_delete_entities(
+    delete_request: EntityBulkDeleteRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Bulk delete entities.
+    - Deletes multiple entities at once
+    - Optionally deletes orphaned relationships
+    - Returns count of deleted entities
+    """
+    if not delete_request.entity_ids:
+        raise HTTPException(status_code=400, detail="No entity IDs provided")
+    
+    # Check if entities exist and get relationship counts
+    check_query = """
+    MATCH (n:Entity)
+    WHERE n.canon_id IN $entity_ids
+    RETURN n.canon_id AS canon_id,
+           n.canonical_name AS canonical_name,
+           size((n)-[]->()) + size((n)<-[]-()) AS relationship_count
+    """
+    
+    entities = await db.execute(check_query, {"entity_ids": delete_request.entity_ids})
+    
+    if not entities:
+        raise HTTPException(status_code=404, detail="No entities found with provided IDs")
+    
+    # Count entities before deletion
+    entities_to_delete = len(entities)
+    
+    # Delete relationships first
+    if delete_request.delete_orphaned_relationships:
+        delete_rels_query = """
+        MATCH (n:Entity)-[r]-()
+        WHERE n.canon_id IN $entity_ids
+        DELETE r
+        """
+        await db.execute(delete_rels_query, {"entity_ids": delete_request.entity_ids})
+    
+    # Delete entities
+    delete_query = """
+    MATCH (n:Entity)
+    WHERE n.canon_id IN $entity_ids
+    DELETE n
+    """
+    
+    await db.execute(delete_query, {"entity_ids": delete_request.entity_ids})
+    
+    await AuditLogger.log(
+        f"Bulk deleted {entities_to_delete} entities: {delete_request.entity_ids}",
+        level=logging.INFO
+    )
+    
+    return {
+        "deleted_count": entities_to_delete,
+        "entity_ids": delete_request.entity_ids,
+        "entities": [{"canon_id": e["canon_id"], "canonical_name": e["canonical_name"], "relationship_count": e.get("relationship_count", 0)} for e in entities]
+    }
+
+
+@router.patch("/entities/{canon_id}")
+async def update_entity_patch(
+    canon_id: str,
+    updates: Dict[str, Any] = Body(...),
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Update specific properties of an entity.
+    Allows partial updates to entity fields.
+    """
+    # First check if entity exists
+    check_query = "MATCH (n:Entity {canon_id: $canon_id}) RETURN n.canon_id AS canon_id"
+    result = await db.execute(check_query, {"canon_id": canon_id})
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    
+    # Build update query
+    allowed_fields = {
+        "canonical_name", "aliases", "confidence_level", "approval_status",
+        "party_knowledge", "approved_fields"
+    }
+    
+    set_clauses = ["n.updated_at = datetime().epochMillis"]
+    params = {"canon_id": canon_id}
+    
+    for key, value in updates.items():
+        if key in allowed_fields:
+            if key == "approved_fields" and isinstance(value, dict):
+                # Handle approved_fields specially - merge with existing
+                for field_key, field_value in value.items():
+                    if not field_key.startswith("_"):  # Skip internal fields
+                        set_clauses.append(f"n.{field_key} = ${field_key}")
+                        params[field_key] = json.dumps(field_value) if isinstance(field_value, (dict, list)) else field_value
+            else:
+                set_clauses.append(f"n.{key} = ${key}")
+                params[key] = value
+    
+    if len(set_clauses) == 1:  # Only the updated_at clause
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    update_query = f"""
+    MATCH (n:Entity {{canon_id: $canon_id}})
+    SET {', '.join(set_clauses)}
+    RETURN n
+    """
+    
+    await db.execute(update_query, params)
+    
+    await AuditLogger.log(
+        f"Updated entity {canon_id} with fields: {list(updates.keys())}",
+        level=logging.INFO
+    )
+    
+    # Return updated entity
+    return await get_entity(canon_id, db=db)
+
+
 @router.get("/entities/{canon_id}", response_model=EntityResponse)
 async def get_entity(canon_id: str, db: Neo4jDatabase = Depends(get_neo4j_db)):
 
