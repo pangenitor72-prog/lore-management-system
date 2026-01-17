@@ -7670,6 +7670,78 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
             </div>
 
+            <!-- Import Entities Modal (for per-world entity import) -->
+            <div id="wm-import-entities-modal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 15px;">📦 Import Entities to <span id="wm-import-world-name"></span></h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                        Import entities from lore files or text. Entities will be extracted and you can review them before importing.
+                    </p>
+                    
+                    <div id="wm-import-status"></div>
+                    
+                    <!-- Input Method Selection -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button id="wm-import-text-btn" class="btn btn-secondary" onclick="switchImportMethod('text')" style="flex: 1; padding: 10px;">
+                            📝 Paste Text
+                        </button>
+                        <button id="wm-import-file-btn" class="btn btn-secondary" onclick="switchImportMethod('file')" style="flex: 1; padding: 10px;">
+                            📄 Upload File
+                        </button>
+                    </div>
+                    
+                    <!-- Text Input (default) -->
+                    <div id="wm-import-text-input" style="margin-bottom: 20px;">
+                        <label style="display: block; color: var(--text-secondary); margin-bottom: 8px;">Lore Content</label>
+                        <textarea id="wm-import-lore-text" rows="8" placeholder="Paste lore content here... Characters, locations, factions, etc." style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; line-height: 1.5; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div id="wm-import-file-input" style="display: none; margin-bottom: 20px;">
+                        <label style="display: block; color: var(--text-secondary); margin-bottom: 8px;">Upload Lore File</label>
+                        <div id="wm-import-dropzone" style="border: 2px dashed var(--border-subtle); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s;"
+                             ondragover="event.preventDefault(); this.style.borderColor='var(--accent-gold)'; this.style.background='rgba(212,175,55,0.1)';"
+                             ondragleave="this.style.borderColor='var(--border-subtle)'; this.style.background='transparent';"
+                             ondrop="handleImportFileDrop(event)"
+                             onclick="document.getElementById('wm-import-file-picker').click()">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                            <div style="color: var(--text-secondary);">Drop file here or click to browse</div>
+                            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">.txt, .md files supported</div>
+                        </div>
+                        <input type="file" id="wm-import-file-picker" accept=".txt,.md" style="display: none;" onchange="handleImportFileSelect(event)">
+                        <div id="wm-import-file-name" style="margin-top: 10px; color: var(--text-secondary); font-size: 0.9rem;"></div>
+                    </div>
+                    
+                    <!-- Entity Review Panel (hidden until extraction completes) -->
+                    <div id="wm-import-review-panel" style="display: none; margin-top: 20px;">
+                        <div style="background: var(--bg-secondary); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h4 style="margin: 0; color: var(--text-primary);">Review Extracted Entities</h4>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary" onclick="wmSelectAllEntities()" style="padding: 6px 12px; font-size: 0.85rem;">✓ Select All</button>
+                                    <button class="btn btn-secondary" onclick="wmDeselectAllEntities()" style="padding: 6px 12px; font-size: 0.85rem;">✗ Deselect All</button>
+                                </div>
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">
+                                Found <span id="wm-import-total-count">0</span> entities | Selected: <span id="wm-import-selected-count">0</span>
+                            </div>
+                            <div id="wm-import-entity-list" style="max-height: 400px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--bg-card); padding-top: 15px; border-top: 1px solid var(--border-subtle);">
+                        <button class="btn btn-secondary" onclick="closeImportEntitiesModal()">Cancel</button>
+                        <button id="wm-import-extract-btn" class="btn btn-primary" onclick="extractEntitiesForImport()" style="background: var(--accent-lavender); color: var(--bg-primary);">
+                            🔍 Extract Entities
+                        </button>
+                        <button id="wm-import-commit-btn" class="btn btn-primary" onclick="commitImportedEntities()" disabled style="background: var(--accent-gold); color: var(--bg-primary); opacity: 0.5;">
+                            📦 Import Selected (<span id="wm-import-commit-count">0</span>)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- World Creator (for Jim) -->
             <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-gold); margin-bottom: 5px;">🌍 World Creator</h3>
@@ -17112,6 +17184,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 <button class="btn btn-secondary" onclick="openAddLoreModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem;">
                                     📁 Add Lore Files
                                 </button>
+                                <button class="btn btn-secondary" onclick="openImportEntitiesModal('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-gold); color: var(--bg-primary);">
+                                    📦 Import Entities
+                                </button>
                                 <button class="btn btn-secondary" onclick="toggleWorldLoreEditor('${world.id}')" style="padding: 6px 12px; font-size: 0.85rem;">
                                     ✏️ Edit Raw Lore
                                 </button>
@@ -17521,6 +17596,314 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             } catch (err) {
                 showStatus('wm-add-lore-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        // ===== Import Entities Modal =====
+        let wmImportWorldId = null;
+        let wmImportWorldName = null;
+        let wmImportEntities = [];
+        let wmImportMethod = 'text'; // 'text' or 'file'
+
+        function openImportEntitiesModal(worldId, worldName) {
+            wmImportWorldId = worldId;
+            wmImportWorldName = worldName;
+            wmImportEntities = [];
+            wmImportMethod = 'text';
+            
+            document.getElementById('wm-import-world-name').textContent = worldName;
+            document.getElementById('wm-import-lore-text').value = '';
+            document.getElementById('wm-import-file-name').textContent = '';
+            document.getElementById('wm-import-review-panel').style.display = 'none';
+            document.getElementById('wm-import-commit-btn').disabled = true;
+            clearStatus('wm-import-status');
+            
+            switchImportMethod('text');
+            document.getElementById('wm-import-entities-modal').style.display = 'flex';
+        }
+
+        function closeImportEntitiesModal() {
+            document.getElementById('wm-import-entities-modal').style.display = 'none';
+            wmImportWorldId = null;
+            wmImportWorldName = null;
+            wmImportEntities = [];
+        }
+
+        function switchImportMethod(method) {
+            wmImportMethod = method;
+            const textBtn = document.getElementById('wm-import-text-btn');
+            const fileBtn = document.getElementById('wm-import-file-btn');
+            const textInput = document.getElementById('wm-import-text-input');
+            const fileInput = document.getElementById('wm-import-file-input');
+            
+            if (method === 'text') {
+                textBtn.style.background = 'var(--accent-lavender)';
+                textBtn.style.color = 'var(--bg-primary)';
+                fileBtn.style.background = 'var(--bg-secondary)';
+                fileBtn.style.color = 'var(--text-primary)';
+                textInput.style.display = 'block';
+                fileInput.style.display = 'none';
+            } else {
+                fileBtn.style.background = 'var(--accent-lavender)';
+                fileBtn.style.color = 'var(--bg-primary)';
+                textBtn.style.background = 'var(--bg-secondary)';
+                textBtn.style.color = 'var(--text-primary)';
+                textInput.style.display = 'none';
+                fileInput.style.display = 'block';
+            }
+        }
+
+        function handleImportFileDrop(event) {
+            event.preventDefault();
+            event.target.style.borderColor = 'var(--border-subtle)';
+            event.target.style.background = 'transparent';
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                processImportFile(files[0]);
+            }
+        }
+
+        function handleImportFileSelect(event) {
+            if (event.target.files.length > 0) {
+                processImportFile(event.target.files[0]);
+            }
+        }
+
+        async function processImportFile(file) {
+            if (!file.name.match(/\.(txt|md)$/i)) {
+                showStatus('wm-import-status', 'Only .txt and .md files are supported', 'error');
+                return;
+            }
+            
+            try {
+                const content = await file.text();
+                document.getElementById('wm-import-lore-text').value = content;
+                document.getElementById('wm-import-file-name').textContent = `📄 ${file.name} (${content.length.toLocaleString()} chars)`;
+            } catch (err) {
+                showStatus('wm-import-status', `Error reading file: ${err.message}`, 'error');
+            }
+        }
+
+        async function extractEntitiesForImport() {
+            const content = document.getElementById('wm-import-lore-text').value.trim();
+            
+            if (!content) {
+                showStatus('wm-import-status', 'Please enter or upload lore content', 'error');
+                return;
+            }
+            
+            if (!wmImportWorldId) {
+                showStatus('wm-import-status', 'No world selected', 'error');
+                return;
+            }
+            
+            showStatus('wm-import-status', '<span class="loading"></span> Extracting entities... (this may take 30-60 seconds)', 'info');
+            document.getElementById('wm-import-extract-btn').disabled = true;
+            
+            try {
+                const response = await fetch(API_BASE + `/game/lore-bases/${wmImportWorldId}/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lore_content: content })
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ detail: 'Extraction failed' }));
+                    throw new Error(err.detail || 'Extraction failed');
+                }
+                
+                const data = await response.json();
+                
+                if (!data.entities || data.entities.length === 0) {
+                    showStatus('wm-import-status', 'No entities found in the lore. Try adding more detailed content.', 'warning');
+                    document.getElementById('wm-import-extract-btn').disabled = false;
+                    return;
+                }
+                
+                // Initialize import entities with selection state
+                wmImportEntities = data.entities.map((entity, index) => ({
+                    ...entity,
+                    id: index,
+                    selected: true,
+                    editing: false
+                }));
+                
+                // Show success message
+                const entityTypeCounts = {};
+                wmImportEntities.forEach(e => {
+                    entityTypeCounts[e.type] = (entityTypeCounts[e.type] || 0) + 1;
+                });
+                
+                const typeSummary = Object.entries(entityTypeCounts)
+                    .map(([type, count]) => `${count} ${type}${count > 1 ? 's' : ''}`)
+                    .join(', ');
+                
+                showStatus('wm-import-status', `✓ Extraction complete! Found ${typeSummary}. Review below before importing.`, 'success');
+                
+                // Render entities and show review panel
+                renderImportEntities();
+                updateImportCounts();
+                document.getElementById('wm-import-review-panel').style.display = 'block';
+                document.getElementById('wm-import-extract-btn').disabled = false;
+                
+            } catch (err) {
+                showStatus('wm-import-status', `❌ Extraction failed: ${err.message}`, 'error');
+                document.getElementById('wm-import-extract-btn').disabled = false;
+            }
+        }
+
+        function renderImportEntities() {
+            const container = document.getElementById('wm-import-entity-list');
+            
+            if (wmImportEntities.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No entities extracted yet</div>';
+                return;
+            }
+            
+            container.innerHTML = wmImportEntities.map(entity => {
+                const isSelected = entity.selected;
+                return `
+                    <div style="background: var(--bg-primary); border: 1px solid ${isSelected ? 'var(--accent-gold)' : 'var(--border-subtle)'}; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleImportEntitySelection(${entity.id})" style="width: 18px; height: 18px; cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">${escapeHtml(entity.name)}</div>
+                                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                                        <span style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px;">${entity.type}</span>
+                                    </div>
+                                    ${entity.description ? `<div style="color: var(--text-secondary); font-size: 0.9rem;">${escapeHtml(entity.description).substring(0, 150)}${entity.description.length > 150 ? '...' : ''}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleImportEntitySelection(id) {
+            const entity = wmImportEntities.find(e => e.id === id);
+            if (entity) {
+                entity.selected = !entity.selected;
+                renderImportEntities();
+                updateImportCounts();
+            }
+        }
+
+        function wmSelectAllEntities() {
+            wmImportEntities.forEach(e => e.selected = true);
+            renderImportEntities();
+            updateImportCounts();
+        }
+
+        function wmDeselectAllEntities() {
+            wmImportEntities.forEach(e => e.selected = false);
+            renderImportEntities();
+            updateImportCounts();
+        }
+
+        function updateImportCounts() {
+            const total = wmImportEntities.length;
+            const selected = wmImportEntities.filter(e => e.selected).length;
+            
+            document.getElementById('wm-import-total-count').textContent = total;
+            document.getElementById('wm-import-selected-count').textContent = selected;
+            document.getElementById('wm-import-commit-count').textContent = selected;
+            
+            const commitBtn = document.getElementById('wm-import-commit-btn');
+            commitBtn.disabled = selected === 0;
+            commitBtn.style.opacity = selected === 0 ? '0.5' : '1';
+        }
+
+        async function commitImportedEntities() {
+            const selectedEntities = wmImportEntities.filter(e => e.selected);
+            
+            if (selectedEntities.length === 0) {
+                showStatus('wm-import-status', 'No entities selected. Select at least one entity to import.', 'error');
+                return;
+            }
+            
+            if (!wmImportWorldId) {
+                showStatus('wm-import-status', 'No world selected', 'error');
+                return;
+            }
+            
+            showStatus('wm-import-status', `<span class="loading"></span> Importing ${selectedEntities.length} entities to ${wmImportWorldName}...`, 'info');
+            document.getElementById('wm-import-commit-btn').disabled = true;
+            
+            try {
+                // Format entities for backend - include all fields from preview
+                const approvedEntities = selectedEntities.map(e => ({
+                    name: e.name,
+                    type: e.type,
+                    description: e.description || null,
+                    traits: e.traits || [],
+                    aliases: e.aliases || [],
+                    tags: e.tags || [],
+                    goals: e.goals || [],
+                    secrets: e.secrets || [],
+                    fears: e.fears || [],
+                    temporal_cues: e.temporal_cues || [],
+                    verbatim_text: e.verbatim_text || null,
+                    // Include OCEAN profile if present (for characters)
+                    openness: e.openness,
+                    conscientiousness: e.conscientiousness,
+                    extraversion: e.extraversion,
+                    agreeableness: e.agreeableness,
+                    neuroticism: e.neuroticism
+                }));
+                
+                // Get the lore content
+                const loreContent = document.getElementById('wm-import-lore-text').value.trim();
+                
+                // Update the world's lore content first (append to existing)
+                const world = worldManagerData?.worlds?.find(w => w.id === wmImportWorldId);
+                const existingLore = world?.lore_content || '';
+                const sourceName = `import_${Date.now()}`;
+                const newLore = existingLore + `\n\n--- IMPORTED: ${sourceName} ---\n\n${loreContent}`;
+                
+                const updateRes = await fetch(API_BASE + `/game/admin/lore-bases/${wmImportWorldId}/lore`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lore_content: newLore })
+                });
+                
+                if (!updateRes.ok) {
+                    throw new Error('Failed to update world lore');
+                }
+                
+                // Now import the entities - use existing world endpoint that accepts approved_entities
+                const importRes = await fetch(API_BASE + `/game/lore-bases/${wmImportWorldId}/entities`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        entities: approvedEntities,
+                        source_name: sourceName
+                    })
+                });
+                
+                if (!importRes.ok) {
+                    const err = await importRes.json().catch(() => ({ detail: 'Import failed' }));
+                    throw new Error(err.detail || 'Import failed');
+                }
+                
+                const result = await importRes.json();
+                
+                showStatus('wm-import-status', `✓ Successfully imported ${selectedEntities.length} entities to "${wmImportWorldName}"`, 'success');
+                
+                // Refresh world manager after a short delay
+                setTimeout(() => {
+                    closeImportEntitiesModal();
+                    loadWorldManagerData();
+                    if (expandedWorlds.has(wmImportWorldId)) {
+                        loadWorldEntities(wmImportWorldId);
+                    }
+                }, 2000);
+                
+            } catch (err) {
+                showStatus('wm-import-status', `❌ Import failed: ${err.message}`, 'error');
+                document.getElementById('wm-import-commit-btn').disabled = false;
             }
         }
 

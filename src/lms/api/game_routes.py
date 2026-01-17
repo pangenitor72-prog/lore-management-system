@@ -4040,6 +4040,148 @@ async def preview_lore_extraction(
         )
 
 
+@router.post("/lore-bases/{lore_id}/entities")
+async def import_entities_to_world(
+    lore_id: str,
+    entities_req: dict,
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+):
+    """
+    Import pre-reviewed entities to an existing world.
+    
+    This endpoint is for human-in-the-loop entity import where entities
+    have already been extracted and reviewed by the user.
+    
+    Body should contain:
+    - entities: List of entity dicts (from preview response)
+    - source_name: Optional source identifier for tracking
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+    
+    entities = entities_req.get("entities", [])
+    source_name = entities_req.get("source_name", f"import_{uuid.uuid4().hex[:8]}")
+    
+    if not entities:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No entities provided"
+        )
+    
+    # Validate database connection
+    if db is None:
+        logger.error("Database connection is None when importing entities")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection unavailable"
+        )
+    
+    logger.info(f"Importing {len(entities)} entities to world {lore_id}, source: {source_name}")
+    
+    entities_created = 0
+    lore_base = LORE_BASES[lore_id]
+    primary_genre = lore_base.get("genre", "fantasy")
+    
+    try:
+        for entity in entities:
+            entity_type = entity.get("type", "").capitalize()
+            entity_name = entity.get("name", "Unknown")
+            
+            # Generate canon_id
+            name_slug = entity_name.lower().replace(' ', '_').replace("'", "")
+            canon_id = f"{lore_id}:{name_slug}"
+            
+            # Build properties dict with all available fields
+            props = {
+                "canon_id": canon_id,
+                "name": entity_name,
+                "canonical_name": entity_name,
+                "description": entity.get("description", ""),
+                "world_id": lore_id,
+                "curated_world_id": lore_id,
+                "source": f"lore_base:{lore_id}:{source_name}",
+                "source_name": source_name,
+                "genre": primary_genre,
+                "entity_type": entity_type,
+                "approval_status": "APPROVED",
+                "confidence_level": "HUMAN_REVIEWED",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+            
+            # Add optional fields if present
+            if entity.get("traits"):
+                props["personality_traits"] = entity["traits"]
+            if entity.get("aliases"):
+                props["aliases"] = entity["aliases"]
+            if entity.get("tags"):
+                props["tags"] = entity["tags"]
+            if entity.get("goals"):
+                props["goals"] = entity["goals"]
+            if entity.get("secrets"):
+                props["secrets"] = entity["secrets"]
+            if entity.get("fears"):
+                props["fears"] = entity["fears"]
+            if entity.get("temporal_cues"):
+                props["temporal_cues"] = entity["temporal_cues"]
+            if entity.get("verbatim_text"):
+                props["verbatim_text"] = entity["verbatim_text"]
+            
+            # Add OCEAN profile for characters
+            if entity_type == "Character":
+                if entity.get("openness") is not None:
+                    props["openness"] = float(entity["openness"])
+                if entity.get("conscientiousness") is not None:
+                    props["conscientiousness"] = float(entity["conscientiousness"])
+                if entity.get("extraversion") is not None:
+                    props["extraversion"] = float(entity["extraversion"])
+                if entity.get("agreeableness") is not None:
+                    props["agreeableness"] = float(entity["agreeableness"])
+                if entity.get("neuroticism") is not None:
+                    props["neuroticism"] = float(entity["neuroticism"])
+            
+            # Create or merge entity node
+            safe_label = "".join([c for c in entity_type if c.isalnum()])
+            
+            query = f"""
+            MERGE (n:`{safe_label}` {{canon_id: $canon_id}})
+            ON CREATE SET n = $props
+            ON MATCH SET n += $props
+            SET n:Entity
+            SET n.updated_at = $updated_at
+            RETURN n.canon_id as id
+            """
+            
+            await db.execute(query, {
+                "canon_id": canon_id,
+                "props": props,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            })
+            
+            entities_created += 1
+        
+        # Update entity count in LORE_BASES
+        LORE_BASES[lore_id]["entities_count"] = LORE_BASES[lore_id].get("entities_count", 0) + entities_created
+        
+        logger.info(f"Successfully imported {entities_created} entities to {lore_id}")
+        
+        return {
+            "lore_id": lore_id,
+            "entities_imported": entities_created,
+            "source_name": source_name,
+            "message": f"Successfully imported {entities_created} entities to world '{lore_base['name']}'"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to import entities to {lore_id}: {type(e).__name__}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to import entities: {str(e)}"
+        )
+
+
 @router.get("/lore-bases/{lore_id}/entities")
 async def get_world_entities(
     lore_id: str,
@@ -4055,12 +4197,23 @@ async def get_world_entities(
     Includes source_name for grouping by import source.
     """
     if lore_id not in LORE_BASES:
+        logger.warning(f"Lore base not found in LORE_BASES: {lore_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Lore base '{lore_id}' not found"
         )
 
+    # Validate database connection
+    if db is None:
+        logger.error("Database connection is None when fetching entities")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection unavailable"
+        )
+
     try:
+        logger.info(f"Fetching entities for world: {lore_id}, type: {entity_type}, source: {source_name}, limit: {limit}")
+        
         query = """
             MATCH (e:Entity)
             WHERE e.world_id = $world_id OR e.curated_world_id = $world_id
@@ -4102,6 +4255,8 @@ async def get_world_entities(
                 "created_at": record.get("created_at"),
             })
 
+        logger.info(f"Successfully fetched {len(entities)} entities for world {lore_id}")
+        
         return {
             "world_id": lore_id,
             "count": len(entities),
@@ -4109,7 +4264,7 @@ async def get_world_entities(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get entities for {lore_id}: {e}")
+        logger.error(f"Failed to get entities for {lore_id}: {type(e).__name__}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get entities: {str(e)}"
