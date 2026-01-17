@@ -813,100 +813,119 @@ async def get_entities_for_management(
     Returns entities sorted by confidence level (least to most confident).
     Confidence order: UNCERTAIN → SPECULATIVE → PROBABLE → AI_GENERATED → CONFIRMED
     """
-    query = "MATCH (n:Entity)"
-    where = []
-    params = {}
+    # Validate database connection
+    if db is None:
+        logger.error("Database connection is None when fetching entities for management")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection unavailable"
+        )
+    
+    try:
+        logger.info(f"Fetching entities for management - world_id: {world_id}, type: {entity_type}, confidence: {confidence_level}, search: {search}")
+        
+        query = "MATCH (n:Entity)"
+        where = []
+        params = {}
 
-    if world_id:
-        where.append("n.world_id = $world_id")
-        params["world_id"] = world_id
+        if world_id:
+            where.append("n.world_id = $world_id")
+            params["world_id"] = world_id
 
-    if entity_type:
-        where.append("n.entity_type = $type")
-        params["type"] = entity_type.value
+        if entity_type:
+            where.append("n.entity_type = $type")
+            params["type"] = entity_type.value
 
-    if confidence_level:
-        where.append("n.confidence_level = $confidence")
-        params["confidence"] = confidence_level.value
+        if confidence_level:
+            where.append("n.confidence_level = $confidence")
+            params["confidence"] = confidence_level.value
 
-    if search:
-        where.append("(toLower(n.canonical_name) CONTAINS toLower($search) OR any(alias IN n.aliases WHERE toLower(alias) CONTAINS toLower($search)))")
-        params["search"] = search
+        if search:
+            where.append("(toLower(n.canonical_name) CONTAINS toLower($search) OR any(alias IN n.aliases WHERE toLower(alias) CONTAINS toLower($search)))")
+            params["search"] = search
 
-    if where:
-        query += " WHERE " + " AND ".join(where)
+        if where:
+            query += " WHERE " + " AND ".join(where)
 
-    # Custom ORDER BY to sort by confidence level (least to most confident)
-    query += """
-    RETURN n.canon_id AS canon_id,
-           n.entity_type AS entity_type,
-           COALESCE(n.canonical_name, n.name) AS canonical_name,
-           COALESCE(n.aliases, []) AS aliases,
-           COALESCE(n.approval_status, 'PENDING') AS approval_status,
-           COALESCE(n.confidence_level, 'AI_GENERATED') AS confidence_level,
-           n.party_knowledge AS party_knowledge,
-           COALESCE(n.created_at, datetime().epochMillis) AS created_at,
-           COALESCE(n.updated_at, n.created_at, datetime().epochMillis) AS updated_at,
-           properties(n) AS all_props,
-           size((n)-[]->()) + size((n)<-[]-()) AS relationship_count
-    ORDER BY 
-        CASE n.confidence_level
-            WHEN 'UNCERTAIN' THEN 1
-            WHEN 'SPECULATIVE' THEN 2
-            WHEN 'PROBABLE' THEN 3
-            WHEN 'AI_GENERATED' THEN 4
-            WHEN 'CONFIRMED' THEN 5
-            ELSE 0
-        END ASC,
-        n.canonical_name ASC
-    """
+        # Custom ORDER BY to sort by confidence level (least to most confident)
+        query += """
+        RETURN n.canon_id AS canon_id,
+               n.entity_type AS entity_type,
+               COALESCE(n.canonical_name, n.name) AS canonical_name,
+               COALESCE(n.aliases, []) AS aliases,
+               COALESCE(n.approval_status, 'PENDING') AS approval_status,
+               COALESCE(n.confidence_level, 'AI_GENERATED') AS confidence_level,
+               n.party_knowledge AS party_knowledge,
+               COALESCE(n.created_at, datetime().epochMillis) AS created_at,
+               COALESCE(n.updated_at, n.created_at, datetime().epochMillis) AS updated_at,
+               properties(n) AS all_props,
+               size((n)-[]->()) + size((n)<-[]-()) AS relationship_count
+        ORDER BY 
+            CASE n.confidence_level
+                WHEN 'UNCERTAIN' THEN 1
+                WHEN 'SPECULATIVE' THEN 2
+                WHEN 'PROBABLE' THEN 3
+                WHEN 'AI_GENERATED' THEN 4
+                WHEN 'CONFIRMED' THEN 5
+                ELSE 0
+            END ASC,
+            n.canonical_name ASC
+        """
 
-    rows = await db.execute(query, params)
+        rows = await db.execute(query, params)
 
-    reserved = {
-        "canon_id", "entity_type", "canonical_name", "aliases",
-        "approval_status", "confidence_level", "party_knowledge",
-        "created_at", "updated_at", "name", "embedding",
-    }
-
-    # Handle date parsing - may be ISO string or Neo4j datetime
-    def parse_date(val):
-        if val is None:
-            return datetime.now(timezone.utc)
-        if isinstance(val, str):
-            return datetime.fromisoformat(val.replace('Z', '+00:00'))
-        if isinstance(val, (int, float)):
-            return datetime.fromtimestamp(val / 1000, tz=timezone.utc)
-        return datetime.now(timezone.utc)
-
-    out = []
-    for row in rows:
-        all_props = row["all_props"]
-        approved_fields = {}
-
-        for k, v in all_props.items():
-            if k not in reserved:
-                try:
-                    approved_fields[k] = json.loads(v)
-                except (json.JSONDecodeError, TypeError, ValueError):
-                    approved_fields[k] = v
-
-        entity_dict = {
-            "canon_id": row["canon_id"],
-            "entity_type": row["entity_type"],
-            "canonical_name": row["canonical_name"] or "Unknown",
-            "aliases": row["aliases"] or [],
-            "approved_fields": approved_fields,
-            "approval_status": row["approval_status"],
-            "confidence_level": row["confidence_level"],
-            "party_knowledge": row.get("party_knowledge") or "KNOWN",
-            "created_at": parse_date(row.get("created_at")),
-            "updated_at": parse_date(row.get("updated_at")),
-            "relationship_count": row.get("relationship_count", 0)
+        reserved = {
+            "canon_id", "entity_type", "canonical_name", "aliases",
+            "approval_status", "confidence_level", "party_knowledge",
+            "created_at", "updated_at", "name", "embedding",
         }
-        out.append(entity_dict)
 
-    return out
+        # Handle date parsing - may be ISO string or Neo4j datetime
+        def parse_date(val):
+            if val is None:
+                return datetime.now(timezone.utc)
+            if isinstance(val, str):
+                return datetime.fromisoformat(val.replace('Z', '+00:00'))
+            if isinstance(val, (int, float)):
+                return datetime.fromtimestamp(val / 1000, tz=timezone.utc)
+            return datetime.now(timezone.utc)
+
+        out = []
+        for row in rows:
+            all_props = row["all_props"]
+            approved_fields = {}
+
+            for k, v in all_props.items():
+                if k not in reserved:
+                    try:
+                        approved_fields[k] = json.loads(v)
+                    except (json.JSONDecodeError, TypeError, ValueError):
+                        approved_fields[k] = v
+
+            entity_dict = {
+                "canon_id": row["canon_id"],
+                "entity_type": row["entity_type"],
+                "canonical_name": row["canonical_name"] or "Unknown",
+                "aliases": row["aliases"] or [],
+                "approved_fields": approved_fields,
+                "approval_status": row["approval_status"],
+                "confidence_level": row["confidence_level"],
+                "party_knowledge": row.get("party_knowledge") or "KNOWN",
+                "created_at": parse_date(row.get("created_at")),
+                "updated_at": parse_date(row.get("updated_at")),
+                "relationship_count": row.get("relationship_count", 0)
+            }
+            out.append(entity_dict)
+
+        logger.info(f"Successfully fetched {len(out)} entities for management")
+        return out
+        
+    except Exception as e:
+        logger.error(f"Failed to get entities for management: {type(e).__name__}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get entities: {str(e)}"
+        )
 
 
 @router.get("/entities/duplicates")

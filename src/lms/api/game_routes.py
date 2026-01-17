@@ -4055,12 +4055,23 @@ async def get_world_entities(
     Includes source_name for grouping by import source.
     """
     if lore_id not in LORE_BASES:
+        logger.warning(f"Lore base not found in LORE_BASES: {lore_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Lore base '{lore_id}' not found"
         )
 
+    # Validate database connection
+    if db is None:
+        logger.error("Database connection is None when fetching entities")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database connection unavailable"
+        )
+
     try:
+        logger.info(f"Fetching entities for world: {lore_id}, type: {entity_type}, source: {source_name}, limit: {limit}")
+        
         query = """
             MATCH (e:Entity)
             WHERE e.world_id = $world_id OR e.curated_world_id = $world_id
@@ -4102,6 +4113,8 @@ async def get_world_entities(
                 "created_at": record.get("created_at"),
             })
 
+        logger.info(f"Successfully fetched {len(entities)} entities for world {lore_id}")
+        
         return {
             "world_id": lore_id,
             "count": len(entities),
@@ -4109,7 +4122,7 @@ async def get_world_entities(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get entities for {lore_id}: {e}")
+        logger.error(f"Failed to get entities for {lore_id}: {type(e).__name__}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get entities: {str(e)}"
