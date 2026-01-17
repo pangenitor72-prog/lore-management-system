@@ -18691,7 +18691,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 </div>
             `;
 
-            modal.classList.add('visible');
+            modal.classList.add('active');
         }
 
         function getCategoryColor(category) {
@@ -18706,7 +18706,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closeUncertaintiesModal() {
             const modal = document.getElementById('uncertainties-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
         }
 
         // ============================================================
@@ -18743,7 +18743,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             renderCurrentPendingDuplicate();
-            modal.classList.add('visible');
+            modal.classList.add('active');
         }
 
         function renderCurrentPendingDuplicate() {
@@ -18877,7 +18877,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closePendingDuplicatesModal() {
             const modal = document.getElementById('pending-duplicates-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
             pendingDuplicatesQueue = [];
             currentPendingIndex = 0;
         }
@@ -18941,7 +18941,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('entity-manager-search').value = '';
             document.getElementById('entity-manager-type-filter').value = 'all';
 
-            modal.classList.add('visible');
+            modal.classList.add('active');
             await loadEntityManagerData();
         }
 
@@ -19162,7 +19162,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             `;
 
             document.getElementById('entity-editor-status').textContent = '';
-            modal.classList.add('visible');
+            modal.classList.add('active');
         }
 
         async function saveEntityEdits() {
@@ -19230,12 +19230,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closeEntityEditor() {
             const modal = document.getElementById('entity-editor-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
         }
 
         function closeEntityManager() {
             const modal = document.getElementById('entity-manager-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
             // Refresh world manager to show updated counts
             loadWorldManagerData();
         }
@@ -19311,7 +19311,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 </div>
             `;
 
-            modal.classList.add('visible');
+            modal.classList.add('active');
         }
 
         function renderDuplicatePairs(pairs) {
@@ -19449,7 +19449,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closeDuplicatesModal() {
             const modal = document.getElementById('duplicates-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
             currentDuplicates = [];
             currentDuplicateWorldId = null;
         }
