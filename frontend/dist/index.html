@@ -19265,9 +19265,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                            style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);">
                 </div>
 
-                ${entity.entity_type === 'Character' ? `
+                ${['Character', 'Faction'].includes(entity.entity_type) ? `
                     <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 1.5rem 0;">
-                    <h3 style="color: var(--accent-lavender); margin-bottom: 1rem;">🧠 Character Details</h3>
+                    <h3 style="color: var(--accent-lavender); margin-bottom: 1rem;">${entity.entity_type === 'Character' ? '🧠 Character Details' : '🏛️ Faction Details'}</h3>
 
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">Goals (one per line)</label>
@@ -19282,41 +19282,43 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     </div>
 
                     <div style="margin-bottom: 1rem;">
-                        <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">Fears (one per line)</label>
+                        <label style="display: block; color: var(--text-secondary); margin-bottom: 4px; font-size: 0.85rem;">${entity.entity_type === 'Character' ? 'Fears' : 'Vulnerabilities'} (one per line)</label>
                         <textarea id="edit-entity-fears" rows="2"
                                   style="width: 100%; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary); resize: vertical;">${(entity.fears || []).join('\n')}</textarea>
                     </div>
 
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.85rem;">OCEAN Personality (0.0 - 1.0)</label>
-                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
-                            <div>
-                                <label style="font-size: 0.75rem; color: var(--text-muted);">Openness</label>
-                                <input type="number" id="edit-ocean-o" min="0" max="1" step="0.1" value="${entity.openness ?? 0.5}"
-                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
-                            </div>
-                            <div>
-                                <label style="font-size: 0.75rem; color: var(--text-muted);">Conscient.</label>
-                                <input type="number" id="edit-ocean-c" min="0" max="1" step="0.1" value="${entity.conscientiousness ?? 0.5}"
-                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
-                            </div>
-                            <div>
-                                <label style="font-size: 0.75rem; color: var(--text-muted);">Extraver.</label>
-                                <input type="number" id="edit-ocean-e" min="0" max="1" step="0.1" value="${entity.extraversion ?? 0.5}"
-                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
-                            </div>
-                            <div>
-                                <label style="font-size: 0.75rem; color: var(--text-muted);">Agreeab.</label>
-                                <input type="number" id="edit-ocean-a" min="0" max="1" step="0.1" value="${entity.agreeableness ?? 0.5}"
-                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
-                            </div>
-                            <div>
-                                <label style="font-size: 0.75rem; color: var(--text-muted);">Neurotic.</label>
-                                <input type="number" id="edit-ocean-n" min="0" max="1" step="0.1" value="${entity.neuroticism ?? 0.5}"
-                                       style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                    ${entity.entity_type === 'Character' ? `
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.85rem;">OCEAN Personality (0.0 - 1.0)</label>
+                            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Openness</label>
+                                    <input type="number" id="edit-ocean-o" min="0" max="1" step="0.1" value="${entity.openness ?? 0.5}"
+                                           style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Conscient.</label>
+                                    <input type="number" id="edit-ocean-c" min="0" max="1" step="0.1" value="${entity.conscientiousness ?? 0.5}"
+                                           style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Extraver.</label>
+                                    <input type="number" id="edit-ocean-e" min="0" max="1" step="0.1" value="${entity.extraversion ?? 0.5}"
+                                           style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Agreeab.</label>
+                                    <input type="number" id="edit-ocean-a" min="0" max="1" step="0.1" value="${entity.agreeableness ?? 0.5}"
+                                           style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-muted);">Neurotic.</label>
+                                    <input type="number" id="edit-ocean-n" min="0" max="1" step="0.1" value="${entity.neuroticism ?? 0.5}"
+                                           style="width: 100%; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary);">
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ` : ''}
                 ` : ''}
             `;
 
@@ -19335,8 +19337,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 aliases: document.getElementById('edit-entity-aliases').value.split(',').map(a => a.trim()).filter(a => a)
             };
 
-            // Add character-specific fields if it's a character
-            if (entity.entity_type === 'Character') {
+            // Add goals/secrets/fears for Characters and Factions
+            if (['Character', 'Faction'].includes(entity.entity_type)) {
                 const goalsEl = document.getElementById('edit-entity-goals');
                 const secretsEl = document.getElementById('edit-entity-secrets');
                 const fearsEl = document.getElementById('edit-entity-fears');
@@ -19345,17 +19347,20 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 if (secretsEl) updates.secrets = secretsEl.value.split('\n').map(s => s.trim()).filter(s => s);
                 if (fearsEl) updates.fears = fearsEl.value.split('\n').map(f => f.trim()).filter(f => f);
 
-                const oEl = document.getElementById('edit-ocean-o');
-                const cEl = document.getElementById('edit-ocean-c');
-                const eEl = document.getElementById('edit-ocean-e');
-                const aEl = document.getElementById('edit-ocean-a');
-                const nEl = document.getElementById('edit-ocean-n');
+                // OCEAN personality is only for Characters
+                if (entity.entity_type === 'Character') {
+                    const oEl = document.getElementById('edit-ocean-o');
+                    const cEl = document.getElementById('edit-ocean-c');
+                    const eEl = document.getElementById('edit-ocean-e');
+                    const aEl = document.getElementById('edit-ocean-a');
+                    const nEl = document.getElementById('edit-ocean-n');
 
-                if (oEl) updates.openness = parseFloat(oEl.value);
-                if (cEl) updates.conscientiousness = parseFloat(cEl.value);
-                if (eEl) updates.extraversion = parseFloat(eEl.value);
-                if (aEl) updates.agreeableness = parseFloat(aEl.value);
-                if (nEl) updates.neuroticism = parseFloat(nEl.value);
+                    if (oEl) updates.openness = parseFloat(oEl.value);
+                    if (cEl) updates.conscientiousness = parseFloat(cEl.value);
+                    if (eEl) updates.extraversion = parseFloat(eEl.value);
+                    if (aEl) updates.agreeableness = parseFloat(aEl.value);
+                    if (nEl) updates.neuroticism = parseFloat(nEl.value);
+                }
             }
 
             document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Saving...';

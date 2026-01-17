@@ -334,9 +334,9 @@ NEUROTICISM: brave, calm, stoic, fearful, anxious, paranoid, confident, nervous,
 | entity_type | Yes | One of: Character, Location, Faction, Item, Event, Concept |
 | description | Yes | 2-3 sentences: who/what it is, why it matters to the narrative |
 | traits | Characters only | Personality traits from vocabulary above (3-6 traits) |
-| goals | Characters only | What they want (1-3 goals, inferred if not stated) |
-| secrets | Characters only | What they hide (can be empty if truly open) |
-| fears | Characters only | What they fear (can be empty if fearless) |
+| goals | Characters/Factions | What they want (1-3 goals, inferred if not stated) |
+| secrets | Characters/Factions | What they hide (can be empty if truly open) |
+| fears | Characters/Factions | What they fear/vulnerabilities (can be empty if none) |
 | tags | Yes | Role/category tags: ["warrior", "noble", "haunted", "ancient", "criminal"] |
 | temporal_cues | If present | Time references: ["during the war", "500 years ago", "before the fall"] |
 | verbatim_text | Yes | EXACT quote from source text (for citation/verification) |
@@ -1334,8 +1334,8 @@ TEXT TO ANALYZE:
                     if entity.description and len(entity.description) > len(existing.get("description") or ""):
                         update_props["description"] = entity.description
 
-                    # Merge goals, secrets, fears for characters
-                    if entity.entity_type == "Character":
+                    # Merge goals, secrets, fears for characters and factions
+                    if entity.entity_type in ["Character", "Faction"]:
                         for field in ["goals", "secrets", "fears"]:
                             existing_vals = getattr(entity, field, []) or []
                             if existing_vals:
@@ -1436,6 +1436,16 @@ TEXT TO ANALYZE:
                 except Exception as ocean_err:
                     logger.error(f"[LORE INGESTION] OCEAN generation failed for '{entity.name}': {ocean_err}", exc_info=True)
                     # Continue without OCEAN profile rather than failing the entire entity
+
+            # Store goals, secrets, fears for Factions (collective motivations)
+            elif entity.entity_type == "Faction":
+                if entity.goals:
+                    props["goals"] = entity.goals
+                if entity.secrets:
+                    props["secrets"] = entity.secrets
+                if entity.fears:
+                    props["fears"] = entity.fears
+                logger.debug(f"[LORE INGESTION] Added faction motivations for '{entity.name}'")
 
             try:
                 # Use parameterized label (safe because we control entity_type values)
