@@ -17506,6 +17506,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
+        // Entity Manager API calls use absolute paths from root (production UI is served from /)
+        // API endpoints are under /api/... (e.g., /api/entities/*, /api/game/entities/merge)
         async function editEntityInline(worldId, entityId) {
             const entities = worldEntitiesCache[worldId] || [];
             const entity = entities.find(e => e.id === entityId);
@@ -17517,7 +17519,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('world-manager-status', `<span class="loading"></span> Updating "${entity.name}"...`, 'info');
 
             try {
-                const response = await fetch(API_BASE + `/entities/${entityId}`, {
+                const response = await fetch(`/api/entities/${entityId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ canonical_name: newName })
@@ -17548,7 +17550,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 const entityIds = Array.from(selected);
-                const response = await fetch(API_BASE + `/entities/bulk`, {
+                const response = await fetch(`/api/entities/bulk`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -17603,7 +17605,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Use the game_routes merge endpoint with simplified parameters
-                const response = await fetch(API_BASE + `/game/entities/merge`, {
+                const response = await fetch(`/api/game/entities/merge`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
