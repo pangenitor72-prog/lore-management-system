@@ -708,19 +708,20 @@ async def get_all_lore_bases_details(
 
     worlds = []
     for lore_id, base in LORE_BASES.items():
+        lore_content = base.get("lore_content") or ""
         worlds.append({
             "id": base["id"],
             "name": base["name"],
-            "description": base.get("description", ""),
+            "description": base.get("description") or "",
             "genre": base.get("genre"),
-            "genre_hints": base.get("genre_hints", []),
-            "tone_hints": base.get("tone_hints", []),
-            "lore_content": base.get("lore_content", ""),
-            "seed_prompt": base.get("seed_prompt", ""),
+            "genre_hints": base.get("genre_hints") or [],
+            "tone_hints": base.get("tone_hints") or [],
+            "lore_content": lore_content,
+            "seed_prompt": base.get("seed_prompt") or "",
             "is_seed": base.get("is_seed", False),
             "entity_count": entity_counts.get(lore_id, 0),
-            "has_lore_content": bool(base.get("lore_content", "").strip()),
-            "lore_char_count": len(base.get("lore_content", "")),
+            "has_lore_content": bool(lore_content.strip()),
+            "lore_char_count": len(lore_content),
         })
 
     return {
