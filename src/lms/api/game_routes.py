@@ -6581,7 +6581,7 @@ async def get_director_notes(
 
 class PromoteEntityRequest(BaseModel):
     """Request to promote session entity(ies) to canon."""
-    entity_ids: List[str] = Field(..., min_items=1, description="List of canon_ids to promote")
+    entity_ids: List[str] = Field(..., min_length=1, description="List of canon_ids to promote")
     target_world_id: str = Field(..., description="Target curated world ID to promote to")
     promote_relationships: bool = Field(
         default=False,

@@ -261,7 +261,7 @@ def test_detect_cross_world_relationships(client: TestClient, mock_neo4j_db):
     asyncio.run(setup())
     
     # Call the detection endpoint
-    response = client.get("/game/admin/relationships/cross-world")
+    response = client.get("/api/game/admin/relationships/cross-world")
     
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -310,7 +310,7 @@ def test_delete_cross_world_relationships_dry_run(client: TestClient, mock_neo4j
     asyncio.run(setup())
     
     # Call delete with dry_run=true
-    response = client.delete("/game/admin/relationships/cross-world?dry_run=true")
+    response = client.delete("/api/game/admin/relationships/cross-world?dry_run=true")
     
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -382,7 +382,7 @@ def test_delete_cross_world_relationships_actual(client: TestClient, mock_neo4j_
     asyncio.run(setup())
     
     # Call delete with dry_run=false
-    response = client.delete("/game/admin/relationships/cross-world?dry_run=false")
+    response = client.delete("/api/game/admin/relationships/cross-world?dry_run=false")
     
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -467,7 +467,7 @@ def test_promote_entities_to_canon(client: TestClient, mock_neo4j_db):
     asyncio.run(setup())
     
     # Promote both entities to canon
-    response = client.post("/game/admin/entities/promote", json={
+    response = client.post("/api/game/admin/entities/promote", json={
         "entity_ids": ["session123-chr-npc-0001", "session123-loc-tavern-0002"],
         "target_world_id": "my_world",
         "promote_relationships": True,
