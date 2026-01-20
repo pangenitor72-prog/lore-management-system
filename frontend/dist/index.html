@@ -13487,7 +13487,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('char-next-btn').textContent = 'Creating...';
 
             // Get name from the review step input
-            const nameInput = document.getElementById('char-name-input');
+                        const nameInput = document.getElementById('char-name-input');
             if (nameInput) {
                 charCreationData.name = nameInput.value.trim() || 'Adventurer';
             }
@@ -13496,11 +13496,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // All data is already in charCreationData from the creation steps
             console.log('[CharGen] Building character locally from selections');
 
-            // Generate a local session ID if we don't have one
-            if (!currentSessionId) {
-                currentSessionId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            }
-
+            // Session will be created when story starts - don't generate local ID
+            // currentSessionId will be set by createSessionInBackground() or continueToStory()
+            
             // Character will be built in finalizeCharacter() from charCreationData
             // No need to set generatedChar - the fallback in finalizeCharacter handles it
             finalizeCharacter();
@@ -13999,11 +13997,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             try {
                 const sessionRes = await fetch(API_BASE + '/game/session', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                if (!sessionRes.ok) throw new Error('Failed to create session');
+                if (!sessionRes.ok) {
+                    const errorData = await sessionRes.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'Failed to create session');
+                }
                 const sessionData = await sessionRes.json();
                 currentSessionId = sessionData.session_id;
                 currentPhase = sessionData.phase;
@@ -14011,11 +14012,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 return sessionData;
             } catch (err) {
                 console.error('[Session] Background creation failed:', err);
-                // Generate a local session ID as fallback
-                currentSessionId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                currentPhase = 'active_play';
-                console.log('[Session] Using local fallback:', currentSessionId);
-                return { session_id: currentSessionId, phase: currentPhase };
+                // Show error to user - DO NOT generate local session ID
+                alert(`Failed to create game session: ${err.message}. Please try again or refresh the page.`);
+                throw err; // Propagate error instead of using fallback
             }
         }
 
@@ -15822,8 +15821,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     return;
                 }
 
-                // Restore game state
-                currentSessionId = saveData.session_id || `local-${Date.now()}`;
+                // Restore game state - session_id should be from server after load
+                // Don't generate local ID here - server will provide new session_id
                 currentPhase = saveData.phase || 'exploration';
                 playerInventory = saveData.inventory || [];
                 rulesGenre = saveData.genre || 'fantasy';

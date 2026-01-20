@@ -1494,6 +1494,7 @@ async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -
     Stores the full session state as JSON so it can be recovered.
     """
     if not db:
+        logger.debug(f"Session persistence skipped for {session_id}: No database connection")
         return False
 
     try:
@@ -1515,21 +1516,34 @@ async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -
         elif "arc_engine" in session_copy:
             del session_copy["arc_engine"]  # Remove if not serializable
 
+        # Serialize character data if present
+        character_id = session.get("character_id")
+        if character_id and character_id in _characters:
+            try:
+                character = _characters[character_id]
+                session_copy["character_data"] = character.model_dump()
+                logger.debug(f"Persisted character data for {character_id} with session {session_id}")
+            except Exception as char_err:
+                logger.warning(f"Failed to serialize character {character_id}: {char_err}")
+
         await db.execute("""
             MERGE (s:ActiveSession {session_id: $session_id})
             SET s.session_data = $session_json,
                 s.updated_at = datetime(),
                 s.phase = $phase,
-                s.character_concept = $character_concept
+                s.character_concept = $character_concept,
+                s.turn_count = $turn_count
         """, {
             "session_id": session_id,
             "session_json": json.dumps(session_copy),
             "phase": session.get("phase", "active_play"),
             "character_concept": session.get("character_concept", ""),
+            "turn_count": len(session.get("history", [])) // 2,
         })
+        logger.debug(f"Persisted session {session_id} to Neo4j (turn {len(session.get('history', [])) // 2})")
         return True
     except Exception as e:
-        logger.warning(f"Failed to persist session {session_id} to Neo4j: {e}")
+        logger.error(f"Failed to persist session {session_id} to Neo4j: {e}", exc_info=True)
         return False
 
 
@@ -1540,6 +1554,7 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
     Returns the session dict if found, None otherwise.
     """
     if not db:
+        logger.debug(f"Session recovery skipped for {session_id}: No database connection")
         return None
 
     try:
@@ -1549,6 +1564,7 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
         """, {"session_id": session_id})
 
         if not results:
+            logger.info(f"Session {session_id} not found in database (ActiveSession node)")
             return None
 
         session_data = json.loads(results[0]["session_json"])
@@ -1565,7 +1581,7 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
         if arc_engine_state and ARC_ENGINE_AVAILABLE:
             try:
                 session_data["arc_engine"] = ArcEngine.from_dict(arc_engine_state)
-                logger.info(f"Restored Arc Engine state for session {session_id}")
+                logger.debug(f"Restored Arc Engine state for session {session_id}")
             except Exception as arc_err:
                 logger.warning(f"Failed to restore Arc Engine for {session_id}: {arc_err}")
                 # Create fresh Arc Engine if restoration fails
@@ -1574,11 +1590,24 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
             # No saved state - create fresh Arc Engine
             session_data["arc_engine"] = ArcEngine(session_id=session_id)
 
-        logger.info(f"Recovered session {session_id} from Neo4j database")
+        # Restore character from saved character_data if present
+        character_data = session_data.get("character_data")
+        character_id = session_data.get("character_id")
+        if character_data and character_id:
+            try:
+                character = CharacterSheet.model_validate(character_data)
+                _characters[character_id] = character
+                logger.info(f"Restored character '{character.name}' (ID: {character_id}) for session {session_id}")
+            except Exception as char_err:
+                logger.warning(f"Failed to restore character {character_id} for session {session_id}: {char_err}")
+        elif character_id and character_id not in _characters:
+            logger.warning(f"Session {session_id} has character_id {character_id} but no character_data - character may not be available")
+
+        logger.info(f"Successfully recovered session {session_id} from Neo4j database (turn {len(session_data.get('history', [])) // 2})")
         return session_data
 
     except Exception as e:
-        logger.warning(f"Failed to recover session {session_id} from Neo4j: {e}")
+        logger.error(f"Failed to recover session {session_id} from Neo4j: {e}", exc_info=True)
         return None
 
 
@@ -4945,6 +4974,7 @@ class SaveGameRequest(BaseModel):
     session_name: Optional[str] = Field(default=None, max_length=50)
     inventory: Optional[List[dict]] = Field(default_factory=list)
     browser_id: str = Field(..., min_length=1, max_length=100)
+    user_id: Optional[str] = Field(default=None, max_length=100, description="Optional user/account ID for account-based saves")
 
 
 class SaveGameResponse(BaseModel):
@@ -4975,29 +5005,51 @@ class LoadGameResponse(BaseModel):
 async def list_save_slots(
     request: Request,
     browser_id: str = Query(..., min_length=1, description="Unique browser identifier"),
+    user_id: Optional[str] = Query(None, description="Optional user/account ID for account-based saves"),
 ):
     """
-    List all save slots for a specific browser.
+    List all save slots for a specific browser or user.
 
     Each browser has its own isolated save slots - saves from one browser
-    are completely invisible to other browsers.
+    are completely invisible to other browsers. If user_id is provided,
+    saves are scoped by user_id instead of browser_id.
     """
     db = get_optional_neo4j_db(request)
     slots = []
 
     if db:
         try:
-            # Query Neo4j for this browser's saves
-            results = await db.execute("""
-                MATCH (s:GameSave {browser_id: $browser_id})
-                RETURN s.slot as slot, s.session_name as session_name,
-                       s.character_concept as character_concept, s.genre as genre,
-                       s.phase as phase, s.turn_count as turn_count,
-                       s.saved_at as saved_at, s.world_name as world_name,
-                       s.character_id as character_id, s.character_name as character_name,
-                       s.rules_mode as rules_mode, s.session_status as session_status
-                ORDER BY s.slot
-            """, {"browser_id": browser_id})
+            # Query Neo4j for this browser's or user's saves
+            # If user_id is provided, scope by user_id; otherwise scope by browser_id
+            if user_id:
+                query = """
+                    MATCH (s:GameSave {user_id: $user_id})
+                    RETURN s.slot as slot, s.session_name as session_name,
+                           s.character_concept as character_concept, s.genre as genre,
+                           s.phase as phase, s.turn_count as turn_count,
+                           s.saved_at as saved_at, s.world_name as world_name,
+                           s.character_id as character_id, s.character_name as character_name,
+                           s.rules_mode as rules_mode, s.session_status as session_status
+                    ORDER BY s.slot
+                """
+                params = {"user_id": user_id}
+                logger.debug(f"Listing saves for user_id: {user_id}")
+            else:
+                query = """
+                    MATCH (s:GameSave {browser_id: $browser_id})
+                    WHERE s.user_id IS NULL
+                    RETURN s.slot as slot, s.session_name as session_name,
+                           s.character_concept as character_concept, s.genre as genre,
+                           s.phase as phase, s.turn_count as turn_count,
+                           s.saved_at as saved_at, s.world_name as world_name,
+                           s.character_id as character_id, s.character_name as character_name,
+                           s.rules_mode as rules_mode, s.session_status as session_status
+                    ORDER BY s.slot
+                """
+                params = {"browser_id": browser_id}
+                logger.debug(f"Listing saves for browser_id: {browser_id[:8]}...")
+
+            results = await db.execute(query, params)
 
             # Build a map of existing saves
             existing_saves = {}
@@ -5081,6 +5133,7 @@ async def save_game(
 
     session = _active_sessions[session_id]
     browser_id = save_req.browser_id
+    user_id = save_req.user_id
     now = datetime.now(timezone.utc)
 
     # Create save data - include everything needed for full session isolation
@@ -5124,25 +5177,53 @@ async def save_game(
         try:
             # Store the full save data as JSON in Neo4j
             # MERGE to update existing or create new
+            # Scope by user_id if provided, otherwise by browser_id
             # Determine session status from session state
             session_status = session.get("status", "active")
-            await db.execute("""
-                MERGE (s:GameSave {browser_id: $browser_id, slot: $slot})
-                SET s.session_id = $session_id,
-                    s.session_name = $session_name,
-                    s.character_concept = $character_concept,
-                    s.genre = $genre,
-                    s.phase = $phase,
-                    s.turn_count = $turn_count,
-                    s.saved_at = datetime(),
-                    s.world_name = $world_name,
-                    s.character_id = $character_id,
-                    s.character_name = $character_name,
-                    s.rules_mode = $rules_mode,
-                    s.session_status = $session_status,
-                    s.save_data = $save_data_json
-            """, {
-                "browser_id": browser_id,
+            
+            if user_id:
+                # User-scoped save
+                query = """
+                    MERGE (s:GameSave {user_id: $user_id, slot: $slot})
+                    SET s.session_id = $session_id,
+                        s.browser_id = $browser_id,
+                        s.session_name = $session_name,
+                        s.character_concept = $character_concept,
+                        s.genre = $genre,
+                        s.phase = $phase,
+                        s.turn_count = $turn_count,
+                        s.saved_at = datetime(),
+                        s.world_name = $world_name,
+                        s.character_id = $character_id,
+                        s.character_name = $character_name,
+                        s.rules_mode = $rules_mode,
+                        s.session_status = $session_status,
+                        s.save_data = $save_data_json
+                """
+                params = {"user_id": user_id, "browser_id": browser_id}
+                logger.info(f"Saved session {session_id} to Neo4j slot {slot} for user {user_id}")
+            else:
+                # Browser-scoped save (existing behavior)
+                query = """
+                    MERGE (s:GameSave {browser_id: $browser_id, slot: $slot})
+                    SET s.session_id = $session_id,
+                        s.session_name = $session_name,
+                        s.character_concept = $character_concept,
+                        s.genre = $genre,
+                        s.phase = $phase,
+                        s.turn_count = $turn_count,
+                        s.saved_at = datetime(),
+                        s.world_name = $world_name,
+                        s.character_id = $character_id,
+                        s.character_name = $character_name,
+                        s.rules_mode = $rules_mode,
+                        s.session_status = $session_status,
+                        s.save_data = $save_data_json
+                """
+                params = {"browser_id": browser_id}
+                logger.info(f"Saved session {session_id} to Neo4j slot {slot} for browser {browser_id[:8]}...")
+            
+            params.update({
                 "slot": slot,
                 "session_id": session_id,
                 "session_name": save_data["session_name"],
@@ -5157,7 +5238,8 @@ async def save_game(
                 "session_status": session_status,
                 "save_data_json": json.dumps(save_data),
             })
-            logger.info(f"Saved session {session_id} to Neo4j slot {slot} for browser {browser_id[:8]}...")
+            
+            await db.execute(query, params)
         except Exception as e:
             logger.error(f"Failed to save to Neo4j: {e}")
             raise HTTPException(
@@ -5184,6 +5266,7 @@ async def load_game(
     slot: int,
     browser_id: str = Query(..., min_length=1, description="Unique browser identifier"),
     mode: str = Query("continue", description="Continuation mode: 'continue' or 'new_chapter'"),
+    user_id: Optional[str] = Query(None, description="Optional user/account ID for account-based saves"),
 ):
     """
     Load a game from a save slot with optional continuation mode.
@@ -5193,7 +5276,7 @@ async def load_game(
               "new_chapter" - Start fresh arc with summarized history
 
     Restores the session and returns the last narrative or summary.
-    Only loads saves belonging to the specified browser_id.
+    Only loads saves belonging to the specified browser_id or user_id.
     """
     if slot < 1 or slot > MAX_SAVES_PER_BROWSER:
         raise HTTPException(
@@ -5210,10 +5293,24 @@ async def load_game(
 
     try:
         # Load save from Neo4j
-        results = await db.execute("""
-            MATCH (s:GameSave {browser_id: $browser_id, slot: $slot})
-            RETURN s.save_data as save_data_json
-        """, {"browser_id": browser_id, "slot": slot})
+        # Scope by user_id if provided, otherwise by browser_id
+        if user_id:
+            query = """
+                MATCH (s:GameSave {user_id: $user_id, slot: $slot})
+                RETURN s.save_data as save_data_json
+            """
+            params = {"user_id": user_id, "slot": slot}
+            logger.info(f"Loading save from slot {slot} for user {user_id}")
+        else:
+            query = """
+                MATCH (s:GameSave {browser_id: $browser_id, slot: $slot})
+                WHERE s.user_id IS NULL
+                RETURN s.save_data as save_data_json
+            """
+            params = {"browser_id": browser_id, "slot": slot}
+            logger.info(f"Loading save from slot {slot} for browser {browser_id[:8]}...")
+        
+        results = await db.execute(query, params)
 
         if not results:
             raise HTTPException(
@@ -5355,8 +5452,9 @@ async def delete_save(
     request: Request,
     slot: int,
     browser_id: str = Query(..., min_length=1, description="Unique browser identifier"),
+    user_id: Optional[str] = Query(None, description="Optional user/account ID for account-based saves"),
 ):
-    """Delete a save from a slot. Only deletes saves belonging to the specified browser_id."""
+    """Delete a save from a slot. Only deletes saves belonging to the specified browser_id or user_id."""
     if slot < 1 or slot > MAX_SAVES_PER_BROWSER:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -5371,12 +5469,26 @@ async def delete_save(
         )
 
     try:
-        # Delete from Neo4j - only if it belongs to this browser
-        result = await db.execute("""
-            MATCH (s:GameSave {browser_id: $browser_id, slot: $slot})
-            DELETE s
-            RETURN count(*) as deleted
-        """, {"browser_id": browser_id, "slot": slot})
+        # Delete from Neo4j - scope by user_id if provided, otherwise by browser_id
+        if user_id:
+            query = """
+                MATCH (s:GameSave {user_id: $user_id, slot: $slot})
+                DELETE s
+                RETURN count(*) as deleted
+            """
+            params = {"user_id": user_id, "slot": slot}
+            logger.info(f"Deleting save from slot {slot} for user {user_id}")
+        else:
+            query = """
+                MATCH (s:GameSave {browser_id: $browser_id, slot: $slot})
+                WHERE s.user_id IS NULL
+                DELETE s
+                RETURN count(*) as deleted
+            """
+            params = {"browser_id": browser_id, "slot": slot}
+            logger.info(f"Deleting save from slot {slot} for browser {browser_id[:8]}...")
+        
+        result = await db.execute(query, params)
 
         if not result or result[0]["deleted"] == 0:
             raise HTTPException(
