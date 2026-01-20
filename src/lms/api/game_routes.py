@@ -713,8 +713,10 @@ async def get_all_lore_bases_details(
             "id": base["id"],
             "name": base["name"],
             "description": base.get("description") or "",
-            "genre": base.get("genre"),
+            "genre": base.get("genre"),  # Legacy field for backward compatibility
+            "mechanics_genre": base.get("mechanics_genre"),  # NEW: Authoritative mechanics genre
             "genre_hints": base.get("genre_hints") or [],
+            "genre_confidence": base.get("genre_confidence"),  # NEW: Confidence score
             "tone_hints": base.get("tone_hints") or [],
             "lore_content": lore_content,
             "seed_prompt": base.get("seed_prompt") or "",
@@ -3192,13 +3194,24 @@ def _load_single_lore_file(json_file: Path, bases: Dict, is_seed: bool = False) 
         genre_hints = data.get("genre_hints", [])
         if not genre_hints and data.get("genre"):
             genre_hints = [data.get("genre")]
+        
+        # Handle mechanics_genre: prefer explicit mechanics_genre, fallback to genre, then first genre_hint
+        mechanics_genre = data.get("mechanics_genre")
+        if not mechanics_genre:
+            mechanics_genre = data.get("genre")
+        if not mechanics_genre and genre_hints:
+            mechanics_genre = genre_hints[0]
+        if not mechanics_genre:
+            mechanics_genre = "fantasy"  # Ultimate fallback
 
         bases[lore_id] = {
             "id": lore_id,
             "name": data.get("name", lore_id.replace("_", " ").title()),
             "description": data.get("description", ""),
-            "genre": data.get("genre", genre_hints[0] if genre_hints else "fantasy"),
+            "genre": data.get("genre", genre_hints[0] if genre_hints else "fantasy"),  # Keep for backward compatibility
+            "mechanics_genre": mechanics_genre,  # NEW: Authoritative mechanics genre
             "genre_hints": genre_hints,
+            "genre_confidence": data.get("genre_confidence"),  # Optional confidence score
             "tone_hints": data.get("tone_hints", []),
             "entities_count": 0,
             "seed_prompt": data.get("seed_prompt", ""),
@@ -3206,7 +3219,7 @@ def _load_single_lore_file(json_file: Path, bases: Dict, is_seed: bool = False) 
             "ingested": False,
             "is_seed": is_seed,  # Mark as curated seed lore
         }
-        logger.info(f"Loaded {'seed' if is_seed else 'lore base'} from file: {lore_id}")
+        logger.info(f"Loaded {'seed' if is_seed else 'lore base'} from file: {lore_id} (mechanics_genre={mechanics_genre})")
     except Exception as e:
         logger.error(f"Failed to load lore file {json_file}: {e}")
 
