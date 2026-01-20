@@ -1245,6 +1245,10 @@ TEXT TO ANALYZE:
         entities_stored = 0
         characters_with_ocean = 0
 
+        # Build mapping of entity names to canon_ids for relationship resolution
+        # This prevents cross-world linking by keeping track of entities in THIS ingestion scope
+        entity_name_to_canon_id: Dict[str, str] = {}
+
         logger.info(f"[LORE INGESTION] Beginning storage phase: {len(result.entities)} entities, {len(result.relationships)} relationships")
 
         # Ensure LoreBase node exists if we have a curated world
@@ -1345,6 +1349,12 @@ TEXT TO ANALYZE:
                         MATCH (e:Entity {canon_id: $canon_id})
                         SET e += $props
                     """, {"canon_id": existing["canon_id"], "props": update_props})
+
+                    # Add to mapping for relationship resolution
+                    entity_name_to_canon_id[entity.name.lower()] = existing["canon_id"]
+                    # Also map any aliases
+                    for alias in (entity.aliases or []):
+                        entity_name_to_canon_id[alias.lower()] = existing["canon_id"]
 
                     entities_auto_merged += 1
                     if entity.entity_type == "Character":
@@ -1485,14 +1495,23 @@ TEXT TO ANALYZE:
                     except Exception as rel_err:
                         logger.warning(f"[LORE INGESTION] Failed to create EXISTS_IN relationship for '{entity.name}': {rel_err}")
 
+                # Add to mapping for relationship resolution
+                entity_name_to_canon_id[entity.name.lower()] = canon_id
+                # Also map any aliases
+                for alias in (entity.aliases or []):
+                    entity_name_to_canon_id[alias.lower()] = canon_id
+
                 entities_stored += 1
 
             except Exception as e:
                 logger.error(f"[LORE INGESTION] Failed to store entity '{entity.name}': {type(e).__name__}: {str(e)}", exc_info=True)
 
-        # Store relationships
+        # Store relationships using canon_id mapping with world-scoped fallback
         relationships_stored = 0
+        relationships_skipped = 0
         logger.info(f"[LORE INGESTION] Storing {len(result.relationships)} relationships...")
+        logger.debug(f"[LORE INGESTION] Entity name to canon_id mapping has {len(entity_name_to_canon_id)} entries")
+        
         for idx, rel in enumerate(result.relationships, 1):
             try:
                 logger.debug(f"[LORE INGESTION] Processing relationship {idx}/{len(result.relationships)}: '{rel.source}' -> '{rel.target}' ({rel.relationship_type})")
@@ -1500,6 +1519,7 @@ TEXT TO ANALYZE:
                 # Validate relationship
                 if not rel.source or not rel.target:
                     logger.warning(f"[LORE INGESTION] Relationship {idx} has empty source or target, skipping")
+                    relationships_skipped += 1
                     continue
                 
                 rel_type = rel.relationship_type.upper().replace(" ", "_")
@@ -1507,23 +1527,78 @@ TEXT TO ANALYZE:
                     logger.warning(f"[LORE INGESTION] Invalid relationship type '{rel.relationship_type}', using RELATED_TO")
                     rel_type = "RELATED_TO"
 
+                # Resolve source and target to canon_ids
+                # Priority 1: Use canon_id mapping from this ingestion scope
+                source_canon_id = entity_name_to_canon_id.get(rel.source.lower())
+                target_canon_id = entity_name_to_canon_id.get(rel.target.lower())
+
+                # Priority 2: If not in mapping, try world-scoped name lookup
+                # This handles cases where we're referring to existing entities in the world
+                if not source_canon_id and id_world:
+                    try:
+                        source_result = await db.execute("""
+                            MATCH (e:Entity)
+                            WHERE (toLower(e.name) = toLower($name) OR toLower($name) IN [alias IN e.aliases | toLower(alias)])
+                              AND (e.world_id = $world_id OR e.curated_world_id = $world_id)
+                            RETURN e.canon_id AS canon_id
+                            LIMIT 1
+                        """, {"name": rel.source, "world_id": id_world})
+                        if source_result:
+                            source_canon_id = source_result[0]["canon_id"]
+                            logger.debug(f"[LORE INGESTION] Resolved source '{rel.source}' to existing entity {source_canon_id} in world {id_world}")
+                    except Exception as lookup_err:
+                        logger.warning(f"[LORE INGESTION] Failed to lookup source entity '{rel.source}': {lookup_err}")
+
+                if not target_canon_id and id_world:
+                    try:
+                        target_result = await db.execute("""
+                            MATCH (e:Entity)
+                            WHERE (toLower(e.name) = toLower($name) OR toLower($name) IN [alias IN e.aliases | toLower(alias)])
+                              AND (e.world_id = $world_id OR e.curated_world_id = $world_id)
+                            RETURN e.canon_id AS canon_id
+                            LIMIT 1
+                        """, {"name": rel.target, "world_id": id_world})
+                        if target_result:
+                            target_canon_id = target_result[0]["canon_id"]
+                            logger.debug(f"[LORE INGESTION] Resolved target '{rel.target}' to existing entity {target_canon_id} in world {id_world}")
+                    except Exception as lookup_err:
+                        logger.warning(f"[LORE INGESTION] Failed to lookup target entity '{rel.target}': {lookup_err}")
+
+                # If we still can't resolve both endpoints, skip this relationship with a warning
+                if not source_canon_id or not target_canon_id:
+                    missing = []
+                    if not source_canon_id:
+                        missing.append(f"source '{rel.source}'")
+                    if not target_canon_id:
+                        missing.append(f"target '{rel.target}'")
+                    logger.warning(
+                        f"[LORE INGESTION] Skipping relationship '{rel.source}' --[{rel.relationship_type}]--> '{rel.target}': "
+                        f"Could not resolve {', '.join(missing)} to canon_id in scope (world={id_world}). "
+                        f"This prevents cross-world linking."
+                    )
+                    relationships_skipped += 1
+                    continue
+
+                # Create relationship using canon_ids (world-safe)
                 query = f"""
-                    MATCH (a {{name: $source}})
-                    MATCH (b {{name: $target}})
+                    MATCH (a:Entity {{canon_id: $source_id}})
+                    MATCH (b:Entity {{canon_id: $target_id}})
                     MERGE (a)-[r:`{rel_type}`]->(b)
-                    SET r.description = $description
-                    SET r.source = $source_name
+                    SET r.description = $description,
+                        r.source = $source_name,
+                        r.created_at = $timestamp
                 """
                 params = {
-                    "source": rel.source,
-                    "target": rel.target,
+                    "source_id": source_canon_id,
+                    "target_id": target_canon_id,
                     "description": rel.description,
                     "source_name": source_name,
+                    "timestamp": timestamp,
                 }
                 
                 try:
                     await db.execute(query, params)
-                    logger.debug(f"[LORE INGESTION] Stored relationship '{rel.source}' -> '{rel.target}'")
+                    logger.debug(f"[LORE INGESTION] Stored relationship {source_canon_id} --[{rel_type}]--> {target_canon_id}")
                     relationships_stored += 1
                 except Exception as db_err:
                     logger.error(
@@ -1532,9 +1607,11 @@ TEXT TO ANALYZE:
                         f"Params: {params}",
                         exc_info=True
                     )
+                    relationships_skipped += 1
 
             except Exception as e:
-                logger.error(f"[LORE INGESTION] Failed to store relationship '{rel.source}' -> '{rel.target}': {type(e).__name__}: {str(e)}", exc_info=True)
+                logger.error(f"[LORE INGESTION] Failed to process relationship '{rel.source}' -> '{rel.target}': {type(e).__name__}: {str(e)}", exc_info=True)
+                relationships_skipped += 1
 
         result.entities_stored = entities_stored
         result.entities_auto_merged = entities_auto_merged
@@ -1578,7 +1655,8 @@ TEXT TO ANALYZE:
             f"LoreParsingAgent: {entities_stored} new entities, "
             f"{entities_auto_merged} auto-merged, "
             f"{len(pending_duplicates)} pending review, "
-            f"{relationships_stored} relationships, "
+            f"{relationships_stored} relationships stored, "
+            f"{relationships_skipped} relationships skipped (could not resolve to canon_id), "
             f"{characters_with_ocean} characters with OCEAN"
         )
 
