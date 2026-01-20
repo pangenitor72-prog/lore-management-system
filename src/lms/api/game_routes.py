@@ -6573,3 +6573,392 @@ async def get_director_notes(
         "notes": result[0].get("notes") or [],
         "note_count": len(result[0].get("notes") or [])
     }
+
+
+# ============================================================
+# ENTITY PROMOTION - Promote session entities to canon
+# ============================================================
+
+class PromoteEntityRequest(BaseModel):
+    """Request to promote session entity(ies) to canon."""
+    entity_ids: List[str] = Field(..., min_length=1, description="List of canon_ids to promote")
+    target_world_id: str = Field(..., description="Target curated world ID to promote to")
+    promote_relationships: bool = Field(
+        default=False,
+        description="If true, also promote relationships between promoted entities"
+    )
+    keep_session_entity: bool = Field(
+        default=False,
+        description="If true, keep the session entity and link it to canon; if false, delete session entity"
+    )
+
+
+class PromoteEntityResponse(BaseModel):
+    """Response from entity promotion."""
+    success: bool
+    promoted_count: int
+    promoted_entities: List[Dict[str, Any]]
+    relationships_promoted: int
+    message: str
+
+
+@router.post("/admin/entities/promote", response_model=PromoteEntityResponse)
+async def promote_entities_to_canon(
+    promote_req: PromoteEntityRequest,
+    db: Neo4jDatabase = Depends(get_neo4j_db)
+):
+    """
+    Promote session-created entities to canon.
+    
+    This creates new canon entities in the specified curated world with properties
+    copied from session entities. Optionally promotes relationships and links
+    session entities to their canon counterparts.
+    
+    Use cases:
+    - DM creates NPCs during a session and wants to promote them to canon
+    - Session events that should become part of world history
+    - Locations discovered/created during play that become canonical
+    
+    Metadata tracking:
+    - Canon entities get `promoted_from_canon_id` field pointing to session entity
+    - Session entities get `promoted_to_canon_id` field pointing to canon entity
+    - Canon entities get `origin_session_id` for traceability
+    """
+    from src.lms.agents.lore_parsing_agent import _generate_human_readable_id
+    from datetime import datetime, timezone
+    
+    target_world = promote_req.target_world_id
+    entity_ids = promote_req.entity_ids
+    
+    # Verify target world exists
+    world_check = await db.execute("""
+        MATCH (lb:LoreBase {lore_id: $world_id})
+        RETURN lb.name AS name
+    """, {"world_id": target_world})
+    
+    if not world_check:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Target world '{target_world}' not found"
+        )
+    
+    # Fetch all session entities to promote
+    entities_result = await db.execute("""
+        MATCH (e:Entity)
+        WHERE e.canon_id IN $entity_ids
+        RETURN e {.*} AS entity
+    """, {"entity_ids": entity_ids})
+    
+    if not entities_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No entities found with provided canon_ids"
+        )
+    
+    timestamp = datetime.now(timezone.utc).isoformat()
+    promoted_entities = []
+    canon_id_mapping = {}  # session_canon_id -> new_canon_id
+    
+    # Promote each entity
+    for row in entities_result:
+        session_entity = row["entity"]
+        session_canon_id = session_entity["canon_id"]
+        session_id = session_entity.get("session_id")
+        
+        # Generate new canon_id for the promoted entity
+        new_canon_id = _generate_human_readable_id(
+            name=session_entity["name"],
+            entity_type=session_entity["entity_type"],
+            world_id=target_world
+        )
+        
+        # Store mapping
+        canon_id_mapping[session_canon_id] = new_canon_id
+        
+        # Copy properties from session entity
+        canon_props = {
+            "canon_id": new_canon_id,
+            "name": session_entity["name"],
+            "entity_type": session_entity["entity_type"],
+            "description": session_entity.get("description", ""),
+            "aliases": session_entity.get("aliases") or [],
+            "curated_world_id": target_world,
+            "world_id": target_world,
+            "tags": session_entity.get("tags") or [],
+            "created_at": timestamp,
+            "promoted_from_canon_id": session_canon_id,
+            "origin_session_id": session_id,
+            "confidence_level": "ADMIN_PROMOTED",
+            "approval_status": "APPROVED",
+        }
+        
+        # Copy OCEAN personality if present (for characters)
+        for ocean_trait in ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]:
+            if ocean_trait in session_entity:
+                canon_props[ocean_trait] = session_entity[ocean_trait]
+        
+        # Copy character-specific fields
+        for char_field in ["goals", "secrets", "fears", "personality_traits"]:
+            if char_field in session_entity:
+                canon_props[char_field] = session_entity[char_field]
+        
+        # Copy faction-specific fields
+        if session_entity["entity_type"] == "Faction":
+            for faction_field in ["goals", "secrets", "fears"]:
+                if faction_field in session_entity:
+                    canon_props[faction_field] = session_entity[faction_field]
+        
+        # Determine label (whitelisted to prevent injection)
+        label = session_entity["entity_type"].replace(" ", "_")
+        # Security: Whitelist of valid labels (safe for Cypher)
+        valid_labels = ["Character", "Location", "Faction", "Item", "Event", "Concept"]
+        if label not in valid_labels:
+            label = "Entity"
+        
+        # Create canon entity (label is whitelisted, safe for f-string)
+        await db.execute(f"""
+            CREATE (e:`{label}` $props)
+            SET e:Entity
+        """, {"props": canon_props})
+        
+        # Link to LoreBase
+        await db.execute("""
+            MATCH (e:Entity {canon_id: $canon_id})
+            MATCH (lb:LoreBase {lore_id: $world_id})
+            MERGE (e)-[:EXISTS_IN]->(lb)
+        """, {"canon_id": new_canon_id, "world_id": target_world})
+        
+        # Update session entity with promotion metadata
+        if promote_req.keep_session_entity:
+            await db.execute("""
+                MATCH (e:Entity {canon_id: $session_id})
+                SET e.promoted_to_canon_id = $canon_id,
+                    e.promoted_at = $timestamp
+            """, {
+                "session_id": session_canon_id,
+                "canon_id": new_canon_id,
+                "timestamp": timestamp
+            })
+        
+        promoted_entities.append({
+            "session_canon_id": session_canon_id,
+            "new_canon_id": new_canon_id,
+            "name": session_entity["name"],
+            "entity_type": session_entity["entity_type"],
+        })
+    
+    # Promote relationships if requested
+    relationships_promoted = 0
+    if promote_req.promote_relationships:
+        # Get all relationships between promoted entities
+        for session_id, canon_id in canon_id_mapping.items():
+            # Get outgoing relationships from this session entity to other promoted entities
+            rels_result = await db.execute("""
+                MATCH (a:Entity {canon_id: $session_id})-[r]->(b:Entity)
+                WHERE b.canon_id IN $promoted_ids
+                RETURN type(r) AS rel_type, b.canon_id AS target_session_id, properties(r) AS rel_props
+            """, {"session_id": session_id, "promoted_ids": list(canon_id_mapping.keys())})
+            
+            for rel_row in rels_result:
+                rel_type = rel_row["rel_type"]
+                target_session_id = rel_row["target_session_id"]
+                rel_props = rel_row["rel_props"] or {}
+                
+                # Security: Validate rel_type from database (should already be safe, but double-check)
+                # Relationship types from Neo4j should be alphanumeric+underscore
+                if not re.match(r"^[A-Z_a-z0-9]+$", rel_type):
+                    logger.warning(f"Skipping relationship with invalid type: {rel_type}")
+                    continue
+                
+                # Get canon ids for both entities
+                source_canon = canon_id_mapping.get(session_id)
+                target_canon = canon_id_mapping.get(target_session_id)
+                
+                if source_canon and target_canon:
+                    # Create relationship between canon entities (rel_type validated, safe for f-string)
+                    await db.execute(f"""
+                        MATCH (a:Entity {{canon_id: $source}})
+                        MATCH (b:Entity {{canon_id: $target}})
+                        MERGE (a)-[r:`{rel_type}`]->(b)
+                        SET r = $props,
+                            r.promoted_from_session = true,
+                            r.promoted_at = $timestamp
+                    """, {
+                        "source": source_canon,
+                        "target": target_canon,
+                        "props": rel_props,
+                        "timestamp": timestamp
+                    })
+                    relationships_promoted += 1
+    
+    # Delete session entities if not keeping them
+    if not promote_req.keep_session_entity:
+        await db.execute("""
+            MATCH (e:Entity)
+            WHERE e.canon_id IN $session_ids
+            DETACH DELETE e
+        """, {"session_ids": entity_ids})
+    
+    logger.info(
+        f"Promoted {len(promoted_entities)} entities from session to canon world '{target_world}'"
+        f" ({relationships_promoted} relationships promoted)"
+    )
+    
+    return PromoteEntityResponse(
+        success=True,
+        promoted_count=len(promoted_entities),
+        promoted_entities=promoted_entities,
+        relationships_promoted=relationships_promoted,
+        message=f"Successfully promoted {len(promoted_entities)} entities to '{target_world}'"
+    )
+
+
+# ============================================================
+# CROSS-WORLD RELATIONSHIP CLEANUP
+# ============================================================
+
+class CrossWorldRelationship(BaseModel):
+    """A relationship that spans across worlds."""
+    rel_id: Optional[int] = None
+    rel_type: str
+    source_canon_id: str
+    source_name: str
+    source_world_id: Optional[str] = None
+    target_canon_id: str
+    target_name: str
+    target_world_id: Optional[str] = None
+
+
+class CrossWorldRelationshipsResponse(BaseModel):
+    """Response from cross-world relationship detection."""
+    total_relationships: int
+    cross_world_relationships: int
+    relationships: List[CrossWorldRelationship]
+
+
+@router.get("/admin/relationships/cross-world", response_model=CrossWorldRelationshipsResponse)
+async def detect_cross_world_relationships(
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+    limit: int = Query(default=100, le=1000, description="Maximum number of relationships to return")
+):
+    """
+    Detect relationships that link entities across different worlds.
+    
+    These are problematic because they can leak lore between sessions or
+    between unrelated curated worlds.
+    
+    A relationship is cross-world if:
+    - Start and end entities have different `curated_world_id` values
+    - Start and end entities have different `world_id` values (session-scoped)
+    - One entity has a world_id/curated_world_id and the other doesn't
+    
+    This endpoint helps identify the bug's damage for cleanup.
+    """
+    # Find relationships where start and end nodes are in different worlds
+    result = await db.execute("""
+        MATCH (a:Entity)-[r]->(b:Entity)
+        WHERE (
+            (a.curated_world_id IS NOT NULL AND b.curated_world_id IS NOT NULL AND a.curated_world_id <> b.curated_world_id)
+            OR (a.world_id IS NOT NULL AND b.world_id IS NOT NULL AND a.world_id <> b.world_id)
+            OR (a.curated_world_id IS NOT NULL AND b.curated_world_id IS NULL AND a.world_id IS NULL)
+            OR (b.curated_world_id IS NOT NULL AND a.curated_world_id IS NULL AND b.world_id IS NULL)
+        )
+        RETURN id(r) AS rel_id,
+               type(r) AS rel_type,
+               a.canon_id AS source_canon_id,
+               a.name AS source_name,
+               COALESCE(a.curated_world_id, a.world_id) AS source_world_id,
+               b.canon_id AS target_canon_id,
+               b.name AS target_name,
+               COALESCE(b.curated_world_id, b.world_id) AS target_world_id
+        LIMIT $limit
+    """, {"limit": limit})
+    
+    cross_world_rels = []
+    for row in result:
+        cross_world_rels.append(CrossWorldRelationship(
+            rel_id=row.get("rel_id"),
+            rel_type=row.get("rel_type", "UNKNOWN"),
+            source_canon_id=row.get("source_canon_id", ""),
+            source_name=row.get("source_name", ""),
+            source_world_id=row.get("source_world_id"),
+            target_canon_id=row.get("target_canon_id", ""),
+            target_name=row.get("target_name", ""),
+            target_world_id=row.get("target_world_id"),
+        ))
+    
+    # Get total relationship count for context
+    total_result = await db.execute("""
+        MATCH ()-[r]->()
+        RETURN count(r) AS total
+    """, {})
+    total_rels = total_result[0]["total"] if total_result else 0
+    
+    logger.info(f"Found {len(cross_world_rels)} cross-world relationships out of {total_rels} total")
+    
+    return CrossWorldRelationshipsResponse(
+        total_relationships=total_rels,
+        cross_world_relationships=len(cross_world_rels),
+        relationships=cross_world_rels
+    )
+
+
+@router.delete("/admin/relationships/cross-world")
+async def delete_cross_world_relationships(
+    db: Neo4jDatabase = Depends(get_neo4j_db),
+    dry_run: bool = Query(default=True, description="If true, only count without deleting")
+):
+    """
+    Delete relationships that link entities across different worlds.
+    
+    WARNING: This is destructive. Use dry_run=true first to preview what will be deleted.
+    
+    This cleans up the damage from the cross-world linking bug by removing
+    relationships where start and end entities belong to different worlds.
+    
+    Safe to run repeatedly - only affects cross-world relationships.
+    """
+    # Count cross-world relationships first
+    count_result = await db.execute("""
+        MATCH (a:Entity)-[r]->(b:Entity)
+        WHERE (
+            (a.curated_world_id IS NOT NULL AND b.curated_world_id IS NOT NULL AND a.curated_world_id <> b.curated_world_id)
+            OR (a.world_id IS NOT NULL AND b.world_id IS NOT NULL AND a.world_id <> b.world_id)
+            OR (a.curated_world_id IS NOT NULL AND b.curated_world_id IS NULL AND a.world_id IS NULL)
+            OR (b.curated_world_id IS NOT NULL AND a.curated_world_id IS NULL AND b.world_id IS NULL)
+        )
+        RETURN count(r) AS count
+    """, {})
+    
+    count = count_result[0]["count"] if count_result else 0
+    
+    if dry_run:
+        logger.info(f"[DRY RUN] Would delete {count} cross-world relationships")
+        return {
+            "dry_run": True,
+            "would_delete": count,
+            "message": f"Dry run complete. {count} cross-world relationships found. Set dry_run=false to delete."
+        }
+    
+    # Actually delete cross-world relationships
+    delete_result = await db.execute("""
+        MATCH (a:Entity)-[r]->(b:Entity)
+        WHERE (
+            (a.curated_world_id IS NOT NULL AND b.curated_world_id IS NOT NULL AND a.curated_world_id <> b.curated_world_id)
+            OR (a.world_id IS NOT NULL AND b.world_id IS NOT NULL AND a.world_id <> b.world_id)
+            OR (a.curated_world_id IS NOT NULL AND b.curated_world_id IS NULL AND a.world_id IS NULL)
+            OR (b.curated_world_id IS NOT NULL AND a.curated_world_id IS NULL AND b.world_id IS NULL)
+        )
+        DELETE r
+        RETURN count(*) AS deleted
+    """, {})
+    
+    deleted = delete_result[0]["deleted"] if delete_result else 0
+    
+    logger.warning(f"Deleted {deleted} cross-world relationships")
+    
+    return {
+        "dry_run": False,
+        "deleted": deleted,
+        "message": f"Successfully deleted {deleted} cross-world relationships"
+    }
