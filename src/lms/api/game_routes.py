@@ -6708,12 +6708,14 @@ async def promote_entities_to_canon(
                 if faction_field in session_entity:
                     canon_props[faction_field] = session_entity[faction_field]
         
-        # Determine label
+        # Determine label (whitelisted to prevent injection)
         label = session_entity["entity_type"].replace(" ", "_")
-        if label not in ["Character", "Location", "Faction", "Item", "Event", "Concept"]:
+        # Security: Whitelist of valid labels (safe for Cypher)
+        valid_labels = ["Character", "Location", "Faction", "Item", "Event", "Concept"]
+        if label not in valid_labels:
             label = "Entity"
         
-        # Create canon entity
+        # Create canon entity (label is whitelisted, safe for f-string)
         await db.execute(f"""
             CREATE (e:`{label}` $props)
             SET e:Entity
@@ -6762,12 +6764,18 @@ async def promote_entities_to_canon(
                 target_session_id = rel_row["target_session_id"]
                 rel_props = rel_row["rel_props"] or {}
                 
+                # Security: Validate rel_type from database (should already be safe, but double-check)
+                # Relationship types from Neo4j should be alphanumeric+underscore
+                if not re.match(r"^[A-Z_a-z0-9]+$", rel_type):
+                    logger.warning(f"Skipping relationship with invalid type: {rel_type}")
+                    continue
+                
                 # Get canon ids for both entities
                 source_canon = canon_id_mapping.get(session_id)
                 target_canon = canon_id_mapping.get(target_session_id)
                 
                 if source_canon and target_canon:
-                    # Create relationship between canon entities
+                    # Create relationship between canon entities (rel_type validated, safe for f-string)
                     await db.execute(f"""
                         MATCH (a:Entity {{canon_id: $source}})
                         MATCH (b:Entity {{canon_id: $target}})

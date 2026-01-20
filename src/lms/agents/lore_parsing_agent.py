@@ -1522,7 +1522,9 @@ TEXT TO ANALYZE:
                     relationships_skipped += 1
                     continue
                 
+                # Validate and sanitize relationship type to prevent injection
                 rel_type = rel.relationship_type.upper().replace(" ", "_")
+                # Security: Only allow alphanumeric and underscore (safe for Cypher)
                 if not re.match(r"^[A-Z_]+$", rel_type):
                     logger.warning(f"[LORE INGESTION] Invalid relationship type '{rel.relationship_type}', using RELATED_TO")
                     rel_type = "RELATED_TO"
