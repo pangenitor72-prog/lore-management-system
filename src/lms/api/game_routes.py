@@ -713,8 +713,10 @@ async def get_all_lore_bases_details(
             "id": base["id"],
             "name": base["name"],
             "description": base.get("description") or "",
-            "genre": base.get("genre"),
+            "genre": base.get("genre"),  # Legacy field for backward compatibility
+            "mechanics_genre": base.get("mechanics_genre"),  # NEW: Authoritative mechanics genre
             "genre_hints": base.get("genre_hints") or [],
+            "genre_confidence": base.get("genre_confidence"),  # NEW: Confidence score
             "tone_hints": base.get("tone_hints") or [],
             "lore_content": lore_content,
             "seed_prompt": base.get("seed_prompt") or "",
@@ -848,6 +850,222 @@ async def update_lore_base_content(
     except Exception as e:
         logger.error(f"Failed to update lore for '{lore_id}': {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/admin/lore-bases/{lore_id}/genre")
+async def get_lore_base_genre(
+    lore_id: str,
+    http_request: Request,
+):
+    """
+    Get genre information for a lore base (mechanics_genre and genre_hints).
+    
+    Works for both curated worlds (LORE_BASES) and user-created worlds (Neo4j).
+    """
+    # Check curated worlds first
+    if lore_id in LORE_BASES:
+        world_data = LORE_BASES[lore_id]
+        mechanics_genre = world_data.get("mechanics_genre") or world_data.get("genre")
+        
+        return {
+            "lore_id": lore_id,
+            "mechanics_genre": mechanics_genre,
+            "genre_hints": world_data.get("genre_hints", []),
+            "genre_confidence": world_data.get("genre_confidence"),
+            "source": "curated",
+        }
+    
+    # Check Neo4j for user-created worlds
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if db:
+        try:
+            result = await db.execute("""
+                MATCH (lb:LoreBase {lore_id: $lore_id})
+                RETURN lb.mechanics_genre AS mechanics_genre,
+                       lb.genre AS genre,
+                       lb.genre_hints AS genre_hints,
+                       lb.genre_confidence AS genre_confidence
+            """, {"lore_id": lore_id})
+            
+            if result:
+                row = result[0]
+                mechanics_genre = row.get("mechanics_genre") or row.get("genre")
+                
+                return {
+                    "lore_id": lore_id,
+                    "mechanics_genre": mechanics_genre,
+                    "genre_hints": row.get("genre_hints", []),
+                    "genre_confidence": row.get("genre_confidence"),
+                    "source": "user_created",
+                }
+        except Exception as e:
+            logger.error(f"Failed to get genre for '{lore_id}' from Neo4j: {e}")
+    
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Lore base '{lore_id}' not found"
+    )
+
+
+@router.put("/admin/lore-bases/{lore_id}/genre")
+async def update_lore_base_genre(
+    lore_id: str,
+    http_request: Request,
+):
+    """
+    Update the mechanics_genre and genre_hints for a lore base.
+    
+    Request body:
+    {
+        "mechanics_genre": "scifi",
+        "genre_hints": ["scifi", "mystery", "thriller"],
+        "genre_confidence": 0.9
+    }
+    
+    Works for both curated worlds (updates JSON file + memory) and user-created worlds (updates Neo4j).
+    """
+    try:
+        body = await http_request.json()
+        mechanics_genre = body.get("mechanics_genre")
+        genre_hints = body.get("genre_hints", [])
+        genre_confidence = body.get("genre_confidence")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+    
+    if not mechanics_genre:
+        raise HTTPException(status_code=400, detail="mechanics_genre is required")
+    
+    # Validate mechanics_genre against valid genres
+    from src.lms.agents.genre_assessment import VALID_MECHANICS_GENRES
+    if mechanics_genre.lower() not in VALID_MECHANICS_GENRES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid mechanics_genre. Must be one of: {', '.join(sorted(VALID_MECHANICS_GENRES))}"
+        )
+    
+    # Update curated world (LORE_BASES + JSON file)
+    if lore_id in LORE_BASES:
+        # Update in-memory LORE_BASES
+        LORE_BASES[lore_id]["mechanics_genre"] = mechanics_genre
+        LORE_BASES[lore_id]["genre_hints"] = genre_hints
+        if genre_confidence is not None:
+            LORE_BASES[lore_id]["genre_confidence"] = genre_confidence
+        
+        # Update JSON file on disk
+        def _update_genre_in_file_sync(lid: str, m_genre: str, hints: list, confidence: float = None) -> Optional[Path]:
+            # Find the JSON file for this lore base
+            found_file = None
+            for json_file in LORE_BASES_DIR.glob("*.json"):
+                try:
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        if data.get("id") == lid:
+                            found_file = json_file
+                            break
+                except Exception:
+                    continue
+            
+            if not found_file:
+                # Check seeds directory
+                for json_file in SEEDS_DIR.glob("*.json"):
+                    try:
+                        with open(json_file, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                            if data.get("id") == lid:
+                                found_file = json_file
+                                break
+                    except Exception:
+                        continue
+            
+            if found_file:
+                # Update existing file
+                with open(found_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                data["mechanics_genre"] = m_genre
+                data["genre_hints"] = hints
+                if confidence is not None:
+                    data["genre_confidence"] = confidence
+                
+                with open(found_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                
+                return found_file
+            
+            return None
+        
+        try:
+            lore_file = await run_in_threadpool(
+                _update_genre_in_file_sync, lore_id, mechanics_genre, genre_hints, genre_confidence
+            )
+            if lore_file:
+                logger.info(f"Updated genre in JSON file: {lore_file}")
+        except Exception as e:
+            logger.warning(f"Failed to update JSON file for {lore_id}: {e}")
+        
+        logger.info(f"Updated genre for curated world '{lore_id}': {mechanics_genre}")
+        return {
+            "success": True,
+            "lore_id": lore_id,
+            "mechanics_genre": mechanics_genre,
+            "genre_hints": genre_hints,
+            "source": "curated",
+            "message": f"Updated genre for '{lore_id}'"
+        }
+    
+    # Update user-created world in Neo4j
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if db:
+        try:
+            # Check if LoreBase exists
+            check_result = await db.execute("""
+                MATCH (lb:LoreBase {lore_id: $lore_id})
+                RETURN lb.name AS name
+            """, {"lore_id": lore_id})
+            
+            if not check_result:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Lore base '{lore_id}' not found"
+                )
+            
+            # Update genre fields
+            update_query = """
+                MATCH (lb:LoreBase {lore_id: $lore_id})
+                SET lb.mechanics_genre = $mechanics_genre,
+                    lb.genre_hints = $genre_hints
+            """
+            params = {
+                "lore_id": lore_id,
+                "mechanics_genre": mechanics_genre,
+                "genre_hints": genre_hints,
+            }
+            
+            if genre_confidence is not None:
+                update_query += ", lb.genre_confidence = $genre_confidence"
+                params["genre_confidence"] = genre_confidence
+            
+            await db.execute(update_query, params)
+            
+            logger.info(f"Updated genre for user-created world '{lore_id}': {mechanics_genre}")
+            return {
+                "success": True,
+                "lore_id": lore_id,
+                "mechanics_genre": mechanics_genre,
+                "genre_hints": genre_hints,
+                "source": "user_created",
+                "message": f"Updated genre for '{lore_id}'"
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Failed to update genre in Neo4j for '{lore_id}': {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Lore base '{lore_id}' not found"
+    )
 
 
 @router.get("/admin/entities/orphans")
@@ -2976,13 +3194,24 @@ def _load_single_lore_file(json_file: Path, bases: Dict, is_seed: bool = False) 
         genre_hints = data.get("genre_hints", [])
         if not genre_hints and data.get("genre"):
             genre_hints = [data.get("genre")]
+        
+        # Handle mechanics_genre: prefer explicit mechanics_genre, fallback to genre, then first genre_hint
+        mechanics_genre = data.get("mechanics_genre")
+        if not mechanics_genre:
+            mechanics_genre = data.get("genre")
+        if not mechanics_genre and genre_hints:
+            mechanics_genre = genre_hints[0]
+        if not mechanics_genre:
+            mechanics_genre = "fantasy"  # Ultimate fallback
 
         bases[lore_id] = {
             "id": lore_id,
             "name": data.get("name", lore_id.replace("_", " ").title()),
             "description": data.get("description", ""),
-            "genre": data.get("genre", genre_hints[0] if genre_hints else "fantasy"),
+            "genre": data.get("genre", genre_hints[0] if genre_hints else "fantasy"),  # Keep for backward compatibility
+            "mechanics_genre": mechanics_genre,  # NEW: Authoritative mechanics genre
             "genre_hints": genre_hints,
+            "genre_confidence": data.get("genre_confidence"),  # Optional confidence score
             "tone_hints": data.get("tone_hints", []),
             "entities_count": 0,
             "seed_prompt": data.get("seed_prompt", ""),
@@ -2990,7 +3219,7 @@ def _load_single_lore_file(json_file: Path, bases: Dict, is_seed: bool = False) 
             "ingested": False,
             "is_seed": is_seed,  # Mark as curated seed lore
         }
-        logger.info(f"Loaded {'seed' if is_seed else 'lore base'} from file: {lore_id}")
+        logger.info(f"Loaded {'seed' if is_seed else 'lore base'} from file: {lore_id} (mechanics_genre={mechanics_genre})")
     except Exception as e:
         logger.error(f"Failed to load lore file {json_file}: {e}")
 
