@@ -56,6 +56,7 @@ class CharacterCreateRequest(BaseModel):
     ability_assignments: Optional[Dict[str, int]] = None  # For CLASSIC mode
     skill_proficiencies: Optional[List[str]] = None
     player_id: str = ""
+    world_id: Optional[str] = None  # If provided, world's mechanics genre dominates
 
     def get_origin(self) -> Optional[str]:
         """Get origin, preferring new field over legacy."""
@@ -490,28 +491,46 @@ async def create_character_from_concept(request: CharacterCreateRequest):
 
     Example: "A gruff dwarf blacksmith who became an adventurer"
     Supports all genres - concept will be interpreted in genre context.
+    
+    Genre Resolution: If world_id is provided, world's mechanics_genre dominates.
+                     User's genre becomes narrative flavor only.
     """
     if not request.concept:
         raise HTTPException(status_code=400, detail="Concept is required for concept mode")
 
-    genre = request.genre or "fantasy"
-    generator = ConceptGenerator(genre=genre)
+    # Import LORE_BASES for genre resolution
+    from .game_routes import LORE_BASES
+    from src.lms.utils.genre_resolver import resolve_mechanics_genre_sync
+    
+    # Resolve mechanics genre (world dominates if provided)
+    user_genre = request.genre or "fantasy"
+    mechanics_genre, flavor_genres = resolve_mechanics_genre_sync(
+        world_id=request.world_id,
+        user_genre=user_genre,
+        lore_bases=LORE_BASES,
+    )
+    
+    # Use mechanics genre for character generation
+    generator = ConceptGenerator(genre=mechanics_genre)
     character = generator.generate_from_concept_sync(
         request.concept,
         player_id=request.player_id,
     )
 
     _characters[character.character_id] = character
-    logger.info(f"Created {genre} character from concept: {character.name}")
+    logger.info(
+        f"Created {mechanics_genre} character from concept: {character.name} "
+        f"(world={request.world_id}, flavor={flavor_genres})"
+    )
 
     # Get display names using genre-aware lookups
-    origin_data = get_origin(character.origin, genre)
-    archetype_data = get_archetype(character.archetype, genre)
+    origin_data = get_origin(character.origin, mechanics_genre)
+    archetype_data = get_archetype(character.archetype, mechanics_genre)
 
     return CharacterResponse(
         character_id=character.character_id,
         name=character.name,
-        genre=genre,
+        genre=mechanics_genre,
         origin=origin_data.display_name if origin_data else character.origin,
         archetype=archetype_data.display_name if archetype_data else character.archetype,
         # Backward compatible
