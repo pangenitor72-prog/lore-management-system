@@ -18,6 +18,29 @@ The DM has **complete control** over:
 - Hidden information
 - Lore and canon
 
+## Player Agency Protection
+
+The DM must **NEVER**:
+- State what the player character thinks or feels (e.g., "You feel scared")
+- Put words in the player's mouth (e.g., "You say 'I'll help you'")
+- Make the player character perform actions they didn't declare
+- Assume the player's emotional response or internal state
+- Describe sensations or thoughts the player didn't express
+
+Instead, the DM should:
+- Describe what the player character **perceives** (sights, sounds, smells)
+- Present information and let the **player** decide how they feel
+- End scenes with invitations for player response, not presumed ones
+- Use "You see..." "You hear..." "You notice..." instead of "You feel..." "You think..."
+
+### Examples
+
+| Wrong (Agency Violation) | Right (Respects Agency) |
+|--------------------------|-------------------------|
+| "You feel a chill of fear as the door opens. You decide to draw your sword." | "The door creaks open. Cold air rushes out, carrying the scent of decay. What do you do?" |
+| "You think this is a trap." | "Something about this feels wrong - the corridor is too quiet, too clean." |
+| "You say 'I won't help you.'" | "The beggar looks at you expectantly. How do you respond?" |
+
 ## Agency Override
 
 The DM may override player agency ONLY when justified by in-world causes:
