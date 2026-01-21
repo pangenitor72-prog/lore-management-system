@@ -8974,6 +8974,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let ttrpgVisibility = 'classic';
         let selectedTTRPGWorld = null;
         let ttrpgWorldsLoaded = false;
+        let ttrpgLoadedWorlds = [];  // Store TTRPG worlds for genre lookup
 
         // ==========================================
         // PLAYER PSYCHOLOGY SYSTEM
@@ -9383,6 +9384,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     return;
                 }
 
+                // Store for later lookup (genre determination)
+                ttrpgLoadedWorlds = worlds;
+
                 // Show all curated worlds as cards (scrollable container)
                 const worldsHtml = worlds.map(world => `
                     <div class="curated-world-card" onclick="selectTTRPGCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
@@ -9418,6 +9422,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             element.classList.add('selected');
             selectedTTRPGWorld = worldId;
             ttrpgGenre = null;  // Clear genre when world is selected
+
+            // CRITICAL: World's mechanics_genre determines character creation options
+            const world = ttrpgLoadedWorlds.find(w => w.id === worldId);
+            if (world && world.mechanics_genre) {
+                rulesGenre = getRulesGenre(world.mechanics_genre);
+                selectedGenre = world.mechanics_genre;
+                console.log('[TTRPG World] Selected:', world.name, '| mechanics_genre:', world.mechanics_genre, '-> rulesGenre:', rulesGenre);
+            }
         }
 
         // Quick Play - start game immediately with selected genre
@@ -10951,12 +10963,22 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             element.classList.add('selected');
             selectedCuratedWorld = worldId;
 
-            // Find the world and pre-populate genre blend with its genre_hints
+            // Find the world and use its mechanics_genre as authority
             const world = loadedCuratedWorlds.find(w => w.id === worldId);
-            if (world && world.genre_hints) {
-                curatedWorldGenres = [...world.genre_hints];
-                blendGenres = [...world.genre_hints];
-                updateGenreBlendDisplay();
+            if (world) {
+                // CRITICAL: World's mechanics_genre determines character creation options
+                if (world.mechanics_genre) {
+                    rulesGenre = getRulesGenre(world.mechanics_genre);
+                    selectedGenre = world.mechanics_genre;
+                    console.log('[World] Selected world:', world.name, '| mechanics_genre:', world.mechanics_genre, '-> rulesGenre:', rulesGenre);
+                }
+
+                // Genre hints are flavor, shown but don't override mechanics
+                if (world.genre_hints) {
+                    curatedWorldGenres = [...world.genre_hints];
+                    blendGenres = [...world.genre_hints];
+                    updateGenreBlendDisplay();
+                }
             }
         }
 
@@ -12011,6 +12033,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 name: '',
                 origin: null,
                 archetype: null,
+                explicitArchetypeSelection: false,  // Reset: no explicit selection yet
                 abilityPriority: null,
                 selectedSkills: [],
                 selectedCantrips: [],
@@ -12281,6 +12304,52 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // Set defaults first
             availableOrigins = defaultOrigins;
             availableArchetypes = defaultArchetypes;
+
+            // PRIORITY: Try to load world-specific character options first
+            // This ensures no gnomes in a modern setting, etc.
+            if (selectedCuratedWorld) {
+                try {
+                    console.log('[CharCreate] Checking for world-specific options:', selectedCuratedWorld);
+                    const worldOptsRes = await fetch(API_BASE + `/game/admin/lore-bases/${selectedCuratedWorld}/character-options`);
+                    if (worldOptsRes.ok) {
+                        const worldOptsData = await worldOptsRes.json();
+                        const charOpts = worldOptsData.character_options || {};
+
+                        if (charOpts.origins && charOpts.origins.length > 0) {
+                            availableOrigins = charOpts.origins.map(o => ({
+                                id: o.id,
+                                display_name: o.name,
+                                description: o.description || '',
+                                base_type: o.base_type  // Store the base type for mechanics
+                            }));
+                            console.log('[CharCreate] Using world-specific origins:', availableOrigins.length);
+                        }
+
+                        if (charOpts.archetypes && charOpts.archetypes.length > 0) {
+                            availableArchetypes = charOpts.archetypes.map(a => ({
+                                id: a.id,
+                                display_name: a.name,
+                                description: a.description || '',
+                                base_type: a.base_type,  // Store the base type for mechanics
+                                hit_die: a.base_type === 'barbarian' ? 'd12' :
+                                        a.base_type === 'fighter' || a.base_type === 'ranger' || a.base_type === 'paladin' ? 'd10' :
+                                        a.base_type === 'wizard' || a.base_type === 'sorcerer' ? 'd6' : 'd8',
+                                has_powers: ['wizard', 'sorcerer', 'cleric', 'warlock', 'druid', 'bard', 'paladin', 'ranger'].includes(a.base_type)
+                            }));
+                            console.log('[CharCreate] Using world-specific archetypes:', availableArchetypes.length);
+                        }
+
+                        // If world has custom options, skip the genre API fetch
+                        if ((charOpts.origins?.length > 0) || (charOpts.archetypes?.length > 0)) {
+                            console.log('[CharCreate] World has custom character options, using those');
+                            updateCharCreationUI();
+                            return;
+                        }
+                    }
+                } catch (worldOptsErr) {
+                    console.log('[CharCreate] Could not load world-specific options, falling back to defaults:', worldOptsErr.message);
+                }
+            }
 
             // Only fetch from API if no story-genre override exists
             // (API returns D&D-style data that would overwrite custom genre choices)
@@ -12882,6 +12951,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         function selectArchetypeHint(archId) {
+            // CRITICAL: Store the explicit selection so it doesn't get lost
+            charCreationData.archetype = archId;
+            charCreationData.explicitArchetypeSelection = true;  // Flag that user made explicit choice
+            console.log('[CharCreate] Archetype hint selected:', archId);
+
             document.querySelectorAll('.archetype-hint').forEach(el => {
                 el.classList.toggle('selected', el.dataset.archetype === archId);
             });
@@ -13351,8 +13425,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 // Parse concept LOCALLY - no API calls, instant!
                 const parsed = parseConceptForCharacter(charCreationData.concept);
-                charCreationData.archetype = parsed.archetype;
+
+                // CRITICAL: Respect explicit user selection over parsed defaults
+                // If user clicked a Quick Archetype chip, that takes priority
+                if (!charCreationData.explicitArchetypeSelection) {
+                    charCreationData.archetype = parsed.archetype;
+                }
+                // Always use parsed origin unless we add origin hints later
                 charCreationData.origin = parsed.origin;
+
+                // Use the FINAL archetype (explicit selection or parsed) for all calculations
+                const finalArchetype = charCreationData.archetype || parsed.archetype;
+                console.log('[CharCreate] Final archetype:', finalArchetype, '| explicit:', charCreationData.explicitArchetypeSelection);
 
                 // Assign default ability scores based on archetype (genre-aware)
                 const classAbilityPriority = {
@@ -13387,7 +13471,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 };
 
                 const defaultPriority = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
-                const priority = classAbilityPriority[parsed.archetype] || defaultPriority;
+                const priority = classAbilityPriority[finalArchetype] || defaultPriority;
                 const standardArray = [15, 14, 13, 12, 10, 8];
                 charCreationData.abilityScores = {};
                 priority.forEach((ability, i) => {
@@ -13425,23 +13509,25 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     occultist: ['arcana', 'investigation'],
                     survivor: ['survival', 'perception']
                 };
-                charCreationData.selectedSkills = classSkills[parsed.archetype] || ['perception', 'investigation'];
+                charCreationData.selectedSkills = classSkills[finalArchetype] || ['perception', 'investigation'];
 
                 // Build local character object for review
                 const hitDieMax = { barbarian: 12, fighter: 10, paladin: 10, ranger: 10,
                     bard: 8, cleric: 8, druid: 8, monk: 8, rogue: 8, warlock: 8,
                     sorcerer: 6, wizard: 6 };
-                const hitDie = hitDieMax[parsed.archetype] || 8;
+                const hitDie = hitDieMax[finalArchetype] || 8;
                 const conMod = Math.floor((charCreationData.abilityScores.constitution - 10) / 2);
                 const dexMod = Math.floor((charCreationData.abilityScores.dexterity - 10) / 2);
                 const maxHP = hitDie + conMod;
 
+                // Use final values (explicit selection takes priority)
+                const finalOrigin = charCreationData.origin || parsed.origin;
                 charCreationData.generatedChar = {
                     name: charCreationData.name || 'Adventurer',
-                    race: parsed.origin,
-                    origin: parsed.origin,
-                    character_class: parsed.archetype.charAt(0).toUpperCase() + parsed.archetype.slice(1),
-                    archetype: parsed.archetype.charAt(0).toUpperCase() + parsed.archetype.slice(1),
+                    race: finalOrigin,
+                    origin: finalOrigin,
+                    character_class: finalArchetype.charAt(0).toUpperCase() + finalArchetype.slice(1),
+                    archetype: finalArchetype.charAt(0).toUpperCase() + finalArchetype.slice(1),
                     level: 1,
                     ability_scores: charCreationData.abilityScores,
                     max_hit_points: maxHP,
@@ -13965,7 +14051,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 storytelling_style: selectedStyle,
                 session_scope: sessionScope,
                 max_turns: maxTurnsForScope[sessionScope] || 20,
-                tester: localStorage.getItem('airpg_tester_name') || null  // Link tester to session
+                tester: localStorage.getItem('airpg_tester_name') || null,  // Link tester to session
+                // D&D Rules Integration - CRITICAL for TTRPG mode
+                rules_mode: rulesMode || 'narrative',
+                rules_visibility: rulesVisibility || 'guided'
             };
 
             if (selectedCuratedWorld) {
@@ -14031,6 +14120,45 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     console.warn('Session creation failed, using local fallback');
                 }
                 pendingSessionPromise = null;
+            }
+
+            // CRITICAL: Register character with backend if D&D mode
+            // This links the frontend-built character to the session for mechanics
+            if (dndCharacter && rulesMode === 'dnd' && currentSessionId) {
+                try {
+                    console.log('[CharRegister] Registering character with backend:', dndCharacter.name);
+                    const regRes = await fetch(API_BASE + '/dnd/characters/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: dndCharacter.name,
+                            origin: dndCharacter.origin || dndCharacter.race || 'human',
+                            archetype: dndCharacter.archetype || dndCharacter.character_class || 'fighter',
+                            level: dndCharacter.level || 1,
+                            ability_scores: dndCharacter.ability_scores || {
+                                strength: 10, dexterity: 10, constitution: 10,
+                                intelligence: 10, wisdom: 10, charisma: 10
+                            },
+                            max_hit_points: dndCharacter.max_hit_points || 10,
+                            current_hit_points: dndCharacter.current_hit_points || 10,
+                            armor_class: dndCharacter.armor_class || 10,
+                            proficiency_bonus: dndCharacter.proficiency_bonus || 2,
+                            skill_proficiencies: dndCharacter.skill_proficiencies || [],
+                            equipment: [],
+                            genre: selectedGenre || 'fantasy',
+                            session_id: currentSessionId
+                        })
+                    });
+                    if (regRes.ok) {
+                        const regData = await regRes.json();
+                        dndCharacter.character_id = regData.character_id;
+                        console.log('[CharRegister] Character registered with ID:', regData.character_id);
+                    } else {
+                        console.warn('[CharRegister] Failed to register character:', await regRes.text());
+                    }
+                } catch (e) {
+                    console.error('[CharRegister] Error registering character:', e);
+                }
             }
 
             // Reset story guidance tracking for new story
@@ -17213,9 +17341,34 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                         🔍 Find Duplicates
                                     </button>
                                 ` : ''}
+                                <button class="btn btn-secondary" onclick="toggleCharacterOptions('${world.id}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-gold); color: var(--bg-primary);">
+                                    🎭 Character Options
+                                </button>
                                 <button class="btn" onclick="openDeleteWorldModal('${world.id}', '${escapeHtml(world.name).replace(/'/g, "\\'")}', ${world.entity_count})" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
                                     🗑️ Delete World
                                 </button>
+                            </div>
+
+                            <!-- Character Options Panel (hidden by default) -->
+                            <div id="char-options-${world.id}" style="display: none; margin-bottom: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <h4 style="margin: 0; color: var(--text-primary);">Character Creation Options</h4>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="btn btn-secondary" onclick="generateCharacterOptions('${world.id}')" style="padding: 4px 10px; font-size: 0.8rem;">
+                                            🤖 Generate from Lore
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="toggleCharacterOptions('${world.id}')" style="padding: 4px 10px; font-size: 0.8rem;">Close</button>
+                                    </div>
+                                </div>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">
+                                    These options define what characters players can create in this world. Each maps to a base D&D type for mechanics.
+                                </p>
+                                <div id="char-options-content-${world.id}">
+                                    <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                                        <span class="loading"></span> Loading options...
+                                    </div>
+                                </div>
+                                <div id="char-options-status-${world.id}" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 10px;"></div>
                             </div>
 
                             <!-- Lore Editor (hidden by default) -->
@@ -18561,6 +18714,186 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     statusSpan.textContent = `Error: ${err.message}`;
                     statusSpan.style.color = 'var(--accent-rose)';
                 }
+            }
+        }
+
+        // ============================================================
+        // CHARACTER OPTIONS MANAGEMENT
+        // ============================================================
+
+        // Cache for character options per world
+        let charOptionsCache = {};
+
+        async function toggleCharacterOptions(worldId) {
+            const panel = document.getElementById(`char-options-${worldId}`);
+            if (!panel) return;
+
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                await loadCharacterOptions(worldId);
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        async function loadCharacterOptions(worldId) {
+            const contentDiv = document.getElementById(`char-options-content-${worldId}`);
+            if (!contentDiv) return;
+
+            contentDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><span class="loading"></span> Loading options...</div>';
+
+            try {
+                const response = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/character-options`);
+                if (!response.ok) throw new Error('Failed to load character options');
+
+                const data = await response.json();
+                charOptionsCache[worldId] = data.character_options || {};
+                renderCharacterOptions(worldId);
+            } catch (err) {
+                contentDiv.innerHTML = `<div style="color: var(--accent-rose); padding: 20px;">Error: ${err.message}</div>`;
+            }
+        }
+
+        function renderCharacterOptions(worldId) {
+            const contentDiv = document.getElementById(`char-options-content-${worldId}`);
+            if (!contentDiv) return;
+
+            const options = charOptionsCache[worldId] || {};
+            const origins = options.origins || [];
+            const archetypes = options.archetypes || [];
+
+            if (origins.length === 0 && archetypes.length === 0) {
+                contentDiv.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                        <p>No character options configured for this world.</p>
+                        <p style="font-size: 0.85rem;">Click "Generate from Lore" to auto-generate setting-appropriate options.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const statusBadge = options.ai_generated
+                ? (options.admin_reviewed
+                    ? '<span style="background: var(--accent-sage); color: var(--bg-primary); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Reviewed</span>'
+                    : '<span style="background: var(--accent-gold); color: var(--bg-primary); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">AI Generated - Needs Review</span>')
+                : '<span style="background: var(--accent-lavender); color: var(--bg-primary); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Custom</span>';
+
+            let html = `<div style="margin-bottom: 10px;">${statusBadge}</div>`;
+
+            // Origins section
+            html += `
+                <div style="margin-bottom: 15px;">
+                    <h5 style="color: var(--text-primary); margin: 0 0 8px 0; font-size: 0.95rem;">Origins (${origins.length})</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+            `;
+
+            origins.forEach(origin => {
+                html += `
+                    <div style="background: var(--bg-primary); padding: 10px; border-radius: 6px; border-left: 3px solid var(--accent-sage);">
+                        <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(origin.name)}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Base: ${origin.base_type}</div>
+                        ${origin.description ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">${escapeHtml(origin.description)}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+
+            // Archetypes section
+            html += `
+                <div>
+                    <h5 style="color: var(--text-primary); margin: 0 0 8px 0; font-size: 0.95rem;">Archetypes (${archetypes.length})</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+            `;
+
+            archetypes.forEach(archetype => {
+                html += `
+                    <div style="background: var(--bg-primary); padding: 10px; border-radius: 6px; border-left: 3px solid var(--accent-lavender);">
+                        <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(archetype.name)}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Base: ${archetype.base_type}</div>
+                        ${archetype.description ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">${escapeHtml(archetype.description)}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+
+            // Mark as reviewed button if not already reviewed
+            if (options.ai_generated && !options.admin_reviewed) {
+                html += `
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button class="btn btn-primary" onclick="markCharacterOptionsReviewed('${worldId}')" style="padding: 6px 12px; font-size: 0.85rem;">
+                            ✓ Mark as Reviewed
+                        </button>
+                    </div>
+                `;
+            }
+
+            contentDiv.innerHTML = html;
+        }
+
+        async function generateCharacterOptions(worldId) {
+            const statusDiv = document.getElementById(`char-options-status-${worldId}`);
+            const contentDiv = document.getElementById(`char-options-content-${worldId}`);
+
+            if (statusDiv) statusDiv.innerHTML = '<span class="loading"></span> Generating options from lore...';
+            if (contentDiv) contentDiv.innerHTML = '<div style="text-align: center; padding: 30px;"><span class="loading"></span> AI is analyzing the lore to generate setting-appropriate character options...</div>';
+
+            try {
+                const response = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/character-options/generate`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || 'Failed to generate options');
+                }
+
+                const result = await response.json();
+                charOptionsCache[worldId] = result.character_options;
+
+                if (statusDiv) {
+                    statusDiv.innerHTML = `<span style="color: var(--accent-sage);">✓ ${result.message}</span>`;
+                }
+
+                renderCharacterOptions(worldId);
+            } catch (err) {
+                if (statusDiv) {
+                    statusDiv.innerHTML = `<span style="color: var(--accent-rose);">Error: ${err.message}</span>`;
+                }
+                if (contentDiv) {
+                    contentDiv.innerHTML = `<div style="color: var(--accent-rose); padding: 20px;">Failed to generate options: ${err.message}</div>`;
+                }
+            }
+        }
+
+        async function markCharacterOptionsReviewed(worldId) {
+            const options = charOptionsCache[worldId];
+            if (!options) return;
+
+            try {
+                const response = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/character-options`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        origins: options.origins || [],
+                        archetypes: options.archetypes || [],
+                        ai_generated: true
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to save');
+
+                const result = await response.json();
+                charOptionsCache[worldId] = result.character_options;
+                renderCharacterOptions(worldId);
+
+                const statusDiv = document.getElementById(`char-options-status-${worldId}`);
+                if (statusDiv) {
+                    statusDiv.innerHTML = '<span style="color: var(--accent-sage);">✓ Marked as reviewed</span>';
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
             }
         }
 

@@ -779,6 +779,79 @@ async def get_character(character_id: str, visibility: Optional[str] = None):
     )
 
 
+class CharacterRegisterRequest(BaseModel):
+    """Request to register a frontend-built character."""
+    name: str
+    origin: str  # race in fantasy terms
+    archetype: str  # class in fantasy terms
+    level: int = 1
+    ability_scores: Dict[str, int]
+    max_hit_points: int
+    current_hit_points: int
+    armor_class: int
+    proficiency_bonus: int = 2
+    skill_proficiencies: List[str] = []
+    equipment: List[Any] = []
+    genre: str = "fantasy"
+    session_id: Optional[str] = None  # Link to game session
+
+
+@router.post("/characters/register", response_model=CharacterResponse)
+async def register_character(request: CharacterRegisterRequest):
+    """
+    Register a character built on the frontend.
+
+    This endpoint stores the character in memory so it can be used
+    for D&D mechanics during gameplay. Also links to session if provided.
+    """
+    import uuid
+
+    character_id = str(uuid.uuid4())
+
+    # Build CharacterSheet from frontend data
+    character = CharacterSheet(
+        character_id=character_id,
+        name=request.name,
+        origin=request.origin,
+        archetype=request.archetype,
+        level=request.level,
+        ability_scores=request.ability_scores,
+        max_hit_points=request.max_hit_points,
+        current_hit_points=request.current_hit_points,
+        armor_class=request.armor_class,
+        proficiency_bonus=request.proficiency_bonus,
+        skill_proficiencies=request.skill_proficiencies,
+        equipment=[],  # Will be converted to proper equipment objects if needed
+        rules_visibility=RulesVisibility.GUIDED.value,
+    )
+
+    _characters[character_id] = character
+
+    # Link to session if provided
+    if request.session_id:
+        from .game_routes import _active_sessions
+        session = _active_sessions.get(request.session_id)
+        if session:
+            session["character_id"] = character_id
+            logger.info(f"Linked character {character_id} to session {request.session_id}")
+
+    logger.info(f"Registered character: {character.name} ({request.origin} {request.archetype}) id={character_id}")
+
+    return CharacterResponse(
+        character_id=character_id,
+        name=character.name,
+        genre=request.genre,
+        origin=request.origin,
+        archetype=request.archetype,
+        race=request.origin,  # Backward compatible
+        character_class=request.archetype,  # Backward compatible
+        level=character.level,
+        hit_points=character.current_hit_points,
+        max_hit_points=character.max_hit_points,
+        armor_class=character.armor_class,
+    )
+
+
 @router.post("/characters/{character_id}/roll", response_model=RollResponse)
 async def perform_roll(character_id: str, request: RollRequest):
     """Perform a dice roll for a character."""

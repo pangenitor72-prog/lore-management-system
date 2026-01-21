@@ -159,6 +159,136 @@ def get_gemini_model():
 
 
 # ============================================================
+# AI CHARACTER OPTIONS GENERATION
+# ============================================================
+# Generate setting-appropriate origins and archetypes from lore
+
+# Base D&D types that custom options can map to
+BASE_ORIGINS = ["human", "elf", "dwarf", "halfling", "gnome", "half-orc", "tiefling", "dragonborn"]
+BASE_ARCHETYPES = ["fighter", "rogue", "wizard", "cleric", "ranger", "barbarian", "paladin", "bard", "monk", "warlock", "sorcerer", "druid"]
+
+
+async def generate_character_options_from_lore(
+    lore_content: str,
+    world_name: str,
+    genre: str,
+    description: str = ""
+) -> Dict[str, Any]:
+    """
+    Use AI to generate setting-appropriate character origins and archetypes
+    based on the world's lore content.
+
+    Each generated option maps to a base D&D type for mechanics.
+
+    Args:
+        lore_content: The full lore text for the world
+        world_name: Name of the world
+        genre: Primary genre (fantasy, scifi, modern, horror, etc.)
+        description: Brief description of the world
+
+    Returns:
+        Dict with 'origins' and 'archetypes' lists, each containing:
+        - id: unique identifier
+        - name: display name
+        - description: short description
+        - base_type: base D&D type for mechanics
+    """
+    model = get_gemini_model()
+    if not model:
+        logger.warning("No Gemini API key - returning empty character options")
+        return {"origins": [], "archetypes": [], "ai_generated": False}
+
+    # Truncate lore for prompt if too long
+    lore_excerpt = lore_content[:8000] if len(lore_content) > 8000 else lore_content
+
+    prompt = f'''You are designing character creation options for a tabletop RPG set in "{world_name}".
+
+WORLD GENRE: {genre}
+WORLD DESCRIPTION: {description}
+
+LORE EXCERPT:
+{lore_excerpt}
+
+Based on this world's lore, generate setting-appropriate character options. Each option must map to a base D&D 5e type for mechanics, but should be flavored for this specific setting.
+
+BASE ORIGINS (for mechanics mapping):
+{", ".join(BASE_ORIGINS)}
+
+BASE ARCHETYPES (for mechanics mapping):
+{", ".join(BASE_ARCHETYPES)}
+
+IMPORTANT RULES:
+1. Origins should represent BACKGROUNDS or PEOPLES that make sense in this world
+2. Archetypes should represent ROLES or PROFESSIONS that fit this setting
+3. Do NOT include fantasy races (elves, dwarves, gnomes) in non-fantasy settings
+4. For modern/scifi/cyberpunk/horror/noir/western settings:
+   - ALL origins should map to base_type "human" (these are backgrounds, not races)
+   - Example: "Street Kid" -> human, "Corporate" -> human, "Ex-Military" -> human
+5. For fantasy settings, you MAY use elf, dwarf, etc. if they fit the lore
+6. Generate 4-6 origins and 4-6 archetypes
+7. Each must map to a base type from the lists above
+8. Choose archetype base types that make mechanical sense (e.g., a "Hacker" maps to "rogue" for skills)
+
+Output valid JSON only, no markdown:
+{{
+  "origins": [
+    {{"id": "origin_id", "name": "Display Name", "description": "One sentence description", "base_type": "human"}}
+  ],
+  "archetypes": [
+    {{"id": "archetype_id", "name": "Display Name", "description": "One sentence description", "base_type": "fighter"}}
+  ]
+}}'''
+
+    try:
+        response = await run_in_threadpool(
+            lambda: model.generate_content(prompt)
+        )
+
+        # Extract JSON from response
+        text = response.text.strip()
+        # Remove markdown code blocks if present
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1]
+            if text.endswith("```"):
+                text = text.rsplit("```", 1)[0]
+            elif "```" in text:
+                text = text.split("```")[0]
+
+        result = json.loads(text)
+
+        # Validate the structure
+        origins = result.get("origins", [])
+        archetypes = result.get("archetypes", [])
+
+        # Ensure base_types are valid
+        for origin in origins:
+            if origin.get("base_type") not in BASE_ORIGINS:
+                origin["base_type"] = "human"  # Default fallback
+        for archetype in archetypes:
+            if archetype.get("base_type") not in BASE_ARCHETYPES:
+                archetype["base_type"] = "fighter"  # Default fallback
+
+        logger.info(
+            f"Generated character options for {world_name}: "
+            f"{len(origins)} origins, {len(archetypes)} archetypes"
+        )
+
+        return {
+            "origins": origins,
+            "archetypes": archetypes,
+            "ai_generated": True,
+            "admin_reviewed": False
+        }
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse AI response as JSON: {e}")
+        return {"origins": [], "archetypes": [], "ai_generated": False}
+    except Exception as e:
+        logger.error(f"AI character options generation failed: {e}")
+        return {"origins": [], "archetypes": [], "ai_generated": False}
+
+
+# ============================================================
 # WORLD CHARACTERISTICS SCHEMA
 # ============================================================
 # Robust taxonomy for defining curated worlds
@@ -1066,6 +1196,183 @@ async def update_lore_base_genre(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Lore base '{lore_id}' not found"
     )
+
+
+# ============================================================
+# CHARACTER OPTIONS ENDPOINTS
+# ============================================================
+
+@router.get("/admin/lore-bases/{lore_id}/character-options")
+async def get_character_options(
+    lore_id: str,
+    http_request: Request,
+):
+    """
+    Get character creation options for a lore base.
+
+    Returns the custom origins and archetypes configured for this world.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    base = LORE_BASES[lore_id]
+    char_opts = base.get("character_options", {})
+
+    return {
+        "lore_id": lore_id,
+        "world_name": base.get("name", lore_id),
+        "character_options": char_opts,
+        "has_options": bool(char_opts.get("origins") or char_opts.get("archetypes"))
+    }
+
+
+@router.post("/admin/lore-bases/{lore_id}/character-options/generate")
+async def generate_character_options(
+    lore_id: str,
+    http_request: Request,
+):
+    """
+    Use AI to generate character creation options from the world's lore.
+
+    This analyzes the lore content and generates setting-appropriate
+    origins and archetypes that map to base D&D types for mechanics.
+
+    The generated options are stored but marked as ai_generated=True
+    and admin_reviewed=False until an admin reviews them.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    base = LORE_BASES[lore_id]
+    lore_content = base.get("lore_content", "")
+    description = base.get("description", "")
+    genre = base.get("genre") or (base.get("genre_hints", ["fantasy"])[0] if base.get("genre_hints") else "fantasy")
+
+    if not lore_content and not description:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Lore base '{lore_id}' has no lore content to analyze"
+        )
+
+    # Use description as fallback if no lore content
+    content_to_analyze = lore_content or description
+
+    # Generate options using AI
+    options = await generate_character_options_from_lore(
+        lore_content=content_to_analyze,
+        world_name=base.get("name", lore_id),
+        genre=genre,
+        description=description
+    )
+
+    # Store the options
+    LORE_BASES[lore_id]["character_options"] = options
+
+    # Try to persist to Neo4j
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if db:
+        try:
+            await db.execute("""
+                MATCH (lb:LoreBase {lore_id: $lore_id})
+                SET lb.character_options = $options
+            """, {
+                "lore_id": lore_id,
+                "options": json.dumps(options)
+            })
+        except Exception as e:
+            logger.warning(f"Failed to persist character options to Neo4j: {e}")
+
+    return {
+        "success": True,
+        "lore_id": lore_id,
+        "world_name": base.get("name", lore_id),
+        "character_options": options,
+        "message": f"Generated {len(options.get('origins', []))} origins and {len(options.get('archetypes', []))} archetypes"
+    }
+
+
+@router.put("/admin/lore-bases/{lore_id}/character-options")
+async def update_character_options(
+    lore_id: str,
+    http_request: Request,
+):
+    """
+    Update character creation options for a lore base.
+
+    Admins can modify the AI-generated options or provide custom ones.
+    This marks the options as admin_reviewed=True.
+    """
+    if lore_id not in LORE_BASES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore base '{lore_id}' not found"
+        )
+
+    body = await http_request.json()
+    origins = body.get("origins", [])
+    archetypes = body.get("archetypes", [])
+
+    # Validate structure
+    for origin in origins:
+        if not all(k in origin for k in ["id", "name", "base_type"]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Origin missing required fields (id, name, base_type): {origin}"
+            )
+        if origin["base_type"] not in BASE_ORIGINS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid base_type '{origin['base_type']}' for origin. Valid: {BASE_ORIGINS}"
+            )
+
+    for archetype in archetypes:
+        if not all(k in archetype for k in ["id", "name", "base_type"]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Archetype missing required fields (id, name, base_type): {archetype}"
+            )
+        if archetype["base_type"] not in BASE_ARCHETYPES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid base_type '{archetype['base_type']}' for archetype. Valid: {BASE_ARCHETYPES}"
+            )
+
+    options = {
+        "origins": origins,
+        "archetypes": archetypes,
+        "ai_generated": body.get("ai_generated", False),
+        "admin_reviewed": True  # Always mark as reviewed when manually updated
+    }
+
+    # Store the options
+    LORE_BASES[lore_id]["character_options"] = options
+
+    # Try to persist to Neo4j
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if db:
+        try:
+            await db.execute("""
+                MATCH (lb:LoreBase {lore_id: $lore_id})
+                SET lb.character_options = $options
+            """, {
+                "lore_id": lore_id,
+                "options": json.dumps(options)
+            })
+        except Exception as e:
+            logger.warning(f"Failed to persist character options to Neo4j: {e}")
+
+    return {
+        "success": True,
+        "lore_id": lore_id,
+        "character_options": options,
+        "message": f"Updated character options: {len(origins)} origins, {len(archetypes)} archetypes"
+    }
 
 
 @router.get("/admin/entities/orphans")
@@ -3387,6 +3694,40 @@ async def load_lore_bases_from_neo4j(db) -> int:
         return 0
 
 
+class CustomOrigin(BaseModel):
+    """
+    A setting-specific character origin that maps to a base D&D type.
+
+    Example: "Netrunner" in cyberpunk maps to "rogue" for mechanics.
+    """
+    id: str = Field(..., description="Unique identifier (e.g., 'netrunner', 'mutant_survivor')")
+    name: str = Field(..., description="Display name (e.g., 'Netrunner', 'Mutant Survivor')")
+    description: str = Field(..., description="Short description of this origin")
+    base_type: str = Field(..., description="Base D&D origin for mechanics (e.g., 'human', 'elf', 'dwarf')")
+    abilities: List[str] = Field(default_factory=list, description="Flavor abilities (mapped to base)")
+
+
+class CustomArchetype(BaseModel):
+    """
+    A setting-specific character archetype that maps to a base D&D class.
+
+    Example: "Street Samurai" in cyberpunk maps to "fighter" for mechanics.
+    """
+    id: str = Field(..., description="Unique identifier (e.g., 'street_samurai', 'corporate_fixer')")
+    name: str = Field(..., description="Display name (e.g., 'Street Samurai', 'Corporate Fixer')")
+    description: str = Field(..., description="Short description of this archetype")
+    base_type: str = Field(..., description="Base D&D class for mechanics (e.g., 'fighter', 'rogue', 'wizard')")
+    key_abilities: List[str] = Field(default_factory=list, description="Flavor abilities (mapped to base)")
+
+
+class WorldCharacterOptions(BaseModel):
+    """Character creation options specific to a world."""
+    origins: List[CustomOrigin] = Field(default_factory=list)
+    archetypes: List[CustomArchetype] = Field(default_factory=list)
+    ai_generated: bool = Field(default=False, description="True if options were AI-generated")
+    admin_reviewed: bool = Field(default=False, description="True if admin has reviewed/approved")
+
+
 class LoreBaseResponse(BaseModel):
     """Response for lore base information."""
     id: str
@@ -3404,6 +3745,8 @@ class LoreBaseResponse(BaseModel):
     entities_created: int = 0  # Number of entities created in this request
     # World characteristics - canonical world definition
     world_characteristics: Optional[WorldCharacteristics] = None
+    # Character creation options specific to this world
+    character_options: Optional[WorldCharacterOptions] = None
 
 
 @router.get("/lore-bases", response_model=List[LoreBaseResponse])
@@ -3427,6 +3770,15 @@ async def list_lore_bases(genre: Optional[str] = None):
         wc_data = base.get("world_characteristics", {})
         world_chars = WorldCharacteristics(**wc_data) if wc_data else None
 
+        # Build character options from stored data
+        co_data = base.get("character_options")
+        char_opts = None
+        if co_data:
+            if isinstance(co_data, dict):
+                char_opts = WorldCharacterOptions(**co_data)
+            elif isinstance(co_data, WorldCharacterOptions):
+                char_opts = co_data
+
         bases.append(LoreBaseResponse(
             id=base["id"],
             name=base["name"],
@@ -3440,6 +3792,7 @@ async def list_lore_bases(genre: Optional[str] = None):
             has_lore_content=bool(base.get("lore_content", "").strip()),
             ingested=base.get("ingested", False),
             world_characteristics=world_chars,
+            character_options=char_opts,
         ))
 
     return bases
@@ -3465,6 +3818,15 @@ async def get_lore_base(lore_id: str):
     wc_data = base.get("world_characteristics", {})
     world_chars = WorldCharacteristics(**wc_data) if wc_data else None
 
+    # Build character options from stored data
+    co_data = base.get("character_options")
+    char_opts = None
+    if co_data:
+        if isinstance(co_data, dict):
+            char_opts = WorldCharacterOptions(**co_data)
+        elif isinstance(co_data, WorldCharacterOptions):
+            char_opts = co_data
+
     return LoreBaseResponse(
         id=base["id"],
         name=base["name"],
@@ -3478,6 +3840,7 @@ async def get_lore_base(lore_id: str):
         has_lore_content=bool(base.get("lore_content", "").strip()),
         ingested=base.get("ingested", False),
         world_characteristics=world_chars,
+        character_options=char_opts,
     )
 
 
@@ -3643,6 +4006,33 @@ async def ingest_lore_base(
             for pd in result.pending_duplicates
         ]
 
+        # Auto-generate character options if not already set
+        if not LORE_BASES[lore_id].get("character_options"):
+            try:
+                options = await generate_character_options_from_lore(
+                    lore_content=lore_content,
+                    world_name=lore_base.get("name", lore_id),
+                    genre=base_genre or "fantasy",
+                    description=lore_base.get("description", "")
+                )
+                LORE_BASES[lore_id]["character_options"] = options
+
+                # Persist to Neo4j
+                try:
+                    await db.execute("""
+                        MATCH (lb:LoreBase {lore_id: $id})
+                        SET lb.character_options = $options
+                    """, {"id": lore_id, "options": json.dumps(options)})
+                except Exception as neo4j_err:
+                    logger.warning(f"Failed to persist character options to Neo4j: {neo4j_err}")
+
+                logger.info(
+                    f"Generated character options for {lore_id}: "
+                    f"{len(options.get('origins', []))} origins, {len(options.get('archetypes', []))} archetypes"
+                )
+            except Exception as opt_err:
+                logger.warning(f"Failed to generate character options for {lore_id}: {opt_err}")
+
         return LoreBaseIngestResponse(
             lore_id=lore_id,
             entities_created=result.entities_stored,
@@ -3697,6 +4087,10 @@ class LoreBaseUploadRequest(BaseModel):
     approved_entities: Optional[List[ApprovedEntity]] = Field(
         default=None,
         description="Pre-approved entities from review step - bypasses AI extraction"
+    )
+    character_options: Optional[WorldCharacterOptions] = Field(
+        default=None,
+        description="Custom character origins/archetypes for this world. If not provided, AI will generate them."
     )
 
 
@@ -3895,6 +4289,44 @@ async def create_lore_base(
         except Exception as e:
             logger.error(f"Auto-ingest failed for {lore_base.id}: {e}")
             # World is still created, just not ingested
+
+    # ============================================================
+    # AUTO-GENERATE CHARACTER OPTIONS
+    # ============================================================
+    # If character_options not provided, generate them from lore
+    if lore_base.character_options:
+        # Use provided options
+        new_base["character_options"] = lore_base.character_options.model_dump()
+        logger.info(f"Using provided character options for {lore_base.id}")
+    elif lore_base.lore_content or lore_base.description:
+        # Generate options from lore using AI
+        try:
+            content_to_analyze = lore_base.lore_content or lore_base.description
+            options = await generate_character_options_from_lore(
+                lore_content=content_to_analyze,
+                world_name=lore_base.name,
+                genre=primary_genre,
+                description=lore_base.description
+            )
+            new_base["character_options"] = options
+            LORE_BASES[lore_base.id]["character_options"] = options
+
+            # Persist to Neo4j
+            try:
+                await db.execute("""
+                    MATCH (lb:LoreBase {lore_id: $id})
+                    SET lb.character_options = $options
+                """, {"id": lore_base.id, "options": json.dumps(options)})
+            except Exception as e:
+                logger.warning(f"Failed to persist character options to Neo4j: {e}")
+
+            logger.info(
+                f"Generated character options for {lore_base.id}: "
+                f"{len(options.get('origins', []))} origins, {len(options.get('archetypes', []))} archetypes"
+            )
+        except Exception as e:
+            logger.error(f"Failed to generate character options for {lore_base.id}: {e}")
+            # World is still created, just without character options
 
     new_base["entities_created"] = entities_created
     return LoreBaseResponse(**new_base)
