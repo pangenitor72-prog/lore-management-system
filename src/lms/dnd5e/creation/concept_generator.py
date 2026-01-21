@@ -110,19 +110,88 @@ class ConceptGenerator:
 
     Can use AI (Gemini) for parsing, or falls back to keyword matching.
     Supports all genres (fantasy, scifi, modern, horror).
+
+    MANTLE Translation Layer:
+    When world_character_options are provided, the generator uses ONLY the
+    world-specific vocabulary (e.g., "Netrunner" not "rogue", "Mutant" not "elf").
+    The base_type field maps world terms to D&D mechanics internally.
     """
 
-    def __init__(self, gemini_client=None, genre: str = "fantasy"):
+    def __init__(self, gemini_client=None, genre: str = "fantasy", world_character_options: Dict[str, Any] = None):
         """
         Initialize the concept generator.
 
         Args:
             gemini_client: Optional Gemini client for AI parsing
             genre: Genre for character generation (fantasy, scifi, modern, horror)
+            world_character_options: Optional dict with 'origins' and 'archetypes' lists
+                                    from the world's custom character options (MANTLE layer)
         """
         self.gemini_client = gemini_client
         self.genre = genre
         self.genre_config = get_genre(genre)
+        self.world_options = world_character_options or {}
+
+        # Build MANTLE keyword mappings if world options provided
+        self._custom_origin_keywords = {}
+        self._custom_archetype_keywords = {}
+        if self.world_options:
+            self._build_mantle_keywords()
+
+    def _build_mantle_keywords(self):
+        """
+        Build keyword mappings from world-specific character options.
+
+        Extracts keywords from option names and descriptions to enable
+        natural language matching against MANTLE vocabulary.
+        """
+        stop_words = {
+            'the', 'and', 'for', 'with', 'who', 'that', 'this', 'from', 'have', 'has',
+            'are', 'was', 'were', 'been', 'being', 'their', 'them', 'they', 'your',
+            'can', 'will', 'would', 'could', 'should', 'may', 'might', 'must'
+        }
+
+        def extract_keywords(option: Dict[str, Any]) -> List[str]:
+            """Extract searchable keywords from an option's name and description."""
+            words = []
+
+            # Add name words
+            name = option.get('name', option.get('display_name', ''))
+            if name:
+                words.extend(name.lower().split())
+
+            # Add description words (filtered)
+            desc = option.get('description', '')
+            if desc:
+                desc_words = re.sub(r'[^a-z\s]', '', desc.lower()).split()
+                words.extend(w for w in desc_words if len(w) >= 3 and w not in stop_words)
+
+            # Add base_type for fallback matching
+            base_type = option.get('base_type', '')
+            if base_type:
+                words.append(base_type.lower())
+
+            # Add id as keyword
+            option_id = option.get('id', '')
+            if option_id:
+                words.extend(option_id.lower().replace('_', ' ').split())
+
+            return list(set(words))
+
+        # Build origin keywords
+        for origin in self.world_options.get('origins', []):
+            origin_id = origin.get('id', '')
+            if origin_id:
+                self._custom_origin_keywords[origin_id] = extract_keywords(origin)
+
+        # Build archetype keywords
+        for archetype in self.world_options.get('archetypes', []):
+            archetype_id = archetype.get('id', '')
+            if archetype_id:
+                self._custom_archetype_keywords[archetype_id] = extract_keywords(archetype)
+
+        logger.debug(f"MANTLE keywords built: {len(self._custom_origin_keywords)} origins, "
+                    f"{len(self._custom_archetype_keywords)} archetypes")
 
     async def generate_from_concept(
         self,
@@ -161,15 +230,92 @@ class ConceptGenerator:
         return self._build_character(parsed, player_id)
 
     async def _ai_parse_concept(self, concept: str) -> Dict[str, Any]:
-        """Parse concept using AI (Gemini)."""
-        prompt = f"""Parse this D&D character concept into structured data.
+        """Parse concept using AI (Gemini) with MANTLE vocabulary when available."""
+
+        # Build prompt based on whether we have world-specific options
+        if self._custom_origin_keywords and self._custom_archetype_keywords:
+            # MANTLE Mode: Use world-specific vocabulary ONLY
+            prompt = self._build_mantle_ai_prompt(concept)
+        else:
+            # Fallback to genre-based D&D terms
+            prompt = self._build_generic_ai_prompt(concept)
+
+        # Call Gemini
+        response = await self.gemini_client.generate_content(prompt)
+
+        # Parse JSON from response
+        import json
+        text = response.text
+        json_match = re.search(r'\{[^}]+\}', text, re.DOTALL)
+        if json_match:
+            return json.loads(json_match.group())
+        raise ValueError("Could not parse AI response as JSON")
+
+    def _build_mantle_ai_prompt(self, concept: str) -> str:
+        """
+        Build AI prompt using MANTLE vocabulary - world-specific options ONLY.
+
+        The AI is STRICTLY FORBIDDEN from using generic D&D terms.
+        """
+        # Build origin list from world options
+        origins = self.world_options.get('origins', [])
+        origin_list = "\n".join([
+            f"  - {o.get('id')}: {o.get('name')} - {o.get('description', '')}"
+            for o in origins
+        ])
+
+        # Build archetype list from world options
+        archetypes = self.world_options.get('archetypes', [])
+        archetype_list = "\n".join([
+            f"  - {a.get('id')}: {a.get('name')} - {a.get('description', '')}"
+            for a in archetypes
+        ])
+
+        return f"""Parse this character concept using ONLY the world-specific options below.
+
+STRICT RULES:
+- You MUST use ONLY the origin and archetype IDs listed below
+- DO NOT use generic D&D terms like "human", "elf", "dwarf", "fighter", "rogue", "cleric", "wizard"
+- Match the player's description to the CLOSEST world-specific option
+- If uncertain, pick the option that best matches the character's described role/style
+
+CHARACTER CONCEPT: "{concept}"
+
+AVAILABLE ORIGINS (use the ID value):
+{origin_list}
+
+AVAILABLE ARCHETYPES (use the ID value):
+{archetype_list}
+
+Extract and return as JSON:
+{{
+    "name": "Character Name (if mentioned, or suggest appropriate one)",
+    "origin": "origin_id_from_list_above",
+    "archetype": "archetype_id_from_list_above",
+    "primary_ability": "strength|dexterity|constitution|intelligence|wisdom|charisma",
+    "secondary_ability": "ability_name",
+    "skills": ["skill1", "skill2"],
+    "personality_note": "brief personality description"
+}}
+
+Return ONLY valid JSON. Use ONLY the IDs from the lists above."""
+
+    def _build_generic_ai_prompt(self, concept: str) -> str:
+        """Build AI prompt using standard genre-based terms (fallback)."""
+        origin_keywords = ORIGIN_KEYWORDS_BY_GENRE.get(self.genre, FANTASY_ORIGIN_KEYWORDS)
+        archetype_keywords = ARCHETYPE_KEYWORDS_BY_GENRE.get(self.genre, FANTASY_ARCHETYPE_KEYWORDS)
+
+        origins_str = ", ".join(origin_keywords.keys())
+        archetypes_str = ", ".join(archetype_keywords.keys())
+
+        return f"""Parse this character concept into structured data for a {self.genre} setting.
 
 Character Concept: "{concept}"
 
 Extract:
 1. Name (if mentioned, otherwise suggest one)
-2. Race (human, elf, dwarf, or halfling)
-3. Class (fighter, rogue, cleric, or wizard)
+2. Origin ({origins_str})
+3. Archetype ({archetypes_str})
 4. Primary ability (strength, dexterity, constitution, intelligence, wisdom, or charisma)
 5. Secondary ability
 6. Two suggested skills appropriate for this character
@@ -177,32 +323,25 @@ Extract:
 Return as JSON:
 {{
     "name": "Character Name",
-    "race": "race_name",
-    "class": "class_name",
+    "origin": "origin_name",
+    "archetype": "archetype_name",
     "primary_ability": "ability_name",
     "secondary_ability": "ability_name",
     "skills": ["skill1", "skill2"],
     "personality_note": "brief personality description"
 }}
 
-Only use the races and classes listed. Return valid JSON only."""
-
-        # Call Gemini (implementation depends on your client)
-        response = await self.gemini_client.generate_content(prompt)
-        # Parse JSON from response
-        import json
-        # Extract JSON from response text
-        text = response.text
-        json_match = re.search(r'\{[^}]+\}', text, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
-        raise ValueError("Could not parse AI response as JSON")
+Only use the origins and archetypes listed. Return valid JSON only."""
 
     def _keyword_parse_concept(self, concept: str) -> Dict[str, Any]:
-        """Parse concept using keyword matching (fallback)."""
+        """Parse concept using keyword matching (fallback), with MANTLE support."""
         concept_lower = concept.lower()
 
-        # Get genre-specific keywords
+        # Use MANTLE vocabulary if world options are available
+        if self._custom_origin_keywords and self._custom_archetype_keywords:
+            return self._mantle_keyword_parse(concept_lower, concept)
+
+        # Otherwise fall back to genre-specific keywords
         origin_keywords = ORIGIN_KEYWORDS_BY_GENRE.get(self.genre, FANTASY_ORIGIN_KEYWORDS)
         archetype_keywords = ARCHETYPE_KEYWORDS_BY_GENRE.get(self.genre, FANTASY_ARCHETYPE_KEYWORDS)
 
@@ -274,14 +413,147 @@ Only use the races and classes listed. Return valid JSON only."""
             "personality_note": concept,
         }
 
+    def _mantle_keyword_parse(self, concept_lower: str, original_concept: str) -> Dict[str, Any]:
+        """
+        MANTLE keyword parsing - match concept to world-specific options.
+
+        Uses keyword scoring to find the best match for origin and archetype
+        from the world's custom character options.
+        """
+        # Score each origin by keyword matches
+        origin_scores = {}
+        for origin_id, keywords in self._custom_origin_keywords.items():
+            score = sum(1 for kw in keywords if kw in concept_lower)
+            if score > 0:
+                origin_scores[origin_id] = score
+
+        # Score each archetype by keyword matches
+        archetype_scores = {}
+        for archetype_id, keywords in self._custom_archetype_keywords.items():
+            score = sum(1 for kw in keywords if kw in concept_lower)
+            if score > 0:
+                archetype_scores[archetype_id] = score
+
+        # Get best matches or defaults
+        origins = self.world_options.get('origins', [])
+        archetypes = self.world_options.get('archetypes', [])
+
+        if origin_scores:
+            detected_origin = max(origin_scores.keys(), key=lambda k: origin_scores[k])
+        else:
+            # Fallback: if player used a D&D term, map via base_type
+            detected_origin = self._fallback_origin_from_dnd_term(concept_lower, origins)
+
+        if archetype_scores:
+            detected_archetype = max(archetype_scores.keys(), key=lambda k: archetype_scores[k])
+        else:
+            # Fallback: if player used a D&D term, map via base_type
+            detected_archetype = self._fallback_archetype_from_dnd_term(concept_lower, archetypes)
+
+        # Get base_type for mechanics lookup
+        origin_base_type = "human"
+        archetype_base_type = "fighter"
+        for o in origins:
+            if o.get('id') == detected_origin:
+                origin_base_type = o.get('base_type', 'human')
+                break
+        for a in archetypes:
+            if a.get('id') == detected_archetype:
+                archetype_base_type = a.get('base_type', 'fighter')
+                break
+
+        # Get archetype data using base_type for mechanics
+        archetype_data = get_archetype(archetype_base_type, self.genre)
+        primary_ability = archetype_data.primary_ability if archetype_data else "strength"
+        secondary_ability = "constitution"
+
+        # Detect ability emphasis from concept
+        for ability, keywords in ABILITY_KEYWORDS.items():
+            if any(kw in concept_lower for kw in keywords):
+                if ability != primary_ability:
+                    secondary_ability = ability
+                    break
+
+        # Extract name from concept
+        words = original_concept.split()
+        common_words = {"a", "an", "the", "who", "is", "was", "with", "and", "or", "but", "from"}
+        name = None
+        for word in words:
+            if len(word) > 1 and word[0].isupper() and word.lower() not in common_words:
+                # Exclude keywords from all options
+                all_keywords = set()
+                for kws in self._custom_origin_keywords.values():
+                    all_keywords.update(kws)
+                for kws in self._custom_archetype_keywords.values():
+                    all_keywords.update(kws)
+                if word.lower() not in all_keywords:
+                    name = word
+                    break
+
+        if not name:
+            name = "Alex"  # Default name for MANTLE worlds
+
+        # Get skills from archetype (using base_type for mechanics)
+        skills = archetype_data.skill_choices[:archetype_data.num_skill_choices] if archetype_data else []
+
+        logger.debug(f"MANTLE parse: '{original_concept}' -> origin={detected_origin}, archetype={detected_archetype}")
+
+        return {
+            "name": name,
+            "origin": detected_origin,
+            "archetype": detected_archetype,
+            "origin_base_type": origin_base_type,
+            "archetype_base_type": archetype_base_type,
+            "primary_ability": primary_ability,
+            "secondary_ability": secondary_ability,
+            "skills": skills,
+            "personality_note": original_concept,
+        }
+
+    def _fallback_origin_from_dnd_term(self, concept_lower: str, origins: List[Dict]) -> str:
+        """Map D&D origin terms to world-specific origins via base_type."""
+        dnd_origins = ["human", "elf", "dwarf", "halfling", "gnome", "half-elf", "half-orc", "tiefling"]
+
+        for dnd_term in dnd_origins:
+            if dnd_term in concept_lower:
+                # Find a world origin with matching base_type
+                for o in origins:
+                    if o.get('base_type', '').lower() == dnd_term:
+                        return o.get('id')
+                break
+
+        # Default to first origin
+        return origins[0].get('id') if origins else "human"
+
+    def _fallback_archetype_from_dnd_term(self, concept_lower: str, archetypes: List[Dict]) -> str:
+        """Map D&D archetype terms to world-specific archetypes via base_type."""
+        dnd_classes = ["fighter", "rogue", "cleric", "wizard", "barbarian", "bard", "druid",
+                       "monk", "paladin", "ranger", "sorcerer", "warlock"]
+
+        for dnd_term in dnd_classes:
+            if dnd_term in concept_lower:
+                # Find a world archetype with matching base_type
+                for a in archetypes:
+                    if a.get('base_type', '').lower() == dnd_term:
+                        return a.get('id')
+                break
+
+        # Default to first archetype
+        return archetypes[0].get('id') if archetypes else "fighter"
+
     def _build_character(self, parsed: Dict[str, Any], player_id: str) -> CharacterSheet:
         """Build a CharacterSheet from parsed concept data."""
-        # Get origin and archetype data for this genre
+        # Get origin and archetype IDs (MANTLE IDs if using world options)
         origin_id = parsed.get("origin") or parsed.get("race", "human")
         archetype_id = parsed.get("archetype") or parsed.get("class", "fighter")
 
-        origin_data = get_origin(origin_id, self.genre)
-        archetype_data = get_archetype(archetype_id, self.genre)
+        # For MANTLE: use base_type for mechanics lookup, but keep MANTLE ID in character sheet
+        # This lets us show "Netrunner" to the player while using "rogue" mechanics
+        origin_lookup_id = parsed.get("origin_base_type", origin_id)
+        archetype_lookup_id = parsed.get("archetype_base_type", archetype_id)
+
+        origin_data = get_origin(origin_lookup_id, self.genre)
+        archetype_data = get_archetype(archetype_lookup_id, self.genre)
 
         if not origin_data or not archetype_data:
             # Fallback to defaults
@@ -323,10 +595,10 @@ Only use the races and classes listed. Return valid JSON only."""
         # Calculate derived stats
         con_mod = abilities.get_modifier(AbilityName.CON)
         dex_mod = abilities.get_modifier(AbilityName.DEX)
-        hp = get_starting_hp(archetype_id, con_mod, self.genre)
+        hp = get_starting_hp(archetype_lookup_id, con_mod, self.genre)
 
-        # Determine AC and equipment based on archetype and genre
-        base_ac, equipment = self._get_starting_equipment(archetype_id, dex_mod)
+        # Determine AC and equipment based on archetype and genre (use base_type for mechanics)
+        base_ac, equipment = self._get_starting_equipment(archetype_lookup_id, dex_mod)
 
         # Power/spell setup for casters
         power_slots = {}
@@ -336,13 +608,14 @@ Only use the races and classes listed. Return valid JSON only."""
             power_slots = {1: 2}
 
             # For fantasy genre, use SRD spells for proper class-based spells
+            # Use archetype_lookup_id (base_type) for spell list lookup
             if self.genre == "fantasy":
                 from ..data.loader import get_srd_loader
                 loader = get_srd_loader()
 
-                # Get cantrips and level 1 spells for this class
-                available_cantrips = loader.get_cantrips_for_class(archetype_id)
-                available_spells = [s for s in loader.get_spells_for_class(archetype_id) if s.get("level") == 1]
+                # Get cantrips and level 1 spells for this class (use base_type for lookup)
+                available_cantrips = loader.get_cantrips_for_class(archetype_lookup_id)
+                available_spells = [s for s in loader.get_spells_for_class(archetype_lookup_id) if s.get("level") == 1]
 
                 # Calculate number of prepared spells
                 num_cantrips = archetype_data.cantrips_known
@@ -354,11 +627,11 @@ Only use the races and classes listed. Return valid JSON only."""
                 abilities_known = [s.get("id", s.get("name", "").lower().replace(" ", "_"))
                                   for s in available_spells[:num_prepared]]
             else:
-                # For non-fantasy genres, use the abilities module
+                # For non-fantasy genres, use the abilities module (use base_type for lookup)
                 from ..models.abilities import get_cantrips_for_archetype, get_abilities_for_archetype, AbilityType
-                archetype_cantrips = get_cantrips_for_archetype(archetype_id, self.genre)
+                archetype_cantrips = get_cantrips_for_archetype(archetype_lookup_id, self.genre)
                 archetype_abilities = [
-                    a for a in get_abilities_for_archetype(archetype_id, self.genre)
+                    a for a in get_abilities_for_archetype(archetype_lookup_id, self.genre)
                     if a.ability_type.value.startswith("level_")
                 ]
                 cantrips = [c.id for c in archetype_cantrips[:2]]

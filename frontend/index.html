@@ -7727,6 +7727,55 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
             </div>
 
+            <!-- MANTLE Mappings Modal -->
+            <div id="wm-mantle-modal" class="modal-overlay">
+                <div class="modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                    <h3 style="color: #8B5CF6; margin-bottom: 15px;">
+                        <span style="font-size: 1.3rem;">🔮</span> MANTLE Translation Bible - <span id="mantle-world-name"></span>
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                        AI proposes mappings between your world's lore and D&D 5e mechanics. Review and approve each translation.
+                    </p>
+
+                    <div id="mantle-status"></div>
+
+                    <!-- Stats Bar -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #F59E0B;" id="mantle-pending-count">0</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Pending</div>
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #22C55E;" id="mantle-active-count">0</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Active</div>
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <button class="btn btn-secondary" onclick="extractMantleMappings()" style="padding: 8px 16px; background: #8B5CF6; color: white; font-size: 0.85rem;">
+                                🔍 Extract from Lore
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mappings List -->
+                    <div id="mantle-mappings-list" style="max-height: 450px; overflow-y: auto;">
+                        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">🔮</div>
+                            <div>No mappings yet. Click "Extract from Lore" to analyze world content.</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div style="display: flex; gap: 10px; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
+                        <div>
+                            <button class="btn btn-secondary" onclick="bulkApproveMantleMappings()" style="padding: 8px 16px; font-size: 0.85rem; background: #22C55E; color: white;" id="mantle-bulk-approve-btn" disabled>
+                                ✓ Approve All Pending
+                            </button>
+                        </div>
+                        <button class="btn btn-secondary" onclick="closeMantleModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- World Creator (for Jim) -->
             <div class="setup-section" style="border: 2px solid var(--accent-gold); border-radius: var(--radius-soft); padding: 25px; margin-top: 30px; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);">
                 <h3 style="color: var(--accent-gold); margin-bottom: 5px;">🌍 World Creator</h3>
@@ -13313,108 +13362,162 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         // Parse concept text to infer class and race (local, instant)
+        /**
+         * MANTLE Translation Layer - Parse character concept using world-specific vocabulary.
+         *
+         * This function implements Constraint-First logic:
+         * 1. Uses availableOrigins and availableArchetypes from the selected world
+         * 2. Builds dynamic patterns from world option names and descriptions
+         * 3. Maps user prose to world-specific IDs (e.g., "hacker" -> "netrunner")
+         * 4. Falls back to base_type matching if no direct match found
+         *
+         * The character sheet then uses the base_type for D&D mechanics while
+         * displaying the setting-specific terminology to the player.
+         */
         function parseConceptForCharacter(concept) {
             const text = (concept || '').toLowerCase();
 
-            // Genre-aware class/archetype detection patterns
-            const classPatternsByGenre = {
-                fantasy: {
-                    barbarian: /\b(barbarian|berserker|raging|rage|savage|tribal warrior)\b/,
-                    bard: /\b(bard|minstrel|musician|singer|poet|performer|troubadour)\b/,
-                    cleric: /\b(cleric|priest|priestess|healer|holy|divine|temple)\b/,
-                    druid: /\b(druid|nature|shapeshifter|wild|forest guardian)\b/,
-                    fighter: /\b(fighter|soldier|warrior|knight|mercenary|swordsman|guard|veteran)\b/,
-                    monk: /\b(monk|martial artist|fist|monastery|discipline)\b/,
-                    paladin: /\b(paladin|holy knight|champion|crusader|oath|righteous)\b/,
-                    ranger: /\b(ranger|hunter|archer|scout|tracker|woodsman|bounty hunter)\b/,
-                    rogue: /\b(rogue|thief|assassin|spy|sneaky|shadow|cunning|pickpocket|burglar)\b/,
-                    sorcerer: /\b(sorcerer|innate magic|bloodline|wild magic|chaotic magic)\b/,
-                    warlock: /\b(warlock|pact|patron|eldritch|dark magic|otherworldly)\b/,
-                    wizard: /\b(wizard|mage|magician|scholar|arcane|spellbook|academic|sage)\b/
-                },
-                scifi: {
-                    soldier: /\b(soldier|marine|trooper|military|combat|veteran|warrior|fighter)\b/,
-                    hacker: /\b(hacker|netrunner|programmer|coder|tech|cyber|digital|slicer)\b/,
-                    medic: /\b(medic|doctor|healer|nurse|medical|surgeon|paramedic)\b/,
-                    engineer: /\b(engineer|mechanic|technician|fixer|builder|inventor|scientist)\b/,
-                    pilot: /\b(pilot|driver|navigator|ace|flyboy)\b/,
-                    operative: /\b(operative|spy|agent|assassin|infiltrator|covert)\b/
-                },
-                modern: {
-                    investigator: /\b(investigator|detective|cop|police|fbi|agent|sleuth)\b/,
-                    operative: /\b(operative|spy|agent|assassin|mercenary|soldier|military)\b/,
-                    face: /\b(face|con|grifter|social|charmer|diplomat|negotiator)\b/,
-                    specialist: /\b(specialist|expert|technician|hacker|medic|doctor)\b/
-                },
-                horror: {
-                    investigator: /\b(investigator|detective|researcher|scholar|professor)\b/,
-                    protector: /\b(protector|guardian|soldier|cop|veteran|fighter)\b/,
-                    occultist: /\b(occultist|mystic|psychic|medium|witch|sorcerer)\b/,
-                    survivor: /\b(survivor|everyman|ordinary|civilian|victim)\b/
+            // ================================================================
+            // MANTLE: Build patterns from world-specific options
+            // ================================================================
+
+            // Extract keywords from option name and description
+            function extractKeywords(option) {
+                const words = [];
+                // Add the option name (split on spaces)
+                if (option.display_name) {
+                    words.push(...option.display_name.toLowerCase().split(/\s+/));
                 }
-            };
-
-            // Genre-aware race/origin detection patterns
-            const racePatternsByGenre = {
-                fantasy: {
-                    'elf': /\b(elf|elven|elvish|high elf|wood elf|dark elf|drow)\b/,
-                    'dwarf': /\b(dwarf|dwarven|mountain|stout|bearded)\b/,
-                    'halfling': /\b(halfling|hobbit|small folk|lightfoot)\b/,
-                    'human': /\b(human|man|woman|folk)\b/,
-                    'dragonborn': /\b(dragonborn|dragon|draconic|scaled)\b/,
-                    'gnome': /\b(gnome|tinker|inventor)\b/,
-                    'half_elf': /\b(half-elf|half elf)\b/,
-                    'half_orc': /\b(half-orc|half orc|orcish)\b/,
-                    'tiefling': /\b(tiefling|infernal|demon|devil|horned)\b/
-                },
-                scifi: {
-                    'human': /\b(human|terran|earthling|baseline)\b/,
-                    'android': /\b(android|robot|synth|synthetic|artificial|machine)\b/,
-                    'alien': /\b(alien|xeno|extraterrestrial|otherworldly)\b/,
-                    'cyborg': /\b(cyborg|augmented|enhanced|modified|chrome)\b/
-                },
-                modern: {
-                    'human': /\b(human|person|man|woman)\b/,
-                    'athlete': /\b(athlete|jock|sports|physical|fit)\b/,
-                    'scholar': /\b(scholar|academic|professor|scientist|intellectual)\b/,
-                    'street': /\b(street|urban|tough|scrappy|survivor)\b/
-                },
-                horror: {
-                    'human': /\b(human|mortal|person)\b/,
-                    'survivor': /\b(survivor|veteran|scarred|hardened)\b/,
-                    'touched': /\b(touched|cursed|haunted|marked|psychic)\b/,
-                    'innocent': /\b(innocent|naive|pure|untainted|young)\b/
+                if (option.name) {
+                    words.push(...option.name.toLowerCase().split(/\s+/));
                 }
-            };
+                // Add keywords from description
+                if (option.description) {
+                    // Extract meaningful words (3+ chars, not common words)
+                    const stopWords = ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'out', 'with', 'from', 'they', 'been', 'have', 'this', 'that', 'who', 'what'];
+                    const descWords = option.description.toLowerCase()
+                        .replace(/[^a-z\s]/g, '')
+                        .split(/\s+/)
+                        .filter(w => w.length >= 3 && !stopWords.includes(w));
+                    words.push(...descWords);
+                }
+                // Add the base_type as a fallback keyword
+                if (option.base_type) {
+                    words.push(option.base_type);
+                }
+                return [...new Set(words)]; // Remove duplicates
+            }
 
-            // Get patterns for current genre
-            const classPatterns = classPatternsByGenre[rulesGenre] || classPatternsByGenre.fantasy;
-            const racePatterns = racePatternsByGenre[rulesGenre] || racePatternsByGenre.fantasy;
+            // Build archetype patterns from availableArchetypes
+            const archetypeKeywords = {};
+            availableArchetypes.forEach(arch => {
+                archetypeKeywords[arch.id] = extractKeywords(arch);
+            });
 
-            // Get first archetype as default for this genre
-            const defaultArchetype = availableArchetypes[0]?.id || Object.keys(classPatterns)[0];
+            // Build origin patterns from availableOrigins
+            const originKeywords = {};
+            availableOrigins.forEach(origin => {
+                originKeywords[origin.id] = extractKeywords(origin);
+            });
+
+            // Also add base_type -> archetype mapping for fallback
+            // (e.g., if user says "rogue", find archetype with base_type="rogue")
+            const baseTypeToArchetype = {};
+            availableArchetypes.forEach(arch => {
+                if (arch.base_type && !baseTypeToArchetype[arch.base_type]) {
+                    baseTypeToArchetype[arch.base_type] = arch.id;
+                }
+            });
+
+            const baseTypeToOrigin = {};
+            availableOrigins.forEach(origin => {
+                if (origin.base_type && !baseTypeToOrigin[origin.base_type]) {
+                    baseTypeToOrigin[origin.base_type] = origin.id;
+                }
+            });
+
+            // ================================================================
+            // MANTLE: Match user text against world vocabulary
+            // ================================================================
+
+            // Default to first available option
+            const defaultArchetype = availableArchetypes[0]?.id || 'fighter';
             const defaultOrigin = availableOrigins[0]?.id || 'human';
 
-            // Detect class
-            let detectedClass = defaultArchetype;
-            for (const [cls, pattern] of Object.entries(classPatterns)) {
-                if (pattern.test(text)) {
-                    detectedClass = cls;
-                    break;
+            let detectedArchetype = null;
+            let detectedOrigin = null;
+            let archetypeScore = 0;
+            let originScore = 0;
+
+            // Score each archetype by keyword matches
+            for (const [archId, keywords] of Object.entries(archetypeKeywords)) {
+                let score = 0;
+                for (const kw of keywords) {
+                    if (text.includes(kw)) {
+                        // Longer keywords get higher score
+                        score += kw.length;
+                    }
+                }
+                if (score > archetypeScore) {
+                    archetypeScore = score;
+                    detectedArchetype = archId;
                 }
             }
 
-            // Detect race
-            let detectedRace = defaultOrigin;
-            for (const [race, pattern] of Object.entries(racePatterns)) {
-                if (pattern.test(text)) {
-                    detectedRace = race;
-                    break;
+            // Score each origin by keyword matches
+            for (const [originId, keywords] of Object.entries(originKeywords)) {
+                let score = 0;
+                for (const kw of keywords) {
+                    if (text.includes(kw)) {
+                        score += kw.length;
+                    }
+                }
+                if (score > originScore) {
+                    originScore = score;
+                    detectedOrigin = originId;
                 }
             }
 
-            console.log('[CharGen] Parsed concept:', { concept: text, detectedClass, detectedRace });
-            return { archetype: detectedClass, origin: detectedRace };
+            // Fallback: Check for base D&D terms and map to world equivalent
+            if (!detectedArchetype) {
+                const baseDndClasses = ['fighter', 'rogue', 'wizard', 'cleric', 'ranger', 'barbarian', 'paladin', 'bard', 'monk', 'warlock', 'sorcerer', 'druid'];
+                for (const baseClass of baseDndClasses) {
+                    if (text.includes(baseClass) && baseTypeToArchetype[baseClass]) {
+                        detectedArchetype = baseTypeToArchetype[baseClass];
+                        console.log('[MANTLE] Mapped base class', baseClass, '->', detectedArchetype);
+                        break;
+                    }
+                }
+            }
+
+            if (!detectedOrigin) {
+                const baseDndRaces = ['human', 'elf', 'dwarf', 'halfling', 'gnome', 'half-orc', 'tiefling', 'dragonborn'];
+                for (const baseRace of baseDndRaces) {
+                    if (text.includes(baseRace) && baseTypeToOrigin[baseRace]) {
+                        detectedOrigin = baseTypeToOrigin[baseRace];
+                        console.log('[MANTLE] Mapped base race', baseRace, '->', detectedOrigin);
+                        break;
+                    }
+                }
+            }
+
+            // Use defaults if nothing matched
+            detectedArchetype = detectedArchetype || defaultArchetype;
+            detectedOrigin = detectedOrigin || defaultOrigin;
+
+            console.log('[MANTLE] Parsed concept:', {
+                concept: text,
+                detectedArchetype,
+                detectedOrigin,
+                archetypeScore,
+                originScore,
+                worldOptions: {
+                    archetypes: availableArchetypes.map(a => a.display_name || a.id).join(', '),
+                    origins: availableOrigins.map(o => o.display_name || o.id).join(', ')
+                }
+            });
+
+            return { archetype: detectedArchetype, origin: detectedOrigin };
         }
 
         async function handleConceptModeNext() {
@@ -17338,6 +17441,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 <button class="btn btn-secondary" onclick="toggleCharacterOptions('${world.id}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-gold); color: var(--bg-primary);">
                                     🎭 Character Options
                                 </button>
+                                <button class="btn btn-secondary" onclick="openMantleMappings('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem; background: #8B5CF6; color: white;">
+                                    🔮 MANTLE Mappings
+                                </button>
                                 <button class="btn" onclick="openDeleteWorldModal('${world.id}', '${escapeHtml(world.name)}', ${world.entity_count})" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
                                     🗑️ Delete World
                                 </button>
@@ -18062,6 +18168,269 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             wmImportWorldName = null;
             wmImportEntities = [];
         }
+
+        // =====================================================================
+        // MANTLE MAPPINGS MODAL - Translation Bible Approval Workflow
+        // =====================================================================
+
+        let mantleCurrentWorldId = null;
+        let mantleCurrentWorldName = null;
+        let mantleMappings = [];
+
+        async function openMantleMappings(worldId, worldName) {
+            mantleCurrentWorldId = worldId;
+            mantleCurrentWorldName = worldName;
+            document.getElementById('mantle-world-name').textContent = worldName;
+            document.getElementById('wm-mantle-modal').classList.add('active');
+            await loadMantleMappings();
+        }
+
+        function closeMantleModal() {
+            document.getElementById('wm-mantle-modal').classList.remove('active');
+            mantleCurrentWorldId = null;
+            mantleCurrentWorldName = null;
+            mantleMappings = [];
+        }
+
+        async function loadMantleMappings() {
+            try {
+                const response = await fetch(`/game/admin/lore-bases/${mantleCurrentWorldId}/pending-mappings`);
+                if (!response.ok) throw new Error('Failed to load mappings');
+                const data = await response.json();
+                mantleMappings = data.mappings || [];
+                renderMantleMappings(data);
+            } catch (err) {
+                showStatus('mantle-status', `Error loading mappings: ${err.message}`, 'error');
+            }
+        }
+
+        function renderMantleMappings(data) {
+            const pendingCount = data.pending_count || 0;
+            const activeCount = data.active_count || 0;
+
+            document.getElementById('mantle-pending-count').textContent = pendingCount;
+            document.getElementById('mantle-active-count').textContent = activeCount;
+
+            const bulkBtn = document.getElementById('mantle-bulk-approve-btn');
+            bulkBtn.disabled = pendingCount === 0;
+            bulkBtn.style.opacity = pendingCount === 0 ? '0.5' : '1';
+
+            const container = document.getElementById('mantle-mappings-list');
+            const mappings = data.mappings || [];
+
+            if (mappings.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🔮</div>
+                        <div>No mappings yet. Click "Extract from Lore" to analyze world content.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by type
+            const origins = mappings.filter(m => m.mapping_type === 'origin');
+            const archetypes = mappings.filter(m => m.mapping_type === 'archetype');
+
+            let html = '';
+
+            // Origins section
+            if (origins.length > 0) {
+                html += `<div style="margin-bottom: 20px;">
+                    <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
+                        Origins (Backgrounds)
+                    </h4>`;
+                origins.forEach(m => { html += renderMantleMapping(m); });
+                html += '</div>';
+            }
+
+            // Archetypes section
+            if (archetypes.length > 0) {
+                html += `<div>
+                    <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
+                        Archetypes (Classes)
+                    </h4>`;
+                archetypes.forEach(m => { html += renderMantleMapping(m); });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderMantleMapping(mapping) {
+            const statusColors = {
+                'pending': '#F59E0B',
+                'active': '#22C55E',
+                'rejected': '#EF4444'
+            };
+            const statusColor = statusColors[mapping.status] || '#6B7280';
+            const confidencePercent = Math.round((mapping.confidence_score || 0.5) * 100);
+            const confidenceColor = confidencePercent >= 80 ? '#22C55E' : confidencePercent >= 50 ? '#F59E0B' : '#EF4444';
+
+            return `
+                <div style="background: var(--bg-primary); border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid ${statusColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <strong style="color: var(--text-primary); font-size: 1.1rem;">${escapeHtml(mapping.lore_name)}</strong>
+                                <span style="background: ${statusColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase;">${mapping.status}</span>
+                            </div>
+                            <div style="display: flex; gap: 15px; margin-bottom: 8px;">
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">
+                                    Maps to: <strong style="color: var(--accent-gold);">${mapping.mechanical_base}</strong>
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">
+                                    Confidence: <span style="color: ${confidenceColor}; font-weight: 600;">${confidencePercent}%</span>
+                                </div>
+                            </div>
+                            ${mapping.ai_justification ? `
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; font-style: italic; margin-bottom: 8px;">
+                                    "${escapeHtml(mapping.ai_justification)}"
+                                </div>
+                            ` : ''}
+                            ${mapping.source_snippet ? `
+                                <details style="margin-top: 8px;">
+                                    <summary style="color: var(--text-muted); font-size: 0.8rem; cursor: pointer;">View Source Snippet</summary>
+                                    <div style="background: var(--bg-secondary); padding: 10px; border-radius: 4px; margin-top: 8px; font-size: 0.85rem; color: var(--text-secondary); max-height: 100px; overflow-y: auto;">
+                                        ${escapeHtml(mapping.source_snippet)}
+                                    </div>
+                                </details>
+                            ` : ''}
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                            ${mapping.status === 'pending' ? `
+                                <button onclick="approveMantleMapping('${mapping.id}')" style="background: #22C55E; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;" title="Approve this mapping">
+                                    ✓
+                                </button>
+                                <button onclick="editMantleMapping('${mapping.id}')" style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;" title="Edit mapping">
+                                    ✏️
+                                </button>
+                                <button onclick="rejectMantleMapping('${mapping.id}')" style="background: transparent; color: #EF4444; border: 1px solid #EF4444; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;" title="Reject this mapping">
+                                    ✗
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function extractMantleMappings() {
+            if (!mantleCurrentWorldId) return;
+
+            showStatus('mantle-status', 'Analyzing lore content... This may take a moment.', 'info');
+
+            try {
+                const response = await fetch(`/game/admin/lore-bases/${mantleCurrentWorldId}/extract-mappings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Extraction failed');
+                }
+
+                const result = await response.json();
+                showStatus('mantle-status', `Extracted ${result.pending_count} mappings from lore!`, 'success');
+                await loadMantleMappings();
+            } catch (err) {
+                showStatus('mantle-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function approveMantleMapping(mappingId) {
+            try {
+                const response = await fetch(`/game/admin/pending-mappings/${mappingId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error('Approval failed');
+
+                showStatus('mantle-status', 'Mapping approved!', 'success');
+                await loadMantleMappings();
+            } catch (err) {
+                showStatus('mantle-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function rejectMantleMapping(mappingId) {
+            if (!confirm('Are you sure you want to reject this mapping?')) return;
+
+            try {
+                const response = await fetch(`/game/admin/pending-mappings/${mappingId}/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error('Rejection failed');
+
+                showStatus('mantle-status', 'Mapping rejected', 'info');
+                await loadMantleMappings();
+            } catch (err) {
+                showStatus('mantle-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function editMantleMapping(mappingId) {
+            const mapping = mantleMappings.find(m => m.id === mappingId);
+            if (!mapping) return;
+
+            const newBase = prompt(
+                `Edit mechanical base for "${mapping.lore_name}"\n\nCurrent: ${mapping.mechanical_base}\n\nEnter new base type:`,
+                mapping.mechanical_base
+            );
+
+            if (!newBase || newBase === mapping.mechanical_base) return;
+
+            try {
+                const response = await fetch(`/game/admin/pending-mappings/${mappingId}/edit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mechanical_base: newBase,
+                        admin_notes: 'Manually corrected by admin'
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Edit failed');
+                }
+
+                showStatus('mantle-status', 'Mapping updated!', 'success');
+                await loadMantleMappings();
+            } catch (err) {
+                showStatus('mantle-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function bulkApproveMantleMappings() {
+            if (!mantleCurrentWorldId) return;
+            if (!confirm('Approve ALL pending mappings for this world?')) return;
+
+            try {
+                const response = await fetch('/game/admin/pending-mappings/bulk-approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        world_id: mantleCurrentWorldId,
+                        admin_notes: 'Bulk approved'
+                    })
+                });
+
+                if (!response.ok) throw new Error('Bulk approval failed');
+
+                const result = await response.json();
+                showStatus('mantle-status', `Approved ${result.approved_count} mappings!`, 'success');
+                await loadMantleMappings();
+            } catch (err) {
+                showStatus('mantle-status', `Error: ${err.message}`, 'error');
+            }
+        }
+
+        // End MANTLE Mappings Functions
 
         function switchImportMethod(method) {
             wmImportMethod = method;
