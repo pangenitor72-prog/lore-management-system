@@ -1487,6 +1487,18 @@ class DMResponse(BaseModel):
 _active_sessions: Dict[str, Dict[str, Any]] = {}
 
 
+def _make_json_serializable(obj):
+    """Recursively convert datetime objects to ISO strings for JSON serialization."""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {k: _make_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [_make_json_serializable(item) for item in obj]
+    else:
+        return obj
+
+
 async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -> bool:
     """
     Persist active session to Neo4j for continuity across server restarts.
@@ -1498,15 +1510,8 @@ async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -
         return False
 
     try:
-        # Convert datetime to ISO string for JSON serialization
-        created_at = session.get("created_at")
-        if hasattr(created_at, 'isoformat'):
-            created_at_str = created_at.isoformat()
-        else:
-            created_at_str = str(created_at) if created_at else None
-
         # Create serializable copy, handling non-JSON objects
-        session_copy = {**session, "created_at": created_at_str}
+        session_copy = dict(session)
 
         # Serialize Arc Engine state if present
         arc_engine = session.get("arc_engine")
@@ -1525,6 +1530,9 @@ async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -
                 logger.debug(f"Persisted character data for {character_id} with session {session_id}")
             except Exception as char_err:
                 logger.warning(f"Failed to serialize character {character_id}: {char_err}")
+
+        # Recursively convert all datetime objects to ISO strings
+        session_copy = _make_json_serializable(session_copy)
 
         await db.execute("""
             MERGE (s:ActiveSession {session_id: $session_id})

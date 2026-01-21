@@ -1,4 +1,5 @@
 import pytest
+import os
 from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from datetime import datetime, timezone
@@ -16,7 +17,12 @@ def mock_neo4j_db():
 
 # Override dependency and lifespan for testing
 @pytest.fixture
-def client(mock_neo4j_db):
+def client(mock_neo4j_db, monkeypatch):
+    # Set environment variables to prevent startup errors
+    monkeypatch.setenv("NEO4J_URI", "bolt://localhost:7687")
+    monkeypatch.setenv("NEO4J_USER", "neo4j")
+    monkeypatch.setenv("NEO4J_PASSWORD", "test")
+    
     # Patch the get_neo4j_db dependency to return our mock
     app.dependency_overrides[get_neo4j_db] = lambda: mock_neo4j_db
 
