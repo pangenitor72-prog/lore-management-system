@@ -9414,7 +9414,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!container) return;
 
             try {
-                const response = await fetch(API_BASE + '/game/lore-bases');
+                const response = await fetch(API_BASE + '/lore-bases');
                 if (!response.ok) {
                     container.innerHTML = '';
                     return;
@@ -9795,7 +9795,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             statusEl.innerHTML = '<div class="status"><span class="loading"></span> Checking...</div>';
 
             try {
-                const response = await fetch(API_BASE + '/game/invite/validate', {
+                const response = await fetch(API_BASE + '/invite/validate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: code })
@@ -10277,7 +10277,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!container) return;
 
             try {
-                const response = await fetch(API_BASE + '/game/lore-bases');
+                const response = await fetch(API_BASE + '/lore-bases');
                 if (!response.ok) throw new Error('Failed to load worlds');
 
                 const worlds = await response.json();
@@ -10380,7 +10380,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             container.innerHTML = '<div class="skeleton-loader"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>';
 
             try {
-                const response = await fetch(API_BASE + '/game/lore-bases');
+                const response = await fetch(API_BASE + '/lore-bases');
                 if (!response.ok) throw new Error('Failed to load worlds');
 
                 worldbuilderLoreBases = await response.json();
@@ -10470,7 +10470,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             entityList.innerHTML = '<div class="wb-loading"><div class="typing-indicator"><span></span><span></span><span></span></div><p>Loading world entities...</p></div>';
 
             try {
-                const response = await fetch(API_BASE + '/game/lore-bases/' + worldId);
+                const response = await fetch(API_BASE + '/lore-bases/' + worldId);
                 if (!response.ok) throw new Error('Failed to load world');
 
                 const world = await response.json();
@@ -10831,7 +10831,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function loadLoreBase(loreId) {
             try {
                 // Try to load pre-made lore from backend
-                const response = await fetch(API_BASE + '/game/lore-bases/' + loreId);
+                const response = await fetch(API_BASE + '/lore-bases/' + loreId);
                 if (response.ok) {
                     const data = await response.json();
                     // Store the lore base data for use in story setup
@@ -10956,7 +10956,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!container) return;
 
             try {
-                const response = await fetch(API_BASE + '/game/lore-bases');
+                const response = await fetch(API_BASE + '/lore-bases');
                 if (!response.ok) {
                     container.innerHTML = '';  // Hide if no worlds
                     return;
@@ -12352,7 +12352,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (selectedCuratedWorld) {
                 try {
                     console.log('[CharCreate] Checking for world-specific options:', selectedCuratedWorld);
-                    const worldOptsRes = await fetch(API_BASE + `/game/admin/lore-bases/${selectedCuratedWorld}/character-options`);
+                    const worldOptsRes = await fetch(API_BASE + `/admin/lore-bases/${selectedCuratedWorld}/character-options`);
                     if (worldOptsRes.ok) {
                         const worldOptsData = await worldOptsRes.json();
                         const charOpts = worldOptsData.character_options || {};
@@ -14180,7 +14180,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // Create session in background
         async function createSessionInBackground(payload) {
             try {
-                const sessionRes = await fetch(API_BASE + '/game/session', {
+                const sessionRes = await fetch(API_BASE + '/session', {
                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -14380,7 +14380,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
             try {
-                const response = await fetch(API_BASE + '/game/session/' + currentSessionId + '/action', {
+                const response = await fetch(API_BASE + '/session/' + currentSessionId + '/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -14913,7 +14913,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 console.log('[Preview] Starting extraction for:', sourceName);
                 console.log('[Preview] Content length:', content.length);
 
-                const response = await fetch(window.location.origin + '/api/game/lore-bases/' + sourceName + '/preview', {
+                const response = await fetch(window.location.origin + '/api/lore-bases/' + sourceName + '/preview', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lore_content: content })
@@ -15255,7 +15255,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     neuroticism: e.neuroticism
                 }));
 
-                const response = await fetch(window.location.origin + '/api/game/lore-bases', {
+                const response = await fetch(window.location.origin + '/api/lore-bases', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -16189,7 +16189,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Load lore bases as available worlds
-                const response = await fetch(API_BASE + '/game/lore-bases');
+                const response = await fetch(API_BASE + '/lore-bases');
                 if (response.ok) {
                     const loreBases = await response.json();
 
@@ -16228,7 +16228,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             statsEl.innerHTML = '<span class="loading"></span> Loading graph data...';
 
             // Build URL with all filters
-            let url = API_BASE + '/game/graph?limit=10000';
+            let url = API_BASE + '/graph?limit=10000';
             const activeFilters = [];
 
             if (curatedWorldFilter && curatedWorldFilter.value) {
@@ -16307,7 +16307,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function loadGraphFilterOptions() {
             try {
-                const response = await fetch(API_BASE + '/game/graph/filters');
+                const response = await fetch(API_BASE + '/graph/filters');
                 if (!response.ok) return;
 
                 const data = await response.json();
@@ -16480,7 +16480,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Use the new graph/node endpoint to get full data
-                const response = await fetch(API_BASE + '/game/graph/node/' + encodeURIComponent(entityId));
+                const response = await fetch(API_BASE + '/graph/node/' + encodeURIComponent(entityId));
                 const data = await response.json();
 
                 if (data.error) {
@@ -16949,7 +16949,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             container.innerHTML = '<div style="text-align: center; padding: 30px;"><span class="loading"></span> Loading usage data...</div>';
 
             try {
-                const response = await fetch(API_BASE + '/game/usage');
+                const response = await fetch(API_BASE + '/usage');
                 if (!response.ok) throw new Error('Failed to load usage stats');
 
                 const data = await response.json();
@@ -17038,7 +17038,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             container.innerHTML = '<div style="text-align: center; padding: 30px;"><span class="loading"></span> Loading analytics...</div>';
 
             try {
-                const response = await fetch(API_BASE + '/game/analytics');
+                const response = await fetch(API_BASE + '/analytics');
                 if (!response.ok) throw new Error('Failed to load analytics');
 
                 const data = await response.json();
@@ -17288,8 +17288,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Load world details
-                console.log('[WorldManager] Fetching from:', API_BASE + '/game/admin/lore-bases/details');
-                const worldsRes = await fetch(API_BASE + '/game/admin/lore-bases/details');
+                console.log('[WorldManager] Fetching from:', API_BASE + '/admin/lore-bases/details');
+                const worldsRes = await fetch(API_BASE + '/admin/lore-bases/details');
                 console.log('[WorldManager] Response status:', worldsRes.status, worldsRes.ok);
                 if (!worldsRes.ok) {
                     const errorText = await worldsRes.text();
@@ -17300,7 +17300,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 console.log('[WorldManager] Loaded', worldManagerData.worlds?.length, 'worlds');
 
                 // Load orphan count
-                const orphansRes = await fetch(API_BASE + '/game/admin/entities/orphans');
+                const orphansRes = await fetch(API_BASE + '/admin/entities/orphans');
                 if (orphansRes.ok) {
                     const orphanData = await orphansRes.json();
                     if (orphanSpan) {
@@ -17545,8 +17545,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             try {
                 // Load sources and entities
                 const [sourcesRes, entitiesRes] = await Promise.all([
-                    fetch(API_BASE + `/game/lore-bases/${worldId}/sources`),
-                    fetch(API_BASE + `/game/lore-bases/${worldId}/entities?limit=5000`)
+                    fetch(API_BASE + `/lore-bases/${worldId}/sources`),
+                    fetch(API_BASE + `/lore-bases/${worldId}/entities?limit=5000`)
                 ]);
 
                 if (!sourcesRes.ok || !entitiesRes.ok) throw new Error('Failed to load data');
@@ -17769,7 +17769,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         // Entity Manager API calls use absolute paths from root (production UI is served from /)
-        // API endpoints are under /api/... (e.g., /api/entities/*, /api/game/entities/merge)
+        // API endpoints are under /api/... (e.g., /api/entities/*, /api/entities/merge)
         async function editEntityInline(worldId, entityId) {
             const entities = worldEntitiesCache[worldId] || [];
             const entity = entities.find(e => e.id === entityId);
@@ -17867,7 +17867,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Use the game_routes merge endpoint with simplified parameters
-                const response = await fetch(`/api/game/entities/merge`, {
+                const response = await fetch(`/api/entities/merge`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -17916,7 +17916,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('world-manager-status', `<span class="loading"></span> Deleting ${entityName}...`, 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}/entities/${entityId}`, {
+                const response = await fetch(API_BASE + `/lore-bases/${worldId}/entities/${entityId}`, {
                     method: 'DELETE'
                 });
 
@@ -17943,7 +17943,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('world-manager-status', `<span class="loading"></span> Deleting ${count} entities from ${sourceName}...`, 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}/entities?source_name=${encodeURIComponent(sourceName)}`, {
+                const response = await fetch(API_BASE + `/lore-bases/${worldId}/entities?source_name=${encodeURIComponent(sourceName)}`, {
                     method: 'DELETE'
                 });
 
@@ -17995,7 +17995,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('world-manager-status', `<span class="loading"></span> Deleting world...`, 'info');
 
             try {
-                const url = API_BASE + `/game/lore-bases/${worldIdToDelete}?delete_entities=${deleteEntities}`;
+                const url = API_BASE + `/lore-bases/${worldIdToDelete}?delete_entities=${deleteEntities}`;
                 console.log('[DeleteWorld] Calling DELETE:', url);
                 const response = await fetch(url, {
                     method: 'DELETE'
@@ -18108,7 +18108,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const existingLore = world?.lore_content || '';
                 const newLore = existingLore + totalContent;
 
-                const updateRes = await fetch(API_BASE + `/game/admin/lore-bases/${wmAddLoreWorldId}/lore`, {
+                const updateRes = await fetch(API_BASE + `/admin/lore-bases/${wmAddLoreWorldId}/lore`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lore_content: newLore })
@@ -18119,7 +18119,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Then ingest to extract entities (force=true to process new lore)
                 showStatus('wm-add-lore-status', `<span class="loading"></span> Extracting entities (this may take a minute)...`, 'info');
 
-                const ingestRes = await fetch(API_BASE + `/game/lore-bases/${wmAddLoreWorldId}/ingest?force=true`, {
+                const ingestRes = await fetch(API_BASE + `/lore-bases/${wmAddLoreWorldId}/ingest?force=true`, {
                     method: 'POST'
                 });
 
@@ -18199,7 +18199,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function loadMantleMappings() {
             try {
                 // Fetch character options directly instead of pending mappings
-                const response = await fetch(API_BASE + `/game/admin/lore-bases/${mantleCurrentWorldId}/character-options`);
+                const response = await fetch(API_BASE + `/admin/lore-bases/${mantleCurrentWorldId}/character-options`);
                 if (!response.ok) {
                     // Try to get error details, but handle non-JSON responses gracefully
                     let errorMsg = 'Failed to load character options';
@@ -18354,7 +18354,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('mantle-status', 'Generating character options from lore... This may take a moment.', 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/admin/lore-bases/${mantleCurrentWorldId}/extract-mappings`, {
+                const response = await fetch(API_BASE + `/admin/lore-bases/${mantleCurrentWorldId}/extract-mappings`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -18375,7 +18375,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function approveMantleMapping(mappingId) {
             try {
-                const response = await fetch(API_BASE + `/game/admin/pending-mappings/${mappingId}/approve`, {
+                const response = await fetch(API_BASE + `/admin/pending-mappings/${mappingId}/approve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -18393,7 +18393,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!confirm('Are you sure you want to reject this mapping?')) return;
 
             try {
-                const response = await fetch(API_BASE + `/game/admin/pending-mappings/${mappingId}/reject`, {
+                const response = await fetch(API_BASE + `/admin/pending-mappings/${mappingId}/reject`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -18419,7 +18419,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!newBase || newBase === mapping.mechanical_base) return;
 
             try {
-                const response = await fetch(API_BASE + `/game/admin/pending-mappings/${mappingId}/edit`, {
+                const response = await fetch(API_BASE + `/admin/pending-mappings/${mappingId}/edit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -18445,7 +18445,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!confirm('Approve ALL pending mappings for this world?')) return;
 
             try {
-                const response = await fetch(API_BASE + '/game/admin/pending-mappings/bulk-approve', {
+                const response = await fetch(API_BASE + '/admin/pending-mappings/bulk-approve', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -18539,7 +18539,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('wm-import-extract-btn').disabled = true;
             
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${wmImportWorldId}/preview`, {
+                const response = await fetch(API_BASE + `/lore-bases/${wmImportWorldId}/preview`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lore_content: content })
@@ -18700,7 +18700,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const sourceName = `import_${Date.now()}`;
                 const newLore = existingLore + `\n\n--- IMPORTED: ${sourceName} ---\n\n${loreContent}`;
                 
-                const updateRes = await fetch(API_BASE + `/game/admin/lore-bases/${wmImportWorldId}/lore`, {
+                const updateRes = await fetch(API_BASE + `/admin/lore-bases/${wmImportWorldId}/lore`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lore_content: newLore })
@@ -18711,7 +18711,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 }
                 
                 // Now import the entities - use existing world endpoint that accepts approved_entities
-                const importRes = await fetch(API_BASE + `/game/lore-bases/${wmImportWorldId}/entities`, {
+                const importRes = await fetch(API_BASE + `/lore-bases/${wmImportWorldId}/entities`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -18783,7 +18783,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}`, {
+                const response = await fetch(API_BASE + `/lore-bases/${worldId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: newName })
@@ -18860,7 +18860,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 .filter(g => g.length > 0);
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}`, {
+                const response = await fetch(API_BASE + `/lore-bases/${worldId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ genre_hints: newGenres })
@@ -18921,7 +18921,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             try {
                 // Fetch options if not cached
                 if (!wcOptions) {
-                    const optRes = await fetch(API_BASE + '/game/world-characteristics/options');
+                    const optRes = await fetch(API_BASE + '/world-characteristics/options');
                     if (!optRes.ok) throw new Error('Failed to load options');
                     wcOptions = await optRes.json();
                 }
@@ -19042,7 +19042,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             };
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${wcCurrentWorldId}`, {
+                const response = await fetch(API_BASE + `/lore-bases/${wcCurrentWorldId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ world_characteristics: characteristics })
@@ -19082,7 +19082,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (statusSpan) statusSpan.textContent = 'Saving...';
 
             try {
-                const response = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/lore`, {
+                const response = await fetch(API_BASE + `/admin/lore-bases/${worldId}/lore`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lore_content: newLore })
@@ -19132,7 +19132,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             contentDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><span class="loading"></span> Loading options...</div>';
 
             try {
-                const response = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/character-options`);
+                const response = await fetch(API_BASE + `/admin/lore-bases/${worldId}/character-options`);
                 if (!response.ok) throw new Error('Failed to load character options');
 
                 const data = await response.json();
@@ -19229,7 +19229,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (contentDiv) contentDiv.innerHTML = '<div style="text-align: center; padding: 30px;"><span class="loading"></span> AI is analyzing the lore to generate setting-appropriate character options...</div>';
 
             try {
-                const response = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/character-options/generate`, {
+                const response = await fetch(API_BASE + `/admin/lore-bases/${worldId}/character-options/generate`, {
                     method: 'POST'
                 });
 
@@ -19261,7 +19261,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!options) return;
 
             try {
-                const response = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/character-options`, {
+                const response = await fetch(API_BASE + `/admin/lore-bases/${worldId}/character-options`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -19292,7 +19292,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('world-manager-status', '<span class="loading"></span> Cleaning up orphans...', 'info');
 
             try {
-                const response = await fetch(API_BASE + '/game/admin/entities/orphans', {
+                const response = await fetch(API_BASE + '/admin/entities/orphans', {
                     method: 'DELETE'
                 });
 
@@ -19321,7 +19321,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Use force=true for re-ingestion to apply latest parsing updates
-                const url = API_BASE + `/game/lore-bases/${worldId}/ingest${isReingest ? '?force=true' : ''}`;
+                const url = API_BASE + `/lore-bases/${worldId}/ingest${isReingest ? '?force=true' : ''}`;
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
@@ -19563,7 +19563,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Merge: Use the merge endpoint to combine new info into existing entity
                 try {
                     // Since the new entity wasn't created, we need to apply its data to the existing entity
-                    const response = await fetch(API_BASE + `/game/entities/${pd.existing_entity_id}/apply-pending`, {
+                    const response = await fetch(API_BASE + `/entities/${pd.existing_entity_id}/apply-pending`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -19582,7 +19582,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             } else if (action === 'keep_new') {
                 // Create the new entity - need an endpoint for this
                 try {
-                    const response = await fetch(API_BASE + `/game/entities/create-pending`, {
+                    const response = await fetch(API_BASE + `/entities/create-pending`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -19692,7 +19692,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             content.innerHTML = '<div style="text-align: center; padding: 30px;"><span class="loading"></span> Loading entities...</div>';
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${entityManagerWorldId}/entities?limit=5000`);
+                const response = await fetch(API_BASE + `/lore-bases/${entityManagerWorldId}/entities?limit=5000`);
                 if (!response.ok) throw new Error('Failed to load entities');
 
                 const data = await response.json();
@@ -19794,7 +19794,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('entity-manager-status').innerHTML = '<span class="loading"></span> Deleting...';
 
             try {
-                const response = await fetch(API_BASE + `/game/entities/${canonId}`, {
+                const response = await fetch(API_BASE + `/entities/${canonId}`, {
                     method: 'DELETE'
                 });
                 if (!response.ok) throw new Error('Failed to delete');
@@ -19867,7 +19867,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             for (const canonId of entityManagerSelected) {
                 try {
-                    const response = await fetch(API_BASE + `/game/entities/${canonId}`, {
+                    const response = await fetch(API_BASE + `/entities/${canonId}`, {
                         method: 'DELETE'
                     });
                     if (response.ok) {
@@ -19949,7 +19949,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 allAliases.delete(primaryName);
 
                 // Update primary entity
-                const updateResponse = await fetch(API_BASE + `/game/entities/${primary.canon_id}`, {
+                const updateResponse = await fetch(API_BASE + `/entities/${primary.canon_id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -19966,7 +19966,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 // Delete secondary entities
                 for (const sec of secondaries) {
-                    await fetch(API_BASE + `/game/entities/${sec.canon_id}`, {
+                    await fetch(API_BASE + `/entities/${sec.canon_id}`, {
                         method: 'DELETE'
                     });
                 }
@@ -20154,7 +20154,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Saving...';
 
             try {
-                const response = await fetch(API_BASE + `/game/entities/${canonId}`, {
+                const response = await fetch(API_BASE + `/entities/${canonId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updates)
@@ -20205,7 +20205,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Adding note...';
 
             try {
-                const response = await fetch(API_BASE + `/game/entities/${canonId}/director-note`, {
+                const response = await fetch(API_BASE + `/entities/${canonId}/director-note`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ note })
@@ -20238,7 +20238,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Removing note...';
 
             try {
-                const response = await fetch(API_BASE + `/game/entities/${canonId}/director-note/${noteIndex}`, {
+                const response = await fetch(API_BASE + `/entities/${canonId}/director-note/${noteIndex}`, {
                     method: 'DELETE'
                 });
 
@@ -20274,7 +20274,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('world-manager-status', `<span class="loading"></span> Scanning ${worldName} for duplicates...`, 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${worldId}/duplicates?threshold=0.7`, {
+                const response = await fetch(API_BASE + `/lore-bases/${worldId}/duplicates?threshold=0.7`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -20409,7 +20409,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (statusEl) statusEl.textContent = `Merging into "${primaryName}"...`;
 
             try {
-                const response = await fetch(API_BASE + '/game/entities/merge', {
+                const response = await fetch(API_BASE + '/entities/merge', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -20504,7 +20504,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 );
 
                 try {
-                    const response = await fetch(API_BASE + `/game/lore-bases/${world.id}/ingest`, {
+                    const response = await fetch(API_BASE + `/lore-bases/${world.id}/ingest`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -20571,7 +20571,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     );
 
                     // Use force=true to re-ingest with latest parsing logic
-                    const response = await fetch(API_BASE + `/game/lore-bases/${world.id}/ingest?force=true`, {
+                    const response = await fetch(API_BASE + `/lore-bases/${world.id}/ingest?force=true`, {
                         method: 'POST'
                     });
 
@@ -21129,7 +21129,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('world-creator-status', '<span class="loading"></span> Creating world...', 'info');
 
             try {
-                const response = await fetch(API_BASE + '/game/lore-bases', {
+                const response = await fetch(API_BASE + '/lore-bases', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -21287,7 +21287,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><span class="loading"></span> Loading entities...</div>';
 
             try {
-                const response = await fetch(`/api/game/lore-bases/${currentWorldEmWorldId}/entities?limit=5000`);
+                const response = await fetch(`/api/lore-bases/${currentWorldEmWorldId}/entities?limit=5000`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
@@ -21675,7 +21675,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('entity-edit-status', '<span class="loading"></span> Saving changes...', 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/entities/${entityId}`, {
+                const response = await fetch(API_BASE + `/entities/${entityId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updates)
