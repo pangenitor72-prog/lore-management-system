@@ -4,7 +4,7 @@ Tests for Phase I-B: Generative Worldbuilding with Contradiction Checking
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.lms.core.models import LoreConfidence, CONFIDENCE_RULES
+from src.mantle.core.models import LoreConfidence, CONFIDENCE_RULES
 
 
 class TestLoreConfidence:
@@ -41,9 +41,9 @@ class TestAuditorEntityAudit:
     @pytest.fixture
     def mock_auditor(self):
         """Create a mock AuditorAgent."""
-        from src.lms.agents.auditor_agent import AuditorAgent
-        from src.lms.auditor.rule_based_auditor import RuleBasedAuditor
-        from src.lms.auditor.semantic_auditor import SemanticAuditor
+        from src.mantle.agents.auditor_agent import AuditorAgent
+        from src.mantle.auditor.rule_based_auditor import RuleBasedAuditor
+        from src.mantle.auditor.semantic_auditor import SemanticAuditor
 
         mock_db = AsyncMock()
         mock_db.execute = AsyncMock(return_value=[])
@@ -52,7 +52,7 @@ class TestAuditorEntityAudit:
         mock_rule_auditor = MagicMock(spec=RuleBasedAuditor)
         mock_semantic_auditor = MagicMock(spec=SemanticAuditor)
 
-        with patch('src.lms.agents.auditor_agent.genai'):
+        with patch('src.mantle.agents.auditor_agent.genai'):
             auditor = AuditorAgent(
                 mock_db,
                 "fake-api-key",
@@ -140,13 +140,13 @@ class TestDMAgentEntityExtraction:
     @pytest.fixture
     def mock_dm_agent(self):
         """Create a mock DMAgent."""
-        from src.lms.agents.dm_agent import DMAgent
+        from src.mantle.agents.dm_agent import DMAgent
 
         mock_db = AsyncMock()
         mock_query_agent = MagicMock()
         mock_auditor_agent = MagicMock()
 
-        with patch('src.lms.agents.dm_agent.genai') as mock_genai:
+        with patch('src.mantle.agents.dm_agent.genai') as mock_genai:
             mock_model = MagicMock()
             mock_genai.GenerativeModel.return_value = mock_model
 
@@ -202,7 +202,7 @@ class TestWorldbuildingRules:
     
     def test_load_worldbuilding_rules(self):
         """Test that worldbuilding rules can be loaded."""
-        from src.lms.agents.dm_agent import load_worldbuilding_rules
+        from src.mantle.agents.dm_agent import load_worldbuilding_rules
         
         rules = load_worldbuilding_rules()
         
@@ -212,7 +212,7 @@ class TestWorldbuildingRules:
     def test_rules_disabled_via_env(self):
         """Test that rules can be disabled via environment variable."""
         import os
-        from src.lms.agents.dm_agent import load_worldbuilding_rules
+        from src.mantle.agents.dm_agent import load_worldbuilding_rules
         
         original = os.environ.get("ENABLE_WORLDBUILDING_RULES")
         

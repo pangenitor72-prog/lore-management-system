@@ -1,6 +1,6 @@
 import pytest
-from src.lms.db.neo4j_adapter import Neo4jDatabase
-from src.lms.services.audit_log import redact_credentials
+from src.mantle.db.neo4j_adapter import Neo4jDatabase
+from src.mantle.services.audit_log import redact_credentials
 
 
 @pytest.mark.skip(reason="_sanitize_cypher_identifier not on Neo4jDatabase - use parameterized queries instead for SQL injection safety")

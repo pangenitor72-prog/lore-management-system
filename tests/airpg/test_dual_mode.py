@@ -23,7 +23,7 @@ from src.airpg.runtime.gameplay_rules import Intervention, RuleResult
 from src.airpg.runtime.rule_packs import get_rules_for_config, RPG_RULES, STORY_RULES
 from src.airpg.runtime.rules.dnd5e_rules import stat_check_rule, combat_rule
 from src.airpg.runtime.runtime import MinimalRuntime
-from src.lms.dnd5e import CharacterSheet, AbilityScores
+from src.mantle.dnd5e import CharacterSheet, AbilityScores
 
 
 # ============================================================================
@@ -814,7 +814,7 @@ class TestEventExtraction:
 
     def test_extract_item_from_narrative(self):
         """Should extract ITEM_ADDED from 'find' phrases."""
-        from src.lms.api.game_routes import _extract_events_from_narrative
+        from src.mantle.api.game_routes import _extract_events_from_narrative
 
         narrative = "You find a Rusty Key on the ground."
         events = _extract_events_from_narrative(narrative, None, turn=5)
@@ -825,7 +825,7 @@ class TestEventExtraction:
 
     def test_extract_gold_from_narrative(self):
         """Should extract GOLD_CHANGED from gold mentions."""
-        from src.lms.api.game_routes import _extract_events_from_narrative
+        from src.mantle.api.game_routes import _extract_events_from_narrative
 
         narrative = "The merchant hands you 50 gold coins."
         events = _extract_events_from_narrative(narrative, None, turn=3)
@@ -836,7 +836,7 @@ class TestEventExtraction:
 
     def test_extract_skill_check_from_mechanical_result(self):
         """Should extract SKILL_CHECK from mechanical_result."""
-        from src.lms.api.game_routes import _extract_events_from_narrative
+        from src.mantle.api.game_routes import _extract_events_from_narrative
 
         mechanical_result = {
             "rolls": [
@@ -861,7 +861,7 @@ class TestEventExtraction:
 
     def test_extract_attack_from_mechanical_result(self):
         """Should extract ATTACK_ROLL from mechanical_result."""
-        from src.lms.api.game_routes import _extract_events_from_narrative
+        from src.mantle.api.game_routes import _extract_events_from_narrative
 
         mechanical_result = {
             "rolls": [
@@ -883,7 +883,7 @@ class TestEventExtraction:
 
     def test_no_events_for_plain_narrative(self):
         """Should return empty list for narrative without events."""
-        from src.lms.api.game_routes import _extract_events_from_narrative
+        from src.mantle.api.game_routes import _extract_events_from_narrative
 
         narrative = "You walk down the corridor. The air is cold."
         events = _extract_events_from_narrative(narrative, None, turn=1)

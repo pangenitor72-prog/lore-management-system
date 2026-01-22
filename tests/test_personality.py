@@ -1,7 +1,7 @@
 """Test OCEAN personality system."""
 
 import pytest
-from src.lms.core.models import (
+from src.mantle.core.models import (
     OCEANProfile, PersonalityArchetype, PersonalityTemplates,
     PersonalityGenerator
 )

@@ -7,7 +7,7 @@ Verifies that the error handling improvements catch and report errors properly.
 import pytest
 import json
 from unittest.mock import Mock, AsyncMock, patch
-from src.lms.agents.lore_parsing_agent import LoreParsingAgent, ParsedLoreResult, ExtractedEntity
+from src.mantle.agents.lore_parsing_agent import LoreParsingAgent, ParsedLoreResult, ExtractedEntity
 
 
 class TestLoreIngestionErrors:

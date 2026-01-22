@@ -6,7 +6,7 @@ Pytest fixtures for orchestrator tests.
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.lms.orchestrator.models import (
+from src.mantle.orchestrator.models import (
     Task,
     TaskResult,
     TaskStatus,
@@ -14,9 +14,9 @@ from src.lms.orchestrator.models import (
     TaskPriority,
     SubAgentContext,
 )
-from src.lms.orchestrator.protocols import SubAgentCapability, AgentBackend
-from src.lms.orchestrator.task_manager import TaskManager
-from src.lms.orchestrator.context_provider import ContextProvider
+from src.mantle.orchestrator.protocols import SubAgentCapability, AgentBackend
+from src.mantle.orchestrator.task_manager import TaskManager
+from src.mantle.orchestrator.context_provider import ContextProvider
 
 
 @pytest.fixture
@@ -92,7 +92,7 @@ def mock_db():
 @pytest.fixture
 def mock_genai():
     """Fixture providing a mock Gemini API."""
-    with patch("src.lms.orchestrator.sub_agents.llm_agent.genai") as mock:
+    with patch("src.mantle.orchestrator.sub_agents.llm_agent.genai") as mock:
         mock_model = MagicMock()
         mock_response = MagicMock()
         mock_response.text = '{"status": "success", "output": {"result": "test"}}'

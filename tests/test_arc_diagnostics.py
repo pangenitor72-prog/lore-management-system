@@ -12,7 +12,7 @@ def test_arc_status_disabled(client: TestClient):
     with patch.dict(os.environ, {"ENABLE_ARC_ENGINE": "false"}):
         # Re-import to pick up env var
         import importlib
-        import src.lms.agents.dm_agent as dm_agent_module
+        import src.mantle.agents.dm_agent as dm_agent_module
         importlib.reload(dm_agent_module)
         
         response = client.get("/arc/status")
@@ -32,9 +32,9 @@ def test_arc_status_enabled_but_import_failed(client: TestClient):
     """
     with patch.dict(os.environ, {"ENABLE_ARC_ENGINE": "true"}):
         # Mock the import to fail
-        with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
-             patch("src.lms.agents.dm_agent.ARC_ENGINE_AVAILABLE", False), \
-             patch("src.lms.agents.dm_agent.ARC_ENGINE_IMPORT_ERROR", "ModuleNotFoundError: No module named 'src.lms.arc'"):
+        with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
+             patch("src.mantle.agents.dm_agent.ARC_ENGINE_AVAILABLE", False), \
+             patch("src.mantle.agents.dm_agent.ARC_ENGINE_IMPORT_ERROR", "ModuleNotFoundError: No module named 'src.mantle.arc'"):
             
             response = client.get("/arc/status")
             
@@ -53,9 +53,9 @@ def test_arc_status_enabled_and_available(client: TestClient):
     """
     with patch.dict(os.environ, {"ENABLE_ARC_ENGINE": "true"}):
         # Mock successful import
-        with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
-             patch("src.lms.agents.dm_agent.ARC_ENGINE_AVAILABLE", True), \
-             patch("src.lms.agents.dm_agent.ARC_ENGINE_IMPORT_ERROR", None):
+        with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
+             patch("src.mantle.agents.dm_agent.ARC_ENGINE_AVAILABLE", True), \
+             patch("src.mantle.agents.dm_agent.ARC_ENGINE_IMPORT_ERROR", None):
             
             response = client.get("/arc/status")
             
@@ -75,7 +75,7 @@ def test_arc_session_when_disabled(client: TestClient):
     """
     Test /arc/session/{session_id} endpoint when Arc Engine is disabled.
     """
-    with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", False):
+    with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", False):
         response = client.get("/arc/session/test-session-123")
         
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -87,8 +87,8 @@ def test_arc_session_when_unavailable(client: TestClient):
     """
     Test /arc/session/{session_id} endpoint when Arc Engine failed to import.
     """
-    with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
-         patch("src.lms.agents.dm_agent.ARC_ENGINE_AVAILABLE", False):
+    with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
+         patch("src.mantle.agents.dm_agent.ARC_ENGINE_AVAILABLE", False):
         
         response = client.get("/arc/session/test-session-123")
         
@@ -101,11 +101,11 @@ def test_arc_session_not_found(client: TestClient):
     """
     Test /arc/session/{session_id} endpoint when session doesn't exist.
     """
-    with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
-         patch("src.lms.agents.dm_agent.ARC_ENGINE_AVAILABLE", True):
+    with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
+         patch("src.mantle.agents.dm_agent.ARC_ENGINE_AVAILABLE", True):
         
         # Mock _active_sessions to be empty
-        with patch("src.lms.api.game_routes._active_sessions", {}):
+        with patch("src.mantle.api.game_routes._active_sessions", {}):
             response = client.get("/arc/session/nonexistent-session")
             
             # Should get 404 or appropriate error
@@ -116,8 +116,8 @@ def test_arc_session_without_arc_engine(client: TestClient):
     """
     Test /arc/session/{session_id} endpoint when session exists but arc_engine not initialized.
     """
-    with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
-         patch("src.lms.agents.dm_agent.ARC_ENGINE_AVAILABLE", True):
+    with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
+         patch("src.mantle.agents.dm_agent.ARC_ENGINE_AVAILABLE", True):
         
         # Mock a session without arc_engine
         mock_session = {
@@ -125,7 +125,7 @@ def test_arc_session_without_arc_engine(client: TestClient):
             "player_id": "player1"
         }
         
-        with patch("src.lms.api.game_routes._active_sessions", {"test-session-123": mock_session}):
+        with patch("src.mantle.api.game_routes._active_sessions", {"test-session-123": mock_session}):
             response = client.get("/arc/session/test-session-123")
             
             assert response.status_code == status.HTTP_200_OK
@@ -138,8 +138,8 @@ def test_arc_session_with_arc_engine(client: TestClient):
     """
     Test /arc/session/{session_id} endpoint when session has arc_engine initialized.
     """
-    with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
-         patch("src.lms.agents.dm_agent.ARC_ENGINE_AVAILABLE", True):
+    with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
+         patch("src.mantle.agents.dm_agent.ARC_ENGINE_AVAILABLE", True):
         
         # Mock an arc_engine instance
         mock_arc_engine = MagicMock()
@@ -155,7 +155,7 @@ def test_arc_session_with_arc_engine(client: TestClient):
             "arc_engine": mock_arc_engine
         }
         
-        with patch("src.lms.api.game_routes._active_sessions", {"test-session-123": mock_session}):
+        with patch("src.mantle.api.game_routes._active_sessions", {"test-session-123": mock_session}):
             response = client.get("/arc/session/test-session-123")
             
             assert response.status_code == status.HTTP_200_OK
@@ -176,9 +176,9 @@ def test_health_check_includes_arc_engine(client: TestClient):
     """
     Test that /health endpoint includes arc_engine status.
     """
-    with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
-         patch("src.lms.agents.dm_agent.ARC_ENGINE_AVAILABLE", True), \
-         patch("src.lms.agents.dm_agent.ARC_ENGINE_IMPORT_ERROR", None):
+    with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", True), \
+         patch("src.mantle.agents.dm_agent.ARC_ENGINE_AVAILABLE", True), \
+         patch("src.mantle.agents.dm_agent.ARC_ENGINE_IMPORT_ERROR", None):
         
         response = client.get("/health")
         
@@ -198,7 +198,7 @@ def test_health_check_arc_engine_disabled(client: TestClient):
     """
     Test that /health endpoint shows arc_engine as disabled when not enabled.
     """
-    with patch("src.lms.agents.dm_agent.ARC_ENGINE_ENABLED", False):
+    with patch("src.mantle.agents.dm_agent.ARC_ENGINE_ENABLED", False):
         
         response = client.get("/health")
         

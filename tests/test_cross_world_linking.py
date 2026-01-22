@@ -10,7 +10,7 @@ import pytest
 from unittest.mock import AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import status
-from src.lms.agents.lore_parsing_agent import LoreParsingAgent
+from src.mantle.agents.lore_parsing_agent import LoreParsingAgent
 
 
 @pytest.mark.asyncio
@@ -48,7 +48,7 @@ async def test_relationship_creation_doesnt_link_across_worlds(mock_neo4j_db):
     
     # Now ingest lore into world_a that creates a relationship to "Captain Varn"
     # This should ONLY link to the world_a Captain Varn, NOT the world_b one
-    from src.lms.agents.lore_parsing_agent import (
+    from src.mantle.agents.lore_parsing_agent import (
         ParsedLoreResult, ExtractedEntity, ExtractedRelationship
     )
     
@@ -127,7 +127,7 @@ async def test_canon_id_mapping_within_scope(mock_neo4j_db):
     """
     agent = LoreParsingAgent(api_key=None)
     
-    from src.lms.agents.lore_parsing_agent import (
+    from src.mantle.agents.lore_parsing_agent import (
         ParsedLoreResult, ExtractedEntity, ExtractedRelationship
     )
     

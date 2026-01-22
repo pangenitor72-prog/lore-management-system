@@ -79,7 +79,9 @@
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
       "Bash(del test_mantle.py)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(git revert:*)",
+      "Bash(git mv:*)"
     ]
   }
 }

@@ -10,13 +10,13 @@ Tests:
 """
 
 import pytest
-from src.lms.agents.genre_assessment import (
+from src.mantle.agents.genre_assessment import (
     assess_genre_from_text,
     assess_genre_from_world_data,
     GenreAssessment,
     VALID_MECHANICS_GENRES,
 )
-from src.lms.utils.genre_resolver import (
+from src.mantle.utils.genre_resolver import (
     resolve_mechanics_genre_sync,
     resolve_mechanics_genre,
 )
@@ -238,7 +238,7 @@ class TestCharacterCreationGenre:
     
     def test_concept_generator_uses_mechanics_genre(self):
         """Test that ConceptGenerator respects genre parameter."""
-        from src.lms.dnd5e.creation.concept_generator import ConceptGenerator
+        from src.mantle.dnd5e.creation.concept_generator import ConceptGenerator
         
         # Test with scifi genre
         generator = ConceptGenerator(genre="scifi")
@@ -250,7 +250,7 @@ class TestCharacterCreationGenre:
     
     def test_concept_character_has_genre_appropriate_equipment(self):
         """Test that concept-generated characters have genre-appropriate starting equipment."""
-        from src.lms.dnd5e.creation.concept_generator import ConceptGenerator
+        from src.mantle.dnd5e.creation.concept_generator import ConceptGenerator
         
         # Generate a modern character
         generator = ConceptGenerator(genre="modern")

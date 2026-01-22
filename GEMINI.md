@@ -20,28 +20,28 @@ Context file for Google Gemini AI assistants working on this codebase.
 
 ## Where Gemini Is Used
 
-### 1. DM Agent (`src/lms/agents/dm_agent.py`)
+### 1. DM Agent (`src/mantle/agents/dm_agent.py`)
 The AI Dungeon Master that generates narrative responses.
 - Uses conversation history for context
 - Integrates with Arc Engine for pacing
 - Follows "Gospel Principle": AI suggests, humans decide
 
-### 2. World Tuner Agent (`src/lms/agents/world_tuner_agent.py`)
+### 2. World Tuner Agent (`src/mantle/agents/world_tuner_agent.py`)
 Conversational assistant for world configuration.
 - Helps admins add races/classes through natural dialogue
 - Outputs structured proposals for approval
 - Uses MANTLE system (maps to D&D 5e base types)
 
-### 3. Query Agent (`src/lms/agents/query_agent.py`)
+### 3. Query Agent (`src/mantle/agents/query_agent.py`)
 Knowledge retrieval from the lore database.
 
-### 4. Auditor Agent (`src/lms/agents/auditor_agent.py`)
+### 4. Auditor Agent (`src/mantle/agents/auditor_agent.py`)
 Contradiction detection when new lore is added.
 
-### 5. Lore Parsing Agent (`src/lms/agents/lore_parsing_agent.py`)
+### 5. Lore Parsing Agent (`src/mantle/agents/lore_parsing_agent.py`)
 Entity extraction from raw text.
 
-### 6. Character Options Generator (`src/lms/api/game_routes.py`)
+### 6. Character Options Generator (`src/mantle/api/game_routes.py`)
 `generate_character_options_from_lore()` - Extracts origins/archetypes from world lore.
 
 ## API Key Configuration
@@ -127,7 +127,7 @@ Maps setting-specific concepts to D&D 5e mechanics:
 ## Project Structure (Key Files)
 
 ```
-src/lms/
+src/mantle/
 ├── agents/
 │   ├── dm_agent.py           # AI Dungeon Master
 │   ├── world_tuner_agent.py  # Conversational world config

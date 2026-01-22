@@ -6,7 +6,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(os.getcwd())
 
-from src.lms.dnd5e.data.loader import get_srd_loader
+from src.mantle.dnd5e.data.loader import get_srd_loader
 
 try:
     loader = get_srd_loader()

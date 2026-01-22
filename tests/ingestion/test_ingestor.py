@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.lms.ingestion.ingestor import LoreIngestor
-from src.lms.services.extraction_service import ExtractionService
-from src.lms.services.embedding_service import EmbeddingService
-from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.mantle.ingestion.ingestor import LoreIngestor
+from src.mantle.services.extraction_service import ExtractionService
+from src.mantle.services.embedding_service import EmbeddingService
+from src.mantle.db.neo4j_adapter import Neo4jDatabase
 
 # Mark all tests in this file as async
 pytestmark = pytest.mark.asyncio

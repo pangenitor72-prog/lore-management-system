@@ -1,7 +1,7 @@
 """Test prompt library structure and functionality."""
 
 import pytest
-from src.lms.prompts import DMPrompts, QueryPrompts, AuditorPrompts, BoundaryPrompts
+from src.mantle.prompts import DMPrompts, QueryPrompts, AuditorPrompts, BoundaryPrompts
 
 def test_dm_prompt_metadata_exists():
     """Verify DM prompts have metadata."""

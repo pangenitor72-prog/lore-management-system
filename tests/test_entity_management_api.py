@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from fastapi import status
-from src.lms.core.models import EntityType, ConfidenceLevel
+from src.mantle.core.models import EntityType, ConfidenceLevel
 
 
 def test_get_entities_for_management(client: TestClient):

@@ -1,8 +1,8 @@
 """Test Entity Factory templates and validation."""
 
 import pytest
-from src.lms.core.entity_factory import EntityFactory, EntityTemplate
-from src.lms.core.models import EntityType
+from src.mantle.core.entity_factory import EntityFactory, EntityTemplate
+from src.mantle.core.models import EntityType
 
 def test_all_entity_types_have_templates():
     """Verify all entity types have templates defined."""

@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 import asyncio
 
-from src.lms.db.neo4j_adapter import Neo4jDatabase
+from src.mantle.db.neo4j_adapter import Neo4jDatabase
 
 # Mark all tests in this file as async
 pytestmark = pytest.mark.asyncio

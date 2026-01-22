@@ -6,8 +6,8 @@ Tests for the main Orchestrator class.
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 
-from src.lms.orchestrator import Orchestrator
-from src.lms.orchestrator.models import TaskType, TaskPriority, TaskStatus
+from src.mantle.orchestrator import Orchestrator
+from src.mantle.orchestrator.models import TaskType, TaskPriority, TaskStatus
 
 
 class TestOrchestrator:
@@ -24,8 +24,8 @@ class TestOrchestrator:
     @pytest.fixture
     def orchestrator_with_mock_llm(self, project_root, mock_gemini_key):
         """Create an orchestrator with mocked Gemini."""
-        with patch("src.lms.orchestrator.sub_agents.llm_agent.GEMINI_AVAILABLE", True):
-            with patch("src.lms.orchestrator.sub_agents.llm_agent.genai") as mock_genai:
+        with patch("src.mantle.orchestrator.sub_agents.llm_agent.GEMINI_AVAILABLE", True):
+            with patch("src.mantle.orchestrator.sub_agents.llm_agent.genai") as mock_genai:
                 mock_model = MagicMock()
                 mock_response = MagicMock()
                 mock_response.text = '{"status": "success", "output": {}}'
@@ -107,8 +107,8 @@ class TestOrchestrator:
     @pytest.mark.asyncio
     async def test_register_agent(self, orchestrator):
         """Test registering an external agent."""
-        from src.lms.orchestrator.sub_agents.rule_agent import RuleBasedSubAgent
-        from src.lms.orchestrator.protocols import SubAgentCapability
+        from src.mantle.orchestrator.sub_agents.rule_agent import RuleBasedSubAgent
+        from src.mantle.orchestrator.protocols import SubAgentCapability
 
         agent = RuleBasedSubAgent(
             capabilities=[SubAgentCapability.FILE_ANALYSIS],
@@ -122,8 +122,8 @@ class TestOrchestrator:
     @pytest.mark.asyncio
     async def test_unregister_agent(self, orchestrator):
         """Test unregistering an agent."""
-        from src.lms.orchestrator.sub_agents.rule_agent import RuleBasedSubAgent
-        from src.lms.orchestrator.protocols import SubAgentCapability
+        from src.mantle.orchestrator.sub_agents.rule_agent import RuleBasedSubAgent
+        from src.mantle.orchestrator.protocols import SubAgentCapability
 
         agent = RuleBasedSubAgent(
             capabilities=[SubAgentCapability.FILE_ANALYSIS],
@@ -187,7 +187,7 @@ class TestOrchestratorContextIntegration:
     @pytest.mark.asyncio
     async def test_context_includes_claude_md(self, orchestrator):
         """Test that context includes CLAUDE.md."""
-        from src.lms.orchestrator.models import Task, TaskType
+        from src.mantle.orchestrator.models import Task, TaskType
 
         task = Task(
             task_type=TaskType.DEVELOPMENT,
@@ -211,7 +211,7 @@ class TestOrchestratorContextIntegration:
         src_dir.mkdir(parents=True, exist_ok=True)
         (src_dir / "test_agent.py").write_text("class TestAgent: pass")
 
-        from src.lms.orchestrator.models import Task, TaskType
+        from src.mantle.orchestrator.models import Task, TaskType
 
         task = Task(
             task_type=TaskType.DEVELOPMENT,

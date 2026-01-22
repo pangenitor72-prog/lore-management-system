@@ -61,18 +61,24 @@ lore-management-system/
 │           └── globals.css      # Design tokens
 │
 ├── src/
-│   ├── lms/                     # Lore Management System
+│   ├── mantle/                  # Main application (unified from LMS + AIRPG)
 │   │   ├── api/                 # FastAPI routes
-│   │   │   ├── routes.py        # Core LMS routes
+│   │   │   ├── routes.py        # Main app setup & core routes
 │   │   │   ├── game_routes.py   # Game session routes (/api/game/*)
+│   │   │   ├── world_tuner_routes.py  # World Tuner endpoints
 │   │   │   ├── dnd_routes.py    # D&D mechanics routes
-│   │   │   └── memory_routes.py # Memory system routes
+│   │   │   ├── memory_routes.py # Memory system routes
+│   │   │   └── orchestrator_routes.py # Orchestrator routes
 │   │   ├── agents/              # AI agents
-│   │   │   ├── auditor_agent.py # Contradiction detection
 │   │   │   ├── dm_agent.py      # AI Dungeon Master
+│   │   │   ├── world_tuner_agent.py   # Conversational world config
 │   │   │   ├── query_agent.py   # Knowledge queries
-│   │   │   ├── lore_parsing_agent.py  # Entity extraction
-│   │   │   └── world_tuner_agent.py   # Conversational world config
+│   │   │   ├── auditor_agent.py # Contradiction detection
+│   │   │   └── lore_parsing_agent.py  # Entity extraction
+│   │   ├── engine/              # Game engine (from AIRPG runtime)
+│   │   │   ├── world_integrity.py     # Canon truths & world state
+│   │   │   ├── game_config.py         # Game configuration
+│   │   │   └── game_events.py         # Game events & inventory
 │   │   ├── core/                # Core models
 │   │   │   ├── models.py        # Pydantic v2 models
 │   │   │   └── entity_factory.py
@@ -88,15 +94,10 @@ lore-management-system/
 │   │   ├── memory/              # Session memory (SQLite)
 │   │   └── services/            # Business logic
 │   │
-│   ├── airpg/                   # AI RPG Engine
-│   │   ├── engine/              # Scene generation, belief propagation
-│   │   ├── runtime/             # Session management, game rules
-│   │   └── models/              # AIRPG-specific models
+│   ├── archive/                 # Archived/experimental code
+│   │   └── airpg_experimental/  # Original AIRPG belief propagation
 │   │
-│   └── shared/                  # Cross-cutting utilities
-│       ├── config/
-│       ├── database/
-│       └── llm/
+│   └── shared/                  # Cross-cutting utilities (unused)
 │
 ├── docs/
 │   ├── airpg/                   # AIRPG philosophy & architecture
@@ -160,7 +161,7 @@ pip install -r requirements.txt
 docker-compose up -d
 
 # Run FastAPI server (serves at http://localhost:8000)
-uvicorn src.lms.api:app --reload --port 8000
+uvicorn src.mantle.api:app --reload --port 8000
 ```
 
 ### Testing
@@ -297,7 +298,7 @@ from .models import EntityCreate, EntityResponse
 
 ## Testing
 
-Tests use `InMemoryMockDatabase` from `src/lms/db/mock_adapter.py`:
+Tests use `InMemoryMockDatabase` from `src/mantle/db/mock_adapter.py`:
 
 ```python
 # conftest.py provides:
@@ -376,7 +377,7 @@ The World Tuner is an AI assistant that helps admins configure worlds through na
 5. Approved changes are applied to `character_options`
 
 **Key Files:**
-- **Agent**: `src/lms/agents/world_tuner_agent.py`
+- **Agent**: `src/mantle/agents/world_tuner_agent.py`
 - **API Endpoints**: `/api/game/admin/lore-bases/{id}/tuner/chat`, `/tuner/approve`, `/tuner/greeting`
 - **Frontend**: Search "WORLD TUNER" in `frontend/dist/index.html`
 
@@ -391,9 +392,9 @@ The World Tuner is an AI assistant that helps admins configure worlds through na
 ```
 
 ### Key Files for Common Tasks
-- **Add new API endpoint**: `src/lms/api/game_routes.py`
-- **Modify DM behavior**: `src/lms/agents/dm_agent.py`
-- **World Tuner logic**: `src/lms/agents/world_tuner_agent.py`
+- **Add new API endpoint**: `src/mantle/api/game_routes.py`
+- **Modify DM behavior**: `src/mantle/agents/dm_agent.py`
+- **World Tuner logic**: `src/mantle/agents/world_tuner_agent.py`
 - **Character creation UI**: Search "Character Options" in `frontend/dist/index.html`
 - **World Tuner UI**: Search "WORLD TUNER" in `frontend/dist/index.html`
 - **World seeds**: `data/lore_bases/seeds/*.json`

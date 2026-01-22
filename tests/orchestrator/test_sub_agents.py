@@ -6,20 +6,20 @@ Tests for sub-agents.
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.lms.orchestrator.models import (
+from src.mantle.orchestrator.models import (
     Task,
     TaskResult,
     TaskStatus,
     TaskType,
     SubAgentContext,
 )
-from src.lms.orchestrator.protocols import AgentBackend, SubAgentCapability
-from src.lms.orchestrator.sub_agents.rule_agent import (
+from src.mantle.orchestrator.protocols import AgentBackend, SubAgentCapability
+from src.mantle.orchestrator.sub_agents.rule_agent import (
     RuleBasedSubAgent,
     Rule,
     create_keyword_rule,
 )
-from src.lms.orchestrator.sub_agents.development.convention_checker import (
+from src.mantle.orchestrator.sub_agents.development.convention_checker import (
     ConventionCheckerAgent,
 )
 

@@ -1,4 +1,4 @@
-from src.lms.core.models import ContradictionCreate, ContradictionSeverity
+from src.mantle.core.models import ContradictionCreate, ContradictionSeverity
 from datetime import datetime
 
 def test_contradiction_create_model():

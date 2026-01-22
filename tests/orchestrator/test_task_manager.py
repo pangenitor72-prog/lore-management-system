@@ -5,14 +5,14 @@ Tests for the TaskManager.
 
 import pytest
 
-from src.lms.orchestrator.models import (
+from src.mantle.orchestrator.models import (
     Task,
     TaskResult,
     TaskStatus,
     TaskType,
     TaskPriority,
 )
-from src.lms.orchestrator.task_manager import TaskManager
+from src.mantle.orchestrator.task_manager import TaskManager
 
 
 class TestTaskManager:

@@ -6,7 +6,7 @@ Tests for orchestrator data models.
 import pytest
 from datetime import datetime, timezone
 
-from src.lms.orchestrator.models import (
+from src.mantle.orchestrator.models import (
     Task,
     TaskResult,
     TaskStatus,

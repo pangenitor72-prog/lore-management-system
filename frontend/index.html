@@ -7762,7 +7762,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- Character Options Modal -->
-            <div id="wm-mantle-modal" class="modal-overlay">
+            <div id="wm-mantle-modal" class="modal-overlay" onclick="if(event.target === this) closeMantleModal()">
                 <div class="modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
                     <h3 style="color: #8B5CF6; margin-bottom: 15px;">
                         <span style="font-size: 1.3rem;">⚙️</span> Character Options - <span id="mantle-world-name"></span>
@@ -18695,7 +18695,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const result = await response.json();
                 const total = (result.origins_count || 0) + (result.archetypes_count || 0);
                 showStatus('mantle-status', `Generated ${result.origins_count || 0} origins and ${result.archetypes_count || 0} archetypes!`, 'success');
-                await loadMantleMappings();
+                // Use the character_options from the POST response directly (avoids race condition with separate GET)
+                renderCharacterOptions({ character_options: result.character_options });
             } catch (err) {
                 showStatus('mantle-status', `Error: ${err.message}`, 'error');
             }
