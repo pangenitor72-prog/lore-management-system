@@ -18208,7 +18208,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function loadMantleMappings() {
             try {
-                const response = await fetch(`/game/admin/lore-bases/${mantleCurrentWorldId}/pending-mappings`);
+                const response = await fetch(API_BASE + `/game/admin/lore-bases/${mantleCurrentWorldId}/pending-mappings`);
                 if (!response.ok) throw new Error('Failed to load mappings');
                 const data = await response.json();
                 mantleMappings = data.mappings || [];
@@ -18335,7 +18335,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('mantle-status', 'Analyzing lore content... This may take a moment.', 'info');
 
             try {
-                const response = await fetch(`/game/admin/lore-bases/${mantleCurrentWorldId}/extract-mappings`, {
+                const response = await fetch(API_BASE + `/game/admin/lore-bases/${mantleCurrentWorldId}/extract-mappings`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -18355,7 +18355,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function approveMantleMapping(mappingId) {
             try {
-                const response = await fetch(`/game/admin/pending-mappings/${mappingId}/approve`, {
+                const response = await fetch(API_BASE + `/game/admin/pending-mappings/${mappingId}/approve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -18373,7 +18373,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!confirm('Are you sure you want to reject this mapping?')) return;
 
             try {
-                const response = await fetch(`/game/admin/pending-mappings/${mappingId}/reject`, {
+                const response = await fetch(API_BASE + `/game/admin/pending-mappings/${mappingId}/reject`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -18399,7 +18399,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!newBase || newBase === mapping.mechanical_base) return;
 
             try {
-                const response = await fetch(`/game/admin/pending-mappings/${mappingId}/edit`, {
+                const response = await fetch(API_BASE + `/game/admin/pending-mappings/${mappingId}/edit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -18425,7 +18425,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (!confirm('Approve ALL pending mappings for this world?')) return;
 
             try {
-                const response = await fetch('/game/admin/pending-mappings/bulk-approve', {
+                const response = await fetch(API_BASE + '/game/admin/pending-mappings/bulk-approve', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
