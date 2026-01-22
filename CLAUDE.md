@@ -71,7 +71,8 @@ lore-management-system/
 │   │   │   ├── auditor_agent.py # Contradiction detection
 │   │   │   ├── dm_agent.py      # AI Dungeon Master
 │   │   │   ├── query_agent.py   # Knowledge queries
-│   │   │   └── lore_parsing_agent.py  # Entity extraction
+│   │   │   ├── lore_parsing_agent.py  # Entity extraction
+│   │   │   └── world_tuner_agent.py   # Conversational world config
 │   │   ├── core/                # Core models
 │   │   │   ├── models.py        # Pydantic v2 models
 │   │   │   └── entity_factory.py
@@ -364,9 +365,36 @@ fetch(API_BASE + '/memory/sessions')      // → /api/memory/sessions
 - Each seed has `character_options` with origins, archetypes, and setting_skills
 - AI can extract character options from lore content
 
+### World Tuner (Conversational World Config)
+The World Tuner is an AI assistant that helps admins configure worlds through natural conversation.
+
+**How it works:**
+1. Admin opens World Tuner from World Manager (green "🎯 World Tuner" button)
+2. Admin describes what they want ("Add a vampire race that's aristocratic")
+3. AI proposes changes with structured data
+4. Admin approves/rejects proposals in the side panel
+5. Approved changes are applied to `character_options`
+
+**Key Files:**
+- **Agent**: `src/lms/agents/world_tuner_agent.py`
+- **API Endpoints**: `/api/game/admin/lore-bases/{id}/tuner/chat`, `/tuner/approve`, `/tuner/greeting`
+- **Frontend**: Search "WORLD TUNER" in `frontend/dist/index.html`
+
+**Proposal Structure:**
+```json
+{
+  "id": "unique_id",
+  "category": "origin|archetype|skill|characteristic",
+  "action": "add|modify|remove",
+  "data": { /* full structured data */ }
+}
+```
+
 ### Key Files for Common Tasks
 - **Add new API endpoint**: `src/lms/api/game_routes.py`
 - **Modify DM behavior**: `src/lms/agents/dm_agent.py`
+- **World Tuner logic**: `src/lms/agents/world_tuner_agent.py`
 - **Character creation UI**: Search "Character Options" in `frontend/dist/index.html`
+- **World Tuner UI**: Search "WORLD TUNER" in `frontend/dist/index.html`
 - **World seeds**: `data/lore_bases/seeds/*.json`
 - **Design tokens**: Search `:root {` in frontend files

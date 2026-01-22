@@ -2551,6 +2551,10 @@ app.include_router(orchestrator_router, prefix="/api")
 from src.lms.api.game_routes import router as game_router
 app.include_router(game_router, prefix="/api")
 
+# World Tuner routes (conversational world config)
+from src.lms.api.world_tuner_routes import router as world_tuner_router
+app.include_router(world_tuner_router, prefix="/api")
+
 # Memory system routes
 from src.lms.api.memory_routes import router as memory_router
 app.include_router(memory_router, prefix="/api")

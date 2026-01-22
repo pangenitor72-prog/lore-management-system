@@ -1720,6 +1720,11 @@ async def bulk_approve_legacy(http_request: Request):
     return {"success": False, "message": "Pending mappings deprecated. Options are now generated directly.", "deprecated": True, "approved_count": 0}
 
 
+# =============================================================================
+# WORLD TUNER - Moved to world_tuner_routes.py
+# =============================================================================
+
+
 @router.get("/admin/entities/orphans")
 async def get_orphan_entities(
     http_request: Request,
