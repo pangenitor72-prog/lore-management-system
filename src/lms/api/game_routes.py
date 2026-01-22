@@ -1528,6 +1528,9 @@ async def update_character_options(
 # =============================================================================
 # MANTLE INGESTION & APPROVAL - Pending Mapping Endpoints
 # =============================================================================
+# TODO: Consider extracting to src/lms/api/mantle_routes.py when game_routes.py
+#       exceeds 10,000 lines or when adding another developer to the project.
+#       This section (~300 lines) is a self-contained feature that could be its own module.
 
 # In-memory storage for pending mappings (persisted to Neo4j on approval)
 PENDING_MAPPINGS: Dict[str, Dict[str, Any]] = {}  # mapping_id -> mapping data
@@ -4244,6 +4247,8 @@ class WorldCharacterOptions(BaseModel):
 # =============================================================================
 # MANTLE INGESTION & APPROVAL - Pending Mapping System
 # =============================================================================
+# TODO: These models could move to src/lms/api/mantle_routes.py along with
+#       the MANTLE endpoints above. See refactoring note at line ~1531.
 
 class MappingStatus(str, Enum):
     """Status of a MANTLE translation mapping."""
