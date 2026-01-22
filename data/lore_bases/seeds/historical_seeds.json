@@ -3,8 +3,312 @@
   "name": "Gilded Shadows",
   "description": "New York, 1889. The Gilded Age glitters with wealth and ambition while the underclass struggles in darkness.",
   "genre": "historical",
-  "genre_hints": ["historical", "drama", "mystery"],
-  "tone_hints": ["atmospheric", "dramatic", "socially conscious"],
+  "genre_hints": [
+    "historical",
+    "drama",
+    "mystery"
+  ],
+  "tone_hints": [
+    "atmospheric",
+    "dramatic",
+    "socially conscious"
+  ],
   "seed_prompt": "A historical drama set during America's Gilded Age, where robber barons and reformers clash.",
-  "lore_content": "The year is 1889. Electric lights are transforming Manhattan's skyline while families crowd into tenements on the Lower East Side. It is an age of extremes, where fortunes are made and lost in a day.\n\nCatherine Ashworth was born to privilege on Fifth Avenue. Now 28 and unmarried by choice, she scandalizes society by working as a journalist under a male pseudonym. Her investigations into sweatshop conditions have made enemies of powerful men - including her own father.\n\nThomas Ashworth built his railroad empire on the backs of immigrant laborers. He genuinely believes his wealth benefits society and cannot understand his daughter's 'radical sympathies.' When workers threaten to strike, he'll do whatever it takes to maintain control.\n\nDr. Marcus Webb runs a free clinic in Five Points, treating the poor who can't afford proper care. A Black man who earned his medical degree in Paris, he faces constant discrimination despite his brilliance. He's documenting the health effects of tenement living for a report that could force legislative action.\n\nRosa Benedetti organizes garment workers in secret, risking beatings and arrest. She lost her sister to a factory fire and has sworn that no more workers will die for wealthy men's profits. The labor movement is growing, and Rosa is at its heart.\n\nDetective Sean O'Brien walks between worlds as an Irish cop in a department run by Tammany Hall. He takes the bribes he must take to survive but secretly passes information to reformers. When a society girl is murdered, the pressure to find a convenient suspect puts him in an impossible position.\n\nMadame Celestine runs the most exclusive brothel in the Tenderloin. Her clients include senators, industrialists, and foreign dignitaries. The secrets she holds could topple empires - which is why someone is trying to silence her permanently.\n\nJacob Stern arrived from Poland with nothing and built a garment business through sheer will. Now he stands between the old ways and the new, trying to treat his workers fairly while competing with those who don't. His sons want to expand; his conscience says otherwise."
+  "lore_content": "The year is 1889. Electric lights are transforming Manhattan's skyline while families crowd into tenements on the Lower East Side. It is an age of extremes, where fortunes are made and lost in a day.\n\nCatherine Ashworth was born to privilege on Fifth Avenue. Now 28 and unmarried by choice, she scandalizes society by working as a journalist under a male pseudonym. Her investigations into sweatshop conditions have made enemies of powerful men - including her own father.\n\nThomas Ashworth built his railroad empire on the backs of immigrant laborers. He genuinely believes his wealth benefits society and cannot understand his daughter's 'radical sympathies.' When workers threaten to strike, he'll do whatever it takes to maintain control.\n\nDr. Marcus Webb runs a free clinic in Five Points, treating the poor who can't afford proper care. A Black man who earned his medical degree in Paris, he faces constant discrimination despite his brilliance. He's documenting the health effects of tenement living for a report that could force legislative action.\n\nRosa Benedetti organizes garment workers in secret, risking beatings and arrest. She lost her sister to a factory fire and has sworn that no more workers will die for wealthy men's profits. The labor movement is growing, and Rosa is at its heart.\n\nDetective Sean O'Brien walks between worlds as an Irish cop in a department run by Tammany Hall. He takes the bribes he must take to survive but secretly passes information to reformers. When a society girl is murdered, the pressure to find a convenient suspect puts him in an impossible position.\n\nMadame Celestine runs the most exclusive brothel in the Tenderloin. Her clients include senators, industrialists, and foreign dignitaries. The secrets she holds could topple empires - which is why someone is trying to silence her permanently.\n\nJacob Stern arrived from Poland with nothing and built a garment business through sheer will. Now he stands between the old ways and the new, trying to treat his workers fairly while competing with those who don't. His sons want to expand; his conscience says otherwise.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "society",
+        "name": "Society Elite",
+        "description": "Born into wealth and influence, you navigate the intricacies of New York's high society.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "Silver Tongue: Advantage on Persuasion checks when dealing with individuals of similar social standing.",
+          "Connected: You have access to information and resources within your social circle."
+        ],
+        "languages": [
+          "English",
+          "French"
+        ]
+      },
+      {
+        "id": "immigrant",
+        "name": "Immigrant",
+        "description": "You arrived in New York seeking a better life, facing prejudice and hardship with resilience.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 1,
+          "strength": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Survival"
+        ],
+        "traits": [
+          "Hardy: Advantage on saving throws against exhaustion.",
+          "Tenacity: Once per long rest, you can reroll a failed saving throw."
+        ],
+        "languages": [
+          "English",
+          "Common",
+          "One additional language"
+        ]
+      },
+      {
+        "id": "working_class",
+        "name": "Working Class",
+        "description": "You toil in factories, docks, or streets, earning a meager living through hard labor.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Intimidation"
+        ],
+        "traits": [
+          "Resilient: Gain +1 to maximum hit points per level.",
+          "Calloused Hands: Advantage on Strength saving throws against being disarmed."
+        ],
+        "languages": [
+          "English",
+          "Common"
+        ]
+      },
+      {
+        "id": "underworld",
+        "name": "Underworld Denizen",
+        "description": "You thrive in the shadows, navigating the criminal underbelly of the city.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Deception"
+        ],
+        "traits": [
+          "Shadow Dweller: Advantage on Stealth checks in dim light or darkness.",
+          "Street Smarts: You have advantage on Insight checks to detect lies or deceit in urban environments."
+        ],
+        "languages": [
+          "English",
+          "Thieves' Cant"
+        ]
+      },
+      {
+        "id": "academic",
+        "name": "Academic",
+        "description": "You are a scholar and investigator, with a hunger for knowledge and a talent for uncovering secrets.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "History"
+        ],
+        "traits": [
+          "Keen Mind: You always know which way is north and you always recall where you have been. You can accurately recall anything you have seen or heard within the past month.",
+          "Researcher: Advantage on ability checks to recall information about historical events, lore, or academic topics."
+        ],
+        "languages": [
+          "English",
+          "Two other languages of your choice"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "detective",
+        "name": "Detective",
+        "description": "A keen observer and investigator, you solve crimes amidst the city's corruption.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Strength",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Perception",
+          "Streetwise"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns",
+          "Rifles",
+          "Clubs"
+        ],
+        "starting_equipment": [
+          "A revolver with 12 bullets",
+          "A magnifying glass",
+          "A notepad and pencil",
+          "A set of common clothes"
+        ],
+        "features": [
+          {
+            "name": "Eye for Detail",
+            "description": "You have advantage on Investigation checks to find clues and analyze evidence."
+          },
+          {
+            "name": "Interrogation",
+            "description": "You gain proficiency in Streetwise (Insight). You have advantage on Streetwise checks when interrogating a suspect."
+          }
+        ]
+      },
+      {
+        "id": "reporter",
+        "name": "Reporter",
+        "description": "Driven by truth, you uncover scandals and expose injustice through your writing.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Investigation",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "A fountain pen",
+          "A notebook",
+          "A hidden camera",
+          "Set of common clothes"
+        ],
+        "features": [
+          {
+            "name": "Incisive Questions",
+            "description": "You can use your action to ask a question to a creature that can understand you. The creature must succeed on a Wisdom saving throw (DC equal to 8 + your proficiency bonus + your Charisma modifier) or truthfully answer the question to the best of its ability."
+          },
+          {
+            "name": "Expose",
+            "description": "When you successfully gather information that incriminates a target, you can spend one day writing an expose. If you spend one day in an urban setting after publishing the expose, you can choose to reduce the target's Charisma score by an amount equal to your Intelligence modifier."
+          }
+        ]
+      },
+      {
+        "id": "labor_organizer",
+        "name": "Labor Organizer",
+        "description": "You champion the rights of workers, fighting for fair treatment and better conditions.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Intimidation",
+          "Performance",
+          "Streetwise"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "A bullhorn",
+          "Pamphlets advocating for workers' rights",
+          "A set of common clothes"
+        ],
+        "features": [
+          {
+            "name": "Rally the Troops",
+            "description": "As an action, you can inspire your allies. Up to three allies within 30 feet of you gain temporary hit points equal to your Charisma modifier. They gain advantage on their next saving throw against being frightened or charmed."
+          },
+          {
+            "name": "Negotiation",
+            "description": "You gain proficiency in Streetwise (Insight). You have advantage on Streetwise checks when negotiating contracts with employers or addressing concerns with workers."
+          }
+        ]
+      },
+      {
+        "id": "physician",
+        "name": "Physician",
+        "description": "Dedicated to healing, you provide care to the sick and wounded, often amidst poverty and disease.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Insight",
+          "Investigation",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "A medical bag with bandages and antiseptic",
+          "A stethoscope",
+          "A set of common clothes"
+        ],
+        "features": [
+          {
+            "name": "First Aid",
+            "description": "As an action, you can administer first aid to a creature within 5 feet. They regain hit points equal to 1d4 + your Wisdom modifier."
+          },
+          {
+            "name": "Diagnose",
+            "description": "You can spend 10 minutes studying a creature to diagnose its illness or injury. After doing so, you gain advantage on Medicine checks to treat that creature."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground and ability to read people's intentions."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

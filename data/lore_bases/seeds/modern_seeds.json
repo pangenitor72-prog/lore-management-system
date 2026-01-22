@@ -3,8 +3,289 @@
   "name": "City Shadows",
   "description": "Contemporary Chicago, where ordinary people face extraordinary challenges in their daily lives.",
   "genre": "modern",
-  "genre_hints": ["modern", "drama", "thriller"],
-  "tone_hints": ["realistic", "gritty", "human"],
+  "genre_hints": [
+    "modern",
+    "drama",
+    "thriller"
+  ],
+  "tone_hints": [
+    "realistic",
+    "gritty",
+    "human"
+  ],
   "seed_prompt": "A modern-day urban setting where cops, criminals, and civilians navigate the complexities of city life.",
-  "lore_content": "Chicago, the present day. Eight million people, eight million stories. The city runs on ambition, corruption, and the relentless drive to survive another day.\n\nDetective Carmen Rodriguez works Major Crimes in a department riddled with problems. Her clearance rate is the best in the unit, which makes her both valuable and threatening to the old guard. She's investigating a string of disappearances that might connect to City Hall.\n\nMarcus Johnson teaches history at Lincoln High and coaches the basketball team. He grew up on the South Side, got out on a scholarship, came back to make a difference. The gangs are recruiting his students, and he's running out of ways to compete.\n\nDr. Priya Sharma runs the ER at Cook County General. Gunshots, overdoses, heart attacks - she sees humanity at its worst every night. She's brilliant, exhausted, and privately struggling with an addiction that started as self-medication.\n\nTony Marinetti is third-generation in the 'waste management' business, which everyone knows is a front. He wants to take the family legitimate, but his uncle Sal thinks that's betrayal. The tension is building toward something that can only end in blood.\n\nSarah Chen is a journalist at the Tribune investigating a slum landlord whose buildings keep catching fire. Residents die; insurance pays out; the landlord buys more buildings. Sarah's editor is getting nervous about the threats.\n\nFather Michael O'Brien runs a soup kitchen in Pilsen. He struggles with his faith every day, wondering if he's actually helping or just making poverty more comfortable. A dying parishioner confessed something that's shaken him to his core.\n\nIn the financial district, Alexandra Moore manages billions for the city's pension fund. She's discovered irregularities that suggest massive fraud. The people responsible have already made one accountant disappear. She's copying files and planning her escape."
+  "lore_content": "Chicago, the present day. Eight million people, eight million stories. The city runs on ambition, corruption, and the relentless drive to survive another day.\n\nDetective Carmen Rodriguez works Major Crimes in a department riddled with problems. Her clearance rate is the best in the unit, which makes her both valuable and threatening to the old guard. She's investigating a string of disappearances that might connect to City Hall.\n\nMarcus Johnson teaches history at Lincoln High and coaches the basketball team. He grew up on the South Side, got out on a scholarship, came back to make a difference. The gangs are recruiting his students, and he's running out of ways to compete.\n\nDr. Priya Sharma runs the ER at Cook County General. Gunshots, overdoses, heart attacks - she sees humanity at its worst every night. She's brilliant, exhausted, and privately struggling with an addiction that started as self-medication.\n\nTony Marinetti is third-generation in the 'waste management' business, which everyone knows is a front. He wants to take the family legitimate, but his uncle Sal thinks that's betrayal. The tension is building toward something that can only end in blood.\n\nSarah Chen is a journalist at the Tribune investigating a slum landlord whose buildings keep catching fire. Residents die; insurance pays out; the landlord buys more buildings. Sarah's editor is getting nervous about the threats.\n\nFather Michael O'Brien runs a soup kitchen in Pilsen. He struggles with his faith every day, wondering if he's actually helping or just making poverty more comfortable. A dying parishioner confessed something that's shaken him to his core.\n\nIn the financial district, Alexandra Moore manages billions for the city's pension fund. She's discovered irregularities that suggest massive fraud. The people responsible have already made one accountant disappear. She's copying files and planning her escape.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "blue_collar",
+        "name": "Blue Collar",
+        "description": "A lifetime spent working physically demanding jobs, honing toughness and resilience.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Survival"
+        ],
+        "traits": [
+          "Resilient: Advantage on saving throws against poison."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "street_smart",
+        "name": "Street Smart",
+        "description": "Growing up on the streets, you learned to survive by your wits and quick thinking.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Streetwise"
+        ],
+        "traits": [
+          "Light Sleeper: You only need 4 hours of sleep to gain the benefits of a long rest."
+        ],
+        "languages": [
+          "Common",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "privileged",
+        "name": "Privileged",
+        "description": "Raised in wealth and comfort, you have access to resources and connections others only dream of.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Investigation"
+        ],
+        "traits": [
+          "Silver Spoon: Once per day, you can reroll a failed Charisma check."
+        ],
+        "languages": [
+          "Common",
+          "Two languages of your choice"
+        ]
+      },
+      {
+        "id": "bookworm",
+        "name": "Bookworm",
+        "description": "You've always preferred the company of books, giving you a wealth of knowledge and a sharp mind.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Arcana"
+        ],
+        "traits": [
+          "Keen Mind: You always know which way is north, and accurately recall anything you have seen or heard within the past month."
+        ],
+        "languages": [
+          "Common",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "first_responder",
+        "name": "First Responder",
+        "description": "Years spent dealing with emergencies, you are capable under pressure, and your senses are sharp.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Medicine",
+          "Perception"
+        ],
+        "traits": [
+          "Iron Stomach: Advantage on saves vs disease"
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "beat_cop",
+        "name": "Beat Cop",
+        "description": "A dedicated officer patrolling the streets, upholding the law, and protecting the innocent.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Streetwise",
+          "Investigation",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Bulletproof vest (AC 11 + Dex modifier)",
+          "Handgun with 20 bullets",
+          "Handcuffs",
+          "Police radio"
+        ],
+        "features": [
+          {
+            "name": "Lawful Presence",
+            "description": "You gain advantage on Persuasion checks when interacting with law-abiding citizens."
+          }
+        ]
+      },
+      {
+        "id": "private_eye",
+        "name": "Private Eye",
+        "description": "A resourceful investigator, uncovering secrets and solving mysteries for those who can afford the truth.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Streetwise",
+          "Investigation",
+          "Deception",
+          "Acrobatics"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Light armor",
+          "Handgun with 20 bullets",
+          "Magnifying glass",
+          "Thieves' tools",
+          "A fedora"
+        ],
+        "features": [
+          {
+            "name": "Keen Observer",
+            "description": "You gain advantage on Investigation checks related to finding clues and hidden objects."
+          }
+        ]
+      },
+      {
+        "id": "street_medic",
+        "name": "Street Medic",
+        "description": "A skilled healer, providing medical assistance to those in need, regardless of their circumstances.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Streetwise",
+          "Persuasion",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light Armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple Weapons"
+        ],
+        "starting_equipment": [
+          "Light armor",
+          "First aid kit",
+          "A backpack filled with medical supplies",
+          "A small book of prayers"
+        ],
+        "features": [
+          {
+            "name": "Healing Touch",
+            "description": "As an action, you can touch a creature and restore a number of hit points equal to your level + your Wisdom modifier."
+          }
+        ]
+      },
+      {
+        "id": "fixer",
+        "name": "Fixer",
+        "description": "A charismatic negotiator, skilled at brokering deals, resolving conflicts, and finding solutions to any problem.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Streetwise",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light Armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple Weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "A business suit",
+          "A burner phone",
+          "A wad of cash",
+          "A handgun with 20 bullets"
+        ],
+        "features": [
+          {
+            "name": "silver Tongue",
+            "description": "You have advantage on Charisma checks made to influence someone who is willing to listen to you."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground, knowing who to trust and where to find information."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

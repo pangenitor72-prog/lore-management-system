@@ -6548,8 +6548,6 @@
                 <a href="#" onclick="showPinModal(); return false;">Admin</a>
             </p>
             <p class="landing-footer" style="margin-top: 8px; font-size: 0.75rem;">
-                <span style="opacity: 0.5;">v41</span>
-                <span>|</span>
                 <a href="#" onclick="(async()=>{if('caches'in window){const n=await caches.keys();await Promise.all(n.map(k=>caches.delete(k)))}if('serviceWorker'in navigator){const r=await navigator.serviceWorker.getRegistrations();for(const reg of r)await reg.unregister()}alert('Cache cleared! Reloading...');location.reload(true)})();return false;" style="color: var(--accent-gold);">🔄 Check for Updates</a>
             </p>
         </div>
@@ -8904,6 +8902,64 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // ==========================================
         // END ANNOUNCEMENT SYSTEM
         // ==========================================
+
+        // ==========================================
+        // MODAL POSITIONING HELPER
+        // ==========================================
+        // Open modals at click position instead of centered
+
+        let lastClickPos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+        // Track click positions globally
+        document.addEventListener('click', (e) => {
+            lastClickPos = { x: e.clientX, y: e.clientY };
+        });
+
+        /**
+         * Position a modal near the last click location.
+         * Ensures the modal stays within viewport bounds.
+         * @param {HTMLElement} modal - The modal element to position
+         * @param {Object} opts - Options: { centered: boolean, offsetX: number, offsetY: number }
+         */
+        function positionModalAtClick(modal, opts = {}) {
+            const { centered = false, offsetX = 0, offsetY = 20 } = opts;
+
+            if (centered) {
+                // Reset to centered positioning
+                modal.style.position = '';
+                modal.style.left = '';
+                modal.style.top = '';
+                modal.style.transform = '';
+                return;
+            }
+
+            const modalInner = modal.querySelector('.modal');
+            if (!modalInner) return;
+
+            // Get modal dimensions (render briefly to measure)
+            modalInner.style.visibility = 'hidden';
+            modalInner.style.position = 'fixed';
+            modal.style.display = 'flex';
+            const rect = modalInner.getBoundingClientRect();
+
+            // Calculate position relative to click
+            let left = lastClickPos.x + offsetX;
+            let top = lastClickPos.y + offsetY;
+
+            // Keep within viewport bounds
+            const padding = 20;
+            const maxLeft = window.innerWidth - rect.width - padding;
+            const maxTop = window.innerHeight - rect.height - padding;
+
+            left = Math.max(padding, Math.min(left, maxLeft));
+            top = Math.max(padding, Math.min(top, maxTop));
+
+            // Apply position
+            modalInner.style.position = 'fixed';
+            modalInner.style.left = left + 'px';
+            modalInner.style.top = top + 'px';
+            modalInner.style.visibility = '';
+        }
 
         // State
         let selectedGenres = [];  // Array of selected genres for mixing
@@ -16476,6 +16532,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const titleEl = document.getElementById('entity-inspector-title');
             const contentEl = document.getElementById('entity-inspector-content');
 
+            // Position at click location
+            positionModalAtClick(modal);
             modal.style.display = 'flex';
             titleEl.textContent = 'Loading...';
             contentEl.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Fetching entity data...</p>';
@@ -18187,7 +18245,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             mantleCurrentWorldId = worldId;
             mantleCurrentWorldName = worldName;
             document.getElementById('mantle-world-name').textContent = worldName;
-            document.getElementById('wm-mantle-modal').classList.add('active');
+            const modal = document.getElementById('wm-mantle-modal');
+            // Position modal at click location
+            positionModalAtClick(modal);
+            modal.classList.add('active');
             await loadMantleMappings();
         }
 
@@ -18202,11 +18263,23 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             try {
                 // Fetch character options directly instead of pending mappings
                 const response = await fetch(API_BASE + `/game/admin/lore-bases/${mantleCurrentWorldId}/character-options`);
-                if (!response.ok) throw new Error('Failed to load character options');
+                if (!response.ok) {
+                    // Try to get error details, but handle non-JSON responses gracefully
+                    let errorMsg = 'Failed to load character options';
+                    try {
+                        const errData = await response.json();
+                        errorMsg = errData.detail || errorMsg;
+                    } catch {
+                        errorMsg = `Server error (${response.status})`;
+                    }
+                    throw new Error(errorMsg);
+                }
                 const data = await response.json();
                 renderCharacterOptions(data);
             } catch (err) {
                 showStatus('mantle-status', `Error loading options: ${err.message}`, 'error');
+                // Show empty state
+                renderCharacterOptions({ character_options: { origins: [], archetypes: [] } });
             }
         }
 

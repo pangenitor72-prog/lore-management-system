@@ -3,8 +3,347 @@
   "name": "Thornwood Chronicles",
   "description": "A mystical forest where fey courts hold sway. Ancient pacts, forbidden love, and the boundaries between worlds grow thin.",
   "genre": "fantasy",
-  "genre_hints": ["fantasy", "romance", "mystery"],
-  "tone_hints": ["intimate", "whimsical", "dark"],
+  "genre_hints": [
+    "fantasy",
+    "romance",
+    "mystery"
+  ],
+  "tone_hints": [
+    "intimate",
+    "whimsical",
+    "dark"
+  ],
   "seed_prompt": "A dark fairy tale setting where the fey courts play dangerous games with mortal hearts and ancient bargains come due.",
-  "lore_content": "Thornwood has stood since before the first humans walked these lands. The trees remember, and they whisper to those who know how to listen.\n\nQueen Mab of the Winter Court rules from her palace of black ice deep within Thornwood's heart. Beautiful and terrible, she collects mortal artists, poets, and dreamers, keeping them in her court where time moves differently. Some have been there for centuries, believing only days have passed. She wages eternal cold war against her sister.\n\nQueen Titania of the Summer Court holds her revels in the Sunlit Glade, where flowers bloom year-round and wine flows freely. Her generosity is legendary, but every gift from the fey carries hidden cost. She appears kind, but her rage when crossed makes Mab seem merciful.\n\nThe Thornwood Rangers patrol the borders between the mortal realm and Faerie. Led by Warden Ashwood, they are half-fey themselves, born of unions between the courts and human lovers. They belong fully to neither world, and their loyalty is constantly tested.\n\nOld Bramble runs the Crossroads Inn, the only safe haven where mortals and fey can meet on neutral ground. Once a powerful sorcerer, he traded his magic to the courts in exchange for his daughter's freedom. Now he serves drinks and pretends not to hear the deals struck in his shadowed booths.\n\nMorgan the Wanderer was stolen from her crib by fairies and raised in the Summer Court. Now returned to the mortal world as an adult, she finds she no longer fits in either realm. Her fey-touched eyes see through glamours, making her invaluable—and hunted.\n\nThe Erlking rides through Thornwood on moonless nights, leading the Wild Hunt. Those who hear his horn must run or be swept up in his eternal chase. Some say he hunts oath-breakers; others say he simply hunts whatever amuses him.\n\nBeneath the eldest oak lies the Well of Echoes, where one can speak to the dead—for a price. The guardian of the well, a faceless entity known only as the Keeper, accepts payment in memories, years of life, or the names of those you love."
+  "lore_content": "Thornwood has stood since before the first humans walked these lands. The trees remember, and they whisper to those who know how to listen.\n\nQueen Mab of the Winter Court rules from her palace of black ice deep within Thornwood's heart. Beautiful and terrible, she collects mortal artists, poets, and dreamers, keeping them in her court where time moves differently. Some have been there for centuries, believing only days have passed. She wages eternal cold war against her sister.\n\nQueen Titania of the Summer Court holds her revels in the Sunlit Glade, where flowers bloom year-round and wine flows freely. Her generosity is legendary, but every gift from the fey carries hidden cost. She appears kind, but her rage when crossed makes Mab seem merciful.\n\nThe Thornwood Rangers patrol the borders between the mortal realm and Faerie. Led by Warden Ashwood, they are half-fey themselves, born of unions between the courts and human lovers. They belong fully to neither world, and their loyalty is constantly tested.\n\nOld Bramble runs the Crossroads Inn, the only safe haven where mortals and fey can meet on neutral ground. Once a powerful sorcerer, he traded his magic to the courts in exchange for his daughter's freedom. Now he serves drinks and pretends not to hear the deals struck in his shadowed booths.\n\nMorgan the Wanderer was stolen from her crib by fairies and raised in the Summer Court. Now returned to the mortal world as an adult, she finds she no longer fits in either realm. Her fey-touched eyes see through glamours, making her invaluable—and hunted.\n\nThe Erlking rides through Thornwood on moonless nights, leading the Wild Hunt. Those who hear his horn must run or be swept up in his eternal chase. Some say he hunts oath-breakers; others say he simply hunts whatever amuses him.\n\nBeneath the eldest oak lies the Well of Echoes, where one can speak to the dead—for a price. The guardian of the well, a faceless entity known only as the Keeper, accepts payment in memories, years of life, or the names of those you love.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "thornwood_human",
+        "name": "Woodsman",
+        "description": "Humans born and raised in the edges of Thornwood, they possess a natural resilience and understanding of the forest.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival"
+        ],
+        "traits": [
+          "Keen Senses: Advantage on Wisdom (Perception) checks related to natural environments.",
+          "Woodsman's Walk: Difficult terrain composed of nonmagical plants does not cost you extra movement."
+        ],
+        "languages": [
+          "Common",
+          "Sylvan"
+        ]
+      },
+      {
+        "id": "fae_touched",
+        "name": "Fae-Touched",
+        "description": "Born of a mortal and a fey creature, these individuals have a strong connection to the magic of Thornwood.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Persuasion"
+        ],
+        "traits": [
+          "Fey Ancestry: Advantage on saving throws against being charmed, and magic can’t put you to sleep.",
+          "Fae Glamour: Once per long rest, you can cast the Disguise Self spell without expending a spell slot. Charisma is your spellcasting ability for this spell.",
+          "Extra Language"
+        ],
+        "languages": [
+          "Common",
+          "Sylvan",
+          "Choose one extra language"
+        ]
+      },
+      {
+        "id": "gnome_lostling",
+        "name": "Lostling",
+        "description": "Gnomes who have spent too much time lost in the Feywild, becoming whimsical and attuned to illusion magic.",
+        "base_type": "gnome",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Arcana"
+        ],
+        "traits": [
+          "Gnome Cunning: Advantage on all Intelligence, Wisdom, and Charisma saving throws against magic.",
+          "Illusion Affinity: You know the Minor Illusion cantrip. Intelligence is your spellcasting ability for it."
+        ],
+        "languages": [
+          "Common",
+          "Gnomish",
+          "Sylvan"
+        ]
+      },
+      {
+        "id": "hagborn",
+        "name": "Hagborn",
+        "description": "Offspring of hags and mortals, marked by a strange beauty or unsettling features.",
+        "base_type": "tiefling",
+        "ability_bonuses": {
+          "charisma": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Intimidation"
+        ],
+        "traits": [
+          "Darkvision: You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can’t discern color in darkness, only shades of gray.",
+          "Hellish Resistance: You have resistance to fire damage.",
+          "Hag's Curse: You know the Thaumaturgy cantrip. Charisma is your spellcasting ability for it."
+        ],
+        "languages": [
+          "Common",
+          "Infernal",
+          "Sylvan"
+        ]
+      },
+      {
+        "id": "oakheart",
+        "name": "Oakheart",
+        "description": "Dwarves who guard the ancient groves, attuned to the earth and resistant to the allure of the Feywild.",
+        "base_type": "dwarf",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Nature",
+          "Survival"
+        ],
+        "traits": [
+          "Dwarven Resilience: You have advantage on saving throws against poison, and you have resistance against poison damage.",
+          "Stonecunning: Whenever you make an Intelligence (History) check related to the origin of stonework, you are considered proficient in the History skill and add double your proficiency bonus to the check, instead of your normal proficiency bonus."
+        ],
+        "languages": [
+          "Common",
+          "Dwarvish",
+          "Sylvan"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "thornwood_ranger",
+        "name": "Thornwood Ranger",
+        "description": "Guardians of the borders between the mortal realm and Faerie, tasked with maintaining balance.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Animal Handling",
+          "Nature",
+          "Perception",
+          "Survival",
+          "Stealth",
+          "Insight"
+        ],
+        "num_skill_choices": 3,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Scale mail",
+          "Longbow and 20 arrows",
+          "Shortsword",
+          "Dagger",
+          "Explorer's pack"
+        ],
+        "features": [
+          {
+            "name": "Favored Enemy",
+            "description": "Choose one type of favored enemy: Aberrations, Beasts, Celestials, Constructs, Dragons, Elementals, Fey, Fiends, Giants, Monstrosities, Oozes, Plants, or Undead. You have advantage on Wisdom (Survival) checks to track your favored enemies, as well as on Intelligence checks to recall information about them."
+          },
+          {
+            "name": "Natural Explorer",
+            "description": "You are particularly familiar with one type of natural environment: forest. When you make an Intelligence or Wisdom check related to your favored terrain, your proficiency bonus is doubled if you are using a skill that you’re proficient in."
+          }
+        ]
+      },
+      {
+        "id": "bramble_sage",
+        "name": "Bramble Sage",
+        "description": "Wise spellcasters who draw their power from the ancient trees and natural cycles of Thornwood.",
+        "base_type": "druid",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Nature",
+          "Animal Handling",
+          "Medicine",
+          "Insight",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields (druids will not wear armor or use shields made of metal)"
+        ],
+        "weapon_proficiencies": [
+          "Clubs, daggers, darts, javelins, maces, quarterstaffs, scimitars, sickles, slings, spears"
+        ],
+        "starting_equipment": [
+          "A wooden shield",
+          "A scimitar",
+          "Leather armor",
+          "Explorer's pack",
+          "Druidic focus (a sprig of mistletoe or holly)"
+        ],
+        "features": [
+          {
+            "name": "Druidic",
+            "description": "You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages. You and others who know this language automatically recognize such messages. Others perceive the messages as natural phenomena, such as an animal track or a cluster of leaves."
+          },
+          {
+            "name": "Spellcasting",
+            "description": "You can cast druid spells."
+          }
+        ]
+      },
+      {
+        "id": "court_bard",
+        "name": "Court Bard",
+        "description": "Entertainers and diplomats of the Fey Courts, weaving magic into their performances.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Arcana",
+          "History",
+          "Insight",
+          "Perception",
+          "Performance",
+          "Persuasion"
+        ],
+        "num_skill_choices": 3,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows, longswords, rapiers, shortswords"
+        ],
+        "starting_equipment": [
+          "A rapier",
+          "A diplomat's pack",
+          "A lute",
+          "Leather Armor",
+          "Dagger"
+        ],
+        "features": [
+          {
+            "name": "Bardic Inspiration",
+            "description": "You can inspire others through stirring words or music. To do so, you use a bonus action on your turn to choose one creature other than yourself within 60 feet of you who can hear you. That creature gains one Bardic Inspiration die, a d6."
+          },
+          {
+            "name": "Spellcasting",
+            "description": "You can cast bard spells."
+          }
+        ]
+      },
+      {
+        "id": "wayfarer",
+        "name": "Wayfarer",
+        "description": "Wanderers who explore Thornwood's paths, knowing the hidden trails and dangers within.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Athletics",
+          "Deception",
+          "Insight",
+          "Intimidation",
+          "Investigation",
+          "Perception",
+          "Performance",
+          "Persuasion",
+          "Stealth"
+        ],
+        "num_skill_choices": 4,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows, longswords, rapiers, shortswords"
+        ],
+        "starting_equipment": [
+          "A rapier",
+          "Shortbow and 20 arrows",
+          "Thieves' tools",
+          "A dungeoneer's pack",
+          "Leather armor",
+          "Two daggers"
+        ],
+        "features": [
+          {
+            "name": "Expertise",
+            "description": "At 1st level, choose two of your skill proficiencies, or one of your skill proficiencies and your proficiency with thieves' tools. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies."
+          },
+          {
+            "name": "Sneak Attack",
+            "description": "Beginning at 1st level, if you have advantage on an attack roll against a creature, you can deal an extra 1d6 damage to the creature. The attack must use a finesse or a ranged weapon."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "feylore",
+        "name": "Feylore",
+        "base_skill": "History",
+        "description": "Knowledge of the Fey Courts, their histories, and customs."
+      },
+      {
+        "id": "forest_lore",
+        "name": "Forest Lore",
+        "base_skill": "Nature",
+        "description": "Knowledge of plants, animals, and ecosystems specific to Thornwood."
+      },
+      {
+        "id": "shadow_tongue",
+        "name": "Shadow Tongue",
+        "base_skill": "Deception",
+        "description": "The art of subtle lies and misdirection favored by the fey."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

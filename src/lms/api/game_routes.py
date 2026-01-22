@@ -40,6 +40,9 @@ from src.lms.dnd5e.engine.checks import CheckEngine, SKILL_TO_ABILITY
 from src.lms.dnd5e.engine.combat_resolver import CombatResolver
 from src.lms.dnd5e.presentation.visibility import VisibilityFilter
 from src.lms.dnd5e.creation.modes import RulesVisibility
+from src.lms.dnd5e.genre.config import get_genre, GENRES
+from src.lms.dnd5e.models.origins import get_origins_for_genre
+from src.lms.dnd5e.models.archetypes import get_archetypes_for_genre
 
 # World Integrity Check
 from src.airpg.runtime.world_integrity import (
@@ -210,33 +213,62 @@ WORLD DESCRIPTION: {description}
 LORE EXCERPT:
 {lore_excerpt}
 
-Based on this world's lore, generate setting-appropriate character options. Each option must map to a base D&D 5e type for mechanics, but should be flavored for this specific setting.
+Based on this world's lore, generate COMPREHENSIVE character options with full details for character creation.
 
-BASE ORIGINS (for mechanics mapping):
+BASE ORIGINS (D&D races for mechanics - player sees setting-specific name):
 {", ".join(BASE_ORIGINS)}
 
-BASE ARCHETYPES (for mechanics mapping):
+BASE ARCHETYPES (D&D classes for mechanics - player sees setting-specific name):
 {", ".join(BASE_ARCHETYPES)}
 
+D&D SKILLS (for proficiency choices):
+Athletics, Acrobatics, Sleight of Hand, Stealth, Arcana, History, Investigation, Nature, Religion, Animal Handling, Insight, Medicine, Perception, Survival, Deception, Intimidation, Performance, Persuasion
+
 IMPORTANT RULES:
-1. Origins should represent BACKGROUNDS or PEOPLES that make sense in this world
-2. Archetypes should represent ROLES or PROFESSIONS that fit this setting
-3. Do NOT include fantasy races (elves, dwarves, gnomes) in non-fantasy settings
-4. For modern/scifi/cyberpunk/horror/noir/western settings:
-   - ALL origins should map to base_type "human" (these are backgrounds, not races)
-   - Example: "Street Kid" -> human, "Corporate" -> human, "Ex-Military" -> human
-5. For fantasy settings, you MAY use elf, dwarf, etc. if they fit the lore
-6. Generate 4-6 origins and 4-6 archetypes
-7. Each must map to a base type from the lists above
-8. Choose archetype base types that make mechanical sense (e.g., a "Hacker" maps to "rogue" for skills)
+1. Origins represent RACES or PEOPLES in fantasy; BACKGROUNDS in modern settings
+2. Archetypes represent CLASSES or PROFESSIONS that fit this setting
+3. Do NOT include elves/dwarves in non-fantasy settings - use human backgrounds instead
+4. For modern/scifi/cyberpunk/horror: ALL origins should map to base_type "human"
+5. Generate 4-6 origins and 4-6 archetypes with FULL mechanical details
+6. Skills should be setting-flavored names but map to D&D skills (e.g., "Streetwise" -> Insight)
+7. Equipment should fit the setting (no swords in cyberpunk unless appropriate)
+8. Abilities/Features should be unique to each archetype
 
 Output valid JSON only, no markdown:
 {{
   "origins": [
-    {{"id": "origin_id", "name": "Display Name", "description": "One sentence description", "base_type": "human"}}
+    {{
+      "id": "origin_id",
+      "name": "Display Name",
+      "description": "One sentence flavor description",
+      "base_type": "human",
+      "ability_bonuses": {{"strength": 1, "dexterity": 2}},
+      "skill_proficiencies": ["Stealth", "Perception"],
+      "traits": ["Trait name: Brief mechanical benefit"],
+      "languages": ["Common", "Setting-specific language"]
+    }}
   ],
   "archetypes": [
-    {{"id": "archetype_id", "name": "Display Name", "description": "One sentence description", "base_type": "fighter"}}
+    {{
+      "id": "archetype_id",
+      "name": "Display Name",
+      "description": "One sentence flavor description",
+      "base_type": "fighter",
+      "hit_die": "d10",
+      "primary_ability": "Strength",
+      "saving_throws": ["Strength", "Constitution"],
+      "skill_choices": ["Athletics", "Intimidation", "Perception", "Survival"],
+      "num_skill_choices": 2,
+      "armor_proficiencies": ["Light armor", "Medium armor", "Shields"],
+      "weapon_proficiencies": ["Simple weapons", "Martial weapons"],
+      "starting_equipment": ["Leather armor", "Two daggers", "Thieves tools"],
+      "features": [
+        {{"name": "Feature Name", "description": "What it does mechanically"}}
+      ]
+    }}
+  ],
+  "setting_skills": [
+    {{"id": "streetwise", "name": "Streetwise", "base_skill": "Insight", "description": "Knowledge of the urban underground"}}
   ]
 }}'''
 
@@ -260,23 +292,41 @@ Output valid JSON only, no markdown:
         # Validate the structure
         origins = result.get("origins", [])
         archetypes = result.get("archetypes", [])
+        setting_skills = result.get("setting_skills", [])
 
-        # Ensure base_types are valid
+        # Ensure base_types are valid and add defaults for missing fields
         for origin in origins:
             if origin.get("base_type") not in BASE_ORIGINS:
-                origin["base_type"] = "human"  # Default fallback
+                origin["base_type"] = "human"
+            # Ensure required fields have defaults
+            origin.setdefault("ability_bonuses", {})
+            origin.setdefault("skill_proficiencies", [])
+            origin.setdefault("traits", [])
+            origin.setdefault("languages", ["Common"])
+
         for archetype in archetypes:
             if archetype.get("base_type") not in BASE_ARCHETYPES:
-                archetype["base_type"] = "fighter"  # Default fallback
+                archetype["base_type"] = "fighter"
+            # Ensure required fields have defaults
+            archetype.setdefault("hit_die", "d8")
+            archetype.setdefault("primary_ability", "Strength")
+            archetype.setdefault("saving_throws", [])
+            archetype.setdefault("skill_choices", [])
+            archetype.setdefault("num_skill_choices", 2)
+            archetype.setdefault("armor_proficiencies", [])
+            archetype.setdefault("weapon_proficiencies", [])
+            archetype.setdefault("starting_equipment", [])
+            archetype.setdefault("features", [])
 
         logger.info(
             f"Generated character options for {world_name}: "
-            f"{len(origins)} origins, {len(archetypes)} archetypes"
+            f"{len(origins)} origins, {len(archetypes)} archetypes, {len(setting_skills)} skills"
         )
 
         return {
             "origins": origins,
             "archetypes": archetypes,
+            "setting_skills": setting_skills,
             "ai_generated": True,
             "admin_reviewed": False
         }
@@ -3793,6 +3843,44 @@ LORE_BASES_DIR = Path(__file__).parent.parent.parent.parent / "data" / "lore_bas
 SEEDS_DIR = LORE_BASES_DIR / "seeds"
 
 
+def _get_default_character_options_for_genre(mechanics_genre: str) -> Dict[str, Any]:
+    """
+    Generate default character options from genre configuration.
+
+    Uses the genre's full origin/archetype data to provide:
+    - id: lowercase snake_case identifier
+    - name: display name
+    - description: brief description
+    - base_type: D&D 5e mechanical base (for MANTLE translation, defaults to id)
+    """
+    # Get full origin/archetype data for this genre
+    origins_data = get_origins_for_genre(mechanics_genre)
+    archetypes_data = get_archetypes_for_genre(mechanics_genre)
+
+    origins = []
+    for origin in origins_data:
+        origins.append({
+            "id": origin.id,
+            "name": origin.display_name,
+            "description": origin.description or f"A {origin.display_name.lower()} background",
+            "base_type": origin.id,  # For non-MANTLE worlds, id == base_type (1:1 mapping)
+        })
+
+    archetypes = []
+    for archetype in archetypes_data:
+        archetypes.append({
+            "id": archetype.id,
+            "name": archetype.display_name,
+            "description": archetype.description or f"A skilled {archetype.display_name.lower()}",
+            "base_type": archetype.id,  # For non-MANTLE worlds, id == base_type (1:1 mapping)
+        })
+
+    return {
+        "origins": origins,
+        "archetypes": archetypes,
+    }
+
+
 def _load_lore_bases_from_files() -> Dict[str, Dict[str, Any]]:
     """
     Load all lore bases from JSON files in data/lore_bases/ and data/lore_bases/seeds/.
@@ -3843,6 +3931,12 @@ def _load_single_lore_file(json_file: Path, bases: Dict, is_seed: bool = False) 
         if not mechanics_genre:
             mechanics_genre = "fantasy"  # Ultimate fallback
 
+        # Generate default character options from genre for seed worlds
+        # These can be customized later by admins via the Character Options UI
+        character_options = data.get("character_options")
+        if not character_options and is_seed:
+            character_options = _get_default_character_options_for_genre(mechanics_genre)
+
         bases[lore_id] = {
             "id": lore_id,
             "name": data.get("name", lore_id.replace("_", " ").title()),
@@ -3857,8 +3951,11 @@ def _load_single_lore_file(json_file: Path, bases: Dict, is_seed: bool = False) 
             "lore_content": data.get("lore_content", ""),
             "ingested": False,
             "is_seed": is_seed,  # Mark as curated seed lore
+            "character_options": character_options,  # Auto-populated from genre for seeds
         }
-        logger.info(f"Loaded {'seed' if is_seed else 'lore base'} from file: {lore_id} (mechanics_genre={mechanics_genre})")
+        num_origins = len(character_options.get("origins", [])) if character_options else 0
+        num_archetypes = len(character_options.get("archetypes", [])) if character_options else 0
+        logger.info(f"Loaded {'seed' if is_seed else 'lore base'} from file: {lore_id} (mechanics_genre={mechanics_genre}, {num_origins} origins, {num_archetypes} archetypes)")
     except Exception as e:
         logger.error(f"Failed to load lore file {json_file}: {e}")
 

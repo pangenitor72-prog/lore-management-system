@@ -3,8 +3,332 @@
   "name": "City of Angles",
   "description": "Los Angeles, 1947. The war is over, but the shadows are just beginning.",
   "genre": "noir",
-  "genre_hints": ["noir", "mystery", "drama"],
-  "tone_hints": ["dark", "cynical", "atmospheric"],
+  "genre_hints": [
+    "noir",
+    "mystery",
+    "drama"
+  ],
+  "tone_hints": [
+    "dark",
+    "cynical",
+    "atmospheric"
+  ],
   "seed_prompt": "A hard-boiled noir setting of private eyes, femme fatales, and corruption that reaches the highest offices.",
-  "lore_content": "Los Angeles gleams under the California sun, but the city's heart is rotten. The studios control everything, the mob controls the studios, and nobody controls the dark impulses of the powerful.\n\nSam Marlowe runs a one-man detective agency out of a third-floor walkup on Wilshire. Ex-cop, ex-drunk, currently trying to stay both. He takes the cases the police won't touch - usually because touching them gets you killed.\n\nLilith Crane is the most dangerous woman in Hollywood. A former actress now married to studio head Victor Crane, she runs the Avalon Club, where the elite conduct business too dirty for boardrooms. She's hired Marlowe twice. Both times, people died.\n\nDetective Rosa Valdez is one of three women on the LAPD and the only one who works homicides. The brass wants her to fail; the boys' club wants her gone. She solves cases anyway, usually the ones her colleagues are paid to bury.\n\nJohnny Marcone owns the waterfront. The Marcone family ran booze during Prohibition and guns during the war. Now they're branching into legitimate business - which means buying politicians and breaking anyone who won't sell.\n\nVictor Crane controls Olympus Pictures and half the scandals in Hollywood. Starlets who cross him disappear. Stars who expose him have accidents. He keeps files on everyone, insurance against a world that might someday turn on him.\n\nLorelei Lake was the biggest star in Hollywood until the scandal. Now she lives in a Malibu estate, drinking herself to death. She claims she's writing her memoirs. The studio claims they'll destroy her if she publishes. Someone hired Marlowe to find out which way she'll jump.\n\nDown in Central Avenue, the jazz clubs keep playing despite the segregation, despite the raids. Singer Ella Divine knows secrets she's never told anyone. She watched a movie star commit murder ten years ago. Now that star is running for Congress, and Ella has started receiving threats."
+  "lore_content": "Los Angeles gleams under the California sun, but the city's heart is rotten. The studios control everything, the mob controls the studios, and nobody controls the dark impulses of the powerful.\n\nSam Marlowe runs a one-man detective agency out of a third-floor walkup on Wilshire. Ex-cop, ex-drunk, currently trying to stay both. He takes the cases the police won't touch - usually because touching them gets you killed.\n\nLilith Crane is the most dangerous woman in Hollywood. A former actress now married to studio head Victor Crane, she runs the Avalon Club, where the elite conduct business too dirty for boardrooms. She's hired Marlowe twice. Both times, people died.\n\nDetective Rosa Valdez is one of three women on the LAPD and the only one who works homicides. The brass wants her to fail; the boys' club wants her gone. She solves cases anyway, usually the ones her colleagues are paid to bury.\n\nJohnny Marcone owns the waterfront. The Marcone family ran booze during Prohibition and guns during the war. Now they're branching into legitimate business - which means buying politicians and breaking anyone who won't sell.\n\nVictor Crane controls Olympus Pictures and half the scandals in Hollywood. Starlets who cross him disappear. Stars who expose him have accidents. He keeps files on everyone, insurance against a world that might someday turn on him.\n\nLorelei Lake was the biggest star in Hollywood until the scandal. Now she lives in a Malibu estate, drinking herself to death. She claims she's writing her memoirs. The studio claims they'll destroy her if she publishes. Someone hired Marlowe to find out which way she'll jump.\n\nDown in Central Avenue, the jazz clubs keep playing despite the segregation, despite the raids. Singer Ella Divine knows secrets she's never told anyone. She watched a movie star commit murder ten years ago. Now that star is running for Congress, and Ella has started receiving threats.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "street_kid",
+        "name": "Street Kid",
+        "description": "You grew up on the tough streets of Los Angeles, learning to survive by your wits and fists.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Deception"
+        ],
+        "traits": [
+          "Quick Reflexes: You have advantage on Dexterity saving throws against effects you can see."
+        ],
+        "languages": [
+          "English",
+          "One additional language of your choice"
+        ]
+      },
+      {
+        "id": "war_vet",
+        "name": "War Veteran",
+        "description": "You served your country overseas and returned to Los Angeles, forever changed by the horrors you witnessed.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Survival"
+        ],
+        "traits": [
+          "Iron Will: You have advantage on saving throws against being frightened."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "blue_blood",
+        "name": "Blue Blood",
+        "description": "You were born into wealth and privilege, insulated from the grime and grit of the city.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "persuasion": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Persuasion"
+        ],
+        "traits": [
+          "Silver Tongue: You have advantage on Persuasion checks made to influence people of high social standing."
+        ],
+        "languages": [
+          "English",
+          "French or Spanish"
+        ]
+      },
+      {
+        "id": "immigrant",
+        "name": "Immigrant",
+        "description": "You came to Los Angeles seeking a better life, but found a city of broken dreams and hard choices.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Medicine"
+        ],
+        "traits": [
+          "Resilient: You have advantage on saving throws against disease and poison."
+        ],
+        "languages": [
+          "English",
+          "Native language"
+        ]
+      },
+      {
+        "id": "hollywood_hopeful",
+        "name": "Hollywood Hopeful",
+        "description": "You came to Los Angeles with stars in your eyes, ready to make it big in the movie industry.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Performance",
+          "Deception"
+        ],
+        "traits": [
+          "Star Quality: When interacting with someone who is starstruck or impressed by your apparent fame, you have advantage on Charisma checks."
+        ],
+        "languages": [
+          "English"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "private_eye",
+        "name": "Private Eye",
+        "description": "A hard-boiled investigator who navigates the dark underbelly of Los Angeles, uncovering secrets and confronting dangerous criminals.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Streetwise",
+          "Perception",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns",
+          "Knives"
+        ],
+        "starting_equipment": [
+          "A handgun with 20 bullets",
+          "A trench coat",
+          "A fedora",
+          "A magnifying glass",
+          "A bottle of whiskey"
+        ],
+        "features": [
+          {
+            "name": "Gut Feeling",
+            "description": "At 1st level, you can use a bonus action to gain advantage on your next Wisdom (Streetwise) or Wisdom (Perception) check."
+          }
+        ]
+      },
+      {
+        "id": "mob_enforcer",
+        "name": "Mob Enforcer",
+        "description": "A brutal and intimidating figure who works for organized crime, enforcing the mob's will through violence and intimidation.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Intimidation",
+          "Athletics",
+          "Streetwise",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Handguns",
+          "Shotguns"
+        ],
+        "starting_equipment": [
+          "A pistol with 20 bullets",
+          "Brass knuckles",
+          "A lead pipe"
+        ],
+        "features": [
+          {
+            "name": "Intimidating Presence",
+            "description": "You gain proficiency in the Intimidation skill. If you are already proficient, you add double your proficiency bonus to any check you make that uses Intimidation."
+          }
+        ]
+      },
+      {
+        "id": "femme_fatale",
+        "name": "Femme Fatale",
+        "description": "A seductive and manipulative woman who uses her charm and beauty to get what she wants, often leading men to their doom.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Performance",
+          "Streetwise"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns",
+          "Knives"
+        ],
+        "starting_equipment": [
+          "A stylish dress",
+          "A compact mirror with a hidden knife",
+          "A cigarette case"
+        ],
+        "features": [
+          {
+            "name": "Alluring Gaze",
+            "description": "As an action, choose one creature you can see within 30 feet of you. If the creature can see you, it must succeed on a Wisdom saving throw (DC 8 + your proficiency bonus + your Charisma modifier) or be charmed by you until the end of your next turn. While charmed in this way, the creature is considered friendly to you."
+          }
+        ]
+      },
+      {
+        "id": "beat_cop",
+        "name": "Beat Cop",
+        "description": "A police officer dedicated to upholding the law, patrolling the streets and dealing with the daily grind of crime and corruption.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Streetwise",
+          "Athletics",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Handguns",
+          "Shotguns"
+        ],
+        "starting_equipment": [
+          "A service revolver with 20 bullets",
+          "A billy club",
+          "A police badge",
+          "A set of handcuffs"
+        ],
+        "features": [
+          {
+            "name": "Uphold the Law",
+            "description": "You gain advantage on Persuasion checks made to convince someone to cooperate with law enforcement."
+          }
+        ]
+      },
+      {
+        "id": "whiskey_priest",
+        "name": "Whiskey Priest",
+        "description": "A conflicted clergyman struggling with their faith in a world of sin and despair, offering solace and guidance to those who need it most.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Insight",
+          "Religion",
+          "Persuasion",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium Armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple Weapons"
+        ],
+        "starting_equipment": [
+          "A bible",
+          "A vial of holy water",
+          "A bottle of whiskey",
+          "A set of simple clothes"
+        ],
+        "features": [
+          {
+            "name": "Comfort the Afflicted",
+            "description": "When you spend at least 1 minute speaking to a willing creature that is frightened or distressed, you can attempt to calm them. The creature makes a Wisdom saving throw (DC 10 or the DC of the effect that caused the condition, whichever is higher). On a success, the frightened condition ends."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground; information on gangs, informants, and the criminal element."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

@@ -3,8 +3,320 @@
   "name": "The Age of Heroes",
   "description": "Ancient Greece, where gods walk among mortals and heroes undertake legendary quests.",
   "genre": "mythology",
-  "genre_hints": ["mythology", "adventure", "drama"],
-  "tone_hints": ["epic", "tragic", "wondrous"],
+  "genre_hints": [
+    "mythology",
+    "adventure",
+    "drama"
+  ],
+  "tone_hints": [
+    "epic",
+    "tragic",
+    "wondrous"
+  ],
   "seed_prompt": "A mythic Greece where demigods, monsters, and divine politics shape mortal fates.",
-  "lore_content": "The gods of Olympus watch the mortal realm with keen interest. They meddle, they bless, they curse - and their children walk among humanity, marked for greatness or tragedy.\n\nAlexios is the son of Zeus, though he has never met his divine father. Raised by a shepherd, he discovered his heritage when lightning answered his rage. Now the Oracle of Delphi has given him a prophecy: he will either save Olympus or destroy it.\n\nThena of Athens is the greatest warrior in Greece, blessed by her namesake goddess. Her bronze armor has never been pierced, her spear never misses. But glory has come at a cost - she has outlived three husbands and two children.\n\nThe Seer Kassandra was blessed - or cursed - by Apollo to see the future. The twist: nobody believes her prophecies until they come true. She has foreseen a darkness rising in the east and travels to warn the hero-cities, knowing she will be dismissed as mad.\n\nLysander the Cunning serves Hermes as thief, spy, and messenger. He has stolen from kings and returned gifts from gods. His tongue is silver, his fingers quicker, but his heart belongs to a woman forbidden to him - a priestess of Hestia.\n\nIn the Underworld, Hades grows restless. Souls have been escaping, the rivers running strange. Someone is weakening the boundaries between life and death. The God of the Dead has dispatched his champion to investigate - a mortal who died and returned, owing him a debt.\n\nThe Titans stir in Tartarus. The elder gods who ruled before Olympus feel their children's power weakening and plot their return. They've found an ally in one of the Twelve - a traitor on Olympus whose name would shake the world.\n\nThe Amazons of Themyscira have sent an emissary to the Greek kings. Queen Penthesilea offers alliance against the eastern threat, but her price is steep: she demands equal standing in any council of war. Few kings are willing to grant such honor to women."
+  "lore_content": "The gods of Olympus watch the mortal realm with keen interest. They meddle, they bless, they curse - and their children walk among humanity, marked for greatness or tragedy.\n\nAlexios is the son of Zeus, though he has never met his divine father. Raised by a shepherd, he discovered his heritage when lightning answered his rage. Now the Oracle of Delphi has given him a prophecy: he will either save Olympus or destroy it.\n\nThena of Athens is the greatest warrior in Greece, blessed by her namesake goddess. Her bronze armor has never been pierced, her spear never misses. But glory has come at a cost - she has outlived three husbands and two children.\n\nThe Seer Kassandra was blessed - or cursed - by Apollo to see the future. The twist: nobody believes her prophecies until they come true. She has foreseen a darkness rising in the east and travels to warn the hero-cities, knowing she will be dismissed as mad.\n\nLysander the Cunning serves Hermes as thief, spy, and messenger. He has stolen from kings and returned gifts from gods. His tongue is silver, his fingers quicker, but his heart belongs to a woman forbidden to him - a priestess of Hestia.\n\nIn the Underworld, Hades grows restless. Souls have been escaping, the rivers running strange. Someone is weakening the boundaries between life and death. The God of the Dead has dispatched his champion to investigate - a mortal who died and returned, owing him a debt.\n\nThe Titans stir in Tartarus. The elder gods who ruled before Olympus feel their children's power weakening and plot their return. They've found an ally in one of the Twelve - a traitor on Olympus whose name would shake the world.\n\nThe Amazons of Themyscira have sent an emissary to the Greek kings. Queen Penthesilea offers alliance against the eastern threat, but her price is steep: she demands equal standing in any council of war. Few kings are willing to grant such honor to women.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "mortal_born",
+        "name": "Mortal-Born",
+        "description": "A child of mortal parents, marked by no divine intervention, they strive for greatness through their own merit.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "dexterity": 1,
+          "constitution": 1,
+          "intelligence": 1,
+          "wisdom": 1,
+          "charisma": 1
+        },
+        "skill_proficiencies": [],
+        "traits": [
+          "Resourceful: Gain proficiency in one skill of your choice."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "demigod",
+        "name": "Demigod",
+        "description": "A child of a god and a mortal, they possess innate power and a destiny intertwined with the divine.",
+        "base_type": "tiefling",
+        "ability_bonuses": {
+          "charisma": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion"
+        ],
+        "traits": [
+          "Divine Spark: You know one cantrip of your choice from the cleric spell list. Charisma is your spellcasting ability for it.",
+          "Divine Resistance: You have resistance to one damage type associated with your divine parent (chosen during character creation, such as fire for Zeus)."
+        ],
+        "languages": [
+          "Common",
+          "Celestial"
+        ]
+      },
+      {
+        "id": "oracle_touched",
+        "name": "Oracle-Touched",
+        "description": "Blessed or cursed with visions of the future, their insights are often dismissed until it is too late.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Perception"
+        ],
+        "traits": [
+          "Premonition: Once per long rest, you can gain advantage on one attack roll, ability check, or saving throw."
+        ],
+        "languages": [
+          "Common",
+          "Ancient Greek"
+        ]
+      },
+      {
+        "id": "amazonian",
+        "name": "Amazonian",
+        "description": "A warrior from the island of Themyscira, known for their unmatched combat prowess and independent spirit.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Survival"
+        ],
+        "traits": [
+          "Warrior Training: You have proficiency with spears and shields.",
+          "Amazonian Resilience: You have advantage on saving throws against being charmed."
+        ],
+        "languages": [
+          "Common",
+          "Amazonian"
+        ]
+      },
+      {
+        "id": "returned",
+        "name": "Returned",
+        "description": "Having tasted death and returned to the world of the living, they are bound by a pact or a purpose.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Intimidation"
+        ],
+        "traits": [
+          "Death's Grasp: You have resistance to necrotic damage.",
+          "Bound Fate: You gain inspiration whenever you act in accordance with the wishes of the entity that returned you (decided during character creation)."
+        ],
+        "languages": [
+          "Common",
+          "Undercommon"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "hoplite",
+        "name": "Hoplite",
+        "description": "A disciplined warrior, fighting in formation with spear and shield to defend their city-state.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "History",
+          "Intimidation",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Heavy armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Scale mail",
+          "Spear",
+          "Shield",
+          "Shortsword",
+          "20 gold"
+        ],
+        "features": [
+          {
+            "name": "Phalanx Training",
+            "description": "While wielding a shield and standing adjacent to an ally, you both gain a +1 bonus to AC."
+          }
+        ]
+      },
+      {
+        "id": "oracle",
+        "name": "Oracle",
+        "description": "Gifted with the Sight, they interpret the will of the gods and glimpse the threads of fate.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Insight",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "A mace",
+          "Leather armor",
+          "A holy symbol",
+          "Waterskin",
+          "A scroll of prophesy"
+        ],
+        "features": [
+          {
+            "name": "Divine Guidance",
+            "description": "As an action, you can expend a spell slot to ask your deity for guidance. Roll a d4 and add it to one attack roll, ability check, or saving throw you make within the next minute."
+          }
+        ]
+      },
+      {
+        "id": "thief",
+        "name": "Thief",
+        "description": "Operating in the shadows, they are masters of stealth, deception, and acquiring what others possess.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Deception",
+          "Investigation",
+          "Perception",
+          "Stealth",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "A rapier",
+          "A shortbow with 20 arrows",
+          "Leather armor",
+          "Two daggers",
+          "Thieves' tools",
+          "20 gold"
+        ],
+        "features": [
+          {
+            "name": "Cunning Action",
+            "description": "On each of your turns, you can use a bonus action to take the Dash, Disengage, or Hide action."
+          }
+        ]
+      },
+      {
+        "id": "heroic_bard",
+        "name": "Heroic Bard",
+        "description": "Inspiring heroes with their tales and songs, their words weave magic and shape destiny.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Arcana",
+          "History",
+          "Performance",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "A rapier",
+          "A lute",
+          "Leather armor",
+          "A dagger",
+          "10 gold"
+        ],
+        "features": [
+          {
+            "name": "Bardic Inspiration",
+            "description": "You can inspire others through stirring words or music. To do so, you use a bonus action on your turn to choose one creature other than yourself within 60 feet of you who can hear you. That creature gains one Bardic Inspiration die, a d6."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "herbalism",
+        "name": "Herbalism",
+        "base_skill": "Nature",
+        "description": "Knowledge of plants and their medicinal properties."
+      },
+      {
+        "id": "seafaring",
+        "name": "Seafaring",
+        "base_skill": "Athletics",
+        "description": "Skills relating to sailing and naval combat."
+      },
+      {
+        "id": "diplomacy",
+        "name": "Diplomacy",
+        "base_skill": "Persuasion",
+        "description": "Ability to negotiate and build alliances."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

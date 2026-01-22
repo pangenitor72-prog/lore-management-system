@@ -347,6 +347,76 @@ class ExperientialMemory:
         )
 
     # ============================================================
+    # WHISPER OPERATIONS
+    # ============================================================
+
+    def record_whisper(self, whisper: Whisper) -> str:
+        """Record a rumor spreading through the world."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO whispers (
+                    id, source_echo_id, original_content, current_content,
+                    mutation, mutation_history, truth_drift, origin_agent_id,
+                    current_carriers, spread_count, regions_reached, factions_aware,
+                    created_at, last_spread, is_active, concerns_player,
+                    player_reputation_impact
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                whisper.id, whisper.source_echo_id, whisper.original_content,
+                whisper.current_content, whisper.mutation.value,
+                json.dumps(whisper.mutation_history), whisper.truth_drift,
+                whisper.origin_agent_id, json.dumps(whisper.current_carriers),
+                whisper.spread_count, json.dumps(whisper.regions_reached),
+                json.dumps(whisper.factions_aware), whisper.created_at.isoformat(),
+                whisper.last_spread.isoformat(), int(whisper.is_active),
+                int(whisper.concerns_player), whisper.player_reputation_impact
+            ))
+            logger.info(f"Recorded whisper: {whisper.current_content[:50]}...")
+            return whisper.id
+
+    def get_whisper(self, whisper_id: str) -> Optional[Whisper]:
+        """Get a specific whisper by ID."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM whispers WHERE id = ?", (whisper_id,))
+            row = cursor.fetchone()
+            if row:
+                return self._row_to_whisper(row)
+        return None
+
+    def get_active_whispers(self) -> List[Whisper]:
+        """Get all currently active rumors."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM whispers WHERE is_active = 1 ORDER BY last_spread DESC"
+            )
+            return [self._row_to_whisper(row) for row in cursor.fetchall()]
+
+    def _row_to_whisper(self, row: sqlite3.Row) -> Whisper:
+        """Convert database row to Whisper model."""
+        return Whisper(
+            id=row['id'],
+            source_echo_id=row['source_echo_id'],
+            original_content=row['original_content'],
+            current_content=row['current_content'],
+            mutation=WhisperMutation(row['mutation']),
+            mutation_history=json.loads(row['mutation_history'] or '[]'),
+            truth_drift=row['truth_drift'],
+            origin_agent_id=row['origin_agent_id'],
+            current_carriers=json.loads(row['current_carriers'] or '[]'),
+            spread_count=row['spread_count'],
+            regions_reached=json.loads(row['regions_reached'] or '[]'),
+            factions_aware=json.loads(row['factions_aware'] or '[]'),
+            created_at=datetime.fromisoformat(row['created_at']),
+            last_spread=datetime.fromisoformat(row['last_spread']),
+            is_active=bool(row['is_active']),
+            concerns_player=bool(row['concerns_player']),
+            player_reputation_impact=row['player_reputation_impact']
+        )
+
+    # ============================================================
     # BELIEF OPERATIONS
     # ============================================================
 

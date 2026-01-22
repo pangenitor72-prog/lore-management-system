@@ -3,8 +3,390 @@
   "name": "Frontier Justice",
   "description": "The Arizona Territory in 1882, where law is scarce and justice comes from the barrel of a gun.",
   "genre": "western",
-  "genre_hints": ["western", "adventure", "drama"],
-  "tone_hints": ["gritty", "dusty", "dangerous"],
+  "genre_hints": [
+    "western",
+    "adventure",
+    "drama"
+  ],
+  "tone_hints": [
+    "gritty",
+    "dusty",
+    "dangerous"
+  ],
   "seed_prompt": "A classic Western setting of outlaws, lawmen, and ordinary folks trying to survive on the frontier.",
-  "lore_content": "Dusty Springs sits at the crossroads of the cattle trail and the railroad expansion. What started as a mining camp has grown into a town of five hundred souls, each with their own story of hope or desperation.\n\nMarshal Jake Thornton came west to escape his past as a Confederate officer. Now he tries to bring order to a lawless land, though his quick draw and quicker temper make enemies as often as they solve problems. He's haunted by the men he killed in the war.\n\nMiss Sarah Chen runs the Golden Dragon saloon, one of the only Chinese-owned businesses tolerated in town. Her establishment serves the best whiskey and the freshest information. She's paid dearly for her position and protects it fiercely.\n\nThe Garrett Gang has robbed every bank between here and Santa Fe. Their leader, 'Bloody' Bill Garrett, is wanted dead or alive for murder and train robbery. What the posters don't mention is that he only steals from the railroad barons who destroyed his family's farm.\n\nDoctor Elizabeth Foster is the only physician within a hundred miles. A widow who learned medicine from her husband before consumption took him, she treats gunfighters and farmers alike. Some say she has secrets from her time in Boston.\n\nReverend John Crow preaches hellfire every Sunday, but he spends his nights at the card tables. His past as a gambler and gunman catches up with him whenever a stranger rides into town.\n\nJonas Black Eagle straddles two worlds - raised by Apache but educated at a missionary school. He works as a scout for the Army while secretly helping his people avoid the reservation. His loyalties will soon be tested beyond breaking.\n\nThe Copper King, Ezekiel Morton, owns the mines and half the town. His private army of Pinkertons enforces his will. He's dying of consumption and desperate to build a legacy before the end."
+  "lore_content": "Dusty Springs sits at the crossroads of the cattle trail and the railroad expansion. What started as a mining camp has grown into a town of five hundred souls, each with their own story of hope or desperation.\n\nMarshal Jake Thornton came west to escape his past as a Confederate officer. Now he tries to bring order to a lawless land, though his quick draw and quicker temper make enemies as often as they solve problems. He's haunted by the men he killed in the war.\n\nMiss Sarah Chen runs the Golden Dragon saloon, one of the only Chinese-owned businesses tolerated in town. Her establishment serves the best whiskey and the freshest information. She's paid dearly for her position and protects it fiercely.\n\nThe Garrett Gang has robbed every bank between here and Santa Fe. Their leader, 'Bloody' Bill Garrett, is wanted dead or alive for murder and train robbery. What the posters don't mention is that he only steals from the railroad barons who destroyed his family's farm.\n\nDoctor Elizabeth Foster is the only physician within a hundred miles. A widow who learned medicine from her husband before consumption took him, she treats gunfighters and farmers alike. Some say she has secrets from her time in Boston.\n\nReverend John Crow preaches hellfire every Sunday, but he spends his nights at the card tables. His past as a gambler and gunman catches up with him whenever a stranger rides into town.\n\nJonas Black Eagle straddles two worlds - raised by Apache but educated at a missionary school. He works as a scout for the Army while secretly helping his people avoid the reservation. His loyalties will soon be tested beyond breaking.\n\nThe Copper King, Ezekiel Morton, owns the mines and half the town. His private army of Pinkertons enforces his will. He's dying of consumption and desperate to build a legacy before the end.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "drifter",
+        "name": "Drifter",
+        "description": "Wanderers with no ties, seeking fortune or fleeing the past.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Perception"
+        ],
+        "traits": [
+          "Quick Reflexes: Gain +2 to initiative.",
+          "Traveler's Resilience: Advantage on saving throws against exhaustion."
+        ],
+        "languages": [
+          "Common",
+          "One additional language of your choice"
+        ]
+      },
+      {
+        "id": "homesteader",
+        "name": "Homesteader",
+        "description": "Resilient folk who carve a living from the unforgiving land.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 2
+        },
+        "skill_proficiencies": [
+          "Animal Handling",
+          "Nature"
+        ],
+        "traits": [
+          "Hardy: Gain +5 hit points.",
+          "Landwise: Advantage on checks to navigate or find food and water in the wilderness."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "gambler",
+        "name": "Gambler",
+        "description": "Risk-takers who thrive on chance, for good or ill.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Persuasion"
+        ],
+        "traits": [
+          "Lucky Streak: Once per day, reroll a failed attack roll, ability check, or saving throw.",
+          "Sharp Eye: Advantage on checks to detect cheating or deception."
+        ],
+        "languages": [
+          "Common",
+          "One additional language of your choice"
+        ]
+      },
+      {
+        "id": "native_american",
+        "name": "Native American",
+        "description": "People native to the land, fighting for their culture and survival.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Athletics"
+        ],
+        "traits": [
+          "Spirit Walker: Advantage on saving throws against being charmed or frightened.",
+          "Tireless: You can travel an additional hour each day before needing to rest."
+        ],
+        "languages": [
+          "Apache",
+          "Common"
+        ]
+      },
+      {
+        "id": "foreigner",
+        "name": "Foreigner",
+        "description": "Immigrants seeking a new life, often facing prejudice and hardship.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "History",
+          "Persuasion"
+        ],
+        "traits": [
+          "Adaptable: You gain proficiency in one language and one tool of your choice.",
+          "Cultural Understanding: Advantage on checks to interact with people from different cultures."
+        ],
+        "languages": [
+          "Common",
+          "One additional language of your choice"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "gunslinger",
+        "name": "Gunslinger",
+        "description": "Masters of the revolver, quick on the draw and deadly accurate.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Acrobatics",
+          "Perception",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two revolvers",
+          "Ammunition pouch (50 bullets)",
+          "A dagger"
+        ],
+        "features": [
+          {
+            "name": "Quick Draw",
+            "description": "As a bonus action, you can draw or stow two one-handed weapons."
+          },
+          {
+            "name": "Deadeye",
+            "description": "Once per turn, you can add your Wisdom modifier to an attack roll with a ranged weapon."
+          },
+          {
+            "name": "Trick Shot",
+            "description": "At 3rd level, choose two Trick Shot options from the list below: \n Disarm: Make a ranged attack. On a hit, the target drops one item they are holding.\n Cripple: Make a ranged attack. On a hit, the target's speed is halved until the end of their next turn.\n Headshot: Make a ranged attack. On a hit, the damage dice are maximized. \n You can use Trick Shot a number of times equal to your Wisdom modifier (minimum of 1). You regain all expended uses when you finish a long rest."
+          }
+        ]
+      },
+      {
+        "id": "lawman",
+        "name": "Lawman",
+        "description": "Defenders of order, upholding justice in a lawless land.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Insight",
+          "Intimidation",
+          "Persuasion",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Revolver",
+          "Shield",
+          "Handcuffs",
+          "A dagger"
+        ],
+        "features": [
+          {
+            "name": "Code of Justice",
+            "description": "You have sworn to uphold the law and protect the innocent. Follow these tenets: Uphold the law. Protect the weak. Punish the guilty."
+          },
+          {
+            "name": "Oath of the Frontier",
+            "description": "You fight to bring justice to the frontier. When you reach 3rd level, you gain the following Channel Divinity options: \n Turn the Wicked. As an action, you present your badge and speak a vow. Each hostile creature within 30 feet of you that can hear you must make a Wisdom saving throw. If the creature fails its saving throw, it is turned for 1 minute or until it takes damage.\n Divine Smite. When you hit a creature with a weapon attack, you can expend one paladin spell slot to deal radiant damage to the target, in addition to the weapon's damage."
+          }
+        ]
+      },
+      {
+        "id": "snake_oil_salesman",
+        "name": "Snake Oil Salesman",
+        "description": "Charming con artists, selling false hopes and empty promises.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Deception",
+          "Persuasion",
+          "Performance",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand Crossbows",
+          "Revolvers"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Revolver",
+          "A dagger",
+          "A set of dice",
+          "A wagon with a trunk full of questionable remedies"
+        ],
+        "features": [
+          {
+            "name": "Silver Tongue",
+            "description": "You have advantage on Persuasion and Deception checks."
+          },
+          {
+            "name": "False Cures",
+            "description": "You can use your Charisma modifier (minimum of 1) to restore hit points to a wounded creature using 'medicine'. These potions have no real value and only provide a placebo effect that lasts for an hour. A creature can only benefit from this ability once per day."
+          }
+        ]
+      },
+      {
+        "id": "frontier_doctor",
+        "name": "Frontier Doctor",
+        "description": "Healers in a harsh land, mending bodies and soothing souls.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Insight",
+          "Nature",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Revolver",
+          "Medical kit",
+          "A holy symbol of your chosen faith",
+          "A dagger"
+        ],
+        "features": [
+          {
+            "name": "Divine Domain: Life",
+            "description": "Choose a deity that represents life and healing. You gain access to Life Domain spells."
+          },
+          {
+            "name": "Healer's Touch",
+            "description": "As an action, you can touch a creature and restore a number of hit points equal to your cleric level + your Wisdom modifier (minimum of 1). You can use this feature a number of times equal to your Wisdom modifier (minimum of 1). You regain all expended uses when you finish a long rest."
+          }
+        ]
+      },
+      {
+        "id": "bounty_hunter",
+        "name": "Bounty Hunter",
+        "description": "Ruthless trackers who bring in the wanted, dead or alive.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Investigation",
+          "Survival",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light Armor",
+          "Medium Armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple Weapons",
+          "Martial Weapons"
+        ],
+        "starting_equipment": [
+          "Leather Armor",
+          "Two Revolvers",
+          "Ammunition Pouch (50 bullets)",
+          "Hunting Trap",
+          "A dagger"
+        ],
+        "features": [
+          {
+            "name": "Favored Enemy",
+            "description": "Choose one type of humanoid, beast, or monster to be your favored enemy. You have advantage on Wisdom (Survival) checks to track them, and you gain a +2 bonus to damage rolls against them."
+          },
+          {
+            "name": "Natural Explorer",
+            "description": "Choose one type of terrain, such as plains, mountains, or desert. You have advantage on Wisdom (Survival) and Intelligence (Nature) checks made in that terrain, and difficult terrain does not slow you down in it."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground, rumors, and hidden networks."
+      },
+      {
+        "id": "gunsmithing",
+        "name": "Gunsmithing",
+        "base_skill": "Investigation",
+        "description": "Knowledge of firearms, maintenance, and modifications."
+      },
+      {
+        "id": "prospecting",
+        "name": "Nature Lore",
+        "base_skill": "Nature",
+        "description": "Finding precious metals, minerals and other useful materials in nature."
+      },
+      {
+        "id": "horse_handling",
+        "name": "Horse Handling",
+        "base_skill": "Animal Handling",
+        "description": "Caring for, riding, and training horses or other mounts."
+      },
+      {
+        "id": "bartering",
+        "name": "Bartering",
+        "base_skill": "Persuasion",
+        "description": "Negotiating fair prices and trades with merchants and other individuals."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

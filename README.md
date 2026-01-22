@@ -120,6 +120,7 @@ data/
 - **Database**: Neo4j (graph + vector search)
 - **AI**: Google Gemini API
 - **Frontend**: React (dist/index.html)
+- **Deployment**: DigitalOcean (Ubuntu 22.04) + NGINX + Docker
 - **Theme**: "Haunting Machine" (phosphor green terminal aesthetic)
 
 ## Development

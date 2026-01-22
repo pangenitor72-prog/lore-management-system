@@ -3,8 +3,281 @@
   "name": "City of Night",
   "description": "Vampires, werewolves, and darker things rule the shadows of a gothic metropolis. The great secret keeps mortals blind to the monsters among them.",
   "genre": "gothic",
-  "genre_hints": ["gothic", "horror", "drama"],
-  "tone_hints": ["dark", "political", "tragic"],
+  "genre_hints": [
+    "gothic",
+    "horror",
+    "drama"
+  ],
+  "tone_hints": [
+    "dark",
+    "political",
+    "tragic"
+  ],
   "seed_prompt": "A dark urban setting where supernatural creatures rule from the shadows. Vampires play politics, werewolves fight spiritual corruption, and mages reshape reality - all while hiding from mortal eyes.",
-  "lore_content": "The City of Night sprawls along the eastern seaboard, a metropolis where the undead have ruled for three centuries. The Great Secret - the understanding that vampires must remain hidden - protects both the immortals and the mortals who would panic if they knew the truth.\n\nPrince Victoria Ashworth, an elder of the aristocratic bloodline, has ruled the city since 1892. Cold and calculating, she maintains order through a web of favors, debts, and carefully applied violence. Her word is law among the immortals, but her grip weakens as younger vampires question the old ways.\n\nThe Council of Elders advises the Prince, each member representing a bloodline. Marcus Thorne speaks for the passionate rebels, Dr. Elena Vance for the mad seers blessed with terrible visions, and the representative known only as 'Whisper' trades in secrets from the sewers below.\n\nBeyond the glass towers, the wolf-born wage their eternal war against corruption and decay. The Pack of the Crescent Moon holds territory in the old industrial district, where spiritual wounds from decades of pollution tear at the fabric of reality.\n\nAlpha Nathaniel Stormbringer leads the pack with fierce devotion to the natural world. Half his warriors died fighting a corrupted corporation that was dumping toxic waste into a sacred river. He dreams of cleansing the entire city, even if it means war with the vampires.\n\nThe blood sorcerers operate from a converted church, practicing forbidden magic that other immortals find distasteful but necessary. Regent Isabella Chen guards their secrets zealously, knowing that the other bloodlines would destroy them if they knew the true extent of their power.\n\nIn the university district, the awakened mages hide in plain sight. Reality is their canvas, but powerful forces that believe magic must be controlled hunt them relentlessly. Professor Alan Wright leads a small circle that teaches young mages to survive.\n\nThe rebels gather in the Rack, the entertainment district where immortals can feed without arousing suspicion. They reject the Prince's authority and dream of a world where vampires need not hide. Their leader, known as 'Riot,' grows bolder each night.\n\nBeneath it all, the Underworld yawns. The restless dead are bound to the city by their unfinished business. The necromancer bloodline maintains ties to these spirits, using death magic to gain advantages their rivals cannot match. Death, in the City of Night, is not an escape - merely a transformation."
+  "lore_content": "The City of Night sprawls along the eastern seaboard, a metropolis where the undead have ruled for three centuries. The Great Secret - the understanding that vampires must remain hidden - protects both the immortals and the mortals who would panic if they knew the truth.\n\nPrince Victoria Ashworth, an elder of the aristocratic bloodline, has ruled the city since 1892. Cold and calculating, she maintains order through a web of favors, debts, and carefully applied violence. Her word is law among the immortals, but her grip weakens as younger vampires question the old ways.\n\nThe Council of Elders advises the Prince, each member representing a bloodline. Marcus Thorne speaks for the passionate rebels, Dr. Elena Vance for the mad seers blessed with terrible visions, and the representative known only as 'Whisper' trades in secrets from the sewers below.\n\nBeyond the glass towers, the wolf-born wage their eternal war against corruption and decay. The Pack of the Crescent Moon holds territory in the old industrial district, where spiritual wounds from decades of pollution tear at the fabric of reality.\n\nAlpha Nathaniel Stormbringer leads the pack with fierce devotion to the natural world. Half his warriors died fighting a corrupted corporation that was dumping toxic waste into a sacred river. He dreams of cleansing the entire city, even if it means war with the vampires.\n\nThe blood sorcerers operate from a converted church, practicing forbidden magic that other immortals find distasteful but necessary. Regent Isabella Chen guards their secrets zealously, knowing that the other bloodlines would destroy them if they knew the true extent of their power.\n\nIn the university district, the awakened mages hide in plain sight. Reality is their canvas, but powerful forces that believe magic must be controlled hunt them relentlessly. Professor Alan Wright leads a small circle that teaches young mages to survive.\n\nThe rebels gather in the Rack, the entertainment district where immortals can feed without arousing suspicion. They reject the Prince's authority and dream of a world where vampires need not hide. Their leader, known as 'Riot,' grows bolder each night.\n\nBeneath it all, the Underworld yawns. The restless dead are bound to the city by their unfinished business. The necromancer bloodline maintains ties to these spirits, using death magic to gain advantages their rivals cannot match. Death, in the City of Night, is not an escape - merely a transformation.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "mortals",
+        "name": "Mortal Vessel",
+        "description": "Unaware of the supernatural world, mortals are pawns in a game they don't understand.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "dexterity": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Investigation"
+        ],
+        "traits": [
+          "Unassuming: Advantage on deception checks against supernatural creatures.",
+          "Resilient: Advantage on saving throws against being frightened."
+        ],
+        "languages": [
+          "Common",
+          "Choose one additional language"
+        ]
+      },
+      {
+        "id": "blood_born",
+        "name": "Blood-Born Vampire",
+        "description": "A scion of an ancient bloodline, you command unnatural strength and a thirst that can never be quenched.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Intimidation",
+          "Persuasion"
+        ],
+        "traits": [
+          "Darkvision: You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray.",
+          "Vampiric Weakness: You have disadvantage on attack rolls and saving throws in direct sunlight. You must drink blood to survive (typically requires one pint per day)."
+        ],
+        "languages": [
+          "Common",
+          "One of: Draconic (for older bloodlines), Abyssal (for darker bloodlines)"
+        ]
+      },
+      {
+        "id": "wolf_born",
+        "name": "Wolf-Born",
+        "description": "Bound to the moon and the wild, you can tap into primal fury to protect the balance of nature.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Athletics"
+        ],
+        "traits": [
+          "Lycanthropic Resilience: You have advantage on saving throws against poison and disease.",
+          "Shapechanger: You can communicate with wolves and dogs. If you are a barbarian, you can rage one additional time per long rest."
+        ],
+        "languages": [
+          "Common",
+          "Sylvan"
+        ]
+      },
+      {
+        "id": "awakened",
+        "name": "Awakened Mage",
+        "description": "A rare individual who can perceive and manipulate the threads of reality, but at great personal risk.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Investigation"
+        ],
+        "traits": [
+          "Arcane Sensitivity: Advantage on checks to identify magic.",
+          "Veiled Identity: Advantage on checks to conceal your magical abilities."
+        ],
+        "languages": [
+          "Common",
+          "Infernal"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "bloodhound",
+        "name": "Bloodhound",
+        "description": "A master of investigation, you unravel mysteries and hunt down the guilty, whether human or immortal.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Perception",
+          "Stealth",
+          "Streetwise"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two daggers",
+          "Thieves' tools",
+          "Magnifying glass"
+        ],
+        "features": [
+          {
+            "name": "Tracking Expertise",
+            "description": "You have advantage on Wisdom (Survival) checks to track creatures, and Wisdom (Insight) checks to detect lies."
+          }
+        ]
+      },
+      {
+        "id": "warden",
+        "name": "Warden",
+        "description": "A protector of the innocent, you stand against the darkness that threatens to consume the city.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Insight",
+          "Intimidation",
+          "Persuasion",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Heavy armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Chain mail",
+          "A holy symbol",
+          "A pistol",
+          "A shield"
+        ],
+        "features": [
+          {
+            "name": "Aura of Protection",
+            "description": "Starting at 1st level, whenever a friendly creature within 10 feet of you must make a saving throw, the creature gains a bonus to the saving throw equal to your Charisma modifier (minimum of +1)."
+          }
+        ]
+      },
+      {
+        "id": "blood_mage",
+        "name": "Blood Mage",
+        "description": "A manipulator of life force, you draw power from the very essence of living beings.",
+        "base_type": "sorcerer",
+        "hit_die": "d6",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Constitution",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Deception",
+          "Intimidation",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings",
+          "Quarterstaffs",
+          "Light crossbows"
+        ],
+        "starting_equipment": [
+          "A light crossbow and 20 bolts",
+          "A spellbook",
+          "A vial of blood"
+        ],
+        "features": [
+          {
+            "name": "Blood Pact",
+            "description": "Whenever you cast a spell that requires a material component, you can replace the component with one hit point of damage to yourself."
+          }
+        ]
+      },
+      {
+        "id": "street_fighter",
+        "name": "Street Fighter",
+        "description": "A hardened brawler, you know the mean streets and can survive nearly any situation.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Acrobatics",
+          "Intimidation",
+          "Streetwise"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Brass knuckles",
+          "A crowbar"
+        ],
+        "features": [
+          {
+            "name": "Unarmed Combatant",
+            "description": "Your unarmed strikes deal 1d4 bludgeoning damage. At 3rd level, this increases to 1d6."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground and criminal element"
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

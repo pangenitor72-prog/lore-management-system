@@ -2357,13 +2357,32 @@ async def import_lore_file(
         
         # Read file content
         if file_path.suffix == ".pdf":
-            # TODO: Add PDF parsing support
-            raise HTTPException(
-                status_code=501,
-                detail="PDF import not yet implemented"
-            )
+            try:
+                from pypdf import PdfReader
+                # Run PDF extraction in threadpool to avoid blocking
+                def _extract_pdf(path):
+                    reader = PdfReader(str(path))
+                    text = ""
+                    for page in reader.pages:
+                        text += page.extract_text() + "\n"
+                    return text
 
-        content = file_path.read_text(encoding="utf-8")
+                content = await run_in_threadpool(_extract_pdf, file_path)
+                logger.info(f"Extracted {len(content)} chars from PDF {file_meta['filename']}")
+
+            except ImportError:
+                raise HTTPException(
+                    status_code=501,
+                    detail="PDF support not available (pypdf not installed)"
+                )
+            except Exception as e:
+                logger.error(f"PDF parsing failed: {e}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to parse PDF: {str(e)}"
+                )
+        else:
+            content = file_path.read_text(encoding="utf-8")
         logger.info(f"Read file {file_meta['filename']}: {len(content)} chars")
 
         # Use LoreParsingAgent for extraction

@@ -3,8 +3,290 @@
   "name": "Whispers Beneath Ravenhollow",
   "description": "A sleepy New England town harbors cosmic horrors that have slumbered for millennia.",
   "genre": "horror",
-  "genre_hints": ["horror", "mystery", "drama"],
-  "tone_hints": ["dark", "tense", "psychological"],
+  "genre_hints": [
+    "horror",
+    "mystery",
+    "drama"
+  ],
+  "tone_hints": [
+    "dark",
+    "tense",
+    "psychological"
+  ],
   "seed_prompt": "A Lovecraftian horror setting where investigators uncover terrible truths about their seemingly ordinary town.",
-  "lore_content": "Ravenhollow, Massachusetts has existed since 1692, though you won't find it on any map. The town appears only to those who need to find it - or those it needs to find.\n\nSheriff Thomas Crane maintains order in Ravenhollow with gruff practicality. He knows something is wrong with his town but refuses to acknowledge what he's seen in the old cemetery at night. His pragmatic denial protects his sanity but leaves others vulnerable.\n\nDr. Eleanor Marsh runs the Ravenhollow Historical Society from her family's colonial-era mansion. Her ancestors founded the town, and their journals contain rituals that should never be read aloud. She's spent her life studying these texts, and her mind has begun to fray at the edges.\n\nThe Whispering Library appears between the butcher shop and the bank only on nights of the new moon. Its librarian, Mr. Ash, seems too thin and too tall, and his eyes have no whites. He offers forbidden knowledge to those desperate enough to pay his price.\n\nBeneath Founders' Hill lies the Temple of the Dreaming God. The cultists of the Pallid Congregation gather there monthly, led by Father Edmund, the town's beloved pastor. By day he preaches Christian charity; by night he prepares for the Awakening.\n\nOlivia Chen arrived in Ravenhollow three months ago, investigating her brother's disappearance. A journalist by trade, she's begun documenting the town's anomalies. The more she learns, the more she realizes she may never be allowed to leave.\n\nThe Thing in the Well has no name that human tongues can speak. It predates the town, the land, the world itself. Sometimes it takes the form of a child asking for help. Those who peer into the old stone well behind the church see their own face staring back - but the reflection doesn't match their movements."
+  "lore_content": "Ravenhollow, Massachusetts has existed since 1692, though you won't find it on any map. The town appears only to those who need to find it - or those it needs to find.\n\nSheriff Thomas Crane maintains order in Ravenhollow with gruff practicality. He knows something is wrong with his town but refuses to acknowledge what he's seen in the old cemetery at night. His pragmatic denial protects his sanity but leaves others vulnerable.\n\nDr. Eleanor Marsh runs the Ravenhollow Historical Society from her family's colonial-era mansion. Her ancestors founded the town, and their journals contain rituals that should never be read aloud. She's spent her life studying these texts, and her mind has begun to fray at the edges.\n\nThe Whispering Library appears between the butcher shop and the bank only on nights of the new moon. Its librarian, Mr. Ash, seems too thin and too tall, and his eyes have no whites. He offers forbidden knowledge to those desperate enough to pay his price.\n\nBeneath Founders' Hill lies the Temple of the Dreaming God. The cultists of the Pallid Congregation gather there monthly, led by Father Edmund, the town's beloved pastor. By day he preaches Christian charity; by night he prepares for the Awakening.\n\nOlivia Chen arrived in Ravenhollow three months ago, investigating her brother's disappearance. A journalist by trade, she's begun documenting the town's anomalies. The more she learns, the more she realizes she may never be allowed to leave.\n\nThe Thing in the Well has no name that human tongues can speak. It predates the town, the land, the world itself. Sometimes it takes the form of a child asking for help. Those who peer into the old stone well behind the church see their own face staring back - but the reflection doesn't match their movements.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "townie",
+        "name": "Ravenhollow Native",
+        "description": "Born and raised in Ravenhollow, you know its secrets, and it knows you.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "History"
+        ],
+        "traits": [
+          "Local Knowledge: Advantage on Wisdom (Survival) checks to navigate within Ravenhollow and its immediate surroundings."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "outsider",
+        "name": "Recent Arrival",
+        "description": "Drawn to Ravenhollow by fate or misfortune, you are still learning its strange ways.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Persuasion"
+        ],
+        "traits": [
+          "Unsettled Feeling: Advantage on saving throws against being frightened."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "marsh_descendant",
+        "name": "Marsh Lineage",
+        "description": "Descended from the founders of Ravenhollow, your family history is intertwined with the town's darkest secrets.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "History"
+        ],
+        "traits": [
+          "Inherited Knowledge: You know one additional language of your choice."
+        ],
+        "languages": [
+          "Common",
+          "Latin"
+        ]
+      },
+      {
+        "id": "crane_descendant",
+        "name": "Crane's Legacy",
+        "description": "A descendant of law enforcement, you are naturally skeptical, but prepared for anything.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Investigation"
+        ],
+        "traits": [
+          "Street Smart: Advantage on Wisdom (Insight) checks made to determine if someone is lying to you."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "touched",
+        "name": "Dream-Touched",
+        "description": "You have experienced visions, dreams or contact with entities beyond human comprehension.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Arcana"
+        ],
+        "traits": [
+          "Lingering Visions: Once per long rest, you can gain advantage on an ability check, attack roll, or saving throw."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "guardian",
+        "name": "Town Protector",
+        "description": "A stalwart defender of Ravenhollow, whether the town wants protecting or not.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Crowbar",
+          "Flashlight"
+        ],
+        "features": [
+          {
+            "name": "Prepared for the Worst",
+            "description": "You gain advantage on saving throws against being surprised."
+          }
+        ]
+      },
+      {
+        "id": "scholar",
+        "name": "Occult Investigator",
+        "description": "Driven by curiosity or a thirst for forbidden knowledge, you delve into Ravenhollow's hidden lore.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings",
+          "Quarterstaffs",
+          "Light Crossbows"
+        ],
+        "starting_equipment": [
+          "A book of occult symbols",
+          "Magnifying glass",
+          "Candles (5)"
+        ],
+        "features": [
+          {
+            "name": "Ritualistic Studies",
+            "description": "You have advantage on Intelligence (Arcana) checks to understand or decipher magical texts."
+          }
+        ]
+      },
+      {
+        "id": "seeker",
+        "name": "Unseen Protector",
+        "description": "A wanderer or private detective, you follow the whispers, seeking to understand the darkness.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Stealth",
+          "Investigation",
+          "Insight",
+          "Streetwise"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Lockpicks",
+          "Concealable pistol",
+          "Pocket notebook"
+        ],
+        "features": [
+          {
+            "name": "Subtle Observation",
+            "description": "You gain proficiency in Streetwise."
+          }
+        ]
+      },
+      {
+        "id": "chosen",
+        "name": "Enlightened One",
+        "description": "A member of a forbidden faith, fighting for the souls of Ravenhollow.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "History",
+          "Insight",
+          "Medicine",
+          "Persuasion",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Holy symbol",
+          "First aid kit",
+          "Bible"
+        ],
+        "features": [
+          {
+            "name": "Channel Divinity: Sacred Protection",
+            "description": "As an action, you can interpose divine protection between yourself and an enemy. For 1 minute, you gain a +2 bonus to AC."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground and ability to read people."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

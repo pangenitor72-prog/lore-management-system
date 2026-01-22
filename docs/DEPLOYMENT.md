@@ -1,5 +1,7 @@
 # Deployment Guide
 
+> **Note:** For the current production environment on DigitalOcean (Ubuntu 22.04), please refer to [DIGITAL_OCEAN_DEPLOYMENT.md](DIGITAL_OCEAN_DEPLOYMENT.md). The guide below primarily covers Fly.io deployment.
+
 ## Prerequisites
 - Fly.io CLI installed: `curl -L https://fly.io/install.sh | sh`
 - Fly.io account with app created: `fly launch` (if not done)

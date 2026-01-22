@@ -178,8 +178,8 @@ class MemoryManager:
             concerns_player=echo.player_involved,
         )
 
-        # TODO: Record whisper to experiential store
-        # self.experiential.record_whisper(whisper)
+        # Record whisper to experiential store
+        self.experiential.record_whisper(whisper)
 
         logger.debug(f"Created whisper from echo: {echo.id}")
         return whisper

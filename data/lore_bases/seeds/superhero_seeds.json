@@ -3,8 +3,326 @@
   "name": "Titan City",
   "description": "A metropolis where superheroes and villains clash, and ordinary people live in the shadow of gods.",
   "genre": "superhero",
-  "genre_hints": ["superhero", "action", "drama"],
-  "tone_hints": ["epic", "colorful", "inspiring"],
+  "genre_hints": [
+    "superhero",
+    "action",
+    "drama"
+  ],
+  "tone_hints": [
+    "epic",
+    "colorful",
+    "inspiring"
+  ],
   "seed_prompt": "A comic-book inspired city of heroes and villains, where great power meets great responsibility.",
-  "lore_content": "Titan City rises from the eastern seaboard, a gleaming monument to heroism. The Sentinel Tower stands in Valor Plaza, beacon of the Champions - the world's premier superhero team.\n\nSolara is the team's leader, a solar-powered hero whose radiance can level buildings. Sarah Chen was an astronaut before the solar flare transformed her. She struggles to remember what it felt like to be normal, to walk down a street without people staring in awe or fear.\n\nThe Specter has protected Titan City for sixty years. Nobody knows who wears the mask - the identity has passed between multiple people. The current Specter is Jamie Torres, third to bear the name, haunted by the predecessors who died in costume.\n\nDoctor Nemesis was once the Champions' greatest enemy. Now reformed, Professor Elena Vance uses her genius to support the team from their tech labs. Some heroes trust her redemption; others wait for her to revert. She's determined to prove them wrong.\n\nThe underground villain coalition known as the Syndicate is run by Mastermind, a telepathic genius who coordinates criminal enterprises across the globe. Nobody has ever seen his true face. His latest scheme involves something called 'Project: Eclipse.'\n\nNova is the newest Champion, a teenager named Marcus Webb who gained cosmic powers from a meteor strike. He's still learning to control abilities that could shatter planets. His mentor, the retired hero Quantum, worries the boy is too powerful for anyone's good.\n\nIn the Hollows, the city's impoverished district, Vigilance protects those the Champions overlook. A former soldier with no powers, just training and rage, she's become a symbol for the powerless. The police want her arrested; the people want her protected.\n\nThe Cosmic Entities that created super-powered beings have taken notice of Earth again. The Herald has appeared in the sky, warning of a coming judgment. Some say it's a test; others say it's an extinction event. The Champions have weeks to prepare."
+  "lore_content": "Titan City rises from the eastern seaboard, a gleaming monument to heroism. The Sentinel Tower stands in Valor Plaza, beacon of the Champions - the world's premier superhero team.\n\nSolara is the team's leader, a solar-powered hero whose radiance can level buildings. Sarah Chen was an astronaut before the solar flare transformed her. She struggles to remember what it felt like to be normal, to walk down a street without people staring in awe or fear.\n\nThe Specter has protected Titan City for sixty years. Nobody knows who wears the mask - the identity has passed between multiple people. The current Specter is Jamie Torres, third to bear the name, haunted by the predecessors who died in costume.\n\nDoctor Nemesis was once the Champions' greatest enemy. Now reformed, Professor Elena Vance uses her genius to support the team from their tech labs. Some heroes trust her redemption; others wait for her to revert. She's determined to prove them wrong.\n\nThe underground villain coalition known as the Syndicate is run by Mastermind, a telepathic genius who coordinates criminal enterprises across the globe. Nobody has ever seen his true face. His latest scheme involves something called 'Project: Eclipse.'\n\nNova is the newest Champion, a teenager named Marcus Webb who gained cosmic powers from a meteor strike. He's still learning to control abilities that could shatter planets. His mentor, the retired hero Quantum, worries the boy is too powerful for anyone's good.\n\nIn the Hollows, the city's impoverished district, Vigilance protects those the Champions overlook. A former soldier with no powers, just training and rage, she's become a symbol for the powerless. The police want her arrested; the people want her protected.\n\nThe Cosmic Entities that created super-powered beings have taken notice of Earth again. The Herald has appeared in the sky, warning of a coming judgment. Some say it's a test; others say it's an extinction event. The Champions have weeks to prepare.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "enhanced_human",
+        "name": "Enhanced Human",
+        "description": "Genetically modified or cybernetically augmented individuals pushing the limits of human potential.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics"
+        ],
+        "traits": [
+          "Augmented Resilience: Advantage on saving throws against poison and disease."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "mutated_human",
+        "name": "Mutated Human",
+        "description": "Humans drastically altered by cosmic radiation, experimental serums, or unforeseen genetic quirks.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Acrobatics"
+        ],
+        "traits": [
+          "Unstable Potential: Once per long rest, reroll one attack roll, ability check, or saving throw. You must use the new roll, even if it is worse.",
+          "Cosmic Sensitivity: You have advantage on saves against effects from cosmic sources."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "psionic_human",
+        "name": "Psionic Human",
+        "description": "Individuals born with or who developed latent mental abilities beyond normal comprehension.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Arcana"
+        ],
+        "traits": [
+          "Mindful Awareness: You are proficient in the Streetwise skill.",
+          "Telepathic Echo: You can communicate telepathically with any creature within 30 feet that you can see. You don't need to share a language to communicate in this way. "
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "legacy_hero",
+        "name": "Legacy Hero",
+        "description": "Descendants of famous superheroes, inheriting some of their powers or skills.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "History"
+        ],
+        "traits": [
+          "Heroic Lineage: You know one additional language of your choice.",
+          "Inherited Resilience: You have advantage on saving throws against being charmed or frightened."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "empowered_human",
+        "name": "Empowered Human",
+        "description": "Humans empowered by advanced technology or mystic artifacts, granting them extraordinary abilities.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "intelligence": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Investigation"
+        ],
+        "traits": [
+          "Resourceful Innovator: You gain proficiency with one tool of your choice.",
+          "Adapted Systems: You have advantage on saving throws against being stunned."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "vigilante",
+        "name": "Vigilante",
+        "description": "Driven by personal conviction, they protect the innocent through skill and determination, outside the law.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Streetwise",
+          "Perception",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "A signature weapon (martial)",
+          "Grappling hook"
+        ],
+        "features": [
+          {
+            "name": "Unrelenting Pursuit",
+            "description": "You can move up to your speed toward a hostile creature that you can see."
+          }
+        ]
+      },
+      {
+        "id": "energy_projector",
+        "name": "Energy Projector",
+        "description": "Capable of manipulating and unleashing energy in various forms, from blasts to shields.",
+        "base_type": "sorcerer",
+        "hit_die": "d6",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Constitution",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Intimidation",
+          "Persuasion",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Dart",
+          "Sling",
+          "Quarterstaff",
+          "Light Crossbow"
+        ],
+        "starting_equipment": [
+          "A light blaster (light crossbow stats)",
+          "A communicator",
+          "Two daggers"
+        ],
+        "features": [
+          {
+            "name": "Energy Affinity",
+            "description": "Your energy powers are difficult to resist. When you cast a spell that deals energy damage, you can ignore resistance to that damage."
+          }
+        ]
+      },
+      {
+        "id": "tech_genius",
+        "name": "Tech Genius",
+        "description": "Masters of technology, creating gadgets, robots, and advanced weaponry.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Investigation",
+          "Technology",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Dart",
+          "Sling",
+          "Quarterstaff",
+          "Light Crossbow"
+        ],
+        "starting_equipment": [
+          "A data pad with pre-loaded schematics",
+          "A multi-tool",
+          "A prototype gadget (functions as a wand)"
+        ],
+        "features": [
+          {
+            "name": "Tech Savvy",
+            "description": "You can cast certain spells as rituals, even if they don't have the ritual tag. When you do so, the casting time is increased by 1 hour."
+          }
+        ]
+      },
+      {
+        "id": "mystic_adept",
+        "name": "Mystic Adept",
+        "description": "Harnessing supernatural energies and ancient knowledge to manipulate reality.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Religion",
+          "Medicine",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "A mystic focus",
+          "A robe",
+          "A book of esoteric symbols"
+        ],
+        "features": [
+          {
+            "name": "Channel Divinity: Astral Sight",
+            "description": "As an action, you open your awareness to the astral plane, allowing you to perceive invisible or hidden creatures and objects within 30 feet for 1 minute."
+          }
+        ]
+      },
+      {
+        "id": "speedster",
+        "name": "Speedster",
+        "description": "Gifted with incredible speed, blurring the line between human and lightning.",
+        "base_type": "monk",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Athletics",
+          "Perception",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "A set of athletic clothes",
+          "A small utility kit",
+          "A pair of specialized running shoes"
+        ],
+        "features": [
+          {
+            "name": "Blur",
+            "description": "When you take the Dash action on your turn, you can move an additional number of feet equal to your Dexterity modifier."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "technology",
+        "name": "Technology",
+        "base_skill": "Investigation",
+        "description": "Knowledge of computer systems, hardware, and digital devices."
+      },
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground and its inhabitants."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

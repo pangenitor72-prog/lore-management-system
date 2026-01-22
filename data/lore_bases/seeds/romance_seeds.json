@@ -3,8 +3,325 @@
   "name": "Hearts of Avalon",
   "description": "A prestigious university town where passion and ambition intertwine among students and faculty.",
   "genre": "romance",
-  "genre_hints": ["romance", "drama", "modern"],
-  "tone_hints": ["emotional", "passionate", "hopeful"],
+  "genre_hints": [
+    "romance",
+    "drama",
+    "modern"
+  ],
+  "tone_hints": [
+    "emotional",
+    "passionate",
+    "hopeful"
+  ],
   "seed_prompt": "A contemporary romance setting where love blooms amid the pressures of academia and personal growth.",
-  "lore_content": "Avalon University has produced three Nobel laureates, two presidents, and countless power couples. The historic campus, with its ivy-covered halls and winding paths, has witnessed love stories for over two hundred years.\n\nDr. Elena Vasquez is the youngest tenured professor in the history department. Brilliant and guarded, she pours herself into her work on Renaissance art history. Her ex-fiancé's betrayal three years ago left her convinced that love and career don't mix. Then Marcus Chen walked into her graduate seminar.\n\nMarcus Chen left his family's tech empire to pursue his passion for art history. At 32, he's older than most graduate students, and his quiet intensity makes him stand out. He didn't expect to fall for his professor. He definitely didn't expect her to be fighting the same attraction.\n\nSophia Blackwood runs the campus coffee shop, 'The Grind.' A former child prodigy who burned out spectacularly, she's rebuilt her life on her own terms. When her high school sweetheart James reappears as the new music professor, old feelings resurface.\n\nJames Morrison thought he'd moved on from Sophia. Seven years, a failed marriage, and a custody battle later, he's not the same person who broke her heart. He wants a second chance, but earning her trust again seems impossible.\n\nPresident Victoria Hayes rules Avalon with an iron will. Few know that her marriage to the charming Dean Richard Hayes is a careful performance. When her college flame, now a famous novelist, returns for a visiting professorship, Victoria must choose between duty and desire.\n\nThe campus newspaper editor, Tyler Brooks, has been in love with his best friend Maya since freshman year. Maya dates a string of unsuitable partners while remaining oblivious to Tyler's feelings. Their friends are running out of ways to push them together.\n\nDr. Robert Kim, the chemistry professor known for explosive demonstrations, has never had time for romance. At 45, he's accepted his solitary life. Then he meets his new lab partner, Dr. Sarah Chen - no relation to Marcus - and discovers it's never too late for love."
+  "lore_content": "Avalon University has produced three Nobel laureates, two presidents, and countless power couples. The historic campus, with its ivy-covered halls and winding paths, has witnessed love stories for over two hundred years.\n\nDr. Elena Vasquez is the youngest tenured professor in the history department. Brilliant and guarded, she pours herself into her work on Renaissance art history. Her ex-fiancé's betrayal three years ago left her convinced that love and career don't mix. Then Marcus Chen walked into her graduate seminar.\n\nMarcus Chen left his family's tech empire to pursue his passion for art history. At 32, he's older than most graduate students, and his quiet intensity makes him stand out. He didn't expect to fall for his professor. He definitely didn't expect her to be fighting the same attraction.\n\nSophia Blackwood runs the campus coffee shop, 'The Grind.' A former child prodigy who burned out spectacularly, she's rebuilt her life on her own terms. When her high school sweetheart James reappears as the new music professor, old feelings resurface.\n\nJames Morrison thought he'd moved on from Sophia. Seven years, a failed marriage, and a custody battle later, he's not the same person who broke her heart. He wants a second chance, but earning her trust again seems impossible.\n\nPresident Victoria Hayes rules Avalon with an iron will. Few know that her marriage to the charming Dean Richard Hayes is a careful performance. When her college flame, now a famous novelist, returns for a visiting professorship, Victoria must choose between duty and desire.\n\nThe campus newspaper editor, Tyler Brooks, has been in love with his best friend Maya since freshman year. Maya dates a string of unsuitable partners while remaining oblivious to Tyler's feelings. Their friends are running out of ways to push them together.\n\nDr. Robert Kim, the chemistry professor known for explosive demonstrations, has never had time for romance. At 45, he's accepted his solitary life. Then he meets his new lab partner, Dr. Sarah Chen - no relation to Marcus - and discovers it's never too late for love.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "legacy_student",
+        "name": "Legacy Student",
+        "description": "Born into a family of Avalon alumni, you carry the weight of expectations and the advantage of connections.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "Silver Spoon: Advantage on Persuasion checks when interacting with other Avalon alumni.",
+          "Name Recognition: You automatically know the name and general reputation of any professor or administrator at Avalon University."
+        ],
+        "languages": [
+          "English",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "transfer_student",
+        "name": "Transfer Student",
+        "description": "A newcomer to Avalon, you bring a unique perspective and a hunger to prove yourself.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "wisdom": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Acrobatics"
+        ],
+        "traits": [
+          "Fresh Eyes: Advantage on your first Perception or Investigation check in a new location on campus.",
+          "Adaptable: Once per long rest, you can reroll any skill check."
+        ],
+        "languages": [
+          "English",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "townie",
+        "name": "Townie",
+        "description": "Having grown up in the shadow of Avalon, you know the town's secrets and the University's flaws.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 2
+        },
+        "skill_proficiencies": [
+          "Streetwise",
+          "Athletics"
+        ],
+        "traits": [
+          "Local Knowledge: Advantage on Survival checks in and around Avalon.",
+          "Connected: You know someone who can get you information or access to most locations in town (GM's discretion)."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "visiting_professor",
+        "name": "Visiting Professor",
+        "description": "An established academic or professional, you're here to share your expertise and perhaps find something new.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Teaching",
+          "History"
+        ],
+        "traits": [
+          "Academic Authority: Advantage on Persuasion checks when interacting with students.",
+          "Published: You can use your academic credentials to gain access to restricted information or locations (GM's discretion)."
+        ],
+        "languages": [
+          "English",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "staff",
+        "name": "Staff",
+        "description": "You are part of the dedicated staff that keeps Avalon University running.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "dexterity": 1,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Persuasion"
+        ],
+        "traits": [
+          "Behind the Scenes: You have access to areas and information normally unavailable to students and faculty.",
+          "Resourceful: Once per long rest, you can find a needed item or favor by calling in a connection (GM's discretion)."
+        ],
+        "languages": [
+          "English"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "scholar",
+        "name": "Scholar",
+        "description": "Driven by a thirst for knowledge, you excel in your field of study and seek to unravel the mysteries of the world.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings",
+          "Quarterstaffs",
+          "Light Crossbows"
+        ],
+        "starting_equipment": [
+          "A pen and notebook",
+          "A set of fine clothes",
+          "A research grant ($50)",
+          "A relevant textbook"
+        ],
+        "features": [
+          {
+            "name": "Erudite Mind",
+            "description": "You have advantage on Intelligence checks related to your chosen field of study."
+          },
+          {
+            "name": "Recall Knowledge",
+            "description": "As an action, you can attempt an Intelligence (History or Arcana) check to recall obscure information related to a current situation. On a success, the GM provides helpful insight."
+          }
+        ]
+      },
+      {
+        "id": "activist",
+        "name": "Activist",
+        "description": "Passionate about social change, you fight for what you believe in, even if it means bending the rules.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Persuasion",
+          "Deception",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "A set of dark clothes",
+          "A lockpick set",
+          "Flyers for your cause",
+          "A megaphone"
+        ],
+        "features": [
+          {
+            "name": "Silver Tongue",
+            "description": "You have advantage on Charisma checks when attempting to sway others to your cause."
+          },
+          {
+            "name": "Organized Resistance",
+            "description": "Once per long rest, you can call upon a network of contacts to provide assistance (e.g., distraction, information, a safe haven)."
+          }
+        ]
+      },
+      {
+        "id": "artist",
+        "name": "Artist",
+        "description": "Expressive and imaginative, you see the world through a unique lens and seek to capture its beauty through your chosen medium.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Performance",
+          "Persuasion",
+          "Deception",
+          "Acrobatics"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Your chosen art supplies",
+          "A portfolio of your work",
+          "A set of stylish clothes",
+          "An instrument"
+        ],
+        "features": [
+          {
+            "name": "Inspiration",
+            "description": "As a bonus action, you can inspire one creature within 60 feet of you who can hear you. For the next 10 minutes, that creature has advantage on one ability check, attack roll, or saving throw it makes. Once you use this feature, you must finish a short or long rest before you can use it again."
+          },
+          {
+            "name": "Captivating Performance",
+            "description": "You can attempt to distract a target with your art. Make a Charisma (Performance) check contested by the target's Wisdom (Insight) check. On a success, the target has disadvantage on attack rolls against you for 1 round."
+          }
+        ]
+      },
+      {
+        "id": "leader",
+        "name": "Leader",
+        "description": "A natural born leader, you aspire to guide and inspire others.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Insight",
+          "Intimidation",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "A suit of business clothes",
+          "A clipboard",
+          "A gavel",
+          "A small office space"
+        ],
+        "features": [
+          {
+            "name": "Inspiring Presence",
+            "description": "As an action, choose one ally within 30 feet who can see or hear you. That ally gains temporary hit points equal to your Charisma modifier (minimum of 1). They also have advantage on their next saving throw. You can use this feature a number of times equal to your Charisma modifier (minimum of 1). You regain all expended uses when you finish a long rest."
+          },
+          {
+            "name": "Commanding Voice",
+            "description": "You have advantage on Charisma (Intimidation) checks against those who are clearly in a subordinate position to you."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground."
+      },
+      {
+        "id": "teaching",
+        "name": "Teaching",
+        "base_skill": "Persuasion",
+        "description": "Effectively communicating information and concepts."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

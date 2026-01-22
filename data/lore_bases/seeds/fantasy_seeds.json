@@ -3,8 +3,315 @@
   "name": "The Shattered Kingdoms",
   "description": "A realm fractured by an ancient war. Noble houses vie for power while darker forces stir in the shadows.",
   "genre": "fantasy",
-  "genre_hints": ["fantasy", "adventure", "drama"],
-  "tone_hints": ["epic", "dangerous", "heroic"],
+  "genre_hints": [
+    "fantasy",
+    "adventure",
+    "drama"
+  ],
+  "tone_hints": [
+    "epic",
+    "dangerous",
+    "heroic"
+  ],
   "seed_prompt": "A classic fantasy realm of magic and monsters, where heroes rise to face ancient evils.",
-  "lore_content": "The Shattered Kingdoms were once a unified empire under the Dragon Throne. Three centuries ago, the War of Sundering broke the land into seven rival kingdoms when the last Emperor fell to the Shadowbane Conspiracy.\n\nKing Aldric Ironhold rules Valdheim, the northern kingdom of dwarves and men. His iron mines fuel the realm's forges, and his stubborn honor makes him both respected and inflexible. He lost his wife to a dragon raid twenty winters past and has sworn vengeance upon all wyrm-kind.\n\nQueen Seraphina Starweave governs the Elven realm of Sylvaneth from her crystal palace. Ancient beyond human reckoning, she remembers the world before the Sundering. Her patience is legendary, but some whisper she has grown too detached from mortal concerns.\n\nThe Archmage Thandril maintains the Floating Citadel of Nethys, training the next generation of wizards. His tower drifts between kingdoms, bound by treaty to remain neutral. He guards the Prismatic Codex, last artifact of the old empire.\n\nBeneath the mountains, the Underdark stirs. The Lich-Queen Malevora builds her army of the dead, seeking the Crown of Souls that would let her raise an unstoppable host. Her phylactery is hidden somewhere in the mortal realms.\n\nThe Order of the Silver Dawn sends paladins across the kingdoms, hunting evil wherever it festers. Sir Gareth the Resolute leads their chapter, though he secretly doubts his faith after witnessing atrocities in the border wars.\n\nIn the port city of Saltmere, the Thieves' Guild controls trade routes and information alike. Their guildmaster, the Fox, has never been seen without their porcelain mask. They say the Fox knows every secret in the kingdoms.\n\nThe Wandering Sage Morwen travels the roads, offering wisdom to those who show kindness to strangers. Some believe she is a goddess in mortal guise; others say she is simply mad. Her prophecies, however, have an unsettling tendency to come true."
+  "lore_content": "The Shattered Kingdoms were once a unified empire under the Dragon Throne. Three centuries ago, the War of Sundering broke the land into seven rival kingdoms when the last Emperor fell to the Shadowbane Conspiracy.\n\nKing Aldric Ironhold rules Valdheim, the northern kingdom of dwarves and men. His iron mines fuel the realm's forges, and his stubborn honor makes him both respected and inflexible. He lost his wife to a dragon raid twenty winters past and has sworn vengeance upon all wyrm-kind.\n\nQueen Seraphina Starweave governs the Elven realm of Sylvaneth from her crystal palace. Ancient beyond human reckoning, she remembers the world before the Sundering. Her patience is legendary, but some whisper she has grown too detached from mortal concerns.\n\nThe Archmage Thandril maintains the Floating Citadel of Nethys, training the next generation of wizards. His tower drifts between kingdoms, bound by treaty to remain neutral. He guards the Prismatic Codex, last artifact of the old empire.\n\nBeneath the mountains, the Underdark stirs. The Lich-Queen Malevora builds her army of the dead, seeking the Crown of Souls that would let her raise an unstoppable host. Her phylactery is hidden somewhere in the mortal realms.\n\nThe Order of the Silver Dawn sends paladins across the kingdoms, hunting evil wherever it festers. Sir Gareth the Resolute leads their chapter, though he secretly doubts his faith after witnessing atrocities in the border wars.\n\nIn the port city of Saltmere, the Thieves' Guild controls trade routes and information alike. Their guildmaster, the Fox, has never been seen without their porcelain mask. They say the Fox knows every secret in the kingdoms.\n\nThe Wandering Sage Morwen travels the roads, offering wisdom to those who show kindness to strangers. Some believe she is a goddess in mortal guise; others say she is simply mad. Her prophecies, however, have an unsettling tendency to come true.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "valdheim_dwarf",
+        "name": "Ironhold Dwarf",
+        "description": "Dwarves of Valdheim are renowned for their resilience and skill in the forge.",
+        "base_type": "dwarf",
+        "ability_bonuses": {
+          "constitution": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "History"
+        ],
+        "traits": [
+          "Dwarven Resilience: Advantage on saving throws against poison, and resistance to poison damage.",
+          "Stonecunning: Whenever you make an Intelligence (History) check related to the origin of stonework, you are considered proficient in the History skill and add double your proficiency bonus to the check, instead of your normal proficiency bonus."
+        ],
+        "languages": [
+          "Common",
+          "Dwarvish"
+        ]
+      },
+      {
+        "id": "sylvaneth_elf",
+        "name": "Starweave Elf",
+        "description": "Elves of Sylvaneth are graceful and wise, with a deep connection to the ancient forests.",
+        "base_type": "elf",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Perception",
+          "Nature"
+        ],
+        "traits": [
+          "Fey Ancestry: Advantage on saving throws against being charmed, and magic can’t put you to sleep.",
+          "Trance: Elves don’t need to sleep. Instead, they meditate deeply, remaining semiconscious, for 4 hours a day."
+        ],
+        "languages": [
+          "Common",
+          "Elvish"
+        ]
+      },
+      {
+        "id": "nethys_human",
+        "name": "Citadel Scholar",
+        "description": "Humans trained at the Floating Citadel of Nethys, dedicated to magic and knowledge.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Investigation"
+        ],
+        "traits": [
+          "Keen Mind: You always know which way is north, and always remember the general layout of any map you have seen, as well as anything you have seen or heard in the past month."
+        ],
+        "languages": [
+          "Common",
+          "Draconic"
+        ]
+      },
+      {
+        "id": "borderlands_human",
+        "name": "Borderlands Survivor",
+        "description": "Humans hardened by life in the war-torn border regions between kingdoms.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 2
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Intimidation"
+        ],
+        "traits": [
+          "Tough: Your hit point maximum increases by 1 for each level you gain in this class."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "saltmere_human",
+        "name": "Saltmere Scoundrel",
+        "description": "Humans skilled in the arts of deception and acquisition from the port city of Saltmere.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Sleight of Hand"
+        ],
+        "traits": [
+          "Nimble Escape: You can take the Disengage or Hide action as a bonus action on each of your turns."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "ironhold_warden",
+        "name": "Ironhold Warden",
+        "description": "A stalwart warrior from Valdheim, trained to defend against dragons and other threats.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Heavy armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Chain mail",
+          "Longsword",
+          "Shield",
+          "Explorer's pack"
+        ],
+        "features": [
+          {
+            "name": "Dragonbane",
+            "description": "You gain advantage on attack rolls against dragons."
+          }
+        ]
+      },
+      {
+        "id": "shadow_walker",
+        "name": "Shadow Walker",
+        "description": "A master of stealth and subterfuge, operating in the shadows of the Shattered Kingdoms.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Stealth",
+          "Deception",
+          "Insight",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two daggers",
+          "Thieves' tools",
+          "Shortbow with 20 arrows"
+        ],
+        "features": [
+          {
+            "name": "Cunning Action",
+            "description": "Starting at 2nd level, you can take a bonus action on each of your turns in combat. This action can be used only to take the Dash, Disengage, or Hide action."
+          }
+        ]
+      },
+      {
+        "id": "arcane_scholar",
+        "name": "Arcane Scholar",
+        "description": "A student of the arcane arts, dedicated to unraveling the mysteries of magic.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings",
+          "Quarterstaffs",
+          "Light Crossbows"
+        ],
+        "starting_equipment": [
+          "Spellbook",
+          "Dagger",
+          "Scholar's pack",
+          "Component pouch"
+        ],
+        "features": [
+          {
+            "name": "Spellcasting",
+            "description": "You are a spellcaster, learning new spells as you gain levels."
+          }
+        ]
+      },
+      {
+        "id": "silver_dawn_knight",
+        "name": "Silver Dawn Knight",
+        "description": "A holy warrior dedicated to the Order of the Silver Dawn, fighting against the forces of evil.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Insight",
+          "Medicine",
+          "Persuasion",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Heavy armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Chain mail",
+          "Longsword",
+          "Shield",
+          "Holy symbol",
+          "Explorer's pack"
+        ],
+        "features": [
+          {
+            "name": "Divine Sense",
+            "description": "The presence of strong evil registers on your senses like a noxious odor, and powerful good rings like heavenly music. As an action, you can open your awareness to detect such forces. Until the end of your next turn, you know the location of any celestial, fiend, or undead within 60 feet of you that is not behind total cover. You know the type (celestial, fiend, or undead) but not its identity (the vampire Count Strahd von Zarovich, for instance). Within the same radius, you also detect the presence of any place or object that has been consecrated or desecrated, as with the hallow spell."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground and ability to read people."
+      },
+      {
+        "id": "heraldry",
+        "name": "Heraldry",
+        "base_skill": "History",
+        "description": "Knowledge of noble houses, their lineages, and their sigils."
+      },
+      {
+        "id": "wyrmlore",
+        "name": "Wyrmlore",
+        "base_skill": "Nature",
+        "description": "Knowledge of dragons and other draconic creatures."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

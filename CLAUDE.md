@@ -114,6 +114,12 @@ lore-management-system/
 
 ## Current State (January 2026)
 
+### Production Deployment
+- **Environment:** DigitalOcean Ubuntu 22.04 LTS (Three-tier architecture)
+- **Status:** Backend API & Neo4j 5.12 online; Frontend served via NGINX.
+- **Pending:** SSL/HTTPS setup and UFW firewall lockdown.
+- **Reference:** See `docs/DIGITAL_OCEAN_DEPLOYMENT.md` for the full handoff dossier.
+
 ### Design System: Obsidian & Gold
 The production UI uses the **Obsidian & Gold** design system:
 - **Colors:** Cooler blacks (#0f0f12, #16161a) with metallic gold (#D4AF37)
@@ -165,8 +171,29 @@ pytest -v                        # Verbose output
 
 ### Deployment
 ```bash
-fly deploy --now                 # Deploy to Fly.io
+fly deploy                       # Deploy to Fly.io
 ```
+
+**IMPORTANT: Local vs Deployed Changes**
+
+When troubleshooting "why isn't this working?":
+1. **First check:** Have the changes been deployed? File edits are LOCAL ONLY until committed and deployed.
+2. **Local changes** = only visible on developer's machine (after server restart)
+3. **Deployed changes** = visible to all users at https://lore-management-system.fly.dev/
+
+**Workflow:**
+```bash
+# 1. Make changes to files
+# 2. Commit changes
+git add . && git commit -m "description"
+# 3. Deploy to production
+fly deploy
+# 4. Update version tracker
+# Edit data/deployed_version.txt with new version
+```
+
+**When user reports something isn't working after we made changes:**
+→ Mention deployment status EARLY: "Those changes are local only - not deployed yet. Want me to deploy?"
 
 ## Frontend Architecture
 

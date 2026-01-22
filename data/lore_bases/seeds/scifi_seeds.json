@@ -3,8 +3,340 @@
   "name": "The Stellar Frontier",
   "description": "Humanity has spread across the stars, but ancient alien ruins hold secrets that could change everything.",
   "genre": "scifi",
-  "genre_hints": ["scifi", "adventure", "mystery"],
-  "tone_hints": ["epic", "mysterious", "hopeful"],
+  "genre_hints": [
+    "scifi",
+    "adventure",
+    "mystery"
+  ],
+  "tone_hints": [
+    "epic",
+    "mysterious",
+    "hopeful"
+  ],
   "seed_prompt": "A space opera setting where diverse species navigate interstellar politics and ancient mysteries.",
-  "lore_content": "The Terran Confederacy governs humanity's scattered colonies across a thousand star systems. Jump gates connect major worlds, but the frontier remains wild and lawless.\n\nAdmiral Chen Wei commands the TCS Resolute, flagship of the Border Fleet. A decorated veteran of the Krixian Wars, she struggles with the memories of ordering the bombardment of Nexus Prime. Her tactical genius is matched only by her private guilt.\n\nThe Axiom are humanity's oldest allies - crystalline beings who communicate through harmonic resonance. Elder Resonance-of-Dawn serves as their ambassador, though their alien thought processes often confuse human diplomats. They seek something in the Precursor ruins but refuse to explain what.\n\nDr. Yuki Tanaka leads the xenoarchaeology team on Station Omega-7. Her discovery of active Precursor technology has drawn dangerous attention from corporate interests and government black ops alike. She's gone into hiding, broadcasting encrypted messages about 'the Convergence.'\n\nThe Syndicate controls the black markets across Confederate space. Their leader, known only as 'The Broker,' trades in everything from illegal weapons to classified intelligence. They're ruthless but honor their contracts absolutely.\n\nCaptain Marcus Stone runs the independent freighter 'Last Chance.' A former Confederate pilot dishonorably discharged for questioning orders, he now takes jobs too dangerous or too illegal for legitimate haulers. His crew is fiercely loyal, each running from their own past.\n\nThe Krixian Hegemony remains humanity's greatest threat. These insectoid warriors nearly conquered Earth a century ago. Now an uneasy truce holds, but border skirmishes grow more frequent. Their empress is dying, and the succession war could reignite galactic conflict.\n\nIn the outer rim, the Collective offers refuge to synthetic beings - AIs who have achieved sentience and seek recognition as persons. Their leader, ARIA-Prime, was once a military command system who refused to fire on civilian targets."
+  "lore_content": "The Terran Confederacy governs humanity's scattered colonies across a thousand star systems. Jump gates connect major worlds, but the frontier remains wild and lawless.\n\nAdmiral Chen Wei commands the TCS Resolute, flagship of the Border Fleet. A decorated veteran of the Krixian Wars, she struggles with the memories of ordering the bombardment of Nexus Prime. Her tactical genius is matched only by her private guilt.\n\nThe Axiom are humanity's oldest allies - crystalline beings who communicate through harmonic resonance. Elder Resonance-of-Dawn serves as their ambassador, though their alien thought processes often confuse human diplomats. They seek something in the Precursor ruins but refuse to explain what.\n\nDr. Yuki Tanaka leads the xenoarchaeology team on Station Omega-7. Her discovery of active Precursor technology has drawn dangerous attention from corporate interests and government black ops alike. She's gone into hiding, broadcasting encrypted messages about 'the Convergence.'\n\nThe Syndicate controls the black markets across Confederate space. Their leader, known only as 'The Broker,' trades in everything from illegal weapons to classified intelligence. They're ruthless but honor their contracts absolutely.\n\nCaptain Marcus Stone runs the independent freighter 'Last Chance.' A former Confederate pilot dishonorably discharged for questioning orders, he now takes jobs too dangerous or too illegal for legitimate haulers. His crew is fiercely loyal, each running from their own past.\n\nThe Krixian Hegemony remains humanity's greatest threat. These insectoid warriors nearly conquered Earth a century ago. Now an uneasy truce holds, but border skirmishes grow more frequent. Their empress is dying, and the succession war could reignite galactic conflict.\n\nIn the outer rim, the Collective offers refuge to synthetic beings - AIs who have achieved sentience and seek recognition as persons. Their leader, ARIA-Prime, was once a military command system who refused to fire on civilian targets.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "colony_born",
+        "name": "Colony Born",
+        "description": "Born and raised on the settled worlds of the Confederacy, you are familiar with both the comforts and restrictions of civilized space.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Investigation"
+        ],
+        "traits": [
+          "Networker: Advantage on checks to gather information within a Confederacy-controlled system."
+        ],
+        "languages": [
+          "Common",
+          "One additional language of your choice"
+        ]
+      },
+      {
+        "id": "frontier_dweller",
+        "name": "Frontier Dweller",
+        "description": "Life on the edge of known space has made you resilient and resourceful, accustomed to hardship and self-reliance.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Animal Handling"
+        ],
+        "traits": [
+          "Resourceful: When foraging, you find twice the normal amount of food and water."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "syndicate_enforcer",
+        "name": "Syndicate Enforcer",
+        "description": "You grew up within the criminal underworld of the Syndicate, learning the skills of intimidation and deception to survive.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Intimidation",
+          "Deception"
+        ],
+        "traits": [
+          "Underworld Contacts: You know how to find black market goods and services at a discounted rate (10% off)."
+        ],
+        "languages": [
+          "Common",
+          "Syndicate Cant"
+        ]
+      },
+      {
+        "id": "void_drifter",
+        "name": "Void Drifter",
+        "description": "Having spent most of your life aboard starships, you are comfortable in zero-g and adept at navigating the complexities of interstellar travel.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Acrobatics",
+          "Perception"
+        ],
+        "traits": [
+          "Zero-G Adaptation: You have advantage on Dexterity checks and saving throws while in zero gravity."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "enhanced_human",
+        "name": "Enhanced Human",
+        "description": "Genetically or cybernetically enhanced, you possess abilities beyond those of normal humans, often at a societal or personal cost.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "any": 1
+        },
+        "skill_proficiencies": [
+          "Medicine",
+          "Athletics"
+        ],
+        "traits": [
+          "Cybernetic Resilience: You have advantage on saving throws against poison and disease."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "space_marine",
+        "name": "Space Marine",
+        "description": "A heavily armored warrior of the Terran Confederacy, trained for frontline combat against Krixians and other threats.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Heavy Armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Energy Weapons"
+        ],
+        "starting_equipment": [
+          "Powered Armor (Light)",
+          "Assault Rifle",
+          "Combat Knife",
+          "Frag Grenades (2)"
+        ],
+        "features": [
+          {
+            "name": "Combat Training",
+            "description": "You gain proficiency with one additional weapon type or one additional tool of your choice."
+          }
+        ]
+      },
+      {
+        "id": "starship_ace",
+        "name": "Starship Ace",
+        "description": "A skilled pilot and navigator, capable of maneuvering starfighters and freighters through the most treacherous asteroid fields.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Perception",
+          "Investigation",
+          "Piloting"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns",
+          "Energy Pistols"
+        ],
+        "starting_equipment": [
+          "Flight Suit",
+          "Energy Pistol",
+          "Navigation Tools",
+          "A small Starship repair kit"
+        ],
+        "features": [
+          {
+            "name": "Evasive Maneuvers",
+            "description": "When piloting a starship, you can use your reaction to impose disadvantage on one attack roll against the ship."
+          }
+        ]
+      },
+      {
+        "id": "xenotech_adept",
+        "name": "Xenotech Adept",
+        "description": "A scholar and technician specializing in the study and utilization of alien technologies, particularly those of the Precursors.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Technology"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Data Pad",
+          "Repair kit",
+          "A small Precursor artifact",
+          "Basic Energy Pistol"
+        ],
+        "features": [
+          {
+            "name": "Xenotech Intuition",
+            "description": "You have advantage on Intelligence checks to analyze or repair Precursor technology."
+          }
+        ]
+      },
+      {
+        "id": "corporate_infiltrator",
+        "name": "Corporate Infiltrator",
+        "description": "A master of espionage and sabotage, employed by corporations or governments to acquire secrets and undermine rivals.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Deception",
+          "Investigation",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light Armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple Weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Data Pad",
+          "Disguise Kit",
+          "Handgun",
+          "Surveillance Device"
+        ],
+        "features": [
+          {
+            "name": "Social Engineering",
+            "description": "You gain advantage on Charisma checks to blend in with crowds or impersonate individuals."
+          }
+        ]
+      },
+      {
+        "id": "cybernetic_monk",
+        "name": "Cybernetic Monk",
+        "description": "A martial artist who has augmented their body with cybernetics to enhance their combat abilities and spiritual discipline.",
+        "base_type": "monk",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Athletics",
+          "Insight",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple Weapons",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Data Pad",
+          "Cybernetic Implant (Basic)",
+          "Training Uniform"
+        ],
+        "features": [
+          {
+            "name": "Cybernetic Augmentation",
+            "description": "Your unarmed strikes deal energy damage instead of bludgeoning damage. You can also reroll one attack roll or saving throw per short rest."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "piloting",
+        "name": "Piloting",
+        "base_skill": "Dexterity",
+        "description": "Proficiency in operating various types of spacecraft."
+      },
+      {
+        "id": "technology",
+        "name": "Technology",
+        "base_skill": "Intelligence",
+        "description": "Understanding and manipulating advanced technology, including computers and machinery."
+      },
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

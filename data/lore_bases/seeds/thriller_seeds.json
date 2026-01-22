@@ -3,8 +3,293 @@
   "name": "Shadow Protocol",
   "description": "A web of espionage and betrayal spanning from Washington to Moscow.",
   "genre": "thriller",
-  "genre_hints": ["thriller", "drama", "mystery"],
-  "tone_hints": ["tense", "paranoid", "high-stakes"],
+  "genre_hints": [
+    "thriller",
+    "drama",
+    "mystery"
+  ],
+  "tone_hints": [
+    "tense",
+    "paranoid",
+    "high-stakes"
+  ],
   "seed_prompt": "A spy thriller where operatives navigate shifting allegiances and deadly conspiracies.",
-  "lore_content": "The Cold War never really ended. It just went underground, into the shadows where deniable assets do deniable things.\n\nAgent Sarah Cole, codename 'Specter,' is the CIA's best deep-cover operative. She's been playing a Russian oligarch's mistress for three years, feeding intel that's prevented two wars. Then her handler goes dark, and the agency claims they've never heard of her.\n\nViktor Volkov runs Russia's most secretive intelligence division, one that doesn't officially exist. A former KGB legend, he's been playing a long game that spans decades. His endgame involves a secret that would reshape the global order - if he can retrieve it before his rivals.\n\nDirector Elizabeth Hayes controls the NSA's Omega Division, a black-budget program tracking threats that don't appear in any briefing. She's discovered that someone inside the intelligence community is selling secrets to every side. The list of suspects includes people she trusts with her life.\n\nMarcus Webb left MI6 after an operation went wrong in Syria. Now he runs security for tech billionaires and asks no questions. When his latest client is assassinated, Marcus finds himself holding a drive containing evidence of a conspiracy reaching the highest levels of multiple governments.\n\nDr. Anna Reyes designed the encryption system that protects NATO communications. She's just discovered a backdoor she didn't create - and tracing its origin has put her on someone's kill list. She has 72 hours to find help before the next attempt succeeds.\n\nThe Broker operates from a yacht that never stays in the same waters twice. They sell secrets to anyone who pays, but they have rules: no weapons of mass destruction, no children, no operations on US soil. Someone is framing them for breaking all three rules.\n\nZhang Wei is a Chinese MSS officer who's been feeding intel to the Americans for a decade. His handler just died in a suspicious accident, and his emergency contact leads to a dead drop that's been compromised. He has to decide: run, or find out who betrayed him."
+  "lore_content": "The Cold War never really ended. It just went underground, into the shadows where deniable assets do deniable things.\n\nAgent Sarah Cole, codename 'Specter,' is the CIA's best deep-cover operative. She's been playing a Russian oligarch's mistress for three years, feeding intel that's prevented two wars. Then her handler goes dark, and the agency claims they've never heard of her.\n\nViktor Volkov runs Russia's most secretive intelligence division, one that doesn't officially exist. A former KGB legend, he's been playing a long game that spans decades. His endgame involves a secret that would reshape the global order - if he can retrieve it before his rivals.\n\nDirector Elizabeth Hayes controls the NSA's Omega Division, a black-budget program tracking threats that don't appear in any briefing. She's discovered that someone inside the intelligence community is selling secrets to every side. The list of suspects includes people she trusts with her life.\n\nMarcus Webb left MI6 after an operation went wrong in Syria. Now he runs security for tech billionaires and asks no questions. When his latest client is assassinated, Marcus finds himself holding a drive containing evidence of a conspiracy reaching the highest levels of multiple governments.\n\nDr. Anna Reyes designed the encryption system that protects NATO communications. She's just discovered a backdoor she didn't create - and tracing its origin has put her on someone's kill list. She has 72 hours to find help before the next attempt succeeds.\n\nThe Broker operates from a yacht that never stays in the same waters twice. They sell secrets to anyone who pays, but they have rules: no weapons of mass destruction, no children, no operations on US soil. Someone is framing them for breaking all three rules.\n\nZhang Wei is a Chinese MSS officer who's been feeding intel to the Americans for a decade. His handler just died in a suspicious accident, and his emergency contact leads to a dead drop that's been compromised. He has to decide: run, or find out who betrayed him.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "deep_cover",
+        "name": "Deep Cover Operative",
+        "description": "You've spent years building a false identity, blending seamlessly into hostile environments.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Stealth"
+        ],
+        "traits": [
+          "False Identity: You have a meticulously crafted false identity, including documents and contacts, granting advantage on checks to impersonate that identity. You also gain proficiency in the Forgery Kit."
+        ],
+        "languages": [
+          "Common",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "intelligence_analyst",
+        "name": "Intelligence Analyst",
+        "description": "You are trained to dissect information, identify patterns, and predict threats before they materialize.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "History"
+        ],
+        "traits": [
+          "Deduction: You can spend 10 minutes analyzing a set of clues (written documents, surveillance footage, etc.) to gain advantage on your next Investigation check related to those clues."
+        ],
+        "languages": [
+          "Common",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "special_forces",
+        "name": "Special Forces Veteran",
+        "description": "You've seen the sharp end of combat, honed to peak physical and mental conditioning.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Survival"
+        ],
+        "traits": [
+          "Combat Conditioning: You have advantage on saving throws against exhaustion. You also gain proficiency with one type of weapon of your choice (firearm, heavy melee, etc.)"
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "private_security",
+        "name": "Private Security Contractor",
+        "description": "You worked for private military organizations protecting the wealthy elite",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Perception",
+          "Intimidation"
+        ],
+        "traits": [
+          "Tactical Awareness: You gain advantage on initiative rolls. Also, once per short rest, you can reroll a missed attack roll."
+        ],
+        "languages": [
+          "Common",
+          "One language of your choice"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "operative",
+        "name": "Operative",
+        "description": "A master of infiltration and close-quarters combat, skilled in espionage and sabotage.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Deception",
+          "Acrobatics",
+          "Streetwise"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longsword",
+          "Rapier",
+          "Shortsword"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two daggers",
+          "Thieves' tools",
+          "A silenced pistol with 2 magazines"
+        ],
+        "features": [
+          {
+            "name": "Sneak Attack",
+            "description": "Beginning at 1st level, you know how to strike subtly and exploit a foe's distraction. Once per turn, you can deal an extra 1d6 damage to one creature you hit with an attack if you have advantage on the attack roll. The attack must use a finesse or a ranged weapon. The amount of the extra damage increases as you gain levels in this class, as shown in the Sneak Attack column of the Rogue table."
+          },
+          {
+            "name": "Cunning Action",
+            "description": "Starting at 2nd level, your quick thinking and agility allow you to move and act quickly. You can take a bonus action on each of your turns in combat. This action can be used only to take the Dash, Disengage, or Hide action."
+          }
+        ]
+      },
+      {
+        "id": "handler",
+        "name": "Handler",
+        "description": "An expert in managing assets and extracting information from a network of contacts.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Insight",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longsword",
+          "Rapier",
+          "Shortsword"
+        ],
+        "starting_equipment": [
+          "A light pistol with one magazine",
+          "A cover identity complete with documents",
+          "A diplomatic briefcase",
+          "Set of fine clothes"
+        ],
+        "features": [
+          {
+            "name": "Inspiration",
+            "description": "You can inspire others through stirring words or music. To do so, you use a bonus action on your turn to choose one creature other than yourself within 60 feet of you who can hear you. That creature gains one Bardic Inspiration die, a d6. Once within the next 10 minutes, the creature can roll the die and add the number rolled to one ability check, attack roll, or saving throw it makes. The creature can wait until after it rolls the d20 before deciding to use the Bardic Inspiration die, but must decide before the GM says whether the roll succeeds or fails. Once the Bardic Inspiration die is rolled, it is lost. A creature can have only one Bardic Inspiration die at a time."
+          }
+        ]
+      },
+      {
+        "id": "marksman",
+        "name": "Marksman",
+        "description": "A master of ranged combat and stealth, capable of taking down targets from extreme distances.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Perception",
+          "Survival",
+          "Athletics"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "A sniper rifle with scope and 20 rounds",
+          "Camouflage Gear",
+          "A spotting scope"
+        ],
+        "features": [
+          {
+            "name": "Precise Shot",
+            "description": "Once per turn, you can reroll an attack roll with a ranged weapon if the target is more than 60 feet away."
+          },
+          {
+            "name": "Keen Eye",
+            "description": "You have advantage on Wisdom (Perception) checks that rely on sight."
+          }
+        ]
+      },
+      {
+        "id": "tech_specialist",
+        "name": "Tech Specialist",
+        "description": "A brilliant mind specializing in electronics, software, and the intersection of technology and espionage.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Investigation",
+          "Technology",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Simple Weapons"
+        ],
+        "starting_equipment": [
+          "Laptop with custom software",
+          "Electronic Toolkit",
+          "Encrypted Flash Drive",
+          "Light pistol with one magazine"
+        ],
+        "features": [
+          {
+            "name": "Encryption",
+            "description": "You have a deep understanding of Encryption; you gain advantage on checks relating to encryption or decryption."
+          },
+          {
+            "name": "Bug Sweeping",
+            "description": "You can use 1 hour to sweep a room for listening devices. At the end of the hour, make an Intelligence check (DC 15) to discover listening devices."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground, including its contacts and hidden locations."
+      },
+      {
+        "id": "technology",
+        "name": "Technology",
+        "base_skill": "Arcana",
+        "description": "Knowledge of computer systems, networks, and hacking techniques."
+      },
+      {
+        "id": "counterintelligence",
+        "name": "Counterintelligence",
+        "base_skill": "Investigation",
+        "description": "Detecting espionage and rooting out enemy agents"
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

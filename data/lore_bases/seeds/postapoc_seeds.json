@@ -3,8 +3,348 @@
   "name": "Ash and Dust",
   "description": "Fifty years after the Fall, survivors build new societies in the ruins of the old world.",
   "genre": "postapoc",
-  "genre_hints": ["postapoc", "adventure", "drama"],
-  "tone_hints": ["gritty", "hopeful", "dangerous"],
+  "genre_hints": [
+    "postapoc",
+    "adventure",
+    "drama"
+  ],
+  "tone_hints": [
+    "gritty",
+    "hopeful",
+    "dangerous"
+  ],
   "seed_prompt": "A post-apocalyptic wasteland where communities struggle to rebuild civilization from the ashes.",
-  "lore_content": "Nobody alive remembers exactly what caused the Fall. Some say nuclear war, others a plague, still others speak of something stranger. What remains is a shattered America, its great cities now tombs of rust and bone.\n\nHaven is a fortified community built in the ruins of Denver. Governor Maria Santos has turned a refugee camp into a thriving town of two thousand souls. She makes hard choices every day - who eats, who trades, who gets exiled to the waste.\n\nThe Reclaimers are scavengers who venture into the Dead Cities to recover Old World technology. Their leader, Jackson Cross, lost his arm to a rad-ghoul in the Chicago Exclusion Zone. Now he wears a jury-rigged prosthetic and leads runs into the most dangerous places on Earth.\n\nThe Children of the New Dawn are a cult that worships the Fall as divine punishment. Prophet Sarah claims to hear the voice of 'the Cleansing Light' and preaches that humanity must suffer before earning redemption. Her followers number in the hundreds and grow each season.\n\nDoc Martinez was a veterinarian before the Fall. Now she's the closest thing to a doctor most wastelanders will ever see. She trades medical services for supplies and information, traveling between settlements in her armored RV.\n\nThe Iron Legion rules the Eastern Territories with brutal efficiency. General Stone has created a military dictatorship that provides security in exchange for absolute obedience. His soldiers are well-fed and well-armed - and completely merciless.\n\nMutants are becoming more common with each generation. Some are barely changed, others unrecognizable as human. The community of Refuge welcomes all who can prove they mean no harm, led by Elder Moss, whose bark-like skin and photosynthetic abilities mark her as clearly Changed.\n\nSomewhere in the Rockies, Vault 17 remains sealed. The bunker dwellers have survived in isolation for fifty years. Now their supplies are failing, and soon they'll have to face the world their ancestors fled."
+  "lore_content": "Nobody alive remembers exactly what caused the Fall. Some say nuclear war, others a plague, still others speak of something stranger. What remains is a shattered America, its great cities now tombs of rust and bone.\n\nHaven is a fortified community built in the ruins of Denver. Governor Maria Santos has turned a refugee camp into a thriving town of two thousand souls. She makes hard choices every day - who eats, who trades, who gets exiled to the waste.\n\nThe Reclaimers are scavengers who venture into the Dead Cities to recover Old World technology. Their leader, Jackson Cross, lost his arm to a rad-ghoul in the Chicago Exclusion Zone. Now he wears a jury-rigged prosthetic and leads runs into the most dangerous places on Earth.\n\nThe Children of the New Dawn are a cult that worships the Fall as divine punishment. Prophet Sarah claims to hear the voice of 'the Cleansing Light' and preaches that humanity must suffer before earning redemption. Her followers number in the hundreds and grow each season.\n\nDoc Martinez was a veterinarian before the Fall. Now she's the closest thing to a doctor most wastelanders will ever see. She trades medical services for supplies and information, traveling between settlements in her armored RV.\n\nThe Iron Legion rules the Eastern Territories with brutal efficiency. General Stone has created a military dictatorship that provides security in exchange for absolute obedience. His soldiers are well-fed and well-armed - and completely merciless.\n\nMutants are becoming more common with each generation. Some are barely changed, others unrecognizable as human. The community of Refuge welcomes all who can prove they mean no harm, led by Elder Moss, whose bark-like skin and photosynthetic abilities mark her as clearly Changed.\n\nSomewhere in the Rockies, Vault 17 remains sealed. The bunker dwellers have survived in isolation for fifty years. Now their supplies are failing, and soon they'll have to face the world their ancestors fled.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "wastelander",
+        "name": "Wastelander",
+        "description": "Born and raised in the harsh wastes, you are resilient and resourceful.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "survival": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Athletics"
+        ],
+        "traits": [
+          "Resilient: Advantage on saving throws against poison.",
+          "Waste-wise: You have advantage on Wisdom (Survival) checks made to find food and water."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "haven_dweller",
+        "name": "Haven Dweller",
+        "description": "You grew up within the walls of a fortified settlement, accustomed to structure and trade.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Investigation"
+        ],
+        "traits": [
+          "Community Minded: You have advantage on checks to interact positively with members of a settlement.",
+          "Educated: You are proficient in one Old World language (other than Common)."
+        ],
+        "languages": [
+          "Common",
+          "Old World Language (chosen)"
+        ]
+      },
+      {
+        "id": "reclaimer",
+        "name": "Reclaimer",
+        "description": "You risk life and limb venturing into the Dead Cities for lost technology.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Arcana"
+        ],
+        "traits": [
+          "Scavenger's Eye: Advantage on Wisdom (Perception) checks to find hidden objects and traps.",
+          "Tech Savvy: You have advantage on Intelligence checks related to understanding or repairing Old World technology."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "changed",
+        "name": "Changed",
+        "description": "Exposure to the wastes has mutated your body, granting you unique abilities.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Medicine",
+          "Animal Handling"
+        ],
+        "traits": [
+          "Wastes Adaptation: You have resistance to radiation damage. Choose one additional minor mutation from a list provided by the GM (e.g., heightened senses, minor regeneration, bioluminescence).",
+          "Othered: You have disadvantage on Charisma checks when interacting with those who distrust mutants."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "vault_dweller",
+        "name": "Vault Dweller",
+        "description": "You emerged from a sealed vault, ignorant of the world but possessing knowledge of the old one.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Medicine"
+        ],
+        "traits": [
+          "Vault Training: You are proficient with one type of tool or weapon of your choice.",
+          "Naive: You have disadvantage on Wisdom (Insight) checks related to understanding social cues and deception."
+        ],
+        "languages": [
+          "Common",
+          "Old World Language (chosen)"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "scrapper",
+        "name": "Scrapper",
+        "description": "A hardened survivor, skilled in close combat and scavenging.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Pipe wrench",
+          "Hunting knife",
+          "50 feet of rope"
+        ],
+        "features": [
+          {
+            "name": "Wasteland Brawler",
+            "description": "At 1st level, you gain proficiency with improvised weapons. When you hit a creature with an improvised weapon, you can use a bonus action to attempt to disarm the target, forcing it to drop one item of your choice that it's holding."
+          }
+        ]
+      },
+      {
+        "id": "shadow",
+        "name": "Shadow",
+        "description": "A master of stealth and deception, adept at moving unseen and unheard.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Stealth",
+          "Deception",
+          "Streetwise",
+          "Sleight of Hand"
+        ],
+        "num_skill_choices": 4,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns",
+          "Crossbows"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two daggers",
+          "Thieves' tools",
+          "A crowbar"
+        ],
+        "features": [
+          {
+            "name": "Sneak Attack",
+            "description": "Beginning at 1st level, if you hit a creature with an attack roll, you can deal extra damage as described in the PHB if the target is adjacent to another enemy of the target or if you have advantage on the attack roll."
+          }
+        ]
+      },
+      {
+        "id": "tinker",
+        "name": "Tinker",
+        "description": "An inventor and repairer, using salvaged parts to create new technology.",
+        "base_type": "fighter",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Investigation",
+          "Nature",
+          "Technology"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Handgun",
+          "Tinker's tools",
+          "Salvaged components"
+        ],
+        "features": [
+          {
+            "name": "Artificer's Intuition",
+            "description": "At 1st level, you can cast detect magic and identify once per long rest."
+          }
+        ]
+      },
+      {
+        "id": "road_preacher",
+        "name": "Road Preacher",
+        "description": "A charismatic leader, inspiring faith and healing the wounded.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Religion",
+          "Medicine",
+          "Persuasion",
+          "Streetwise"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Handgun",
+          "Medical kit",
+          "A holy symbol (modified)",
+          "A book of sermons"
+        ],
+        "features": [
+          {
+            "name": "Divine Inspiration",
+            "description": "At 1st level, you gain the ability to inspire hope in others. As an action, you can touch one willing creature and grant them advantage on their next saving throw. You can use this feature a number of times equal to your Wisdom modifier (minimum of one). You regain all expended uses when you finish a long rest."
+          }
+        ]
+      },
+      {
+        "id": "stormcaller",
+        "name": "Stormcaller",
+        "description": "A conduit for the raw energies of the wastes, capable of wielding devastating power.",
+        "base_type": "sorcerer",
+        "hit_die": "d6",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Constitution",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Intimidation",
+          "Persuasion",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Slings"
+        ],
+        "starting_equipment": [
+          "A dagger",
+          "A waterskin filled with glowing liquid",
+          "A tattered map of the surrounding area"
+        ],
+        "features": [
+          {
+            "name": "Wastes Affinity",
+            "description": "You gain proficiency in saving throws against Radiation. You may also choose one elemental cantrip (Fire Bolt, Shocking Grasp, Gust, Ray of Frost)."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground; understanding motivations and reading between the lines in dangerous environments."
+      },
+      {
+        "id": "technology",
+        "name": "Technology",
+        "base_skill": "Arcana",
+        "description": "Knowledge of old-world devices, computers, programming, and electronics."
+      },
+      {
+        "id": "barter",
+        "name": "Barter",
+        "base_skill": "Persuasion",
+        "description": "Used to trade effectively and get a good deal out of merchants."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

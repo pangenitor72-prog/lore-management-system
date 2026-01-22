@@ -3,8 +3,289 @@
   "name": "The Clockwork Empire",
   "description": "An alternate Victorian Britain where steam power and impossible science have created wonders and terrors.",
   "genre": "steampunk",
-  "genre_hints": ["steampunk", "adventure", "mystery"],
-  "tone_hints": ["elegant", "inventive", "dangerous"],
+  "genre_hints": [
+    "steampunk",
+    "adventure",
+    "mystery"
+  ],
+  "tone_hints": [
+    "elegant",
+    "inventive",
+    "dangerous"
+  ],
   "seed_prompt": "A Victorian world transformed by steam technology, airships, and mad science.",
-  "lore_content": "The British Empire stretches across the globe, connected by networks of pneumatic tubes, analytical engines, and the magnificent Sky Fleet. Queen Victoria still reigns at ninety, her life extended by Dr. Pemberton's Vitality Engine.\n\nProfessor Adelaide Hartwell is the Empire's foremost aeronaut and inventor. Her workshop in the Crystal Palace produces marvels that defy conventional physics. The Royal Society has censured her three times for 'reckless experimentation,' which she considers a badge of honor.\n\nInspector Sebastian Black investigates crimes too strange for Scotland Yard's regular constables. His clockwork eye sees through illusions, and his mechanical arm can punch through steel. He lost the originals hunting the Whitechapel Automaton.\n\nThe Artificers' Guild controls who may build and repair thinking machines. Guildmaster Tobias Crane guards their secrets jealously, for the knowledge to create true mechanical intelligence could reshape society - or destroy it.\n\nLady Penelope Ashworth leads the Suffragette Aeronaught Corps, a society of adventuresses who fight for women's rights from the decks of their brass-fitted airship, the HMS Valkyrie. High society considers them scandalous; the common folk consider them heroes.\n\nIn the soot-choked Undercity, the Cog Breakers plot revolution. Factory workers and discarded automata alike follow the masked figure known only as 'The Engineer.' They've discovered that the Empire's prosperity is built on darker foundations than coal.\n\nDoctor Viktor Steinwald was expelled from the University of Vienna for grave-robbing. Now he works in the shadows of London, stitching together creations that should not live. His latest masterwork is almost complete - and it has its creator's memories.\n\nThe Aether has begun to leak through at weak points in reality. Some theorize that steam engines are somehow tearing the fabric of space. Whatever the cause, impossible things now walk the fog-shrouded streets."
+  "lore_content": "The British Empire stretches across the globe, connected by networks of pneumatic tubes, analytical engines, and the magnificent Sky Fleet. Queen Victoria still reigns at ninety, her life extended by Dr. Pemberton's Vitality Engine.\n\nProfessor Adelaide Hartwell is the Empire's foremost aeronaut and inventor. Her workshop in the Crystal Palace produces marvels that defy conventional physics. The Royal Society has censured her three times for 'reckless experimentation,' which she considers a badge of honor.\n\nInspector Sebastian Black investigates crimes too strange for Scotland Yard's regular constables. His clockwork eye sees through illusions, and his mechanical arm can punch through steel. He lost the originals hunting the Whitechapel Automaton.\n\nThe Artificers' Guild controls who may build and repair thinking machines. Guildmaster Tobias Crane guards their secrets jealously, for the knowledge to create true mechanical intelligence could reshape society - or destroy it.\n\nLady Penelope Ashworth leads the Suffragette Aeronaught Corps, a society of adventuresses who fight for women's rights from the decks of their brass-fitted airship, the HMS Valkyrie. High society considers them scandalous; the common folk consider them heroes.\n\nIn the soot-choked Undercity, the Cog Breakers plot revolution. Factory workers and discarded automata alike follow the masked figure known only as 'The Engineer.' They've discovered that the Empire's prosperity is built on darker foundations than coal.\n\nDoctor Viktor Steinwald was expelled from the University of Vienna for grave-robbing. Now he works in the shadows of London, stitching together creations that should not live. His latest masterwork is almost complete - and it has its creator's memories.\n\nThe Aether has begun to leak through at weak points in reality. Some theorize that steam engines are somehow tearing the fabric of space. Whatever the cause, impossible things now walk the fog-shrouded streets.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "costermonger",
+        "name": "Costermonger",
+        "description": "A child of the Undercity, raised amidst soot and steam.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Streetwise"
+        ],
+        "traits": [
+          "Undercity Grit: Advantage on saves against poison and disease.",
+          "Resourceful: Once per day, you can find a useful item worth up to 5 shillings in scrap and discarded materials."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      },
+      {
+        "id": "royal_engineer",
+        "name": "Royal Engineer",
+        "description": "Trained in the Empire's finest technical academies.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Engineering",
+          "Investigation"
+        ],
+        "traits": [
+          "Analytical Mind: Advantage on Intelligence checks related to machines or complex systems.",
+          "Tinkerer: You can repair simple mechanical devices with an hour of work."
+        ],
+        "languages": [
+          "Common",
+          "Gnomish"
+        ]
+      },
+      {
+        "id": "aeronaut",
+        "name": "Aeronaut",
+        "description": "A daring pilot, soaring through the skies in brass and canvas airships.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Piloting",
+          "Acrobatics"
+        ],
+        "traits": [
+          "Skyborn: You have advantage on saving throws against falling.",
+          "Airship Familiarity: You are adept at handling airships and gain advantage on checks related to their operation and maintenance."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "automaton",
+        "name": "Automaton",
+        "description": "A thinking machine, granted sentience by forbidden science.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Medicine"
+        ],
+        "traits": [
+          "Constructed: You do not need to eat, drink or breathe. Instead you must spend an hour performing maintenance once per day to continue functioning.",
+          "Mechanical Resilience: You have advantage on saving throws against poison and disease."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "cogsmith",
+        "name": "Cogsmith",
+        "description": "A master artificer, crafting wondrous gadgets and weapons.",
+        "base_type": "fighter",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Engineering",
+          "Arcana",
+          "Investigation",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand Crossbows"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Hand Crossbow and 20 bolts",
+          "Artificer's tools",
+          "10 gp"
+        ],
+        "features": [
+          {
+            "name": "Tinker's Focus",
+            "description": "You can spend 1 hour and 10gp worth of materials to create a Tinker's Focus, a device that enhances your engineering abilities. While holding the Focus, you gain advantage on skill checks using your engineering skill."
+          }
+        ]
+      },
+      {
+        "id": "aethermancer",
+        "name": "Aethermancer",
+        "description": "A scholar who manipulates the strange energies leaking into the world.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings"
+        ],
+        "starting_equipment": [
+          "Aethermancer's Focus",
+          "Scholar's pack",
+          "Spellbook"
+        ],
+        "features": [
+          {
+            "name": "Aether Attunement",
+            "description": "You can sense fluctuations in the Aether within 30 feet. When you detect a fluctuation, you can spend 1 minute focusing on it to learn its general nature (e.g., a leak, a surge, a distortion)."
+          }
+        ]
+      },
+      {
+        "id": "detective",
+        "name": "Detective",
+        "description": "A keen investigator, solving mysteries with deduction and strange technology.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Streetwise",
+          "Deception",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Rapier",
+          "Magnifying glass",
+          "Investigator's kit",
+          "15 gp"
+        ],
+        "features": [
+          {
+            "name": "Keen Eye",
+            "description": "You have advantage on Intelligence (Investigation) checks related to finding clues or hidden objects."
+          }
+        ]
+      },
+      {
+        "id": "coilwright",
+        "name": "Coilwright",
+        "description": "A protector of the downtrodden, infused with raw steam power.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Wisdom",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Engineering",
+          "Intimidation",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Heavy armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Chain mail",
+          "Steam-Powered Gauntlet",
+          "Holy symbol",
+          "10 gp"
+        ],
+        "features": [
+          {
+            "name": "Steam-Powered Gauntlet",
+            "description": "When you hit a creature with a melee weapon attack, you can expend a steam charge to deal an extra 1d8 fire damage to the target. You have 2 steam charges, and regain all expended charges during a short or long rest."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "engineering",
+        "name": "Engineering",
+        "base_skill": "Arcana",
+        "description": "Knowledge of steam engines, automatons, and other mechanical devices."
+      },
+      {
+        "id": "piloting",
+        "name": "Piloting",
+        "base_skill": "Animal Handling",
+        "description": "Controlling an airship or other flying vehicle."
+      },
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

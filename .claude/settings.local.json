@@ -70,7 +70,16 @@
       "Bash(timeout 20 fly logs:*)",
       "Bash(git checkout:*)",
       "Bash(flyctl deploy:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(node --check:*)",
+      "Bash(flyctl logs:*)",
+      "Bash(timeout:*)",
+      "Bash(sort:*)",
+      "Bash(paste:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(del test_mantle.py)",
+      "Bash(tasklist:*)"
     ]
   }
 }

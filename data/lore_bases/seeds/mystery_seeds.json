@@ -3,8 +3,312 @@
   "name": "Raven's Crossing",
   "description": "A coastal New England town where generations of secrets are buried beneath the surface.",
   "genre": "mystery",
-  "genre_hints": ["mystery", "drama", "thriller"],
-  "tone_hints": ["atmospheric", "suspenseful", "intricate"],
+  "genre_hints": [
+    "mystery",
+    "drama",
+    "thriller"
+  ],
+  "tone_hints": [
+    "atmospheric",
+    "suspenseful",
+    "intricate"
+  ],
   "seed_prompt": "A classic mystery setting where amateur sleuths and professional investigators unravel complex crimes.",
-  "lore_content": "Raven's Crossing, Maine, population 8,000, sits where the Penobscot River meets the Atlantic. The founding families still control most of the town's wealth, and they've kept their secrets for three hundred years.\n\nChief Detective Sarah McAllister returned to her hometown after fifteen years with the Boston PD. She thought small-town crime would be simpler. Then bodies started appearing with the same mark her mother had when she 'drowned' in 1995.\n\nMargaret Blackwood, 82, is the last of the original founding family. Sharp as a tack despite her age, she knows where all the bodies are buried - literally. She's decided it's time for the truth to come out, but someone is killing anyone she talks to.\n\nDr. Nathan Cross runs the local medical examiner's office. A forensic pathologist who traded Boston trauma for coastal quiet, he notices patterns others miss. His growing friendship with Sarah is complicated by evidence suggesting her father may have been involved in her mother's death.\n\nLibrarian Anna Chen maintains the town archives, including records the Blackwoods thought they'd destroyed. She's been quietly building a case against the founding families for twenty years. Now someone has noticed her research.\n\nReverend Thomas Grey came to Raven's Crossing to escape his past in Chicago. He took confessions from dying men that implicated powerful people. Now those people want to know what he knows.\n\nReporter Jamie Vasquez works for the Raven's Crossing Gazette, the local paper that hasn't broken a real story in decades. She's discovered financial irregularities in the town accounts that lead to offshore accounts and a smuggling operation that's been running since Prohibition.\n\nFormer Judge Eleanor Prescott knows every crime that was buried, every deal that was made, every hand that was shaken. Alzheimer's is stealing her memories, and her granddaughter is racing to record her lucid moments before they're gone forever."
+  "lore_content": "Raven's Crossing, Maine, population 8,000, sits where the Penobscot River meets the Atlantic. The founding families still control most of the town's wealth, and they've kept their secrets for three hundred years.\n\nChief Detective Sarah McAllister returned to her hometown after fifteen years with the Boston PD. She thought small-town crime would be simpler. Then bodies started appearing with the same mark her mother had when she 'drowned' in 1995.\n\nMargaret Blackwood, 82, is the last of the original founding family. Sharp as a tack despite her age, she knows where all the bodies are buried - literally. She's decided it's time for the truth to come out, but someone is killing anyone she talks to.\n\nDr. Nathan Cross runs the local medical examiner's office. A forensic pathologist who traded Boston trauma for coastal quiet, he notices patterns others miss. His growing friendship with Sarah is complicated by evidence suggesting her father may have been involved in her mother's death.\n\nLibrarian Anna Chen maintains the town archives, including records the Blackwoods thought they'd destroyed. She's been quietly building a case against the founding families for twenty years. Now someone has noticed her research.\n\nReverend Thomas Grey came to Raven's Crossing to escape his past in Chicago. He took confessions from dying men that implicated powerful people. Now those people want to know what he knows.\n\nReporter Jamie Vasquez works for the Raven's Crossing Gazette, the local paper that hasn't broken a real story in decades. She's discovered financial irregularities in the town accounts that lead to offshore accounts and a smuggling operation that's been running since Prohibition.\n\nFormer Judge Eleanor Prescott knows every crime that was buried, every deal that was made, every hand that was shaken. Alzheimer's is stealing her memories, and her granddaughter is racing to record her lucid moments before they're gone forever.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "townie",
+        "name": "Townie",
+        "description": "Descendants of Raven's Crossing's long-established families, for good or ill.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 1,
+          "intelligence": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "Local Knowledge: Advantage on History checks related to Raven's Crossing."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "newcomer",
+        "name": "Newcomer",
+        "description": "Recent arrivals drawn to Raven's Crossing by opportunity, escape, or something else entirely.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "wisdom": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Investigation"
+        ],
+        "traits": [
+          "Fresh Perspective: Advantage on Investigation checks in familiar areas."
+        ],
+        "languages": [
+          "Common",
+          "Choose one additional language."
+        ]
+      },
+      {
+        "id": "penobscot",
+        "name": "Penobscot",
+        "description": "Members of the Penobscot Nation, whose history with the region predates Raven's Crossing by millennia.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "wisdom": 2
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Nature"
+        ],
+        "traits": [
+          "Wilderness Wisdom: Advantage on Survival checks in forested or riverine environments.",
+          "Natural Stealth: You have advantage on Dexterity (Stealth) checks made to hide in natural environments."
+        ],
+        "languages": [
+          "Common",
+          "Penobscot"
+        ]
+      },
+      {
+        "id": "coast_guard_descendant",
+        "name": "Coast Guard Descendant",
+        "description": "A descendant of the brave men and women who patrol the seas around Raven's Crossing.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Perception"
+        ],
+        "traits": [
+          "Seafarer: You have advantage on Athletics checks related to swimming and sailing.",
+          "Keen Senses: You have advantage on Perception checks related to sight and sound."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "investigator",
+        "name": "Investigator",
+        "description": "A sharp mind dedicated to uncovering the truth, whether for the police, a private client, or themselves.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Perception",
+          "Stealth",
+          "Persuasion",
+          "Deception"
+        ],
+        "num_skill_choices": 4,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "A set of clothes",
+          "A magnifying glass",
+          "A notebook and pen",
+          "A pistol with 20 rounds of ammunition"
+        ],
+        "features": [
+          {
+            "name": "Keen Eye",
+            "description": "You gain advantage on checks to find clues or hidden objects."
+          },
+          {
+            "name": "Analytical Mind",
+            "description": "You can analyze a situation or object to determine its purpose, function, or origin."
+          }
+        ]
+      },
+      {
+        "id": "scholar",
+        "name": "Scholar",
+        "description": "A seeker of knowledge, poring over ancient texts and forgotten lore to understand the secrets of Raven's Crossing.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Religion",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings",
+          "Quarterstaffs",
+          "Light Crossbows"
+        ],
+        "starting_equipment": [
+          "A book of lore",
+          "A set of scholar's robes",
+          "A magnifying glass",
+          "A quill and ink"
+        ],
+        "features": [
+          {
+            "name": "Research",
+            "description": "You gain advantage on History checks relating to a chosen topic."
+          },
+          {
+            "name": "Arcane Knowledge",
+            "description": "You can identify magical items and effects."
+          }
+        ]
+      },
+      {
+        "id": "doctor",
+        "name": "Doctor",
+        "description": "A healer, whether practicing medicine or delving into the mysteries of the human body.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Insight",
+          "Investigation",
+          "Religion",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "A doctor's bag",
+          "A set of medical tools",
+          "A book on anatomy"
+        ],
+        "features": [
+          {
+            "name": "Healing Touch",
+            "description": "You can heal wounds and cure diseases."
+          },
+          {
+            "name": "Diagnosis",
+            "description": "You can diagnose illnesses and injuries."
+          }
+        ]
+      },
+      {
+        "id": "reporter",
+        "name": "Reporter",
+        "description": "A journalist digging for the truth, even if it means uncovering secrets that powerful people want to keep buried.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Insight",
+          "Investigation",
+          "Performance"
+        ],
+        "num_skill_choices": 3,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "A notepad and pen",
+          "A camera",
+          "A tape recorder",
+          "A press badge"
+        ],
+        "features": [
+          {
+            "name": "Investigative Journalism",
+            "description": "You have advantage on checks to gather information."
+          },
+          {
+            "name": "Inspiration",
+            "description": "You can inspire others to perform better."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Knowledge of the urban underground."
+      },
+      {
+        "id": "legal",
+        "name": "Legal",
+        "base_skill": "History",
+        "description": "Knowledge of local laws and judicial procedures."
+      },
+      {
+        "id": "sailing",
+        "name": "Sailing",
+        "base_skill": "Athletics",
+        "description": "Knowledge of boating and ship navigation."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

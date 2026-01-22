@@ -3,8 +3,284 @@
   "name": "Autumn Falls",
   "description": "A small Vermont town where three generations of a family gather for a wedding that will change everything.",
   "genre": "drama",
-  "genre_hints": ["drama", "romance", "modern"],
-  "tone_hints": ["emotional", "intimate", "redemptive"],
+  "genre_hints": [
+    "drama",
+    "romance",
+    "modern"
+  ],
+  "tone_hints": [
+    "emotional",
+    "intimate",
+    "redemptive"
+  ],
   "seed_prompt": "A family drama set during a pivotal weekend where old wounds surface and new bonds form.",
-  "lore_content": "Autumn Falls, Vermont. Population 3,200. The kind of place where everyone knows your business but pretends they don't. The Callahan family has lived here for five generations, and this weekend, they're all coming home for a wedding.\n\nEleanor Callahan, 78, is the family matriarch. Sharp-tongued and sharper-minded, she's kept this family together through sheer force of will. She's hiding a diagnosis she hasn't shared with anyone. This might be the last time she sees all her children in one place.\n\nMichael Callahan, 52, is Eleanor's eldest. A successful Boston lawyer, he hasn't spoken to his brother David in fifteen years over their father's will. His wife Patricia thinks this trip is a mistake. His daughter Emma, the bride, just wants one weekend without drama.\n\nDavid Callahan, 48, stayed in Autumn Falls to run the family hardware store. He's quietly bitter about being the one who stayed while Michael got the glory. His wife Sarah knows he's been drinking again. Their son Jake, 19, is thinking about dropping out of college.\n\nMargaret 'Maggie' Callahan, 45, is the youngest sibling. A free spirit who left for California at 18 and never looked back. She's returning with her partner Alex, whom the family has never met. She's also three months pregnant and hasn't told anyone.\n\nEmma Callahan, 26, is getting married to Ryan Torres, a kind man from a working-class family. She loves him, but part of her wonders if she's settling. Her college ex, James, just RSVP'd yes to the wedding.\n\nRyan Torres, 28, knows the Callahans think he's not good enough for Emma. He's determined to prove himself, but the prenup Michael insisted on still stings.\n\nReverend Thomas Chen has known this family for thirty years. He's seen their best and worst. He's also the only person who knows Eleanor's secret, bound by a confession she made last month.\n\nOver one weekend, secrets will surface, old wounds will reopen, and this family will either heal or shatter."
+  "lore_content": "Autumn Falls, Vermont. Population 3,200. The kind of place where everyone knows your business but pretends they don't. The Callahan family has lived here for five generations, and this weekend, they're all coming home for a wedding.\n\nEleanor Callahan, 78, is the family matriarch. Sharp-tongued and sharper-minded, she's kept this family together through sheer force of will. She's hiding a diagnosis she hasn't shared with anyone. This might be the last time she sees all her children in one place.\n\nMichael Callahan, 52, is Eleanor's eldest. A successful Boston lawyer, he hasn't spoken to his brother David in fifteen years over their father's will. His wife Patricia thinks this trip is a mistake. His daughter Emma, the bride, just wants one weekend without drama.\n\nDavid Callahan, 48, stayed in Autumn Falls to run the family hardware store. He's quietly bitter about being the one who stayed while Michael got the glory. His wife Sarah knows he's been drinking again. Their son Jake, 19, is thinking about dropping out of college.\n\nMargaret 'Maggie' Callahan, 45, is the youngest sibling. A free spirit who left for California at 18 and never looked back. She's returning with her partner Alex, whom the family has never met. She's also three months pregnant and hasn't told anyone.\n\nEmma Callahan, 26, is getting married to Ryan Torres, a kind man from a working-class family. She loves him, but part of her wonders if she's settling. Her college ex, James, just RSVP'd yes to the wedding.\n\nRyan Torres, 28, knows the Callahans think he's not good enough for Emma. He's determined to prove himself, but the prenup Michael insisted on still stings.\n\nReverend Thomas Chen has known this family for thirty years. He's seen their best and worst. He's also the only person who knows Eleanor's secret, bound by a confession she made last month.\n\nOver one weekend, secrets will surface, old wounds will reopen, and this family will either heal or shatter.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "townie",
+        "name": "Townie",
+        "description": "Rooted in Autumn Falls, you know everyone's secrets, and they know yours.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 1,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Persuasion"
+        ],
+        "traits": [
+          "Local Knowledge: Advantage on History checks related to Autumn Falls."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "out_of_stater",
+        "name": "Out-of-Stater",
+        "description": "New to Autumn Falls or returning after a long absence, you see the town with fresh eyes.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Perception"
+        ],
+        "traits": [
+          "Keen Observer: Advantage on Perception checks to notice small details."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "callahan_blood",
+        "name": "Callahan Blood",
+        "description": "Born into the Callahan family, you carry the weight of their legacy and expectations.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Intimidation"
+        ],
+        "traits": [
+          "Callahan Resilience: Advantage on saving throws against being frightened."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "working_class",
+        "name": "Working Class",
+        "description": "You come from a background of hard work and practical skills, often feeling like an outsider among the Callahans.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Animal Handling"
+        ],
+        "traits": [
+          "Practical Knowledge: Proficient in one tool of your choice."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "fixer",
+        "name": "Fixer",
+        "description": "Skilled at resolving conflicts and keeping the peace, often through negotiation or subtle manipulation.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Insight",
+          "Deception",
+          "Investigation",
+          "Performance"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "A set of fine clothes",
+          "A notebook and pen",
+          "A bottle of whiskey"
+        ],
+        "features": [
+          {
+            "name": "Calming Presence",
+            "description": "As an action, you can attempt to calm a creature within 30 feet of you. It must succeed on a Wisdom saving throw (DC 8 + your Charisma modifier + your proficiency bonus) or be charmed by you until the end of your next turn."
+          }
+        ]
+      },
+      {
+        "id": "skeptic",
+        "name": "Skeptic",
+        "description": "A keen observer with a knack for uncovering secrets and questioning everything.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Stealth",
+          "Perception",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "A set of dark clothing",
+          "A magnifying glass",
+          "A lockpick set"
+        ],
+        "features": [
+          {
+            "name": "Uncanny Dodge",
+            "description": "When an attacker that you can see hits you with an attack, you can use your reaction to halve the attack’s damage against you."
+          }
+        ]
+      },
+      {
+        "id": "caretaker",
+        "name": "Caretaker",
+        "description": "Compassionate and dedicated to helping others, often carrying the burdens of those around them.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Insight",
+          "Persuasion",
+          "Religion",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium Armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "A first aid kit",
+          "A book of comforting verses",
+          "A set of plain clothes"
+        ],
+        "features": [
+          {
+            "name": "Soothing Touch",
+            "description": "As an action, you can touch one willing creature and restore a number of hit points equal to your Wisdom modifier + your level. You can use this feature a number of times equal to your Wisdom modifier (minimum of one)."
+          }
+        ]
+      },
+      {
+        "id": "enforcer",
+        "name": "Enforcer",
+        "description": "Used to getting their way through intimidation or force, often protecting those they care about.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Insight",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "A baseball bat",
+          "A heavy coat",
+          "A flask of strong liquor"
+        ],
+        "features": [
+          {
+            "name": "Imposing Presence",
+            "description": "You have advantage on Intimidation checks against creatures smaller than you."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "small_town_gossip",
+        "name": "Small Town Gossip",
+        "base_skill": "Persuasion",
+        "description": "Ability to find out the latest happenings and rumors in Autumn Falls."
+      },
+      {
+        "id": "family_history",
+        "name": "Family History",
+        "base_skill": "History",
+        "description": "Knowledge of the Callahan family and their past."
+      },
+      {
+        "id": "reading_people",
+        "name": "Reading People",
+        "base_skill": "Insight",
+        "description": "Ability to gauge someone's emotional state or honesty."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

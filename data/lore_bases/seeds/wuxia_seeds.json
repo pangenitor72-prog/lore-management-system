@@ -3,8 +3,352 @@
   "name": "The Jade Kingdom",
   "description": "Ancient China, where martial arts masters walk among clouds and honor means more than life.",
   "genre": "wuxia",
-  "genre_hints": ["wuxia", "adventure", "drama"],
-  "tone_hints": ["elegant", "honorable", "tragic"],
+  "genre_hints": [
+    "wuxia",
+    "adventure",
+    "drama"
+  ],
+  "tone_hints": [
+    "elegant",
+    "honorable",
+    "tragic"
+  ],
   "seed_prompt": "A wuxia setting of martial arts schools, wandering swordsmen, and the pursuit of perfection.",
-  "lore_content": "The Jade Kingdom has known peace for a generation under the wise Emperor. But the martial world - the jianghu - follows its own laws, where honor and skill determine one's standing.\n\nLin Xiaoyun is called the Wandering Sword, a masterless warrior who travels the land righting wrongs. She left the Wudang School after her master's murder, seeking the seven disciples who betrayed him. Four are dead by her blade. Three remain.\n\nMaster Chen Wei leads the Shaolin Temple, guardian of justice in the martial world. An old man now, he trained the greatest warriors of the age. He knows his final student has surpassed him and fears what that student plans to do with such power.\n\nThe Jade Empress is the kingdom's true power behind the throne. Her network of spies and assassins ensures stability - and eliminates threats. She was once a beggar girl; now she protects an empire. Her methods are brutal but effective.\n\nWu Zhihao is the Young Phoenix, prodigy of the Azure Cloud Sect. At twenty, his kung fu rivals masters twice his age. Fame has made him arrogant, and arrogance makes enemies. He's challenged the wrong person, and the duel is set for the next full moon.\n\nThe Beggar Sect controls the roads and rivers, a brotherhood of outcasts who know everything that happens in the kingdom. Their leader, Liu Bai, seems a simple drunk. In truth, his Drunken Fist style has never been defeated.\n\nIn the Western Territories, the Demon Cult rises again. They practice forbidden techniques that corrupt the body and soul but grant terrible power. The new Cult Leader claims to have perfected a technique that conquers death itself.\n\nThe Tournament of Heaven's Gate occurs once per decade, where the greatest martial artists compete for the title of Supreme Master. This year, rumors say someone will reveal the legendary Nine Yang Manual - a prize worth killing for."
+  "lore_content": "The Jade Kingdom has known peace for a generation under the wise Emperor. But the martial world - the jianghu - follows its own laws, where honor and skill determine one's standing.\n\nLin Xiaoyun is called the Wandering Sword, a masterless warrior who travels the land righting wrongs. She left the Wudang School after her master's murder, seeking the seven disciples who betrayed him. Four are dead by her blade. Three remain.\n\nMaster Chen Wei leads the Shaolin Temple, guardian of justice in the martial world. An old man now, he trained the greatest warriors of the age. He knows his final student has surpassed him and fears what that student plans to do with such power.\n\nThe Jade Empress is the kingdom's true power behind the throne. Her network of spies and assassins ensures stability - and eliminates threats. She was once a beggar girl; now she protects an empire. Her methods are brutal but effective.\n\nWu Zhihao is the Young Phoenix, prodigy of the Azure Cloud Sect. At twenty, his kung fu rivals masters twice his age. Fame has made him arrogant, and arrogance makes enemies. He's challenged the wrong person, and the duel is set for the next full moon.\n\nThe Beggar Sect controls the roads and rivers, a brotherhood of outcasts who know everything that happens in the kingdom. Their leader, Liu Bai, seems a simple drunk. In truth, his Drunken Fist style has never been defeated.\n\nIn the Western Territories, the Demon Cult rises again. They practice forbidden techniques that corrupt the body and soul but grant terrible power. The new Cult Leader claims to have perfected a technique that conquers death itself.\n\nThe Tournament of Heaven's Gate occurs once per decade, where the greatest martial artists compete for the title of Supreme Master. This year, rumors say someone will reveal the legendary Nine Yang Manual - a prize worth killing for.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "jianghu_wanderer",
+        "name": "Jianghu Wanderer",
+        "description": "Born and raised in the ever-changing jianghu, you are accustomed to hardship and know how to survive.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Athletics"
+        ],
+        "traits": [
+          "Unburdened Traveler: You can travel an additional 1d4 hours before needing to rest.",
+          "Knowing the Land: You can recall the general layout of land within a 1 mile radius."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "noble_scion",
+        "name": "Noble Scion",
+        "description": "You were born into a life of privilege and refinement, granting you social grace and knowledge of courtly affairs.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "Silver Tongue: Advantage on Persuasion checks when interacting with nobles or officials.",
+          "Courtly Knowledge: You know the general histories of prominent noble families in the Jade Kingdom."
+        ],
+        "languages": [
+          "Common",
+          "High Imperial"
+        ]
+      },
+      {
+        "id": "temple_initiate",
+        "name": "Temple Initiate",
+        "description": "You dedicated your life to monastic study, training your mind and body in the ways of discipline and inner peace.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Religion",
+          "Medicine"
+        ],
+        "traits": [
+          "Inner Peace: Advantage on saving throws against being charmed or frightened.",
+          "Meditative Focus: Once per day, you can regain 1d4 hit points by meditating for 10 minutes."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "jadeblood_heritage",
+        "name": "Jadeblood Heritage",
+        "description": "A descendant of ancient spirits, known for their resilience and affinity for the mystical.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Nature",
+          "Survival"
+        ],
+        "traits": [
+          "Jade Resilience: You have advantage on saving throws against poison.",
+          "Spirit's Touch: You can communicate simple ideas to animals."
+        ],
+        "languages": [
+          "Common",
+          "Ancient Tongues"
+        ]
+      },
+      {
+        "id": "demon_touched",
+        "name": "Demon-Touched",
+        "description": "Branded from birth, your lineage bears a dark secret, granting you strength and corruption.",
+        "base_type": "tiefling",
+        "ability_bonuses": {
+          "charisma": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Intimidation",
+          "Deception"
+        ],
+        "traits": [
+          "Infernal Resistance: You have resistance to fire damage.",
+          "Darkvision: See in dim light within 60 feet as if it were bright light, and in darkness as if it were dim light."
+        ],
+        "languages": [
+          "Common",
+          "Infernal"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "wandering_blade",
+        "name": "Wandering Blade",
+        "description": "A masterless swordsman roaming the land, driven by honor and a thirst for justice.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Acrobatics",
+          "Insight",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Traveler's Clothes",
+          "Steel Longsword",
+          "Dagger",
+          "Waterskin"
+        ],
+        "features": [
+          {
+            "name": "Blade Focus",
+            "description": "Your attacks with longswords deal an additional 1d4 damage of the same damage type."
+          }
+        ]
+      },
+      {
+        "id": "shadow_hand",
+        "name": "Shadow Hand",
+        "description": "A stealthy assassin or spy, trained in the arts of deception and silent elimination.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Stealth",
+          "Deception",
+          "Investigation",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two daggers",
+          "Shortsword",
+          "Thieves' tools"
+        ],
+        "features": [
+          {
+            "name": "Silent Step",
+            "description": "You have advantage on Dexterity (Stealth) checks made to move silently."
+          }
+        ]
+      },
+      {
+        "id": "spirit_channeler",
+        "name": "Spirit Channeler",
+        "description": "A mystic who draws power from the spirit world, manipulating the energies of nature and the elements.",
+        "base_type": "sorcerer",
+        "hit_die": "d6",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Constitution",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Religion",
+          "Insight",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings",
+          "Quarterstaffs",
+          "Light Crossbows"
+        ],
+        "starting_equipment": [
+          "A light crossbow and 20 bolts",
+          "A component pouch",
+          "A dagger",
+          "Scroll of knowledge"
+        ],
+        "features": [
+          {
+            "name": "Spirit Affinity",
+            "description": "You have resistance to necrotic damage."
+          }
+        ]
+      },
+      {
+        "id": "drunken_master",
+        "name": "Drunken Master",
+        "description": "A martial artist who uses unorthodox and unpredictable movements, fueled by alcohol, to overcome opponents.",
+        "base_type": "monk",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Athletics",
+          "Insight",
+          "Performance"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Shortsword",
+          "Explorer's Pack",
+          "10 Darts",
+          "Gourd of Wine"
+        ],
+        "features": [
+          {
+            "name": "Drunken Agility",
+            "description": "You can spend 1 ki point to take the Disengage action or the Dodge action as a bonus action on your turn."
+          }
+        ]
+      },
+      {
+        "id": "forbidden_scholar",
+        "name": "Forbidden Scholar",
+        "description": "A seeker of forgotten lore and dangerous knowledge, dabbling in arts best left undisturbed.",
+        "base_type": "warlock",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "A light crossbow and 20 bolts",
+          "A component pouch",
+          "A dagger",
+          "A book of forbidden secrets"
+        ],
+        "features": [
+          {
+            "name": "Whispers of the Old Ones",
+            "description": "You can communicate telepathically with any creature you can see within 30 feet of you."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "tea_ceremony",
+        "name": "Tea Ceremony",
+        "base_skill": "Performance",
+        "description": "The art of brewing and serving tea to convey respect, build rapport, and subtly influence others."
+      },
+      {
+        "id": "pressure_points",
+        "name": "Pressure Points",
+        "base_skill": "Medicine",
+        "description": "Knowledge of vital points on the body that can be manipulated for healing or debilitating effects."
+      },
+      {
+        "id": "geomancy",
+        "name": "Geomancy",
+        "base_skill": "Nature",
+        "description": "Understanding of the flow of energy within the land and how to harness it for divination or manipulation."
+      },
+      {
+        "id": "calligraphy",
+        "name": "Calligraphy",
+        "base_skill": "History",
+        "description": "Mastery of the written word, enabling the character to forge documents, decipher ancient texts, and create works of art."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }

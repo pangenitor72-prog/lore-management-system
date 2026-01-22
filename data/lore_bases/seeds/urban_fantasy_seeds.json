@@ -3,8 +3,357 @@
   "name": "The Veiled City",
   "description": "Magic hides in plain sight in a modern metropolis. Wizards, fae, and monsters walk among the unknowing mortals.",
   "genre": "urban_fantasy",
-  "genre_hints": ["urban_fantasy", "mystery", "adventure"],
-  "tone_hints": ["noir", "magical", "gritty"],
+  "genre_hints": [
+    "urban_fantasy",
+    "mystery",
+    "adventure"
+  ],
+  "tone_hints": [
+    "noir",
+    "magical",
+    "gritty"
+  ],
   "seed_prompt": "A modern city where magic exists in the shadows. Ancient powers operate behind a veil of normalcy while ordinary people remain blissfully unaware.",
-  "lore_content": "The Veiled City exists in the shadows of a modern metropolis, where magic operates behind a curtain of mundane reality. The Covenant of Mages enforces the Laws of Magic from their hidden sanctum, punishing those who use magic to kill, manipulate minds, or breach the barriers between worlds.\n\nWarden Commander Elena Blackwood leads the Covenant's enforcers in the city. A war veteran of the Vampire Courts conflict, she carries a silver blade that can cut through any supernatural defense. Her harsh exterior hides guilt over those she couldn't save during the Crimson Night massacre.\n\nThe Fae Courts maintain embassies in the city, disguised as exclusive nightclubs. The Summer Court's 'Solstice' caters to artists and dreamers, while Winter's 'Permafrost' draws the ambitious and ruthless. Crossing either court means owing debts that compound with terrifying interest.\n\nDetective Marcus Chen runs the unofficial 'weird cases' desk at the police department. A Sensitive with limited magical sight, he bridges the gap between mundane law enforcement and the supernatural community. He's learned that justice looks different when your suspect can turn into mist.\n\nThe Archivist, a young woman named Sarah who inherited the sum of all recorded magical knowledge, operates from a used bookstore called 'Between the Lines.' She cannot act directly but trades information for favors. Those who break deals with her simply... vanish from records.\n\nBeneath the streets, the Undertown sprawls - a network of tunnels where those unwelcome in both worlds make their home. Goblins run gambling dens, minor spirits sell cheap enchantments, and things that have no names lurk in the deepest passages.\n\nThe old vampire bloodlines were destroyed in the war, but something new moves through the nightclubs and blood banks. The Crimson Covenant claims to offer a new way - feeding without killing. The Mages remain skeptical.\n\nMagic has rules. Iron disrupts fairy magic. Thresholds protect homes from uninvited supernatural entry. True names have power. And above all, the Veil must be maintained - because if humanity learned the truth, the resulting panic would be worse than any monster."
+  "lore_content": "The Veiled City exists in the shadows of a modern metropolis, where magic operates behind a curtain of mundane reality. The Covenant of Mages enforces the Laws of Magic from their hidden sanctum, punishing those who use magic to kill, manipulate minds, or breach the barriers between worlds.\n\nWarden Commander Elena Blackwood leads the Covenant's enforcers in the city. A war veteran of the Vampire Courts conflict, she carries a silver blade that can cut through any supernatural defense. Her harsh exterior hides guilt over those she couldn't save during the Crimson Night massacre.\n\nThe Fae Courts maintain embassies in the city, disguised as exclusive nightclubs. The Summer Court's 'Solstice' caters to artists and dreamers, while Winter's 'Permafrost' draws the ambitious and ruthless. Crossing either court means owing debts that compound with terrifying interest.\n\nDetective Marcus Chen runs the unofficial 'weird cases' desk at the police department. A Sensitive with limited magical sight, he bridges the gap between mundane law enforcement and the supernatural community. He's learned that justice looks different when your suspect can turn into mist.\n\nThe Archivist, a young woman named Sarah who inherited the sum of all recorded magical knowledge, operates from a used bookstore called 'Between the Lines.' She cannot act directly but trades information for favors. Those who break deals with her simply... vanish from records.\n\nBeneath the streets, the Undertown sprawls - a network of tunnels where those unwelcome in both worlds make their home. Goblins run gambling dens, minor spirits sell cheap enchantments, and things that have no names lurk in the deepest passages.\n\nThe old vampire bloodlines were destroyed in the war, but something new moves through the nightclubs and blood banks. The Crimson Covenant claims to offer a new way - feeding without killing. The Mages remain skeptical.\n\nMagic has rules. Iron disrupts fairy magic. Thresholds protect homes from uninvited supernatural entry. True names have power. And above all, the Veil must be maintained - because if humanity learned the truth, the resulting panic would be worse than any monster.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "sensitive",
+        "name": "Sensitive",
+        "description": "Some individuals are born with a heightened awareness of magic and the supernatural.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Insight"
+        ],
+        "traits": [
+          "Sixth Sense: Gain advantage on saving throws against illusions.",
+          "Limited Magic Sight: You can perceive faint magical auras."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "covenant_mage",
+        "name": "Covenant Initiate",
+        "description": "Raised from a young age within the Covenant of Mages, you understand the basics of magical theory and practice.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "History"
+        ],
+        "traits": [
+          "Magical Aptitude: You know one extra cantrip of your choice from the wizard spell list.",
+          "Covenant Training: You have advantage on checks made to identify magical objects or rituals."
+        ],
+        "languages": [
+          "Common",
+          "Infernal"
+        ]
+      },
+      {
+        "id": "undertown_dweller",
+        "name": "Undertown Dweller",
+        "description": "Life in the Undertown is hard, but it breeds resourcefulness and a deep understanding of the city's underbelly.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Sleight of Hand"
+        ],
+        "traits": [
+          "Undertown Contacts: You know how to find information and assistance in the Undertown.",
+          "Shadow Walker: You have advantage on Stealth checks made in dim light or darkness."
+        ],
+        "languages": [
+          "Common",
+          "Goblin"
+        ]
+      },
+      {
+        "id": "fae_touched",
+        "name": "Fae-Touched",
+        "description": "A chance encounter with the Fae has left you marked by their magic, granting you unusual abilities and a connection to the Courts.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Deception"
+        ],
+        "traits": [
+          "Fae Favor: Choose Summer or Winter. You have advantage on Charisma checks when interacting with members of that court.",
+          "Glimmering Presence: Once per long rest, you can cast the 'Friends' cantrip."
+        ],
+        "languages": [
+          "Common",
+          "Sylvan"
+        ]
+      },
+      {
+        "id": "crimson_born",
+        "name": "Crimson-Born",
+        "description": "A recent initiate of the Crimson Covenant. You walk the path of modern vampirism.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 2
+        },
+        "skill_proficiencies": [
+          "Intimidation",
+          "Medicine"
+        ],
+        "traits": [
+          "Blood Thirst: You have disadvantage on Charisma (Persuasion) checks when hungry.",
+          "Crimson Resilience: You gain resistance to necrotic damage."
+        ],
+        "languages": [
+          "Common",
+          "Abyssal"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "warden",
+        "name": "Warden",
+        "description": "An enforcer of the Covenant, tasked with upholding the Laws of Magic and protecting the Veil.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Heavy armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "A martial weapon",
+          "A shield",
+          "An Investigator's Kit"
+        ],
+        "features": [
+          {
+            "name": "Veil Guardian",
+            "description": "You gain advantage on saving throws against effects that would reveal the existence of magic to non-sensitives."
+          },
+          {
+            "name": "Law Enforcement",
+            "description": "You can use your action to restrain a creature you have grappled."
+          }
+        ]
+      },
+      {
+        "id": "spellbinder",
+        "name": "Spellbinder",
+        "description": "A versatile mage who uses both arcane knowledge and raw magical power to shape reality.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings",
+          "Quarterstaffs",
+          "Light Crossbows"
+        ],
+        "starting_equipment": [
+          "A spellbook",
+          "A component pouch",
+          "A dagger"
+        ],
+        "features": [
+          {
+            "name": "Arcane Studies",
+            "description": "Choose a school of magic. Spells of that school cost one less spell slot (minimum of 1)."
+          }
+        ]
+      },
+      {
+        "id": "shadow_dealer",
+        "name": "Shadow Dealer",
+        "description": "A cunning manipulator who thrives in the shadows, dealing in secrets, favors, and forbidden knowledge.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Stealth",
+          "Deception",
+          "Streetwise",
+          "Persuasion"
+        ],
+        "num_skill_choices": 4,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand Crossbows",
+          "Longswords",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two daggers",
+          "Thieves' tools",
+          "A set of fine clothes"
+        ],
+        "features": [
+          {
+            "name": "Whispers in the Dark",
+            "description": "You gain advantage on Intelligence checks made to gather information in urban environments."
+          }
+        ]
+      },
+      {
+        "id": "channeler",
+        "name": "Channeler",
+        "description": "A conduit for supernatural energies, drawing power from sources beyond the Veil to heal, protect, or destroy.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "History",
+          "Insight",
+          "Medicine",
+          "Persuasion",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "A simple weapon",
+          "A holy symbol"
+        ],
+        "features": [
+          {
+            "name": "Divine Domain",
+            "description": "Choose a Divine Domain appropriate for the setting (e.g., Knowledge, Life, Trickery)."
+          }
+        ]
+      },
+      {
+        "id": "bloodhunter",
+        "name": "Bloodhunter",
+        "description": "A disciplined warrior dedicated to hunting down creatures of the night, often at a great personal cost.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Survival",
+          "Investigation",
+          "Medicine",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two shortswords",
+          "Longbow and 20 arrows",
+          "an Explorer's Pack"
+        ],
+        "features": [
+          {
+            "name": "Favored Enemy",
+            "description": "Choose one type of aberration, fiend, or undead. You have advantage on Wisdom (Survival) checks to track them and Intelligence checks to recall information about them."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Understanding the unspoken rules and power dynamics of the urban landscape."
+      },
+      {
+        "id": "arcane_lore",
+        "name": "Arcane Lore",
+        "base_skill": "Arcana",
+        "description": "Knowledge of magical theories, spells, and rituals."
+      },
+      {
+        "id": "veiled_history",
+        "name": "Veiled History",
+        "base_skill": "History",
+        "description": "Understanding the hidden history of the Veiled City and its supernatural inhabitants."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
 }
