@@ -1666,8 +1666,8 @@ async def extract_character_options(
     )
 
     # Debug logging to diagnose lore content issues
-    logger.info(f"Extract options for '{lore_id}': lore_content={len(base.get('lore_content', ''))}, "
-                f"description={len(base.get('description', ''))}, seed_prompt={len(base.get('seed_prompt', ''))}")
+    logger.info(f"Extract options for '{lore_id}': lore_content={len(base.get('lore_content') or '')}, "
+                f"description={len(base.get('description') or '')}, seed_prompt={len(base.get('seed_prompt') or '')}")
 
     if not lore_content:
         raise HTTPException(
