@@ -1790,12 +1790,22 @@ async def extract_pending_mappings(
         )
 
     base = LORE_BASES[lore_id]
-    lore_content = base.get("lore_content", "") or base.get("description", "")
+
+    # Try multiple fields for lore content - seed_prompt often has rich content
+    lore_content = (
+        base.get("lore_content", "") or
+        base.get("description", "") or
+        base.get("seed_prompt", "")
+    )
+
+    # Debug logging to diagnose lore content issues
+    logger.info(f"MANTLE extract for '{lore_id}': lore_content={len(base.get('lore_content', ''))}, "
+                f"description={len(base.get('description', ''))}, seed_prompt={len(base.get('seed_prompt', ''))}")
 
     if not lore_content:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="World has no lore content to analyze"
+            detail=f"World has no lore content to analyze. Fields checked: lore_content, description, seed_prompt"
         )
 
     # Determine genre

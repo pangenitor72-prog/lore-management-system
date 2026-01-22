@@ -201,9 +201,10 @@ class GuidedCreationFlow:
         "leadership": ["charisma", "wisdom"],
     }
 
-    def __init__(self, genre: str = "fantasy"):
+    def __init__(self, genre: str = "fantasy", world_character_options: Dict[str, Any] = None):
         self.state = GuidedCreationState()
         self.genre = genre  # Store for future genre-specific content
+        self.world_options = world_character_options  # MANTLE world-specific options
 
     def get_current_step(self) -> int:
         return self.state.step
@@ -223,27 +224,53 @@ class GuidedCreationFlow:
         elif step == 1:
             # Get genre-specific origins instead of hardcoded D&D races
             genre_config = get_genre(self.genre)
-            origins = get_origins_for_genre(self.genre)
 
-            # Build options from origins
+            # Use world-specific MANTLE options if available
             options = []
-            for origin in origins:
-                # Format ability bonuses as hint
-                if origin.ability_bonuses:
-                    bonus_parts = [f"+{v} {k.title()}" for k, v in origin.ability_bonuses.items() if v > 0]
-                    mechanical_hint = ", ".join(bonus_parts[:3])  # Limit to 3 for readability
-                    if len(bonus_parts) > 3:
-                        mechanical_hint += " and more"
-                else:
-                    mechanical_hint = "Balanced abilities"
+            if self.world_options and self.world_options.get("origins"):
+                # World has MANTLE-approved origins - use these exclusively
+                for origin_data in self.world_options["origins"]:
+                    # Look up base type mechanics from genre data
+                    base_type = origin_data.get("base_type", "human")
+                    base_origin = get_origin(base_type, self.genre)
 
-                options.append({
-                    "id": origin.id,
-                    "name": origin.display_name,
-                    "tagline": origin.personality_hint.split(",")[0] if origin.personality_hint else origin.description[:50],
-                    "description": origin.description,
-                    "mechanical_hint": mechanical_hint,
-                })
+                    # Format ability bonuses from base type
+                    if base_origin and base_origin.ability_bonuses:
+                        bonus_parts = [f"+{v} {k.title()}" for k, v in base_origin.ability_bonuses.items() if v > 0]
+                        mechanical_hint = ", ".join(bonus_parts[:3])
+                        if len(bonus_parts) > 3:
+                            mechanical_hint += " and more"
+                    else:
+                        mechanical_hint = "Balanced abilities"
+
+                    options.append({
+                        "id": origin_data.get("id", origin_data.get("name", "").lower().replace(" ", "_")),
+                        "name": origin_data.get("name", "Unknown"),
+                        "tagline": origin_data.get("description", "")[:50],
+                        "description": origin_data.get("description", "A unique origin"),
+                        "mechanical_hint": mechanical_hint,
+                        "base_type": base_type,  # Include base type for mechanics
+                    })
+            else:
+                # Fall back to genre default origins
+                origins = get_origins_for_genre(self.genre)
+                for origin in origins:
+                    # Format ability bonuses as hint
+                    if origin.ability_bonuses:
+                        bonus_parts = [f"+{v} {k.title()}" for k, v in origin.ability_bonuses.items() if v > 0]
+                        mechanical_hint = ", ".join(bonus_parts[:3])  # Limit to 3 for readability
+                        if len(bonus_parts) > 3:
+                            mechanical_hint += " and more"
+                    else:
+                        mechanical_hint = "Balanced abilities"
+
+                    options.append({
+                        "id": origin.id,
+                        "name": origin.display_name,
+                        "tagline": origin.personality_hint.split(",")[0] if origin.personality_hint else origin.description[:50],
+                        "description": origin.description,
+                        "mechanical_hint": mechanical_hint,
+                    })
 
             # Use genre-appropriate terminology
             origin_term = genre_config.terminology.origin
@@ -260,18 +287,39 @@ class GuidedCreationFlow:
             # NOTE: has_powers can mean magic, tech, psionics, ki, etc. depending on genre
             # The genre-specific archetypes already have appropriate powers for their setting
             genre_config = get_genre(self.genre)
-            archetypes = get_archetypes_for_genre(self.genre)
 
-            # Build options from archetypes
+            # Use world-specific MANTLE options if available
             options = []
-            for arch in archetypes:
-                options.append({
-                    "id": arch.id,
-                    "name": arch.display_name,
-                    "tagline": arch.playstyle_hint.split(",")[0] if arch.playstyle_hint else arch.description[:50],
-                    "description": arch.description,
-                    "playstyle": arch.playstyle_hint or "Versatile adventurer",
-                })
+            if self.world_options and self.world_options.get("archetypes"):
+                # World has MANTLE-approved archetypes - use these exclusively
+                for arch_data in self.world_options["archetypes"]:
+                    # Look up base type mechanics from genre data
+                    base_type = arch_data.get("base_type", "fighter")
+                    base_arch = get_archetype(base_type, self.genre)
+
+                    playstyle = arch_data.get("description", "")[:60]
+                    if base_arch and base_arch.playstyle_hint:
+                        playstyle = base_arch.playstyle_hint
+
+                    options.append({
+                        "id": arch_data.get("id", arch_data.get("name", "").lower().replace(" ", "_")),
+                        "name": arch_data.get("name", "Unknown"),
+                        "tagline": arch_data.get("description", "")[:50],
+                        "description": arch_data.get("description", "A unique calling"),
+                        "playstyle": playstyle,
+                        "base_type": base_type,  # Include base type for mechanics
+                    })
+            else:
+                # Fall back to genre default archetypes
+                archetypes = get_archetypes_for_genre(self.genre)
+                for arch in archetypes:
+                    options.append({
+                        "id": arch.id,
+                        "name": arch.display_name,
+                        "tagline": arch.playstyle_hint.split(",")[0] if arch.playstyle_hint else arch.description[:50],
+                        "description": arch.description,
+                        "playstyle": arch.playstyle_hint or "Versatile adventurer",
+                    })
 
             # Use genre-appropriate terminology
             archetype_term = genre_config.terminology.archetype

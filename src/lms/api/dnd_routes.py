@@ -509,9 +509,20 @@ async def create_character_from_concept(request: CharacterCreateRequest):
         user_genre=user_genre,
         lore_bases=LORE_BASES,
     )
-    
-    # Use mechanics genre for character generation
-    generator = ConceptGenerator(genre=mechanics_genre)
+
+    # Get world's character options for MANTLE translation (if world provided)
+    world_character_options = None
+    if request.world_id and request.world_id in LORE_BASES:
+        world_data = LORE_BASES[request.world_id]
+        world_character_options = world_data.get("character_options")
+        if world_character_options:
+            logger.info(f"Using MANTLE character options for world '{request.world_id}'")
+
+    # Use mechanics genre and world options for character generation
+    generator = ConceptGenerator(
+        genre=mechanics_genre,
+        world_character_options=world_character_options
+    )
     character = generator.generate_from_concept_sync(
         request.concept,
         player_id=request.player_id,
@@ -589,13 +600,25 @@ async def start_guided_creation(request: GuidedStartRequest = None, player_id: s
     else:
         actual_genre = user_genre
 
-    flow = GuidedCreationFlow(genre=actual_genre)
+    # Get world's character options for MANTLE translation (if world provided)
+    world_character_options = None
+    if world_id and world_id in LORE_BASES:
+        world_data = LORE_BASES[world_id]
+        world_character_options = world_data.get("character_options")
+        if world_character_options:
+            logger.info(f"Guided flow using MANTLE character options for world '{world_id}'")
+
+    flow = GuidedCreationFlow(
+        genre=actual_genre,
+        world_character_options=world_character_options
+    )
     flow_id = f"guided_{actual_player_id or 'anon'}_{len(_creation_flows)}"
     _creation_flows[flow_id] = {
         "flow": flow,
         "genre": actual_genre,
         "flavor_genres": flavor_genres,
         "world_id": world_id,
+        "world_character_options": world_character_options,  # Store for later steps
     }
 
     return {
