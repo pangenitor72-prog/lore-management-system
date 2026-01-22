@@ -6,6 +6,23 @@ This module converts extracted personality cues into full OCEAN profiles
 using the existing PersonalityGenerator in src.core.models.
 
 It serves as the bridge between narrative text (traits) and psychological structure (OCEAN).
+
+TODO: Architectural Gap - PersonalityGenerator.generate_from_text() Missing
+----------------------------------------------------------------------
+The original design expected PersonalityGenerator to have a `generate_from_text(personality_text)`
+method that would use AI to map arbitrary prose to OCEAN profiles. This method was never implemented.
+
+Current workaround (implemented here):
+1. Try to match tags to known roles via PersonalityGenerator.generate_from_role()
+2. Fall back to _heuristic_ocean_from_traits() which does keyword-based mapping
+3. Default to neutral 0.5 baseline if neither works
+
+The heuristic approach is limited (~15 keywords). A proper generate_from_text() implementation
+in src/lms/core/models.py could use the Gemini API to map any descriptive text to OCEAN values,
+which would be more accurate and flexible.
+
+Priority: Low (current workaround is functional)
+Identified by: AI code review, 2026-01
 """
 
 import logging
