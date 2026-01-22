@@ -303,3 +303,70 @@ Tests use `InMemoryMockDatabase` from `src/lms/db/mock_adapter.py`:
 # - mock_neo4j_db: InMemoryMockDatabase instance
 # - client: TestClient with mocked dependencies
 ```
+
+## API Route Structure (IMPORTANT!)
+
+**Router Prefixes:** Routers have their own prefixes that stack with mount prefixes:
+
+```python
+# game_routes.py has:
+router = APIRouter(prefix="/game", tags=["Game"])  # <-- Router prefix
+
+# routes.py mounts it:
+app.include_router(game_router, prefix="/api")     # <-- Mount prefix
+
+# Final path: /api/game/lore-bases (not /api/lore-bases!)
+```
+
+**Frontend API Calls:**
+```javascript
+const API_BASE = window.location.origin + '/api';
+
+// CORRECT - game routes need /game/ prefix:
+fetch(API_BASE + '/game/lore-bases')      // → /api/game/lore-bases
+
+// Other routers without /game/ prefix:
+fetch(API_BASE + '/orchestrator/status')  // → /api/orchestrator/status
+fetch(API_BASE + '/memory/sessions')      // → /api/memory/sessions
+```
+
+**Router → Mount Mapping:**
+| Router | Mount Prefix | Router Prefix | Example Endpoint |
+|--------|-------------|---------------|------------------|
+| game_router | /api | /game | /api/game/lore-bases |
+| orchestrator_router | /api | (none) | /api/orchestrator/status |
+| memory_router | /api | (none) | /api/memory/sessions |
+| dnd_router | /api | (none) | /api/dnd/characters |
+
+## Working with the User (Ben) - Session Notes
+
+### Communication Preferences
+- Be **explicit** about what changes have been made vs deployed
+- When user asks "why isn't this working?", first check deployment status
+- User values efficiency - use parallel tool calls when possible
+- User appreciates when Claude mentions relevant context proactively
+
+### Common Gotchas
+1. **API Route Prefixes**: game_routes.py has `prefix="/game"` on the router itself
+2. **Local vs Deployed**: Always clarify if changes need deployment
+3. **Two Frontend Files**: Changes must go in BOTH `frontend/dist/index.html` AND `frontend/index.html`
+4. **Version Tracking**: Update `data/deployed_version.txt` after deploys
+
+### Testing Workflow
+1. User often tests on live site (https://lore-management-system.fly.dev/)
+2. Jim (collaborator) also does playtesting and reports issues
+3. Feedback often comes mid-session - handle gracefully without losing context
+
+### Character Creation System (MANTLE)
+- **Origins** = Setting-specific races (map to D&D 5e base races)
+- **Archetypes** = Setting-specific classes (map to D&D 5e base classes)
+- **Seeds** = Pre-made world templates in `data/lore_bases/seeds/`
+- Each seed has `character_options` with origins, archetypes, and setting_skills
+- AI can extract character options from lore content
+
+### Key Files for Common Tasks
+- **Add new API endpoint**: `src/lms/api/game_routes.py`
+- **Modify DM behavior**: `src/lms/agents/dm_agent.py`
+- **Character creation UI**: Search "Character Options" in `frontend/dist/index.html`
+- **World seeds**: `data/lore_bases/seeds/*.json`
+- **Design tokens**: Search `:root {` in frontend files
