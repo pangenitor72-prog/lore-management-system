@@ -289,7 +289,11 @@ Output valid JSON only, no markdown:
         return {"origins": [], "archetypes": [], "ai_generated": False}
 
 
-async def generate_pending_mappings_from_lore(
+# NOTE: generate_pending_mappings_from_lore was removed - use generate_character_options_from_lore instead
+# Character options are now directly editable without a separate approval workflow.
+
+
+async def _removed_generate_pending_mappings_from_lore(
     world_id: str,
     lore_content: str,
     world_name: str,
@@ -1526,262 +1530,75 @@ async def update_character_options(
 
 
 # =============================================================================
-# MANTLE INGESTION & APPROVAL - Pending Mapping Endpoints
+# CHARACTER OPTIONS ENDPOINTS
 # =============================================================================
-# TODO: Consider extracting to src/lms/api/mantle_routes.py when game_routes.py
-#       exceeds 10,000 lines or when adding another developer to the project.
-#       This section (~300 lines) is a self-contained feature that could be its own module.
+# Character options (origins/archetypes) are directly editable without a staging workflow.
+# - GET /admin/lore-bases/{lore_id}/character-options - view current options
+# - PUT /admin/lore-bases/{lore_id}/character-options - edit options
+# - POST /admin/lore-bases/{lore_id}/character-options/generate - AI generate from lore
+# - POST /admin/lore-bases/{lore_id}/extract-mappings - alias for generate (legacy)
 
-# In-memory storage for pending mappings (persisted to Neo4j on approval)
-PENDING_MAPPINGS: Dict[str, Dict[str, Any]] = {}  # mapping_id -> mapping data
 
-
+# Legacy endpoints - return character options instead of pending mappings
 @router.get("/admin/pending-mappings")
-async def list_all_pending_mappings(
-    http_request: Request,
-    status_filter: Optional[str] = None,
-):
-    """
-    List all pending mappings across all worlds.
-
-    Args:
-        status_filter: Optional filter for mapping status ('pending', 'active', 'rejected')
-    """
-    mappings = []
-
-    for mapping_id, mapping_data in PENDING_MAPPINGS.items():
-        if status_filter and mapping_data.get("status") != status_filter:
-            continue
-        mappings.append(mapping_data)
-
-    # Group by world
-    by_world = {}
-    for m in mappings:
-        world_id = m.get("world_id", "unknown")
-        if world_id not in by_world:
-            world_name = LORE_BASES.get(world_id, {}).get("name", world_id)
-            by_world[world_id] = {
-                "world_id": world_id,
-                "world_name": world_name,
-                "mappings": [],
-                "pending_count": 0,
-                "active_count": 0
-            }
-        by_world[world_id]["mappings"].append(m)
-        if m.get("status") == "pending":
-            by_world[world_id]["pending_count"] += 1
-        elif m.get("status") == "active":
-            by_world[world_id]["active_count"] += 1
-
-    return {
-        "worlds": list(by_world.values()),
-        "total_pending": sum(w["pending_count"] for w in by_world.values()),
-        "total_active": sum(w["active_count"] for w in by_world.values())
-    }
+async def list_pending_mappings_legacy(http_request: Request, status_filter: Optional[str] = None):
+    """DEPRECATED: Pending mappings removed. Use character options endpoints instead."""
+    return {"worlds": [], "total_pending": 0, "total_active": 0, "message": "Pending mappings deprecated - use character options"}
 
 
 @router.get("/admin/lore-bases/{lore_id}/pending-mappings")
-async def get_pending_mappings_for_world(
-    lore_id: str,
-    http_request: Request,
-    status_filter: Optional[str] = None,
-):
-    """
-    Get pending mappings for a specific world.
-
-    These are AI-proposed translations awaiting admin approval.
-    """
+async def get_pending_mappings_for_world_legacy(lore_id: str, http_request: Request, status_filter: Optional[str] = None):
+    """DEPRECATED: Returns character options for the world instead."""
     if lore_id not in LORE_BASES:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Lore base '{lore_id}' not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Lore base '{lore_id}' not found")
 
-    mappings = []
-    for mapping_id, mapping_data in PENDING_MAPPINGS.items():
-        if mapping_data.get("world_id") != lore_id:
-            continue
-        if status_filter and mapping_data.get("status") != status_filter:
-            continue
-        mappings.append(mapping_data)
-
-    # Sort by confidence score (highest first) then by type
-    mappings.sort(key=lambda m: (-m.get("confidence_score", 0), m.get("mapping_type", "")))
-
+    # Return character options as "mappings" for backward compatibility
+    options = LORE_BASES[lore_id].get("character_options", {})
     world_name = LORE_BASES.get(lore_id, {}).get("name", lore_id)
-    pending_count = sum(1 for m in mappings if m.get("status") == "pending")
-    active_count = sum(1 for m in mappings if m.get("status") == "active")
 
     return {
         "world_id": lore_id,
         "world_name": world_name,
-        "mappings": mappings,
-        "pending_count": pending_count,
-        "active_count": active_count,
-        "needs_approval": pending_count > 0
+        "mappings": [],  # No pending mappings in new system
+        "pending_count": 0,
+        "active_count": len(options.get("origins", [])) + len(options.get("archetypes", [])),
+        "needs_approval": False,
+        "character_options": options,
+        "message": "Pending mappings deprecated - character options returned instead"
     }
 
 
+# Legacy approve/reject/edit endpoints - return deprecation notice
 @router.post("/admin/pending-mappings/{mapping_id}/approve")
-async def approve_pending_mapping(
-    mapping_id: str,
-    http_request: Request,
-):
-    """
-    Approve a pending mapping, making it active in the Translation Bible.
-
-    This converts the pending mapping to an active character option.
-    """
-    if mapping_id not in PENDING_MAPPINGS:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Mapping '{mapping_id}' not found"
-        )
-
-    mapping = PENDING_MAPPINGS[mapping_id]
-    if mapping.get("status") == "active":
-        return {"success": True, "message": "Mapping already active", "mapping": mapping}
-
-    # Update status
-    mapping["status"] = "active"
-    mapping["reviewed_at"] = datetime.now(timezone.utc).isoformat()
-
-    # Add to world's character options
-    world_id = mapping.get("world_id")
-    if world_id and world_id in LORE_BASES:
-        options = LORE_BASES[world_id].setdefault("character_options", {
-            "origins": [],
-            "archetypes": [],
-            "ai_generated": True,
-            "admin_reviewed": False
-        })
-
-        if mapping.get("mapping_type") == "origin":
-            origin_entry = {
-                "id": mapping.get("id"),
-                "name": mapping.get("lore_name"),
-                "description": mapping.get("lore_description", ""),
-                "base_type": mapping.get("mechanical_base"),
-                "abilities": []
-            }
-            # Avoid duplicates
-            if not any(o.get("id") == origin_entry["id"] for o in options.get("origins", [])):
-                options.setdefault("origins", []).append(origin_entry)
-
-        elif mapping.get("mapping_type") == "archetype":
-            archetype_entry = {
-                "id": mapping.get("id"),
-                "name": mapping.get("lore_name"),
-                "description": mapping.get("lore_description", ""),
-                "base_type": mapping.get("mechanical_base"),
-                "key_abilities": []
-            }
-            # Avoid duplicates
-            if not any(a.get("id") == archetype_entry["id"] for a in options.get("archetypes", [])):
-                options.setdefault("archetypes", []).append(archetype_entry)
-
-    return {
-        "success": True,
-        "message": f"Approved mapping '{mapping.get('lore_name')}' -> {mapping.get('mechanical_base')}",
-        "mapping": mapping
-    }
+async def approve_mapping_legacy(mapping_id: str, http_request: Request):
+    """DEPRECATED: Use PUT /admin/lore-bases/{lore_id}/character-options instead."""
+    return {"success": False, "message": "Pending mappings deprecated. Edit character options directly via PUT /admin/lore-bases/{lore_id}/character-options", "deprecated": True}
 
 
 @router.post("/admin/pending-mappings/{mapping_id}/reject")
-async def reject_pending_mapping(
-    mapping_id: str,
-    http_request: Request,
-):
-    """
-    Reject a pending mapping.
-
-    The mapping is marked as rejected but retained for audit purposes.
-    """
-    if mapping_id not in PENDING_MAPPINGS:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Mapping '{mapping_id}' not found"
-        )
-
-    body = await http_request.json() if http_request.headers.get("content-type") == "application/json" else {}
-    admin_notes = body.get("admin_notes", "")
-
-    mapping = PENDING_MAPPINGS[mapping_id]
-    mapping["status"] = "rejected"
-    mapping["reviewed_at"] = datetime.now(timezone.utc).isoformat()
-    if admin_notes:
-        mapping["admin_notes"] = admin_notes
-
-    return {
-        "success": True,
-        "message": f"Rejected mapping '{mapping.get('lore_name')}'",
-        "mapping": mapping
-    }
+async def reject_mapping_legacy(mapping_id: str, http_request: Request):
+    """DEPRECATED: Use PUT /admin/lore-bases/{lore_id}/character-options instead."""
+    return {"success": False, "message": "Pending mappings deprecated. Edit character options directly.", "deprecated": True}
 
 
 @router.post("/admin/pending-mappings/{mapping_id}/edit")
-async def edit_pending_mapping(
-    mapping_id: str,
-    http_request: Request,
-):
-    """
-    Edit a pending mapping before approval.
-
-    Allows admin to override the mechanical base type or add notes.
-    """
-    if mapping_id not in PENDING_MAPPINGS:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Mapping '{mapping_id}' not found"
-        )
-
-    body = await http_request.json()
-    mapping = PENDING_MAPPINGS[mapping_id]
-
-    # Update allowed fields
-    if "mechanical_base" in body:
-        new_base = body["mechanical_base"]
-        mapping_type = mapping.get("mapping_type")
-
-        # Validate new base type
-        if mapping_type == "origin" and new_base not in BASE_ORIGINS:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid origin base type '{new_base}'. Valid: {BASE_ORIGINS}"
-            )
-        if mapping_type == "archetype" and new_base not in BASE_ARCHETYPES:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid archetype base type '{new_base}'. Valid: {BASE_ARCHETYPES}"
-            )
-
-        mapping["mechanical_base"] = new_base
-        mapping["ai_justification"] = f"[Admin Override] {body.get('admin_notes', 'Manual correction')}"
-
-    if "admin_notes" in body:
-        mapping["admin_notes"] = body["admin_notes"]
-
-    if "lore_description" in body:
-        mapping["lore_description"] = body["lore_description"]
-
-    return {
-        "success": True,
-        "message": f"Updated mapping '{mapping.get('lore_name')}'",
-        "mapping": mapping
-    }
+async def edit_mapping_legacy(mapping_id: str, http_request: Request):
+    """DEPRECATED: Use PUT /admin/lore-bases/{lore_id}/character-options instead."""
+    return {"success": False, "message": "Pending mappings deprecated. Edit character options directly.", "deprecated": True}
 
 
 @router.post("/admin/lore-bases/{lore_id}/extract-mappings")
-async def extract_pending_mappings(
+async def extract_character_options(
     lore_id: str,
     http_request: Request,
 ):
     """
-    Extract pending MANTLE mappings from a world's lore.
+    Extract character options from a world's lore using AI.
 
-    This analyzes the lore text and creates pending mappings that require
-    admin approval. Unlike direct character option generation, these go
-    through the approval workflow.
+    This analyzes the lore and directly generates character creation options
+    (origins and archetypes) that are immediately available for editing.
+
+    This is an alias for /character-options/generate for backward compatibility.
     """
     if lore_id not in LORE_BASES:
         raise HTTPException(
@@ -1799,7 +1616,7 @@ async def extract_pending_mappings(
     )
 
     # Debug logging to diagnose lore content issues
-    logger.info(f"MANTLE extract for '{lore_id}': lore_content={len(base.get('lore_content', ''))}, "
+    logger.info(f"Extract options for '{lore_id}': lore_content={len(base.get('lore_content', ''))}, "
                 f"description={len(base.get('description', ''))}, seed_prompt={len(base.get('seed_prompt', ''))}")
 
     if not lore_content:
@@ -1811,94 +1628,46 @@ async def extract_pending_mappings(
     # Determine genre
     genre = base.get("mechanics_genre") or base.get("genre") or "fantasy"
 
-    # Generate pending mappings
-    result = await generate_pending_mappings_from_lore(
-        world_id=lore_id,
+    # Generate character options directly (no approval workflow)
+    options = await generate_character_options_from_lore(
         lore_content=lore_content,
         world_name=base.get("name", lore_id),
         genre=genre,
         description=base.get("description", "")
     )
 
+    # Store in LORE_BASES immediately
+    LORE_BASES[lore_id]["character_options"] = options
+
+    # Persist to Neo4j if available
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if db:
+        try:
+            await db.execute("""
+                MATCH (lb:LoreBase {lore_id: $lore_id})
+                SET lb.character_options = $options
+            """, {"lore_id": lore_id, "options": json.dumps(options)})
+        except Exception as e:
+            logger.warning(f"Failed to persist character options to Neo4j: {e}")
+
+    origins_count = len(options.get("origins", []))
+    archetypes_count = len(options.get("archetypes", []))
+
     return {
         "success": True,
         "lore_id": lore_id,
         "world_name": base.get("name", lore_id),
-        "pending_count": result.get("pending_count", 0),
-        "mappings": result.get("mappings", []),
-        "message": f"Extracted {result.get('pending_count', 0)} pending mappings - awaiting admin approval"
+        "origins_count": origins_count,
+        "archetypes_count": archetypes_count,
+        "character_options": options,
+        "message": f"Generated {origins_count} origins and {archetypes_count} archetypes - ready to edit"
     }
 
 
 @router.post("/admin/pending-mappings/bulk-approve")
-async def bulk_approve_mappings(
-    http_request: Request,
-):
-    """
-    Approve all pending mappings for a world at once.
-
-    Use with caution - this bypasses individual review.
-    """
-    body = await http_request.json()
-    world_id = body.get("world_id")
-
-    if not world_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="world_id is required"
-        )
-
-    approved_count = 0
-    for mapping_id, mapping in PENDING_MAPPINGS.items():
-        if mapping.get("world_id") == world_id and mapping.get("status") == "pending":
-            mapping["status"] = "active"
-            mapping["reviewed_at"] = datetime.now(timezone.utc).isoformat()
-            mapping["admin_notes"] = body.get("admin_notes", "Bulk approved")
-            approved_count += 1
-
-            # Add to character options
-            await _add_mapping_to_character_options(world_id, mapping)
-
-    return {
-        "success": True,
-        "message": f"Bulk approved {approved_count} mappings for world '{world_id}'",
-        "approved_count": approved_count
-    }
-
-
-async def _add_mapping_to_character_options(world_id: str, mapping: Dict[str, Any]):
-    """Helper to add an approved mapping to character options."""
-    if world_id not in LORE_BASES:
-        return
-
-    options = LORE_BASES[world_id].setdefault("character_options", {
-        "origins": [],
-        "archetypes": [],
-        "ai_generated": True,
-        "admin_reviewed": False
-    })
-
-    if mapping.get("mapping_type") == "origin":
-        entry = {
-            "id": mapping.get("id"),
-            "name": mapping.get("lore_name"),
-            "description": mapping.get("lore_description", ""),
-            "base_type": mapping.get("mechanical_base"),
-            "abilities": []
-        }
-        if not any(o.get("id") == entry["id"] for o in options.get("origins", [])):
-            options.setdefault("origins", []).append(entry)
-
-    elif mapping.get("mapping_type") == "archetype":
-        entry = {
-            "id": mapping.get("id"),
-            "name": mapping.get("lore_name"),
-            "description": mapping.get("lore_description", ""),
-            "base_type": mapping.get("mechanical_base"),
-            "key_abilities": []
-        }
-        if not any(a.get("id") == entry["id"] for a in options.get("archetypes", [])):
-            options.setdefault("archetypes", []).append(entry)
+async def bulk_approve_legacy(http_request: Request):
+    """DEPRECATED: Use POST /admin/lore-bases/{lore_id}/extract-mappings to generate options directly."""
+    return {"success": False, "message": "Pending mappings deprecated. Options are now generated directly.", "deprecated": True, "approved_count": 0}
 
 
 @router.get("/admin/entities/orphans")
@@ -4254,62 +4023,8 @@ class WorldCharacterOptions(BaseModel):
     admin_reviewed: bool = Field(default=False, description="True if admin has reviewed/approved")
 
 
-# =============================================================================
-# MANTLE INGESTION & APPROVAL - Pending Mapping System
-# =============================================================================
-# TODO: These models could move to src/lms/api/mantle_routes.py along with
-#       the MANTLE endpoints above. See refactoring note at line ~1531.
-
-class MappingStatus(str, Enum):
-    """Status of a MANTLE translation mapping."""
-    PENDING = "pending"      # AI proposed, awaiting admin review
-    ACTIVE = "active"        # Admin approved, available for character creation
-    REJECTED = "rejected"    # Admin rejected this mapping
-
-
-class PendingMapping(BaseModel):
-    """
-    A proposed translation between lore terminology and D&D 5e mechanics.
-
-    AI extracts entities from lore and proposes mechanical mappings.
-    Admins must approve before they become active in the Translation Bible.
-    """
-    id: str = Field(..., description="Unique identifier for this mapping")
-    world_id: str = Field(..., description="ID of the world this mapping belongs to")
-    mapping_type: str = Field(..., description="Type of mapping: 'origin' or 'archetype'")
-
-    # Lore-side (what the setting calls it)
-    lore_name: str = Field(..., description="Name in the world's lore (e.g., 'Void-Knight')")
-    lore_description: str = Field(default="", description="Description from lore")
-    source_snippet: str = Field(default="", description="Original prose this was extracted from")
-
-    # D&D-side (what it maps to mechanically)
-    mechanical_base: str = Field(..., description="D&D 5e base type (e.g., 'paladin', 'fighter')")
-    ai_justification: str = Field(default="", description="AI's reasoning for this mapping")
-    confidence_score: float = Field(default=0.5, ge=0.0, le=1.0, description="AI confidence (0-1)")
-
-    # Status
-    status: MappingStatus = Field(default=MappingStatus.PENDING)
-    admin_notes: str = Field(default="", description="Admin comments on this mapping")
-    created_at: str = Field(default="", description="ISO timestamp when proposed")
-    reviewed_at: Optional[str] = Field(default=None, description="ISO timestamp when reviewed")
-
-
-class PendingMappingsResponse(BaseModel):
-    """Response containing all pending mappings for a world."""
-    world_id: str
-    world_name: str
-    mappings: List[PendingMapping] = Field(default_factory=list)
-    pending_count: int = Field(default=0)
-    active_count: int = Field(default=0)
-
-
-class MappingApprovalRequest(BaseModel):
-    """Request to approve or edit a pending mapping."""
-    mapping_id: str
-    action: str = Field(..., description="'approve', 'reject', or 'edit'")
-    mechanical_base: Optional[str] = Field(default=None, description="Override base type if editing")
-    admin_notes: Optional[str] = Field(default=None, description="Admin notes")
+# NOTE: MappingStatus, PendingMapping, PendingMappingsResponse, MappingApprovalRequest
+# models were removed. Character options are now directly editable without a staging workflow.
 
 
 class LoreBaseResponse(BaseModel):

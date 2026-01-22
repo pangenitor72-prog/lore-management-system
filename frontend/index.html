@@ -3167,7 +3167,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0,0,0,0.7);
-            z-index: 100;
+            z-index: 10000;
             align-items: center;
             justify-content: center;
         }
@@ -4529,18 +4529,18 @@
                 gap: 8px;
             }
 
-            /* Modals as bottom sheets */
+            /* Modals - centered on all screen sizes */
             .modal-overlay {
-                align-items: flex-end !important;
+                align-items: center !important;
+                padding: 20px;
             }
 
             .modal {
-                max-width: 100% !important;
+                max-width: 95% !important;
                 width: 100% !important;
                 max-height: 85vh;
-                border-radius: 20px 20px 0 0;
+                border-radius: 16px;
                 margin: 0;
-                animation: slideUp 0.3s ease;
             }
 
             .modal-header {
@@ -7607,8 +7607,8 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- World Manager Modals -->
-            <div id="wm-delete-modal" class="modal" style="display: none;">
-                <div class="modal-content" style="max-width: 500px;">
+            <div id="wm-delete-modal" class="modal-overlay">
+                <div class="modal" style="max-width: 500px;">
                     <h3 style="color: var(--accent-rose); margin-bottom: 15px;">🗑️ Delete World</h3>
                     <p style="color: var(--text-secondary); margin-bottom: 20px;">
                         You are about to delete <strong id="wm-delete-world-name" style="color: var(--text-primary);"></strong>.
@@ -7630,8 +7630,8 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
             </div>
 
-            <div id="wm-add-lore-modal" class="modal" style="display: none;">
-                <div class="modal-content" style="max-width: 700px;">
+            <div id="wm-add-lore-modal" class="modal-overlay">
+                <div class="modal" style="max-width: 700px;">
                     <h3 style="color: var(--accent-gold); margin-bottom: 15px;">📁 Add Lore to <span id="wm-add-lore-world-name"></span></h3>
                     <div id="wm-add-lore-status"></div>
                     <div style="margin-bottom: 20px;">
@@ -7656,8 +7656,8 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
             </div>
 
             <!-- Import Entities Modal (for per-world entity import) -->
-            <div id="wm-import-entities-modal" class="modal" style="display: none;">
-                <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div id="wm-import-entities-modal" class="modal-overlay">
+                <div class="modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
                     <h3 style="color: var(--accent-gold); margin-bottom: 15px;">📦 Import Entities to <span id="wm-import-world-name"></span></h3>
                     <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
                         Import entities from lore files or text. Entities will be extracted and you can review them before importing.
@@ -7727,14 +7727,14 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
             </div>
 
-            <!-- MANTLE Mappings Modal -->
+            <!-- Character Options Modal -->
             <div id="wm-mantle-modal" class="modal-overlay">
                 <div class="modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
                     <h3 style="color: #8B5CF6; margin-bottom: 15px;">
-                        <span style="font-size: 1.3rem;">🔮</span> MANTLE Translation Bible - <span id="mantle-world-name"></span>
+                        <span style="font-size: 1.3rem;">⚙️</span> Character Options - <span id="mantle-world-name"></span>
                     </h3>
                     <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
-                        AI proposes mappings between your world's lore and D&D 5e mechanics. Review and approve each translation.
+                        Configure the character creation options available to players in this world. Click "Generate from Lore" to have AI extract options from your world's lore.
                     </p>
 
                     <div id="mantle-status"></div>
@@ -7742,35 +7742,30 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                     <!-- Stats Bar -->
                     <div style="display: flex; gap: 15px; margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
                         <div style="flex: 1; text-align: center;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #F59E0B;" id="mantle-pending-count">0</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">Pending</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #22C55E;" id="mantle-pending-count">0</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Origins</div>
                         </div>
                         <div style="flex: 1; text-align: center;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #22C55E;" id="mantle-active-count">0</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">Active</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #8B5CF6;" id="mantle-active-count">0</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Archetypes</div>
                         </div>
                         <div style="flex: 1; text-align: center;">
                             <button class="btn btn-secondary" onclick="extractMantleMappings()" style="padding: 8px 16px; background: #8B5CF6; color: white; font-size: 0.85rem;">
-                                🔍 Extract from Lore
+                                🔍 Generate from Lore
                             </button>
                         </div>
                     </div>
 
-                    <!-- Mappings List -->
+                    <!-- Character Options List -->
                     <div id="mantle-mappings-list" style="max-height: 450px; overflow-y: auto;">
                         <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                            <div style="font-size: 2rem; margin-bottom: 10px;">🔮</div>
-                            <div>No mappings yet. Click "Extract from Lore" to analyze world content.</div>
+                            <div style="font-size: 2rem; margin-bottom: 10px;">⚙️</div>
+                            <div>No character options configured. Click "Generate from Lore" to create options from world content.</div>
                         </div>
                     </div>
 
-                    <!-- Quick Actions -->
-                    <div style="display: flex; gap: 10px; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
-                        <div>
-                            <button class="btn btn-secondary" onclick="bulkApproveMantleMappings()" style="padding: 8px 16px; font-size: 0.85rem; background: #22C55E; color: white;" id="mantle-bulk-approve-btn" disabled>
-                                ✓ Approve All Pending
-                            </button>
-                        </div>
+                    <!-- Actions -->
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-subtle);">
                         <button class="btn btn-secondary" onclick="closeMantleModal()">Close</button>
                     </div>
                 </div>
@@ -7919,8 +7914,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         </div>
 
         <!-- Entity Edit Modal -->
-        <div id="entity-edit-modal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div id="entity-edit-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 style="color: var(--accent-gold); margin: 0;">✏️ Edit Entity</h3>
                     <button onclick="closeEntityEditModal()" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 0; width: 30px; height: 30px;">&times;</button>
@@ -13676,7 +13671,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('char-next-btn').textContent = 'Creating...';
 
             // Get name from the review step input
-            const nameInput = document.getElementById('char-name-input');
+                        const nameInput = document.getElementById('char-name-input');
             if (nameInput) {
                 charCreationData.name = nameInput.value.trim() || 'Adventurer';
             }
@@ -13685,11 +13680,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // All data is already in charCreationData from the creation steps
             console.log('[CharGen] Building character locally from selections');
 
-            // Generate a local session ID if we don't have one
-            if (!currentSessionId) {
-                currentSessionId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            }
-
+            // Session will be created when story starts - don't generate local ID
+            // currentSessionId will be set by createSessionInBackground() or continueToStory()
+            
             // Character will be built in finalizeCharacter() from charCreationData
             // No need to set generatedChar - the fallback in finalizeCharacter handles it
             finalizeCharacter();
@@ -14191,11 +14184,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             try {
                 const sessionRes = await fetch(API_BASE + '/game/session', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                if (!sessionRes.ok) throw new Error('Failed to create session');
+                if (!sessionRes.ok) {
+                    const errorData = await sessionRes.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'Failed to create session');
+                }
                 const sessionData = await sessionRes.json();
                 currentSessionId = sessionData.session_id;
                 currentPhase = sessionData.phase;
@@ -14203,11 +14199,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 return sessionData;
             } catch (err) {
                 console.error('[Session] Background creation failed:', err);
-                // Generate a local session ID as fallback
-                currentSessionId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                currentPhase = 'active_play';
-                console.log('[Session] Using local fallback:', currentSessionId);
-                return { session_id: currentSessionId, phase: currentPhase };
+                // Show error to user - DO NOT generate local session ID
+                alert(`Failed to create game session: ${err.message}. Please try again or refresh the page.`);
+                throw err; // Propagate error instead of using fallback
             }
         }
 
@@ -16053,8 +16047,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     return;
                 }
 
-                // Restore game state
-                currentSessionId = saveData.session_id || `local-${Date.now()}`;
+                // Restore game state - session_id should be from server after load
+                // Don't generate local ID here - server will provide new session_id
                 currentPhase = saveData.phase || 'exploration';
                 playerInventory = saveData.inventory || [];
                 rulesGenre = saveData.genre || 'fantasy';
@@ -17296,9 +17290,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             try {
                 // Load world details
+                console.log('[WorldManager] Fetching from:', API_BASE + '/game/admin/lore-bases/details');
                 const worldsRes = await fetch(API_BASE + '/game/admin/lore-bases/details');
-                if (!worldsRes.ok) throw new Error('Failed to load world details');
+                console.log('[WorldManager] Response status:', worldsRes.status, worldsRes.ok);
+                if (!worldsRes.ok) {
+                    const errorText = await worldsRes.text();
+                    console.error('[WorldManager] Error response:', errorText.substring(0, 200));
+                    throw new Error('Failed to load world details (status: ' + worldsRes.status + ')');
+                }
                 worldManagerData = await worldsRes.json();
+                console.log('[WorldManager] Loaded', worldManagerData.worlds?.length, 'worlds');
 
                 // Load orphan count
                 const orphansRes = await fetch(API_BASE + '/game/admin/entities/orphans');
@@ -17438,13 +17439,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                         🔍 Find Duplicates
                                     </button>
                                 ` : ''}
-                                <button class="btn btn-secondary" onclick="toggleCharacterOptions('${world.id}')" style="padding: 6px 12px; font-size: 0.85rem; background: var(--accent-gold); color: var(--bg-primary);">
-                                    🎭 Character Options
-                                </button>
                                 <button class="btn btn-secondary" onclick="openMantleMappings('${world.id}', '${escapeHtml(world.name)}')" style="padding: 6px 12px; font-size: 0.85rem; background: #8B5CF6; color: white;">
-                                    🔮 MANTLE Mappings
+                                    ⚙️ Character Options
                                 </button>
-                                <button class="btn" onclick="openDeleteWorldModal('${world.id}', '${escapeHtml(world.name)}', ${world.entity_count})" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
+                                <button class="btn" onclick="openDeleteWorldModal('${world.id}', '${escapeHtml(world.name).replace(/'/g, "\\'")}', ${world.entity_count})" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--accent-rose); color: var(--accent-rose);">
                                     🗑️ Delete World
                                 </button>
                             </div>
@@ -17969,31 +17967,39 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         // Delete World Modal
         function openDeleteWorldModal(worldId, worldName, entityCount) {
+            console.log('[DeleteWorld] Opening modal for:', worldId, worldName, entityCount);
             wmDeleteWorldId = worldId;
             document.getElementById('wm-delete-world-name').textContent = worldName;
             document.getElementById('wm-delete-entity-count').textContent = entityCount;
-            document.getElementById('wm-delete-modal').style.display = 'flex';
+            document.getElementById('wm-delete-modal').classList.add('active');
             // Reset to default option
             document.querySelector('input[name="delete-mode"][value="world-only"]').checked = true;
         }
 
         function closeDeleteWorldModal() {
-            document.getElementById('wm-delete-modal').style.display = 'none';
+            document.getElementById('wm-delete-modal').classList.remove('active');
             wmDeleteWorldId = null;
         }
 
         async function confirmDeleteWorld() {
-            if (!wmDeleteWorldId) return;
+            console.log('[DeleteWorld] Confirming delete for:', wmDeleteWorldId);
+            if (!wmDeleteWorldId) {
+                console.error('[DeleteWorld] No world ID set!');
+                return;
+            }
 
             // Save world ID before closing modal (closeDeleteWorldModal sets wmDeleteWorldId to null)
             const worldIdToDelete = wmDeleteWorldId;
             const deleteEntities = document.querySelector('input[name="delete-mode"]:checked').value === 'world-and-entities';
+            console.log('[DeleteWorld] Delete entities:', deleteEntities, 'for world:', worldIdToDelete);
 
             closeDeleteWorldModal();
             showStatus('world-manager-status', `<span class="loading"></span> Deleting world...`, 'info');
 
             try {
-                const response = await fetch(API_BASE + `/game/lore-bases/${worldIdToDelete}?delete_entities=${deleteEntities}`, {
+                const url = API_BASE + `/game/lore-bases/${worldIdToDelete}?delete_entities=${deleteEntities}`;
+                console.log('[DeleteWorld] Calling DELETE:', url);
+                const response = await fetch(url, {
                     method: 'DELETE'
                 });
 
@@ -18025,11 +18031,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('wm-add-lore-files').innerHTML = '';
             document.getElementById('wm-add-lore-submit').disabled = true;
             clearStatus('wm-add-lore-status');
-            document.getElementById('wm-add-lore-modal').style.display = 'flex';
+            document.getElementById('wm-add-lore-modal').classList.add('active');
         }
 
         function closeAddLoreModal() {
-            document.getElementById('wm-add-lore-modal').style.display = 'none';
+            document.getElementById('wm-add-lore-modal').classList.remove('active');
             wmAddLoreWorldId = null;
             wmAddLoreFiles = [];
         }
@@ -18150,20 +18156,20 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             wmImportWorldName = worldName;
             wmImportEntities = [];
             wmImportMethod = 'text';
-            
+
             document.getElementById('wm-import-world-name').textContent = worldName;
             document.getElementById('wm-import-lore-text').value = '';
             document.getElementById('wm-import-file-name').textContent = '';
             document.getElementById('wm-import-review-panel').style.display = 'none';
             document.getElementById('wm-import-commit-btn').disabled = true;
             clearStatus('wm-import-status');
-            
+
             switchImportMethod('text');
-            document.getElementById('wm-import-entities-modal').style.display = 'flex';
+            document.getElementById('wm-import-entities-modal').classList.add('active');
         }
 
         function closeImportEntitiesModal() {
-            document.getElementById('wm-import-entities-modal').style.display = 'none';
+            document.getElementById('wm-import-entities-modal').classList.remove('active');
             wmImportWorldId = null;
             wmImportWorldName = null;
             wmImportEntities = [];
@@ -18194,43 +18200,35 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function loadMantleMappings() {
             try {
-                const response = await fetch(API_BASE + `/game/admin/lore-bases/${mantleCurrentWorldId}/pending-mappings`);
-                if (!response.ok) throw new Error('Failed to load mappings');
+                // Fetch character options directly instead of pending mappings
+                const response = await fetch(API_BASE + `/game/admin/lore-bases/${mantleCurrentWorldId}/character-options`);
+                if (!response.ok) throw new Error('Failed to load character options');
                 const data = await response.json();
-                mantleMappings = data.mappings || [];
-                renderMantleMappings(data);
+                renderCharacterOptions(data);
             } catch (err) {
-                showStatus('mantle-status', `Error loading mappings: ${err.message}`, 'error');
+                showStatus('mantle-status', `Error loading options: ${err.message}`, 'error');
             }
         }
 
-        function renderMantleMappings(data) {
-            const pendingCount = data.pending_count || 0;
-            const activeCount = data.active_count || 0;
+        function renderCharacterOptions(data) {
+            const options = data.character_options || {};
+            const origins = options.origins || [];
+            const archetypes = options.archetypes || [];
 
-            document.getElementById('mantle-pending-count').textContent = pendingCount;
-            document.getElementById('mantle-active-count').textContent = activeCount;
-
-            const bulkBtn = document.getElementById('mantle-bulk-approve-btn');
-            bulkBtn.disabled = pendingCount === 0;
-            bulkBtn.style.opacity = pendingCount === 0 ? '0.5' : '1';
+            document.getElementById('mantle-pending-count').textContent = origins.length;
+            document.getElementById('mantle-active-count').textContent = archetypes.length;
 
             const container = document.getElementById('mantle-mappings-list');
-            const mappings = data.mappings || [];
 
-            if (mappings.length === 0) {
+            if (origins.length === 0 && archetypes.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                        <div style="font-size: 2rem; margin-bottom: 10px;">🔮</div>
-                        <div>No mappings yet. Click "Extract from Lore" to analyze world content.</div>
+                        <div style="font-size: 2rem; margin-bottom: 10px;">⚙️</div>
+                        <div>No character options configured. Click "Generate from Lore" to create options from world content.</div>
                     </div>
                 `;
                 return;
             }
-
-            // Group by type
-            const origins = mappings.filter(m => m.mapping_type === 'origin');
-            const archetypes = mappings.filter(m => m.mapping_type === 'archetype');
 
             let html = '';
 
@@ -18238,9 +18236,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (origins.length > 0) {
                 html += `<div style="margin-bottom: 20px;">
                     <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
-                        Origins (Backgrounds)
+                        Origins (Backgrounds) - ${origins.length}
                     </h4>`;
-                origins.forEach(m => { html += renderMantleMapping(m); });
+                origins.forEach(o => { html += renderCharacterOption(o, 'origin'); });
                 html += '</div>';
             }
 
@@ -18248,13 +18246,38 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             if (archetypes.length > 0) {
                 html += `<div>
                     <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">
-                        Archetypes (Classes)
+                        Archetypes (Classes) - ${archetypes.length}
                     </h4>`;
-                archetypes.forEach(m => { html += renderMantleMapping(m); });
+                archetypes.forEach(a => { html += renderCharacterOption(a, 'archetype'); });
                 html += '</div>';
             }
 
             container.innerHTML = html;
+        }
+
+        function renderCharacterOption(option, type) {
+            const typeColor = type === 'origin' ? '#22C55E' : '#8B5CF6';
+            return `
+                <div style="background: var(--bg-primary); border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid ${typeColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <strong style="color: var(--text-primary); font-size: 1.1rem;">${escapeHtml(option.name)}</strong>
+                            </div>
+                            <div style="display: flex; gap: 15px; margin-bottom: 8px;">
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">
+                                    Base Type: <strong style="color: var(--accent-gold);">${option.base_type}</strong>
+                                </div>
+                            </div>
+                            ${option.description ? `
+                                <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                    ${escapeHtml(option.description)}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function renderMantleMapping(mapping) {
@@ -18318,7 +18341,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function extractMantleMappings() {
             if (!mantleCurrentWorldId) return;
 
-            showStatus('mantle-status', 'Analyzing lore content... This may take a moment.', 'info');
+            showStatus('mantle-status', 'Generating character options from lore... This may take a moment.', 'info');
 
             try {
                 const response = await fetch(API_BASE + `/game/admin/lore-bases/${mantleCurrentWorldId}/extract-mappings`, {
@@ -18328,11 +18351,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.detail || 'Extraction failed');
+                    throw new Error(err.detail || 'Generation failed');
                 }
 
                 const result = await response.json();
-                showStatus('mantle-status', `Extracted ${result.pending_count} mappings from lore!`, 'success');
+                const total = (result.origins_count || 0) + (result.archetypes_count || 0);
+                showStatus('mantle-status', `Generated ${result.origins_count || 0} origins and ${result.archetypes_count || 0} archetypes!`, 'success');
                 await loadMantleMappings();
             } catch (err) {
                 showStatus('mantle-status', `Error: ${err.message}`, 'error');
@@ -19388,7 +19412,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 </div>
             `;
 
-            modal.classList.add('visible');
+            modal.classList.add('active');
         }
 
         function getCategoryColor(category) {
@@ -19403,7 +19427,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closeUncertaintiesModal() {
             const modal = document.getElementById('uncertainties-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
         }
 
         // ============================================================
@@ -19440,7 +19464,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             renderCurrentPendingDuplicate();
-            modal.classList.add('visible');
+            modal.classList.add('active');
         }
 
         function renderCurrentPendingDuplicate() {
@@ -19574,7 +19598,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closePendingDuplicatesModal() {
             const modal = document.getElementById('pending-duplicates-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
             pendingDuplicatesQueue = [];
             currentPendingIndex = 0;
         }
@@ -19586,10 +19610,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let entityManagerWorldId = null;
         let entityManagerData = [];
         let entityManagerFilter = 'all';
+        let entityManagerSelected = new Set();
 
         async function openEntityManager(worldId, worldName) {
             entityManagerWorldId = worldId;
             entityManagerFilter = 'all';
+            entityManagerSelected.clear();
 
             let modal = document.getElementById('entity-manager-modal');
             if (!modal) {
@@ -19605,7 +19631,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                             </div>
                             <button class="btn btn-ghost" onclick="closeEntityManager()">×</button>
                         </div>
-                        <div style="padding: 0 1rem; display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
+                        <div style="padding: 0 1rem; display: flex; gap: 8px; margin-bottom: 0.5rem; flex-wrap: wrap; align-items: center;">
                             <input type="text" id="entity-manager-search" placeholder="Search entities..."
                                    style="flex: 1; min-width: 200px; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);"
                                    oninput="filterEntityManager()">
@@ -19621,7 +19647,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                             </select>
                             <button class="btn btn-secondary" onclick="loadEntityManagerData()" style="padding: 8px 12px;">🔄 Refresh</button>
                         </div>
-                        <div class="modal-body" id="entity-manager-content" style="max-height: 60vh; overflow-y: auto; padding: 0 1rem;">
+                        <!-- Bulk Actions Bar -->
+                        <div id="entity-manager-bulk-bar" style="padding: 0 1rem; margin-bottom: 0.5rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button class="btn btn-ghost" onclick="emSelectAll()" style="padding: 6px 10px; font-size: 0.8rem;">☑️ Select All</button>
+                            <button class="btn btn-ghost" onclick="emSelectNone()" style="padding: 6px 10px; font-size: 0.8rem;">☐ Clear</button>
+                            <span id="em-selection-count" style="color: var(--text-muted); font-size: 0.85rem; margin-left: 8px;">0 selected</span>
+                            <div style="flex: 1;"></div>
+                            <button class="btn btn-secondary" onclick="emMergeSelected()" id="em-merge-btn" style="padding: 6px 12px; font-size: 0.8rem; display: none;">🔗 Merge Selected</button>
+                            <button class="btn btn-secondary" onclick="emDeleteSelected()" id="em-delete-btn" style="padding: 6px 12px; font-size: 0.8rem; color: var(--accent-rose); display: none;">🗑️ Delete Selected</button>
+                        </div>
+                        <div class="modal-body" id="entity-manager-content" style="max-height: 55vh; overflow-y: auto; padding: 0 1rem;">
                             <div style="text-align: center; padding: 30px;"><span class="loading"></span> Loading entities...</div>
                         </div>
                         <div class="modal-footer">
@@ -19638,7 +19673,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.getElementById('entity-manager-search').value = '';
             document.getElementById('entity-manager-type-filter').value = 'all';
 
-            modal.classList.add('visible');
+            modal.classList.add('active');
             await loadEntityManagerData();
         }
 
@@ -19703,25 +19738,33 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const color = typeColors[entity.entity_type] || '#6b7280';
                 const hasOcean = entity.openness !== undefined;
                 const hasMotivations = (entity.goals?.length > 0) || (entity.secrets?.length > 0) || (entity.fears?.length > 0);
+                const noteCount = (entity.director_notes || []).length;
+                const isSelected = entityManagerSelected.has(entity.canon_id);
 
                 return `
-                    <div class="entity-manager-item" style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid ${color};">
+                    <div class="entity-manager-item" style="background: ${isSelected ? 'var(--bg-hover)' : 'var(--bg-secondary)'}; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid ${color}; ${isSelected ? 'box-shadow: 0 0 0 2px var(--accent-gold);' : ''}">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div style="flex: 1;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <strong style="color: var(--text-primary);">${escapeHtml(entity.name)}</strong>
-                                    <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">${entity.entity_type}</span>
-                                    ${hasOcean ? '<span style="font-size: 0.7rem; color: var(--accent-sage);" title="Has OCEAN personality">🧠</span>' : ''}
-                                    ${hasMotivations ? '<span style="font-size: 0.7rem; color: var(--accent-gold);" title="Has goals/secrets/fears">💡</span>' : ''}
-                                </div>
-                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0; max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    ${escapeHtml(entity.description || 'No description')}
-                                </p>
-                                ${entity.aliases && entity.aliases.length > 0 ? `
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-                                        Also known as: ${entity.aliases.map(a => escapeHtml(a)).join(', ')}
+                            <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1;">
+                                <input type="checkbox" ${isSelected ? 'checked' : ''}
+                                       onchange="emToggleSelect('${entity.canon_id}')"
+                                       style="width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--accent-gold);">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                        <strong style="color: var(--text-primary);">${escapeHtml(entity.name)}</strong>
+                                        <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">${entity.entity_type}</span>
+                                        ${hasOcean ? '<span style="font-size: 0.7rem; color: var(--accent-sage);" title="Has OCEAN personality">🧠</span>' : ''}
+                                        ${hasMotivations ? '<span style="font-size: 0.7rem; color: var(--accent-gold);" title="Has goals/secrets/fears">💡</span>' : ''}
+                                        ${noteCount > 0 ? `<span style="font-size: 0.7rem; background: var(--accent-gold); color: var(--bg-primary); padding: 1px 5px; border-radius: 8px;" title="${noteCount} director note${noteCount > 1 ? 's' : ''}">📝${noteCount}</span>` : ''}
                                     </div>
-                                ` : ''}
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0; max-width: 600px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${escapeHtml(entity.description || 'No description')}
+                                    </p>
+                                    ${entity.aliases && entity.aliases.length > 0 ? `
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                                            Also known as: ${entity.aliases.map(a => escapeHtml(a)).join(', ')}
+                                        </div>
+                                    ` : ''}
+                                </div>
                             </div>
                             <div style="display: flex; gap: 4px;">
                                 <button onclick="openEntityEditor('${entity.canon_id}')" class="btn btn-ghost" style="padding: 4px 8px; font-size: 0.8rem;" title="Edit">✏️</button>
@@ -19731,6 +19774,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     </div>
                 `;
             }).join('');
+
+            updateEmSelectionUI();
         }
 
         async function deleteEntityFromManager(canonId, entityName, entityType) {
@@ -19746,9 +19791,184 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 document.getElementById('entity-manager-status').innerHTML = `<span style="color: var(--accent-sage);">✓ Deleted "${entityName}"</span>`;
                 entityManagerData = entityManagerData.filter(e => e.canon_id !== canonId);
+                entityManagerSelected.delete(canonId);
                 renderEntityManager();
             } catch (e) {
                 document.getElementById('entity-manager-status').innerHTML = `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
+            }
+        }
+
+        // Entity Manager Selection Functions
+        function emToggleSelect(canonId) {
+            if (entityManagerSelected.has(canonId)) {
+                entityManagerSelected.delete(canonId);
+            } else {
+                entityManagerSelected.add(canonId);
+            }
+            renderEntityManager();
+        }
+
+        function emSelectAll() {
+            const searchTerm = (document.getElementById('entity-manager-search')?.value || '').toLowerCase();
+            const typeFilter = document.getElementById('entity-manager-type-filter')?.value || 'all';
+
+            entityManagerData.forEach(e => {
+                const matchesSearch = !searchTerm ||
+                    e.name.toLowerCase().includes(searchTerm) ||
+                    (e.description || '').toLowerCase().includes(searchTerm);
+                const matchesType = typeFilter === 'all' || e.entity_type === typeFilter;
+                if (matchesSearch && matchesType) {
+                    entityManagerSelected.add(e.canon_id);
+                }
+            });
+            renderEntityManager();
+        }
+
+        function emSelectNone() {
+            entityManagerSelected.clear();
+            renderEntityManager();
+        }
+
+        function updateEmSelectionUI() {
+            const count = entityManagerSelected.size;
+            const countEl = document.getElementById('em-selection-count');
+            const mergeBtn = document.getElementById('em-merge-btn');
+            const deleteBtn = document.getElementById('em-delete-btn');
+
+            if (countEl) countEl.textContent = `${count} selected`;
+            if (mergeBtn) mergeBtn.style.display = count >= 2 ? 'inline-block' : 'none';
+            if (deleteBtn) deleteBtn.style.display = count >= 1 ? 'inline-block' : 'none';
+        }
+
+        async function emDeleteSelected() {
+            const count = entityManagerSelected.size;
+            if (count === 0) return;
+
+            const entities = entityManagerData.filter(e => entityManagerSelected.has(e.canon_id));
+            const names = entities.slice(0, 5).map(e => e.name).join(', ');
+            const moreText = count > 5 ? ` and ${count - 5} more` : '';
+
+            if (!confirm(`Delete ${count} entities?\n\n${names}${moreText}\n\nThis cannot be undone.`)) return;
+
+            document.getElementById('entity-manager-status').innerHTML = `<span class="loading"></span> Deleting ${count} entities...`;
+
+            let deleted = 0;
+            let errors = 0;
+
+            for (const canonId of entityManagerSelected) {
+                try {
+                    const response = await fetch(API_BASE + `/game/entities/${canonId}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        deleted++;
+                        entityManagerData = entityManagerData.filter(e => e.canon_id !== canonId);
+                    } else {
+                        errors++;
+                    }
+                } catch (e) {
+                    errors++;
+                }
+            }
+
+            entityManagerSelected.clear();
+            renderEntityManager();
+
+            if (errors > 0) {
+                document.getElementById('entity-manager-status').innerHTML =
+                    `<span style="color: var(--accent-gold);">✓ Deleted ${deleted} entities, ${errors} failed</span>`;
+            } else {
+                document.getElementById('entity-manager-status').innerHTML =
+                    `<span style="color: var(--accent-sage);">✓ Deleted ${deleted} entities</span>`;
+            }
+        }
+
+        async function emMergeSelected() {
+            const count = entityManagerSelected.size;
+            if (count < 2) {
+                alert('Select at least 2 entities to merge');
+                return;
+            }
+
+            const entities = entityManagerData.filter(e => entityManagerSelected.has(e.canon_id));
+
+            // Check all are same type
+            const types = new Set(entities.map(e => e.entity_type));
+            if (types.size > 1) {
+                alert('Can only merge entities of the same type.\n\nSelected types: ' + [...types].join(', '));
+                return;
+            }
+
+            // Show merge dialog
+            const entityList = entities.map(e => `• ${e.name}`).join('\n');
+            const primaryName = prompt(
+                `Merging ${count} entities:\n\n${entityList}\n\nEnter the canonical name for the merged entity:`,
+                entities[0].name
+            );
+
+            if (!primaryName) return;
+
+            document.getElementById('entity-manager-status').innerHTML = `<span class="loading"></span> Merging ${count} entities...`;
+
+            try {
+                // Use first entity as primary, merge all others into it
+                const primary = entities[0];
+                const secondaries = entities.slice(1);
+
+                // Collect all aliases, descriptions
+                let allAliases = new Set(primary.aliases || []);
+                let allDescriptions = [primary.description || ''];
+                let allGoals = [...(primary.goals || [])];
+                let allSecrets = [...(primary.secrets || [])];
+                let allFears = [...(primary.fears || [])];
+
+                for (const sec of secondaries) {
+                    // Add secondary name as alias
+                    allAliases.add(sec.name);
+                    // Add secondary aliases
+                    (sec.aliases || []).forEach(a => allAliases.add(a));
+                    // Collect descriptions
+                    if (sec.description) allDescriptions.push(sec.description);
+                    // Collect motivations
+                    (sec.goals || []).forEach(g => { if (!allGoals.includes(g)) allGoals.push(g); });
+                    (sec.secrets || []).forEach(s => { if (!allSecrets.includes(s)) allSecrets.push(s); });
+                    (sec.fears || []).forEach(f => { if (!allFears.includes(f)) allFears.push(f); });
+                }
+
+                // Remove primary name from aliases if present
+                allAliases.delete(primaryName);
+
+                // Update primary entity
+                const updateResponse = await fetch(API_BASE + `/game/entities/${primary.canon_id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: primaryName,
+                        aliases: [...allAliases],
+                        description: allDescriptions.filter(d => d).join(' | '),
+                        goals: allGoals,
+                        secrets: allSecrets,
+                        fears: allFears
+                    })
+                });
+
+                if (!updateResponse.ok) throw new Error('Failed to update primary entity');
+
+                // Delete secondary entities
+                for (const sec of secondaries) {
+                    await fetch(API_BASE + `/game/entities/${sec.canon_id}`, {
+                        method: 'DELETE'
+                    });
+                }
+
+                document.getElementById('entity-manager-status').innerHTML =
+                    `<span style="color: var(--accent-sage);">✓ Merged ${count} entities into "${primaryName}"</span>`;
+
+                entityManagerSelected.clear();
+                await loadEntityManagerData();
+            } catch (e) {
+                document.getElementById('entity-manager-status').innerHTML =
+                    `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
             }
         }
 
@@ -19856,10 +20076,32 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         </div>
                     ` : ''}
                 ` : ''}
+
+                <!-- Director Notes (for all entity types) -->
+                <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 1.5rem 0;">
+                <h3 style="color: var(--accent-gold); margin-bottom: 0.5rem;">📝 Director Notes</h3>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;">
+                    Guide how the AI portrays this entity. Notes are injected into AI prompts when this entity is referenced.
+                </p>
+
+                <div id="director-notes-list" style="margin-bottom: 1rem;">
+                    ${(entity.director_notes || []).map((note, idx) => `
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--accent-gold); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px;">
+                            <div style="flex: 1; color: var(--text-primary); font-size: 0.9rem;">${escapeHtml(note)}</div>
+                            <button onclick="removeDirectorNote('${entity.canon_id}', ${idx})" class="btn btn-ghost" style="padding: 2px 6px; color: var(--accent-rose); font-size: 0.8rem;" title="Remove note">×</button>
+                        </div>
+                    `).join('') || '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No director notes yet.</div>'}
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="new-director-note" placeholder="e.g., This character should be more suspicious and paranoid..."
+                           style="flex: 1; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary);">
+                    <button onclick="addDirectorNote('${entity.canon_id}')" class="btn btn-secondary" style="padding: 8px 16px; background: var(--accent-gold); color: var(--bg-primary);">Add Note</button>
+                </div>
             `;
 
             document.getElementById('entity-editor-status').textContent = '';
-            modal.classList.add('visible');
+            modal.classList.add('active');
         }
 
         async function saveEntityEdits() {
@@ -19927,14 +20169,88 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closeEntityEditor() {
             const modal = document.getElementById('entity-editor-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
         }
 
         function closeEntityManager() {
             const modal = document.getElementById('entity-manager-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
             // Refresh world manager to show updated counts
             loadWorldManagerData();
+        }
+
+        // ============================================================
+        // DIRECTOR NOTES - Admin guidance for AI behavior
+        // ============================================================
+
+        async function addDirectorNote(canonId) {
+            const input = document.getElementById('new-director-note');
+            const note = input?.value?.trim();
+
+            if (!note) {
+                alert('Please enter a note');
+                return;
+            }
+
+            document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Adding note...';
+
+            try {
+                const response = await fetch(API_BASE + `/game/entities/${canonId}/director-note`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to add note');
+                }
+
+                const result = await response.json();
+                document.getElementById('entity-editor-status').innerHTML = '<span style="color: var(--accent-sage);">✓ Note added</span>';
+
+                // Update local entity data and refresh editor
+                const entity = entityManagerData.find(e => e.canon_id === canonId);
+                if (entity) {
+                    entity.director_notes = result.notes;
+                    openEntityEditor(canonId); // Refresh the editor to show new note
+                }
+
+                renderEntityManager(); // Update the list to show note badge
+            } catch (e) {
+                document.getElementById('entity-editor-status').innerHTML = `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
+            }
+        }
+
+        async function removeDirectorNote(canonId, noteIndex) {
+            if (!confirm('Remove this director note?')) return;
+
+            document.getElementById('entity-editor-status').innerHTML = '<span class="loading"></span> Removing note...';
+
+            try {
+                const response = await fetch(API_BASE + `/game/entities/${canonId}/director-note/${noteIndex}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Failed to remove note');
+                }
+
+                const result = await response.json();
+                document.getElementById('entity-editor-status').innerHTML = '<span style="color: var(--accent-sage);">✓ Note removed</span>';
+
+                // Update local entity data and refresh editor
+                const entity = entityManagerData.find(e => e.canon_id === canonId);
+                if (entity) {
+                    entity.director_notes = result.notes;
+                    openEntityEditor(canonId); // Refresh the editor
+                }
+
+                renderEntityManager(); // Update the list to show note badge
+            } catch (e) {
+                document.getElementById('entity-editor-status').innerHTML = `<span style="color: var(--accent-rose);">Error: ${e.message}</span>`;
+            }
         }
 
         // ============================================================
@@ -20008,7 +20324,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 </div>
             `;
 
-            modal.classList.add('visible');
+            modal.classList.add('active');
         }
 
         function renderDuplicatePairs(pairs) {
@@ -20146,7 +20462,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function closeDuplicatesModal() {
             const modal = document.getElementById('duplicates-modal');
-            if (modal) modal.classList.remove('visible');
+            if (modal) modal.classList.remove('active');
             currentDuplicates = [];
             currentDuplicateWorldId = null;
         }
@@ -21304,12 +21620,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
 
             // Show modal
-            document.getElementById('entity-edit-modal').style.display = 'flex';
+            document.getElementById('entity-edit-modal').classList.add('active');
         }
 
         function closeEntityEditModal() {
             currentEditEntityId = null;
-            document.getElementById('entity-edit-modal').style.display = 'none';
+            document.getElementById('entity-edit-modal').classList.remove('active');
             document.getElementById('entity-edit-form').reset();
         }
 
@@ -21324,14 +21640,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const description = document.getElementById('edit-entity-description').value.trim();
             const aliasesText = document.getElementById('edit-entity-aliases').value;
             const aliases = aliasesText.split('\n').map(a => a.trim()).filter(a => a);
-            const confidence = document.getElementById('edit-entity-confidence').value;
 
             const updates = {
-                canonical_name: name,
-                entity_type: type,
+                name: name,
                 description: description,
-                aliases: aliases,
-                confidence_level: confidence
+                aliases: aliases
             };
 
             // Add OCEAN if it's a Character
@@ -21352,8 +21665,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             showStatus('entity-edit-status', '<span class="loading"></span> Saving changes...', 'info');
 
             try {
-                const response = await fetch(`/api/entities/${entityId}`, {
-                    method: 'PATCH',
+                const response = await fetch(API_BASE + `/game/entities/${entityId}`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updates)
                 });
