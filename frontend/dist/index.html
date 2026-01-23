@@ -12654,7 +12654,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         // If world has custom options, skip the genre API fetch
                         if ((charOpts.origins?.length > 0) || (charOpts.archetypes?.length > 0)) {
                             console.log('[CharCreate] World has custom character options, using those');
-                            updateCharCreationUI();
+                            console.log('[CharCreate] Ready - Origins:', availableOrigins.map(o => o.id), 'Archetypes:', availableArchetypes.map(a => a.id));
+                            updateCreationSteps();
+                            renderCreationStep();
+                            document.getElementById('char-creation-modal').style.display = 'flex';
                             return;
                         }
                     }
