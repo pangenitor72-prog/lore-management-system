@@ -2791,14 +2791,16 @@ async def create_session(
 
     # World Integrity Check: Validate world before active_play
     # For Session 0 (no world_id), we allow empty world since we're building it
+    # NOTE: Seed worlds (in LORE_BASES) are pre-validated JSON files - skip Neo4j check
     db = get_optional_neo4j_db(request)
-    if session_req.world_id and db:
+    is_seed_world = session_req.world_id and session_req.world_id in LORE_BASES
+    if session_req.world_id and db and not is_seed_world:
         try:
-            # Validate that the world has required elements
+            # Validate that user-created worlds have required elements
             await require_valid_world(
                 db,
                 world_id=session_req.world_id,
-                allow_empty=False,  # Existing worlds must be complete
+                allow_empty=False,  # User-created worlds must be complete
             )
         except WorldNotReadyError as e:
             raise HTTPException(

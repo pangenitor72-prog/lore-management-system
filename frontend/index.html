@@ -14458,7 +14458,19 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 if (!sessionRes.ok) {
                     const errorData = await sessionRes.json().catch(() => ({}));
-                    throw new Error(errorData.detail || 'Failed to create session');
+                    // Handle both string and object error details
+                    let errorMsg = 'Failed to create session';
+                    if (errorData.detail) {
+                        if (typeof errorData.detail === 'string') {
+                            errorMsg = errorData.detail;
+                        } else if (errorData.detail.errors) {
+                            // WorldNotReadyError format: {error, world_id, errors}
+                            errorMsg = errorData.detail.errors.join('; ');
+                        } else {
+                            errorMsg = JSON.stringify(errorData.detail);
+                        }
+                    }
+                    throw new Error(errorMsg);
                 }
                 const sessionData = await sessionRes.json();
                 currentSessionId = sessionData.session_id;
