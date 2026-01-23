@@ -11418,6 +11418,94 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             setTimeout(() => toast.remove(), 3000);
         }
 
+        // Show game event as a toast notification
+        function showGameEventToast(event) {
+            if (!event || !event.type) return;
+
+            // Choose icon and color based on event type
+            let icon = '📜';
+            let color = '#4a9eff';
+            let message = '';
+
+            switch (event.type) {
+                case 'ITEM_ADDED':
+                    icon = '🎒';
+                    color = '#4CAF50';
+                    message = `Found: ${event.data?.item || 'item'}`;
+                    break;
+                case 'ITEM_REMOVED':
+                    icon = '📤';
+                    color = '#ff9800';
+                    message = `Lost: ${event.data?.item || 'item'}`;
+                    break;
+                case 'GOLD_CHANGED':
+                    icon = '💰';
+                    color = '#FFD700';
+                    const amt = event.data?.amount || 0;
+                    message = amt > 0 ? `+${amt} gold` : `${amt} gold`;
+                    break;
+                case 'DAMAGE_TAKEN':
+                    icon = '💔';
+                    color = '#f44336';
+                    message = `Took ${event.data?.amount || 0} damage (HP: ${event.data?.new_hp || '?'})`;
+                    break;
+                case 'DAMAGE_DEALT':
+                    icon = '⚔️';
+                    color = '#ff5722';
+                    message = `Dealt ${event.data?.amount || 0} damage to ${event.data?.target || 'enemy'}`;
+                    break;
+                case 'HP_CHANGED':
+                    icon = '❤️';
+                    color = '#e91e63';
+                    const change = event.data?.change || 0;
+                    message = change > 0 ? `Healed ${change} HP` : `Lost ${-change} HP`;
+                    break;
+                case 'SKILL_CHECK':
+                    icon = '🎲';
+                    color = event.data?.success ? '#4CAF50' : '#f44336';
+                    message = `${event.data?.skill || 'Check'}: ${event.data?.total || 0} (${event.data?.success ? 'Success' : 'Fail'})`;
+                    break;
+                case 'ATTACK_ROLL':
+                    icon = '🎯';
+                    color = event.data?.is_hit ? '#4CAF50' : '#f44336';
+                    message = `Attack: ${event.data?.total || 0} (${event.data?.is_hit ? 'Hit!' : 'Miss'})`;
+                    break;
+                case 'CONDITION_ADDED':
+                    icon = '⚠️';
+                    color = '#ff9800';
+                    message = `Condition: ${event.data?.condition || 'unknown'}`;
+                    break;
+                case 'CONDITION_REMOVED':
+                    icon = '✅';
+                    color = '#4CAF50';
+                    message = `Removed: ${event.data?.condition || 'condition'}`;
+                    break;
+                default:
+                    message = event.type.replace(/_/g, ' ');
+            }
+
+            const toast = document.createElement('div');
+            toast.innerHTML = `${icon} ${message}`;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: ${100 + (document.querySelectorAll('.game-event-toast').length * 50)}px;
+                right: 20px;
+                background: linear-gradient(135deg, #2d2d3d, #1e1e2e);
+                color: ${color};
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: 500;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                z-index: 9999;
+                animation: slideInRight 0.3s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+                border: 1px solid ${color}40;
+                font-family: monospace;
+            `;
+            toast.className = 'game-event-toast';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
         // D&D Character Sheet Modal
         function showCharacterSheet() {
             if (!dndCharacter) {
@@ -14602,10 +14690,40 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Save to history for undo/retry
                 saveToHistory(action, data.narrative);
 
-                // Update HUD if character data changed
+                // Update HUD if character data changed (legacy)
                 if (data.character) {
                     dndCharacter = data.character;
                     updateCharacterHUD();
+                }
+
+                // NEW: Update from character_update (authoritative game state)
+                if (data.character_update) {
+                    const update = data.character_update;
+                    if (dndCharacter) {
+                        if (update.hp !== undefined) {
+                            dndCharacter.current_hit_points = update.hp;
+                        }
+                        if (update.max_hp !== undefined) {
+                            dndCharacter.max_hit_points = update.max_hp;
+                        }
+                        if (update.conditions !== undefined) {
+                            dndCharacter.conditions = update.conditions;
+                        }
+                        updateCharacterHUD();
+                    }
+                    // Update gold display if we have inventory panel
+                    if (update.gold !== undefined) {
+                        const goldDisplay = document.getElementById('inventory-gold');
+                        if (goldDisplay) goldDisplay.textContent = update.gold + ' gp';
+                    }
+                    console.log('[GameState] Character update:', update);
+                }
+
+                // NEW: Display events as toasts
+                if (data.events && data.events.length > 0) {
+                    data.events.forEach(event => {
+                        showGameEventToast(event);
+                    });
                 }
 
                 // Update story arc progress

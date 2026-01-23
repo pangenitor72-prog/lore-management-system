@@ -7524,28 +7524,45 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                     <span id="admin-changelog-arrow" style="font-size: 1.2rem; transition: transform 0.2s;">▼</span>
                 </div>
                 <div id="admin-changelog-content" style="margin-top: 15px;">
+                    <!-- Most recent first -->
                     <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <strong style="color: var(--text-primary);">🎯 World Tuner - Conversational World Config</strong>
                             <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
-                            Configure your worlds through natural conversation! In World Manager, click the green "🎯 World Tuner" button to chat with an AI assistant that helps you add races, classes, skills, and more.
+                            Configure your worlds through natural conversation! In World Manager, click the green "🎯 World Tuner" button to chat with an AI assistant that helps you add races, classes, skills, and more. No more editing JSON - just describe what you want and approve the changes.
                         </p>
                     </div>
+
                     <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-lavender);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <strong style="color: var(--text-primary);">⚙️ Character Options Editor</strong>
                             <span style="color: var(--text-muted); font-size: 0.75rem;">Jan 2026</span>
                         </div>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Direct editing of origins and archetypes for any world.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Direct editing of origins (races) and archetypes (classes) for any world. Click "⚙️ Character Options" in World Manager to view, add, or modify character creation options.
+                        </p>
                     </div>
-                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-gold);">
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-gold);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <strong style="color: var(--text-primary);">🌍 21 Pre-Built Seed Worlds</strong>
                             <span style="color: var(--text-muted); font-size: 0.75rem;">Jan 2026</span>
                         </div>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Fantasy, sci-fi, noir, western, and more with pre-configured character options.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Fantasy, sci-fi, noir, western, horror, and more - each with pre-configured character options. Players can jump right in without admin setup, or admins can customize each world.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-sage);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">📋 Entity Manager</strong>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Jan 2026</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Browse, edit, and delete individual entities within any world. Access via the "📋 Entity Manager" button in World Manager.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -9009,6 +9026,64 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // ==========================================
         // END ANNOUNCEMENT SYSTEM
         // ==========================================
+
+        // ==========================================
+        // MODAL POSITIONING HELPER
+        // ==========================================
+        // Open modals at click position instead of centered
+
+        let lastClickPos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+        // Track click positions globally
+        document.addEventListener('click', (e) => {
+            lastClickPos = { x: e.clientX, y: e.clientY };
+        });
+
+        /**
+         * Position a modal near the last click location.
+         * Ensures the modal stays within viewport bounds.
+         * @param {HTMLElement} modal - The modal element to position
+         * @param {Object} opts - Options: { centered: boolean, offsetX: number, offsetY: number }
+         */
+        function positionModalAtClick(modal, opts = {}) {
+            const { centered = false, offsetX = 0, offsetY = 20 } = opts;
+
+            if (centered) {
+                // Reset to centered positioning
+                modal.style.position = '';
+                modal.style.left = '';
+                modal.style.top = '';
+                modal.style.transform = '';
+                return;
+            }
+
+            const modalInner = modal.querySelector('.modal');
+            if (!modalInner) return;
+
+            // Get modal dimensions (render briefly to measure)
+            modalInner.style.visibility = 'hidden';
+            modalInner.style.position = 'fixed';
+            modal.style.display = 'flex';
+            const rect = modalInner.getBoundingClientRect();
+
+            // Calculate position relative to click
+            let left = lastClickPos.x + offsetX;
+            let top = lastClickPos.y + offsetY;
+
+            // Keep within viewport bounds
+            const padding = 20;
+            const maxLeft = window.innerWidth - rect.width - padding;
+            const maxTop = window.innerHeight - rect.height - padding;
+
+            left = Math.max(padding, Math.min(left, maxLeft));
+            top = Math.max(padding, Math.min(top, maxTop));
+
+            // Apply position
+            modalInner.style.position = 'fixed';
+            modalInner.style.left = left + 'px';
+            modalInner.style.top = top + 'px';
+            modalInner.style.visibility = '';
+        }
 
         // State
         let selectedGenres = [];  // Array of selected genres for mixing
@@ -11339,6 +11414,94 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 animation: slideInUp 0.3s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
                 border: 1px solid rgba(230,168,168,0.3);
             `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Show game event as a toast notification
+        function showGameEventToast(event) {
+            if (!event || !event.type) return;
+
+            // Choose icon and color based on event type
+            let icon = '📜';
+            let color = '#4a9eff';
+            let message = '';
+
+            switch (event.type) {
+                case 'ITEM_ADDED':
+                    icon = '🎒';
+                    color = '#4CAF50';
+                    message = `Found: ${event.data?.item || 'item'}`;
+                    break;
+                case 'ITEM_REMOVED':
+                    icon = '📤';
+                    color = '#ff9800';
+                    message = `Lost: ${event.data?.item || 'item'}`;
+                    break;
+                case 'GOLD_CHANGED':
+                    icon = '💰';
+                    color = '#FFD700';
+                    const amt = event.data?.amount || 0;
+                    message = amt > 0 ? `+${amt} gold` : `${amt} gold`;
+                    break;
+                case 'DAMAGE_TAKEN':
+                    icon = '💔';
+                    color = '#f44336';
+                    message = `Took ${event.data?.amount || 0} damage (HP: ${event.data?.new_hp || '?'})`;
+                    break;
+                case 'DAMAGE_DEALT':
+                    icon = '⚔️';
+                    color = '#ff5722';
+                    message = `Dealt ${event.data?.amount || 0} damage to ${event.data?.target || 'enemy'}`;
+                    break;
+                case 'HP_CHANGED':
+                    icon = '❤️';
+                    color = '#e91e63';
+                    const change = event.data?.change || 0;
+                    message = change > 0 ? `Healed ${change} HP` : `Lost ${-change} HP`;
+                    break;
+                case 'SKILL_CHECK':
+                    icon = '🎲';
+                    color = event.data?.success ? '#4CAF50' : '#f44336';
+                    message = `${event.data?.skill || 'Check'}: ${event.data?.total || 0} (${event.data?.success ? 'Success' : 'Fail'})`;
+                    break;
+                case 'ATTACK_ROLL':
+                    icon = '🎯';
+                    color = event.data?.is_hit ? '#4CAF50' : '#f44336';
+                    message = `Attack: ${event.data?.total || 0} (${event.data?.is_hit ? 'Hit!' : 'Miss'})`;
+                    break;
+                case 'CONDITION_ADDED':
+                    icon = '⚠️';
+                    color = '#ff9800';
+                    message = `Condition: ${event.data?.condition || 'unknown'}`;
+                    break;
+                case 'CONDITION_REMOVED':
+                    icon = '✅';
+                    color = '#4CAF50';
+                    message = `Removed: ${event.data?.condition || 'condition'}`;
+                    break;
+                default:
+                    message = event.type.replace(/_/g, ' ');
+            }
+
+            const toast = document.createElement('div');
+            toast.innerHTML = `${icon} ${message}`;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: ${100 + (document.querySelectorAll('.game-event-toast').length * 50)}px;
+                right: 20px;
+                background: linear-gradient(135deg, #2d2d3d, #1e1e2e);
+                color: ${color};
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: 500;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                z-index: 9999;
+                animation: slideInRight 0.3s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+                border: 1px solid ${color}40;
+                font-family: monospace;
+            `;
+            toast.className = 'game-event-toast';
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
@@ -14527,10 +14690,40 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Save to history for undo/retry
                 saveToHistory(action, data.narrative);
 
-                // Update HUD if character data changed
+                // Update HUD if character data changed (legacy)
                 if (data.character) {
                     dndCharacter = data.character;
                     updateCharacterHUD();
+                }
+
+                // NEW: Update from character_update (authoritative game state)
+                if (data.character_update) {
+                    const update = data.character_update;
+                    if (dndCharacter) {
+                        if (update.hp !== undefined) {
+                            dndCharacter.current_hit_points = update.hp;
+                        }
+                        if (update.max_hp !== undefined) {
+                            dndCharacter.max_hit_points = update.max_hp;
+                        }
+                        if (update.conditions !== undefined) {
+                            dndCharacter.conditions = update.conditions;
+                        }
+                        updateCharacterHUD();
+                    }
+                    // Update gold display if we have inventory panel
+                    if (update.gold !== undefined) {
+                        const goldDisplay = document.getElementById('inventory-gold');
+                        if (goldDisplay) goldDisplay.textContent = update.gold + ' gp';
+                    }
+                    console.log('[GameState] Character update:', update);
+                }
+
+                // NEW: Display events as toasts
+                if (data.events && data.events.length > 0) {
+                    data.events.forEach(event => {
+                        showGameEventToast(event);
+                    });
                 }
 
                 // Update story arc progress
@@ -16581,6 +16774,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const titleEl = document.getElementById('entity-inspector-title');
             const contentEl = document.getElementById('entity-inspector-content');
 
+            // Position at click location
+            positionModalAtClick(modal);
             modal.style.display = 'flex';
             titleEl.textContent = 'Loading...';
             contentEl.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Fetching entity data...</p>';
@@ -17015,6 +17210,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             adminChangelogExpanded = !adminChangelogExpanded;
             const content = document.getElementById('admin-changelog-content');
             const arrow = document.getElementById('admin-changelog-arrow');
+
             if (adminChangelogExpanded) {
                 content.style.display = 'block';
                 arrow.style.transform = 'rotate(0deg)';
@@ -18314,8 +18510,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             wtHistory = [];
             wtPendingProposals = [];
 
+            // Update modal header
             document.getElementById('wt-world-name').textContent = worldName;
+
+            // Show modal
             document.getElementById('world-tuner-modal').style.display = 'flex';
+
+            // Clear previous messages
             document.getElementById('wt-messages').innerHTML = '';
             document.getElementById('wt-proposals').innerHTML = `
                 <div style="text-align: center; padding: 30px; color: var(--text-muted);">
@@ -18324,8 +18525,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 </div>
             `;
             updateProposalCount();
+
+            // Load world summary
             await loadWorldTunerSummary();
 
+            // Get greeting
             try {
                 const res = await fetch(API_BASE + `/game/admin/lore-bases/${worldId}/tuner/greeting`);
                 if (res.ok) {
@@ -18333,8 +18537,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     addTunerMessage('assistant', data.greeting);
                 }
             } catch (err) {
+                console.error('Failed to get greeting:', err);
                 addTunerMessage('assistant', `Hi! I'm ready to help you configure **${worldName}**. What would you like to change?`);
             }
+
+            // Focus input
             document.getElementById('wt-input').focus();
         }
 
@@ -18348,37 +18555,62 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function loadWorldTunerSummary() {
             if (!wtCurrentWorldId) return;
+
             try {
                 const res = await fetch(API_BASE + `/game/admin/lore-bases/${wtCurrentWorldId}/character-options`);
                 if (res.ok) {
                     const data = await res.json();
                     const opts = data.character_options || {};
+
                     document.getElementById('wt-origins-count').textContent = (opts.origins || []).length;
                     document.getElementById('wt-archetypes-count').textContent = (opts.archetypes || []).length;
                     document.getElementById('wt-skills-count').textContent = (opts.setting_skills || []).length;
+
+                    // Get genre from worldManagerData
                     const world = worldManagerData?.worlds?.find(w => w.id === wtCurrentWorldId);
                     document.getElementById('wt-genre').textContent = world?.genre || '-';
                 }
-            } catch (err) { console.error('Failed to load world summary:', err); }
+            } catch (err) {
+                console.error('Failed to load world summary:', err);
+            }
         }
 
         function addTunerMessage(role, content) {
             const container = document.getElementById('wt-messages');
             const isUser = role === 'user';
+
+            // Add to history
             wtHistory.push({ role, content });
+
+            // Render message
             const msgDiv = document.createElement('div');
-            msgDiv.style.cssText = `display: flex; justify-content: ${isUser ? 'flex-end' : 'flex-start'};`;
+            msgDiv.style.cssText = `
+                display: flex;
+                justify-content: ${isUser ? 'flex-end' : 'flex-start'};
+            `;
+
             msgDiv.innerHTML = `
-                <div style="max-width: 80%; padding: 12px 16px; border-radius: 12px; background: ${isUser ? 'linear-gradient(135deg, #22c55e, #14b8a6)' : 'var(--bg-secondary)'}; color: ${isUser ? 'white' : 'var(--text-primary)'}; ${!isUser ? 'border: 1px solid var(--border-subtle);' : ''}">
-                    <div style="font-size: 0.8rem; color: ${isUser ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)'}; margin-bottom: 4px;">${isUser ? 'You' : '🎯 World Tuner'}</div>
+                <div style="
+                    max-width: 80%;
+                    padding: 12px 16px;
+                    border-radius: 12px;
+                    background: ${isUser ? 'linear-gradient(135deg, #22c55e, #14b8a6)' : 'var(--bg-secondary)'};
+                    color: ${isUser ? 'white' : 'var(--text-primary)'};
+                    ${!isUser ? 'border: 1px solid var(--border-subtle);' : ''}
+                ">
+                    <div style="font-size: 0.8rem; color: ${isUser ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)'}; margin-bottom: 4px;">
+                        ${isUser ? 'You' : '🎯 World Tuner'}
+                    </div>
                     <div style="white-space: pre-wrap; line-height: 1.5;">${formatTunerMessage(content)}</div>
                 </div>
             `;
+
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
         }
 
         function formatTunerMessage(content) {
+            // Basic markdown-like formatting
             return escapeHtml(content)
                 .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*([^*]+)\*/g, '<em>$1</em>')
@@ -18388,34 +18620,63 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         async function sendWorldTunerMessage() {
             if (wtLoading || !wtCurrentWorldId) return;
+
             const input = document.getElementById('wt-input');
             const message = input.value.trim();
             if (!message) return;
+
+            // Clear input and show user message
             input.value = '';
             addTunerMessage('user', message);
+
+            // Show loading state
             wtLoading = true;
             const sendBtn = document.getElementById('wt-send-btn');
             sendBtn.disabled = true;
             sendBtn.textContent = '...';
+
+            // Add typing indicator
             const typingDiv = document.createElement('div');
             typingDiv.id = 'wt-typing';
             typingDiv.style.cssText = 'display: flex; justify-content: flex-start;';
-            typingDiv.innerHTML = `<div style="padding: 12px 16px; border-radius: 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle);"><span class="loading" style="width: 16px; height: 16px;"></span><span style="margin-left: 8px; color: var(--text-muted);">Thinking...</span></div>`;
+            typingDiv.innerHTML = `
+                <div style="padding: 12px 16px; border-radius: 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle);">
+                    <span class="loading" style="width: 16px; height: 16px;"></span>
+                    <span style="margin-left: 8px; color: var(--text-muted);">Thinking...</span>
+                </div>
+            `;
             document.getElementById('wt-messages').appendChild(typingDiv);
+
             try {
                 const res = await fetch(API_BASE + `/game/admin/lore-bases/${wtCurrentWorldId}/tuner/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, history: wtHistory.slice(0, -1) })
+                    body: JSON.stringify({
+                        message,
+                        history: wtHistory.slice(0, -1)  // Exclude the message we just added
+                    })
                 });
+
+                // Remove typing indicator
                 document.getElementById('wt-typing')?.remove();
-                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+                if (!res.ok) {
+                    throw new Error(`Server error: ${res.status}`);
+                }
+
                 const data = await res.json();
+
+                // Add AI response
                 addTunerMessage('assistant', data.message);
-                if (data.proposals?.length > 0) {
-                    data.proposals.forEach(p => wtPendingProposals.push(p));
+
+                // Add any proposals
+                if (data.proposals && data.proposals.length > 0) {
+                    data.proposals.forEach(p => {
+                        wtPendingProposals.push(p);
+                    });
                     renderProposals();
                 }
+
             } catch (err) {
                 document.getElementById('wt-typing')?.remove();
                 addTunerMessage('assistant', `Sorry, I encountered an error: ${err.message}. Please try again.`);
@@ -18430,10 +18691,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         function renderProposals() {
             const container = document.getElementById('wt-proposals');
             updateProposalCount();
+
             if (wtPendingProposals.length === 0) {
-                container.innerHTML = `<div style="text-align: center; padding: 30px; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 10px;">💬</div><div>Chat with the tuner to propose changes</div></div>`;
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
+                        <div>Chat with the tuner to propose changes</div>
+                    </div>
+                `;
                 return;
             }
+
             container.innerHTML = wtPendingProposals.map((p, idx) => renderProposalCard(p, idx)).join('');
         }
 
@@ -18441,32 +18709,54 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const category = proposal.category || 'unknown';
             const action = proposal.action || 'add';
             const data = proposal.data || {};
+
             const categoryColors = {
                 origin: { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', icon: '🧝' },
                 archetype: { bg: 'rgba(139,92,246,0.15)', border: '#8B5CF6', icon: '⚔️' },
                 skill: { bg: 'rgba(59,130,246,0.15)', border: '#3B82F6', icon: '📚' },
                 characteristic: { bg: 'rgba(245,158,11,0.15)', border: '#F59E0B', icon: '⚙️' }
             };
+
             const colors = categoryColors[category] || categoryColors.characteristic;
             const actionLabel = action === 'add' ? 'NEW' : action === 'modify' ? 'MODIFY' : 'REMOVE';
-            return `<div style="background: ${colors.bg}; border: 1px solid ${colors.border}; border-radius: 10px; padding: 15px; position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 1.2rem;">${colors.icon}</span><strong style="color: var(--text-primary);">${escapeHtml(data.name || data.id || 'Unnamed')}</strong></div>
-                    <span style="background: ${colors.border}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">${actionLabel} ${category.toUpperCase()}</span>
+
+            return `
+                <div style="background: ${colors.bg}; border: 1px solid ${colors.border}; border-radius: 10px; padding: 15px; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.2rem;">${colors.icon}</span>
+                            <strong style="color: var(--text-primary);">${escapeHtml(data.name || data.id || 'Unnamed')}</strong>
+                        </div>
+                        <span style="background: ${colors.border}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">
+                            ${actionLabel} ${category.toUpperCase()}
+                        </span>
+                    </div>
+
+                    ${data.description ? `<p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 10px; line-height: 1.4;">${escapeHtml(data.description)}</p>` : ''}
+
+                    ${data.base_type ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Base: <span style="color: var(--text-primary);">${data.base_type}</span></div>` : ''}
+
+                    ${data.ability_bonuses ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Bonuses: <span style="color: var(--text-primary);">${formatAbilityBonuses(data.ability_bonuses)}</span></div>` : ''}
+
+                    ${data.traits && data.traits.length > 0 ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Traits: <span style="color: var(--text-primary);">${data.traits.length}</span></div>` : ''}
+
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                        <button onclick="approveProposal(${index})" style="flex: 1; padding: 8px 12px; background: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">
+                            ✓ Approve
+                        </button>
+                        <button onclick="rejectProposal(${index})" style="padding: 8px 12px; background: transparent; color: var(--accent-rose); border: 1px solid var(--accent-rose); border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+                            ✗
+                        </button>
+                    </div>
                 </div>
-                ${data.description ? `<p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 10px; line-height: 1.4;">${escapeHtml(data.description)}</p>` : ''}
-                ${data.base_type ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Base: <span style="color: var(--text-primary);">${data.base_type}</span></div>` : ''}
-                ${data.ability_bonuses ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Bonuses: <span style="color: var(--text-primary);">${formatAbilityBonuses(data.ability_bonuses)}</span></div>` : ''}
-                <div style="display: flex; gap: 8px; margin-top: 12px;">
-                    <button onclick="approveProposal(${index})" style="flex: 1; padding: 8px 12px; background: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">✓ Approve</button>
-                    <button onclick="rejectProposal(${index})" style="padding: 8px 12px; background: transparent; color: var(--accent-rose); border: 1px solid var(--accent-rose); border-radius: 6px; cursor: pointer; font-size: 0.85rem;">✗</button>
-                </div>
-            </div>`;
+            `;
         }
 
         function formatAbilityBonuses(bonuses) {
             if (!bonuses) return '-';
-            return Object.entries(bonuses).map(([stat, val]) => `+${val} ${stat.substring(0, 3).toUpperCase()}`).join(', ');
+            return Object.entries(bonuses)
+                .map(([stat, val]) => `+${val} ${stat.substring(0, 3).toUpperCase()}`)
+                .join(', ');
         }
 
         function updateProposalCount() {
@@ -18476,17 +18766,28 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function approveProposal(index) {
             const proposal = wtPendingProposals[index];
             if (!proposal || !wtCurrentWorldId) return;
+
             try {
                 const res = await fetch(API_BASE + `/game/admin/lore-bases/${wtCurrentWorldId}/tuner/approve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ proposal })
                 });
-                if (!res.ok) throw new Error(`Failed to apply: ${res.status}`);
+
+                if (!res.ok) {
+                    throw new Error(`Failed to apply: ${res.status}`);
+                }
+
+                // Remove from pending
                 wtPendingProposals.splice(index, 1);
                 renderProposals();
+
+                // Update summary
                 await loadWorldTunerSummary();
+
+                // Show success in chat
                 addTunerMessage('assistant', `✅ Applied: **${proposal.data?.name || 'change'}** has been ${proposal.action}ed to your world!`);
+
             } catch (err) {
                 addTunerMessage('assistant', `❌ Failed to apply change: ${err.message}`);
             }
@@ -18495,8 +18796,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         function rejectProposal(index) {
             const proposal = wtPendingProposals[index];
             if (!proposal) return;
+
+            // Remove from pending
             wtPendingProposals.splice(index, 1);
             renderProposals();
+
+            // Show in chat
             addTunerMessage('assistant', `Got it - I've discarded the "${proposal.data?.name || 'change'}" proposal. Let me know if you'd like to try something different.`);
         }
 
@@ -18513,7 +18818,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             mantleCurrentWorldId = worldId;
             mantleCurrentWorldName = worldName;
             document.getElementById('mantle-world-name').textContent = worldName;
-            document.getElementById('wm-mantle-modal').classList.add('active');
+            const modal = document.getElementById('wm-mantle-modal');
+            // Position modal at click location
+            positionModalAtClick(modal);
+            modal.classList.add('active');
             await loadMantleMappings();
         }
 

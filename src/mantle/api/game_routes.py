@@ -51,6 +51,10 @@ from src.mantle.engine.world_integrity import (
     validate_world_before_session,
 )
 
+# Game State - Single source of truth for session state
+from src.mantle.engine.game_state import GameState, CombatantState, Item
+from src.mantle.engine.game_events import get_starting_inventory
+
 # Arc Engine for narrative pacing
 try:
     from src.mantle.arc.arc_engine import ArcEngine
@@ -2143,6 +2147,55 @@ class DMResponse(BaseModel):
 
 _active_sessions: Dict[str, Dict[str, Any]] = {}
 
+# GameState instances - authoritative source for character HP, inventory, combat
+_game_states: Dict[str, GameState] = {}
+
+
+def get_world_context_for_dm(world_id: str) -> str:
+    """
+    Get admin-configured world details for DM context.
+
+    This pulls from LORE_BASES (populated by World Tuner and seed files)
+    so the DM knows about the world the admin created.
+    """
+    if not world_id or world_id not in LORE_BASES:
+        return ""
+
+    world = LORE_BASES[world_id]
+    lines = []
+
+    lines.append("=== WORLD CONFIGURATION (Admin-Defined) ===")
+    lines.append(f"World: {world.get('name', world_id)}")
+    if world.get('genre'):
+        lines.append(f"Genre: {world.get('genre')}")
+
+    # Character options the admin configured (from World Tuner or generation)
+    options = world.get("character_options", {})
+
+    if options.get("origins"):
+        lines.append("\nPlayable Origins (races) in this world:")
+        for origin in options["origins"][:6]:
+            desc = origin.get('description', '')[:80]
+            lines.append(f"  - {origin['name']}: {desc}")
+
+    if options.get("archetypes"):
+        lines.append("\nPlayable Archetypes (classes) in this world:")
+        for arch in options["archetypes"][:6]:
+            desc = arch.get('description', '')[:80]
+            lines.append(f"  - {arch['name']}: {desc}")
+
+    if options.get("setting_skills"):
+        lines.append("\nSetting-Specific Skills:")
+        for skill in options["setting_skills"][:4]:
+            lines.append(f"  - {skill['name']}: {skill.get('description', '')[:60]}")
+
+    # Add instruction to use this context
+    if options.get("origins") or options.get("archetypes"):
+        lines.append("\nIMPORTANT: Reference these setting-specific elements naturally in your narrative.")
+        lines.append("NPCs, factions, and lore should align with the world the admin designed.")
+
+    return "\n".join(lines)
+
 
 def _make_json_serializable(obj):
     """Recursively convert datetime objects to ISO strings for JSON serialization."""
@@ -2849,6 +2902,19 @@ async def create_session(
 
     _active_sessions[session_id] = session_data
 
+    # Create GameState - the authoritative source for HP, inventory, combat
+    character = _characters.get(session_req.character_id) if session_req.character_id else None
+    game_state = GameState.create_new(
+        session_id=session_id,
+        world_id=session_req.world_id or "custom",
+        character=character,
+        starting_gold=10,
+    )
+    game_state.location = world_name or "Unknown"
+    _game_states[session_id] = game_state
+    game_state.save()  # Persist to JSON file
+    logger.info(f"Created GameState for session {session_id} with character={character.name if character else 'None'}")
+
     # Store in Neo4j for persistence (if available)
     # This ensures story continuity even if server restarts
     db = get_optional_neo4j_db(request)
@@ -2983,6 +3049,25 @@ async def process_action(
                 detail=f"Session {session_id} not found. Please start a new story or load a saved game."
             )
 
+    # Get or recover GameState (the authoritative source for HP, inventory, combat)
+    game_state = _game_states.get(session_id)
+    if not game_state:
+        # Try to load from disk
+        game_state = GameState.load(session_id)
+        if game_state:
+            _game_states[session_id] = game_state
+            logger.info(f"GameState recovered from disk for session {session_id}")
+        else:
+            # Create new if doesn't exist (legacy sessions)
+            character = _characters.get(session.get("character_id")) if session.get("character_id") else None
+            game_state = GameState.create_new(
+                session_id=session_id,
+                world_id=session.get("world_id", "custom"),
+                character=character,
+            )
+            _game_states[session_id] = game_state
+            logger.info(f"Created new GameState for legacy session {session_id}")
+
     model = get_gemini_model()
 
     if not model:
@@ -3024,6 +3109,30 @@ async def process_action(
                                 mechanical_context = f"[MECHANICAL: {roll['skill'].title()} check FAILED. Describe a complication or setback.]"
 
                     logger.info(f"Mechanical action resolved: {mechanical_result['action_type']}")
+
+                    # APPLY MECHANICAL RESULTS TO GAME STATE
+                    # This is where damage actually affects HP!
+                    if mechanical_result.get("rolls") and game_state:
+                        for roll in mechanical_result["rolls"]:
+                            if roll.get("type") == "attack" and roll.get("is_hit"):
+                                # Find the damage roll
+                                dmg_roll = next(
+                                    (r for r in mechanical_result["rolls"] if r.get("type") == "damage"),
+                                    None
+                                )
+                                if dmg_roll:
+                                    damage = dmg_roll.get("total") or dmg_roll.get("damage", 0)
+                                    target = roll.get("target", "enemy")
+                                    # Apply damage to target (NPC/enemy)
+                                    # For now we track this in the mechanical_context for the DM
+                                    logger.info(f"[COMBAT] Player dealt {damage} damage to {target}")
+                                    # If we have a tracked enemy, apply it
+                                    try:
+                                        if target in game_state.active_npcs or target in game_state.combat.combatants:
+                                            game_state.apply_damage_to_npc(target, damage, source="player")
+                                    except ValueError:
+                                        pass  # Target not tracked yet
+
                 except Exception as e:
                     logger.warning(f"Failed to resolve mechanical action: {e}")
 
@@ -3042,7 +3151,8 @@ async def process_action(
         response_text, arc_context = await _handle_active_play(
             session, action.action, model, db, mechanical_context,
             needs_guidance=action.needs_guidance,
-            adaptive_context=action.adaptive_context
+            adaptive_context=action.adaptive_context,
+            game_state=game_state,  # Pass game state for context injection
         )
 
     # Add response to history
@@ -3096,6 +3206,39 @@ async def process_action(
     # Extract structured events from narrative for frontend
     turn_count = len(session.get("history", [])) // 2
     events = _extract_events_from_narrative(response_text, mechanical_result, turn_count)
+
+    # EXTRACT STATE CHANGES FROM NARRATIVE AND APPLY TO GAME STATE
+    # This catches items picked up, gold found, damage mentioned in narrative
+    if game_state:
+        state_changes = _extract_state_changes_from_narrative(response_text, game_state)
+        if state_changes:
+            logger.info(f"[STATE] Applied {len(state_changes)} state changes from narrative: {state_changes}")
+
+        # Add to history and advance turn
+        game_state.add_to_history("user", action.action)
+        game_state.add_to_history("assistant", response_text)
+        game_state.advance_turn()
+
+        # Save game state to disk (authoritative state)
+        game_state.save()
+
+        # Build character_update from actual game state
+        if game_state.character:
+            character_update = {
+                "hp": game_state.character.current_hit_points,
+                "max_hp": game_state.character.max_hit_points,
+                "temp_hp": game_state.character.temporary_hit_points,
+                "conditions": game_state.character.conditions,
+                "gold": game_state.inventory.gold,
+                "item_count": len(game_state.inventory.items),
+            }
+
+        # Get events from game state (merged with narrative events)
+        state_events = game_state.flush_events()
+        if state_events:
+            # Convert to dicts and merge with narrative events
+            state_event_dicts = [e.to_dict() for e in state_events]
+            events = (events or []) + state_event_dicts
 
     # Detect session ending (THE END marker for ONE_SHOT mode)
     session_ended = "**THE END**" in response_text or "THE END" in response_text.upper()
@@ -3288,6 +3431,96 @@ def _extract_events_from_narrative(
                 ))
 
     return events
+
+
+def _extract_state_changes_from_narrative(narrative: str, game_state: GameState) -> List[Dict[str, Any]]:
+    """
+    Parse narrative for state-changing events and APPLY them to game state.
+
+    This is where items picked up, gold found, and damage taken in the story
+    actually become real state changes.
+
+    Args:
+        narrative: The DM's narrative response
+        game_state: The GameState to mutate
+
+    Returns:
+        List of changes that were applied
+    """
+    import re
+    changes = []
+
+    # Item pickup patterns - look for things the player received
+    item_patterns = [
+        r"(?:you\s+)?(?:find|pick up|receive|acquire|take|grab|obtain|discover)s?\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[a-z]+)*)",
+        r"(?:hands? you|gives? you|rewards? you with|presents? you with)\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[a-z]+)*)",
+        r"([A-Z][a-z]+(?:\s+[a-z]+)*)\s+(?:is now yours|added to your inventory|goes into your pack)",
+    ]
+
+    for pattern in item_patterns:
+        matches = re.findall(pattern, narrative, re.IGNORECASE)
+        for match in matches:
+            item_name = match.strip()
+            # Filter out false positives
+            if len(item_name) < 3 or len(item_name) > 50:
+                continue
+            if item_name.lower() in ["the", "a", "an", "you", "your", "they", "their", "it", "them", "this"]:
+                continue
+            # Add to inventory
+            try:
+                game_state.add_item_by_name(item_name)
+                changes.append({"type": "item_added", "item": item_name})
+            except Exception as e:
+                logger.warning(f"Failed to add item '{item_name}': {e}")
+
+    # Gold patterns
+    gold_pattern = r"(?:you\s+)?(?:find|receive|earn|collect|take|obtain)\s+(\d+)\s*(?:gold|gp|coins?|gold pieces)"
+    gold_matches = re.findall(gold_pattern, narrative, re.IGNORECASE)
+    for match in gold_matches:
+        try:
+            amount = int(match)
+            if amount > 0 and amount < 10000:  # Sanity check
+                game_state.add_gold(amount)
+                changes.append({"type": "gold_added", "amount": amount})
+        except (ValueError, Exception) as e:
+            logger.warning(f"Failed to add gold: {e}")
+
+    # Damage taken patterns (enemy attacks hitting player)
+    damage_patterns = [
+        r"(?:you\s+)?(?:take|suffer|receive)s?\s+(\d+)\s*(?:points? of)?\s*(?:damage|hit points?)",
+        r"(?:deals?|inflicts?|causes?)\s+(\d+)\s*(?:points? of)?\s*damage\s+(?:to you|against you)",
+        r"strikes? you for\s+(\d+)\s*damage",
+    ]
+
+    for pattern in damage_patterns:
+        matches = re.findall(pattern, narrative, re.IGNORECASE)
+        for match in matches:
+            try:
+                amount = int(match)
+                if amount > 0 and amount < 500:  # Sanity check
+                    game_state.apply_damage_to_player(amount, source="narrative")
+                    changes.append({"type": "damage_taken", "amount": amount})
+            except (ValueError, Exception) as e:
+                logger.warning(f"Failed to apply damage: {e}")
+
+    # Healing patterns
+    heal_patterns = [
+        r"(?:you\s+)?(?:heal|recover|regain)s?\s+(\d+)\s*(?:hit points?|hp|health)",
+        r"restores?\s+(\d+)\s*(?:hit points?|hp|health)",
+    ]
+
+    for pattern in heal_patterns:
+        matches = re.findall(pattern, narrative, re.IGNORECASE)
+        for match in matches:
+            try:
+                amount = int(match)
+                if amount > 0 and amount < 500:  # Sanity check
+                    game_state.heal_player(amount, source="narrative")
+                    changes.append({"type": "healed", "amount": amount})
+            except (ValueError, Exception) as e:
+                logger.warning(f"Failed to apply healing: {e}")
+
+    return changes
 
 
 def _get_story_scope_guidance(scope: str, turn_count: int, max_turns: int) -> str:
@@ -3632,6 +3865,7 @@ async def _handle_active_play(
     mechanical_context: str = "",
     needs_guidance: bool = False,
     adaptive_context: Optional[str] = None,
+    game_state: Optional[GameState] = None,
 ) -> tuple[str, Optional[Dict[str, Any]]]:
     """Handle active gameplay with genre-aware storytelling.
 
@@ -3745,15 +3979,25 @@ ESTABLISHED LORE (stay true to these characters and details):
         except Exception:
             pass
 
-    # Build character context if D&D character exists
+    # Build character context - prefer game_state (authoritative) over _characters
     char_context = ""
-    if session.get("character_id"):
+    if game_state and game_state.character:
+        # Use game_state for accurate, current state (HP, inventory, conditions)
+        char_context = game_state.get_dm_context()
+    elif session.get("character_id"):
+        # Fallback to _characters dict (may be stale)
         dnd_char = _characters.get(session["character_id"])
         if dnd_char:
             char_context = f"""
 CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
 - Level {dnd_char.level}, {dnd_char.current_hit_points}/{dnd_char.max_hit_points} HP
 - Skills: {', '.join(dnd_char.skill_proficiencies[:4])}"""
+
+    # Get admin-configured world context (from World Tuner / LORE_BASES)
+    admin_world_context = ""
+    world_id = session.get("world_id")
+    if world_id:
+        admin_world_context = get_world_context_for_dm(world_id)
 
     # Build arc context for narrative pacing (Hero's Journey phases, tension)
     # Campaigns use subtle mode - structure should emerge naturally, not be announced
@@ -3781,6 +4025,7 @@ Voice: {genre_info['voice']}
 TONE: {tone}
 {world_context}
 {db_context}
+{admin_world_context}
 
 PROTAGONIST: {character if character else 'the protagonist'}
 {char_context}
