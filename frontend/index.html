@@ -13594,8 +13594,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         async function loadEquipmentForClass(classId) {
+            console.log('[Equipment] Loading for class:', classId);
+            console.log('[Equipment] Available archetypes:', availableArchetypes.map(a => a.id));
+
             // First check for world-specific starting equipment
             const selectedArch = availableArchetypes.find(a => a.id === classId);
+            console.log('[Equipment] Found archetype:', selectedArch?.id, 'equipment:', selectedArch?.starting_equipment);
+
             if (selectedArch && selectedArch.starting_equipment && selectedArch.starting_equipment.length > 0) {
                 console.log('[Equipment] Using world-specific starting_equipment:', selectedArch.starting_equipment);
                 availableEquipment.choices = null;
@@ -13603,22 +13608,31 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 renderCreationStep();
                 return;
             }
+
             // Fall back to API for D&D SRD equipment choices
+            // Use the base_type if available (e.g., "rogue" instead of "operative")
+            const apiClassId = selectedArch?.base_type || classId;
+            console.log('[Equipment] Falling back to API with class:', apiClassId);
+
             try {
-                const response = await fetch(`/api/dnd/equipment/class/${classId}`);
+                const response = await fetch(`/api/dnd/equipment/class/${apiClassId}`);
                 if (response.ok) {
                     const data = await response.json();
                     availableEquipment.choices = data.choices || null;
                     availableEquipment.fixed = data.fixed || [];
-                    renderCreationStep();
+                    console.log('[Equipment] API returned:', availableEquipment);
                 } else {
-                    console.warn('Failed to load equipment:', response.status);
-                    availableEquipment = { choices: null, fixed: [] };
+                    console.warn('[Equipment] API failed:', response.status, '- skipping equipment step');
+                    // Mark as loaded but empty so we can skip
+                    availableEquipment = { choices: {}, fixed: [] };
                 }
             } catch (error) {
-                console.error('Error loading equipment:', error);
-                availableEquipment = { choices: null, fixed: [] };
+                console.error('[Equipment] Error loading equipment:', error);
+                // Mark as loaded but empty so we can skip
+                availableEquipment = { choices: {}, fixed: [] };
             }
+            // Always re-render after loading attempt
+            renderCreationStep();
         }
 
         function selectEquipmentChoice(choiceId, optionId) {
