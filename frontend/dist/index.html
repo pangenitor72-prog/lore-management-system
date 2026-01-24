@@ -9191,7 +9191,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
         let availableOrigins = [];
         let availableArchetypes = [];
-        let availableEquipment = { choices: null, fixed: [] };
+        let availableEquipment = { choices: null, fixed: [], loaded: false };
         let availableBackgrounds = [];
         let worldSettingSkills = [];  // World-specific custom skills
         let availableSpells = { cantrips: [], level_1: [] };  // Spell data for current class
@@ -12437,7 +12437,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             // Reset world-specific data from previous creation attempts
             worldSettingSkills = [];
-            availableEquipment = { choices: null, fixed: [] };
+            availableEquipment = { choices: null, fixed: [], loaded: false };
             availableOrigins = [];
             availableArchetypes = [];
 
@@ -13218,8 +13218,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     title.textContent = 'Choose Your Equipment';
                     subtitle.textContent = 'Select your starting gear.';
 
+                    console.log('[Equipment] Render - loaded:', availableEquipment.loaded, 'choices:', availableEquipment.choices, 'fixed.length:', availableEquipment.fixed?.length);
+
                     // Load equipment if not already loaded for this class
-                    if (!availableEquipment.choices && availableEquipment.fixed.length === 0 && charCreationData.archetype) {
+                    if (!availableEquipment.loaded && charCreationData.archetype) {
                         loadEquipmentForClass(charCreationData.archetype);
                         content.innerHTML = '<div style="color: var(--text-muted); padding: 20px; text-align: center;">Loading equipment...</div>';
                         nextBtn.disabled = true;
@@ -13452,7 +13454,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             charCreationData.selectedSpells = [];
             charCreationData.selectedEquipment = {}; // Reset equipment when archetype changes
             availableSpells = { cantrips: [], level_1: [] }; // Clear spell cache for new class
-            availableEquipment = { choices: null, fixed: [] }; // Clear equipment cache for new class
+            availableEquipment = { choices: null, fixed: [], loaded: false }; // Clear equipment cache for new class
             document.querySelectorAll('.archetype-card').forEach(card => {
                 card.classList.toggle('selected', card.querySelector('.archetype-name')?.textContent === getArchetypeName(archId));
             });
@@ -13618,6 +13620,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 console.log('[Equipment] Using world-specific starting_equipment:', selectedArch.starting_equipment);
                 availableEquipment.choices = null;
                 availableEquipment.fixed = selectedArch.starting_equipment;
+                availableEquipment.loaded = true;
+                console.log('[Equipment] Set loaded=true, fixed.length=', availableEquipment.fixed.length);
                 renderCreationStep();
                 return;
             }
@@ -13633,16 +13637,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     const data = await response.json();
                     availableEquipment.choices = data.choices || null;
                     availableEquipment.fixed = data.fixed || [];
+                    availableEquipment.loaded = true;
                     console.log('[Equipment] API returned:', availableEquipment);
                 } else {
                     console.warn('[Equipment] API failed:', response.status, '- skipping equipment step');
                     // Mark as loaded but empty so we can skip
-                    availableEquipment = { choices: {}, fixed: [] };
+                    availableEquipment = { choices: {}, fixed: [], loaded: true };
                 }
             } catch (error) {
                 console.error('[Equipment] Error loading equipment:', error);
                 // Mark as loaded but empty so we can skip
-                availableEquipment = { choices: {}, fixed: [] };
+                availableEquipment = { choices: {}, fixed: [], loaded: true };
             }
             // Always re-render after loading attempt
             renderCreationStep();
