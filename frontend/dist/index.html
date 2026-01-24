@@ -7019,6 +7019,7 @@
                     <div class="hud-stat">Init: <span class="hud-stat-value" id="hud-init">+2</span></div>
                     <div class="hud-stat">Prof: <span class="hud-stat-value" id="hud-prof">+2</span></div>
                 </div>
+                <div id="hud-conditions" class="hud-conditions" style="display: none; margin-top: 8px; flex-wrap: wrap; gap: 4px;"></div>
             </div>
 
             <div class="story-container" id="story-container"></div>
@@ -10345,6 +10346,42 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const initMod = dndCharacter.initiative_modifier || 0;
             document.getElementById('hud-init').textContent = (initMod >= 0 ? '+' : '') + initMod;
             document.getElementById('hud-prof').textContent = '+' + (dndCharacter.proficiency_bonus || 2);
+
+            // Conditions display
+            const conditionsEl = document.getElementById('hud-conditions');
+            const conditions = dndCharacter.conditions || [];
+            if (conditions.length > 0) {
+                conditionsEl.style.display = 'flex';
+                conditionsEl.innerHTML = conditions.map(cond => {
+                    const condColor = getConditionColor(cond);
+                    return `<span style="
+                        background: ${condColor}20;
+                        color: ${condColor};
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-size: 0.75rem;
+                        border: 1px solid ${condColor}40;
+                        text-transform: capitalize;
+                    ">${cond}</span>`;
+                }).join('');
+            } else {
+                conditionsEl.style.display = 'none';
+                conditionsEl.innerHTML = '';
+            }
+        }
+
+        // Get color for condition based on severity
+        function getConditionColor(condition) {
+            const negativeConditions = ['poisoned', 'blinded', 'deafened', 'frightened', 'paralyzed', 'petrified', 'stunned', 'unconscious', 'exhausted', 'charmed', 'grappled', 'incapacitated', 'prone', 'restrained'];
+            const positiveConditions = ['blessed', 'hasted', 'inspired', 'invisible', 'flying'];
+
+            const lowerCond = condition.toLowerCase();
+            if (negativeConditions.some(c => lowerCond.includes(c))) {
+                return '#e57373'; // Red for negative
+            } else if (positiveConditions.some(c => lowerCond.includes(c))) {
+                return '#81c784'; // Green for positive
+            }
+            return '#ffb74d'; // Amber for neutral/unknown
         }
 
         // Quick Actions
@@ -15819,9 +15856,139 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // INVENTORY SYSTEM
         // ==========================================
 
-        function showInventory() {
-            const listEl = document.getElementById('inventory-list');
+        // Rarity color mapping for inventory items
+        const rarityColors = {
+            common: '#9e9e9e',
+            uncommon: '#4CAF50',
+            rare: '#2196F3',
+            very_rare: '#9C27B0',
+            legendary: '#FF9800',
+            artifact: '#f44336'
+        };
 
+        async function showInventory() {
+            const listEl = document.getElementById('inventory-list');
+            const modal = document.getElementById('inventory-modal');
+
+            // Show modal immediately with loading state
+            modal.classList.add('active');
+            listEl.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                    <p style="font-size: 1.2rem;">Loading inventory...</p>
+                </div>
+            `;
+
+            // If no session, show local inventory as fallback
+            if (!currentSessionId) {
+                renderLocalInventory(listEl);
+                return;
+            }
+
+            try {
+                // Fetch authoritative inventory from backend
+                const response = await fetch(API_BASE + '/game/session/' + currentSessionId + '/inventory');
+
+                if (!response.ok) {
+                    // Fallback to local inventory on error
+                    console.warn('Could not fetch inventory from backend, using local');
+                    renderLocalInventory(listEl);
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Render inventory from backend
+                renderBackendInventory(listEl, data);
+
+            } catch (err) {
+                console.error('Inventory fetch error:', err);
+                renderLocalInventory(listEl);
+            }
+        }
+
+        function renderBackendInventory(listEl, data) {
+            const items = data.items || [];
+            const equipped = data.equipped || {};
+
+            let html = '';
+
+            // Currency section
+            const hasCoins = data.gold > 0 || data.silver > 0 || data.copper > 0;
+            if (hasCoins) {
+                html += `
+                    <div style="display: flex; gap: 15px; padding: 12px 15px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 15px; justify-content: center;">
+                        ${data.gold > 0 ? `<span style="color: #FFD700;">💰 ${data.gold} gold</span>` : ''}
+                        ${data.silver > 0 ? `<span style="color: #C0C0C0;">🪙 ${data.silver} silver</span>` : ''}
+                        ${data.copper > 0 ? `<span style="color: #CD7F32;">🪙 ${data.copper} copper</span>` : ''}
+                    </div>
+                `;
+            }
+
+            // Equipped items section
+            const equippedSlots = Object.entries(equipped).filter(([slot, item]) => item);
+            if (equippedSlots.length > 0) {
+                html += `<div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle);">
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Equipped</div>`;
+                equippedSlots.forEach(([slot, itemName]) => {
+                    const slotLabel = slot.replace('_', ' ');
+                    html += `
+                        <div style="display: flex; align-items: center; padding: 8px 12px; background: var(--bg-hover); border-radius: 6px; margin-bottom: 6px;">
+                            <span style="color: var(--text-muted); font-size: 0.8rem; width: 80px;">${slotLabel}</span>
+                            <span style="color: var(--accent-gold);">${itemName}</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Items list
+            if (items.length === 0 && !hasCoins && equippedSlots.length === 0) {
+                html = `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <p style="font-size: 1.2rem; margin-bottom: 10px;">Your pack is empty</p>
+                        <p style="font-size: 0.9rem; font-style: italic;">Items you find or receive will appear here.</p>
+                    </div>
+                `;
+            } else if (items.length > 0) {
+                html += items.map(item => {
+                    const rarity = item.rarity || 'common';
+                    const rarityColor = rarityColors[rarity] || rarityColors.common;
+                    const rarityBadge = rarity !== 'common' ? `<span style="color: ${rarityColor}; font-size: 0.75rem; text-transform: uppercase; margin-left: 8px;">${rarity.replace('_', ' ')}</span>` : '';
+                    const icon = item.icon || getItemIcon(item.name);
+
+                    return `
+                        <div class="inventory-item" style="
+                            display: flex;
+                            align-items: center;
+                            padding: 12px 15px;
+                            background: var(--bg-card);
+                            border: 1px solid ${rarity !== 'common' ? rarityColor + '40' : 'var(--border-subtle)'};
+                            border-radius: 8px;
+                            margin-bottom: 10px;
+                        ">
+                            <span style="font-size: 1.3rem; margin-right: 12px;">${icon}</span>
+                            <div style="flex: 1;">
+                                <div style="color: ${rarityColor}; font-weight: 600;">${item.name}${rarityBadge}</div>
+                                ${item.item_type ? `<div style="color: var(--text-muted); font-size: 0.8rem;">${item.item_type}</div>` : ''}
+                            </div>
+                            ${item.quantity > 1 ? `<span style="color: var(--text-secondary); font-size: 0.9rem;">x${item.quantity}</span>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            listEl.innerHTML = html;
+
+            // Sync local inventory for fallback
+            playerInventory = items.map(i => ({
+                name: i.name,
+                quantity: i.quantity || 1,
+                icon: i.icon || getItemIcon(i.name),
+                rarity: i.rarity
+            }));
+        }
+
+        function renderLocalInventory(listEl) {
             if (playerInventory.length === 0) {
                 listEl.innerHTML = `
                     <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
@@ -15849,8 +16016,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     </div>
                 `).join('');
             }
-
-            document.getElementById('inventory-modal').classList.add('active');
         }
 
         function closeInventory(event) {

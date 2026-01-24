@@ -3036,6 +3036,71 @@ async def get_session(request: Request, session_id: str):
     )
 
 
+@router.get("/session/{session_id}/inventory")
+async def get_session_inventory(session_id: str):
+    """Get the current inventory for a session from GameState."""
+    # Try to get game state from memory
+    game_state = _game_states.get(session_id)
+
+    # Try to load from disk if not in memory
+    if not game_state:
+        game_state = GameState.load(session_id)
+        if game_state:
+            _game_states[session_id] = game_state
+
+    if not game_state:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Session {session_id} not found or has no game state"
+        )
+
+    # Build inventory response
+    inventory_data = game_state.inventory.to_dict()
+
+    return {
+        "session_id": session_id,
+        "items": inventory_data.get("items", []),
+        "gold": inventory_data.get("gold", 0),
+        "silver": inventory_data.get("silver", 0),
+        "copper": inventory_data.get("copper", 0),
+        "equipped": inventory_data.get("equipped", {}),
+        "item_count": len(inventory_data.get("items", [])),
+    }
+
+
+@router.get("/session/{session_id}/character")
+async def get_session_character(session_id: str):
+    """Get the current character state for a session from GameState."""
+    game_state = _game_states.get(session_id)
+
+    if not game_state:
+        game_state = GameState.load(session_id)
+        if game_state:
+            _game_states[session_id] = game_state
+
+    if not game_state or not game_state.character:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Session {session_id} not found or has no character"
+        )
+
+    char = game_state.character
+    return {
+        "session_id": session_id,
+        "name": char.name,
+        "origin": char.race,
+        "archetype": char.archetype,
+        "level": char.level,
+        "hp": char.current_hit_points,
+        "max_hp": char.max_hit_points,
+        "temp_hp": char.temporary_hit_points,
+        "armor_class": char.armor_class,
+        "conditions": char.conditions,
+        "power_slots_max": char.power_slots_max,
+        "power_slots_used": char.power_slots_used,
+    }
+
+
 @router.post("/session/{session_id}/action", response_model=DMResponse)
 async def process_action(
     request: Request,
