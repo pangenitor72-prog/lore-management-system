@@ -2093,18 +2093,19 @@ async def reset_database(
 # In-memory announcement storage (persists until server restart)
 # For production, you'd want to store this in a file or database
 _current_announcement = {
-    "id": "update-2026-01-24-v22",
+    "id": "update-2026-01-24-v23",
     "type": "success",  # info, warning, success, maintenance
-    "icon": "🎒",
-    "message": """<strong>v22: Enhanced Inventory System!</strong> Items now have rarity, equipment slots, and smarter AI integration.
+    "icon": "🗄️",
+    "message": """<strong>v23: Persistent World Building!</strong> Your custom origins and archetypes now save to the database.
 <br><br>
 <strong>What's New:</strong>
 <ul style="margin: 8px 0 0 20px; padding: 0; text-align: left;">
-<li><strong>Item Rarity</strong> — Common to Artifact tiers with color-coded notifications (blue=rare, purple=very rare, orange=legendary).</li>
-<li><strong>Equipment Slots</strong> — Weapons, armor, and accessories now equip to proper slots (main hand, off hand, body, etc.).</li>
-<li><strong>Multi-Currency</strong> — Gold, silver, and copper support. Extensible for sci-fi credits and chips.</li>
-<li><strong>Smarter AI Loot</strong> — The DM uses structured tags like [ACQUIRED: Ancient Key, rare, quest] for reliable item tracking.</li>
-</ul>""",
+<li><strong>Neo4j Persistence</strong> — Character options (origins, archetypes) now store in the graph database and survive server restarts.</li>
+<li><strong>World Tuner Upgrade</strong> — Create custom races and classes that persist permanently for your world.</li>
+<li><strong>Schema Foundation</strong> — Groundwork laid for equipment templates, skills, and deeper world customization.</li>
+</ul>
+<br>
+<em>Plus v22 features: Item rarity, equipment slots, multi-currency, and structured AI loot tags.</em>""",
     "dismissible": True,
     "persistent": False,
     "active": True
