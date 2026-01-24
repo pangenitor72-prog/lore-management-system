@@ -57,12 +57,12 @@ class TokenBudget:
 
     For safety, we estimate higher.
     """
-    # Per-request limits
-    max_input_tokens_per_request: int = 4000
-    max_output_tokens_per_request: int = 1000
+    # Per-request limits (Gemini 2.0 Flash has 1M context window)
+    max_input_tokens_per_request: int = 32000   # Allow complex gameplay prompts
+    max_output_tokens_per_request: int = 16000  # Allow detailed narrative responses
 
     # Per-session limits
-    max_tokens_per_session: int = 50000    # ~50k tokens per session
+    max_tokens_per_session: int = 200000   # ~200k tokens per session (increased for complex gameplay)
     max_requests_per_session: int = 100    # Max 100 AI calls per session
 
     # Hourly rate limits

@@ -491,11 +491,20 @@ class Inventory:
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize inventory."""
+        # Build equipped map: slot -> item name for display
+        equipped_display = {}
+        for slot, idx in self._equipped_slots.items():
+            if idx is not None and 0 <= idx < len(self._items):
+                equipped_display[slot] = self._items[idx].name
+
         return {
             "items": [item.to_dict() for item in self._items],
             "currency": self._currency,
             "gold": self._currency.get("gold", 0),  # Backwards compat
-            "equipped_slots": self._equipped_slots,
+            "silver": self._currency.get("silver", 0),
+            "copper": self._currency.get("copper", 0),
+            "equipped_slots": self._equipped_slots,  # Internal: slot -> index
+            "equipped": equipped_display,  # API: slot -> item name
         }
 
     @classmethod
