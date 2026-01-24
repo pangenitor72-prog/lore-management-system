@@ -365,16 +365,46 @@ class GuidedCreationFlow:
             }
 
         elif step == 4:
-            # Skills - use archetype data for genre compatibility
-            archetype = get_archetype(self.state.character_class, self.genre)
-            if archetype:
-                skill_choices = archetype.skill_choices
-                num_choices = archetype.num_skill_choices
+            # Skills - prioritize world-specific archetype data, then genre archetypes
+            skill_choices = []
+            num_choices = 2
+
+            # First try world-specific archetype from MANTLE world options
+            world_archetype = None
+            if self.world_options:
+                archetypes = self.world_options.get("archetypes", [])
+                for arch in archetypes:
+                    if arch.get("id") == self.state.character_class:
+                        world_archetype = arch
+                        break
+
+            if world_archetype:
+                # Use world-specific skill choices
+                skill_choices = list(world_archetype.get("skill_choices", []))
+                num_choices = world_archetype.get("num_skill_choices", 2)
             else:
-                # Fallback to fantasy classes
-                class_data = CLASSES.get(self.state.character_class)
-                skill_choices = class_data.skill_choices if class_data else []
-                num_choices = class_data.num_skill_choices if class_data else 2
+                # Fall back to genre archetypes
+                archetype = get_archetype(self.state.character_class, self.genre)
+                if archetype:
+                    skill_choices = list(archetype.skill_choices)
+                    num_choices = archetype.num_skill_choices
+                else:
+                    # Last resort: fantasy classes
+                    class_data = CLASSES.get(self.state.character_class)
+                    skill_choices = list(class_data.skill_choices) if class_data else []
+                    num_choices = class_data.num_skill_choices if class_data else 2
+
+            # Add setting-specific skills from world options
+            if self.world_options:
+                setting_skills = self.world_options.get("setting_skills", [])
+                for skill in setting_skills:
+                    skill_id = skill.get("id") or skill.get("name", "").lower().replace(" ", "_")
+                    # Add if not already in list
+                    if skill_id and skill_id not in [s.lower() for s in skill_choices]:
+                        skill_choices.append(skill_id)
+
+            # Ensure at least 3 choices available (more interesting for players)
+            num_choices = max(num_choices, 3) if len(skill_choices) >= 3 else len(skill_choices)
 
             return {
                 "step": "skills",
@@ -512,27 +542,44 @@ class GuidedCreationFlow:
                     "fixed": equipment_choices.get("fixed", []),
                 }
             else:
-                # Non-fantasy: generate equipment from archetype proficiencies
-                archetype = get_archetype(self.state.character_class, self.genre)
-                genre_equipment = GENRE_EQUIPMENT_DEFAULTS.get(self.genre, {})
-
+                # Non-fantasy: prioritize world-specific archetype equipment
                 fixed_equipment = []
+                archetype_name = self.state.character_class.title()
 
-                # Add default items for this genre
-                fixed_equipment.extend(genre_equipment.get("default", []))
+                # First check for world-specific archetype with starting_equipment
+                world_archetype = None
+                if self.world_options:
+                    archetypes = self.world_options.get("archetypes", [])
+                    for arch in archetypes:
+                        if arch.get("id") == self.state.character_class:
+                            world_archetype = arch
+                            break
 
-                # Add weapon based on proficiencies
-                if archetype:
-                    for prof in archetype.weapon_proficiencies:
-                        if prof in genre_equipment:
-                            fixed_equipment.extend(genre_equipment[prof])
-                            break  # Only add one weapon type
+                if world_archetype and world_archetype.get("starting_equipment"):
+                    # Use world-specific starting equipment directly
+                    fixed_equipment = list(world_archetype.get("starting_equipment", []))
+                    archetype_name = world_archetype.get("name", archetype_name)
+                else:
+                    # Fall back to genre equipment defaults
+                    archetype = get_archetype(self.state.character_class, self.genre)
+                    genre_equipment = GENRE_EQUIPMENT_DEFAULTS.get(self.genre, {})
 
-                    # Add armor based on proficiencies
-                    for armor_type in ["heavy", "medium", "light"]:
-                        if armor_type in archetype.armor_proficiencies and armor_type in genre_equipment:
-                            fixed_equipment.extend(genre_equipment[armor_type])
-                            break  # Only add one armor type
+                    # Add default items for this genre
+                    fixed_equipment.extend(genre_equipment.get("default", []))
+
+                    # Add weapon based on proficiencies
+                    if archetype:
+                        archetype_name = archetype.display_name
+                        for prof in archetype.weapon_proficiencies:
+                            if prof in genre_equipment:
+                                fixed_equipment.extend(genre_equipment[prof])
+                                break  # Only add one weapon type
+
+                        # Add armor based on proficiencies
+                        for armor_type in ["heavy", "medium", "light"]:
+                            if armor_type in archetype.armor_proficiencies and armor_type in genre_equipment:
+                                fixed_equipment.extend(genre_equipment[armor_type])
+                                break  # Only add one armor type
 
                 # Remove duplicates while preserving order
                 seen = set()
@@ -545,7 +592,7 @@ class GuidedCreationFlow:
                 return {
                     "step": "equipment",
                     "question": f"Your starting {genre_config.terminology.ability_power.lower() if hasattr(genre_config.terminology, 'ability_power') else 'gear'}",
-                    "hint": f"Standard equipment for a {archetype.display_name if archetype else 'character'} in this setting.",
+                    "hint": f"Standard equipment for a {archetype_name} in this setting.",
                     "choices": [],  # No choices for non-fantasy - streamlined
                     "fixed": unique_equipment,
                 }
@@ -695,7 +742,20 @@ class GuidedCreationFlow:
             "tracking": ("Tracking", "Following trails and hunting prey"),
             "riding": ("Riding", "Controlling mounts and mounted combat"),
         }
-        name, desc = skill_descriptions.get(skill, (skill.replace("_", " ").title(), ""))
+        # First check world options for setting-specific skill descriptions
+        if self.world_options:
+            setting_skills = self.world_options.get("setting_skills", [])
+            for setting_skill in setting_skills:
+                skill_id = setting_skill.get("id") or setting_skill.get("name", "").lower().replace(" ", "_")
+                if skill_id and skill_id.lower() == skill.lower():
+                    return {
+                        "id": skill,
+                        "name": setting_skill.get("name", skill.replace("_", " ").title()),
+                        "description": setting_skill.get("description", ""),
+                    }
+
+        # Fall back to hardcoded descriptions
+        name, desc = skill_descriptions.get(skill.lower(), (skill.replace("_", " ").title(), ""))
         return {"id": skill, "name": name, "description": desc}
 
     def set_name(self, name: str) -> bool:
@@ -726,20 +786,49 @@ class GuidedCreationFlow:
         return True
 
     def set_skills(self, skills: List[str]) -> bool:
-        # Get archetype data for skill validation
-        archetype = get_archetype(self.state.character_class, self.genre)
-        if archetype:
-            num_choices = archetype.num_skill_choices
-            available = [s.lower() for s in archetype.skill_choices]
+        # Get archetype data for skill validation - same logic as get_step_content
+        available = []
+        num_choices = 2
+
+        # First try world-specific archetype from MANTLE world options
+        world_archetype = None
+        if self.world_options:
+            archetypes = self.world_options.get("archetypes", [])
+            for arch in archetypes:
+                if arch.get("id") == self.state.character_class:
+                    world_archetype = arch
+                    break
+
+        if world_archetype:
+            # Use world-specific skill choices
+            available = [s.lower() for s in world_archetype.get("skill_choices", [])]
+            num_choices = world_archetype.get("num_skill_choices", 2)
         else:
-            # Fallback for fantasy classes
-            class_data = CLASSES.get(ClassName(self.state.character_class)) if self.state.character_class in [c.value for c in ClassName] else None
-            if class_data:
-                num_choices = class_data.num_skill_choices
-                available = [s.lower() for s in class_data.skill_choices]
+            # Fall back to genre archetypes
+            archetype = get_archetype(self.state.character_class, self.genre)
+            if archetype:
+                available = [s.lower() for s in archetype.skill_choices]
+                num_choices = archetype.num_skill_choices
             else:
-                num_choices = 2
-                available = skills  # Accept whatever was provided
+                # Last resort: fantasy classes
+                class_data = CLASSES.get(ClassName(self.state.character_class)) if self.state.character_class in [c.value for c in ClassName] else None
+                if class_data:
+                    num_choices = class_data.num_skill_choices
+                    available = [s.lower() for s in class_data.skill_choices]
+                else:
+                    num_choices = 2
+                    available = [s.lower() for s in skills]  # Accept whatever was provided
+
+        # Include setting-specific skills in available list
+        if self.world_options:
+            setting_skills = self.world_options.get("setting_skills", [])
+            for skill in setting_skills:
+                skill_id = skill.get("id") or skill.get("name", "").lower().replace(" ", "_")
+                if skill_id and skill_id.lower() not in available:
+                    available.append(skill_id.lower())
+
+        # Ensure at least 3 choices allowed (matches get_step_content)
+        num_choices = max(num_choices, 3) if len(available) >= 3 else len(available)
 
         if len(skills) != num_choices:
             return False
@@ -1019,9 +1108,21 @@ class GuidedCreationFlow:
                         break
         else:
             # Fallback for classes without equipment data
-            # Use string comparisons since character_class is now a string
             class_id = self.state.character_class
-            if class_id == "fighter":
+
+            # First check for world-specific archetype with starting_equipment
+            world_archetype = None
+            if self.world_options:
+                archetypes = self.world_options.get("archetypes", [])
+                for arch in archetypes:
+                    if arch.get("id") == class_id:
+                        world_archetype = arch
+                        break
+
+            if world_archetype and world_archetype.get("starting_equipment"):
+                # Use world-specific starting equipment directly
+                equipment = list(world_archetype.get("starting_equipment", []))
+            elif class_id == "fighter":
                 equipment = ["chain mail", "longsword", "shield"]
             elif class_id == "rogue":
                 equipment = ["leather armor", "rapier", "shortbow"]
