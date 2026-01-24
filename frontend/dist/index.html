@@ -12743,6 +12743,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         // If world has custom options, skip the genre API fetch
                         if ((charOpts.origins?.length > 0) || (charOpts.archetypes?.length > 0)) {
                             console.log('[CharCreate] World has custom character options, using those');
+
+                            // Ensure we have at least fallback options if one array is empty
+                            if (availableOrigins.length === 0) {
+                                availableOrigins = [{ id: 'human', display_name: 'Human', description: 'Versatile and adaptable', base_type: 'human' }];
+                                console.warn('[CharCreate] No origins from world, using fallback');
+                            }
+                            if (availableArchetypes.length === 0) {
+                                availableArchetypes = [{ id: 'fighter', display_name: 'Fighter', description: 'Master of combat', base_type: 'fighter', hit_die: 'd10', has_powers: false, skill_choices: [], num_skill_choices: 2, starting_equipment: [] }];
+                                console.warn('[CharCreate] No archetypes from world, using fallback');
+                            }
+
                             console.log('[CharCreate] Ready - Origins:', availableOrigins.map(o => o.id), 'Archetypes:', availableArchetypes.map(a => a.id));
                             updateCreationSteps();
                             renderCreationStep();
@@ -12995,6 +13006,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         </div>
                     `;
                     nextBtn.textContent = 'Next';
+                    nextBtn.disabled = false;
+                    console.log('[CharCreate] Name step - Origins:', availableOrigins.length, 'Archetypes:', availableArchetypes.length);
                     break;
 
                 case 1: // Origin
@@ -14249,9 +14262,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 genres: [],
                 abilityScores: { strength: null, dexterity: null, constitution: null, intelligence: null, wisdom: null, charisma: null }
             };
-            // Close the modal and show setup panel
-            document.getElementById('char-creation-modal').style.display = 'none';
-            document.getElementById('setup-panel').style.display = 'block';
+            // Close the modal and go back to start screen
+            const modal = document.getElementById('char-creation-modal');
+            if (modal) modal.style.display = 'none';
+            showScreen('start');
             console.log('[CharCreation] Character creation aborted by user');
         }
 
