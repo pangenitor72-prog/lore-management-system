@@ -11427,22 +11427,52 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             let color = '#4a9eff';
             let message = '';
 
+            // Rarity color mapping
+            const rarityColors = {
+                common: '#9e9e9e',
+                uncommon: '#4CAF50',
+                rare: '#2196F3',
+                very_rare: '#9C27B0',
+                legendary: '#FF9800',
+                artifact: '#f44336'
+            };
+
             switch (event.type) {
                 case 'ITEM_ADDED':
                     icon = '🎒';
-                    color = '#4CAF50';
-                    message = `Found: ${event.data?.item || 'item'}`;
+                    const rarity = event.data?.rarity || 'common';
+                    color = rarityColors[rarity] || '#4CAF50';
+                    const rarityLabel = rarity !== 'common' ? ` [${rarity.replace('_', ' ')}]` : '';
+                    message = `Found: ${event.data?.item || 'item'}${rarityLabel}`;
                     break;
                 case 'ITEM_REMOVED':
                     icon = '📤';
                     color = '#ff9800';
                     message = `Lost: ${event.data?.item || 'item'}`;
                     break;
+                case 'ITEM_EQUIPPED':
+                    icon = '🛡️';
+                    const eqRarity = event.data?.rarity || 'common';
+                    color = rarityColors[eqRarity] || '#4CAF50';
+                    message = `Equipped: ${event.data?.item || 'item'} (${event.data?.slot || 'slot'})`;
+                    break;
+                case 'ITEM_UNEQUIPPED':
+                    icon = '📦';
+                    color = '#9e9e9e';
+                    message = `Unequipped: ${event.data?.item || 'item'}`;
+                    break;
                 case 'GOLD_CHANGED':
                     icon = '💰';
                     color = '#FFD700';
                     const amt = event.data?.amount || 0;
                     message = amt > 0 ? `+${amt} gold` : `${amt} gold`;
+                    break;
+                case 'CURRENCY_CHANGED':
+                    icon = '🪙';
+                    color = '#C0C0C0';
+                    const currAmt = event.data?.amount || 0;
+                    const currType = event.data?.currency || 'coins';
+                    message = currAmt > 0 ? `+${currAmt} ${currType}` : `${currAmt} ${currType}`;
                     break;
                 case 'DAMAGE_TAKEN':
                     icon = '💔';

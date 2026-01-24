@@ -3439,8 +3439,20 @@ def _extract_state_changes_from_narrative(narrative: str, game_state: GameState)
     """
     Parse narrative for state-changing events and APPLY them to game state.
 
-    This is where items picked up, gold found, and damage taken in the story
-    actually become real state changes.
+    Supports two modes:
+    1. STRUCTURED TAGS (preferred) - [ACQUIRED: ...], [GOLD: ...], [DAMAGE: ...], [HEAL: ...]
+    2. REGEX FALLBACK - Natural language parsing for narratives without tags
+
+    Tag Formats:
+        [ACQUIRED: Item Name]
+        [ACQUIRED: Item Name, rarity]
+        [ACQUIRED: Item Name, rarity, type]
+        [ACQUIRED: Item Name, rarity, type, slot]
+        [GOLD: 50]
+        [CURRENCY: silver, 25]
+        [DAMAGE: 8]
+        [DAMAGE: 8, fire]
+        [HEAL: 10]
 
     Args:
         narrative: The DM's narrative response
@@ -3452,75 +3464,177 @@ def _extract_state_changes_from_narrative(narrative: str, game_state: GameState)
     import re
     changes = []
 
-    # Item pickup patterns - look for things the player received
-    item_patterns = [
-        r"(?:you\s+)?(?:find|pick up|receive|acquire|take|grab|obtain|discover)s?\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[a-z]+)*)",
-        r"(?:hands? you|gives? you|rewards? you with|presents? you with)\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[a-z]+)*)",
-        r"([A-Z][a-z]+(?:\s+[a-z]+)*)\s+(?:is now yours|added to your inventory|goes into your pack)",
-    ]
+    # =================================================================
+    # PHASE 1: Parse structured tags (preferred, explicit)
+    # =================================================================
 
-    for pattern in item_patterns:
-        matches = re.findall(pattern, narrative, re.IGNORECASE)
-        for match in matches:
-            item_name = match.strip()
-            # Filter out false positives
-            if len(item_name) < 3 or len(item_name) > 50:
-                continue
-            if item_name.lower() in ["the", "a", "an", "you", "your", "they", "their", "it", "them", "this"]:
-                continue
-            # Add to inventory
+    # [ACQUIRED: Item Name] or [ACQUIRED: Item Name, rarity, type, slot]
+    acquired_pattern = r'\[ACQUIRED:\s*([^\]]+)\]'
+    acquired_matches = re.findall(acquired_pattern, narrative, re.IGNORECASE)
+    for match in acquired_matches:
+        parts = [p.strip() for p in match.split(',')]
+        item_name = parts[0] if parts else ""
+        rarity = parts[1] if len(parts) > 1 else "common"
+        item_type = parts[2] if len(parts) > 2 else "misc"
+        slot = parts[3] if len(parts) > 3 else "none"
+
+        if item_name and len(item_name) >= 2:
             try:
-                game_state.add_item_by_name(item_name)
-                changes.append({"type": "item_added", "item": item_name})
+                item = Item(
+                    name=item_name,
+                    quantity=1,
+                    item_type=item_type,
+                    rarity=rarity,
+                    equipment_slot=slot,
+                )
+                game_state.add_item(item)
+                changes.append({
+                    "type": "item_added",
+                    "item": item_name,
+                    "rarity": rarity,
+                    "item_type": item_type,
+                    "source": "structured_tag",
+                })
+                logger.info(f"[ACQUIRED] Added item via tag: {item_name} ({rarity} {item_type})")
             except Exception as e:
-                logger.warning(f"Failed to add item '{item_name}': {e}")
+                logger.warning(f"Failed to add item from tag '{match}': {e}")
 
-    # Gold patterns
-    gold_pattern = r"(?:you\s+)?(?:find|receive|earn|collect|take|obtain)\s+(\d+)\s*(?:gold|gp|coins?|gold pieces)"
-    gold_matches = re.findall(gold_pattern, narrative, re.IGNORECASE)
-    for match in gold_matches:
+    # [GOLD: amount] or [CURRENCY: type, amount]
+    gold_tag_pattern = r'\[GOLD:\s*(\d+)\]'
+    gold_tag_matches = re.findall(gold_tag_pattern, narrative, re.IGNORECASE)
+    for match in gold_tag_matches:
         try:
             amount = int(match)
-            if amount > 0 and amount < 10000:  # Sanity check
+            if 0 < amount < 100000:
                 game_state.add_gold(amount)
-                changes.append({"type": "gold_added", "amount": amount})
+                changes.append({"type": "gold_added", "amount": amount, "source": "structured_tag"})
+                logger.info(f"[GOLD] Added {amount} gold via tag")
         except (ValueError, Exception) as e:
-            logger.warning(f"Failed to add gold: {e}")
+            logger.warning(f"Failed to add gold from tag: {e}")
 
-    # Damage taken patterns (enemy attacks hitting player)
-    damage_patterns = [
-        r"(?:you\s+)?(?:take|suffer|receive)s?\s+(\d+)\s*(?:points? of)?\s*(?:damage|hit points?)",
-        r"(?:deals?|inflicts?|causes?)\s+(\d+)\s*(?:points? of)?\s*damage\s+(?:to you|against you)",
-        r"strikes? you for\s+(\d+)\s*damage",
-    ]
+    currency_tag_pattern = r'\[CURRENCY:\s*(\w+)\s*,\s*(\d+)\]'
+    currency_tag_matches = re.findall(currency_tag_pattern, narrative, re.IGNORECASE)
+    for currency_type, amount_str in currency_tag_matches:
+        try:
+            amount = int(amount_str)
+            if 0 < amount < 100000:
+                game_state.inventory.add_currency(currency_type.lower(), amount, game_state.turn_count)
+                changes.append({
+                    "type": "currency_added",
+                    "currency": currency_type.lower(),
+                    "amount": amount,
+                    "source": "structured_tag",
+                })
+                logger.info(f"[CURRENCY] Added {amount} {currency_type} via tag")
+        except (ValueError, Exception) as e:
+            logger.warning(f"Failed to add currency from tag: {e}")
 
-    for pattern in damage_patterns:
-        matches = re.findall(pattern, narrative, re.IGNORECASE)
-        for match in matches:
+    # [DAMAGE: amount] or [DAMAGE: amount, type]
+    damage_tag_pattern = r'\[DAMAGE:\s*(\d+)(?:\s*,\s*(\w+))?\]'
+    damage_tag_matches = re.findall(damage_tag_pattern, narrative, re.IGNORECASE)
+    for amount_str, damage_type in damage_tag_matches:
+        try:
+            amount = int(amount_str)
+            if 0 < amount < 1000:
+                game_state.apply_damage_to_player(amount, source=damage_type or "narrative")
+                changes.append({
+                    "type": "damage_taken",
+                    "amount": amount,
+                    "damage_type": damage_type or "untyped",
+                    "source": "structured_tag",
+                })
+                logger.info(f"[DAMAGE] Applied {amount} {damage_type or 'untyped'} damage via tag")
+        except (ValueError, Exception) as e:
+            logger.warning(f"Failed to apply damage from tag: {e}")
+
+    # [HEAL: amount]
+    heal_tag_pattern = r'\[HEAL:\s*(\d+)\]'
+    heal_tag_matches = re.findall(heal_tag_pattern, narrative, re.IGNORECASE)
+    for match in heal_tag_matches:
+        try:
+            amount = int(match)
+            if 0 < amount < 1000:
+                game_state.heal_player(amount, source="narrative")
+                changes.append({"type": "healed", "amount": amount, "source": "structured_tag"})
+                logger.info(f"[HEAL] Applied {amount} healing via tag")
+        except (ValueError, Exception) as e:
+            logger.warning(f"Failed to apply healing from tag: {e}")
+
+    # =================================================================
+    # PHASE 2: Fallback to regex parsing (for backwards compatibility)
+    # Only if no structured tags were found
+    # =================================================================
+
+    if not changes:
+        # Item pickup patterns - look for things the player received
+        item_patterns = [
+            r"(?:you\s+)?(?:find|pick up|receive|acquire|take|grab|obtain|discover)s?\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[a-z]+)*)",
+            r"(?:hands? you|gives? you|rewards? you with|presents? you with)\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[a-z]+)*)",
+            r"([A-Z][a-z]+(?:\s+[a-z]+)*)\s+(?:is now yours|added to your inventory|goes into your pack)",
+        ]
+
+        for pattern in item_patterns:
+            matches = re.findall(pattern, narrative, re.IGNORECASE)
+            for match in matches:
+                item_name = match.strip()
+                # Filter out false positives
+                if len(item_name) < 3 or len(item_name) > 50:
+                    continue
+                if item_name.lower() in ["the", "a", "an", "you", "your", "they", "their", "it", "them", "this"]:
+                    continue
+                # Add to inventory
+                try:
+                    game_state.add_item_by_name(item_name)
+                    changes.append({"type": "item_added", "item": item_name, "source": "regex_fallback"})
+                except Exception as e:
+                    logger.warning(f"Failed to add item '{item_name}': {e}")
+
+        # Gold patterns
+        gold_pattern = r"(?:you\s+)?(?:find|receive|earn|collect|take|obtain)\s+(\d+)\s*(?:gold|gp|coins?|gold pieces)"
+        gold_matches = re.findall(gold_pattern, narrative, re.IGNORECASE)
+        for match in gold_matches:
             try:
                 amount = int(match)
-                if amount > 0 and amount < 500:  # Sanity check
-                    game_state.apply_damage_to_player(amount, source="narrative")
-                    changes.append({"type": "damage_taken", "amount": amount})
+                if amount > 0 and amount < 10000:  # Sanity check
+                    game_state.add_gold(amount)
+                    changes.append({"type": "gold_added", "amount": amount, "source": "regex_fallback"})
             except (ValueError, Exception) as e:
-                logger.warning(f"Failed to apply damage: {e}")
+                logger.warning(f"Failed to add gold: {e}")
 
-    # Healing patterns
-    heal_patterns = [
-        r"(?:you\s+)?(?:heal|recover|regain)s?\s+(\d+)\s*(?:hit points?|hp|health)",
-        r"restores?\s+(\d+)\s*(?:hit points?|hp|health)",
-    ]
+        # Damage taken patterns (enemy attacks hitting player)
+        damage_patterns = [
+            r"(?:you\s+)?(?:take|suffer|receive)s?\s+(\d+)\s*(?:points? of)?\s*(?:damage|hit points?)",
+            r"(?:deals?|inflicts?|causes?)\s+(\d+)\s*(?:points? of)?\s*damage\s+(?:to you|against you)",
+            r"strikes? you for\s+(\d+)\s*damage",
+        ]
 
-    for pattern in heal_patterns:
-        matches = re.findall(pattern, narrative, re.IGNORECASE)
-        for match in matches:
-            try:
-                amount = int(match)
-                if amount > 0 and amount < 500:  # Sanity check
-                    game_state.heal_player(amount, source="narrative")
-                    changes.append({"type": "healed", "amount": amount})
-            except (ValueError, Exception) as e:
-                logger.warning(f"Failed to apply healing: {e}")
+        for pattern in damage_patterns:
+            matches = re.findall(pattern, narrative, re.IGNORECASE)
+            for match in matches:
+                try:
+                    amount = int(match)
+                    if amount > 0 and amount < 500:  # Sanity check
+                        game_state.apply_damage_to_player(amount, source="narrative")
+                        changes.append({"type": "damage_taken", "amount": amount, "source": "regex_fallback"})
+                except (ValueError, Exception) as e:
+                    logger.warning(f"Failed to apply damage: {e}")
+
+        # Healing patterns
+        heal_patterns = [
+            r"(?:you\s+)?(?:heal|recover|regain)s?\s+(\d+)\s*(?:hit points?|hp|health)",
+            r"restores?\s+(\d+)\s*(?:hit points?|hp|health)",
+        ]
+
+        for pattern in heal_patterns:
+            matches = re.findall(pattern, narrative, re.IGNORECASE)
+            for match in matches:
+                try:
+                    amount = int(match)
+                    if amount > 0 and amount < 500:  # Sanity check
+                        game_state.heal_player(amount, source="narrative")
+                        changes.append({"type": "healed", "amount": amount, "source": "regex_fallback"})
+                except (ValueError, Exception) as e:
+                    logger.warning(f"Failed to apply healing: {e}")
 
     return changes
 
@@ -4050,7 +4164,17 @@ Continue:
 - 2-3 paragraphs, natural pause
 - NO suggestions or questions
 
-Write ONLY the narrative:"""
+STATE CHANGE TAGS (use when player gains items, gold, or takes damage):
+- When player acquires an item: include [ACQUIRED: Item Name] or [ACQUIRED: Item Name, rarity, type]
+  Example: "You pocket the ancient key. [ACQUIRED: Ancient Key, rare, quest]"
+- When player gains gold/currency: include [GOLD: amount] or [CURRENCY: silver, amount]
+  Example: "The merchant pays you well. [GOLD: 50]"
+- When player takes damage: include [DAMAGE: amount] or [DAMAGE: amount, type]
+  Example: "The blade bites deep. [DAMAGE: 8, slashing]"
+- When player heals: include [HEAL: amount]
+  Example: "The potion takes effect. [HEAL: 10]"
+
+Write ONLY the narrative (with state tags naturally embedded):"""
 
     # Use protected AI call with guardrails
     # 1200 tokens allows for complete responses without truncation
