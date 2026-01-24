@@ -1434,9 +1434,9 @@ async def get_character_options(
     char_opts = base.get("character_options", {})
     source = "memory"
 
-    # Try to load from Neo4j if available (structured storage)
+    # Try to load from Neo4j first (source of truth) - fall back to memory
     db = getattr(http_request.app.state, "neo4j_db", None)
-    if db and not char_opts.get("origins"):
+    if db:
         try:
             schema_db = CharacterSchemaDB(db)
             neo4j_opts = await schema_db.get_character_options(lore_id)
@@ -1445,7 +1445,7 @@ async def get_character_options(
                 source = "neo4j"
                 # Update in-memory cache
                 LORE_BASES[lore_id]["character_options"] = char_opts
-                logger.info(f"Loaded character options from Neo4j for {lore_id}")
+                logger.debug(f"Loaded character options from Neo4j for {lore_id}")
         except Exception as e:
             logger.debug(f"No Neo4j character options for {lore_id}: {e}")
 
