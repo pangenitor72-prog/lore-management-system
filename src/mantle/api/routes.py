@@ -180,6 +180,18 @@ async def lifespan(app: FastAPI):
             logger.error(f"Failed to load lore bases from Neo4j: {e}")
 
     # -------------------------
+    # MIGRATE SEED WORLDS TO NEO4J
+    # -------------------------
+    if connected:
+        try:
+            from src.mantle.api.game_routes import migrate_seed_worlds_to_neo4j
+            migrated = await migrate_seed_worlds_to_neo4j(app.state.neo4j_db)
+            if migrated > 0:
+                await AuditLogger.log(f"✅ Migrated {migrated} seed worlds to Neo4j")
+        except Exception as e:
+            logger.error(f"Failed to migrate seed worlds to Neo4j: {e}")
+
+    # -------------------------
     # VECTOR INDEX
     # -------------------------
     if connected:

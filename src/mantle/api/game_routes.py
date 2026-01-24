@@ -4550,6 +4550,67 @@ async def load_lore_bases_from_neo4j(db) -> int:
         return 0
 
 
+async def migrate_seed_worlds_to_neo4j(db) -> int:
+    """
+    Migrate seed world character options to Neo4j.
+
+    This ensures that worlds loaded from JSON files have their character options
+    (origins, archetypes) persisted to Neo4j for the World Tuner to edit.
+
+    Returns the count of worlds migrated.
+    """
+    if not db:
+        return 0
+
+    from .character_schema import CharacterSchemaDB
+
+    migrated = 0
+
+    try:
+        schema_db = CharacterSchemaDB(db)
+
+        for world_id, world_data in LORE_BASES.items():
+            # Skip empty canvas
+            if world_id == "empty":
+                continue
+
+            char_opts = world_data.get("character_options", {})
+            origins = char_opts.get("origins", [])
+            archetypes = char_opts.get("archetypes", [])
+
+            # Skip if no character options
+            if not origins and not archetypes:
+                continue
+
+            # Check if already migrated by looking for existing data
+            try:
+                existing = await schema_db.get_character_options(world_id)
+                existing_origins = existing.get("origins", [])
+                existing_archetypes = existing.get("archetypes", [])
+
+                # If Neo4j already has data for this world, skip
+                if existing_origins or existing_archetypes:
+                    logger.debug(f"World {world_id} already has Neo4j character options, skipping migration")
+                    continue
+            except Exception:
+                # No existing data, proceed with migration
+                pass
+
+            # Migrate to Neo4j
+            try:
+                await schema_db.save_character_options(world_id, origins, archetypes)
+                migrated += 1
+                logger.info(f"Migrated {world_id} to Neo4j: {len(origins)} origins, {len(archetypes)} archetypes")
+            except Exception as e:
+                logger.warning(f"Failed to migrate {world_id}: {e}")
+
+        return migrated
+
+    except Exception as e:
+        logger.error(f"Failed to migrate seed worlds to Neo4j: {e}")
+        return 0
+
+
 class CustomOrigin(BaseModel):
     """
     A setting-specific character origin that maps to a base D&D type.
