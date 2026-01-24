@@ -8577,7 +8577,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 <div class="btn-group" style="justify-content: space-between; margin-top: 25px;">
                     <div style="display: flex; gap: 10px;">
-                        <button id="char-cancel-btn" class="btn" onclick="abortCharacterCreation()" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border-subtle);" title="Cancel character creation">Cancel</button>
+                        <button id="char-cancel-btn" class="btn" onclick="abortCharacterCreation()" style="background: var(--bg-secondary); color: var(--accent-gold); border: 1px solid var(--accent-gold);" title="Cancel character creation">✕ Cancel</button>
                         <button id="char-prev-btn" class="btn btn-secondary" onclick="charCreationPrev()" style="display: none;">Back</button>
                     </div>
                     <div style="flex: 1;"></div>
@@ -9193,6 +9193,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let availableArchetypes = [];
         let availableEquipment = { choices: null, fixed: [] };
         let availableBackgrounds = [];
+        let worldSettingSkills = [];  // World-specific custom skills
         let availableSpells = { cantrips: [], level_1: [] };  // Spell data for current class
         let genreTerminology = { origin: 'Origin', archetype: 'Archetype' };
 
@@ -12727,6 +12728,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                             console.log('[CharCreate] Using world-specific archetypes:', availableArchetypes.length);
                         }
 
+                        // Store world-specific setting skills
+                        if (charOpts.setting_skills && charOpts.setting_skills.length > 0) {
+                            worldSettingSkills = charOpts.setting_skills.map(s => s.name || s.id);
+                            console.log('[CharCreate] World setting skills:', worldSettingSkills);
+                        }
+
                         // If world has custom options, skip the genre API fetch
                         if ((charOpts.origins?.length > 0) || (charOpts.archetypes?.length > 0)) {
                             console.log('[CharCreate] World has custom character options, using those');
@@ -13075,19 +13082,48 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     subtitle.textContent = 'Select the skills your character is proficient in.';
 
                     const selectedArch4 = availableArchetypes.find(a => a.id === charCreationData.archetype);
-                    const skillChoices4 = selectedArch4?.skill_choices || ['athletics', 'perception', 'stealth', 'persuasion', 'investigation', 'insight'];
-                    const numSkills4 = selectedArch4?.num_skill_choices || 2;
+
+                    // Common skills available to all characters
+                    const commonSkills = ['Athletics', 'Acrobatics', 'Stealth', 'Investigation', 'Insight', 'Perception', 'Persuasion', 'Deception', 'Intimidation', 'Survival'];
+
+                    // Archetype-specific skills (highlighted as recommended)
+                    const archetypeSkills = selectedArch4?.skill_choices || [];
+
+                    // Combine: archetype skills + setting skills + common skills (deduplicated)
+                    const allSkillsSet = new Set([
+                        ...archetypeSkills.map(s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()),
+                        ...worldSettingSkills,
+                        ...commonSkills
+                    ]);
+                    const allSkills = Array.from(allSkillsSet).sort();
+
+                    // Allow at least 3 skill choices, or what the archetype specifies if higher
+                    const numSkills4 = Math.max(3, selectedArch4?.num_skill_choices || 3);
+
+                    // Format archetype skills for highlighting
+                    const archetypeSkillsNormalized = archetypeSkills.map(s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase());
 
                     content.innerHTML = `
                         <div style="margin-bottom: 15px;">
                             <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">
                                 Select ${numSkills4} skill${numSkills4 > 1 ? 's' : ''} for your ${getArchetypeName(charCreationData.archetype)}:
                             </div>
-                            <div class="skill-selection-grid">
-                                ${skillChoices4.map(skill => `
-                                    <span class="skill-option ${charCreationData.selectedSkills.includes(skill) ? 'selected' : ''}"
-                                          onclick="toggleSkill('${skill}', ${numSkills4})">${skill.replace(/_/g, ' ')}</span>
-                                `).join('')}
+                            <div class="skill-selection-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${allSkills.map(skill => {
+                                    const isArchetypeSkill = archetypeSkillsNormalized.includes(skill);
+                                    const isSettingSkill = worldSettingSkills.includes(skill);
+                                    const isSelected = charCreationData.selectedSkills.includes(skill);
+                                    const badge = isArchetypeSkill ? ' ★' : (isSettingSkill ? ' ◆' : '');
+                                    return `
+                                        <span class="skill-option ${isSelected ? 'selected' : ''} ${isArchetypeSkill ? 'recommended' : ''}"
+                                              onclick="toggleSkill('${skill}', ${numSkills4})"
+                                              style="${isArchetypeSkill ? 'border-color: var(--accent-gold);' : ''}"
+                                              title="${isArchetypeSkill ? 'Recommended for your archetype' : (isSettingSkill ? 'Setting-specific skill' : '')}">${skill}${badge}</span>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.75rem; color: var(--text-muted);">
+                                ★ = Recommended for your archetype${worldSettingSkills.length > 0 ? ' | ◆ = Setting-specific skill' : ''}
                             </div>
                         </div>
                         <div style="color: var(--text-muted); font-size: 0.8rem; text-align: center;">
@@ -13164,20 +13200,36 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     subtitle.textContent = 'Select your starting gear.';
 
                     // Load equipment if not already loaded for this class
-                    if (!availableEquipment.choices && charCreationData.archetype) {
+                    if (!availableEquipment.choices && availableEquipment.fixed.length === 0 && charCreationData.archetype) {
                         loadEquipmentForClass(charCreationData.archetype);
-                    }
-
-                    // Skip if no choices for this class
-                    if (availableEquipment.choices === null && charCreationData.archetype) {
-                        // Wait for load, or skip if no choices available
                         content.innerHTML = '<div style="color: var(--text-muted); padding: 20px; text-align: center;">Loading equipment...</div>';
                         nextBtn.disabled = true;
                         break;
                     }
 
+                    // If we have fixed equipment but no choices, show the fixed equipment and allow proceeding
                     if (!availableEquipment.choices || Object.keys(availableEquipment.choices).length === 0) {
-                        // No equipment choices, skip to review
+                        if (availableEquipment.fixed && availableEquipment.fixed.length > 0) {
+                            // Show fixed equipment only
+                            content.innerHTML = `
+                                <div class="equipment-selection-section">
+                                    <div class="equipment-fixed-section">
+                                        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Your Starting Equipment</h4>
+                                        <div class="equipment-fixed-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                            ${availableEquipment.fixed.map(item => `
+                                                <div class="equipment-item" style="padding: 10px 15px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                                                    ${item}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            nextBtn.textContent = 'Next';
+                            nextBtn.disabled = false;
+                            break;
+                        }
+                        // No equipment at all, skip to review
                         charCreationStep = 7;
                         renderCreationStep();
                         return;
