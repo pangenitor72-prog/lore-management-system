@@ -4563,7 +4563,7 @@ async def migrate_seed_worlds_to_neo4j(db) -> int:
         logger.warning("[MIGRATION] No database connection, skipping migration")
         return 0
 
-    from .character_schema import CharacterSchemaDB
+    from src.mantle.db.character_schema import CharacterSchemaDB
 
     migrated = 0
     total_worlds = len(LORE_BASES)
