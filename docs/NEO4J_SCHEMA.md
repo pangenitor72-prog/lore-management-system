@@ -254,3 +254,135 @@ Pre-defined profiles for common NPC types:
 | Peasant | 0.4 | 0.6 | 0.5 | 0.7 | 0.6 |
 
 These profiles drive consistent NPC behavior across all game sessions.
+
+## Character Creation Schema (v22+)
+
+The character creation system uses additional node types to store world-specific playable options.
+
+### World
+
+Represents a game world configuration.
+
+**Properties:**
+- `world_id`: string - Unique identifier (same as lore_id)
+- `name`: string - Display name
+
+### Origin
+
+Represents a playable race/species for a world.
+
+**Required Properties:**
+- `id`: string - Unique identifier
+- `world_id`: string - Parent world
+- `name`: string - Display name (e.g., "Space Marine", "Street Urchin")
+- `base_type`: string - D&D mechanical base (human, elf, dwarf, etc.)
+
+**Optional Properties:**
+- `description`: string - Flavor text
+- `ability_bonuses`: string (JSON) - e.g., '{"strength": 2, "dexterity": 1}'
+- `speed`: integer - Movement speed (default 30)
+- `size`: string - Size category (Medium, Small, etc.)
+- `traits`: list[string] - Racial traits
+- `languages`: list[string] - Languages known
+- `skill_proficiencies`: list[string] - Granted skills
+- `personality_hint`: string - Creation hints
+- `suggested_archetypes`: list[string] - Recommended classes
+- `ai_generated`: boolean - True if AI-generated
+- `admin_reviewed`: boolean - True if admin approved
+
+**Relationships:**
+- `(World)-[:HAS_ORIGIN]->(Origin)`
+
+### Archetype
+
+Represents a playable class for a world.
+
+**Required Properties:**
+- `id`: string - Unique identifier
+- `world_id`: string - Parent world
+- `name`: string - Display name (e.g., "Netrunner", "Void Knight")
+- `base_type`: string - D&D mechanical base (fighter, wizard, rogue, etc.)
+
+**Optional Properties:**
+- `description`: string - Flavor text
+- `hit_die`: string - Hit die (d6, d8, d10, d12)
+- `primary_ability`: string - Main ability score
+- `saving_throws`: list[string] - Proficient saves
+- `armor_proficiencies`: list[string] - Armor proficiencies
+- `weapon_proficiencies`: list[string] - Weapon proficiencies
+- `skill_choices`: list[string] - Available skill picks
+- `num_skill_choices`: integer - Number of skills to choose
+- `starting_equipment`: list[string] - Starting gear
+- `starting_gold`: integer - Starting gold
+- `features`: string (JSON) - Level 1 features
+- `has_powers`: boolean - Spellcaster flag
+- `power_ability`: string - Spellcasting ability
+- `cantrips_known`: integer - Starting cantrips
+- `powers_known`: integer - Starting powers
+- `playstyle_hint`: string - How the class plays
+- `suggested_origins`: list[string] - Recommended races
+- `ai_generated`: boolean - True if AI-generated
+- `admin_reviewed`: boolean - True if admin approved
+
+**Relationships:**
+- `(World)-[:HAS_ARCHETYPE]->(Archetype)`
+
+### EquipmentTemplate
+
+Represents a template for starting equipment items.
+
+**Properties:**
+- `id`: string - Unique identifier
+- `world_id`: string - Parent world
+- `name`: string - Item name
+- `description`: string - Item description
+- `item_type`: string - weapon, armor, consumable, misc, quest
+- `rarity`: string - common, uncommon, rare, very_rare, legendary, artifact
+- `equipment_slot`: string - main_hand, off_hand, body, etc.
+- `damage`: string - Damage dice (e.g., "1d8")
+- `armor_class`: integer - AC bonus
+- `weight`: float - Item weight
+- `value`: integer - Base value in gold
+- `properties`: list[string] - Item properties
+- `requires_attunement`: boolean - Attunement required
+
+### Character Creation Indexes
+
+```cypher
+CREATE INDEX origin_id IF NOT EXISTS FOR (o:Origin) ON (o.id);
+CREATE INDEX origin_world IF NOT EXISTS FOR (o:Origin) ON (o.world_id);
+CREATE INDEX archetype_id IF NOT EXISTS FOR (a:Archetype) ON (a.id);
+CREATE INDEX archetype_world IF NOT EXISTS FOR (a:Archetype) ON (a.world_id);
+CREATE INDEX world_id IF NOT EXISTS FOR (w:World) ON (w.world_id);
+```
+
+### Example: Creating World with Character Options
+
+```cypher
+// Create world
+CREATE (w:World {world_id: 'neon_shadows', name: 'Neon Shadows'})
+
+// Create origin
+CREATE (o:Origin {
+    id: 'netrunner',
+    world_id: 'neon_shadows',
+    name: 'Netrunner',
+    base_type: 'human',
+    description: 'A hacker who interfaces directly with cyberspace',
+    ability_bonuses: '{"intelligence": 2, "dexterity": 1}',
+    traits: ['Neural Interface', 'Code Mastery']
+})
+MERGE (w)-[:HAS_ORIGIN]->(o)
+
+// Create archetype
+CREATE (a:Archetype {
+    id: 'street_samurai',
+    world_id: 'neon_shadows',
+    name: 'Street Samurai',
+    base_type: 'fighter',
+    description: 'A cybernetically enhanced warrior',
+    hit_die: 'd10',
+    primary_ability: 'strength'
+})
+MERGE (w)-[:HAS_ARCHETYPE]->(a)
+```

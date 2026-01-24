@@ -55,6 +55,9 @@ from src.mantle.engine.world_integrity import (
 from src.mantle.engine.game_state import GameState, CombatantState, Item
 from src.mantle.engine.game_events import get_starting_inventory
 
+# Character schema for Neo4j persistence
+from src.mantle.db.character_schema import CharacterSchemaDB, OriginSchema, ArchetypeSchema
+
 # Arc Engine for narrative pacing
 try:
     from src.mantle.arc.arc_engine import ArcEngine
@@ -1419,6 +1422,7 @@ async def get_character_options(
     Get character creation options for a lore base.
 
     Returns the custom origins and archetypes configured for this world.
+    Checks Neo4j first for persisted options, falls back to in-memory.
     """
     if lore_id not in LORE_BASES:
         raise HTTPException(
@@ -1428,12 +1432,29 @@ async def get_character_options(
 
     base = LORE_BASES[lore_id]
     char_opts = base.get("character_options", {})
+    source = "memory"
+
+    # Try to load from Neo4j if available (structured storage)
+    db = getattr(http_request.app.state, "neo4j_db", None)
+    if db and not char_opts.get("origins"):
+        try:
+            schema_db = CharacterSchemaDB(db)
+            neo4j_opts = await schema_db.get_character_options(lore_id)
+            if neo4j_opts.get("origins") or neo4j_opts.get("archetypes"):
+                char_opts = neo4j_opts
+                source = "neo4j"
+                # Update in-memory cache
+                LORE_BASES[lore_id]["character_options"] = char_opts
+                logger.info(f"Loaded character options from Neo4j for {lore_id}")
+        except Exception as e:
+            logger.debug(f"No Neo4j character options for {lore_id}: {e}")
 
     return {
         "lore_id": lore_id,
         "world_name": base.get("name", lore_id),
         "character_options": char_opts,
-        "has_options": bool(char_opts.get("origins") or char_opts.get("archetypes"))
+        "has_options": bool(char_opts.get("origins") or char_opts.get("archetypes")),
+        "source": source,
     }
 
 
@@ -1558,20 +1579,21 @@ async def update_character_options(
         "admin_reviewed": True  # Always mark as reviewed when manually updated
     }
 
-    # Store the options
+    # Store the options in memory (for immediate use)
     LORE_BASES[lore_id]["character_options"] = options
 
-    # Try to persist to Neo4j
+    # Persist to Neo4j using structured schema
     db = getattr(http_request.app.state, "neo4j_db", None)
+    neo4j_result = None
     if db:
         try:
-            await db.execute("""
-                MATCH (lb:LoreBase {lore_id: $lore_id})
-                SET lb.character_options = $options
-            """, {
-                "lore_id": lore_id,
-                "options": json.dumps(options)
-            })
+            schema_db = CharacterSchemaDB(db)
+            neo4j_result = await schema_db.save_character_options(
+                world_id=lore_id,
+                origins=origins,
+                archetypes=archetypes,
+            )
+            logger.info(f"Persisted character options to Neo4j: {neo4j_result}")
         except Exception as e:
             logger.warning(f"Failed to persist character options to Neo4j: {e}")
 
@@ -1579,6 +1601,7 @@ async def update_character_options(
         "success": True,
         "lore_id": lore_id,
         "character_options": options,
+        "neo4j_result": neo4j_result,
         "message": f"Updated character options: {len(origins)} origins, {len(archetypes)} archetypes"
     }
 
