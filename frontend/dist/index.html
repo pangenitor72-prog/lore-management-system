@@ -12435,6 +12435,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 }
             };
 
+            // Reset world-specific data from previous creation attempts
+            worldSettingSkills = [];
+            availableEquipment = { choices: null, fixed: [] };
+            availableOrigins = [];
+            availableArchetypes = [];
+
             // Sync rulesGenre with effective genres (blendGenres from curated world, or selectedGenres)
             // Map story genre to rules genre (fantasy/scifi/modern/horror)
             const effectiveGenres = blendGenres.length > 0 ? blendGenres : selectedGenres;
