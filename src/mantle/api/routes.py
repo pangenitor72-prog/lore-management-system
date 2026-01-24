@@ -2105,20 +2105,19 @@ async def reset_database(
 # In-memory announcement storage (persists until server restart)
 # For production, you'd want to store this in a file or database
 _current_announcement = {
-    "id": "update-2026-01-24-v24",
+    "id": "update-2026-01-24-v25",
     "type": "success",  # info, warning, success, maintenance
-    "icon": "📊",
-    "message": """<strong>v24: Real-Time Game State!</strong> Your HP, inventory, and conditions now sync with the server.
+    "icon": "🗄️",
+    "message": """<strong>v25: Neo4j World Persistence!</strong> Seed worlds now automatically migrate to the graph database.
 <br><br>
 <strong>What's New:</strong>
 <ul style="margin: 8px 0 0 20px; padding: 0; text-align: left;">
-<li><strong>Backend Inventory</strong> — Open your inventory to see items from the server with rarity colors and equipped slots.</li>
-<li><strong>Conditions Display</strong> — Status effects now appear in your character HUD (poisoned, blessed, etc.).</li>
-<li><strong>Currency Tracking</strong> — Gold, silver, and copper shown in inventory panel.</li>
-<li><strong>Character API</strong> — New endpoints for fetching real-time character and inventory state.</li>
+<li><strong>Auto-Migration</strong> — Seed worlds (Shattered Kingdoms, Thornwood) migrate to Neo4j on startup.</li>
+<li><strong>Neo4j Source of Truth</strong> — Character options (origins, archetypes) now load from the graph database.</li>
+<li><strong>Admin Persistence</strong> — World configurations created by admins persist across server restarts.</li>
 </ul>
 <br>
-<em>Plus v22-23: Item rarity, equipment slots, Neo4j persistence, and structured AI loot tags.</em>""",
+<em>Plus v22-24: Real-time game state, inventory sync, conditions display, and structured AI loot.</em>""",
     "dismissible": True,
     "persistent": False,
     "active": True
