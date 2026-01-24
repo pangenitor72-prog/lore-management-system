@@ -2093,19 +2093,20 @@ async def reset_database(
 # In-memory announcement storage (persists until server restart)
 # For production, you'd want to store this in a file or database
 _current_announcement = {
-    "id": "update-2026-01-24-v23",
+    "id": "update-2026-01-24-v24",
     "type": "success",  # info, warning, success, maintenance
-    "icon": "🗄️",
-    "message": """<strong>v23: Persistent World Building!</strong> Your custom origins and archetypes now save to the database.
+    "icon": "📊",
+    "message": """<strong>v24: Real-Time Game State!</strong> Your HP, inventory, and conditions now sync with the server.
 <br><br>
 <strong>What's New:</strong>
 <ul style="margin: 8px 0 0 20px; padding: 0; text-align: left;">
-<li><strong>Neo4j Persistence</strong> — Character options (origins, archetypes) now store in the graph database and survive server restarts.</li>
-<li><strong>World Tuner Upgrade</strong> — Create custom races and classes that persist permanently for your world.</li>
-<li><strong>Schema Foundation</strong> — Groundwork laid for equipment templates, skills, and deeper world customization.</li>
+<li><strong>Backend Inventory</strong> — Open your inventory to see items from the server with rarity colors and equipped slots.</li>
+<li><strong>Conditions Display</strong> — Status effects now appear in your character HUD (poisoned, blessed, etc.).</li>
+<li><strong>Currency Tracking</strong> — Gold, silver, and copper shown in inventory panel.</li>
+<li><strong>Character API</strong> — New endpoints for fetching real-time character and inventory state.</li>
 </ul>
 <br>
-<em>Plus v22 features: Item rarity, equipment slots, multi-currency, and structured AI loot tags.</em>""",
+<em>Plus v22-23: Item rarity, equipment slots, Neo4j persistence, and structured AI loot tags.</em>""",
     "dismissible": True,
     "persistent": False,
     "active": True
