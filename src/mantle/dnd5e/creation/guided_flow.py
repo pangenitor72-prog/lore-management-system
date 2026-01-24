@@ -1,6 +1,7 @@
 """Guided character creation flow with explanations."""
 
 import json
+import logging
 import uuid
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -12,6 +13,8 @@ from ..models.archetypes import ClassName, CLASSES, get_starting_hp, get_archety
 from ..models.origins import get_origins_for_genre, get_origin
 from ..models.character_sheet import CharacterSheet
 from ..genre.config import get_genre
+
+logger = logging.getLogger(__name__)
 
 
 # Cache for genre powers data
@@ -369,30 +372,43 @@ class GuidedCreationFlow:
             skill_choices = []
             num_choices = 2
 
+            # Debug logging to trace skill selection issue
+            logger.info(f"[SKILLS] Step 4 - character_class={self.state.character_class}, genre={self.genre}")
+            logger.info(f"[SKILLS] world_options present: {self.world_options is not None}")
+
             # First try world-specific archetype from MANTLE world options
             world_archetype = None
             if self.world_options:
                 archetypes = self.world_options.get("archetypes", [])
+                logger.info(f"[SKILLS] Found {len(archetypes)} archetypes in world_options")
                 for arch in archetypes:
-                    if arch.get("id") == self.state.character_class:
+                    arch_id = arch.get("id")
+                    logger.info(f"[SKILLS] Checking archetype id='{arch_id}' vs character_class='{self.state.character_class}'")
+                    if arch_id == self.state.character_class:
                         world_archetype = arch
+                        logger.info(f"[SKILLS] MATCH FOUND: {arch.get('name')}")
                         break
 
             if world_archetype:
                 # Use world-specific skill choices
                 skill_choices = list(world_archetype.get("skill_choices", []))
                 num_choices = world_archetype.get("num_skill_choices", 2)
+                logger.info(f"[SKILLS] Using WORLD archetype skills: {skill_choices}, num_choices={num_choices}")
             else:
                 # Fall back to genre archetypes
                 archetype = get_archetype(self.state.character_class, self.genre)
+                logger.info(f"[SKILLS] No world archetype match, trying genre archetype: {archetype}")
                 if archetype:
                     skill_choices = list(archetype.skill_choices)
                     num_choices = archetype.num_skill_choices
+                    logger.info(f"[SKILLS] Using GENRE archetype skills: {skill_choices}")
                 else:
                     # Last resort: fantasy classes
                     class_data = CLASSES.get(self.state.character_class)
+                    logger.info(f"[SKILLS] No genre archetype, trying CLASSES fallback for '{self.state.character_class}': {class_data}")
                     skill_choices = list(class_data.skill_choices) if class_data else []
                     num_choices = class_data.num_skill_choices if class_data else 2
+                    logger.info(f"[SKILLS] Using FANTASY CLASS skills: {skill_choices}")
 
             # Add setting-specific skills from world options
             if self.world_options:

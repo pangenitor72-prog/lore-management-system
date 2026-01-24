@@ -8576,7 +8576,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 </div>
 
                 <div class="btn-group" style="justify-content: space-between; margin-top: 25px;">
-                    <button id="char-prev-btn" class="btn btn-secondary" onclick="charCreationPrev()" style="display: none;">Back</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="char-cancel-btn" class="btn" onclick="abortCharacterCreation()" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border-subtle);" title="Cancel character creation">Cancel</button>
+                        <button id="char-prev-btn" class="btn btn-secondary" onclick="charCreationPrev()" style="display: none;">Back</button>
+                    </div>
                     <div style="flex: 1;"></div>
                     <button id="char-next-btn" class="btn btn-primary" onclick="charCreationNext()">Next</button>
                 </div>
@@ -12693,6 +12696,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     if (worldOptsRes.ok) {
                         const worldOptsData = await worldOptsRes.json();
                         const charOpts = worldOptsData.character_options || {};
+                        const worldGenre = worldOptsData.genre || 'fantasy';
+
+                        // Non-magical genres should default to no powers
+                        const nonMagicalGenres = ['romance', 'drama', 'noir', 'western', 'thriller', 'modern', 'historical'];
+                        const genreHasMagic = !nonMagicalGenres.includes(worldGenre.toLowerCase());
+                        console.log('[CharCreate] World genre:', worldGenre, 'hasMagic:', genreHasMagic);
 
                         if (charOpts.origins && charOpts.origins.length > 0) {
                             availableOrigins = charOpts.origins.map(o => ({
@@ -12710,12 +12719,21 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 display_name: a.name,
                                 description: a.description || '',
                                 base_type: a.base_type,  // Store the base type for mechanics
-                                hit_die: a.base_type === 'barbarian' ? 'd12' :
+                                hit_die: a.hit_die || (a.base_type === 'barbarian' ? 'd12' :
                                         a.base_type === 'fighter' || a.base_type === 'ranger' || a.base_type === 'paladin' ? 'd10' :
-                                        a.base_type === 'wizard' || a.base_type === 'sorcerer' ? 'd6' : 'd8',
-                                has_powers: ['wizard', 'sorcerer', 'cleric', 'warlock', 'druid', 'bard', 'paladin', 'ranger'].includes(a.base_type)
+                                        a.base_type === 'wizard' || a.base_type === 'sorcerer' ? 'd6' : 'd8'),
+                                // For non-magical genres, default to no powers unless explicitly set
+                                has_powers: a.has_powers !== undefined ? a.has_powers :
+                                           (genreHasMagic && ['wizard', 'sorcerer', 'cleric', 'warlock', 'druid', 'bard', 'paladin', 'ranger'].includes(a.base_type)),
+                                // World-specific skill and equipment data
+                                skill_choices: a.skill_choices || [],
+                                num_skill_choices: a.num_skill_choices || 2,
+                                starting_equipment: a.starting_equipment || [],
+                                cantrips_known: a.cantrips_known || (genreHasMagic && a.base_type === 'wizard' ? 3 : genreHasMagic && a.base_type === 'cleric' ? 3 : 0)
                             }));
                             console.log('[CharCreate] Using world-specific archetypes:', availableArchetypes.length);
+                            console.log('[CharCreate] Archetype skill_choices:', availableArchetypes.map(a => `${a.id}: ${a.skill_choices?.join(',')}`));
+                            console.log('[CharCreate] Archetype has_powers:', availableArchetypes.map(a => `${a.id}: ${a.has_powers}`));
                         }
 
                         // If world has custom options, skip the genre API fetch
@@ -13426,7 +13444,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             };
 
             const archId = charCreationData.archetype?.toLowerCase() || 'fighter';
-            const priority = abilityPriorities[archId] || ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+            const arch = availableArchetypes.find(a => a.id === archId);
+            const baseType = arch?.base_type?.toLowerCase() || archId;
+
+            // Try archetype ID first, then base_type, then default
+            const priority = abilityPriorities[archId] || abilityPriorities[baseType] || ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+            console.log('[AutoAssign] archId:', archId, 'baseType:', baseType, 'using priority for:', abilityPriorities[archId] ? archId : (abilityPriorities[baseType] ? baseType : 'default'));
 
             // Assign standard array based on priority
             const sortedArray = [...STANDARD_ARRAY].sort((a, b) => b - a); // [15, 14, 13, 12, 10, 8]
@@ -13526,6 +13549,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         async function loadEquipmentForClass(classId) {
+            // First check for world-specific starting equipment
+            const selectedArch = availableArchetypes.find(a => a.id === classId);
+            if (selectedArch && selectedArch.starting_equipment && selectedArch.starting_equipment.length > 0) {
+                console.log('[Equipment] Using world-specific starting_equipment:', selectedArch.starting_equipment);
+                availableEquipment.choices = null;  // No choices needed
+                availableEquipment.fixed = selectedArch.starting_equipment;
+                renderCreationStep();
+                return;
+            }
+
+            // Fall back to API for D&D SRD equipment choices
             try {
                 const response = await fetch(`/api/dnd/equipment/class/${classId}`);
                 if (response.ok) {
@@ -14133,6 +14167,46 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Could add a subtle shake animation here to indicate it can't be closed
                 console.log('[CharCreation] Click outside modal ignored - use the buttons to navigate');
             }
+        }
+
+        function abortCharacterCreation() {
+            // Confirm with user before aborting
+            if (charCreationStep > 0 && !confirm('Are you sure you want to cancel character creation? Your progress will be lost.')) {
+                return;
+            }
+
+            // Reset character creation state
+            charCreationStep = 0;
+            charCreationData = {
+                name: '',
+                origin: null,
+                archetype: null,
+                explicitArchetypeSelection: false,
+                abilityPriority: null,
+                selectedSkills: [],
+                selectedCantrips: [],
+                selectedSpells: [],
+                selectedEquipment: {},
+                selectedBackground: null,
+                concept: '',
+                genres: [],
+                abilityScores: {
+                    strength: null,
+                    dexterity: null,
+                    constitution: null,
+                    intelligence: null,
+                    wisdom: null,
+                    charisma: null
+                }
+            };
+
+            // Close the modal
+            document.getElementById('char-creation-modal').style.display = 'none';
+
+            // Show the setup panel again
+            document.getElementById('setup-panel').style.display = 'block';
+
+            console.log('[CharCreation] Character creation aborted by user');
         }
 
         // ============================================================

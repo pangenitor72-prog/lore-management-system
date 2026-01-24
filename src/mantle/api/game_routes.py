@@ -1452,6 +1452,7 @@ async def get_character_options(
     return {
         "lore_id": lore_id,
         "world_name": base.get("name", lore_id),
+        "genre": base.get("genre", base.get("mechanics_genre", "fantasy")),
         "character_options": char_opts,
         "has_options": bool(char_opts.get("origins") or char_opts.get("archetypes")),
         "source": source,
