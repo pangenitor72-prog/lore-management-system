@@ -4560,11 +4560,14 @@ async def migrate_seed_worlds_to_neo4j(db) -> int:
     Returns the count of worlds migrated.
     """
     if not db:
+        logger.warning("[MIGRATION] No database connection, skipping migration")
         return 0
 
     from .character_schema import CharacterSchemaDB
 
     migrated = 0
+    total_worlds = len(LORE_BASES)
+    logger.info(f"[MIGRATION] Starting seed world migration, {total_worlds} worlds in LORE_BASES")
 
     try:
         schema_db = CharacterSchemaDB(db)
@@ -4578,9 +4581,11 @@ async def migrate_seed_worlds_to_neo4j(db) -> int:
             origins = char_opts.get("origins", [])
             archetypes = char_opts.get("archetypes", [])
 
-            # Skip if no character options
+            # Skip if no character options in memory
             if not origins and not archetypes:
                 continue
+
+            logger.info(f"[MIGRATION] {world_id}: Found {len(origins)} origins, {len(archetypes)} archetypes in memory")
 
             # Check if already migrated by looking for existing data
             try:
@@ -4590,24 +4595,26 @@ async def migrate_seed_worlds_to_neo4j(db) -> int:
 
                 # If Neo4j already has data for this world, skip
                 if existing_origins or existing_archetypes:
-                    logger.debug(f"World {world_id} already has Neo4j character options, skipping migration")
+                    logger.info(f"[MIGRATION] {world_id}: Already in Neo4j ({len(existing_origins)} origins, {len(existing_archetypes)} archetypes), skipping")
                     continue
-            except Exception:
-                # No existing data, proceed with migration
-                pass
+                else:
+                    logger.info(f"[MIGRATION] {world_id}: No existing Neo4j data, proceeding with migration")
+            except Exception as e:
+                logger.info(f"[MIGRATION] {world_id}: Neo4j check exception ({e}), proceeding with migration")
 
             # Migrate to Neo4j
             try:
-                await schema_db.save_character_options(world_id, origins, archetypes)
+                result = await schema_db.save_character_options(world_id, origins, archetypes)
                 migrated += 1
-                logger.info(f"Migrated {world_id} to Neo4j: {len(origins)} origins, {len(archetypes)} archetypes")
+                logger.info(f"[MIGRATION] {world_id}: Successfully migrated - {result}")
             except Exception as e:
-                logger.warning(f"Failed to migrate {world_id}: {e}")
+                logger.error(f"[MIGRATION] {world_id}: Failed to migrate - {e}")
 
+        logger.info(f"[MIGRATION] Complete: {migrated} worlds migrated")
         return migrated
 
     except Exception as e:
-        logger.error(f"Failed to migrate seed worlds to Neo4j: {e}")
+        logger.error(f"[MIGRATION] Fatal error: {e}")
         return 0
 
 
