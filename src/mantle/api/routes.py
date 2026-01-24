@@ -2093,17 +2093,17 @@ async def reset_database(
 # In-memory announcement storage (persists until server restart)
 # For production, you'd want to store this in a file or database
 _current_announcement = {
-    "id": "update-2026-01-23",
+    "id": "update-2026-01-24-v22",
     "type": "success",  # info, warning, success, maintenance
-    "icon": "🎮",
-    "message": """<strong>World Tuner Now Powers Gameplay!</strong> Admin configurations actually matter now.
+    "icon": "🎒",
+    "message": """<strong>v22: Enhanced Inventory System!</strong> Items now have rarity, equipment slots, and smarter AI integration.
 <br><br>
 <strong>What's New:</strong>
 <ul style="margin: 8px 0 0 20px; padding: 0; text-align: left;">
-<li><strong>Setting-Specific Character Options</strong> — Sci-fi worlds show Space Marines, not Elves. Your World Tuner choices appear in character creation!</li>
-<li><strong>Persistent Game State</strong> — HP, inventory, and conditions now actually persist. Take damage? It stays. Pick up loot? It's in your bag.</li>
-<li><strong>DM Knows Your State</strong> — The AI references your actual HP and gear. "You're badly wounded" means something now.</li>
-<li><strong>Admin Context in Play</strong> — Origins, archetypes, and lore you configure flow into DM prompts.</li>
+<li><strong>Item Rarity</strong> — Common to Artifact tiers with color-coded notifications (blue=rare, purple=very rare, orange=legendary).</li>
+<li><strong>Equipment Slots</strong> — Weapons, armor, and accessories now equip to proper slots (main hand, off hand, body, etc.).</li>
+<li><strong>Multi-Currency</strong> — Gold, silver, and copper support. Extensible for sci-fi credits and chips.</li>
+<li><strong>Smarter AI Loot</strong> — The DM uses structured tags like [ACQUIRED: Ancient Key, rare, quest] for reliable item tracking.</li>
 </ul>""",
     "dismissible": True,
     "persistent": False,
