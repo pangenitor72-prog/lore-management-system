@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 # Arc Engine for narrative structure (optional - graceful fallback if not available)
 # Check environment variable to enable/disable Arc Engine
-ARC_ENGINE_ENABLED = os.getenv("ENABLE_ARC_ENGINE", "false").lower() == "true"
+ARC_ENGINE_ENABLED = os.getenv("ENABLE_ARC_ENGINE", "true").lower() == "true"
 ARC_ENGINE_AVAILABLE = False
 ARC_ENGINE_IMPORT_ERROR = None
 ArcEngine = None
@@ -129,7 +129,16 @@ class DMAgent:
     - Track session state via GameSession
     """
     
-    def __init__(self, model_name: str = "gemini-2.0-flash", conversation_history: list = None):
+    def __init__(
+        self, 
+        model_name: str = "gemini-2.0-flash", 
+        conversation_history: list = None,
+        db: Optional[Neo4jDatabase] = None,
+        query_agent: Optional[QueryAgent] = None,
+        auditor_agent: Optional[AuditorAgent] = None,
+        api_key: Optional[str] = None,
+        prompt_version: str = "2.4"
+    ):
         """
         Initialize the DM Agent.
         
