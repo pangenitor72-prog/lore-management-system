@@ -183,7 +183,8 @@ async def generate_character_options_from_lore(
     lore_content: str,
     world_name: str,
     genre: str,
-    description: str = ""
+    description: str = "",
+    world_characteristics: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Use AI to generate setting-appropriate character origins and archetypes
@@ -196,6 +197,7 @@ async def generate_character_options_from_lore(
         world_name: Name of the world
         genre: Primary genre (fantasy, scifi, modern, horror, etc.)
         description: Brief description of the world
+        world_characteristics: Optional dict with magic_level, technology_level, etc.
 
     Returns:
         Dict with 'origins' and 'archetypes' lists, each containing:
@@ -211,6 +213,18 @@ async def generate_character_options_from_lore(
 
     # Truncate lore for prompt if too long
     lore_excerpt = lore_content[:8000] if len(lore_content) > 8000 else lore_content
+
+    # Build dynamic constraints from characteristics
+    constraints_text = ""
+    if world_characteristics:
+        magic = str(world_characteristics.get("magic_level", "")).lower()
+        tech = str(world_characteristics.get("technology_level", "")).lower()
+
+        if magic in ["none", "rare & mythic", "low & costly"]:
+            constraints_text += "\n- MAGIC RESTRICTION: Magic is rare or non-existent. Do NOT use 'Wizard', 'Sorcerer', 'Cleric', 'Druid', 'Warlock' base types unless heavily re-flavored as non-magical (e.g. Psionic, Tech-based, or mundane savant).\n"
+        
+        if tech in ["modern", "near-future", "far-future", "cyberpunk", "industrial"]:
+            constraints_text += "\n- TECH REQUIREMENT: Include modern/scifi equipment. Do NOT provide swords/bows as primary gear unless justified by lore. Use firearms/tech instead.\n"
 
     prompt = f'''You are designing character creation options for a tabletop RPG set in "{world_name}".
 
@@ -240,6 +254,7 @@ IMPORTANT RULES:
 6. Skills should be setting-flavored names but map to D&D skills (e.g., "Streetwise" -> Insight)
 7. Equipment should fit the setting (no swords in cyberpunk unless appropriate)
 8. Abilities/Features should be unique to each archetype
+{constraints_text}
 
 Output valid JSON only, no markdown:
 {{
@@ -1498,7 +1513,8 @@ async def generate_character_options(
         lore_content=content_to_analyze,
         world_name=base.get("name", lore_id),
         genre=genre,
-        description=description
+        description=description,
+        world_characteristics=base.get("world_characteristics")
     )
 
     # Store the options
@@ -1711,7 +1727,8 @@ async def extract_character_options(
         lore_content=lore_content,
         world_name=base.get("name", lore_id),
         genre=genre,
-        description=base.get("description", "")
+        description=base.get("description", ""),
+        world_characteristics=base.get("world_characteristics")
     )
 
     # Store in LORE_BASES immediately
@@ -4942,7 +4959,8 @@ async def ingest_lore_base(
                     lore_content=lore_content,
                     world_name=lore_base.get("name", lore_id),
                     genre=base_genre or "fantasy",
-                    description=lore_base.get("description", "")
+                    description=lore_base.get("description", ""),
+                    world_characteristics=LORE_BASES[lore_id].get("world_characteristics")
                 )
                 LORE_BASES[lore_id]["character_options"] = options
 
