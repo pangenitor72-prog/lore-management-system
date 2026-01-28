@@ -617,7 +617,7 @@ TEXT TO ANALYZE:
             }
 
             self.model = genai.GenerativeModel(
-                "gemini-2.0-flash-exp",
+                "gemini-2.0-flash",
                 safety_settings=safety_settings,
             )
             logger.info("LoreParsingAgent initialized with Gemini (fiction-safe settings)")

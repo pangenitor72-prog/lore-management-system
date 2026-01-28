@@ -46,7 +46,7 @@ class SemanticAuditor:
         genai.configure(api_key=gemini_api_key)
 
         # Explicit model handles for clarity
-        self.flash_model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        self.flash_model = genai.GenerativeModel("gemini-2.0-flash")
         self.pro_model = genai.GenerativeModel("gemini-exp-1206")
 
     # ============================================================

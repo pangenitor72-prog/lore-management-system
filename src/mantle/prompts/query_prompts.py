@@ -75,7 +75,7 @@ Treat that CONTEXT as the sole source of truth for your answers.
         version="1.1",
         author="Shawn",
         date="2025-12-15",
-        tested_with="gemini-2.0-flash-exp",
+        tested_with="gemini-2.0-flash",
         temperature=0.3,
         max_tokens=1024,
     )

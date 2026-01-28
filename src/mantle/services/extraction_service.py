@@ -21,7 +21,7 @@ class ExtractionService:
     return a valid extraction structure.
     """
 
-    MODEL_NAME = "gemini-2.0-flash-exp"
+    MODEL_NAME = "gemini-2.0-flash"
 
     EXTRACTION_PROMPT = (
         "You are a Knowledge Graph Extractor for a D&D Campaign.\n"

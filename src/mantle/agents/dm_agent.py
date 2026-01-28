@@ -129,15 +129,7 @@ class DMAgent:
     - Track session state via GameSession
     """
     
-    def __init__(
-        self,
-        db: Neo4jDatabase,
-        query_agent: QueryAgent,
-        auditor_agent: AuditorAgent,
-        api_key: Optional[str] = None, # Still needed for local LLM calls
-        model_name: str = "gemini-2.0-flash",
-        prompt_version: str = "2.4"
-    ):
+    def __init__(self, model_name: str = "gemini-2.0-flash", conversation_history: list = None):
         """
         Initialize the DM Agent.
         

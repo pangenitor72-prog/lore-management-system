@@ -87,7 +87,7 @@ class QueryAgent:
              AuditLogger.log_sync("QueryAgent: Vector search ENABLED (Service injected)")
         
         # Use Flash for fast Q&A
-        self.pro_model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        self.pro_model = genai.GenerativeModel("gemini-2.0-flash")
         
         # Define the system prompt for the chat
         self.system_prompt = QueryPrompts.get_system_prompt()

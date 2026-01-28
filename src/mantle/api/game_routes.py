@@ -153,7 +153,7 @@ async def extract_and_store_gameplay_lore(
         logger.warning(f"[LORE] Entity extraction failed for session {session_id}: {e}")
 
 # Gemini configuration - same model as LoreParsingAgent
-GEMINI_MODEL = "gemini-2.0-flash-exp"  # This works for lore parsing
+GEMINI_MODEL = "gemini-2.0-flash"  # This works for lore parsing
 
 
 def get_gemini_model():
