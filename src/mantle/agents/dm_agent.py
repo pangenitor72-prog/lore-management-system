@@ -256,9 +256,10 @@ class DMAgent:
 
     def get_pacing_context(self, turn: int) -> str:
         """
-        Get pacing pressure context for ONE_SHOT mode.
+        Get pacing pressure context based on game mode.
 
-        Forces AI to drive toward climax in later turns.
+        ONE_SHOT: Forces AI to drive toward climax in later turns.
+        CAMPAIGN: Enforces slow buildup and grounded progression.
 
         Args:
             turn: Current turn number (0-indexed)
@@ -266,40 +267,51 @@ class DMAgent:
         Returns:
             Pacing instruction to inject into prompts
         """
-        if not self._game_config or not self._game_config.is_one_shot():
+        if not self._game_config:
             return ""
 
+        if not self._game_config.is_one_shot():
+            # CAMPAIGN MODE: Slow burn, earned status
+            return """
+=== PACING: CAMPAIGN MODE (LONG FORM) ===
+- Do NOT rush the narrative. Allow scenes to breathe.
+- The player is NOT a "Chosen One" or instantly special.
+- Respect earned progression: status, power, and reputation must be built over time.
+- Focus on small, grounded details and local consequences.
+- Introduce mysteries that may not be solved for a long time.
+"""
+
+        # ONE_SHOT MODE logic (existing + reinforced urgency)
         phase = self._game_config.get_pacing_phase(turn)
         remaining = self._game_config.max_turns - turn
 
         pacing_instructions = {
             "INTRO": """
-=== PACING: INTRODUCTION (Turns 1-3) ===
-- Establish atmosphere, character, and immediate situation
-- Introduce the central tension or mystery
-- Keep it mysterious and inviting
+=== PACING: ONE-SHOT INTRO (Turns 1-3) ===
+- Establish atmosphere QUICKLY.
+- Introduce the central conflict immediately.
+- Don't linger on travel or minor details.
 """,
             "RISING": f"""
-=== PACING: RISING ACTION (Turns 4-14) ===
-- Escalate tension with each response
-- Introduce complications and stakes
+=== PACING: ONE-SHOT RISING ACTION (Turns 4-14) ===
+- Escalate tension with EVERY response.
+- Move the story forward aggressively.
 - Remaining turns: {remaining}
 """,
             "CLIMAX": f"""
-=== PACING: CLIMAX PHASE (Turns 15-20) ===
+=== PACING: ONE-SHOT CLIMAX (Turns 15-20) ===
 ⚠️ CRITICAL: Only {remaining} turns remaining!
-- ACTIVELY drive the narrative toward its climax
-- Increase urgency and stakes dramatically
-- Begin resolving major plot threads
-- Make consequences feel final and meaningful
+- FORCE a confrontation or resolution now.
+- No new mysteries. Solve the current one.
+- Make consequences feel final.
 """,
             "END": """
 === PACING: RESOLUTION ===
 ⚠️ THIS IS THE FINAL TURN.
-- Deliver a satisfying conclusion
-- Resolve the central conflict
+- Deliver a satisfying conclusion.
+- Resolve the central conflict.
 - End with: "**THE END**"
-- This session is complete. No further actions possible.
+- This session is complete.
 """,
         }
 
