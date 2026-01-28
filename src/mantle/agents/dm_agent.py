@@ -508,7 +508,10 @@ Generate the opening scene. Follow the Pacing Formula:
 4. Present actionable pathways (implicitly)
 5. Stay atmospheric and concise
 
-Do NOT ask questions. Do NOT speak for the player. Describe the scene and STOP.
+=== CRITICAL AGENCY RULE ===
+You MUST NOT describe the player character's internal thoughts, feelings, or spoken words.
+You MUST NOT decide what the player does next.
+Describe the scene and the immediate situation, then STOP and wait for the player.
 """
         
         response = self.model.generate_content(
@@ -631,14 +634,16 @@ Tone: {self.session_0_answers.get('tone', 'Unknown')}
 
 === LORE CONTEXT (Canon - Use if relevant) ===
 {lore_context}
-{arc_context}
-=== PLAYER'S ACTION ===
-{player_input}
-
 === INSTRUCTION ===
-Respond as the DM. Follow the Pacing Formula. Do NOT speak for the player.
+Respond as the DM. Follow the Pacing Formula.
 You determine all outcomes based on narrative logic, character capabilities, and circumstances.
 Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specified.
+
+=== CRITICAL AGENCY RULE ===
+You MUST NOT describe the player character's internal thoughts, feelings, or spoken words.
+You MUST NOT auto-complete the player's intended actions.
+Only describe the immediate outcome and the world's reaction.
+Stop and wait for the player's response.
 """
 
         response = self.model.generate_content(
