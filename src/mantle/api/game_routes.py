@@ -2130,6 +2130,19 @@ class SessionCreateRequest(BaseModel):
         default=100,
         description="Expected maximum turns for this story scope"
     )
+    # Player Storytelling Preferences
+    protagonist_arc: Optional[str] = Field(
+        default=None,
+        description="Player's preferred protagonist arc: chosen_one, reluctant_hero, everyman_rising, anti_hero, redemption"
+    )
+    lethality_preference: Optional[str] = Field(
+        default=None,
+        description="Player's preferred danger level: plot_armor, forgiving, balanced, dangerous, brutal"
+    )
+    moral_complexity_preference: Optional[str] = Field(
+        default=None,
+        description="Player's preferred moral complexity: clear, mostly_clear, gray_areas, ambiguous, no_clear"
+    )
 
 
 class SessionResponse(BaseModel):
@@ -2149,6 +2162,9 @@ class SessionResponse(BaseModel):
     character_concept: Optional[str] = None
     character_id: Optional[str] = None
     tone_preference: Optional[str] = None
+    protagonist_arc: Optional[str] = None
+    lethality_preference: Optional[str] = None
+    moral_complexity_preference: Optional[str] = None
 
 
 class PlayerActionRequest(BaseModel):
@@ -2993,6 +3009,10 @@ async def create_session(
         # Story Length / Pacing
         "session_scope": session_req.session_scope or "one_shot",
         "max_turns": session_req.max_turns or 100,
+        # Player Storytelling Preferences
+        "protagonist_arc": session_req.protagonist_arc,
+        "lethality_preference": session_req.lethality_preference,
+        "moral_complexity_preference": session_req.moral_complexity_preference,
         # Arc Engine for narrative pacing (per-session instance)
         "arc_engine": ArcEngine(session_id=session_id) if ARC_ENGINE_AVAILABLE else None,
     }
@@ -3069,6 +3089,9 @@ async def create_session(
         character_concept=session_req.character_concept,
         character_id=session_req.character_id,
         tone_preference=session_req.tone_preference,
+        protagonist_arc=session_req.protagonist_arc,
+        lethality_preference=session_req.lethality_preference,
+        moral_complexity_preference=session_req.moral_complexity_preference,
     )
 
 
@@ -4007,6 +4030,147 @@ reader to respond. NEVER suggest specific choices or ask direct questions.""",
     return styles.get(style, styles["guided"])
 
 
+# ==========================================
+# PLAYER STORYTELLING PREFERENCE HELPERS
+# ==========================================
+
+def _get_protagonist_arc_guidance(arc: Optional[str]) -> str:
+    """Get narrative guidance for the player's chosen protagonist arc."""
+    if not arc:
+        return ""
+    arcs = {
+        "chosen_one": """PROTAGONIST ARC - CHOSEN ONE:
+The protagonist is marked by destiny. Lean into moments of revelation, growing power, and the weight of prophecy.
+NPCs should sense something special about them. Challenges should feel like tests of worthiness.""",
+        "reluctant_hero": """PROTAGONIST ARC - RELUCTANT HERO:
+The protagonist didn't ask for this. They're pulled into events. Honor their resistance — let them complain, hesitate, try to walk away.
+But make the reasons to stay more compelling than the reasons to leave. Growth comes through acceptance.""",
+        "everyman_rising": """PROTAGONIST ARC - EVERYMAN RISING:
+The protagonist is ordinary. No special bloodline, no prophecy. They grow through effort, wit, and determination.
+Early challenges should feel barely manageable. Victories should feel earned, not destined. NPCs should initially underestimate them.""",
+        "anti_hero": """PROTAGONIST ARC - ANTI-HERO:
+The protagonist's methods are unconventional. They may lie, steal, or manipulate for what they see as right.
+Present moral shortcuts as viable options. Don't punish pragmatism. Let their darker choices have real (sometimes positive) consequences.""",
+        "redemption": """PROTAGONIST ARC - REDEMPTION:
+The protagonist carries guilt. They're trying to be better. Weave in reminders of their past without being heavy-handed.
+Offer chances to make different choices than before. Let NPCs react to their reputation — some with distrust, some with cautious hope.""",
+    }
+    return arcs.get(arc, "")
+
+
+def _get_lethality_guidance(lethality: Optional[str]) -> str:
+    """Get danger-level guidance for the DM."""
+    if not lethality:
+        return ""
+    levels = {
+        "plot_armor": """LETHALITY - PLOT ARMOR:
+The protagonist will survive. Injuries are dramatic but never fatal. Focus on emotional and narrative stakes rather than mortal danger.
+Bad outcomes are setbacks, captures, losses of allies or resources — never death.""",
+        "forgiving": """LETHALITY - FORGIVING:
+The world is dangerous but fair. Death is very unlikely unless the player makes truly reckless choices.
+Wounds heal, failures teach, and there are usually second chances.""",
+        "balanced": """LETHALITY - BALANCED:
+Real danger exists but is proportional to the risks taken. Smart play is rewarded, recklessness has consequences.
+Death is possible in extreme situations but not the default outcome of failure.""",
+        "dangerous": """LETHALITY - DANGEROUS:
+This world is genuinely threatening. Combat can maim or kill. Bad decisions have severe, sometimes permanent consequences.
+The player should feel the weight of choosing to fight vs. flee, prepare vs. rush in.""",
+        "brutal": """LETHALITY - BRUTAL:
+Death is always close. Every fight could be the last. Resources are scarce, healing is limited.
+Survival itself is an achievement. Make the player feel the cost of every wound, every risk taken.""",
+    }
+    return levels.get(lethality, "")
+
+
+def _get_moral_complexity_guidance(complexity: Optional[str]) -> str:
+    """Get moral complexity guidance for the DM."""
+    if not complexity:
+        return ""
+    levels = {
+        "clear": """MORALITY - CLEAR GOOD VS EVIL:
+Villains are villainous, heroes are heroic. The right choice is recognizable. Evil looks evil, good looks good.
+Let the player feel righteous. Don't muddy the waters with moral ambiguity.""",
+        "mostly_clear": """MORALITY - MOSTLY CLEAR:
+Good and evil are real, but individuals can surprise you. A bandit might have a family. A noble might be corrupt.
+The right path is usually clear, but sometimes complicated by circumstance.""",
+        "gray_areas": """MORALITY - GRAY AREAS:
+No side is purely right. Factions have legitimate grievances. Solutions involve trade-offs.
+Present dilemmas where reasonable people would disagree. Let the player define what 'right' means.""",
+        "ambiguous": """MORALITY - MORALLY AMBIGUOUS:
+Everyone believes they're justified. Power corrupts, idealism fails, and good intentions lead to terrible outcomes.
+Challenge the player's assumptions. Make them question their choices after the fact.""",
+        "no_clear": """MORALITY - NO CLEAR MORALITY:
+Morality is a construct. Survival, power, loyalty, love — these drive people, not good vs evil.
+Present choices in terms of practical consequences, not moral weight. There are no heroes, only survivors.""",
+    }
+    return levels.get(complexity, "")
+
+
+def _build_storytelling_preferences_context(session: Dict[str, Any]) -> str:
+    """Build the full storytelling preferences prompt section, including world/player blending."""
+    protagonist_arc = session.get("protagonist_arc")
+    lethality_pref = session.get("lethality_preference")
+    moral_pref = session.get("moral_complexity_preference")
+
+    # Get individual guidance blocks
+    arc_guidance = _get_protagonist_arc_guidance(protagonist_arc)
+    lethality_guidance = _get_lethality_guidance(lethality_pref)
+    moral_guidance = _get_moral_complexity_guidance(moral_pref)
+
+    if not any([arc_guidance, lethality_guidance, moral_guidance]):
+        return ""
+
+    # Load world characteristics for blending
+    world_id = session.get("world_id")
+    world_chars = {}
+    if world_id and world_id in LORE_BASES:
+        world_chars = LORE_BASES[world_id].get("world_characteristics", {})
+
+    # Build blending notes where player differs from world
+    blending_notes = []
+
+    tone_val = session.get("tone_preference")
+    if tone_val and world_chars.get("tone"):
+        world_tone = world_chars["tone"].lower()
+        if tone_val.lower() != world_tone:
+            blending_notes.append(
+                f"Tone: World baseline is '{world_chars['tone']}', but player prefers '{tone_val}'. "
+                f"Honor both — maintain the world's established feel while steering toward the player's preference."
+            )
+
+    if lethality_pref and world_chars.get("lethality"):
+        lethality_labels = {"plot_armor": "Plot Armor", "forgiving": "Forgiving", "balanced": "Balanced", "dangerous": "Dangerous", "brutal": "Brutal"}
+        player_label = lethality_labels.get(lethality_pref, lethality_pref)
+        if player_label.lower() != world_chars["lethality"].lower():
+            blending_notes.append(
+                f"Lethality: World baseline is '{world_chars['lethality']}', but player prefers '{player_label}'. "
+                f"Honor both — maintain the world's danger profile while adjusting toward the player's comfort."
+            )
+
+    if moral_pref and world_chars.get("moral_complexity"):
+        moral_labels = {"clear": "Clear Good vs Evil", "mostly_clear": "Mostly Clear", "gray_areas": "Gray Areas", "ambiguous": "Morally Ambiguous", "no_clear": "No Clear Morality"}
+        player_label = moral_labels.get(moral_pref, moral_pref)
+        if player_label.lower() != world_chars["moral_complexity"].lower():
+            blending_notes.append(
+                f"Moral Complexity: World baseline is '{world_chars['moral_complexity']}', but player prefers '{player_label}'. "
+                f"Honor both — use the world's moral framework while emphasizing the player's preferred complexity."
+            )
+
+    # Assemble the full section
+    parts = ["=== PLAYER STORYTELLING PREFERENCES ==="]
+    if arc_guidance:
+        parts.append(arc_guidance)
+    if lethality_guidance:
+        parts.append(lethality_guidance)
+    if moral_guidance:
+        parts.append(moral_guidance)
+    if blending_notes:
+        parts.append("=== PREFERENCE BLENDING ===")
+        parts.extend(blending_notes)
+
+    return "\n".join(parts)
+
+
 def _get_guidance_instruction(needs_guidance: bool) -> str:
     """Get optional story guidance instruction when player seems stuck."""
     if needs_guidance:
@@ -4043,6 +4207,7 @@ async def _generate_opening(session: Dict[str, Any], model) -> str:
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
     scope_guidance = _get_story_scope_guidance(session_scope, turn_count, max_turns)
+    storytelling_prefs = _build_storytelling_preferences_context(session)
 
     # Get world rules from session (user's explicit choice) or fall back to genre defaults
     world_rules = session.get("world_rules", {})
@@ -4103,6 +4268,7 @@ Voice: {genre_info['voice']}
 {magic_guidance}
 
 TONE: {tone}
+{storytelling_prefs}
 {style_instructions}
 {world_context}
 
@@ -4170,6 +4336,7 @@ async def _handle_active_play(
     genre_info = _get_genre_guidance(genre)
     style_instructions = _get_style_instructions(style)
     scope_guidance = _get_story_scope_guidance(session_scope, turn_count, max_turns)
+    storytelling_prefs = _build_storytelling_preferences_context(session)
 
     # Get world rules from session (user's explicit choice) or fall back to genre defaults
     world_rules = session.get("world_rules", {})
@@ -4299,6 +4466,7 @@ Voice: {genre_info['voice']}
 {magic_guidance}
 
 TONE: {tone}
+{storytelling_prefs}
 {world_context}
 {db_context}
 {admin_world_context}
@@ -6641,6 +6809,10 @@ async def save_game(
         "character_id": session.get("character_id"),
         "rules_mode": session.get("rules_mode"),
         "rules_visibility": session.get("rules_visibility"),
+        # Player Storytelling Preferences
+        "protagonist_arc": session.get("protagonist_arc"),
+        "lethality_preference": session.get("lethality_preference"),
+        "moral_complexity_preference": session.get("moral_complexity_preference"),
         "character_data": None,  # Will be populated below
     }
 
@@ -6836,6 +7008,10 @@ async def load_game(
         "character_id": save_data.get("character_id"),
         "rules_mode": save_data.get("rules_mode"),
         "rules_visibility": save_data.get("rules_visibility"),
+        # Player Storytelling Preferences
+        "protagonist_arc": save_data.get("protagonist_arc"),
+        "lethality_preference": save_data.get("lethality_preference"),
+        "moral_complexity_preference": save_data.get("moral_complexity_preference"),
     }
 
     _active_sessions[new_session_id] = session_data

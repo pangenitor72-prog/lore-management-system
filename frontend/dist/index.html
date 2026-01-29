@@ -1329,6 +1329,44 @@
             color: var(--accent-gold);
         }
 
+        /* Storytelling Preferences */
+        .sp-arc-chip {
+            text-align: center;
+            min-width: 120px;
+        }
+        .sp-chip-desc {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            font-weight: normal;
+        }
+        .sp-chip.selected .sp-chip-desc {
+            color: var(--accent-gold);
+            opacity: 0.8;
+        }
+        .tone-chip.sp-world-default {
+            border-color: rgba(212, 175, 55, 0.3);
+            position: relative;
+        }
+        .tone-chip.sp-world-default::after {
+            content: 'world default';
+            position: absolute;
+            top: -10px;
+            right: 4px;
+            font-size: 0.6rem;
+            color: var(--accent-gold);
+            opacity: 0.7;
+            background: var(--bg-primary);
+            padding: 0 4px;
+        }
+        .sp-world-hint {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
         /* Form Elements */
         .form-group {
             margin-bottom: 25px;
@@ -8253,6 +8291,76 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             </div>
         </div>
 
+        <!-- Storytelling Preferences Screen -->
+        <div id="storytelling-preferences" class="screen">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h2 style="color: var(--accent-gold); font-weight: normal; margin-bottom: 8px;">Your Story Preferences</h2>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">Shape the narrative to your taste. The world sets the stage; you set the mood.</p>
+                <p id="sp-world-name" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;"></p>
+            </div>
+
+            <!-- TONE -->
+            <div class="setup-section" style="margin-bottom: 25px;">
+                <h3 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 8px;">Tone</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">How does your story feel?</p>
+                <div class="tone-options" id="sp-tone-chips">
+                    <span class="tone-chip sp-chip" data-sp-tone="lighthearted" onclick="selectSPTone('lighthearted')">Lighthearted</span>
+                    <span class="tone-chip sp-chip" data-sp-tone="hopeful" onclick="selectSPTone('hopeful')">Hopeful</span>
+                    <span class="tone-chip sp-chip" data-sp-tone="balanced" onclick="selectSPTone('balanced')">Balanced</span>
+                    <span class="tone-chip sp-chip" data-sp-tone="serious" onclick="selectSPTone('serious')">Serious</span>
+                    <span class="tone-chip sp-chip" data-sp-tone="dark" onclick="selectSPTone('dark')">Dark</span>
+                    <span class="tone-chip sp-chip" data-sp-tone="grimdark" onclick="selectSPTone('grimdark')">Grimdark</span>
+                </div>
+                <div id="sp-tone-world-hint" class="sp-world-hint"></div>
+            </div>
+
+            <!-- PROTAGONIST ARC -->
+            <div class="setup-section" style="margin-bottom: 25px;">
+                <h3 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 8px;">Protagonist Arc</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">What kind of hero are you?</p>
+                <div class="tone-options" id="sp-arc-chips">
+                    <span class="tone-chip sp-chip sp-arc-chip" data-sp-arc="chosen_one" onclick="selectSPArc('chosen_one')">Chosen One<span class="sp-chip-desc">Destined for greatness</span></span>
+                    <span class="tone-chip sp-chip sp-arc-chip" data-sp-arc="reluctant_hero" onclick="selectSPArc('reluctant_hero')">Reluctant Hero<span class="sp-chip-desc">Pulled in against their will</span></span>
+                    <span class="tone-chip sp-chip sp-arc-chip" data-sp-arc="everyman_rising" onclick="selectSPArc('everyman_rising')">Everyman Rising<span class="sp-chip-desc">Ordinary becoming extraordinary</span></span>
+                    <span class="tone-chip sp-chip sp-arc-chip" data-sp-arc="anti_hero" onclick="selectSPArc('anti_hero')">Anti-Hero<span class="sp-chip-desc">Morally gray, unconventional</span></span>
+                    <span class="tone-chip sp-chip sp-arc-chip" data-sp-arc="redemption" onclick="selectSPArc('redemption')">Redemption<span class="sp-chip-desc">Seeking to atone</span></span>
+                </div>
+            </div>
+
+            <!-- LETHALITY -->
+            <div class="setup-section" style="margin-bottom: 25px;">
+                <h3 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 8px;">Lethality</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">How dangerous is the world?</p>
+                <div class="tone-options" id="sp-lethality-chips">
+                    <span class="tone-chip sp-chip" data-sp-lethality="plot_armor" onclick="selectSPLethality('plot_armor')">Plot Armor</span>
+                    <span class="tone-chip sp-chip" data-sp-lethality="forgiving" onclick="selectSPLethality('forgiving')">Forgiving</span>
+                    <span class="tone-chip sp-chip" data-sp-lethality="balanced" onclick="selectSPLethality('balanced')">Balanced</span>
+                    <span class="tone-chip sp-chip" data-sp-lethality="dangerous" onclick="selectSPLethality('dangerous')">Dangerous</span>
+                    <span class="tone-chip sp-chip" data-sp-lethality="brutal" onclick="selectSPLethality('brutal')">Brutal</span>
+                </div>
+                <div id="sp-lethality-world-hint" class="sp-world-hint"></div>
+            </div>
+
+            <!-- MORAL COMPLEXITY -->
+            <div class="setup-section" style="margin-bottom: 25px;">
+                <h3 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 8px;">Moral Complexity</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">How clear is right and wrong?</p>
+                <div class="tone-options" id="sp-morality-chips">
+                    <span class="tone-chip sp-chip" data-sp-morality="clear" onclick="selectSPMorality('clear')">Clear Good vs Evil</span>
+                    <span class="tone-chip sp-chip" data-sp-morality="mostly_clear" onclick="selectSPMorality('mostly_clear')">Mostly Clear</span>
+                    <span class="tone-chip sp-chip" data-sp-morality="gray_areas" onclick="selectSPMorality('gray_areas')">Gray Areas</span>
+                    <span class="tone-chip sp-chip" data-sp-morality="ambiguous" onclick="selectSPMorality('ambiguous')">Morally Ambiguous</span>
+                    <span class="tone-chip sp-chip" data-sp-morality="no_clear" onclick="selectSPMorality('no_clear')">No Clear Morality</span>
+                </div>
+                <div id="sp-morality-world-hint" class="sp-world-hint"></div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="showScreen('quick-start')">← Back</button>
+                <button class="btn btn-primary" onclick="confirmStoryPreferences()" style="background: var(--accent-gold); color: var(--bg-primary);">Begin Your Story</button>
+            </div>
+        </div>
+
         <!-- TTRPG Setup Screen -->
         <div id="ttrpg-setup" class="screen">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -9188,6 +9296,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let creationMode = 'concept';  // concept, guided, classic
         let sessionScope = 'one_shot';  // one_shot, short, medium, long, campaign
         let maxTurnsForScope = { one_shot: 200, short: 300, medium: 500, long: 800, campaign: 0 };
+        // Player Storytelling Preferences
+        let playerTonePreference = null;
+        let playerProtagonistArc = null;
+        let playerLethality = null;
+        let playerMoralComplexity = null;
+        let currentWorldCharacteristics = null;
         let dndCharacter = null;  // Current D&D character sheet
 
         // Voice Input State
@@ -9693,8 +9807,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             sessionScope = 'one_shot';
             selectedCuratedWorld = worldId;
 
-            // Start story -> routes to character creation because rulesMode === 'dnd'
-            await beginStory();
+            // Show storytelling preferences screen before starting story
+            initStoryPreferences(worldId);
+            showScreen('storytelling-preferences');
         }
 
         // TTRPG Mode Flow - D&D rules enabled by default
@@ -11561,6 +11676,120 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.querySelectorAll('.session-scope-chip').forEach(chip => {
                 chip.classList.toggle('selected', chip.dataset.scope === scope);
             });
+        }
+
+        // ==========================================
+        // STORYTELLING PREFERENCES SELECTORS
+        // ==========================================
+
+        function selectSPTone(tone) {
+            playerTonePreference = tone;
+            document.querySelectorAll('#sp-tone-chips .sp-chip').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.spTone === tone);
+            });
+        }
+
+        function selectSPArc(arc) {
+            playerProtagonistArc = arc;
+            document.querySelectorAll('#sp-arc-chips .sp-chip').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.spArc === arc);
+            });
+        }
+
+        function selectSPLethality(lethality) {
+            playerLethality = lethality;
+            document.querySelectorAll('#sp-lethality-chips .sp-chip').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.spLethality === lethality);
+            });
+        }
+
+        function selectSPMorality(morality) {
+            playerMoralComplexity = morality;
+            document.querySelectorAll('#sp-morality-chips .sp-chip').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.spMorality === morality);
+            });
+        }
+
+        function initStoryPreferences(worldId) {
+            // Reset all selections
+            playerTonePreference = null;
+            playerProtagonistArc = null;
+            playerLethality = null;
+            playerMoralComplexity = null;
+            currentWorldCharacteristics = null;
+            document.querySelectorAll('#storytelling-preferences .sp-chip').forEach(c => {
+                c.classList.remove('selected', 'sp-world-default');
+            });
+            ['sp-tone-world-hint', 'sp-lethality-world-hint', 'sp-morality-world-hint'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '';
+            });
+
+            // Find the world in quickStartWorlds to get its characteristics
+            const world = quickStartWorlds.find(w => w.id === worldId);
+            currentWorldCharacteristics = (world && world.world_characteristics) || null;
+
+            // Show world name
+            const nameEl = document.getElementById('sp-world-name');
+            if (nameEl && world) {
+                nameEl.textContent = 'Playing in: ' + (world.name || worldId);
+            }
+
+            // Pre-select world defaults and show hints
+            if (currentWorldCharacteristics) {
+                const wc = currentWorldCharacteristics;
+
+                // Tone: map world's tone to player's 6-option tone
+                if (wc.tone) {
+                    const toneMap = {
+                        'Hopeful': 'hopeful', 'Optimistic': 'hopeful',
+                        'Neutral': 'balanced', 'Whimsical': 'lighthearted',
+                        'Campy': 'lighthearted', 'Satirical': 'balanced',
+                        'Serious': 'serious', 'Melancholic': 'dark',
+                        'Dark': 'dark', 'Grimdark': 'grimdark'
+                    };
+                    const mapped = toneMap[wc.tone] || 'balanced';
+                    selectSPTone(mapped);
+                    const chip = document.querySelector('#sp-tone-chips .sp-chip[data-sp-tone="' + mapped + '"]');
+                    if (chip) chip.classList.add('sp-world-default');
+                    document.getElementById('sp-tone-world-hint').textContent = 'World default: ' + wc.tone;
+                }
+
+                // Lethality
+                if (wc.lethality) {
+                    const lethalityMap = {
+                        'Plot Armor': 'plot_armor', 'Forgiving': 'forgiving',
+                        'Balanced': 'balanced', 'Dangerous': 'dangerous', 'Brutal': 'brutal'
+                    };
+                    const mapped = lethalityMap[wc.lethality] || 'balanced';
+                    selectSPLethality(mapped);
+                    const chip = document.querySelector('#sp-lethality-chips .sp-chip[data-sp-lethality="' + mapped + '"]');
+                    if (chip) chip.classList.add('sp-world-default');
+                    document.getElementById('sp-lethality-world-hint').textContent = 'World default: ' + wc.lethality;
+                }
+
+                // Moral Complexity
+                if (wc.moral_complexity) {
+                    const moralMap = {
+                        'Clear Good vs Evil': 'clear', 'Mostly Clear': 'mostly_clear',
+                        'Gray Areas': 'gray_areas', 'Morally Ambiguous': 'ambiguous',
+                        'No Clear Morality': 'no_clear'
+                    };
+                    const mapped = moralMap[wc.moral_complexity] || 'gray_areas';
+                    selectSPMorality(mapped);
+                    const chip = document.querySelector('#sp-morality-chips .sp-chip[data-sp-morality="' + mapped + '"]');
+                    if (chip) chip.classList.add('sp-world-default');
+                    document.getElementById('sp-morality-world-hint').textContent = 'World default: ' + wc.moral_complexity;
+                }
+            }
+        }
+
+        async function confirmStoryPreferences() {
+            // Copy tone preference to the global used by beginStory
+            if (playerTonePreference) {
+                selectedTone = playerTonePreference;
+            }
+            await beginStory();
         }
 
         // Update the rules genre display to show selected genres
@@ -14827,7 +15056,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 tester: localStorage.getItem('airpg_tester_name') || null,  // Link tester to session
                 // D&D Rules Integration - CRITICAL for TTRPG mode
                 rules_mode: rulesMode || 'narrative',
-                rules_visibility: rulesVisibility || 'guided'
+                rules_visibility: rulesVisibility || 'guided',
+                // Player Storytelling Preferences
+                protagonist_arc: playerProtagonistArc,
+                lethality_preference: playerLethality,
+                moral_complexity_preference: playerMoralComplexity
             };
 
             if (selectedCuratedWorld) {
