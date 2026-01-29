@@ -910,7 +910,7 @@ Stop and wait for the player's response.
                 MATCH (e:Entity {name: $name})
                 RETURN count(e) > 0 AS exists
                 """
-                params = {"name": name}
+                params = {"name": entity_name}
 
             records = await self.db.execute(cypher, params)
             return records[0]["exists"] if records else False
@@ -970,23 +970,18 @@ GUIDELINES:
 NAMING: {template.naming_conventions}
 """
 
-            generation_instruction += """
-If you mention any of these entities in your response, include a JSON block at the END of your response:
+        json_instruction = """
+=== OUTPUT FORMAT ===
+At the end of your response, you MUST include a JSON block for system use:
 ```json
 {
+  "visual_summary": "Evocative visual description of the current scene (max 30 words) suitable for image generation.",
   "new_entities": [
-    {
-      "name": "Entity Name",
-      "label": "Character|Location|Item|Faction|Concept",
-      "properties": {
-        "description": "Brief description",
-        // Include other template properties
-      }
-    }
+    // Include definitions for any NEW entities you introduced based on the guidelines above.
+    // If no new entities, leave this list empty.
   ]
 }
 ```
-If you don't introduce new entities, omit this JSON block entirely.
 """
 
         # 4. Build full prompt
@@ -1022,6 +1017,7 @@ Turn: {turn_count}
 === LORE CONTEXT (Canon - Use if relevant) ===
 {lore_context}
 {generation_instruction}
+{json_instruction}
 {pacing_context}
 {complexity_context}
 === PLAYER'S ACTION ===
@@ -1048,8 +1044,12 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
         response_text = response.text
         
         # 6. Extract and create any new entities from the response
-        narrative, new_entities = self._parse_response_with_entities(response_text)
+        narrative, new_entities, visual_summary = self._parse_response_with_entities(response_text)
         
+        if visual_summary and self.session:
+            await self.session.add_event("VISUAL_SCENE", visual_summary)
+            logging.info(f"[VISUAL] Generated scene: {visual_summary}")
+
         if new_entities and self.session:
             for entity in new_entities:
                 # Use factory skeleton as base to ensure structure
@@ -1069,11 +1069,11 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
         
         return narrative
 
-    def _parse_response_with_entities(self, response_text: str) -> tuple[str, List[Dict[str, Any]]]:
+    def _parse_response_with_entities(self, response_text: str) -> tuple[str, List[Dict[str, Any]], Optional[str]]:
         """
         Parse DM response to extract narrative and any new entity definitions.
         
-        Returns: (narrative_text, list_of_new_entities)
+        Returns: (narrative_text, list_of_new_entities, visual_summary)
         """
         # Try to find JSON block at end of response
         json_match = re.search(r'```json\s*(\{[\s\S]*?\})\s*```', response_text)
@@ -1082,16 +1082,17 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
             try:
                 data = json.loads(json_match.group(1))
                 new_entities = data.get("new_entities", [])
+                visual_summary = data.get("visual_summary")
                 
                 # Remove JSON block from narrative
                 narrative = response_text[:json_match.start()].strip()
                 
-                return narrative, new_entities
+                return narrative, new_entities, visual_summary
             except json.JSONDecodeError:
                 pass
         
         # No valid JSON found - return full response as narrative
-        return response_text, []
+        return response_text, [], None
 
     # ==========================================
     # PERSONALITY-AWARE GENERATION (OCEAN Model)
