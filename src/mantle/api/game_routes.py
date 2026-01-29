@@ -2778,6 +2778,57 @@ Return ONLY valid JSON in this exact format:
             "tone": seed.tone,
         })
 
+        # === IMAGE GENERATION ===
+        try:
+            from src.mantle.services.image_service import image_service
+            
+            logger.info(f"Generating images for world '{world_data['name']}'...")
+            images_generated = 0
+            
+            # 1. World Cover Image
+            cover_url = await image_service.generate_image(
+                prompt=world_data["description"][:500],
+                entity_name=world_data["name"],
+                entity_type="World",
+                style_key=seed.tone
+            )
+            
+            if cover_url:
+                await db.execute(
+                    "MATCH (w:World {world_id: $wid}) SET w.image_url = $url",
+                    {"wid": world_id, "url": cover_url}
+                )
+                images_generated += 1
+
+            # 2. Key Entities
+            for ent in entities_created:
+                e_type = str(ent.get("type", "")).lower()
+                # Prioritize locations and factions, but also do characters if budget allows
+                if e_type in ["location", "faction", "character", "item", "creature"]:
+                    # Find description from original data
+                    desc = next((e.get("description", "") for e in world_data.get("entities", []) if e.get("name") == ent["name"]), "")
+                    
+                    if desc:
+                        img_url = await image_service.generate_image(
+                            prompt=desc,
+                            entity_name=ent["name"],
+                            entity_type=ent["type"],
+                            style_key=seed.tone
+                        )
+                        
+                        if img_url:
+                            await db.execute(
+                                "MATCH (e:Entity {canon_id: $cid}) SET e.image_url = $url",
+                                {"cid": ent["canon_id"], "url": img_url}
+                            )
+                            images_generated += 1
+            
+            logger.info(f"Generated {images_generated} images for world '{world_data['name']}'")
+            
+        except Exception as img_err:
+            logger.error(f"Image generation failed: {img_err}")
+            # Non-blocking failure
+
         logger.info(f"Created world '{world_data['name']}' with {len(entities_created)} entities")
 
         return WorldSeedResponse(
