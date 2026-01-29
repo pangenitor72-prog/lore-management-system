@@ -2799,6 +2799,9 @@ Return ONLY valid JSON in this exact format:
                     {"wid": world_id, "url": cover_url}
                 )
                 images_generated += 1
+                # Cache in LORE_BASES for immediate API availability
+                if world_id in LORE_BASES:
+                    LORE_BASES[world_id]["image_url"] = cover_url
 
             # 2. Key Entities
             for ent in entities_created:
@@ -4569,7 +4572,8 @@ async def load_lore_bases_from_neo4j(db) -> int:
                    lb.is_curated as is_curated,
                    lb.ingested as ingested,
                    lb.entities_count as entities_count,
-                   lb.world_characteristics_json as wc_json
+                   lb.world_characteristics_json as wc_json,
+                   lb.image_url as image_url
         """, {})
 
         loaded_count = 0
@@ -4607,6 +4611,7 @@ async def load_lore_bases_from_neo4j(db) -> int:
                 "ingested": record.get("ingested", False),
                 "is_curated": record.get("is_curated", True),
                 "world_characteristics": wc_data,
+                "image_url": record.get("image_url"),
                 "source": "neo4j",  # Mark as loaded from DB
             }
             loaded_count += 1
@@ -4616,6 +4621,37 @@ async def load_lore_bases_from_neo4j(db) -> int:
 
     except Exception as e:
         logger.error(f"Failed to load LoreBase nodes from Neo4j: {e}")
+        return 0
+
+
+async def load_world_images_from_neo4j(db) -> int:
+    """
+    Load image_url from World nodes into LORE_BASES.
+
+    Seed worlds store images on World nodes (not LoreBase nodes),
+    so this bridges the gap after load_lore_bases_from_neo4j runs.
+    """
+    if not db:
+        return 0
+
+    try:
+        results = await db.execute("""
+            MATCH (w:World)
+            WHERE w.image_url IS NOT NULL
+            RETURN w.world_id as id, w.image_url as image_url
+        """, {})
+
+        count = 0
+        for record in results:
+            wid = record.get("id")
+            if wid and wid in LORE_BASES and not LORE_BASES[wid].get("image_url"):
+                LORE_BASES[wid]["image_url"] = record.get("image_url")
+                count += 1
+
+        return count
+
+    except Exception as e:
+        logger.error(f"Failed to load World images from Neo4j: {e}")
         return 0
 
 
@@ -4744,6 +4780,8 @@ class LoreBaseResponse(BaseModel):
     world_characteristics: Optional[WorldCharacteristics] = None
     # Character creation options specific to this world
     character_options: Optional[WorldCharacterOptions] = None
+    # Pre-generated image URL for visual display
+    image_url: Optional[str] = None
 
 
 @router.get("/lore-bases", response_model=List[LoreBaseResponse])
@@ -4790,6 +4828,7 @@ async def list_lore_bases(genre: Optional[str] = None):
             ingested=bool(base.get("ingested")),
             world_characteristics=world_chars,
             character_options=char_opts,
+            image_url=base.get("image_url"),
         ))
 
     return bases
@@ -4838,6 +4877,7 @@ async def get_lore_base(lore_id: str):
         ingested=base.get("ingested", False),
         world_characteristics=world_chars,
         character_options=char_opts,
+        image_url=base.get("image_url"),
     )
 
 
@@ -5989,7 +6029,8 @@ async def get_world_entities(
                    e.confidence_level as confidence,
                    coalesce(e.source_name, e.source) as source_name,
                    e.created_at as created_at,
-                   e.director_notes as director_notes
+                   e.director_notes as director_notes,
+                   e.image_url as image_url
             ORDER BY e.source, e.entity_type, e.name
             LIMIT $limit
         """
@@ -6011,6 +6052,7 @@ async def get_world_entities(
                     "confidence": record.get("confidence"),
                     "source_name": record.get("source_name", "unknown"),
                     "created_at": record.get("created_at"),
+                    "image_url": record.get("image_url"),
                 }
 
                 # Include character-specific fields if present
@@ -7030,7 +7072,8 @@ async def get_graph_data(
             n.description AS description,
             n.world_id AS world_id,
             n.session_id AS session_id,
-            n.genre AS genre
+            n.genre AS genre,
+            n.image_url AS image_url
         LIMIT $limit
         """
         nodes_result = await db.execute(node_query, params)
@@ -7082,13 +7125,16 @@ async def get_graph_data(
             }
             color = colors.get(node_type, "#b8a99a")
 
-            nodes.append({
+            node_data = {
                 "id": row["id"],
                 "label": row["label"],
                 "group": node_type,
                 "color": color,
                 "title": row.get("description", "")[:200] if row.get("description") else node_type,
-            })
+            }
+            if row.get("image_url"):
+                node_data["image_url"] = row["image_url"]
+            nodes.append(node_data)
 
         edges = []
         for row in edges_result:

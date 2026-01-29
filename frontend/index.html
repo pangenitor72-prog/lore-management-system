@@ -1205,12 +1205,17 @@
         }
 
         .curated-world-card {
-            padding: 16px;
+            padding: 0;
             background: var(--bg-card);
             border: 2px solid var(--border-subtle);
             border-radius: var(--radius-soft);
             cursor: pointer;
             transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .curated-world-card .world-card-text {
+            padding: 12px 16px;
         }
 
         .curated-world-card:hover {
@@ -1239,6 +1244,62 @@
             margin-top: 8px;
             font-size: 0.75rem;
             color: var(--text-muted);
+        }
+
+        /* World Card Banner Image */
+        .world-card-banner {
+            width: 100%;
+            aspect-ratio: 2 / 1;
+            object-fit: cover;
+            display: block;
+            background: var(--bg-secondary);
+        }
+
+        .world-card-banner-placeholder {
+            width: 100%;
+            aspect-ratio: 2 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+            font-size: 2.5rem;
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+
+        /* Entity Thumbnail */
+        .entity-thumbnail {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-medium);
+            object-fit: cover;
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .entity-thumbnail-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-medium);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* Entity Inspector Image */
+        .entity-inspector-image {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: var(--radius-medium);
+            margin-bottom: 15px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-secondary);
         }
 
         .tone-options {
@@ -8174,44 +8235,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             </div>
         </div>
 
-        <!-- Quick Start Screen (Simplified Genre Picker) -->
+        <!-- Quick Start Screen (Curated World Picker) -->
         <div id="quick-start" class="screen">
             <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="color: var(--accent-gold); font-weight: normal; margin-bottom: 10px;">Pick Your Vibe</h2>
-                <p style="color: var(--text-secondary);">Choose a genre and start playing immediately</p>
+                <h2 style="color: var(--accent-gold); font-weight: normal; margin-bottom: 10px;">Pick Your World</h2>
+                <p style="color: var(--text-secondary);">Choose a world and jump straight in</p>
             </div>
 
-            <div class="quick-genre-grid">
-                <div class="quick-genre-card" onclick="quickPlay('fantasy')">
-                    <span class="icon">⚔️</span>
-                    <span class="label">Fantasy</span>
-                    <span class="desc">Magic & adventure</span>
-                </div>
-                <div class="quick-genre-card" onclick="quickPlay('mystery')">
-                    <span class="icon">🔍</span>
-                    <span class="label">Mystery</span>
-                    <span class="desc">Solve the puzzle</span>
-                </div>
-                <div class="quick-genre-card" onclick="quickPlay('romance')">
-                    <span class="icon">💕</span>
-                    <span class="label">Romance</span>
-                    <span class="desc">Love & drama</span>
-                </div>
-                <div class="quick-genre-card" onclick="quickPlay('scifi')">
-                    <span class="icon">🚀</span>
-                    <span class="label">Sci-Fi</span>
-                    <span class="desc">Future worlds</span>
-                </div>
-                <div class="quick-genre-card" onclick="quickPlay('horror')">
-                    <span class="icon">👻</span>
-                    <span class="label">Horror</span>
-                    <span class="desc">Fear & survival</span>
-                </div>
-                <div class="quick-genre-card surprise-card" onclick="quickPlay('surprise')">
-                    <span class="icon">🎲</span>
-                    <span class="label">Surprise Me!</span>
-                    <span class="desc">Random adventure</span>
-                </div>
+            <div id="quick-start-worlds" class="curated-worlds-grid" style="margin-bottom: 20px; max-height: 60vh; overflow-y: auto;">
+                <!-- Populated by loadQuickStartWorlds() -->
+                <div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading worlds...</div>
             </div>
 
             <div class="btn-group" style="margin-top: 30px;">
@@ -9154,7 +9187,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let rulesVisibility = 'guided';  // storyteller, guided, classic, tactician
         let creationMode = 'concept';  // concept, guided, classic
         let sessionScope = 'one_shot';  // one_shot, short, medium, long, campaign
-        let maxTurnsForScope = { one_shot: 100, short: 150, medium: 250, long: 400, campaign: 0 };
+        let maxTurnsForScope = { one_shot: 200, short: 300, medium: 500, long: 800, campaign: 0 };
         let dndCharacter = null;  // Current D&D character sheet
 
         // Voice Input State
@@ -9192,10 +9225,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let availableOrigins = [];
         let availableArchetypes = [];
         let availableEquipment = { choices: null, fixed: [], loaded: false };
+        let customEquipmentSelections = { weapons: null, armor: null, shield: null, pack: null, extra: null };
         let availableBackgrounds = [];
         let worldSettingSkills = [];  // World-specific custom skills
         let availableSpells = { cantrips: [], level_1: [] };  // Spell data for current class
         let genreTerminology = { origin: 'Origin', archetype: 'Archetype' };
+        let currentWorldGenre = 'fantasy';  // Track current world's genre for equipment selection
 
         // TTRPG Mode State
         let ttrpgGenre = 'fantasy';
@@ -9563,9 +9598,103 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // NEW LANDING FLOW FUNCTIONS
         // ==========================================
 
-        // Quick Start Flow - go straight to genre picker
+        // Quick Start Flow - load curated worlds and show picker
+        let quickStartWorldsLoaded = false;
+        let quickStartWorlds = [];
+
         function quickStartFlow() {
             showScreen('quick-start');
+            loadQuickStartWorlds();
+        }
+
+        async function loadQuickStartWorlds() {
+            if (quickStartWorldsLoaded) return;
+
+            const container = document.getElementById('quick-start-worlds');
+            if (!container) return;
+
+            try {
+                const response = await fetch(API_BASE + '/game/lore-bases');
+                if (!response.ok) {
+                    container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Could not load worlds.</div>';
+                    return;
+                }
+
+                const worlds = await response.json();
+                if (!worlds || worlds.length === 0) {
+                    container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">No worlds available yet.</div>';
+                    return;
+                }
+
+                quickStartWorlds = worlds;
+
+                const worldsHtml = worlds.map(world => `
+                    <div class="curated-world-card" onclick="quickPlayWorld('${world.id}')" data-world-id="${world.id}">
+                        ${world.image_url
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
+                            : `<div class="world-card-banner-placeholder">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
+                        }
+                        <div class="world-card-text">
+                            <div class="world-name">${world.name}</div>
+                            <div class="world-description">${world.description || 'A unique world awaits...'}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add Surprise Me card at the end
+                const surpriseCard = `
+                    <div class="curated-world-card" onclick="quickPlayWorld('surprise')" style="border-color: var(--accent-warm); background: linear-gradient(145deg, var(--bg-card), rgba(212, 165, 116, 0.1));">
+                        <div class="world-card-banner-placeholder" style="background: linear-gradient(135deg, rgba(212, 165, 116, 0.15), var(--bg-card)); font-size: 3rem;">&#127922;</div>
+                        <div class="world-card-text">
+                            <div class="world-name">Surprise Me!</div>
+                            <div class="world-description">Jump into a random world</div>
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML = worldsHtml + surpriseCard;
+                quickStartWorldsLoaded = true;
+            } catch (err) {
+                console.log('Could not load quick start worlds:', err);
+                container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Could not load worlds.</div>';
+            }
+        }
+
+        async function quickPlayWorld(worldId) {
+            let world;
+
+            if (worldId === 'surprise') {
+                // Pick a random world
+                if (quickStartWorlds.length > 0) {
+                    world = quickStartWorlds[Math.floor(Math.random() * quickStartWorlds.length)];
+                    worldId = world.id;
+                } else {
+                    // Fallback: no worlds loaded, use genre-based quick play
+                    const genres = ['fantasy', 'mystery', 'romance', 'scifi', 'horror', 'adventure'];
+                    const genre = genres[Math.floor(Math.random() * genres.length)];
+                    await quickPlay(genre);
+                    return;
+                }
+            } else {
+                world = quickStartWorlds.find(w => w.id === worldId);
+            }
+
+            const genre = (world && (world.mechanics_genre || world.genre)) || 'fantasy';
+
+            // Set up config (same as quickPlay but with a curated world)
+            selectedGenres = [genre];
+            selectedGenre = genre;
+            selectedTone = 'dramatic';
+            selectedStyle = 'guided';
+            rulesMode = 'dnd';
+            rulesGenre = getRulesGenre(genre);
+            rulesVisibility = 'guided';
+            creationMode = 'concept';
+            sessionScope = 'one_shot';
+            selectedCuratedWorld = worldId;
+
+            // Start story -> routes to character creation because rulesMode === 'dnd'
+            await beginStory();
         }
 
         // TTRPG Mode Flow - D&D rules enabled by default
@@ -9619,9 +9748,15 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Show all curated worlds as cards (scrollable container)
                 const worldsHtml = worlds.map(world => `
                     <div class="curated-world-card" onclick="selectTTRPGCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
-                        <div class="world-name">${world.name}</div>
-                        <div class="world-description">${world.description || 'A unique world awaits...'}</div>
-                        <div class="world-genres">${(world.genre_hints || []).slice(0, 3).join(' • ')}</div>
+                        ${world.image_url
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
+                            : `<div class="world-card-banner-placeholder">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
+                        }
+                        <div class="world-card-text">
+                            <div class="world-name">${world.name}</div>
+                            <div class="world-description">${world.description || 'A unique world awaits...'}</div>
+                            <div class="world-genres">${(world.genre_hints || []).slice(0, 3).join(' &bull; ')}</div>
+                        </div>
                     </div>
                 `).join('');
 
@@ -10562,13 +10697,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     <div class="lore-base-card ${isSelected ? 'selected' : ''}"
                          onclick="selectLoreBase('${world.id}')"
                          data-lore="${world.id}"
-                         style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-soft); padding: 20px; cursor: pointer; transition: all 0.3s ease;">
-                        <div class="world-card-genre">${genre.toUpperCase()}</div>
-                        <span class="world-card-icon">${icon}</span>
-                        <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">${world.name}</h4>
-                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0; line-height: 1.4;">
-                            ${world.description || 'A unique world awaits...'}
-                        </p>
+                         style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-soft); cursor: pointer; transition: all 0.3s ease; overflow: hidden;">
+                        ${world.image_url
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${icon}</div>'">`
+                            : `<div class="world-card-banner-placeholder">${icon}</div>`
+                        }
+                        <div style="padding: 16px 20px;">
+                            <div class="world-card-genre">${genre.toUpperCase()}</div>
+                            <h4 style="color: var(--accent-gold); margin: 10px 0 8px; font-weight: normal;">${world.name}</h4>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0; line-height: 1.4;">
+                                ${world.description || 'A unique world awaits...'}
+                            </p>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -10629,8 +10769,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const entityCount = world.entities_count || 0;
 
                 return `
-                    <div class="wb-world-card" onclick="previewWorldLore('${world.id}')">
-                        <div class="wb-world-icon">${icon}</div>
+                    <div class="wb-world-card" onclick="previewWorldLore('${world.id}')" style="overflow: hidden;">
+                        ${world.image_url
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${icon}</div>'">`
+                            : `<div class="world-card-banner-placeholder">${icon}</div>`
+                        }
                         <div class="wb-world-info">
                             <h4>${world.name}</h4>
                             <p>${world.description || 'A unique world awaits...'}</p>
@@ -10853,7 +10996,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 html += `
                     <div class="wb-entity-card ${statusClass}" data-index="${index}">
                         <div class="wb-entity-header">
-                            <span class="wb-entity-icon">${icon}</span>
+                            ${entity.image_url
+                                ? `<img class="entity-thumbnail" src="${entity.image_url}" alt="${entity.name}" onerror="this.outerHTML='<span class=\\'wb-entity-icon\\'>${icon}</span>'" style="width: 40px; height: 40px;">`
+                                : `<span class="wb-entity-icon">${icon}</span>`
+                            }
                             <span class="wb-entity-name">${entity.name}</span>
                             <span class="wb-entity-type">${entity.entity_type || entity.type || 'Unknown'}</span>
                         </div>
@@ -11197,9 +11343,15 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Show all curated worlds as cards (scrollable container)
                 const worldsHtml = worlds.map(world => `
                     <div class="curated-world-card" onclick="selectCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
-                        <div class="world-name">${world.name}</div>
-                        <div class="world-description">${world.description || 'A unique world awaits...'}</div>
-                        <div class="world-genres">${(world.genre_hints || []).slice(0, 3).join(' • ')}</div>
+                        ${world.image_url
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
+                            : `<div class="world-card-banner-placeholder">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
+                        }
+                        <div class="world-card-text">
+                            <div class="world-name">${world.name}</div>
+                            <div class="world-description">${world.description || 'A unique world awaits...'}</div>
+                            <div class="world-genres">${(world.genre_hints || []).slice(0, 3).join(' &bull; ')}</div>
+                        </div>
                     </div>
                 `).join('');
 
@@ -12438,6 +12590,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // Reset world-specific data from previous creation attempts
             worldSettingSkills = [];
             availableEquipment = { choices: null, fixed: [], loaded: false };
+            customEquipmentSelections = { weapons: null, armor: null, shield: null, pack: null, extra: null };
             availableOrigins = [];
             availableArchetypes = [];
 
@@ -12704,6 +12857,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         const worldOptsData = await worldOptsRes.json();
                         const charOpts = worldOptsData.character_options || {};
                         const worldGenre = worldOptsData.genre || 'fantasy';
+                        currentWorldGenre = worldGenre;  // Store for equipment selection
                         const nonMagicalGenres = ['romance', 'drama', 'noir', 'western', 'thriller', 'modern', 'historical'];
                         const genreHasMagic = !nonMagicalGenres.includes(worldGenre.toLowerCase());
                         console.log('[CharCreate] World genre:', worldGenre, 'hasMagic:', genreHasMagic);
@@ -13102,8 +13256,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                     const selectedArch4 = availableArchetypes.find(a => a.id === charCreationData.archetype);
 
-                    // Common skills available to all characters
-                    const commonSkills = ['Athletics', 'Acrobatics', 'Stealth', 'Investigation', 'Insight', 'Perception', 'Persuasion', 'Deception', 'Intimidation', 'Survival'];
+                    // All 18 D&D 5e skills available to characters
+                    const commonSkills = [
+                        'Acrobatics', 'Animal Handling', 'Arcana', 'Athletics',
+                        'Deception', 'History', 'Insight', 'Intimidation',
+                        'Investigation', 'Medicine', 'Nature', 'Perception',
+                        'Performance', 'Persuasion', 'Religion', 'Sleight of Hand',
+                        'Stealth', 'Survival'
+                    ];
 
                     // Archetype-specific skills (highlighted as recommended)
                     const archetypeSkills = selectedArch4?.skill_choices || [];
@@ -13222,38 +13382,66 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                     // Load equipment if not already loaded for this class
                     if (!availableEquipment.loaded && charCreationData.archetype) {
-                        loadEquipmentForClass(charCreationData.archetype);
+                        // Set loading message FIRST, before calling loadEquipmentForClass
+                        // This prevents the message from overwriting equipment if loading is synchronous
                         content.innerHTML = '<div style="color: var(--text-muted); padding: 20px; text-align: center;">Loading equipment...</div>';
                         nextBtn.disabled = true;
+                        loadEquipmentForClass(charCreationData.archetype);
                         break;
                     }
 
-                    // If we have fixed equipment but no choices, show the fixed equipment and allow proceeding
+                    // If we have fixed equipment but no choices, show custom equipment selection
                     if (!availableEquipment.choices || Object.keys(availableEquipment.choices).length === 0) {
-                        if (availableEquipment.fixed && availableEquipment.fixed.length > 0) {
-                            // Show fixed equipment only
-                            content.innerHTML = `
-                                <div class="equipment-selection-section">
-                                    <div class="equipment-fixed-section">
-                                        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Your Starting Equipment</h4>
-                                        <div class="equipment-fixed-list" style="display: flex; flex-direction: column; gap: 8px;">
-                                            ${availableEquipment.fixed.map(item => `
-                                                <div class="equipment-item" style="padding: 10px 15px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-subtle);">
-                                                    ${item}
-                                                </div>
-                                            `).join('')}
-                                        </div>
+                        console.log('[Equipment] No API choices, showing custom equipment selection');
+
+                        // Determine which categories to show based on archetype
+                        const arch = availableArchetypes.find(a => a.id === charCreationData.archetype);
+                        const baseType = arch?.base_type || 'fighter';
+
+                        // All characters choose weapon, armor, pack, and extra gear
+                        const categories = ['weapons', 'armor', 'shield', 'pack', 'extra'];
+
+                        const allSelected = categories.every(cat => customEquipmentSelections[cat] !== null);
+
+                        content.innerHTML = `
+                            <div class="equipment-selection-section" style="max-height: 60vh; overflow-y: auto;">
+                                ${availableEquipment.fixed && availableEquipment.fixed.length > 0 ? `
+                                    <div class="equipment-fixed-section" style="margin-bottom: 20px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                                        <h4 style="color: var(--accent-gold); margin-bottom: 8px; font-size: 0.9rem;">Class Equipment (Included)</h4>
+                                        <div style="color: var(--text-secondary); font-size: 0.85rem;">${availableEquipment.fixed.join(', ')}</div>
                                     </div>
+                                ` : ''}
+                                ${categories.map(category => {
+                                    const cat = EQUIPMENT_CHOICES[category];
+                                    const selected = customEquipmentSelections[category];
+                                    return `
+                                        <div class="equipment-category" style="margin-bottom: 16px;">
+                                            <h4 style="color: var(--text-primary); margin-bottom: 8px; font-size: 0.95rem;">${cat.label}</h4>
+                                            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                                ${cat.options.map(opt => `
+                                                    <div class="equipment-option ${selected === opt.id ? 'selected' : ''}"
+                                                         onclick="selectCustomEquipment('${category}', '${opt.id}')"
+                                                         title="${opt.description}"
+                                                         style="padding: 8px 12px; background: ${selected === opt.id ? 'var(--accent-primary)' : 'var(--bg-secondary)'};
+                                                                border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+                                                                border: 1px solid ${selected === opt.id ? 'var(--accent-primary)' : 'var(--border-subtle)'};
+                                                                color: ${selected === opt.id ? 'white' : 'var(--text-primary)'};
+                                                                transition: all 0.15s ease;">
+                                                        <span style="margin-right: 4px;">${opt.icon}</span>${opt.name}
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                                <div style="color: var(--text-muted); font-size: 0.8rem; text-align: center; margin-top: 10px;">
+                                    ${categories.filter(c => customEquipmentSelections[c]).length} / ${categories.length} categories selected
                                 </div>
-                            `;
-                            nextBtn.textContent = 'Next';
-                            nextBtn.disabled = false;
-                            break;
-                        }
-                        // No equipment at all, skip to review
-                        charCreationStep = 7;
-                        renderCreationStep();
-                        return;
+                            </div>
+                        `;
+                        nextBtn.textContent = 'Next';
+                        nextBtn.disabled = !allSelected;
+                        break;
                     }
 
                     const choiceKeys = Object.keys(availableEquipment.choices).sort();
@@ -13455,6 +13643,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             charCreationData.selectedEquipment = {}; // Reset equipment when archetype changes
             availableSpells = { cantrips: [], level_1: [] }; // Clear spell cache for new class
             availableEquipment = { choices: null, fixed: [], loaded: false }; // Clear equipment cache for new class
+            customEquipmentSelections = { weapons: null, armor: null, shield: null, pack: null, extra: null }; // Clear custom equipment
             document.querySelectorAll('.archetype-card').forEach(card => {
                 card.classList.toggle('selected', card.querySelector('.archetype-name')?.textContent === getArchetypeName(archId));
             });
@@ -13655,6 +13844,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function selectEquipmentChoice(choiceId, optionId) {
             charCreationData.selectedEquipment[choiceId] = optionId;
+            renderCreationStep();
+        }
+
+        function selectCustomEquipment(category, optionId) {
+            customEquipmentSelections[category] = optionId;
             renderCreationStep();
         }
 
@@ -16226,6 +16420,71 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             }
         }
 
+        // Equipment selection options for character creation
+        const EQUIPMENT_CHOICES = {
+            weapons: {
+                label: 'Choose a Weapon',
+                options: [
+                    { id: 'longsword', name: 'Longsword', description: '1d8 slashing, versatile', icon: '⚔️' },
+                    { id: 'shortsword', name: 'Shortsword', description: '1d6 piercing, finesse, light', icon: '🗡️' },
+                    { id: 'rapier', name: 'Rapier', description: '1d8 piercing, finesse', icon: '🗡️' },
+                    { id: 'battleaxe', name: 'Battleaxe', description: '1d8 slashing, versatile', icon: '🪓' },
+                    { id: 'warhammer', name: 'Warhammer', description: '1d8 bludgeoning, versatile', icon: '🔨' },
+                    { id: 'longbow', name: 'Longbow', description: '1d8 piercing, range 150/600', icon: '🏹' },
+                    { id: 'shortbow', name: 'Shortbow', description: '1d6 piercing, range 80/320', icon: '🏹' },
+                    { id: 'crossbow_light', name: 'Light Crossbow', description: '1d8 piercing, range 80/320', icon: '🎯' },
+                    { id: 'quarterstaff', name: 'Quarterstaff', description: '1d6 bludgeoning, versatile', icon: '🪄' },
+                    { id: 'dagger', name: 'Daggers (2)', description: '1d4 piercing, finesse, thrown', icon: '🗡️' },
+                    { id: 'handaxe', name: 'Handaxes (2)', description: '1d6 slashing, light, thrown', icon: '🪓' },
+                    { id: 'mace', name: 'Mace', description: '1d6 bludgeoning', icon: '🔨' },
+                    { id: 'spear', name: 'Spear', description: '1d6 piercing, thrown, versatile', icon: '🔱' }
+                ]
+            },
+            armor: {
+                label: 'Choose Armor',
+                options: [
+                    { id: 'leather', name: 'Leather Armor', description: 'AC 11 + DEX, light armor', icon: '🧥' },
+                    { id: 'studded_leather', name: 'Studded Leather', description: 'AC 12 + DEX, light armor', icon: '🧥' },
+                    { id: 'hide', name: 'Hide Armor', description: 'AC 12 + DEX (max 2), medium', icon: '🦺' },
+                    { id: 'chain_shirt', name: 'Chain Shirt', description: 'AC 13 + DEX (max 2), medium', icon: '🛡️' },
+                    { id: 'scale_mail', name: 'Scale Mail', description: 'AC 14 + DEX (max 2), medium, stealth disadv.', icon: '🛡️' },
+                    { id: 'chain_mail', name: 'Chain Mail', description: 'AC 16, heavy, STR 13 req., stealth disadv.', icon: '🛡️' },
+                    { id: 'no_armor', name: 'No Armor (Robes)', description: 'AC 10 + DEX, free movement', icon: '👘' }
+                ]
+            },
+            shield: {
+                label: 'Shield?',
+                options: [
+                    { id: 'shield_yes', name: 'Shield', description: '+2 AC, requires free hand', icon: '🛡️' },
+                    { id: 'shield_no', name: 'No Shield', description: 'Keep both hands free', icon: '✋' }
+                ]
+            },
+            pack: {
+                label: 'Choose a Pack',
+                options: [
+                    { id: 'explorer', name: "Explorer's Pack", description: 'Backpack, bedroll, mess kit, tinderbox, torches, rations, waterskin, rope', icon: '🎒' },
+                    { id: 'dungeoneer', name: "Dungeoneer's Pack", description: 'Backpack, crowbar, hammer, pitons, torches, tinderbox, rations, waterskin, rope', icon: '🎒' },
+                    { id: 'burglar', name: "Burglar's Pack", description: 'Backpack, caltrops, string, bell, candles, crowbar, lamp, oil, rations, tinderbox, waterskin', icon: '🎒' },
+                    { id: 'scholar', name: "Scholar's Pack", description: 'Backpack, book of lore, ink, pen, parchment, small knife, sand', icon: '🎒' },
+                    { id: 'priest', name: "Priest's Pack", description: 'Backpack, blanket, candles, tinderbox, alms box, incense, vestments, rations, waterskin', icon: '🎒' },
+                    { id: 'entertainer', name: "Entertainer's Pack", description: 'Backpack, bedroll, costumes, candles, rations, waterskin, disguise kit', icon: '🎒' }
+                ]
+            },
+            extra: {
+                label: 'Choose Extra Gear',
+                options: [
+                    { id: 'thieves_tools', name: "Thieves' Tools", description: 'For picking locks and disarming traps', icon: '🔧' },
+                    { id: 'healers_kit', name: "Healer's Kit", description: '10 uses, stabilize dying creatures', icon: '🩹' },
+                    { id: 'holy_symbol', name: 'Holy Symbol', description: 'Divine focus for spellcasting', icon: '✨' },
+                    { id: 'arcane_focus', name: 'Arcane Focus', description: 'Crystal, orb, or wand for spellcasting', icon: '🔮' },
+                    { id: 'component_pouch', name: 'Component Pouch', description: 'Spell components', icon: '👝' },
+                    { id: 'musical_instrument', name: 'Musical Instrument', description: 'Lute, flute, or drum', icon: '🎵' },
+                    { id: 'climbing_kit', name: 'Climbing Kit', description: 'Pitons, boot tips, gloves, harness', icon: '🧗' },
+                    { id: 'hunting_trap', name: 'Hunting Trap', description: 'Catch small game or set ambushes', icon: '🪤' }
+                ]
+            }
+        };
+
         // Starting equipment by archetype/class
         const STARTING_EQUIPMENT = {
             // Fantasy
@@ -16353,14 +16612,77 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         function getStartingInventory(archetype) {
             const archetypeId = (archetype || 'fighter').toLowerCase();
-            const hasEquipment = STARTING_EQUIPMENT.hasOwnProperty(archetypeId);
-            const equipment = STARTING_EQUIPMENT[archetypeId] || STARTING_EQUIPMENT['fighter'];
 
-            console.log('[Equipment] getStartingInventory called:', {
+            // First, try to use equipment selected during character creation
+            let equipment = [];
+
+            // Gather equipment from character creation selections
+            if (availableEquipment.fixed && availableEquipment.fixed.length > 0) {
+                // Use fixed equipment from world-specific archetype
+                availableEquipment.fixed.forEach(itemName => {
+                    equipment.push({
+                        name: itemName,
+                        description: '',
+                        icon: getItemIcon(itemName),
+                        quantity: 1
+                    });
+                });
+                console.log('[Equipment] Using world-specific equipment:', availableEquipment.fixed);
+            }
+
+            // Add equipment from choice selections (if any)
+            if (availableEquipment.choices && charCreationData.selectedEquipment) {
+                for (const [choiceKey, selectedId] of Object.entries(charCreationData.selectedEquipment)) {
+                    const choice = availableEquipment.choices[choiceKey];
+                    if (choice) {
+                        const option = choice.options.find(opt => opt.id === selectedId);
+                        if (option && option.items) {
+                            option.items.forEach(itemName => {
+                                equipment.push({
+                                    name: itemName,
+                                    description: '',
+                                    icon: getItemIcon(itemName),
+                                    quantity: 1
+                                });
+                            });
+                        }
+                    }
+                }
+                console.log('[Equipment] Added equipment from choices');
+            }
+
+            // Add custom equipment selections (player chose from gear list)
+            const hasCustomSelections = Object.values(customEquipmentSelections).some(v => v !== null);
+            if (hasCustomSelections) {
+                for (const [category, selectedId] of Object.entries(customEquipmentSelections)) {
+                    if (selectedId && selectedId !== 'shield_no' && selectedId !== 'no_armor') {
+                        const categoryData = EQUIPMENT_CHOICES[category];
+                        if (categoryData) {
+                            const option = categoryData.options.find(opt => opt.id === selectedId);
+                            if (option) {
+                                equipment.push({
+                                    name: option.name,
+                                    description: option.description,
+                                    icon: option.icon,
+                                    quantity: 1
+                                });
+                            }
+                        }
+                    }
+                }
+                console.log('[Equipment] Added custom equipment selections:', customEquipmentSelections);
+            }
+
+            // Fall back to hardcoded defaults if no equipment was selected
+            if (equipment.length === 0) {
+                const hasEquipment = STARTING_EQUIPMENT.hasOwnProperty(archetypeId);
+                equipment = STARTING_EQUIPMENT[archetypeId] || STARTING_EQUIPMENT['fighter'];
+                console.log('[Equipment] Using default equipment for', archetypeId, '(found in map:', hasEquipment, ')');
+            }
+
+            console.log('[Equipment] getStartingInventory result:', {
                 inputArchetype: archetype,
-                normalizedId: archetypeId,
-                foundInMap: hasEquipment,
-                availableKeys: Object.keys(STARTING_EQUIPMENT),
+                equipmentCount: equipment.length,
                 equipmentItems: equipment.map(e => e.name)
             });
 
@@ -16371,8 +16693,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 setTimeout(() => {
                     addToInventory({
                         name: item.name,
-                        description: item.description,
-                        icon: item.icon,
+                        description: item.description || '',
+                        icon: item.icon || getItemIcon(item.name),
                         quantity: item.quantity || 1
                     }, true);  // Show notification for starting equipment
                 }, index * 300);  // 300ms delay between each item
@@ -17052,18 +17374,32 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const container = document.getElementById('graph-container');
 
             // Create vis.js datasets
-            const nodesDataset = new vis.DataSet(nodes.map(n => ({
-                id: n.id,
-                label: n.label,
-                group: n.group,
-                title: n.title,
-                color: {
-                    background: n.color,
-                    border: n.color,
-                    highlight: { background: '#f5f0eb', border: n.color }
-                },
-                font: { color: '#f5f0eb' }
-            })));
+            const nodesDataset = new vis.DataSet(nodes.map(n => {
+                const nodeConfig = {
+                    id: n.id,
+                    label: n.label,
+                    group: n.group,
+                    title: n.title,
+                    font: { color: '#f5f0eb' }
+                };
+                if (n.image_url) {
+                    nodeConfig.shape = 'circularImage';
+                    nodeConfig.image = n.image_url;
+                    nodeConfig.size = 25;
+                    nodeConfig.borderWidth = 3;
+                    nodeConfig.color = {
+                        border: n.color,
+                        highlight: { border: '#D4AF37' }
+                    };
+                } else {
+                    nodeConfig.color = {
+                        background: n.color,
+                        border: n.color,
+                        highlight: { background: '#f5f0eb', border: n.color }
+                    };
+                }
+                return nodeConfig;
+            }));
 
             const edgesDataset = new vis.DataSet(edges.map(e => ({
                 from: e.from,
@@ -17079,7 +17415,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     shape: 'dot',
                     size: 16,
                     font: { size: 12 },
-                    borderWidth: 2
+                    borderWidth: 2,
+                    shapeProperties: {
+                        useBorderWithImage: true,
+                        interpolation: false
+                    }
                 },
                 edges: {
                     width: 1,
@@ -17292,6 +17632,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     ">${data.entity_type}</span>
                 </div>
             `;
+
+            // Entity image
+            const imageUrl = (data.properties && data.properties.image_url) || data.image_url;
+            if (imageUrl) {
+                html += `
+                    <img class="entity-inspector-image"
+                         src="${imageUrl}"
+                         alt="${data.name || ''}"
+                         onerror="this.style.display='none'">
+                `;
+            }
 
             // Description
             if (data.description) {
@@ -18327,6 +18678,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                                 return `
                                 <div class="entity-card" data-entity-id="${e.id}" style="display: flex; gap: 10px; align-items: flex-start; padding: 10px; background: var(--bg-primary); border-radius: 6px; margin-bottom: 8px; border: 1px solid ${isSelected ? 'var(--accent-gold)' : 'transparent'}; transition: border-color 0.2s;">
                                     <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleEntitySelection('${worldId}', '${e.id}')" style="margin-top: 4px; cursor: pointer; width: 18px; height: 18px;">
+                                    ${e.image_url
+                                        ? `<img class="entity-thumbnail" src="${e.image_url}" alt="${escapeHtml(e.name)}" onerror="this.style.display='none'">`
+                                        : ''
+                                    }
                                     <div style="flex: 1; min-width: 0;" onclick="toggleEntityDetails('${worldId}', '${e.id}')" style="cursor: pointer;">
                                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
                                             <span style="color: var(--text-primary); font-weight: 500; font-size: 0.95rem;">${escapeHtml(e.name)}</span>

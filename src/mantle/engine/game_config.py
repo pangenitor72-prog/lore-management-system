@@ -23,7 +23,7 @@ class GameConfig(BaseModel):
     - STORY mode (no visible mechanics)
     - NARRATIVE dice (AI handles outcomes)
     - CONCISE text (action-focused, not literary)
-    - ONE_SHOT scope (AI drives to climax in ~100 turns)
+    - ONE_SHOT scope (AI drives to climax in ~200 turns)
     """
 
     # MODE: Determines if we use strict rules or just story logic
@@ -35,12 +35,12 @@ class GameConfig(BaseModel):
     # COMPLEXITY: Text depth. CONCISE = short, action-focused. VERBOSE = immersive, literary
     narrative_complexity: Literal["CONCISE", "VERBOSE"] = "CONCISE"
 
-    # SCOPE: Duration. ONE_SHOT = AI drives to climax (~100 turns). CAMPAIGN = endless open world
+    # SCOPE: Duration. ONE_SHOT = AI drives to climax (~200 turns). CAMPAIGN = endless open world
     session_scope: Literal["ONE_SHOT", "CAMPAIGN"] = "ONE_SHOT"
 
     # Pacing thresholds for ONE_SHOT mode
-    climax_start_turn: int = 75
-    max_turns: int = 100
+    climax_start_turn: int = 150
+    max_turns: int = 200
 
     def requires_dice(self) -> bool:
         """Returns True if this config requires dice rolling."""

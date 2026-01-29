@@ -45,20 +45,24 @@ async def batch_generate():
         
         for world in worlds:
             wid = world["id"]
-            wname = world["name"]
-            wtone = world.get("tone", "fantasy")
-            wdesc = world.get("description", "")
+            wname = world.get("name") or wid or "Unknown World"
+            wtone = world.get("tone") or "fantasy"
+            wdesc = world.get("description") or ""
             
             logger.info(f"Processing world: {wname} ({wid})")
             
             # Generate World Cover if missing
             # Check if world node has image
-            world_node = await db.execute(
+            world_nodes = await db.execute(
                 "MATCH (n {world_id: $wid}) WHERE n:World OR n:LoreBase RETURN n.image_url as url",
                 {"wid": wid}
             )
             
-            if not world_node or not world_node[0].get("url"):
+            has_image = False
+            if world_nodes and world_nodes[0].get("url"):
+                has_image = True
+
+            if not has_image and wdesc:
                 logger.info(f"Generating cover image for {wname}...")
                 cover_url = await image_service.generate_image(
                     prompt=wdesc[:500],

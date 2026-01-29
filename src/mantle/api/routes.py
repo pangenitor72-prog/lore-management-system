@@ -172,10 +172,13 @@ async def lifespan(app: FastAPI):
     # -------------------------
     if connected:
         try:
-            from src.mantle.api.game_routes import load_lore_bases_from_neo4j
+            from src.mantle.api.game_routes import load_lore_bases_from_neo4j, load_world_images_from_neo4j
             neo4j_count = await load_lore_bases_from_neo4j(app.state.neo4j_db)
             if neo4j_count > 0:
                 await AuditLogger.log(f"✅ Loaded {neo4j_count} admin-created lore bases from Neo4j")
+            img_count = await load_world_images_from_neo4j(app.state.neo4j_db)
+            if img_count > 0:
+                await AuditLogger.log(f"✅ Loaded {img_count} world images from Neo4j")
         except Exception as e:
             logger.error(f"Failed to load lore bases from Neo4j: {e}")
 

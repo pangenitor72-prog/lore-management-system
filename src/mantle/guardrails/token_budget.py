@@ -62,8 +62,8 @@ class TokenBudget:
     max_output_tokens_per_request: int = 16000  # Allow detailed narrative responses
 
     # Per-session limits
-    max_tokens_per_session: int = 200000   # ~200k tokens per session (increased for complex gameplay)
-    max_requests_per_session: int = 100    # Max 100 AI calls per session
+    max_tokens_per_session: int = 400000   # ~400k tokens per session (doubled for longer sessions)
+    max_requests_per_session: int = 200    # Max 200 AI calls per session
 
     # Hourly rate limits
     max_requests_per_hour: int = 60        # 1 per minute average
@@ -74,7 +74,7 @@ class TokenBudget:
     max_requests_per_day: int = 500        # 500 requests/day
 
     # Cost limits (in USD)
-    max_cost_per_session: float = 0.50     # 50 cents per session
+    max_cost_per_session: float = 1.00     # $1 per session (doubled for longer sessions)
     max_cost_per_day: float = 5.00         # $5 per day
 
     # Pricing (USD per 1M tokens) - conservative estimates
