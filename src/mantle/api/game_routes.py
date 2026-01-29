@@ -69,6 +69,9 @@ except ImportError:
 # Context-aware action suggestions
 from src.mantle.suggestions.action_engine import generate_action_suggestions, PlayerMode
 
+# Creative Catalyst for narrative variety
+from src.mantle.creative.catalyst import CreativeCatalyst
+
 logger = logging.getLogger(__name__)
 
 from src.mantle.services.broadcaster import broadcaster
@@ -254,7 +257,8 @@ IMPORTANT RULES:
 6. Skills should be setting-flavored names but map to D&D skills (e.g., "Streetwise" -> Insight)
 7. Equipment should fit the setting (no swords in cyberpunk unless appropriate)
 8. Abilities/Features should be unique to each archetype
-{constraints_text}
+9. VARIETY: Each time options are generated, vary the selection — don't always default to the most obvious choices. Include at least one unexpected or unconventional option alongside the classics.
+{constraints_text}{_get_character_gen_catalyst_directive()}
 
 Output valid JSON only, no markdown:
 {{
@@ -2288,6 +2292,14 @@ async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -
         elif "arc_engine" in session_copy:
             del session_copy["arc_engine"]  # Remove if not serializable
 
+        # Serialize Creative Catalyst state if present
+        creative_catalyst = session.get("creative_catalyst")
+        if creative_catalyst and hasattr(creative_catalyst, 'to_dict'):
+            session_copy["creative_catalyst_state"] = creative_catalyst.to_dict()
+            del session_copy["creative_catalyst"]
+        elif "creative_catalyst" in session_copy:
+            del session_copy["creative_catalyst"]
+
         # Serialize character data if present
         character_id = session.get("character_id")
         if character_id and character_id in _characters:
@@ -2364,6 +2376,18 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
         elif ARC_ENGINE_AVAILABLE:
             # No saved state - create fresh Arc Engine
             session_data["arc_engine"] = ArcEngine(session_id=session_id)
+
+        # Restore Creative Catalyst from saved state if available
+        catalyst_state = session_data.pop("creative_catalyst_state", None)
+        if catalyst_state:
+            try:
+                session_data["creative_catalyst"] = CreativeCatalyst.from_dict(catalyst_state)
+                logger.debug(f"Restored Creative Catalyst state for session {session_id}")
+            except Exception as cat_err:
+                logger.warning(f"Failed to restore Creative Catalyst for {session_id}: {cat_err}")
+                session_data["creative_catalyst"] = CreativeCatalyst(genre=session_data.get("genre", "fantasy"))
+        else:
+            session_data["creative_catalyst"] = CreativeCatalyst(genre=session_data.get("genre", "fantasy"))
 
         # Restore character from saved character_data if present
         character_data = session_data.get("character_data")
@@ -3015,6 +3039,8 @@ async def create_session(
         "moral_complexity_preference": session_req.moral_complexity_preference,
         # Arc Engine for narrative pacing (per-session instance)
         "arc_engine": ArcEngine(session_id=session_id) if ARC_ENGINE_AVAILABLE else None,
+        # Creative Catalyst for narrative variety (per-session instance)
+        "creative_catalyst": CreativeCatalyst(genre=primary_genre),
     }
 
     _active_sessions[session_id] = session_data
@@ -4184,6 +4210,46 @@ Example: Instead of "You should go to the tavern", use "The distant sound of lau
     return ""
 
 
+def _get_opening_catalyst_directive(session: Dict[str, Any]) -> str:
+    """Get a creative opening seed from the session's Creative Catalyst."""
+    catalyst = session.get("creative_catalyst")
+    if not catalyst:
+        return ""
+    try:
+        seed = catalyst.get_opening_seed()
+        return f"\nCREATIVE DIRECTION (for this opening only):\n- {seed}"
+    except Exception as e:
+        logger.debug(f"[CATALYST] Failed to get opening seed: {e}")
+        return ""
+
+
+def _get_active_play_catalyst_directive(session: Dict[str, Any]) -> str:
+    """Get creative directives from the session's Creative Catalyst for active play."""
+    catalyst = session.get("creative_catalyst")
+    if not catalyst:
+        return ""
+    try:
+        directives = catalyst.get_directives(count=2)
+        if directives:
+            return f"{directives}\n"
+        return ""
+    except Exception as e:
+        logger.debug(f"[CATALYST] Failed to get directives: {e}")
+        return ""
+
+
+def _get_character_gen_catalyst_directive() -> str:
+    """Get a creative twist directive for character option generation."""
+    try:
+        from src.mantle.creative.catalyst import CreativeCatalyst
+        catalyst = CreativeCatalyst()
+        directive = catalyst.get_character_gen_directive()
+        return f"\nCREATIVE TWIST: {directive}\n"
+    except Exception as e:
+        logger.debug(f"[CATALYST] Failed to get character gen directive: {e}")
+        return ""
+
+
 async def _generate_opening(session: Dict[str, Any], model) -> str:
     """Generate an opening that matches the user's genre, tone, and style."""
     logger.info(f"[OPENING] Starting _generate_opening for session {session.get('session_id', 'unknown')}")
@@ -4282,7 +4348,7 @@ Write an opening that:
 4. Creates intrigue through {genre_info['hooks']}
 5. Honors the fantasy their character concept implies
 6. Ends at a natural pause - DO NOT suggest choices or ask questions
-
+{_get_opening_catalyst_directive(session)}
 Length: 2-3 paragraphs. Write ONLY the narrative.
 Complete your thoughts - never end mid-sentence."""
 
@@ -4492,7 +4558,7 @@ PLAYER'S ACTION: {player_input}
 {mechanical_context}
 {_get_guidance_instruction(needs_guidance)}
 {f'''STORYTELLING ADJUSTMENT: {adaptive_context}
-''' if adaptive_context else ''}
+''' if adaptive_context else ''}{_get_active_play_catalyst_directive(session)}
 Continue:
 - Pick up EXACTLY where the scene left off
 - Honor what they're trying to do - match their energy
