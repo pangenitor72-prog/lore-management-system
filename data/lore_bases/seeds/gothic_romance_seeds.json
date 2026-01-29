@@ -1,0 +1,301 @@
+{
+  "id": "blackmoor_house",
+  "name": "Blackmoor House",
+  "description": "An English estate, 1843. A brooding master, a locked wing, and secrets the walls themselves seem to keep.",
+  "genre": "gothic_romance",
+  "mechanics_genre": "horror",
+  "genre_hints": [
+    "gothic",
+    "romance",
+    "mystery"
+  ],
+  "tone_hints": [
+    "brooding",
+    "atmospheric",
+    "romantic"
+  ],
+  "seed_prompt": "A gothic romance set in a sprawling English estate where a new arrival uncovers dark family secrets, forbidden attraction, and something that walks the halls at night.",
+  "lore_content": "Blackmoor House sits on the Yorkshire moors like a bruise on the landscape. Four hundred years of Blackmoor money built it, expanded it, and filled it with secrets that multiply faster than the ivy on its walls. The east wing has been locked for seven years. The servants won't say why.\n\nLord Edmund Blackmoor inherited the estate at twenty-two when his father fell from the roof under circumstances the inquest called 'misadventure.' Now thirty, he manages the estate with quiet competence and a melancholy that never quite lifts. He is generous to his tenants, kind to his staff, and has not left the grounds in three years. When asked why, he changes the subject with a skill that suggests practice.\n\nMrs. Fairfax has been housekeeper for thirty years, serving three generations of Blackmoors. She knows every room, every passage, every draft in the house. She also knows what happened in the east wing, and the knowledge has turned her hair white and her disposition to iron. She protects the household with fierce efficiency and answers personal questions with silence.\n\nDr. Julian Ashworth visits Blackmoor weekly, ostensibly to treat Lord Edmund's persistent headaches. His medical bag contains laudanum, surgical tools, and a journal of observations about the family that reads more like a case study in hereditary madness. He is either Edmund's closest friend or his keeper. Perhaps both.\n\nMiss Clara Dove is the new governess, hired to teach the Blackmoor ward — a silent child named Thomas who was found on the doorstep five years ago. Clara is educated, practical, and refreshingly unafraid of gothic atmosphere. She's also noticed that Thomas draws the same figure repeatedly — a woman in white standing at a window that can only be in the locked east wing.\n\nThe villagers in Blackmoor-under-Hill avoid the estate after dark. They tell stories of lights in the locked wing, of music playing when no one is at the piano, of a woman's voice singing lullabies that drift across the moor. Old Mr. Thorne, the groundskeeper, leaves offerings of bread and milk at the garden gate every evening. When asked who they're for, he says 'She gets restless when she's hungry.'\n\nIn the attic, behind a false wall, there is a room that doesn't appear on any floor plan. Inside: a wedding dress stained with something dark, a portrait of a woman who looks remarkably like Clara Dove, and a diary written in a hand that starts elegant and ends in something barely human.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "governess",
+        "name": "New Arrival",
+        "description": "You've come to Blackmoor for employment, inheritance, or invitation. The house was expecting you.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Persuasion"
+        ],
+        "traits": [
+          "Educated: Proficiency in two additional languages and one artistic tool (piano, painting, etc.).",
+          "Outsider's Eye: Advantage on Perception checks to notice things the household has become blind to."
+        ],
+        "languages": [
+          "English",
+          "French",
+          "Latin"
+        ]
+      },
+      {
+        "id": "staff",
+        "name": "Estate Staff",
+        "description": "You've served the Blackmoors for years. You know the house's rhythms — and its secrets.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Perception",
+          "Stealth"
+        ],
+        "traits": [
+          "Invisible Service: Advantage on Stealth checks within the estate. Nobles overlook you by habit.",
+          "House Knowledge: You know every room, passage, and hidden space in Blackmoor House."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "blackmoor_blood",
+        "name": "Blackmoor Blood",
+        "description": "Related to the family by blood, however distantly. The house recognizes you. That may not be a good thing.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Insight"
+        ],
+        "traits": [
+          "Family Resemblance: You bear a striking resemblance to a Blackmoor ancestor. NPCs react with recognition — or fear.",
+          "Inherited Sensitivity: You can sense supernatural presences in the house. You experience cold spots, hear whispers, and see movement in mirrors."
+        ],
+        "languages": [
+          "English",
+          "French"
+        ]
+      },
+      {
+        "id": "village_folk",
+        "name": "Village-Born",
+        "description": "From Blackmoor-under-Hill, you've grown up in the shadow of the estate and its stories.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Nature"
+        ],
+        "traits": [
+          "Moor-Walker: You can navigate the moors in any weather without becoming lost.",
+          "Local Lore: Advantage on History checks related to the Blackmoor family and the estate's past."
+        ],
+        "languages": [
+          "English"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "investigator_gothic",
+        "name": "Sleuth",
+        "description": "Questions need answers. Locked doors need opening. Secrets need finding.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Perception",
+          "Insight",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Rapiers"
+        ],
+        "starting_equipment": [
+          "Lockpick set",
+          "Magnifying glass",
+          "Journal and pen",
+          "Candlestick"
+        ],
+        "features": [
+          {
+            "name": "Keen Observation",
+            "description": "After spending 1 minute examining a room, you can identify hidden compartments, secret doors, or recently disturbed items."
+          },
+          {
+            "name": "Deduce Motive",
+            "description": "After a conversation of at least 5 minutes, you can make an Insight check to determine a person's primary motivation or what they're hiding."
+          }
+        ]
+      },
+      {
+        "id": "spiritist",
+        "name": "Spiritist",
+        "description": "You perceive what others cannot — the dead who linger, the emotions soaked into old walls, the truth behind the haunting.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Religion",
+          "Insight",
+          "Medicine",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Crystal pendulum",
+          "Candles (12)",
+          "Spirit board",
+          "Salt pouch"
+        ],
+        "features": [
+          {
+            "name": "Séance",
+            "description": "You can attempt to contact the dead. Spend 10 minutes in a darkened room to ask up to three questions of a spirit. The spirit may answer truthfully, cryptically, or not at all."
+          },
+          {
+            "name": "Psychic Impression",
+            "description": "By touching an object, you can sense strong emotions associated with it — who held it last, what they felt, and whether violence was involved."
+          }
+        ]
+      },
+      {
+        "id": "protector_gothic",
+        "name": "Guardian",
+        "description": "Someone in this house is in danger. You've made it your business to ensure they survive.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Perception",
+          "Intimidation",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Sturdy coat",
+          "Walking stick (club)",
+          "Lantern",
+          "Hunting knife"
+        ],
+        "features": [
+          {
+            "name": "Protective Instinct",
+            "description": "When an ally within 5 feet is attacked, you can use your reaction to impose disadvantage on the attack roll."
+          },
+          {
+            "name": "Steadfast",
+            "description": "Advantage on saving throws against fear and supernatural dread."
+          }
+        ]
+      },
+      {
+        "id": "healer_gothic",
+        "name": "Physician",
+        "description": "Science and reason in a house of shadows. You trust the rational — but the rational keeps failing you here.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Investigation",
+          "Nature",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Medical bag",
+          "Laudanum (3 doses)",
+          "Scientific journal",
+          "Pocket watch"
+        ],
+        "features": [
+          {
+            "name": "Medical Expertise",
+            "description": "You can stabilize dying creatures automatically and restore 1d6 + Intelligence modifier hit points once per short rest."
+          },
+          {
+            "name": "Rational Analysis",
+            "description": "When confronted with a supernatural phenomenon, you can study it for 1 minute to determine if it has a natural explanation — and if not, gain advantage on your next save against its effects."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "social_graces",
+        "name": "Social Graces",
+        "base_skill": "Persuasion",
+        "description": "Navigating Victorian social hierarchy, etiquette, and the unspoken rules of polite society."
+      },
+      {
+        "id": "occult_studies",
+        "name": "Occult Studies",
+        "base_skill": "Arcana",
+        "description": "Knowledge of spiritualism, séances, hauntings, and Victorian supernatural belief."
+      },
+      {
+        "id": "household_politics",
+        "name": "Household Politics",
+        "base_skill": "Insight",
+        "description": "Understanding the power dynamics, alliances, and secrets within a great household."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

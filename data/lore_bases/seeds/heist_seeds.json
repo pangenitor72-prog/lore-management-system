@@ -1,0 +1,311 @@
+{
+  "id": "gilded_lie",
+  "name": "The Gilded Lie",
+  "description": "The French Riviera, 1962. A crew of specialists assembles for an impossible score against people who deserve to lose.",
+  "genre": "heist",
+  "mechanics_genre": "modern",
+  "genre_hints": [
+    "modern",
+    "thriller",
+    "drama"
+  ],
+  "tone_hints": [
+    "stylish",
+    "witty",
+    "tense"
+  ],
+  "seed_prompt": "A glamorous 1960s heist caper set across European high society, where a crew of charming specialists plan an impossible theft.",
+  "lore_content": "The Casino Aurelian sits on a limestone cliff above the Mediterranean, a temple of wealth where fortunes change hands between champagne courses. Its vault is legendary — six feet of reinforced steel, time-locked, and guarded by men who shoot first. It has never been robbed. That's about to change.\n\nSophie Renard is the architect of the plan. A former MI6 analyst who was burned after asking too many questions about who really profits from the Cold War. She's brilliant, ruthless, and carries a grudge against the casino's owner that she hasn't explained to the rest of the crew. She always has a backup plan. Sometimes she has a backup for the backup.\n\nMarco Bellini is the face — the con man who can talk his way into any room and out of any accusation. An Italian count (possibly legitimate, possibly not) with a talent for mimicry and an encyclopedic knowledge of European nobility. He owes money to people who express displeasure creatively.\n\nThe Contessa, Eleanora de Vargas, owns the Casino Aurelian and three governments' worth of blackmail material. She built her empire from nothing during the war — how, exactly, depends on who's telling the story. She is charming, generous, and has ordered the deaths of eleven people that anyone knows about.\n\nFrantz Kleiner is the safecracker. German, quiet, precise. He can feel the tumblers through six inches of steel and has never met a lock he couldn't open. He wants the money for his daughter's medical treatment. He doesn't talk about what happened to her.\n\nYuki Tanaka is the wheelman — driver, pilot, sailor, whatever the exit demands. She raced motorcycles in Japan before a scandal involving a yakuza boss's car forced her to leave. She misses the speed more than the country.\n\nInspector Claude Marais of Interpol has been tracking the crew's component members for three years. He's smart, tenacious, and plays by the rules — which is both his greatest strength and the crew's best advantage. He's two steps behind. That might be close enough.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "con_artist",
+        "name": "Con Artist",
+        "description": "You've been someone else for so long, the real you is mostly theoretical.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Performance"
+        ],
+        "traits": [
+          "Cover Identity: You have one fully documented false identity with papers, backstory, and contacts.",
+          "Read the Room: Advantage on Insight checks to determine what someone wants or fears."
+        ],
+        "languages": [
+          "Common",
+          "Two additional languages"
+        ]
+      },
+      {
+        "id": "ex_intelligence",
+        "name": "Ex-Intelligence",
+        "description": "Former spy, burned by your agency. The skills remained; the loyalty didn't.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Perception"
+        ],
+        "traits": [
+          "Tradecraft: Proficiency with disguise kits and forgery kits.",
+          "Dead Drop: You have a network of anonymous contacts who can leave information or small items in pre-arranged locations."
+        ],
+        "languages": [
+          "Common",
+          "Two additional languages"
+        ]
+      },
+      {
+        "id": "street_kid",
+        "name": "Street Kid",
+        "description": "You grew up picking pockets in the alleys. Now you pick bigger pockets in nicer buildings.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Sleight of Hand",
+          "Stealth"
+        ],
+        "traits": [
+          "Light Fingers: Advantage on Sleight of Hand checks to pickpocket or palm small objects.",
+          "Street Smart: You always know the quickest route through any urban environment."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      },
+      {
+        "id": "disgraced_aristocrat",
+        "name": "Disgraced Aristocrat",
+        "description": "Old money, new problems. You know how the elite think because you used to be one of them.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "High Society: You can navigate elite social events with ease and know the etiquette of the wealthy.",
+          "Old Connections: Once per session, you can call in a favor from a former contact in high society."
+        ],
+        "languages": [
+          "Common",
+          "French",
+          "One additional language"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "mastermind",
+        "name": "The Mastermind",
+        "description": "You see the whole board. Every person is a piece, every room is a puzzle, every problem has a solution.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Deception",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Rapiers"
+        ],
+        "starting_equipment": [
+          "Tailored suit",
+          "Concealed pistol",
+          "Lockpick set",
+          "Floor plans (stolen)"
+        ],
+        "features": [
+          {
+            "name": "Master Plan",
+            "description": "Once per long rest, you can declare a flashback scene — reveal a preparation you made earlier that is now relevant. The DM determines the feasibility."
+          },
+          {
+            "name": "Tactical Direction",
+            "description": "As a bonus action, you can direct an ally within 30 feet. They gain advantage on their next ability check or attack roll."
+          }
+        ]
+      },
+      {
+        "id": "face",
+        "name": "The Face",
+        "description": "Every con needs someone who can sell the story. You don't just lie — you become the lie.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Deception",
+          "Persuasion",
+          "Performance",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows"
+        ],
+        "starting_equipment": [
+          "Designer wardrobe",
+          "Multiple fake IDs",
+          "Makeup kit",
+          "Hidden derringer"
+        ],
+        "features": [
+          {
+            "name": "Perfect Cover",
+            "description": "You can adopt a new persona in minutes. You have advantage on Deception checks to maintain a false identity."
+          },
+          {
+            "name": "Silver Tongue",
+            "description": "Once per short rest, you can automatically succeed on a Persuasion or Deception check against a non-hostile creature."
+          }
+        ]
+      },
+      {
+        "id": "technician",
+        "name": "The Specialist",
+        "description": "Safes, alarms, electronics — everything has a weakness if you know where to look.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Sleight of Hand",
+          "Perception",
+          "Arcana"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Safecracking tools",
+          "Electronics kit",
+          "Stethoscope",
+          "Penlight"
+        ],
+        "features": [
+          {
+            "name": "Expert Hands",
+            "description": "You have advantage on all checks to pick locks, disable alarms, or crack safes."
+          },
+          {
+            "name": "Case the Joint",
+            "description": "After spending 10 minutes observing a location, you can identify all security measures, exits, and vulnerable points. You share this knowledge with your team."
+          }
+        ]
+      },
+      {
+        "id": "wheelman",
+        "name": "The Wheelman",
+        "description": "Cars, boats, planes — you can drive anything fast and park anything tight.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Perception",
+          "Stealth",
+          "Athletics"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather jacket",
+          "Driving gloves",
+          "Modified vehicle",
+          "Pistol"
+        ],
+        "features": [
+          {
+            "name": "Precision Driving",
+            "description": "You have advantage on all checks to drive, pilot, or control vehicles, and you can perform maneuvers that others would consider impossible."
+          },
+          {
+            "name": "Escape Route",
+            "description": "You always know the fastest way out. After arriving at any location, you automatically identify the three best escape routes."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "casing",
+        "name": "Casing",
+        "base_skill": "Investigation",
+        "description": "Analyzing security systems, guard patterns, and building layouts."
+      },
+      {
+        "id": "forgery",
+        "name": "Forgery",
+        "base_skill": "Deception",
+        "description": "Creating convincing fake documents, identities, and credentials."
+      },
+      {
+        "id": "safecracking",
+        "name": "Safecracking",
+        "base_skill": "Sleight of Hand",
+        "description": "Opening locks, vaults, and security systems through physical manipulation."
+      },
+      {
+        "id": "high_society",
+        "name": "High Society",
+        "base_skill": "Persuasion",
+        "description": "Navigating elite social circles, galas, and exclusive establishments."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

@@ -1,0 +1,310 @@
+{
+  "id": "outer_reach",
+  "name": "The Outer Reach",
+  "description": "Frontier planets at the edge of a collapsed galactic government. Smugglers, bounty hunters, and settlers carving lives in the lawless expanse.",
+  "genre": "space_western",
+  "mechanics_genre": "space_opera",
+  "genre_hints": [
+    "scifi",
+    "western",
+    "adventure"
+  ],
+  "tone_hints": [
+    "frontier",
+    "scrappy",
+    "adventurous"
+  ],
+  "seed_prompt": "A space western where frontier planets exist beyond the reach of a fractured galactic government, filled with smugglers, bounty hunters, and settlers building new lives.",
+  "lore_content": "The Alliance collapsed eighteen years ago. The core worlds still pretend to govern, but out here — past the Drift, where the beacon network ends — it's just ships, grit, and the cold math of survival. The Outer Reach is a string of colony worlds connected by trade routes that only the brave or desperate fly.\n\nCaptain Josie Malone runs the Jackrabbit, a modified cargo hauler that's seen better decades. She takes any job that pays and only asks questions when they're relevant to getting paid. Former Alliance military, she left after the Collapse and hasn't looked back. Her crew is family, her ship is home, and she'll burn anyone who threatens either.\n\nMarshal Kade Vasquez is the last Alliance lawman in the Reach. His jurisdiction covers six planets and he has no backup, no warrant authority, and no illusions. He enforces what he can, lets go what he must, and drinks alone in port bars between jobs. He's looking for a fugitive war criminal named Harlow. Finding Harlow might kill him. Not finding Harlow definitely will.\n\nThe Combine is what passes for organized crime in the Reach — a loose federation of smuggling operations, protection rackets, and mining claims run by Boss Catarina Zheng from her flagship, the Iron Fortune. She's fair in her dealings, merciless to betrayers, and provides the only stable economy some of these colonies have. Several settlements would collapse without her supply runs.\n\nDoc Okafor runs the clinic on Dust, the largest settlement in the Reach. He was a trauma surgeon on a core-world hospital station before the Collapse stranded him. He patches up gunshot wounds, delivers babies, and performs surgery with whatever's available. His waiting room always has people in it.\n\nThe Architects left ruins on every planet in the Reach — massive structures of an unknown alloy that resist every attempt at analysis. Most colonists ignore them. Some loot them for tradeable artifacts. A few have noticed that the ruins on different planets seem to be pointing at the same coordinates in deep space. Nobody wants to be the first to fly there.\n\nSettlement Elara is the newest colony, three hundred souls trying to farm a planet that doesn't want them. Their water table is contaminated, their crops keep failing, and something in the mountains broadcasts a signal that scrambles electronics within five miles. They need help. They can't afford to pay for it.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "colony_born",
+        "name": "Colony-Born",
+        "description": "Raised on a Reach world, you know what it means to build something from nothing.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Nature"
+        ],
+        "traits": [
+          "Frontier Tough: Gain +3 hit points.",
+          "Jury-Rigger: Proficiency with tinker's tools. You can repair broken equipment with improvised materials."
+        ],
+        "languages": [
+          "Common",
+          "Reach Pidgin"
+        ]
+      },
+      {
+        "id": "ex_alliance",
+        "name": "Ex-Alliance",
+        "description": "You served the old government. Now you serve yourself. The skills remained; the loyalty expired.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "dexterity": 2
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Investigation"
+        ],
+        "traits": [
+          "Military Training: Proficiency with all firearms and pilot's tools.",
+          "Alliance Codes: You can access old Alliance systems and channels (where they still function)."
+        ],
+        "languages": [
+          "Common",
+          "Alliance Standard"
+        ]
+      },
+      {
+        "id": "ship_rat",
+        "name": "Ship Rat",
+        "description": "Born on a ship, raised in the void. Dirt-side feels wrong to you.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Acrobatics",
+          "Perception"
+        ],
+        "traits": [
+          "Spacer: You operate normally in zero gravity and can hold your breath for twice as long in vacuum.",
+          "Ship Sense: Advantage on checks to operate, repair, or navigate spacecraft."
+        ],
+        "languages": [
+          "Common",
+          "Spacer Cant"
+        ]
+      },
+      {
+        "id": "drifter_space",
+        "name": "Drifter",
+        "description": "No home, no crew, no plan. Just you, the black, and whatever comes next.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Persuasion"
+        ],
+        "traits": [
+          "Quick Friends: You can establish a rapport with strangers quickly. Advantage on first Charisma checks with new people.",
+          "Wanderer's Luck: Once per long rest, you can reroll any one d20 roll."
+        ],
+        "languages": [
+          "Common",
+          "One additional language"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "freighter_captain",
+        "name": "Ship Captain",
+        "description": "Your ship is your world. Keep it flying, keep the crew fed, and try not to die.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Intimidation",
+          "Perception",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Flight jacket",
+          "Sidearm",
+          "Ship manifest",
+          "Bottle of engine whiskey"
+        ],
+        "features": [
+          {
+            "name": "Rally the Crew",
+            "description": "As a bonus action, give an order. One ally within 30 feet gains advantage on their next attack roll or saving throw."
+          },
+          {
+            "name": "Captain's Luck",
+            "description": "When your ship takes damage or faces a critical malfunction, you can make a DC 15 Charisma check to mitigate the worst of it."
+          }
+        ]
+      },
+      {
+        "id": "bounty_hunter_space",
+        "name": "Bounty Hunter",
+        "description": "You find people who don't want to be found. The pay is good. The danger is better.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Survival",
+          "Investigation",
+          "Perception",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Armored vest",
+          "Rifle",
+          "Tracking device",
+          "Bounty puck (current target)"
+        ],
+        "features": [
+          {
+            "name": "Mark Target",
+            "description": "Choose one creature as your quarry. You have advantage on Perception and Survival checks to track them, and deal an extra 1d6 damage on your first hit against them each turn."
+          },
+          {
+            "name": "No Escape",
+            "description": "When your quarry attempts to flee, you can use your reaction to make an opportunity attack or move up to half your speed toward them."
+          }
+        ]
+      },
+      {
+        "id": "mechanic",
+        "name": "Ship Mechanic",
+        "description": "You keep the lights on and the engines burning. Without you, everyone dies in the cold dark.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Sleight of Hand",
+          "Perception",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows"
+        ],
+        "starting_equipment": [
+          "Mechanic's coveralls",
+          "Tool kit (extensive)",
+          "Welding torch",
+          "Wrench (doubles as weapon)"
+        ],
+        "features": [
+          {
+            "name": "Miracle Fix",
+            "description": "Once per short rest, you can repair a broken device or weapon in 1 minute using improvised materials."
+          },
+          {
+            "name": "Booby Trap",
+            "description": "Given 10 minutes and materials, you can rig a door, container, or piece of equipment to shock, alarm, or explode when tampered with."
+          }
+        ]
+      },
+      {
+        "id": "frontier_medic",
+        "name": "Frontier Medic",
+        "description": "Out here, you're the hospital. Make it count.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Insight",
+          "Nature",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Medical bag",
+          "Surgical kit",
+          "Sedatives (3 doses)",
+          "Pistol"
+        ],
+        "features": [
+          {
+            "name": "Triage",
+            "description": "As an action, stabilize a dying creature and restore 1d8 + Wisdom modifier hit points."
+          },
+          {
+            "name": "Calm Under Pressure",
+            "description": "You have advantage on Medicine checks made during combat or crisis situations."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "piloting",
+        "name": "Piloting",
+        "base_skill": "Acrobatics",
+        "description": "Flying spacecraft through hazardous conditions, docking maneuvers, and evasive action."
+      },
+      {
+        "id": "ship_systems",
+        "name": "Ship Systems",
+        "base_skill": "Investigation",
+        "description": "Understanding, repairing, and modifying spacecraft systems and components."
+      },
+      {
+        "id": "black_market_space",
+        "name": "Underworld Contacts",
+        "base_skill": "Persuasion",
+        "description": "Connections to smuggling networks, fences, and information brokers across the Reach."
+      },
+      {
+        "id": "xeno_archaeology",
+        "name": "Architect Lore",
+        "base_skill": "History",
+        "description": "Knowledge of the mysterious Architect ruins found across Reach worlds."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

@@ -1,0 +1,376 @@
+{
+  "id": "drowned_crown",
+  "name": "The Drowned Crown",
+  "description": "The Shattered Isles, 1715. Pirate fleets clash over cursed gold while colonial empires tighten their grip on the Caribbean.",
+  "genre": "pirate",
+  "mechanics_genre": "pirate",
+  "genre_hints": [
+    "pirate",
+    "adventure",
+    "fantasy"
+  ],
+  "tone_hints": [
+    "swashbuckling",
+    "dangerous",
+    "salty"
+  ],
+  "seed_prompt": "A golden age of piracy setting with cursed treasure, rival fleets, sea monsters, and colonial powers fighting for dominance across a shattered archipelago.",
+  "lore_content": "The Shattered Isles are what remains of a great landmass that sank beneath the waves centuries ago. Now only the mountaintops remain — hundreds of islands scattered across warm turquoise waters, each hiding something worth killing for.\n\nCaptain Maris Blacktide commands the Revenant, a stolen frigate painted black as pitch. She was a naval officer once, before she discovered what the Admiralty was really shipping in those sealed holds. Now she hunts her former masters, and every prize she takes funds the next battle. Her crew would die for her. Several already have.\n\nGovernor Aldric Vane rules Port Sovereign from a fortress built on bones. The Crown sent him to stamp out piracy. Instead, he's become the islands' most profitable fence, taking a cut of every stolen cargo that passes through his harbor. His letters to London are masterpieces of fiction.\n\nThe Sea Witch, Esmeralda dos Santos, lives in the mangrove labyrinth south of Tortuga Reef. Sailors bring her offerings for fair winds and safe passage. She reads the tides the way scholars read books, and her potions can cure scurvy or cause it. Some say she's three hundred years old. She doesn't deny it.\n\nQuartermaster Jin Hao runs the Free Port of Driftwood — a floating city of lashed-together hulls where every pirate code is honored and every law of man is ignored. He enforces one rule: no killing in the market. Everything else is negotiable.\n\nThe Drowned Crown itself is legend. A golden diadem that sank with the old kingdom, said to grant dominion over the sea itself. Every captain wants it. The Cult of the Deep, led by the eyeless priest Father Abyssal, believes finding it will wake something that sleeps in the oceanic trench. They may be right.\n\nThe HMS Resolve, commanded by Commodore Catherine Shaw, patrols the shipping lanes with a fleet of twelve warships. She's the most dangerous person in the Shattered Isles — incorruptible, brilliant, and absolutely convinced that hanging every pirate will solve everything. She's wrong, but she hasn't lost a battle yet.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "sea_dog",
+        "name": "Sea Dog",
+        "description": "Born on the waves, you've sailed since before you could walk.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Acrobatics",
+          "Perception"
+        ],
+        "traits": [
+          "Sea Legs: Advantage on checks to maintain balance or move on a ship.",
+          "Weather Eye: You can predict weather changes 24 hours in advance."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      },
+      {
+        "id": "navy_deserter",
+        "name": "Navy Deserter",
+        "description": "Trained by the Crown, freed by conscience — or cowardice.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "intelligence": 2
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Investigation"
+        ],
+        "traits": [
+          "Naval Training: Proficiency with navigation tools and cartographer's tools.",
+          "Know the Enemy: Advantage on checks to predict military tactics or ship maneuvers."
+        ],
+        "languages": [
+          "Common",
+          "One additional language"
+        ]
+      },
+      {
+        "id": "islander",
+        "name": "Islander",
+        "description": "Native to the Shattered Isles, you know the reefs, currents, and secrets the colonizers never will.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Nature"
+        ],
+        "traits": [
+          "Reef Walker: You can swim at full speed and hold your breath for twice as long.",
+          "Island Lore: Advantage on checks to navigate the Shattered Isles or find hidden coves."
+        ],
+        "languages": [
+          "Common",
+          "Islander Creole"
+        ]
+      },
+      {
+        "id": "merchant_fallen",
+        "name": "Ruined Merchant",
+        "description": "You had a trading empire once. Now you have debts, enemies, and a desperate plan.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Deception"
+        ],
+        "traits": [
+          "Eye for Value: You can accurately appraise the worth of any cargo or treasure.",
+          "Trade Contacts: You have connections in ports across the Isles."
+        ],
+        "languages": [
+          "Common",
+          "Spanish",
+          "Dutch"
+        ]
+      },
+      {
+        "id": "press_ganged",
+        "name": "Press-Ganged",
+        "description": "Taken from your old life by force, you've made the sea your new home — willingly or not.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Intimidation"
+        ],
+        "traits": [
+          "Hard Knocks: Gain +3 hit points.",
+          "Improviser: Proficiency with improvised weapons."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "buccaneer",
+        "name": "Buccaneer",
+        "description": "A fearsome fighter equally deadly with cutlass and pistol.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Acrobatics",
+          "Intimidation",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Cutlass",
+          "Flintlock pistol",
+          "20 rounds"
+        ],
+        "features": [
+          {
+            "name": "Sea Fury",
+            "description": "When you hit a creature with a melee weapon, you can use a bonus action to make a ranged attack with a one-handed weapon."
+          },
+          {
+            "name": "Boarding Action",
+            "description": "You have advantage on attack rolls made during the first round of any combat that begins on a ship or dock."
+          }
+        ]
+      },
+      {
+        "id": "navigator",
+        "name": "Navigator",
+        "description": "Master of charts, stars, and the secret paths between islands.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Nature",
+          "Survival",
+          "Perception",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Compass and charts",
+          "Spyglass",
+          "Short sword"
+        ],
+        "features": [
+          {
+            "name": "Star Reader",
+            "description": "You cannot become lost except by magical means, and you have advantage on Survival checks to navigate at sea."
+          },
+          {
+            "name": "Reef Sense",
+            "description": "You have advantage on Perception checks to spot hidden dangers in water — reefs, sandbars, or lurking creatures."
+          }
+        ]
+      },
+      {
+        "id": "sea_witch",
+        "name": "Tide Caller",
+        "description": "Wielder of the old ocean magic — tides, winds, and the voices below the surface.",
+        "base_type": "warlock",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Nature",
+          "Intimidation",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Driftwood staff",
+          "Pouch of sea salt and coral",
+          "Leather armor"
+        ],
+        "features": [
+          {
+            "name": "Ocean's Whisper",
+            "description": "You can speak with sea creatures and sense the presence of large creatures within 500 feet while on water."
+          },
+          {
+            "name": "Tidal Surge",
+            "description": "Once per short rest, you can call a surge of water that pushes all creatures within 15 feet back 10 feet and knocks them prone (Strength save DC 8 + proficiency + Charisma modifier)."
+          }
+        ]
+      },
+      {
+        "id": "smuggler",
+        "name": "Smuggler",
+        "description": "If it exists, you can move it past any customs officer, blockade, or locked door.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Sleight of Hand",
+          "Deception",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two daggers",
+          "Thieves' tools",
+          "Hidden compartment vest"
+        ],
+        "features": [
+          {
+            "name": "Hidden Cargo",
+            "description": "You can conceal items on your person or in a space with advantage on checks to hide them from searches."
+          },
+          {
+            "name": "Quick Escape",
+            "description": "When you take the Disengage action, your movement speed increases by 10 feet until the end of your turn."
+          }
+        ]
+      },
+      {
+        "id": "ships_doctor",
+        "name": "Ship's Surgeon",
+        "description": "Part healer, part butcher — you keep the crew alive with rum, rags, and steady hands.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Nature",
+          "Insight",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Surgeon's kit",
+          "Leather armor",
+          "Mace",
+          "Bottle of rum"
+        ],
+        "features": [
+          {
+            "name": "Field Surgery",
+            "description": "During a short rest, you can tend to wounds. One creature regains additional hit points equal to your Wisdom modifier."
+          },
+          {
+            "name": "Steady Hands",
+            "description": "You have advantage on Medicine checks and on Dexterity checks that require fine motor control."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "seamanship",
+        "name": "Seamanship",
+        "base_skill": "Survival",
+        "description": "Knowledge of sailing, rigging, and ship handling."
+      },
+      {
+        "id": "black_market",
+        "name": "Black Market",
+        "base_skill": "Persuasion",
+        "description": "Connections and knowledge of illegal trade networks."
+      },
+      {
+        "id": "gunnery",
+        "name": "Gunnery",
+        "base_skill": "Athletics",
+        "description": "Operating and aiming ship-mounted cannons and siege weapons."
+      },
+      {
+        "id": "cartography",
+        "name": "Cartography",
+        "base_skill": "Investigation",
+        "description": "Reading, creating, and interpreting nautical charts and treasure maps."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

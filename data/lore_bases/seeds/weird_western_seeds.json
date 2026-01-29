@@ -1,0 +1,330 @@
+{
+  "id": "dust_and_devils",
+  "name": "Dust & Devils",
+  "description": "The American frontier, 1873. The railroad digs too deep, the desert whispers back, and some things out here are older than the land.",
+  "genre": "weird_western",
+  "mechanics_genre": "western",
+  "genre_hints": [
+    "western",
+    "horror",
+    "mystery"
+  ],
+  "tone_hints": [
+    "eerie",
+    "gritty",
+    "atmospheric"
+  ],
+  "seed_prompt": "A weird western where the American frontier harbors Lovecraftian horrors, Native American spirit magic, and an encroaching railroad that awakens things better left buried.",
+  "lore_content": "Perdition sits in a valley the maps forgot. The town exists because of the copper mine, and the mine exists because the Pacific & Western Railroad needs copper for telegraph wire. What nobody mentions is that the deeper the miners dig, the stranger things get. At three hundred feet they found bones too large to be any animal. At five hundred feet they found carvings in a language nobody recognizes. At seven hundred feet, two miners went missing and one came back speaking in a voice that wasn't his.\n\nSheriff Ada Reyes keeps the peace in Perdition with a Winchester and a refusal to acknowledge anything she can't shoot. She's seen the lights in the desert. She's heard the singing from the mine at night. She has chosen not to believe in any of it, and her denial is the only thing keeping the town from panic. It's getting harder to maintain.\n\nDoc Whitfield came west for his health and stayed for the mysteries. A naturalist from Boston, he's been collecting samples of the strange flora growing near the mine — plants that shouldn't exist, that glow faintly, that lean toward people when they pass. His notes are meticulous. His conclusions terrify him.\n\nWalking Crow is a Diné medicine man who tried to warn the railroad surveyors three years ago. They didn't listen. Now he watches from the mesa, performing ceremonies to keep the boundary intact. He says the mine has broken a seal between this world and a place beneath it. The old stories call it the Hollow — a realm that existed before the earth was solid.\n\nRose Delacroix runs the only saloon. She's from New Orleans and brought something with her — a practice of rootwork and conjure that actually works out here, where the boundary between real and unreal has worn thin. She sells whiskey and protections. The protections cost more.\n\nForeman Ezra Briggs has quotas to meet. The railroad doesn't care about strange noises or missing miners — it cares about copper tonnage. He pushes his crews deeper every week and refuses to read Doc Whitfield's reports. His right hand has started turning gray. He wears a glove over it.\n\nIn the desert east of town, travelers have reported seeing a figure that doesn't move — a tall, thin shape standing on the horizon at dusk. It's always in the same spot. It doesn't approach. It doesn't leave. Those who've tried to reach it say the distance never closes. Last Tuesday, it was closer.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "frontier_settler",
+        "name": "Frontier Settler",
+        "description": "You came west for a new start. The frontier had other plans.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Animal Handling"
+        ],
+        "traits": [
+          "Frontier Grit: Gain +3 hit points.",
+          "Self-Reliant: Proficiency with one artisan's tool or vehicle (your choice)."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "native_spiritual",
+        "name": "Spirit Walker",
+        "description": "Your people have lived here since before memory. You see the land as it truly is — and what's beneath it.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Nature",
+          "Religion"
+        ],
+        "traits": [
+          "Spirit Sight: You can see spiritual presences and disturbances invisible to others.",
+          "Earth Memory: Advantage on History checks related to the land and its ancient inhabitants."
+        ],
+        "languages": [
+          "Common",
+          "Diné",
+          "Spirit Tongue"
+        ]
+      },
+      {
+        "id": "drifter_weird",
+        "name": "Haunted Drifter",
+        "description": "Something happened to you on the road. You don't talk about it. You can't forget it.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Perception",
+          "Stealth"
+        ],
+        "traits": [
+          "Sixth Sense: You cannot be surprised while conscious.",
+          "Scarred Mind: Advantage on saves against fear, but you suffer nightmares during long rests (DM may provide visions)."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "conjure_folk",
+        "name": "Conjure Folk",
+        "description": "You carry the old practices — rootwork, hoodoo, folk magic. Out here, it actually works.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Medicine"
+        ],
+        "traits": [
+          "Folk Remedies: You can prepare protective charms and healing salves during long rests.",
+          "Crossroads Knowledge: Advantage on Arcana checks related to folk magic, spirits, and supernatural phenomena."
+        ],
+        "languages": [
+          "Common",
+          "Creole"
+        ]
+      },
+      {
+        "id": "mine_survivor",
+        "name": "Mine Survivor",
+        "description": "You went down into the mine. You came back up. You don't remember all of what happened between those two events.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Investigation"
+        ],
+        "traits": [
+          "Dark-Adapted: You have darkvision to 60 feet.",
+          "Touched: Once per long rest, you experience a vision related to the Hollow. It may provide useful information at the DM's discretion."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "gunslinger_weird",
+        "name": "Gunslinger",
+        "description": "Fast draw, dead eye, and the growing suspicion that bullets don't solve everything.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Perception",
+          "Intimidation",
+          "Acrobatics",
+          "Athletics"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather duster",
+          "Two revolvers",
+          "Ammunition (50 rounds)",
+          "Knife"
+        ],
+        "features": [
+          {
+            "name": "Quick Draw",
+            "description": "You draw weapons instantly. You have advantage on initiative rolls and can draw or stow two weapons as a free action."
+          },
+          {
+            "name": "Deadeye",
+            "description": "Once per turn, you can add your Wisdom modifier to a ranged attack roll."
+          }
+        ]
+      },
+      {
+        "id": "occult_investigator",
+        "name": "Occult Investigator",
+        "description": "You study what can't be explained. Your notebook is full of things that would get you committed back East.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Arcana",
+          "History",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Revolvers"
+        ],
+        "starting_equipment": [
+          "Research journal",
+          "Specimen jars",
+          "Magnifying glass",
+          "Derringer"
+        ],
+        "features": [
+          {
+            "name": "Analytical Mind",
+            "description": "After studying a supernatural phenomenon for 10 minutes, you can determine its nature, origin, and potential weaknesses."
+          },
+          {
+            "name": "Warding Knowledge",
+            "description": "You can create protective wards using salt, iron, and symbols. One ward protects a 10-foot area for 8 hours against supernatural intrusion."
+          }
+        ]
+      },
+      {
+        "id": "medicine_worker",
+        "name": "Medicine Worker",
+        "description": "The old magic is real here. You walk between worlds to heal, protect, and fight what the bullets can't touch.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Religion",
+          "Nature",
+          "Medicine",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Medicine bag",
+          "Sacred herbs",
+          "Spirit rattle",
+          "Skinning knife"
+        ],
+        "features": [
+          {
+            "name": "Spirit Bond",
+            "description": "You have a connection to an animal spirit. Once per long rest, you can call on it for guidance (as Augury) or protection (+2 AC for 1 minute)."
+          },
+          {
+            "name": "Cleansing Ritual",
+            "description": "You can spend 10 minutes performing a ritual to cleanse a person or area of supernatural corruption, curses, or possession."
+          }
+        ]
+      },
+      {
+        "id": "tracker_weird",
+        "name": "Wilderness Tracker",
+        "description": "You read the land like a book. Lately, the book has chapters that don't make sense.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Survival",
+          "Perception",
+          "Stealth",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Rifle",
+          "Hunting knife",
+          "Rope (50 ft)"
+        ],
+        "features": [
+          {
+            "name": "Desert Reader",
+            "description": "You can track any creature across any terrain, and you can determine if an area has been touched by supernatural influence."
+          },
+          {
+            "name": "Survivor's Instinct",
+            "description": "When you fail a saving throw against a supernatural effect, you can reroll it. Once per long rest."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "frontier_lore",
+        "name": "Frontier Lore",
+        "base_skill": "Survival",
+        "description": "Knowledge of frontier life, wilderness hazards, and practical survival skills."
+      },
+      {
+        "id": "occult_knowledge",
+        "name": "Occult Knowledge",
+        "base_skill": "Arcana",
+        "description": "Understanding of supernatural phenomena, folk magic, and the things beneath the surface."
+      },
+      {
+        "id": "mining",
+        "name": "Mining",
+        "base_skill": "Athletics",
+        "description": "Knowledge of mining techniques, geological formations, and underground navigation."
+      },
+      {
+        "id": "tracking",
+        "name": "Desert Tracking",
+        "base_skill": "Perception",
+        "description": "Reading tracks, signs, and disturbances across harsh desert terrain."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

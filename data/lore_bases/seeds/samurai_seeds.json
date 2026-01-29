@@ -1,0 +1,333 @@
+{
+  "id": "floating_world",
+  "name": "The Floating World",
+  "description": "Edo-period Japan where honor binds like iron, yokai haunt the wild places, and a ronin's sword cuts both ways.",
+  "genre": "samurai",
+  "mechanics_genre": "fantasy",
+  "genre_hints": [
+    "fantasy",
+    "drama",
+    "mystery"
+  ],
+  "tone_hints": [
+    "elegant",
+    "dangerous",
+    "melancholic"
+  ],
+  "seed_prompt": "A feudal Japanese setting blending samurai drama with yokai mythology, where rigid social hierarchy and supernatural threats create impossible choices.",
+  "lore_content": "Tsukimori province sits in the shadow of Mount Kagura, where foxfire dances on moonless nights. The castle town thrives on silk trade and political scheming, while the countryside whispers of things that wear human faces but cast no shadows.\n\nLord Takeda Masahiro governs Tsukimori from his ancestor's castle with calligraphy-perfect composure. His public face is flawless — the model daimyō. In private, he is consumed by a forbidden love for a merchant's daughter, a scandal that would destroy his house. His chief advisor knows. The price of silence grows steeper each month.\n\nO-Rin runs the Floating Lantern, the finest teahouse in the pleasure quarter. Every secret in Tsukimori passes through her establishment eventually. She was once a lady of noble birth, sold into service to pay her father's debts. She's built an intelligence network that would make the shogun's spies envious.\n\nMaster Ishikawa teaches the Way of the Blade at the Autumn Wind dojo. He is the greatest swordsman in three provinces and has not drawn his katana in anger for fifteen years. His students wonder why. The truth — that he killed his own brother in a duel he was manipulated into — would destroy the school and his remaining reason to live.\n\nThe ronin called Crow wanders Tsukimori's roads, taking odd jobs and refusing to give her real name. She carries two swords but fights with unsettling restraint, as if holding something back. Those who've seen her fight at full capacity don't talk about it. The few who recognize the crest she filed from her blade don't talk about that either.\n\nMonk Jinen tends the shrine at the mountain pass where the boundary between the mortal world and the spirit realm is thinnest. He performs rituals to keep the barrier stable, but the fox spirits are testing the wards more frequently. Something in the spirit world is pushing them toward the human side, and Jinen suspects the cause is human greed, not supernatural malice.\n\nIn the bamboo groves south of town, travelers have begun disappearing. The magistrate blames bandits. The farmers know better — they've heard the singing that comes from the groves at dusk, beautiful enough to follow, impossible to resist.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "samurai_caste",
+        "name": "Samurai Caste",
+        "description": "Born to the warrior class, bound by bushidō and the weight of your family's honor.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "History",
+          "Intimidation"
+        ],
+        "traits": [
+          "Bushidō Training: Proficiency with calligraphy supplies and one gaming set.",
+          "Noble Bearing: Advantage on Charisma checks when interacting with the social elite."
+        ],
+        "languages": [
+          "Japanese",
+          "Classical Japanese"
+        ]
+      },
+      {
+        "id": "ronin",
+        "name": "Rōnin",
+        "description": "Masterless, disgraced, or deliberately free — you walk the road that has no end.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Perception"
+        ],
+        "traits": [
+          "Wanderer's Resolve: Advantage on saving throws against fear and charm effects.",
+          "Road-Wise: You require only half the normal rations and can sleep comfortably in any conditions."
+        ],
+        "languages": [
+          "Japanese"
+        ]
+      },
+      {
+        "id": "merchant",
+        "name": "Merchant Class",
+        "description": "Lowest in rank but richest in coin — the social order says you're beneath warriors, but gold speaks its own language.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Deception"
+        ],
+        "traits": [
+          "Trade Networks: You have contacts in every major town and can acquire goods at reduced prices.",
+          "Eye for Quality: You can accurately appraise the value of any item or trade good."
+        ],
+        "languages": [
+          "Japanese",
+          "Chinese"
+        ]
+      },
+      {
+        "id": "shrine_raised",
+        "name": "Shrine-Raised",
+        "description": "Raised at a temple or shrine, you grew up between the mortal world and the spirit realm.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Religion",
+          "Insight"
+        ],
+        "traits": [
+          "Spirit Sensitivity: You can sense the presence of yokai and supernatural beings within 60 feet.",
+          "Purification Rites: You know the ritual to cleanse a person or small area of spiritual corruption (takes 10 minutes)."
+        ],
+        "languages": [
+          "Japanese",
+          "Spirit Tongue"
+        ]
+      },
+      {
+        "id": "eta",
+        "name": "Outcast (Eta)",
+        "description": "Born to the untouchable class, invisible to polite society — which makes you perfect for the jobs no one else will do.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Medicine"
+        ],
+        "traits": [
+          "Invisible: In urban settings, you can blend into crowds or servant backgrounds with advantage on Stealth checks.",
+          "Death-Handler: You have advantage on saving throws against disease and are not unsettled by corpses, gore, or spiritual pollution."
+        ],
+        "languages": [
+          "Japanese"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "kensei",
+        "name": "Kensai (Sword Saint)",
+        "description": "Your blade is an extension of your soul. You seek perfection through the way of the sword.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Acrobatics",
+          "Perception",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Katana (longsword)",
+          "Wakizashi (shortsword)",
+          "Leather armor",
+          "Maintenance kit"
+        ],
+        "features": [
+          {
+            "name": "Iaijutsu",
+            "description": "On the first round of combat, if you draw your weapon and attack, you deal an extra 1d8 damage and have advantage on the attack roll."
+          },
+          {
+            "name": "Blade Meditation",
+            "description": "During a short rest, you can meditate with your weapon to gain temporary hit points equal to your fighter level + Constitution modifier."
+          }
+        ]
+      },
+      {
+        "id": "shinobi",
+        "name": "Shinobi",
+        "description": "Shadow operative — spy, assassin, and saboteur. Your clan trained you for the missions samurai won't dirty their hands with.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Acrobatics",
+          "Deception",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Shortswords",
+          "Shuriken (darts)",
+          "Blowguns"
+        ],
+        "starting_equipment": [
+          "Dark clothing",
+          "Shortsword",
+          "10 shuriken",
+          "Climbing gear",
+          "Disguise kit"
+        ],
+        "features": [
+          {
+            "name": "Shadow Step",
+            "description": "When you are in dim light or darkness, you can use a bonus action to teleport up to 30 feet to another space in dim light or darkness."
+          },
+          {
+            "name": "Poison Craft",
+            "description": "You can apply poison to a weapon as a bonus action. You know how to prepare one basic poison during a long rest using natural ingredients."
+          }
+        ]
+      },
+      {
+        "id": "onmyoji",
+        "name": "Onmyōji (Spirit Binder)",
+        "description": "Practitioner of onmyōdō — you command paper spirits, read fortunes, and negotiate with yokai.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Religion",
+          "History",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Quarterstaffs"
+        ],
+        "starting_equipment": [
+          "Ofuda (paper talismans, 20)",
+          "Divination tools",
+          "Ceremonial robes",
+          "Quarterstaff"
+        ],
+        "features": [
+          {
+            "name": "Shikigami",
+            "description": "You can animate a paper talisman into a small spirit servant (as Find Familiar). It can scout, deliver messages, or perform simple tasks."
+          },
+          {
+            "name": "Ward of Binding",
+            "description": "You can place an ofuda on a door, container, or small area. Yokai and undead must make a Wisdom save to cross or interact with the warded object."
+          }
+        ]
+      },
+      {
+        "id": "yamabushi",
+        "name": "Yamabushi (Mountain Warrior-Monk)",
+        "description": "Ascetic warrior who draws power from the mountain spirits through extreme physical and spiritual training.",
+        "base_type": "monk",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Acrobatics",
+          "Religion",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Quarterstaff",
+          "Prayer beads",
+          "Mountain boots",
+          "Conch shell horn"
+        ],
+        "features": [
+          {
+            "name": "Ki Strike",
+            "description": "Your unarmed strikes deal 1d6 damage and count as magical for the purpose of overcoming resistance."
+          },
+          {
+            "name": "Mountain's Endurance",
+            "description": "You can spend 1 ki point to reduce incoming damage by 1d10 + Wisdom modifier as a reaction."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "bushido",
+        "name": "Bushidō",
+        "base_skill": "History",
+        "description": "Knowledge of warrior codes, clan politics, and the obligations of honor."
+      },
+      {
+        "id": "yokai_lore",
+        "name": "Yokai Lore",
+        "base_skill": "Arcana",
+        "description": "Knowledge of supernatural creatures, their habits, weaknesses, and how to appease them."
+      },
+      {
+        "id": "tea_ceremony",
+        "name": "Tea Ceremony",
+        "base_skill": "Persuasion",
+        "description": "The art of formal social interaction, reading intention through ritual and subtlety."
+      },
+      {
+        "id": "shadow_craft",
+        "name": "Shadow Craft",
+        "base_skill": "Stealth",
+        "description": "Techniques of concealment, infiltration, and covert movement."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

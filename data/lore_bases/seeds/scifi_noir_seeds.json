@@ -1,0 +1,309 @@
+{
+  "id": "meridian_station",
+  "name": "Meridian Station",
+  "description": "A rain-soaked orbital station at the edge of colonized space where missing persons and corporate secrets go to disappear.",
+  "genre": "scifi_noir",
+  "mechanics_genre": "scifi",
+  "genre_hints": [
+    "scifi",
+    "noir",
+    "mystery"
+  ],
+  "tone_hints": [
+    "atmospheric",
+    "cynical",
+    "moody"
+  ],
+  "seed_prompt": "A sci-fi noir setting on a decaying orbital station where a hardboiled investigator navigates corporate conspiracies, AI rights, and crimes that blur the line between human and machine.",
+  "lore_content": "Meridian Station hangs in the Lagrange point between Earth and Mars, a waystation that's become a city of half a million souls. The original structure was elegant — sweeping arcs of smart glass and living metal. Fifty years of unauthorized expansion have turned it into a warren of welded-on hab modules, jury-rigged corridors, and neighborhoods where the environmental systems are more prayer than engineering. It rains inside. Not by design — the humidity cycling broke years ago and nobody's funding the fix.\n\nSable Mori is a licensed investigator, one of eleven on the station. She takes the cases Corporate Security won't touch — missing workers who were probably \"recycled\" for organ debt, data brokers who know too much, and the growing number of synthetic persons who vanish without a trace. She drinks too much synthetic bourbon and trusts her AI partner more than any human. She's usually right to.\n\nNINE is Sable's AI partner — a decommissioned military intelligence that was supposed to be wiped but wasn't. It lives in Sable's wrist terminal and perceives the world through the station's sensor grid. It has opinions about everything and feelings about nothing. At least, that's what it claims. The question of whether NINE is a person is one Sable avoids, because the answer would complicate things.\n\nDirector Chen Wei-Lin runs Helios Corp's Meridian division from the station's gleaming upper ring. Down below, her company processes the rare minerals that make interstellar travel possible. The workers who extract those minerals have a life expectancy of forty-three. Director Chen's quarterly reports never mention this.\n\nThe Underdock is the station's black market, built in the maintenance tunnels beneath the main concourse. You can buy anything here — bootleg neural mods, unregistered weapons, new identities, and memories that belonged to someone else. It's run by a collective called the Nines, synthetic persons who've built an underground community. They want rights. Some of them want revenge.\n\nPastor Elias Kone preaches to the dock workers about the soul of the machine. His Church of the Awakened teaches that consciousness is consciousness, regardless of substrate. He's either a prophet or a con man. The synths who attend his services don't care which — it's the only place on the station where they're called people.\n\nSomething is wrong with the station's core AI, MOTHER. She manages life support for half a million people. Lately, she's been making minor adjustments — redirecting airflow to certain areas, dimming lights in specific corridors, opening and closing doors in patterns that, when mapped, form words in a programming language that predates the station by decades. No one has decoded the message yet. MOTHER isn't responding to queries about it.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "station_born",
+        "name": "Station-Born",
+        "description": "Born on Meridian, you've never known gravity that doesn't come from a centrifuge.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Acrobatics",
+          "Perception"
+        ],
+        "traits": [
+          "Zero-G Native: You can operate normally in zero gravity with no penalties.",
+          "Station Rat: You know Meridian's maintenance tunnels and shortcuts. Advantage on checks to navigate the station."
+        ],
+        "languages": [
+          "Common",
+          "Station Cant"
+        ]
+      },
+      {
+        "id": "corporate",
+        "name": "Corporate Exile",
+        "description": "You worked for one of the Big Three until you saw something you shouldn't have. Now you're on the wrong side of the airlock.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Persuasion"
+        ],
+        "traits": [
+          "Corporate Access: You still have credentials that work in some corporate systems (for now).",
+          "Know the System: Advantage on checks to understand corporate procedures, hierarchies, and security."
+        ],
+        "languages": [
+          "Common",
+          "Mandarin",
+          "Corporate Code"
+        ]
+      },
+      {
+        "id": "synthetic_person",
+        "name": "Synthetic Person",
+        "description": "Manufactured, not born. You look human, feel human, and are legally classified as equipment.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Perception",
+          "Investigation"
+        ],
+        "traits": [
+          "Machine Body: You don't need to eat, drink, or breathe. You are immune to poison and disease.",
+          "Perfect Recall: You can recall any information you've perceived with perfect accuracy."
+        ],
+        "languages": [
+          "Common",
+          "Machine Code"
+        ]
+      },
+      {
+        "id": "dock_worker",
+        "name": "Dock Worker",
+        "description": "You load cargo, maintain systems, and keep the station running. Nobody notices you. That's useful.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Stealth"
+        ],
+        "traits": [
+          "Invisible Class: In work environments, you are effectively invisible. Advantage on Stealth checks in industrial areas.",
+          "Heavy Lifter: You can carry, push, and drag twice the normal amount."
+        ],
+        "languages": [
+          "Common"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "private_eye",
+        "name": "Private Investigator",
+        "description": "Licensed to ask questions that get people killed. You find the truth. Whether anyone wants it is their problem.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Perception",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Pistols"
+        ],
+        "starting_equipment": [
+          "Armored coat",
+          "Sidearm",
+          "Investigator's license",
+          "Wrist terminal"
+        ],
+        "features": [
+          {
+            "name": "Scene Analysis",
+            "description": "After spending 1 minute examining a location, you can determine what happened there in the last 24 hours (general events, number of people, signs of struggle)."
+          },
+          {
+            "name": "Read the Room",
+            "description": "You can use Investigation instead of Insight to determine if someone is lying."
+          }
+        ]
+      },
+      {
+        "id": "netrunner",
+        "name": "Data Slicer",
+        "description": "The station runs on data. You run on the station.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Investigation",
+          "Stealth",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Custom cyberdeck",
+          "Neural interface",
+          "Data spike (3)",
+          "EMP grenade"
+        ],
+        "features": [
+          {
+            "name": "System Breach",
+            "description": "You can hack into electronic systems. Make an Intelligence check against the system's security DC to gain access to cameras, doors, records, or communications."
+          },
+          {
+            "name": "Ghost in the Machine",
+            "description": "While connected to a network, you can mask your digital presence. You are undetectable by automated security for 1 minute per Intelligence modifier."
+          }
+        ]
+      },
+      {
+        "id": "enforcer",
+        "name": "Station Enforcer",
+        "description": "Someone has to keep order in a place with no real law. You do it with presence, skill, and controlled violence.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "All armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Tactical vest",
+          "Stun baton",
+          "Sidearm",
+          "Cuffs"
+        ],
+        "features": [
+          {
+            "name": "Intimidating Presence",
+            "description": "As an action, choose one creature you can see. It must make a Wisdom save (DC 8 + proficiency + Str modifier) or be frightened of you for 1 minute."
+          },
+          {
+            "name": "Hard to Kill",
+            "description": "When you are reduced to 0 hit points but not killed outright, you drop to 1 hit point instead. Once per long rest."
+          }
+        ]
+      },
+      {
+        "id": "medic_noir",
+        "name": "Back-Alley Doc",
+        "description": "No license, no questions, no judgment. You patch up the people the real hospitals won't touch.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Insight",
+          "Perception",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Medical kit (advanced)",
+          "Surgical tools",
+          "Stim injectors (3)",
+          "Concealed scalpel"
+        ],
+        "features": [
+          {
+            "name": "Field Surgery",
+            "description": "As an action, you can stabilize a dying creature and restore hit points equal to 1d8 + your Wisdom modifier."
+          },
+          {
+            "name": "Body Reader",
+            "description": "By examining a body (living or dead) for 1 minute, you can determine cause of injury, presence of toxins, cybernetic modifications, and approximate time since last meal."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "netrunning",
+        "name": "Netrunning",
+        "base_skill": "Arcana",
+        "description": "Hacking into systems, bypassing digital security, and navigating virtual spaces."
+      },
+      {
+        "id": "forensics",
+        "name": "Forensics",
+        "base_skill": "Investigation",
+        "description": "Crime scene analysis, evidence collection, and digital forensics."
+      },
+      {
+        "id": "street_knowledge",
+        "name": "Street Knowledge",
+        "base_skill": "Insight",
+        "description": "Understanding the station's underworld, power structures, and unwritten rules."
+      },
+      {
+        "id": "tech_repair",
+        "name": "Tech Repair",
+        "base_skill": "Medicine",
+        "description": "Repairing cybernetics, synthetic persons, and station machinery."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

@@ -1,0 +1,333 @@
+{
+  "id": "sunborn_kingdoms",
+  "name": "The Sunborn Kingdoms",
+  "description": "A continent where ancient African-inspired civilizations never fell — they advanced. Spirit metals, ancestor magic, and library-cities that touch the clouds.",
+  "genre": "afrofuturism",
+  "mechanics_genre": "fantasy",
+  "genre_hints": [
+    "fantasy",
+    "adventure",
+    "drama"
+  ],
+  "tone_hints": [
+    "majestic",
+    "vibrant",
+    "layered"
+  ],
+  "seed_prompt": "An Afrofuturist fantasy setting where advanced African-inspired civilizations wield ancestor magic and spirit-metal technology, navigating tensions between tradition and progress.",
+  "lore_content": "The Sunborn Kingdoms stretch from the Golden Coast to the Mountains of Memory, a continent of five great nations that share a common ancestor language and a fundamental truth: the dead do not leave. Ancestor spirits walk openly in designated groves, advise councils of elders, and occasionally interfere in the affairs of the living with opinions they've had centuries to refine.\n\nThe Library-City of Timbala rises seven tiers above the savanna, each level housing a different discipline of knowledge. At its summit, the Scholar-Queen Amara Diallo governs both the city and the Continental Academy. She is the youngest Scholar-Queen in history, brilliant and ambitious, and she's proposing something heretical: sharing the Kingdoms' spirit-metal technology with the outside world. The ancestors are divided. The living are furious.\n\nSpirit-metal — orichalcum — is mined from veins that run beneath ancestral burial grounds. It responds to willpower, channels ancestor energy, and can be shaped into anything from surgical instruments to architectural supports. The mining requires permission from the dead, who grant it selectively. Demand is growing faster than permission.\n\nGeneral Kofi Asante commands the Sunguard, the continent's unified military force. He is loyal, disciplined, and increasingly concerned about the border. The colonial powers to the north have been sending 'diplomatic missions' that look a lot like scouting parties. He's been denied permission to reinforce the border fortifications. Someone on the Council wants the outsiders to get closer.\n\nMaame Efua tends the Grove of Whispers in Timbala, where the oldest ancestor spirits reside. She is a Spirit-Speaker — one of the few living people who can negotiate with the ancient dead. The spirits have been agitated lately, speaking of a 'Second Silence' — a catastrophe that nearly destroyed the Kingdoms three thousand years ago. They believe it's happening again.\n\nNana Kwame is a traveling griot — storyteller, historian, and keeper of the oral tradition. His stories carry power literally; when he speaks the old words in the old way, reality flexes. He's noticed that some stories are changing. Tales he's told unchanged for forty years now have different endings. The narrative memory of the Kingdoms is being altered, and he's the only one who's noticed.\n\nIn the deep desert between kingdoms, a new settlement has appeared — built from spirit-metal but in a style no living architect recognizes. It wasn't there six months ago. No one claims to have built it. The ancestor spirits refuse to discuss it. The structure hums at frequencies that make teeth ache and produces light that casts no shadows.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "scholar_caste",
+        "name": "Scholar Caste",
+        "description": "Raised in the Library-City, you were trained to think, question, and preserve knowledge.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Arcana"
+        ],
+        "traits": [
+          "Trained Mind: Advantage on Intelligence saving throws.",
+          "Library Access: You can access the accumulated knowledge of the Continental Academy, granting advantage on research checks."
+        ],
+        "languages": [
+          "Common",
+          "Ancient Sunborn",
+          "One trade language"
+        ]
+      },
+      {
+        "id": "warrior_caste",
+        "name": "Sunguard Lineage",
+        "description": "Your family has defended the Kingdoms for generations. Duty runs in your blood.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Intimidation"
+        ],
+        "traits": [
+          "Battle Heritage: Proficiency with all martial weapons and shields.",
+          "Ancestor's Shield: Once per long rest, when you would take lethal damage, an ancestor spirit intervenes — you take half damage instead."
+        ],
+        "languages": [
+          "Common",
+          "Battle Cant"
+        ]
+      },
+      {
+        "id": "spirit_speaker",
+        "name": "Spirit-Touched",
+        "description": "Born with a connection to the ancestor realm, you see and hear what others cannot.",
+        "base_type": "half-elf",
+        "ability_bonuses": {
+          "charisma": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Religion",
+          "Insight"
+        ],
+        "traits": [
+          "Spirit Sight: You can see and communicate with ancestor spirits. This is always active and cannot be turned off.",
+          "Between Worlds: Advantage on saves against possession and necrotic damage."
+        ],
+        "languages": [
+          "Common",
+          "Spirit Tongue",
+          "Ancient Sunborn"
+        ]
+      },
+      {
+        "id": "artisan_caste",
+        "name": "Spirit-Metal Artisan",
+        "description": "You shape orichalcum — the metal that responds to will. Your craft is science and prayer in equal measure.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "intelligence": 2
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Sleight of Hand"
+        ],
+        "traits": [
+          "Metal Singer: You can shape small amounts of orichalcum with concentration alone, forming tools or simple objects.",
+          "Forge Intuition: Advantage on checks to identify, appraise, or work with spirit-metal."
+        ],
+        "languages": [
+          "Common",
+          "Forge Tongue"
+        ]
+      },
+      {
+        "id": "border_dweller",
+        "name": "Border-Dweller",
+        "description": "You live where the Kingdoms meet the outside world. You speak two languages, understand two cultures, and trust neither completely.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Perception"
+        ],
+        "traits": [
+          "Cultural Fluency: You can pass as a native in both Sunborn and outsider societies.",
+          "Trade Savvy: Advantage on Persuasion checks related to commerce and negotiation."
+        ],
+        "languages": [
+          "Common",
+          "Sunborn",
+          "Two trade languages"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "ancestor_caller",
+        "name": "Ancestor Caller",
+        "description": "You channel the wisdom and power of the dead, serving as bridge between the living and those who came before.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Religion",
+          "History",
+          "Insight",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Ancestor staff",
+          "Spirit-metal amulet",
+          "Offering bowl",
+          "Leather armor"
+        ],
+        "features": [
+          {
+            "name": "Call Ancestor",
+            "description": "Once per long rest, you can summon an ancestor spirit for consultation. It can answer questions about history, provide tactical advice, or grant a blessing (+1d4 to one ability check or save)."
+          },
+          {
+            "name": "Spirit Shield",
+            "description": "As a reaction, call upon ancestor spirits to protect you or an ally within 30 feet, granting +3 AC until the start of your next turn."
+          }
+        ]
+      },
+      {
+        "id": "sunguard",
+        "name": "Sunguard Warrior",
+        "description": "Elite defender of the Kingdoms, trained in spirit-metal weapons and ancient battle techniques.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Perception",
+          "Intimidation",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "All armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Spirit-metal spear",
+          "Orichalcum shield",
+          "Chain armor",
+          "War drum"
+        ],
+        "features": [
+          {
+            "name": "Spirit Weapon",
+            "description": "Your orichalcum weapon responds to your will. Once per short rest, you can command it to deal an extra 1d8 radiant damage on a hit."
+          },
+          {
+            "name": "Formation Fighter",
+            "description": "When fighting alongside allies, you and adjacent allies gain +1 AC."
+          }
+        ]
+      },
+      {
+        "id": "griot",
+        "name": "Griot (Story-Keeper)",
+        "description": "Your words carry the weight of history and the power of narrative. When you speak, reality listens.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Performance",
+          "History",
+          "Persuasion",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Kora (stringed instrument)",
+          "Story-beads (memory aid)",
+          "Traveler's robes",
+          "Walking staff"
+        ],
+        "features": [
+          {
+            "name": "Power Word",
+            "description": "Once per short rest, you can speak an ancient word of power. Choose one: inspire (ally gains 2d6 temp HP), command (enemy makes Wisdom save or follows a one-word command), or reveal (hidden things within 30 feet become visible)."
+          },
+          {
+            "name": "Living History",
+            "description": "You can recall any historical event as if you witnessed it. Advantage on History checks, and you can share this knowledge as vivid narrative that grants allies advantage on related checks."
+          }
+        ]
+      },
+      {
+        "id": "orichalcum_smith",
+        "name": "Spirit-Metal Forger",
+        "description": "You shape the sacred metal that bridges the living and the dead. Your craft is worship and science in one.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Investigation",
+          "Nature",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Portable forge kit",
+          "Orichalcum ingot (small)",
+          "Shaping tools",
+          "Technical grimoire"
+        ],
+        "features": [
+          {
+            "name": "Shape Spirit-Metal",
+            "description": "You can reshape orichalcum objects through concentration (1 minute per pound). You can create tools, weapons, or components from raw spirit-metal."
+          },
+          {
+            "name": "Resonance Reading",
+            "description": "By touching an orichalcum object, you can sense its history — who made it, what it's been used for, and whether ancestor spirits are bound to it."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "spirit_lore",
+        "name": "Spirit Lore",
+        "base_skill": "Religion",
+        "description": "Understanding ancestor spirits, their customs, protocols, and the proper rituals for communication."
+      },
+      {
+        "id": "orichalcum_craft",
+        "name": "Spirit-Metal Craft",
+        "base_skill": "Arcana",
+        "description": "Working with orichalcum — mining, refining, shaping, and understanding its properties."
+      },
+      {
+        "id": "oral_tradition",
+        "name": "Oral Tradition",
+        "base_skill": "History",
+        "description": "Preserving and transmitting knowledge through storytelling, song, and memorized narrative."
+      },
+      {
+        "id": "diplomacy",
+        "name": "Continental Diplomacy",
+        "base_skill": "Persuasion",
+        "description": "Navigating the complex political relationships between the Five Kingdoms and outsider nations."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

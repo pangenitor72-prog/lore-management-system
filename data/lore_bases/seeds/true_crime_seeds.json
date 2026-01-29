@@ -1,0 +1,307 @@
+{
+  "id": "cold_trail",
+  "name": "Cold Trail",
+  "description": "A true crime-inspired investigation where cold cases intersect, witnesses disappear, and the truth is buried under decades of silence and complicity.",
+  "genre": "true_crime",
+  "mechanics_genre": "modern",
+  "genre_hints": [
+    "mystery",
+    "drama",
+    "thriller"
+  ],
+  "tone_hints": [
+    "methodical",
+    "unsettling",
+    "obsessive"
+  ],
+  "seed_prompt": "A true crime investigation where interconnected cold cases reveal a pattern spanning decades, and every answer raises darker questions about who knew and who looked away.",
+  "lore_content": "Ridgewater, Oregon. Population 34,000. The kind of town where everyone waves but nobody talks. Three cold cases spanning twenty years have one thing in common: the victims all worked at or near the Harmon Cannery on Route 9. The cannery closed in 2004. The cases were never connected — until now.\n\nThe first case: Denise Calloway, 1998. Waitress at the Pine Cone Diner across from the cannery. Last seen locking up after a Friday night shift. Her car was found at the trailhead of Miller's Creek with the keys in the ignition and her purse on the seat. No body was ever recovered. The sheriff at the time ruled it a voluntary disappearance. Her mother never believed it.\n\nThe second case: Marcus Webb, 2003. Night shift foreman at the cannery. Found dead in the processing plant — ruled an industrial accident, crushed by equipment. His wife insisted the scene didn't make sense: Marcus had worked that machinery for twelve years. The medical examiner noted bruising inconsistent with the equipment, but the report was filed as accidental. The examiner retired six months later and moved out of state.\n\nThe third case: Aimee Larson, 2016. True crime podcaster who came to Ridgewater to investigate the first two cases. She recorded fourteen episodes from a rented house on Elm Street. Episode fifteen was never released. She told her producer she'd found something that 'changes everything' and needed to verify it in person. She was found dead in her rental — officially a medication interaction. Her laptop and all recording equipment were missing. The police report is four pages long. It should be forty.\n\nDetective Rita Vasquez transferred to Ridgewater PD six months ago from Portland Homicide. She's good at her job and bad at politics, which is why she's in Ridgewater. She pulled the Calloway file on a slow Tuesday and noticed the cannery connection within an hour. She's been pulling threads since, and the threads are pulling back. Her desk phone rings at 2 AM now. Nobody speaks. Someone left a dead bird on her windshield.\n\nFormer Sheriff Dale Hewitt ran Ridgewater's law enforcement from 1995 to 2010. He's seventy-two now, sits on his porch, and drinks bourbon. He handled the Calloway and Webb cases personally. When asked about them, he says 'Sometimes people just disappear' and 'Accidents happen in canneries.' He's lying about something. His hands shake when the cannery comes up.\n\nLucy Calloway is Denise's daughter. She was four years old when her mother vanished. She's thirty now, works at the county clerk's office, and has spent her entire adult life researching what happened. She has a storage unit full of documents, timelines, and maps. She contacted Aimee Larson. She found Aimee's body. She doesn't trust the police. She doesn't trust anyone. But she has information nobody else has — her mother's diary, hidden in a wall during a renovation, discovered in 2019.\n\nTommy Harmon is the grandson of the cannery's founder. The family sold the property in 2006 to a development company that never developed it. The building sits empty, padlocked, surrounded by a chain-link fence with no trespassing signs. Tommy lives in Seattle now and runs a tech startup. He's rich, polished, and very interested in making sure nobody looks too closely at the family business. He's retained a law firm that sends cease-and-desist letters to anyone who mentions the cannery in print.\n\nDr. Paul Okafor is the current county medical examiner. He's reviewed the Webb autopsy at Vasquez's request and written a supplemental report that contradicts the original findings. He's now receiving pressure from the county administrator to retract it. He hasn't retracted it. He's also discovered that three other death certificates from the early 2000s have irregularities — all signed by his predecessor, all connected to people who worked seasonal shifts at the cannery.\n\nSomething happened at the Harmon Cannery. Something that required silence from people in positions of authority. The pattern isn't random violence — it's containment. Someone is still containing it.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "law_enforcement",
+        "name": "Law Enforcement",
+        "description": "You carry a badge and the weight of cases that didn't close. The system is yours to work — or work around.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Perception"
+        ],
+        "traits": [
+          "Badge Authority: You can access crime scenes, request records, and compel cooperation from local officials — within limits.",
+          "Case Instinct: Advantage on Investigation checks when examining crime scenes or reviewing case files."
+        ],
+        "languages": [
+          "English",
+          "Legal terminology"
+        ]
+      },
+      {
+        "id": "journalist",
+        "name": "Journalist / Podcaster",
+        "description": "You follow stories. This one followed you back. Your audience is waiting for answers you're not sure you'll survive finding.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Investigation"
+        ],
+        "traits": [
+          "Public Platform: You have an audience. Threatening you creates public attention — which is both protection and provocation.",
+          "Source Network: Advantage on Persuasion checks to convince people to share information or go on record."
+        ],
+        "languages": [
+          "English",
+          "One additional language"
+        ]
+      },
+      {
+        "id": "connected_family",
+        "name": "Victim's Family",
+        "description": "Someone you loved disappeared or died wrong. You've been living with unanswered questions long enough.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Survival"
+        ],
+        "traits": [
+          "Personal Stakes: Your emotional investment gives you advantage on checks to notice details others overlook in cases connected to your family.",
+          "Years of Research: You have a personal archive of evidence, documents, and theories that rivals any official file."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "local_insider",
+        "name": "Ridgewater Local",
+        "description": "You grew up here. You know whose truck is parked where it shouldn't be and which stories don't add up.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 1,
+          "wisdom": 2
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Persuasion"
+        ],
+        "traits": [
+          "Hometown Knowledge: You know the geography, the families, and the unspoken history. Advantage on checks involving local knowledge.",
+          "Trusted Face: Locals will talk to you when they won't talk to outsiders — but some will also report what you're asking about."
+        ],
+        "languages": [
+          "English"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "detective",
+        "name": "The Detective",
+        "description": "Evidence. Procedure. Patience. You solve cases by working them harder and longer than anyone thinks reasonable.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Perception",
+          "Insight",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Badge or PI license",
+          "Case files",
+          "Service weapon",
+          "Evidence collection kit"
+        ],
+        "features": [
+          {
+            "name": "Crime Scene Reconstruction",
+            "description": "After examining a scene for 10 minutes, you can determine the sequence of events, number of people involved, and identify inconsistencies with any official account."
+          },
+          {
+            "name": "Interrogation",
+            "description": "When questioning a person, you can make an Insight check opposed by their Deception. Success reveals one thing they're hiding or lying about."
+          }
+        ]
+      },
+      {
+        "id": "researcher",
+        "name": "The Researcher",
+        "description": "Records don't lie — but people bury them. You dig through archives, databases, and paper trails until the truth surfaces.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "History",
+          "Insight",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Laptop with database access",
+          "FOIA request templates",
+          "Document scanner",
+          "Filing system"
+        ],
+        "features": [
+          {
+            "name": "Paper Trail",
+            "description": "Given a name, date, or location, you can research public and semi-public records to find connections. Intelligence check DC varies by how well the information has been hidden."
+          },
+          {
+            "name": "Pattern Recognition",
+            "description": "When reviewing multiple documents or data sets, you can identify statistical anomalies, forged records, or deliberate gaps. Advantage on Investigation checks involving document analysis."
+          }
+        ]
+      },
+      {
+        "id": "interviewer",
+        "name": "The Interviewer",
+        "description": "People are the evidence. You read them, earn their trust, and draw out what they swore they'd never tell.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Insight",
+          "Performance"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Recording device",
+          "Notebook",
+          "Contact list",
+          "Comfortable shoes"
+        ],
+        "features": [
+          {
+            "name": "Disarming Conversation",
+            "description": "After 5 minutes of casual conversation, a target makes a Wisdom save (DC 8 + proficiency + Cha). On failure, they share one piece of information they didn't intend to reveal."
+          },
+          {
+            "name": "Read the Room",
+            "description": "When entering a social situation, you immediately sense the emotional dynamics — who's nervous, who's lying, who's watching whom. Free Insight check against everyone present."
+          }
+        ]
+      },
+      {
+        "id": "field_operative",
+        "name": "The Field Operative",
+        "description": "Surveillance. Tailing. Getting into places you shouldn't be. You do the work that happens after dark.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Athletics",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Firearms"
+        ],
+        "starting_equipment": [
+          "Surveillance camera",
+          "Lock picks",
+          "Dark clothing",
+          "Concealed carry weapon"
+        ],
+        "features": [
+          {
+            "name": "Stakeout",
+            "description": "You can maintain surveillance on a location for up to 12 hours without losing focus. You notice everyone who enters and exits, and can identify patterns over multiple nights."
+          },
+          {
+            "name": "Covert Entry",
+            "description": "Advantage on checks to bypass physical security — locks, fences, alarm systems. You can assess a building's security level by observing it for 10 minutes."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "cold_case_analysis",
+        "name": "Cold Case Analysis",
+        "base_skill": "Investigation",
+        "description": "Reviewing old evidence with fresh eyes — identifying overlooked details, chain of custody issues, and investigative failures."
+      },
+      {
+        "id": "forensic_awareness",
+        "name": "Forensic Awareness",
+        "base_skill": "Medicine",
+        "description": "Understanding forensic evidence — cause of death, blood spatter, decomposition timelines, and what autopsy reports should contain."
+      },
+      {
+        "id": "witness_handling",
+        "name": "Witness Handling",
+        "base_skill": "Persuasion",
+        "description": "Building trust with reluctant witnesses, protecting sources, and managing people who are afraid to talk."
+      },
+      {
+        "id": "public_records",
+        "name": "Public Records",
+        "base_skill": "History",
+        "description": "Navigating government archives, property records, court filings, and FOIA requests to uncover documented history."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

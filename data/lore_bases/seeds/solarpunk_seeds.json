@@ -1,0 +1,304 @@
+{
+  "id": "canopy",
+  "name": "Canopy",
+  "description": "A hopeful near-future where ecological collapse was barely averted. Solar arcologies rise, but utopia has cracks only the vigilant can see.",
+  "genre": "solarpunk",
+  "mechanics_genre": "scifi",
+  "genre_hints": [
+    "scifi",
+    "drama",
+    "mystery"
+  ],
+  "tone_hints": [
+    "hopeful",
+    "thoughtful",
+    "tense"
+  ],
+  "seed_prompt": "A solarpunk near-future where ecological restoration has created a hopeful but fragile society, and the tensions between progress, tradition, and hidden costs threaten the new world.",
+  "lore_content": "The Collapse came in 2038 and lasted seven years. When it ended, the survivors built something better — or tried to. Canopy is what they made: a network of solar-powered arcologies rising from reclaimed land, vertical forests breathing life back into the atmosphere, and community governance that runs on consensus and radical transparency. It's 2067 and the air is clean. It cost everything to get here.\n\nAlderman Yuki Taniguchi oversees Canopy Seven, one of twelve arcologies in the Pacific Northwest cluster. She was twelve during the Collapse and remembers what the old world smelled like. She governs with gentle pragmatism and a deep fear that the new world is more fragile than anyone admits. The power grid is solar and wind — clean, reliable, and absolutely dependent on weather systems that are still stabilizing.\n\nDr. Kofi Mensah runs the Seed Vault — Canopy's genetic library for every plant species recovered after the Collapse. He's cheerful, tireless, and privately terrified. Three species went extinct last month despite restoration efforts. The ecosystem is healing, but it's not healed, and the math suggests they're losing the race.\n\nMira Chen is a greywater engineer who maintains Canopy Seven's water recycling systems. She loves her work, believes in the mission, and has discovered that the recycling metrics are being falsified. Someone is dumping untreated water into the restoration zone. She doesn't know who, and she doesn't know who to trust with the information.\n\nThe Rootstock are a community of people who rejected arcology life to live on the reclaimed land itself — farming, foraging, and rebuilding soil the old way. Their leader, Grandmother Bea, argues that Canopy's technology is repeating the same mistakes that caused the Collapse. She's not entirely wrong. The arcologies' rare-earth mineral demands are growing.\n\nJordan Park is a courier who moves physical goods between arcologies by bicycle and solar rail. In a world of radical transparency, physical delivery is one of the few private channels left. Jordan carries packages, messages, and occasionally people who need to move without being tracked. They've started noticing patterns in what people want hidden.\n\nBeneath Canopy Seven, in the sealed maintenance levels, there's a room that doesn't appear on any schematic. It contains pre-Collapse technology — the kind that was banned after the Emergency Accords. Someone has been accessing it regularly. The entry logs show a council member's biometric signature.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "arcology_native",
+        "name": "Arcology Native",
+        "description": "Born after the Collapse, you've only known the new world. Its promises feel natural. Its failures feel personal.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Nature",
+          "Persuasion"
+        ],
+        "traits": [
+          "Systems Thinker: Advantage on checks to understand interconnected systems — ecological, social, or mechanical.",
+          "Community Voice: You can call a community assembly to address issues. People listen."
+        ],
+        "languages": [
+          "Common",
+          "Sign Language"
+        ]
+      },
+      {
+        "id": "rootstock",
+        "name": "Rootstock",
+        "description": "You live on the land, not above it. Your hands are dirty and your conscience is clean.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Animal Handling"
+        ],
+        "traits": [
+          "Earth Skills: Proficiency with herbalism kit and farmer's tools.",
+          "Restoration Knowledge: Advantage on Nature checks related to soil health, water quality, and ecosystem recovery."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "collapse_survivor",
+        "name": "Collapse Survivor",
+        "description": "You remember the old world. You remember what it cost. You'll do anything to prevent it happening again.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Insight"
+        ],
+        "traits": [
+          "Hardened: Advantage on saves against fear and exhaustion.",
+          "Old World Knowledge: You understand pre-Collapse technology and can identify banned tech on sight."
+        ],
+        "languages": [
+          "Common",
+          "One pre-Collapse language"
+        ]
+      },
+      {
+        "id": "tech_dissident",
+        "name": "Tech Dissident",
+        "description": "You believe Canopy's transparency has become surveillance. Privacy is a right worth fighting for.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Investigation"
+        ],
+        "traits": [
+          "Off-Grid: You know how to move through Canopy without being tracked by monitoring systems.",
+          "Encrypted: Advantage on checks to hide information, create secure communications, or detect surveillance."
+        ],
+        "languages": [
+          "Common",
+          "Crypto-Cant"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "restoration_engineer",
+        "name": "Restoration Engineer",
+        "description": "You heal the world — one water table, one forest, one species at a time.",
+        "base_type": "druid",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Nature",
+          "Medicine",
+          "Survival",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Soil testing kit",
+          "Seed collection",
+          "Field journal",
+          "Solar-powered tools"
+        ],
+        "features": [
+          {
+            "name": "Ecosystem Assessment",
+            "description": "After 10 minutes of observation, you can determine the health of a natural area — toxin levels, species diversity, and what intervention is needed."
+          },
+          {
+            "name": "Green Thumb",
+            "description": "Plants you tend grow at twice the normal rate. You can coax growth from even damaged soil."
+          }
+        ]
+      },
+      {
+        "id": "community_mediator",
+        "name": "Community Mediator",
+        "description": "In a world run by consensus, the person who builds agreement has the real power.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Insight",
+          "Performance",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Community handbook",
+          "Portable speaker",
+          "Consensus tokens",
+          "Walking staff"
+        ],
+        "features": [
+          {
+            "name": "Bridge Builder",
+            "description": "When two parties are in conflict, you can mediate. After 10 minutes of facilitation, both sides make Wisdom saves (DC = your 8 + proficiency + Cha). On failure, they become open to compromise."
+          },
+          {
+            "name": "Inspiring Words",
+            "description": "As a bonus action, inspire an ally within 60 feet. They add 1d6 to their next ability check, attack, or save."
+          }
+        ]
+      },
+      {
+        "id": "courier",
+        "name": "Courier",
+        "description": "You move between arcologies carrying goods, messages, and secrets. The road is the last free space.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Acrobatics",
+          "Stealth",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Solar bicycle",
+          "Courier satchel",
+          "Trail rations",
+          "Multitool"
+        ],
+        "features": [
+          {
+            "name": "Pathfinder",
+            "description": "You know every route between arcologies and the safest paths through reclaimed territory. You travel at double pace without penalty."
+          },
+          {
+            "name": "Discrete Delivery",
+            "description": "You can conceal items in your courier gear with advantage on checks to hide them from inspection."
+          }
+        ]
+      },
+      {
+        "id": "systems_hacker",
+        "name": "Systems Auditor",
+        "description": "You watch the watchers. In a transparent society, the real secrets are in what the systems don't show.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Stealth",
+          "Perception",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Portable terminal",
+          "Signal jammer",
+          "Diagnostic tools",
+          "Encrypted comm device"
+        ],
+        "features": [
+          {
+            "name": "Data Mining",
+            "description": "You can access Canopy's public databases and cross-reference information to find hidden patterns and discrepancies."
+          },
+          {
+            "name": "Ghost Protocol",
+            "description": "You can mask your digital presence, moving through monitored areas without triggering tracking systems for up to 1 hour."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "eco_science",
+        "name": "Eco-Science",
+        "base_skill": "Nature",
+        "description": "Understanding ecological systems, restoration techniques, and environmental monitoring."
+      },
+      {
+        "id": "consensus_building",
+        "name": "Consensus Building",
+        "base_skill": "Persuasion",
+        "description": "Facilitating community decision-making, resolving conflicts, and building agreements."
+      },
+      {
+        "id": "solar_tech",
+        "name": "Solar Tech",
+        "base_skill": "Investigation",
+        "description": "Maintaining and repairing solar power systems, arcology infrastructure, and green technology."
+      },
+      {
+        "id": "foraging",
+        "name": "Foraging",
+        "base_skill": "Survival",
+        "description": "Finding edible plants, medicinal herbs, and useful materials in reclaimed wilderness."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

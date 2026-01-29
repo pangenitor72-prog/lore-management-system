@@ -1,0 +1,310 @@
+{
+  "id": "the_smoke",
+  "name": "The Smoke",
+  "description": "London, 1922. Post-war disillusionment, rising criminal empires, jazz clubs, and a city rotting beneath its grandeur.",
+  "genre": "historical_crime",
+  "mechanics_genre": "noir",
+  "genre_hints": [
+    "noir",
+    "drama",
+    "historical"
+  ],
+  "tone_hints": [
+    "gritty",
+    "atmospheric",
+    "morally_gray"
+  ],
+  "seed_prompt": "A 1920s London crime drama where post-war criminal empires clash, police corruption runs deep, and everyone carries scars from the trenches.",
+  "lore_content": "London in 1922 is a city at war with itself. The Great War ended four years ago but never really stopped — it just moved indoors, into the pubs and gambling dens and dockside warehouses where men who learned to kill find new applications for the skill.\n\nTommy Harker runs the Harker Firm from a boxing gym in Bermondsey. He went to France as a bricklayer's son and came back as something else. His empire covers South London: protection, bookmaking, stolen goods, and a growing interest in nightclubs. He's clever enough to pay his taxes and violent enough to make examples. The razor scars on his face are from the trenches. The ones on his hands are from closer encounters.\n\nDetective Inspector Edith Crane is the first woman to hold her rank at Scotland Yard. She earned it by being twice as good and three times as stubborn as every man in the building. She's assigned to the new Organised Crime desk, which means she's given impossible cases and insufficient resources. She doesn't take bribes. This makes her dangerous and lonely.\n\nSolomon Adeyemi runs the Deptford Dockers — a crew of West African and Caribbean dockworkers who've organized their own protection after the police made it clear they wouldn't. What started as self-defense has grown into a smuggling operation that rivals the established firms. Solomon is educated, strategic, and tired of being underestimated.\n\nLady Vivian Ashworth hosts the most exclusive parties in Mayfair. Her townhouse is where politicians, gangsters, and aristocrats drink the same champagne and pretend they're different species. Vivian is the information broker nobody sees coming — she knows everything because everyone talks freely in her drawing room. Her husband died at the Somme. She's been making the world pay ever since.\n\nThe Sabini Brothers control the West End racecourses and most of the Italian community's business interests. Darby Sabini is urbane, well-dressed, and will have your fingers broken for looking at him wrong. An alliance between the Sabinis and the Harkers could control London. A war between them could burn it down.\n\nBeneath the surface, there's a new drug moving through the city — a refined opiate called 'Bliss' that's cheaper and more addictive than anything before. Someone is manufacturing it in industrial quantities. The supply chain leads to the docks, but the money trail goes somewhere much higher. Inspector Crane is following the money. Tommy Harker is following the supply. They're going to meet in the middle.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "war_veteran",
+        "name": "War Veteran",
+        "description": "You survived the trenches. Everything since has been borrowed time.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Intimidation"
+        ],
+        "traits": [
+          "Trench-Hardened: Advantage on saving throws against fear.",
+          "Brothers in Arms: You can identify other veterans on sight and gain their trust quickly."
+        ],
+        "languages": [
+          "English",
+          "French"
+        ]
+      },
+      {
+        "id": "east_ender",
+        "name": "East Ender",
+        "description": "Born in the slums, raised by the streets. You learned to fight before you learned to read.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Sleight of Hand"
+        ],
+        "traits": [
+          "Street Smart: Advantage on checks to navigate London's underworld, find black market goods, or spot trouble.",
+          "Hard to Kill: When you're reduced to 0 HP, you can spend a hit die to stabilize. Once per long rest."
+        ],
+        "languages": [
+          "English",
+          "Cockney Rhyming Slang"
+        ]
+      },
+      {
+        "id": "upper_class",
+        "name": "Upper Class",
+        "description": "Born to wealth and privilege. Your world and the underworld overlap more than polite society admits.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "Society Access: You can enter any establishment, club, or social event in London without question.",
+          "Old Money: You start with additional funds and have access to family solicitors."
+        ],
+        "languages": [
+          "English",
+          "French",
+          "Latin"
+        ]
+      },
+      {
+        "id": "immigrant",
+        "name": "Immigrant",
+        "description": "You came to London seeking opportunity. You found something else entirely.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Survival"
+        ],
+        "traits": [
+          "Community Ties: You have strong connections within your community — a network for information, shelter, and support.",
+          "Outsider's View: You see London's power structures clearly. Advantage on Insight checks to understand political and criminal motivations."
+        ],
+        "languages": [
+          "English",
+          "One community language"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "gangster",
+        "name": "Firm Man",
+        "description": "You're muscle, enforcer, and earner for one of London's criminal families.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Flat cap and overcoat",
+          "Razor",
+          "Knuckledusters",
+          "Pistol"
+        ],
+        "features": [
+          {
+            "name": "Reputation",
+            "description": "Your firm's name precedes you. You have advantage on Intimidation checks against anyone who knows your affiliation."
+          },
+          {
+            "name": "Dirty Fighter",
+            "description": "Once per turn, when you hit a creature with a melee attack, you can deal an extra 1d6 damage. If you have advantage on the attack, you deal 2d6 instead."
+          }
+        ]
+      },
+      {
+        "id": "detective_crime",
+        "name": "Detective",
+        "description": "You investigate crimes in a city where everyone is guilty of something.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Perception",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Pistols"
+        ],
+        "starting_equipment": [
+          "Warrant card",
+          "Truncheon",
+          "Notebook",
+          "Handcuffs"
+        ],
+        "features": [
+          {
+            "name": "Interrogation",
+            "description": "After 10 minutes of questioning, you can make a contested Insight vs. Deception check. On success, the subject reveals one piece of truthful information."
+          },
+          {
+            "name": "Crime Scene Analysis",
+            "description": "After examining a crime scene for 5 minutes, you can determine the sequence of events, number of people involved, and time elapsed."
+          }
+        ]
+      },
+      {
+        "id": "grifter",
+        "name": "Grifter",
+        "description": "You sell dreams to desperate people. Sometimes the dreams are even real.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Deception",
+          "Performance",
+          "Persuasion",
+          "Sleight of Hand"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Sharp suit",
+          "Loaded dice",
+          "Fake business cards (several sets)",
+          "Concealed derringer"
+        ],
+        "features": [
+          {
+            "name": "The Long Con",
+            "description": "After establishing a false identity with a target, all Deception checks against that target are made with advantage."
+          },
+          {
+            "name": "Quick Change",
+            "description": "You can completely change your appearance (clothing, hair, mannerisms) in under 2 minutes with materials at hand."
+          }
+        ]
+      },
+      {
+        "id": "fixer",
+        "name": "Fixer",
+        "description": "You make problems disappear. Evidence, witnesses, inconvenient truths — everything has a price.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Perception",
+          "Investigation",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Dark clothing",
+          "Lockpicks",
+          "Garrote",
+          "Pistol with silencer"
+        ],
+        "features": [
+          {
+            "name": "Shadow Work",
+            "description": "You have advantage on Stealth checks in urban environments and at night."
+          },
+          {
+            "name": "Clean Up",
+            "description": "You can remove evidence from a crime scene in half the time it would normally take, and your work withstands casual police inspection."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "underworld_knowledge",
+        "name": "Underworld Knowledge",
+        "base_skill": "Insight",
+        "description": "Understanding London's criminal landscape, gang territories, and unwritten codes."
+      },
+      {
+        "id": "bookmaking",
+        "name": "Bookmaking",
+        "base_skill": "Investigation",
+        "description": "Running and analyzing gambling operations, odds, and financial schemes."
+      },
+      {
+        "id": "motor_skills",
+        "name": "Motor Skills",
+        "base_skill": "Acrobatics",
+        "description": "Driving motorcars at speed through London's streets and maintaining vehicles."
+      },
+      {
+        "id": "street_medicine",
+        "name": "Street Medicine",
+        "base_skill": "Medicine",
+        "description": "Treating injuries without hospitals, accessing medical supplies through unofficial channels."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

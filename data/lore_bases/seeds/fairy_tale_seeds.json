@@ -1,0 +1,335 @@
+{
+  "id": "briar_kingdom",
+  "name": "The Briar Kingdom",
+  "description": "A world built from the older, darker fairy tales — where bargains have prices, curses have teeth, and the woods remember everything.",
+  "genre": "fairy_tale",
+  "mechanics_genre": "fantasy",
+  "genre_hints": [
+    "fantasy",
+    "horror",
+    "mystery"
+  ],
+  "tone_hints": [
+    "enchanting",
+    "dangerous",
+    "bittersweet"
+  ],
+  "seed_prompt": "A dark fairy-tale world where classic folk tales are real and dangerous — enchanted forests, fey bargains, and curses that always exact a price.",
+  "lore_content": "The Briar Kingdom exists where the stories are true. Not the gentle versions told to children, but the older ones — where the stepmother dances in iron shoes, where the wolf doesn't stop at grandmothers, where the price of three wishes is always more than you can pay.\n\nQueen Rosamund rules from the Throne of Thorns, a living seat that has grown around her over twenty years of reign. She cannot leave it. The briars that hold her also sustain her — she doesn't age, doesn't hunger, doesn't sleep. She rules wisely, but her edicts come from a woman who hasn't touched another person in two decades. Her advisors wonder if she's still human. She wonders too.\n\nThe Woodcutter has no other name. He patrols the border between the kingdom and the Deep Woods, where the old stories still walk. His axe can cut through any enchantment, but he ages a year for every spell he breaks. He looks seventy. He's thirty-four.\n\nMother Goss runs the orphanage in Hearthtown. She takes in children that the stories have chewed up and spat out — kids whose parents traded them for wishes, kids who wandered into the woods and came back changed. She's fierce, kind, and has a iron-and-salt circle under the floorboards that she activates every full moon.\n\nThe Peddler appears at crossroads with a cart of impossible things: boots that let you run on moonlight, cloaks that make you invisible, mirrors that show the truth. Everything works exactly as promised. The prices are always personal — a memory, a relationship, a year of your life. He never lies. He never warns.\n\nIn the Deep Woods, the Erlking holds court in a palace of living trees. He is beautiful and terrible, and the children he takes are never returned the same. Some come back speaking languages that haven't existed for centuries. Some don't come back at all. The kingdom has tried war, diplomacy, and prayer. Nothing works. The Erlking takes what he wants.\n\nThe Glass River runs through the kingdom's heart. Look into it and you see what you truly desire. Follow it upstream and you'll find the Spring of Stories, where every tale ever told pools in water that tastes like tears. Someone has been poisoning the spring. The stories are going wrong — heroes failing, villains winning, happy endings curdling. Someone wants the old stories to die.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "storyborn",
+        "name": "Story-Born",
+        "description": "You were born into a fairy tale and walked out of it. The narrative still tugs at you.",
+        "base_type": "half-elf",
+        "ability_bonuses": {
+          "charisma": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Performance",
+          "Insight"
+        ],
+        "traits": [
+          "Narrative Sense: You can feel when a story is happening around you — quests, curses, and bargains register as a physical sensation.",
+          "Echoes: Once per long rest, you can invoke a fairy-tale trope (three attempts, a magical disguise, speak to animals) for one scene."
+        ],
+        "languages": [
+          "Common",
+          "Sylvan"
+        ]
+      },
+      {
+        "id": "hearthfolk",
+        "name": "Hearthfolk",
+        "description": "Ordinary people in an extraordinary land. Your strength is common sense in a world that has none.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Medicine"
+        ],
+        "traits": [
+          "Iron Will: Advantage on saving throws against enchantment and charm effects.",
+          "Practical Knowledge: Proficiency with one artisan's tool of your choice."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "changeling",
+        "name": "Changeling",
+        "description": "Left by the fey in exchange for a human child. You look human, but something inside you isn't.",
+        "base_type": "half-elf",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Nature"
+        ],
+        "traits": [
+          "Glamour: Once per short rest, you can change your appearance for 1 hour (as Disguise Self).",
+          "Fey Heritage: Resistance to charm effects, but iron causes you discomfort (disadvantage on attacks with iron weapons)."
+        ],
+        "languages": [
+          "Common",
+          "Sylvan"
+        ]
+      },
+      {
+        "id": "cursed_child",
+        "name": "Curse-Marked",
+        "description": "A curse was laid on you at birth — or before. Breaking it is your life's work. Living with it is your daily burden.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 2
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Athletics"
+        ],
+        "traits": [
+          "Curse Resilience: You've lived with magic gone wrong. Advantage on saves against curses and hexes.",
+          "Marked: Your curse is visible (unusual eyes, a shadow that moves wrong, flowers that wilt at your touch). NPCs react with fear or pity."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "woods_child",
+        "name": "Woods-Raised",
+        "description": "The Deep Woods raised you — literally. Trees bent to shelter you. Animals brought you food. You're not sure why.",
+        "base_type": "wood-elf",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Nature",
+          "Animal Handling"
+        ],
+        "traits": [
+          "Beast Speech: You can communicate with animals as if sharing a language.",
+          "Path of the Woods: You cannot become lost in forests, and plants part to let you pass through difficult terrain."
+        ],
+        "languages": [
+          "Common",
+          "Sylvan",
+          "Beast Speech"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "witch_hunter",
+        "name": "Witch-Finder",
+        "description": "You hunt the stories that go wrong — the curses, the monsters, the bargains that eat people alive.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Survival",
+          "Investigation",
+          "Perception",
+          "Arcana"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Silver-edged sword",
+          "Iron nails (pouch of 20)",
+          "Salt pouch",
+          "Rowan-wood stake"
+        ],
+        "features": [
+          {
+            "name": "Story Sense",
+            "description": "You can identify when a curse, enchantment, or fairy-tale pattern is active in your vicinity (120 feet)."
+          },
+          {
+            "name": "Iron and Salt",
+            "description": "Your weapons count as cold iron against fey creatures. You can create a protective salt circle (10-foot radius) that fey cannot willingly cross."
+          }
+        ]
+      },
+      {
+        "id": "hedge_witch",
+        "name": "Hedge Witch",
+        "description": "Your magic is kitchen magic — herbs, songs, and practical enchantments that keep the darkness at bay.",
+        "base_type": "druid",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Nature",
+          "Medicine",
+          "Arcana",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor (non-metal)"
+        ],
+        "weapon_proficiencies": [
+          "Clubs",
+          "Daggers",
+          "Quarterstaffs"
+        ],
+        "starting_equipment": [
+          "Herb pouch",
+          "Iron cauldron (small)",
+          "Worn grimoire",
+          "Walking stick"
+        ],
+        "features": [
+          {
+            "name": "Hearth Magic",
+            "description": "You can brew potions during a long rest: healing tea (2d4+Wis HP), sleep draught (Wisdom save or sleep 1 hour), or truth serum (disadvantage on Deception for 10 minutes)."
+          },
+          {
+            "name": "Fairy-Tale Knowledge",
+            "description": "You know the rules of stories — how curses work, what breaks them, and what bargains cost. Advantage on Arcana checks related to enchantments and curses."
+          }
+        ]
+      },
+      {
+        "id": "thorn_knight",
+        "name": "Thorn Knight",
+        "description": "Sworn to the Queen and the Kingdom. Your armor is grown, not forged, and it is alive.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Nature",
+          "Intimidation",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "All armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Living thorn armor (half-plate)",
+          "Briar-wood shield",
+          "Longsword",
+          "Queen's sigil"
+        ],
+        "features": [
+          {
+            "name": "Briar Oath",
+            "description": "You are bound to protect the kingdom from enchantment. You have advantage on saves against fey magic and can sense enchanted creatures within 60 feet."
+          },
+          {
+            "name": "Thorns of Justice",
+            "description": "Once per short rest, when you hit a creature with a melee attack, briars erupt from the wound. The creature takes an extra 2d6 piercing damage and is restrained until the end of its next turn."
+          }
+        ]
+      },
+      {
+        "id": "tale_spinner",
+        "name": "Tale-Spinner",
+        "description": "In a world made of stories, the one who controls the narrative controls reality.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Performance",
+          "Persuasion",
+          "History",
+          "Arcana"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Rapiers"
+        ],
+        "starting_equipment": [
+          "Story-book (spellbook equivalent)",
+          "Quill that never runs dry",
+          "Rapier",
+          "Leather armor"
+        ],
+        "features": [
+          {
+            "name": "Story Weave",
+            "description": "You can invoke a fairy-tale convention (\"the third time's the charm,\" \"names have power,\" \"true love breaks the curse\") to gain advantage on a relevant check."
+          },
+          {
+            "name": "Bardic Inspiration",
+            "description": "You can inspire allies with a tale. As a bonus action, grant a creature within 60 feet a d6 to add to an ability check, attack roll, or saving throw within 10 minutes."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "fairy_lore",
+        "name": "Fairy Lore",
+        "base_skill": "Arcana",
+        "description": "Knowledge of fey customs, bargain rules, and the logic of enchantments."
+      },
+      {
+        "id": "curse_breaking",
+        "name": "Curse-Breaking",
+        "base_skill": "Medicine",
+        "description": "Identifying and reversing magical curses, hexes, and enchantments."
+      },
+      {
+        "id": "story_craft",
+        "name": "Story Craft",
+        "base_skill": "Performance",
+        "description": "Understanding narrative patterns and using them to influence events in a story-shaped world."
+      },
+      {
+        "id": "herbcraft",
+        "name": "Herbcraft",
+        "base_skill": "Nature",
+        "description": "Knowledge of magical plants, brewing remedies, and preparing protective charms."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

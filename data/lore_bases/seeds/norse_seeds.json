@@ -1,0 +1,336 @@
+{
+  "id": "frostblood_saga",
+  "name": "Frostblood Saga",
+  "description": "9th century Scandinavia where the old gods are real but fading, and a new faith threatens to consume everything.",
+  "genre": "norse",
+  "mechanics_genre": "fantasy",
+  "genre_hints": [
+    "fantasy",
+    "adventure",
+    "historical"
+  ],
+  "tone_hints": [
+    "epic",
+    "harsh",
+    "mythic"
+  ],
+  "seed_prompt": "A Viking-era Norse setting where myths are real, blood feuds shape politics, and the tension between old gods and new faith threatens to tear communities apart.",
+  "lore_content": "The fjords of Nordhavn run deep and dark, carved by giants in an age before memory. The fishing is good, the raids are profitable, and the mead halls ring with boasts — but something has changed. The winters are longer. The harvests thinner. The gods answer fewer prayers.\n\nJarl Sigrid Ironfist rules Nordhavn from the great hall at Ravensperch. She took power by killing her uncle in single combat after he murdered her father. Her people respect her strength but whisper about her refusal to marry. She consults the seeress before every major decision and keeps a white raven that some say carries messages to Odin himself.\n\nBrother Aldric arrived from Frankia two years ago, carrying nothing but a wooden cross and an impossible amount of courage. He's baptized forty-three Norsemen, built a small church, and survived three assassination attempts. The gods-fearing folk want him dead. The curious want to hear more. Jarl Sigrid hasn't decided which camp she's in.\n\nErik the Skald travels between settlements, carrying news and singing the old stories. His songs can make warriors weep and cowards fight. He claims to have visited Jotunheim in a dream and spoken with a giantess who showed him the future. What he saw has made him drink more heavily than usual.\n\nThora Deepmind is the most feared völva in the north. She lives alone on an island in the frozen lake, attended by wolves that obey her without command. Jarls and kings seek her counsel, but her prophecies are never comforting. She has declared that Ragnarök is not a future event — it is happening now, slowly, one broken oath at a time.\n\nThe blood feud between the Blackmoor and Stoneheim clans has lasted three generations. What began as a disputed boundary has become an engine of revenge that has claimed dozens of lives. Both sides know it must end. Neither side knows how to stop without appearing weak.\n\nSomething stirs beneath the glacier north of the settlement. Hunters report finding enormous footprints in the snow. Trees at the glacier's edge have been uprooted and stacked like kindling. The old stories say a jötunn sleeps there, and that when it wakes, the age of men in this valley ends.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "karl",
+        "name": "Karl (Free Farmer)",
+        "description": "The backbone of Norse society — landowners, fighters, and the people who actually keep things running.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 2
+        },
+        "skill_proficiencies": [
+          "Animal Handling",
+          "Athletics"
+        ],
+        "traits": [
+          "Sturdy Build: Gain +3 hit points.",
+          "Self-Sufficient: Proficiency with carpenter's tools or smith's tools (your choice)."
+        ],
+        "languages": [
+          "Norse"
+        ]
+      },
+      {
+        "id": "thrall_freed",
+        "name": "Freed Thrall",
+        "description": "Once a slave, now free — but freedom in the north must be defended daily.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Perception"
+        ],
+        "traits": [
+          "Survivor's Instinct: Advantage on initiative rolls.",
+          "Unseen: You can take the Hide action as a bonus action."
+        ],
+        "languages": [
+          "Norse",
+          "One foreign language (from your homeland)"
+        ]
+      },
+      {
+        "id": "jarl_kin",
+        "name": "Jarl's Blood",
+        "description": "Born to a noble line, you carry the weight of legacy and the expectation of greatness.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "Noble Bearing: Advantage on Charisma checks when interacting with Norse nobility.",
+          "Blood of Kings: Once per long rest, you can inspire an ally within 30 feet, granting them advantage on their next attack roll or saving throw."
+        ],
+        "languages": [
+          "Norse",
+          "Frankish"
+        ]
+      },
+      {
+        "id": "outsider_norse",
+        "name": "Foreign-Born",
+        "description": "Taken in a raid, shipwrecked, or come willingly — you're an outsider in a land that respects strength.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Insight"
+        ],
+        "traits": [
+          "Worldly Knowledge: Proficiency with one additional language and one tool of your choice.",
+          "Outside Perspective: Advantage on Insight checks against deception by Norsemen."
+        ],
+        "languages": [
+          "Norse",
+          "Two additional languages"
+        ]
+      },
+      {
+        "id": "sami",
+        "name": "Sámi Wanderer",
+        "description": "Of the reindeer people, you carry the old magic that predates even the Norse gods.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Nature"
+        ],
+        "traits": [
+          "Reindeer Bond: You can communicate simple concepts with reindeer and similar animals.",
+          "Northern Resilience: Resistance to cold damage."
+        ],
+        "languages": [
+          "Norse",
+          "Sámi"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "berserker",
+        "name": "Berserker",
+        "description": "Warriors who channel divine fury — blessed or cursed by the battle-madness of Odin.",
+        "base_type": "barbarian",
+        "hit_die": "d12",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Greataxe",
+          "Two handaxes",
+          "Hide armor",
+          "Bear or wolf pelt"
+        ],
+        "features": [
+          {
+            "name": "Battle Fury",
+            "description": "You can enter a rage as a bonus action. While raging, you deal +2 melee damage, have advantage on Strength checks, and resistance to bludgeoning, piercing, and slashing damage."
+          },
+          {
+            "name": "Fearless",
+            "description": "While raging, you are immune to the frightened condition."
+          }
+        ]
+      },
+      {
+        "id": "skald",
+        "name": "Skald",
+        "description": "Keeper of the old songs, your words can heal wounds, ignite courage, or curse enemies.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Performance",
+          "Persuasion",
+          "History",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Longswords",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Lyre or drum",
+          "Longsword",
+          "Book of sagas"
+        ],
+        "features": [
+          {
+            "name": "Song of Valor",
+            "description": "As a bonus action, inspire an ally within 60 feet. They add 1d6 to one attack roll, ability check, or saving throw in the next 10 minutes."
+          },
+          {
+            "name": "Saga Knowledge",
+            "description": "You can recall useful information from sagas and legends. Advantage on History checks related to Norse lore, heroes, and monsters."
+          }
+        ]
+      },
+      {
+        "id": "volva",
+        "name": "Völva (Seeress)",
+        "description": "You walk between worlds, reading fate in runes and speaking with spirits the living cannot see.",
+        "base_type": "druid",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Nature",
+          "Religion",
+          "Medicine",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor (non-metal)"
+        ],
+        "weapon_proficiencies": [
+          "Clubs",
+          "Daggers",
+          "Quarterstaffs",
+          "Sickles"
+        ],
+        "starting_equipment": [
+          "Staff carved with runes",
+          "Set of bone runes",
+          "Leather armor",
+          "Herb pouch"
+        ],
+        "features": [
+          {
+            "name": "Rune Casting",
+            "description": "You can cast runes to divine the future. Once per long rest, you can gain advantage on one roll by reading the runes before acting."
+          },
+          {
+            "name": "Spirit Sight",
+            "description": "You can see and communicate with spirits of the dead within 60 feet. Living creatures are unaware of these interactions."
+          }
+        ]
+      },
+      {
+        "id": "shield_maiden",
+        "name": "Shieldbearer",
+        "description": "Disciplined warrior of the shield wall — you protect those beside you and break those ahead.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Perception",
+          "Intimidation",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "All armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Chain mail",
+          "Shield",
+          "Longsword",
+          "Spear"
+        ],
+        "features": [
+          {
+            "name": "Shield Wall",
+            "description": "When you are adjacent to an ally who also has a shield, you both gain +2 AC."
+          },
+          {
+            "name": "Hold the Line",
+            "description": "When a creature within 5 feet of you is hit by an attack, you can use your reaction to add your shield's AC bonus to their AC against that attack."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "runecraft",
+        "name": "Runecraft",
+        "base_skill": "Arcana",
+        "description": "Knowledge of runic inscriptions, their meanings, and their magical properties."
+      },
+      {
+        "id": "seamanship_norse",
+        "name": "Longship Mastery",
+        "base_skill": "Survival",
+        "description": "Sailing, navigating, and maintaining Norse longships."
+      },
+      {
+        "id": "saga_lore",
+        "name": "Saga Lore",
+        "base_skill": "History",
+        "description": "Knowledge of Norse myths, legends, genealogies, and ancient customs."
+      },
+      {
+        "id": "feud_politics",
+        "name": "Thing-Law",
+        "base_skill": "Persuasion",
+        "description": "Understanding of Norse legal customs, blood feuds, and assembly politics."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

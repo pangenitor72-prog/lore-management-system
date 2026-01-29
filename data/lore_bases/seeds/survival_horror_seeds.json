@@ -1,0 +1,305 @@
+{
+  "id": "the_isolation",
+  "name": "The Isolation",
+  "description": "Halcyon Station, Antarctica. Winter 1982. Six months of darkness. The supply drop isn't coming. Something in the ice isn't ice.",
+  "genre": "survival_horror",
+  "mechanics_genre": "horror",
+  "genre_hints": [
+    "horror",
+    "mystery",
+    "thriller"
+  ],
+  "tone_hints": [
+    "claustrophobic",
+    "paranoid",
+    "brutal"
+  ],
+  "seed_prompt": "A survival horror setting at an isolated Antarctic research station where dwindling supplies, crushing darkness, and something wrong in the ice core samples create escalating paranoia.",
+  "lore_content": "Halcyon Station sits on the Ross Ice Shelf, a collection of prefab buildings connected by heated corridors that groan in the wind. Twelve people. Six months of polar night. The last supply flight left in March. The next one comes in October. It is now July, and the radio has been dead for three weeks.\n\nStation Commander Dr. Robert Marsh keeps the crew on schedule because schedule is the only thing between order and madness. Wake at 0700, meals at set times, work shifts, recreation hours. He served in Vietnam and recognizes the look he's seeing in people's eyes — that thousand-yard stare that means someone is about to break. He's seen it in his own mirror.\n\nDr. Elena Petrova is the lead glaciologist. She and her team pulled ice core samples from three kilometers down — ice that hasn't seen air in 400,000 years. Core sample K-7 was different. The ice was the wrong color, the wrong consistency, and when it melted, the water moved against gravity before settling. She sealed it in the lab. She checks the seal every four hours.\n\nMechanics Chief James 'Mac' MacReady keeps the generators running. Without heat, everyone dies in hours. Without power, the heated corridors go cold, the food stores freeze into a solid mass, and the emergency beacon can't broadcast. Mac is competent, gruff, and has quietly begun sleeping with a fire axe next to his bunk.\n\nDr. Sarah Kim is the station physician. She's treated three cases of frostbite, two of depression, and one of something she can't explain — Lab Technician Yuri Sokov presented with a body temperature of 93°F, pupils that don't react to light, and a resting heart rate of 22 BPM. He insists he feels fine. His blood work shows cells she's never seen before.\n\nCommunications Officer David Torres has been trying to fix the long-range radio since it failed. The damage isn't mechanical — the components are intact, but the signal doesn't propagate. Something is absorbing the radio waves. He's started transmitting on frequencies that shouldn't be usable and has received responses. He hasn't told anyone what they said.\n\nBiologist Anna Lindqvist was the first to notice the dogs behaving strangely. They refuse to go near the sample storage wing. Two nights ago, one of them chewed through its chain and ran into the dark. It came back six hours later, calm and silent. It hasn't barked since. It doesn't blink.\n\nThe temperature in Sample Lab B has been dropping steadily despite the heating system working at full capacity. The walls are developing frost patterns that, when photographed and assembled, form shapes that look like a language. Nobody has assembled them yet. Nobody wants to.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "scientist",
+        "name": "Research Scientist",
+        "description": "You came here for knowledge. Now you'd settle for survival.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Nature"
+        ],
+        "traits": [
+          "Analytical Mind: Advantage on checks to understand scientific phenomena or analyze unknown substances.",
+          "Published Author: You have contacts in the academic world who might help — if you can reach them."
+        ],
+        "languages": [
+          "English",
+          "One scientific language"
+        ]
+      },
+      {
+        "id": "military",
+        "name": "Military Personnel",
+        "description": "You're here for security or support. The training prepared you for hostile territory. Not for this.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Perception"
+        ],
+        "traits": [
+          "Combat Training: Proficiency with all weapons and medium armor.",
+          "Situational Awareness: You cannot be surprised while conscious."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "support_staff",
+        "name": "Support Staff",
+        "description": "Cook, mechanic, or technician — you keep the station alive. That's more important now than ever.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Sleight of Hand"
+        ],
+        "traits": [
+          "Practical Skills: Proficiency with two sets of tools of your choice.",
+          "Station Knowledge: You know every system, vent, and crawlspace in Halcyon Station."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "medical",
+        "name": "Medical Staff",
+        "description": "You're the only thing between your colleagues and death. The symptoms you're seeing aren't in any textbook.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Medicine",
+          "Insight"
+        ],
+        "traits": [
+          "Field Medicine: You can stabilize dying creatures automatically and have advantage on Medicine checks.",
+          "Bedside Manner: Advantage on Insight checks to determine if someone's behavior has changed from their baseline."
+        ],
+        "languages": [
+          "English",
+          "Latin"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "survivor_horror",
+        "name": "Survivor",
+        "description": "You don't need to understand it. You just need to outlast it.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Constitution",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Perception",
+          "Survival",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Heavy coat",
+          "Fire axe",
+          "Flashlight",
+          "Flare gun (3 flares)"
+        ],
+        "features": [
+          {
+            "name": "Will to Live",
+            "description": "When reduced to 0 HP, make a DC 10 Constitution save to drop to 1 HP instead. Once per long rest."
+          },
+          {
+            "name": "Improvised Weapon Expert",
+            "description": "You deal full weapon damage with improvised weapons and can use any object as an effective weapon."
+          }
+        ]
+      },
+      {
+        "id": "investigator_horror",
+        "name": "Investigator",
+        "description": "Something is wrong. You're going to figure out what, even if the answer is worse than the question.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Perception",
+          "Stealth",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Notebook",
+          "Camera",
+          "Lock picks",
+          "Flashlight"
+        ],
+        "features": [
+          {
+            "name": "Scene Analysis",
+            "description": "After examining a location for 5 minutes, determine what happened there — sequence of events, people involved, and anomalies."
+          },
+          {
+            "name": "Trust Issues",
+            "description": "You can spend 1 minute observing a person to determine if their behavior is inconsistent with their baseline. Advantage on Insight checks to detect impostors or compromised individuals."
+          }
+        ]
+      },
+      {
+        "id": "medic_horror",
+        "name": "Field Medic",
+        "description": "Keep people alive. Keep them human. Those two goals are starting to diverge.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Investigation",
+          "Insight",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Medical kit (extensive)",
+          "Blood test supplies",
+          "Sedatives (5 doses)",
+          "Scalpel"
+        ],
+        "features": [
+          {
+            "name": "Emergency Treatment",
+            "description": "As an action, restore 1d8 + Wisdom modifier HP to a creature you touch. You can also cure one disease or neutralize one poison."
+          },
+          {
+            "name": "Blood Test",
+            "description": "You can analyze a blood sample to determine if the subject is human, infected, or... something else. Takes 10 minutes with lab access."
+          }
+        ]
+      },
+      {
+        "id": "engineer_horror",
+        "name": "Engineer",
+        "description": "The station is the only thing keeping you alive. You keep the station alive. Simple math.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Perception",
+          "Nature",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Tool kit",
+          "Welding torch",
+          "Station schematics",
+          "Emergency radio parts"
+        ],
+        "features": [
+          {
+            "name": "Jury-Rig",
+            "description": "You can repair any station system with improvised materials. Roll Intelligence check (DC varies) — success restores functionality for 1d6 hours."
+          },
+          {
+            "name": "Fortify",
+            "description": "Given 30 minutes and tools, you can seal a room, reinforce a door, or create a barricade that adds +5 to the DC of breaking through."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "arctic_survival",
+        "name": "Arctic Survival",
+        "base_skill": "Survival",
+        "description": "Surviving in extreme cold — navigation, shelter building, frostbite prevention, and rationing."
+      },
+      {
+        "id": "station_systems",
+        "name": "Station Systems",
+        "base_skill": "Investigation",
+        "description": "Understanding and maintaining the station's generators, heating, communications, and life support."
+      },
+      {
+        "id": "sample_analysis",
+        "name": "Sample Analysis",
+        "base_skill": "Nature",
+        "description": "Laboratory analysis of biological and geological samples, including anomalous materials."
+      },
+      {
+        "id": "threat_assessment",
+        "name": "Threat Assessment",
+        "base_skill": "Insight",
+        "description": "Evaluating dangers — whether from the environment, unknown organisms, or compromised colleagues."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

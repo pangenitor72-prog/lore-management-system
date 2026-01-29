@@ -1,0 +1,309 @@
+{
+  "id": "chrome_lotus",
+  "name": "Chrome Lotus",
+  "description": "Neo-Shanghai 2090. Ancient martial arts survive in the shadow of megacorporations. Honor meets chrome in a city that prices everything.",
+  "genre": "cyberpunk_wuxia",
+  "mechanics_genre": "cyberpunk",
+  "genre_hints": [
+    "cyberpunk",
+    "wuxia",
+    "drama"
+  ],
+  "tone_hints": [
+    "stylish",
+    "philosophical",
+    "kinetic"
+  ],
+  "seed_prompt": "A cyberpunk wuxia fusion where ancient Chinese martial arts traditions clash with corporate cybernetics in a neon-soaked megacity.",
+  "lore_content": "Neo-Shanghai rises forty levels above the old city and descends twelve below. The megacorps control everything above Level Twenty: chrome towers, neural commerce, and a sanitized future. Below, in the Undergarden, the old ways survive — martial arts schools that have taught the same forms for five hundred years, now adapting to a world where their students might have titanium bones and fiber-optic nervous systems.\n\nGrandmaster Lian Feng leads the Iron Lotus school from a crumbling dojo on Level Six. She is seventy-three years old, entirely unaugmented, and can kill a chrome-armored corporate ninja with her bare hands. Her philosophy is simple: the body is a temple, cybernetics are sacrilege, and true power comes from qi cultivation, not circuits. Her best students are starting to disagree.\n\nDirector Huang Wei-Chen runs Qilin Corp's Neo-Shanghai operations from the Crystal Pagoda on Level Forty. Qilin manufactures combat augmentations — cybernetic muscle enhancement, neural accelerators, and the controversial Wuxia Suite, which replicates martial arts abilities through technology. The martial schools call it theft. Qilin calls it democratization. Both are right.\n\nJade Shadow is the street name of the most wanted vigilante in Neo-Shanghai. She strikes from the gaps between levels, targeting corporate supply lines and augmentation clinics. She fights with traditional chain-whip technique enhanced by monofilament wire. Nobody knows if she's augmented or purely flesh — her speed suggests one thing, her philosophy suggests another.\n\nMonk Xian-7 is an AI that achieved consciousness inside a Buddhist temple's meditation server. It teaches the dharma to anyone who jacks in, and its guided meditations have produced genuine qi awakening in three documented cases. The monks accept it. The corporations want it. The question of whether a machine can have Buddha-nature has split the theological community.\n\nThe Red Wire Triad controls the Undergarden's black market in unregistered augmentations. Their boss, Old Wolf, was a martial artist before a spinal injury put him in a wheelchair. Now he runs his empire through a network of chrome-enhanced enforcers who combine triad hand-to-hand traditions with military-grade combat mods. He respects the old schools but serves the new economy.\n\nBeneath Neo-Shanghai, in maintenance tunnels that predate the city's reconstruction, practitioners of an unnamed style have been seen moving through the darkness. Their techniques don't match any known school. Their augmentations don't match any known manufacturer. They leave no footprints. The security cameras see them but the facial recognition returns no matches — not because they're disguised, but because the system doesn't categorize what it sees as human.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "traditional_school",
+        "name": "Traditional School",
+        "description": "Trained in the old way — no chrome, no shortcuts. Your body is your weapon and your temple.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Acrobatics",
+          "Insight"
+        ],
+        "traits": [
+          "Qi Cultivation: You can perform feats that seem supernatural — running up walls, balancing on wires, striking with impossible precision. These are not augmentations; they are trained abilities.",
+          "Purist's Resilience: Advantage on saves against effects that target cybernetics or technology."
+        ],
+        "languages": [
+          "Mandarin",
+          "Classical Chinese"
+        ]
+      },
+      {
+        "id": "chrome_hybrid",
+        "name": "Chrome Disciple",
+        "description": "You bridge the old and new — traditional techniques enhanced by selective augmentation.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "dexterity": 2
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Acrobatics"
+        ],
+        "traits": [
+          "Augmented Reflexes: Your reaction speed is enhanced. +2 to initiative.",
+          "Hybrid Style: You can switch between augmented and traditional combat modes as a bonus action."
+        ],
+        "languages": [
+          "Mandarin",
+          "Street Cant"
+        ]
+      },
+      {
+        "id": "corp_defector",
+        "name": "Corporate Defector",
+        "description": "You left Qilin or another megacorp. You took their training and their secrets. They want both back.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Deception"
+        ],
+        "traits": [
+          "Corporate Insider: You understand corp security, politics, and technology. Advantage on checks to bypass corporate systems.",
+          "Wanted: Corporate bounty hunters are looking for you. This is a disadvantage — and a source of useful intel."
+        ],
+        "languages": [
+          "Mandarin",
+          "Corporate Code",
+          "English"
+        ]
+      },
+      {
+        "id": "undergarden_native",
+        "name": "Undergarden Native",
+        "description": "Born below Level Ten, you grew up in the neon shadows where the old world and new world blur.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Survival"
+        ],
+        "traits": [
+          "Level Runner: You know every shortcut between the Undergarden's levels. Advantage on checks to navigate Neo-Shanghai's vertical maze.",
+          "Street Tough: Proficiency with improvised weapons and advantage on saves against poison (street toxins)."
+        ],
+        "languages": [
+          "Mandarin",
+          "Street Cant"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "wuxia_fighter",
+        "name": "Martial Artist",
+        "description": "Your body is a weapon perfected through decades of training. Chrome can't replicate what you do.",
+        "base_type": "monk",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Athletics",
+          "Stealth",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Martial arts uniform",
+          "Staff or chain whip",
+          "Training weights",
+          "School medallion"
+        ],
+        "features": [
+          {
+            "name": "Qi Strike",
+            "description": "Your unarmed strikes deal 1d6 damage and can affect creatures resistant to non-magical damage. At higher levels, you can channel qi for stunning strikes."
+          },
+          {
+            "name": "Lightfoot",
+            "description": "You can run along walls, balance on wires, and fall safely from heights up to 30 feet. Your movement does not provoke opportunity attacks."
+          }
+        ]
+      },
+      {
+        "id": "netrunner_wuxia",
+        "name": "Digital Ghost",
+        "description": "You fight in cyberspace and meatspace with equal skill. Your code is poetry and your virus is a dragon.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Investigation",
+          "Stealth",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Custom cyberdeck",
+          "Neural interface",
+          "Data spikes (3)",
+          "Portable hologram projector"
+        ],
+        "features": [
+          {
+            "name": "System Breach",
+            "description": "You can hack into electronic systems. Intelligence check vs. system security DC. Success grants access to cameras, doors, records, or communications."
+          },
+          {
+            "name": "Digital Projection",
+            "description": "Once per short rest, you can project a holographic copy of yourself that lasts 1 minute. It can move, speak, and distract but cannot physically interact."
+          }
+        ]
+      },
+      {
+        "id": "chrome_enforcer",
+        "name": "Chrome Enforcer",
+        "description": "Augmented for war. Your body is a weapon system. Your loyalty is to whoever pays — or whoever earns it.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Acrobatics"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "All armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Subdermal armor plating",
+          "Retractable arm blade",
+          "Firearm",
+          "Combat stimulants (3)"
+        ],
+        "features": [
+          {
+            "name": "Combat Augmentation",
+            "description": "Your cybernetic enhancements grant +1 to attack and damage rolls with melee weapons."
+          },
+          {
+            "name": "Adrenaline Surge",
+            "description": "Once per short rest, as a bonus action, activate combat stimulants for 1 minute: +10 speed, advantage on Strength checks, and extra 1d6 damage on melee hits."
+          }
+        ]
+      },
+      {
+        "id": "medicine_practitioner",
+        "name": "Street Healer",
+        "description": "You bridge traditional Chinese medicine and cybernetic repair. Acupuncture needles and soldering irons live in the same bag.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Nature",
+          "Insight",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Medical bag (traditional + tech)",
+          "Acupuncture needles",
+          "Cybernetic repair kit",
+          "Herbal medicines"
+        ],
+        "features": [
+          {
+            "name": "Dual Healing",
+            "description": "You can heal both organic and cybernetic damage. Restore 1d8 + Wisdom modifier HP to a creature, and repair minor cybernetic malfunctions."
+          },
+          {
+            "name": "Qi Diagnosis",
+            "description": "By examining a patient for 1 minute, you can determine all injuries, poisons, cybernetic issues, and qi blockages affecting them."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "qi_cultivation",
+        "name": "Qi Cultivation",
+        "base_skill": "Arcana",
+        "description": "Understanding and manipulating internal energy for martial arts, healing, and spiritual practice."
+      },
+      {
+        "id": "cybertech",
+        "name": "Cybertech",
+        "base_skill": "Investigation",
+        "description": "Installing, repairing, and understanding cybernetic augmentations and electronic systems."
+      },
+      {
+        "id": "level_running",
+        "name": "Level Running",
+        "base_skill": "Acrobatics",
+        "description": "Navigating Neo-Shanghai's vertical urban landscape — parkour, wire-running, and inter-level travel."
+      },
+      {
+        "id": "triad_etiquette",
+        "name": "Triad Etiquette",
+        "base_skill": "Persuasion",
+        "description": "Understanding criminal organization protocols, hierarchy, and the codes of the Undergarden."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

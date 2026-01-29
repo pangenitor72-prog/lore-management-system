@@ -1,0 +1,312 @@
+{
+  "id": "the_conclave",
+  "name": "The Conclave",
+  "description": "A city-state ruled by rival magical houses where assassination is art, alliances shift weekly, and the banquet table is the deadliest battlefield.",
+  "genre": "political_fantasy",
+  "mechanics_genre": "fantasy",
+  "genre_hints": [
+    "fantasy",
+    "drama",
+    "thriller"
+  ],
+  "tone_hints": [
+    "scheming",
+    "elegant",
+    "treacherous"
+  ],
+  "seed_prompt": "A political intrigue fantasy set in a city-state governed by rival magical houses, where power comes from alliances, secrets, and the careful application of both magic and murder.",
+  "lore_content": "Valdris is the richest city in the known world — a marble-and-crystal jewel built on a volcanic island where the geothermal vents fuel both industry and magic. It is governed by the Conclave: seven Great Houses, each commanding a different school of magic, each with a seat on the Council, and each absolutely convinced that the other six are plotting their destruction. They're usually right.\n\nHouse Argentum controls divination and information. Their Matriarch, Lady Seraphina Voss, knows what you had for breakfast and how you voted last Tuesday. She trades in secrets the way merchants trade in silk, and her intelligence network spans three continents. She's the most feared person in Valdris. She is also dying of a wasting illness that her own seers didn't predict.\n\nHouse Ferrum commands war magic — shields, blades of force, and the devastating siege spells that make Valdris's walls unnecessary. Marshal Castellan Drago holds the military seat. He's blunt, honest by Valdris standards, and the only Council member who says what he means. This makes him either refreshingly trustworthy or spectacularly dangerous.\n\nHouse Verdant practices life magic — healing, growth, and the subtle arts of poison. Their Archdruid, Linden Ashwood, runs the city's hospitals and its best assassins. In Valdris, the house that heals you is the house most capable of killing you. Linden smiles easily and never makes threats. He doesn't need to.\n\nHouse Umbra deals in shadow magic and necromancy. Grandmother Nyx hasn't been seen in public for eight years. Her votes arrive by skeletal courier. Some say she's dead and her house is being run by her ghost. Others say she's very much alive and this is simply her idea of delegation.\n\nThe Lesser Houses — dozens of minor magical families — survive by attaching themselves to the Great Houses as vassals, advisors, and expendable pawns. Among them, the Blackwell family has been rising through a combination of strategic marriages and timely deaths in other families. Young Cassian Blackwell has a seat at five different tables and loyalty to none of them.\n\nThe Mask Market is where Valdris's underworld operates. Every patron wears a mask; every deal is anonymous. Here you can hire assassins, buy forbidden spells, and acquire blackmail material. The Market is governed by the Faceless — an organization that enforces one rule: business conducted in masks stays in masks. Breaking this rule is the only capital offense in the Market.\n\nSomeone is killing Council members' heirs. Three in the past month, each by a different method, each leaving a calling card: a glass rose. No House claims responsibility. Every House suspects every other House. The Conclave is one more death away from civil war.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "great_house",
+        "name": "Great House Scion",
+        "description": "Born to one of the seven ruling families. Your name opens doors and paints targets on your back.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "House Authority: You can invoke your House's name for access, resources, and obedience from retainers.",
+          "Political Education: Advantage on Insight checks to detect political motivations and hidden agendas."
+        ],
+        "languages": [
+          "Common",
+          "High Valdric",
+          "One House cipher"
+        ]
+      },
+      {
+        "id": "lesser_house",
+        "name": "Lesser House Climber",
+        "description": "Minor nobility with major ambitions. You navigate between the great powers, serving your own interests.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Insight"
+        ],
+        "traits": [
+          "Social Chameleon: Advantage on Deception checks to pose as a member of a different house or social class.",
+          "Networker: You have contacts in at least three different houses and can arrange meetings with mid-level members."
+        ],
+        "languages": [
+          "Common",
+          "High Valdric"
+        ]
+      },
+      {
+        "id": "guild_member",
+        "name": "Guild Professional",
+        "description": "You serve the city's merchant and artisan guilds. Power isn't just magic — it's money.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Persuasion"
+        ],
+        "traits": [
+          "Trade Connections: You have access to guild resources, workshops, and the commercial intelligence network.",
+          "Practical Magic: You know one cantrip (Intelligence-based) learned from guild training rather than house schooling."
+        ],
+        "languages": [
+          "Common",
+          "Trade Cant"
+        ]
+      },
+      {
+        "id": "mask_market",
+        "name": "Mask Market Regular",
+        "description": "You operate in Valdris's underworld. Behind the mask, everyone is equal. Without it, you're a target.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Deception"
+        ],
+        "traits": [
+          "Anonymous: You have a masked identity in the Market with its own reputation and contacts.",
+          "Shadow Economy: Advantage on checks to acquire illegal goods, hire covert services, or fence stolen items."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "spymaster",
+        "name": "Spymaster",
+        "description": "Information is the only currency that never devalues. You trade in it exclusively.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Deception",
+          "Stealth",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Rapiers",
+          "Hand crossbows"
+        ],
+        "starting_equipment": [
+          "Fine clothing",
+          "Hidden blade",
+          "Cipher book",
+          "Disguise kit"
+        ],
+        "features": [
+          {
+            "name": "Intelligence Network",
+            "description": "You maintain a web of informants. Once per long rest, you can ask the DM one question about a person, place, or event in Valdris and receive a truthful (if incomplete) answer."
+          },
+          {
+            "name": "Sneak Attack",
+            "description": "Once per turn, deal extra 1d6 damage when you have advantage or an ally is adjacent to your target."
+          }
+        ]
+      },
+      {
+        "id": "house_mage",
+        "name": "House Mage",
+        "description": "Trained in your House's magical tradition, you wield arcane power shaped by centuries of refinement.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "History",
+          "Investigation",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Quarterstaffs"
+        ],
+        "starting_equipment": [
+          "Spellbook",
+          "House sigil ring",
+          "Component pouch",
+          "Formal robes"
+        ],
+        "features": [
+          {
+            "name": "School Specialization",
+            "description": "Choose a magical school matching your House. Spells from that school are cast at +1 to their save DC."
+          },
+          {
+            "name": "Arcane Ward",
+            "description": "You can detect magical surveillance within 30 feet and dispel scrying effects targeting you."
+          }
+        ]
+      },
+      {
+        "id": "duelist",
+        "name": "Honor Blade",
+        "description": "When politics fail, disputes are settled by steel. You are the steel.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Acrobatics",
+          "Athletics",
+          "Perception",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Rapier",
+          "Dagger",
+          "Leather armor",
+          "Dueling gloves"
+        ],
+        "features": [
+          {
+            "name": "Riposte",
+            "description": "When a creature misses you with a melee attack, you can use your reaction to make a melee attack against that creature."
+          },
+          {
+            "name": "Duelists Focus",
+            "description": "When fighting a single opponent with no other enemies within 5 feet of you, you gain +2 to AC and attack rolls."
+          }
+        ]
+      },
+      {
+        "id": "diplomat",
+        "name": "Courtier",
+        "description": "Words, alliances, and careful promises. Your weapon is the conversation nobody else hears.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Insight",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Rapiers"
+        ],
+        "starting_equipment": [
+          "Court attire (multiple sets)",
+          "Seal ring",
+          "Concealed dagger",
+          "Correspondence kit"
+        ],
+        "features": [
+          {
+            "name": "Silver Tongue",
+            "description": "Once per short rest, you can charm a non-hostile creature for 1 hour (Wisdom save DC 8 + proficiency + Cha). They regard you as a trusted friend."
+          },
+          {
+            "name": "Political Leverage",
+            "description": "When you learn a secret about someone, you can invoke it in conversation. They have disadvantage on Deception and Persuasion checks against you until the information becomes public."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "house_politics",
+        "name": "House Politics",
+        "base_skill": "Insight",
+        "description": "Understanding the relationships, rivalries, and alliances between Valdris's Great Houses."
+      },
+      {
+        "id": "poison_craft",
+        "name": "Poison Craft",
+        "base_skill": "Medicine",
+        "description": "Identifying, creating, and administering poisons — or detecting and treating them."
+      },
+      {
+        "id": "cipher_work",
+        "name": "Cipher Work",
+        "base_skill": "Investigation",
+        "description": "Creating and breaking codes, encrypted messages, and magical concealment."
+      },
+      {
+        "id": "court_etiquette",
+        "name": "Court Etiquette",
+        "base_skill": "Persuasion",
+        "description": "The intricate social rules of Valdris's political court — what to say, when, and to whom."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

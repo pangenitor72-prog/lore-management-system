@@ -1,0 +1,335 @@
+{
+  "id": "jeweled_throne",
+  "name": "The Jeweled Throne",
+  "description": "A Mahabharata-inspired epic where divine politics play out through mortal champions, dharma binds like fate, and the great war draws near.",
+  "genre": "mythic_india",
+  "mechanics_genre": "mythology",
+  "genre_hints": [
+    "mythology",
+    "adventure",
+    "drama"
+  ],
+  "tone_hints": [
+    "epic",
+    "philosophical",
+    "passionate"
+  ],
+  "seed_prompt": "An Indian mythology-inspired epic where divine champions navigate dharma, karma, and cosmic warfare in a world where gods walk openly and fate is both binding and negotiable.",
+  "lore_content": "The Five Kingdoms spread across a subcontinent of impossible beauty — golden plains, mountains that touch the realm of the gods, and rivers that flow with the distilled essence of dharma itself. For generations, the kingdoms have maintained an uneasy peace through marriage alliances and trade agreements. That peace is ending.\n\nPrincess Amara of Hastinara is the rightful heir to the Jeweled Throne — the seat that commands the allegiance of all five kingdoms. Her uncle, Regent Devak, has held the throne 'in trust' since her father's death fifteen years ago. She is now of age. He shows no sign of surrendering power. The law is on her side. His army is on his.\n\nRegent Devak is not a villain. He took power because the kingdom needed stability, and he has ruled well. His roads are safe, his granaries are full, and his justice is fair. He genuinely believes Amara is not ready to rule. He may be right. The problem is that his sons believe the throne is theirs by right, and they are willing to do what their father is not.\n\nGuru Vidya teaches at the Academy of Wisdom in the mountain city of Gyanapur. She has trained princes and warriors for forty years, and her students now sit on every throne. She is bound by dharma to teach anyone who asks, regardless of which side they serve. This neutrality is becoming impossible to maintain.\n\nArjun the Archer carries a divine bow gifted by Indra, god of storms. He can hit a target through the eye of a moving fish by watching its reflection. He is Amara's champion and her closest friend. He is also terrified of the war he sees coming, because his dharma as a warrior conflicts with his dharma as a human being who does not want to kill people he trained alongside.\n\nThe Naga Princess, Sarissa, rules the underwater kingdom beneath Lake Vrinda. Her people control the gemstone trade and maintain the water temples that keep the rivers flowing. She has remained neutral in human politics — until Regent Devak's eldest son attempted to drain the lake for irrigation. Now she is choosing a side, and the armies she commands include creatures that make human soldiers irrelevant.\n\nLord Krishna of Dwaraka is an avatar of Vishnu, though he presents himself merely as a wise advisor with a fondness for butter and flute music. He has offered his counsel to both sides. His advice to Amara was: 'Fight only when there is no other path, and when you fight, fight without hatred.' His advice to Devak is unknown. He is playing a game on a board that mortals cannot see.\n\nThe astrologers have read the stars. The conjunction of Rahu and Ketu is three months away — an alignment that last occurred during the great war that destroyed the previous age of civilization. Whether this alignment causes war or merely predicts it is a theological debate that may become academic very quickly.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "kshatriya",
+        "name": "Kshatriya (Warrior Caste)",
+        "description": "Born to fight, trained to lead. Your dharma is the protection of the realm.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "History"
+        ],
+        "traits": [
+          "Warrior's Honor: Advantage on saves against fear and charm effects in combat.",
+          "Noble Bearing: Advantage on Charisma checks when dealing with other warriors or nobility."
+        ],
+        "languages": [
+          "Common",
+          "Sanskrit"
+        ]
+      },
+      {
+        "id": "brahmin",
+        "name": "Brahmin (Scholar-Priest)",
+        "description": "Keeper of sacred knowledge and ritual. Your dharma is wisdom and truth.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Religion",
+          "Arcana"
+        ],
+        "traits": [
+          "Sacred Learning: You can read and perform vedic rituals. Advantage on Religion and Arcana checks.",
+          "Respected: Even enemies hesitate to harm a brahmin. Hostile creatures must make a Wisdom save (DC 13) to attack you first."
+        ],
+        "languages": [
+          "Common",
+          "Sanskrit",
+          "Devanagari"
+        ]
+      },
+      {
+        "id": "vaishya",
+        "name": "Merchant Traveler",
+        "description": "The trade routes are your home. You've seen more of the world than any warrior or priest.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Insight"
+        ],
+        "traits": [
+          "Trade Networks: You have contacts in every kingdom and access to goods, information, and safe houses.",
+          "Worldly: Proficiency in two additional languages and advantage on checks to barter or appraise."
+        ],
+        "languages": [
+          "Common",
+          "Sanskrit",
+          "Two trade languages"
+        ]
+      },
+      {
+        "id": "naga_blood",
+        "name": "Naga-Touched",
+        "description": "You carry the blood of the serpent people. The water calls to you and the land fears you.",
+        "base_type": "half-elf",
+        "ability_bonuses": {
+          "constitution": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Nature",
+          "Intimidation"
+        ],
+        "traits": [
+          "Water Affinity: You can breathe underwater and swim at full speed.",
+          "Serpent's Gaze: Once per long rest, you can lock eyes with a creature. They must make a Wisdom save (DC 12) or be paralyzed for 1 round."
+        ],
+        "languages": [
+          "Common",
+          "Naga"
+        ]
+      },
+      {
+        "id": "ascetic",
+        "name": "Forest Ascetic",
+        "description": "You renounced the world to seek truth. The world found you anyway.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Medicine"
+        ],
+        "traits": [
+          "Tapas (Austerity): Your spiritual discipline grants resistance to fire damage and advantage on Constitution saves.",
+          "Detachment: You need only half the normal food and water, and you can meditate instead of sleeping."
+        ],
+        "languages": [
+          "Common",
+          "Sanskrit",
+          "Beast Speech"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "divine_champion",
+        "name": "Divine Champion",
+        "description": "A god has chosen you as their instrument. Your weapons carry divine fire and your cause is cosmic.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Religion",
+          "Intimidation",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "All armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Divine weapon (longsword or bow)",
+          "Chain mail",
+          "Shield bearing divine sigil",
+          "Prayer beads"
+        ],
+        "features": [
+          {
+            "name": "Divine Smite",
+            "description": "When you hit with a melee weapon, you can expend a spell slot to deal extra radiant damage: 2d8 for a 1st-level slot, +1d8 per slot level."
+          },
+          {
+            "name": "Aura of Dharma",
+            "description": "You and allies within 10 feet have advantage on saving throws against being frightened."
+          }
+        ]
+      },
+      {
+        "id": "guru",
+        "name": "Guru (Wisdom Keeper)",
+        "description": "You channel divine knowledge through mantra and meditation. Your power is the word itself.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Religion",
+          "Medicine",
+          "Insight",
+          "History"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Sacred texts",
+          "Meditation mat",
+          "Ritual implements",
+          "Walking staff"
+        ],
+        "features": [
+          {
+            "name": "Mantra of Power",
+            "description": "By chanting a sacred mantra (1 action), you can heal (1d8 + Wisdom), bless (advantage on next roll), or ward (resistance to one damage type for 1 minute)."
+          },
+          {
+            "name": "Karma Sight",
+            "description": "You can perceive the karmic weight of a creature — whether they have done great good, great evil, or are in balance."
+          }
+        ]
+      },
+      {
+        "id": "celestial_archer",
+        "name": "Celestial Archer",
+        "description": "Your bow channels divine energy. Each arrow carries the force of dharma — or its judgment.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Perception",
+          "Athletics",
+          "Stealth",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Divine bow",
+          "Quiver of celestial arrows (20)",
+          "Leather armor",
+          "Arm guard"
+        ],
+        "features": [
+          {
+            "name": "Astral Arrow",
+            "description": "Once per short rest, you can infuse an arrow with divine energy. It deals an extra 2d8 radiant damage and cannot miss (auto-hit within range)."
+          },
+          {
+            "name": "Eye of Truth",
+            "description": "You can see through illusions and magical disguises within 60 feet."
+          }
+        ]
+      },
+      {
+        "id": "maya_wielder",
+        "name": "Maya Wielder (Illusionist)",
+        "description": "You command maya — the divine art of illusion. Reality is a suggestion you can overrule.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Deception",
+          "Performance",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Quarterstaffs"
+        ],
+        "starting_equipment": [
+          "Spellbook of Illusions",
+          "Component pouch (sacred materials)",
+          "Mirror of Truth",
+          "Silk robes"
+        ],
+        "features": [
+          {
+            "name": "Veil of Maya",
+            "description": "You can create a perfect illusion within 30 feet that engages all senses. It lasts 10 minutes or until touched. Creatures interacting with it make an Intelligence save against your spell DC."
+          },
+          {
+            "name": "Reality Slip",
+            "description": "Once per long rest, you can briefly unmake reality in a 10-foot radius — all creatures must make a Wisdom save or be stunned for 1 round as they question what is real."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "dharma_lore",
+        "name": "Dharma Lore",
+        "base_skill": "Religion",
+        "description": "Understanding cosmic law, divine duty, karmic consequence, and the obligations of one's station."
+      },
+      {
+        "id": "astra_knowledge",
+        "name": "Astra Knowledge",
+        "base_skill": "Arcana",
+        "description": "Knowledge of divine weapons, celestial artifacts, and the mantras required to invoke them."
+      },
+      {
+        "id": "court_intrigue",
+        "name": "Court Intrigue",
+        "base_skill": "Insight",
+        "description": "Navigating the complex politics of the Five Kingdoms and reading the intentions of rulers."
+      },
+      {
+        "id": "vedic_chanting",
+        "name": "Vedic Chanting",
+        "base_skill": "Performance",
+        "description": "The precise recitation of sacred verses for ritual, healing, and divine invocation."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

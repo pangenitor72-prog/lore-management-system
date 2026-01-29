@@ -1,0 +1,299 @@
+{
+  "id": "green_chapel",
+  "name": "The Green Chapel",
+  "description": "Rural England, 1973. A village with traditions older than Christianity. The locals are welcoming. Too welcoming.",
+  "genre": "folk_horror",
+  "mechanics_genre": "horror",
+  "genre_hints": [
+    "horror",
+    "mystery",
+    "drama"
+  ],
+  "tone_hints": [
+    "unsettling",
+    "pastoral",
+    "dread"
+  ],
+  "seed_prompt": "A folk horror setting in a rural English village where ancient pagan traditions hide beneath a veneer of quaint charm, and the land itself has expectations.",
+  "lore_content": "Aldham Green is the kind of village that appears on postcards — thatched roofs, a stone church, a pub called The Green Man, and rolling countryside dotted with sheep. It's not on the main road to anywhere. Visitors arrive by accident and are always made extraordinarily welcome. Leaving is more complicated than it should be.\n\nMargaret Hale runs the village post office and serves as the unofficial welcome committee. She's warm, generous, and has a gift for making newcomers feel at home. She also keeps a detailed ledger of every person who enters the village, their physical characteristics, and their date of arrival. The ledger goes back to 1847. The handwriting doesn't change.\n\nReverend Thomas Fell conducts services at St. Brigid's every Sunday. His sermons are pleasant if unremarkable. The stained glass windows, however, depict scenes that have nothing to do with Christianity — figures with antlers, women emerging from trees, a great fire with something dancing in it. When asked about them, the Reverend smiles and says they're 'local tradition.'\n\nOld Cob hasn't spoken a word in twenty years. He tends the standing stones on Barrow Hill with obsessive care — clearing moss, realigning fallen stones, pouring libations of milk and honey at the solstices. The village pays him a modest wage from the parish fund. No one questions why.\n\nDr. Sarah Keane arrived six months ago from London to take over the village surgery after the previous doctor retired suddenly. She's noticed statistical anomalies — the village has zero childhood mortality, zero cancer, and an average lifespan twenty years above the national mean. Her inquiries about the village's health records before 1950 have been met with blank looks and changed subjects.\n\nThe May Queen is chosen each spring from among the village's young women. It's considered a great honor. The ceremony involves a crown of hawthorn, a procession to the Green Chapel in the woods, and a night-long vigil. Every May Queen returns changed — quieter, more content, strangely reluctant to discuss what happened. None of them have ever left the village.\n\nThe Green Chapel itself is a structure of living trees that have grown together to form walls and a roof. Inside, the floor is bare earth. In the center grows a single oak that shouldn't be able to survive without sunlight. Its roots go deeper than any tree should. At certain times of year, the earth around it is warm to the touch.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "outsider_folk",
+        "name": "Outsider",
+        "description": "You've come to Aldham Green from outside. The village is delighted to have you. You should ask why.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Perception"
+        ],
+        "traits": [
+          "Urban Perspective: Advantage on checks to notice things that don't fit rural normalcy.",
+          "Skeptic: Advantage on saving throws against charm effects."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "village_native",
+        "name": "Village Native",
+        "description": "Born here, raised here. You know the traditions. You're starting to question them.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Nature",
+          "Persuasion"
+        ],
+        "traits": [
+          "Local Trust: Village NPCs are naturally friendly toward you and share information more readily.",
+          "Tradition Knowledge: You know the village's customs and calendar, including which traditions are 'for show' and which ones matter."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "returning_child",
+        "name": "Prodigal Return",
+        "description": "You left Aldham Green years ago. Something has brought you back. The village remembers you. It's been waiting.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "History"
+        ],
+        "traits": [
+          "Memory Gaps: You don't remember everything about your childhood here. Occasionally, memories surface unbidden.",
+          "Between Worlds: You have resistance to the village's supernatural influence but are more sensitive to its manifestations."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "academic",
+        "name": "Academic Researcher",
+        "description": "You came to study the village's folklore. The folklore is studying you back.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Arcana"
+        ],
+        "traits": [
+          "Research Skills: Advantage on Investigation checks when examining documents, records, or archaeological sites.",
+          "Folklore Knowledge: You can identify ritual elements, symbolic patterns, and mythological references."
+        ],
+        "languages": [
+          "English",
+          "Latin",
+          "Old English"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "investigator_folk",
+        "name": "Investigator",
+        "description": "Questions, evidence, logic. Tools that work perfectly well — until they don't.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Perception",
+          "Stealth",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Camera",
+          "Notebook",
+          "Lockpicks",
+          "Torch"
+        ],
+        "features": [
+          {
+            "name": "Evidence Collection",
+            "description": "When you examine a scene, you automatically notice physical evidence others would miss. Advantage on Investigation checks at locations."
+          },
+          {
+            "name": "Pattern Recognition",
+            "description": "After observing a recurring event or behavior three times, you can predict when and where it will happen next."
+          }
+        ]
+      },
+      {
+        "id": "keeper_folk",
+        "name": "Tradition Keeper",
+        "description": "You know the old ways. The question is whether you serve them or fight them.",
+        "base_type": "druid",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Nature",
+          "Religion",
+          "Medicine",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor (non-metal)"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Herb garden shears",
+          "Book of folk remedies",
+          "Sickle",
+          "Hawthorn charm"
+        ],
+        "features": [
+          {
+            "name": "Old Magic",
+            "description": "You can perform folk rituals — protection charms, healing poultices, divination by fire or water. These work reliably within the village's boundaries."
+          },
+          {
+            "name": "Earth Sense",
+            "description": "You can feel disturbances in the natural order within 1 mile. You know when something unnatural is happening to the land."
+          }
+        ]
+      },
+      {
+        "id": "rationalist",
+        "name": "Rationalist",
+        "description": "There's an explanation for everything. You're going to find it. Even if it finds you first.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Medicine",
+          "History",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Medical bag",
+          "Scientific instruments",
+          "Journal",
+          "Pocket knife"
+        ],
+        "features": [
+          {
+            "name": "Analytical Mind",
+            "description": "When you encounter a supernatural phenomenon, you can study it for 10 minutes to determine its mechanism, triggering conditions, and potential weaknesses."
+          },
+          {
+            "name": "Mental Fortitude",
+            "description": "Your commitment to reason gives you advantage on saves against fear and madness effects."
+          }
+        ]
+      },
+      {
+        "id": "survivor_folk",
+        "name": "Survivor",
+        "description": "You don't need to understand what's happening. You just need to get through it alive.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Constitution",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Perception",
+          "Survival",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Heavy coat",
+          "Axe",
+          "Rope (50 ft)",
+          "First aid kit"
+        ],
+        "features": [
+          {
+            "name": "Will to Live",
+            "description": "When reduced to 0 hit points, you can make a DC 10 Constitution save to drop to 1 hit point instead. Once per long rest."
+          },
+          {
+            "name": "Improvised Defense",
+            "description": "You can use any object as a weapon without penalty and can quickly barricade doors or create defensive positions."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "folklore",
+        "name": "Folklore",
+        "base_skill": "History",
+        "description": "Knowledge of folk traditions, pagan customs, and the symbolic language of rural ritual."
+      },
+      {
+        "id": "herbalism",
+        "name": "Herbalism",
+        "base_skill": "Nature",
+        "description": "Identifying and using plants for healing, protection, and other traditional purposes."
+      },
+      {
+        "id": "reading_signs",
+        "name": "Reading Signs",
+        "base_skill": "Perception",
+        "description": "Interpreting natural omens, weather patterns, and the subtle warnings the countryside provides."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

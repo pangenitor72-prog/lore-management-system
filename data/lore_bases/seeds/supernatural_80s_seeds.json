@@ -1,0 +1,302 @@
+{
+  "id": "static",
+  "name": "Static",
+  "description": "Millbrook, Indiana, 1986. Kids on bikes, arcade cabinets, walkie-talkies — and something that opened up in the woods that the adults refuse to see.",
+  "genre": "supernatural_80s",
+  "mechanics_genre": "horror",
+  "genre_hints": [
+    "horror",
+    "mystery",
+    "adventure"
+  ],
+  "tone_hints": [
+    "nostalgic",
+    "creepy",
+    "adventurous"
+  ],
+  "seed_prompt": "A 1980s supernatural horror-adventure where kids in a small Midwestern town investigate strange phenomena that adults refuse to acknowledge.",
+  "lore_content": "Millbrook, Indiana sits in corn country — flat land, big sky, and a Main Street with a diner, a hardware store, and a video rental place. Population 4,200. Nothing ever happens here. That's what the adults say. The kids know better.\n\nIt started with the TV static. Channel 3 went off the air six weeks ago, but if you tune to it at exactly 11:47 PM, you hear something that isn't static. It sounds like voices speaking backwards. Kevin Marsh recorded it on his boombox and played it in reverse. What it said made him stop sleeping with the lights off.\n\nDeputy Linda Vasquez is the only cop in Millbrook who takes the kids seriously. She's noticed things too — the power fluctuations that follow no pattern, the dogs that howl in unison every third night, the way compasses spin when you're near the old water tower. She filed a report with the county. It was returned with 'insufficient evidence' stamped on it.\n\nMr. Bellweather has run the Millbrook Public Library for thirty years. He has every local newspaper going back to 1891. He knows the town's history better than anyone, including the parts nobody talks about — the military installation that operated in the woods from 1953 to 1971, the families that moved away without selling their homes, and the fact that the current mayor is the grandson of the man who signed the original military lease.\n\nThe Arcade — officially 'Galactic Games' — is the kids' headquarters. Owner Pete 'Pixel' Kowalski doesn't ask questions about why they need the back room, where the broken Pac-Man machine has been converted into a radio scanner. Pete was an Army signals operator in Vietnam. He's heard the transmission from Channel 3. He recognizes the frequency.\n\nCoach Davis runs the middle school athletic program and is universally beloved. He's also been visiting the woods every weekend, alone, for the past three months. He comes back with dirt under his nails and a look on his face that the kids call 'the empty.' When asked where he's been, he smiles and says 'just walking.' His eyes don't match the smile.\n\nThe woods north of town — Briar Hollow — have always been off-limits. The official reason is unstable ground from old mining operations. But the military installed a chain-link fence around a specific clearing in 1962, and that fence is still maintained. By whom is unclear. Inside the fence, the trees grow in a perfect spiral. At the center, the ground is warm. Sometimes, at dusk, lights rise from the clearing like slow-motion fireworks and drift toward town.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "townie_kid",
+        "name": "Townie Kid",
+        "description": "Born and raised in Millbrook. You know every shortcut, every hiding spot, and every adult who can be avoided.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Perception"
+        ],
+        "traits": [
+          "Home Turf: Advantage on checks to navigate Millbrook and its surroundings.",
+          "Kid Network: You have friends across town who can pass messages, keep lookout, or provide alibis."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "new_kid",
+        "name": "New Kid",
+        "description": "Your family just moved here. Fresh eyes see things the locals have learned to ignore.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Insight"
+        ],
+        "traits": [
+          "Outsider's Eye: Advantage on Perception checks to notice things that seem 'wrong' or out of place.",
+          "Adaptable: You learn quickly. Gain proficiency in one additional skill of your choice."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "weird_kid",
+        "name": "Weird Kid",
+        "description": "You've always been different. You see things others don't. This town sees you back.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Perception"
+        ],
+        "traits": [
+          "Sixth Sense: You can feel supernatural presences within 60 feet as a tingling sensation.",
+          "Strange Knowledge: You sometimes know things you shouldn't. Once per long rest, the DM provides a cryptic clue about a current mystery."
+        ],
+        "languages": [
+          "English"
+        ]
+      },
+      {
+        "id": "tough_kid",
+        "name": "Tough Kid",
+        "description": "Wrong side of the tracks, chip on your shoulder. You've been fighting your whole life. Now there's something worth fighting.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Intimidation"
+        ],
+        "traits": [
+          "Scrapper: Proficiency with improvised weapons.",
+          "Never Back Down: Advantage on saves against fear effects."
+        ],
+        "languages": [
+          "English"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "brain",
+        "name": "The Brain",
+        "description": "You read everything, remember everything, and know that knowledge is the only weapon that matters.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "History",
+          "Arcana",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Encyclopedia set (portable)",
+          "Flashlight",
+          "Walkie-talkie",
+          "Notebook and pen"
+        ],
+        "features": [
+          {
+            "name": "I Read About This",
+            "description": "Once per short rest, you can declare you've read about the current situation. Make an Intelligence check to recall useful information."
+          },
+          {
+            "name": "Puzzle Solver",
+            "description": "Advantage on checks to decipher codes, solve puzzles, or understand strange symbols and patterns."
+          }
+        ]
+      },
+      {
+        "id": "scout",
+        "name": "The Scout",
+        "description": "You're fast, you're quiet, and you go places other kids won't.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Acrobatics",
+          "Perception",
+          "Sleight of Hand"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Slingshot"
+        ],
+        "starting_equipment": [
+          "Bike",
+          "Slingshot",
+          "Lockpick set (homemade)",
+          "Walkie-talkie"
+        ],
+        "features": [
+          {
+            "name": "Quick Escape",
+            "description": "When you take the Dash action, you can move through spaces occupied by larger creatures and ignore difficult terrain."
+          },
+          {
+            "name": "Recon",
+            "description": "After observing a location for 5 minutes, you can identify all entrances, exits, and the movement patterns of anyone inside."
+          }
+        ]
+      },
+      {
+        "id": "heart",
+        "name": "The Heart",
+        "description": "You keep the group together. When things get scary, you're the one who says 'we can do this.'",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Insight",
+          "Performance",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "First aid kit",
+          "Walkie-talkie",
+          "Friendship bracelet (gives courage)",
+          "Candy stash"
+        ],
+        "features": [
+          {
+            "name": "Pep Talk",
+            "description": "As a bonus action, give an ally within 30 feet a pep talk. They gain advantage on their next save against fear or gain 1d6 temporary hit points."
+          },
+          {
+            "name": "Empathy",
+            "description": "You can sense the emotional state of any creature within 30 feet. Advantage on Insight checks."
+          }
+        ]
+      },
+      {
+        "id": "tinkerer",
+        "name": "The Tinkerer",
+        "description": "You build things. Radios, gadgets, traps. If it has parts, you can make it do something new.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Perception",
+          "Nature",
+          "Sleight of Hand"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Tool kit",
+          "Modified walkie-talkie (extended range)",
+          "Spare parts bag",
+          "Homemade EMF detector"
+        ],
+        "features": [
+          {
+            "name": "Gadgeteer",
+            "description": "During a short rest, you can build a useful gadget from available materials: smoke bomb, alarm tripwire, signal booster, or light source."
+          },
+          {
+            "name": "Signal Tracker",
+            "description": "You can detect and follow electromagnetic anomalies using your homemade equipment. Advantage on checks to locate supernatural energy sources."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "urban_exploration",
+        "name": "Urban Exploration",
+        "base_skill": "Stealth",
+        "description": "Sneaking into restricted areas, abandoned buildings, and places adults don't want you to go."
+      },
+      {
+        "id": "electronics",
+        "name": "Electronics",
+        "base_skill": "Investigation",
+        "description": "Building, modifying, and repairing radios, computers, and homemade detection equipment."
+      },
+      {
+        "id": "local_history",
+        "name": "Local History",
+        "base_skill": "History",
+        "description": "Knowledge of Millbrook's past, its secrets, and the things the town records don't mention."
+      },
+      {
+        "id": "bike_handling",
+        "name": "Bike Handling",
+        "base_skill": "Acrobatics",
+        "description": "High-speed riding, jumps, tight turns, and the art of the quick getaway on two wheels."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

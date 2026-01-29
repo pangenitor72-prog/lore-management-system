@@ -1,0 +1,308 @@
+{
+  "id": "long_game",
+  "name": "The Long Game",
+  "description": "A contemporary global underworld where organized crime operates across continents, every relationship is leverage, and the law is always three steps behind.",
+  "genre": "modern_underworld",
+  "mechanics_genre": "modern",
+  "genre_hints": [
+    "modern",
+    "thriller",
+    "drama"
+  ],
+  "tone_hints": [
+    "tense",
+    "calculating",
+    "visceral"
+  ],
+  "seed_prompt": "A modern organized crime drama spanning multiple cities where syndicates clash, loyalty is currency, and survival means staying useful to dangerous people.",
+  "lore_content": "The money moves through shell companies in the Caymans, gets laundered through real estate in Dubai, and emerges clean enough to buy senators in Washington. The product — drugs, weapons, data, people — follows different routes but the same principle: every transaction creates a debt, and debts are the real currency of the underworld.\n\nVictor Salazar runs the Salazar network from a penthouse in Miami that he never leaves. Former Colombian military intelligence, he built his organization by being smarter than the cartels and less violent than the Russians. His specialty is logistics — moving anything anywhere without it being traced. He doesn't touch the product. He just makes it disappear and reappear where it's wanted. His weakness is his daughter, Isabella, who wants nothing to do with the business.\n\nNatalya Volkov inherited the Volkov bratva from her father after his assassination in a Moscow bathhouse. She's thirty-one, speaks five languages, and has the coldest eyes in any room she enters. The bratva controls cybercrime operations across Eastern Europe, and Natalya has been modernizing — less street violence, more digital extortion. The old guard resents her. The new recruits worship her.\n\nDetective Marcus Cole works Organized Crime for the NYPD. He's good — too good, which is why the brass keeps him on a leash. He's identified connections between six international syndicates that his supervisors don't want confirmed. He suspects at least two people in his department are on a payroll that isn't the city's.\n\nThe Accountant is known only by that name. A forensic financial genius who works for whoever pays, managing the money flows between organizations. The Accountant has never been seen in person — all communication happens through encrypted channels and dead drops. Rumor says the Accountant is former intelligence. Other rumors say there is no single Accountant — it's a team. Nobody knows which rumor is true.\n\nJin-Ho Park operates between Seoul, Tokyo, and Los Angeles, bridging the Korean and Japanese underworlds through a legitimate electronics import business. He's charming, cultured, and maintains relationships with every organization as a trusted neutral party. He's also building something of his own — a data brokerage that could make all traditional crime obsolete.\n\nSomething new is happening. Four mid-level operators from different syndicates have been killed in the past month — each in a different city, each by a method specific to a rival organization. Someone is starting a war and making it look like everyone else's fault. The smart money says it's a new player. The smart money is scared.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "family_business",
+        "name": "Family Business",
+        "description": "Born into the life. The organization isn't your employer — it's your family, literally.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Intimidation",
+          "Insight"
+        ],
+        "traits": [
+          "Blood Loyalty: You have deep connections within your organization. Advantage on Persuasion checks with family members.",
+          "Raised in the Game: You can spot surveillance, tails, and undercover operatives with advantage on Perception checks."
+        ],
+        "languages": [
+          "English",
+          "One family language"
+        ]
+      },
+      {
+        "id": "recruited",
+        "name": "Recruited Talent",
+        "description": "You had a useful skill. Someone noticed. Now you're in too deep to walk away.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Stealth"
+        ],
+        "traits": [
+          "Specialist: You have expertise in one specific area (hacking, forgery, chemistry, etc.). Advantage on checks in your specialty.",
+          "Exit Strategy: You always have a go-bag packed and an emergency escape plan."
+        ],
+        "languages": [
+          "English",
+          "One additional language"
+        ]
+      },
+      {
+        "id": "undercover",
+        "name": "Undercover",
+        "description": "You're law enforcement — or you were. The line between your cover and your real life blurred a long time ago.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Perception"
+        ],
+        "traits": [
+          "Deep Cover: You have a fully established criminal identity with years of history.",
+          "Dual Loyalty: You can access both law enforcement and criminal resources — but using either risks exposing you to the other."
+        ],
+        "languages": [
+          "English",
+          "One additional language"
+        ]
+      },
+      {
+        "id": "street_soldier",
+        "name": "Street Soldier",
+        "description": "You came up from nothing. Every scar is a promotion. Every breath is earned.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Intimidation"
+        ],
+        "traits": [
+          "Hard Knocks: Gain +3 hit points.",
+          "Respect: In street-level criminal environments, you are treated as someone not to be trifled with."
+        ],
+        "languages": [
+          "English"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "operator",
+        "name": "The Operator",
+        "description": "You do the work nobody talks about. Wet work, debt collection, problem elimination.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Stealth",
+          "Perception",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Firearms"
+        ],
+        "starting_equipment": [
+          "Concealed body armor",
+          "Pistol with suppressor",
+          "Combat knife",
+          "Burner phone"
+        ],
+        "features": [
+          {
+            "name": "Professional",
+            "description": "You deal an extra 1d6 damage to surprised creatures. You have advantage on initiative rolls."
+          },
+          {
+            "name": "Clean Scene",
+            "description": "You know how to eliminate evidence. After an encounter, you can spend 10 minutes making a location look undisturbed."
+          }
+        ]
+      },
+      {
+        "id": "money_man",
+        "name": "The Money Man",
+        "description": "You make dirty money clean and clean money invisible. Your spreadsheets are more dangerous than any weapon.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Deception",
+          "Insight",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Encrypted laptop",
+          "Multiple burner phones",
+          "Offshore account details",
+          "Expensive suit"
+        ],
+        "features": [
+          {
+            "name": "Follow the Money",
+            "description": "Given access to financial records, you can trace money flows to their source. Intelligence check DC varies by complexity."
+          },
+          {
+            "name": "Creative Accounting",
+            "description": "You can create convincing financial documents, shell companies, and money trails that withstand standard scrutiny."
+          }
+        ]
+      },
+      {
+        "id": "fixer_modern",
+        "name": "The Fixer",
+        "description": "You know everyone. You connect people who need things with people who have things. Your Rolodex is worth more than most bank vaults.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Insight",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Pistols"
+        ],
+        "starting_equipment": [
+          "Multiple phones",
+          "Contact book (encrypted)",
+          "Concealed pistol",
+          "Tailored wardrobe"
+        ],
+        "features": [
+          {
+            "name": "I Know a Guy",
+            "description": "Once per long rest, you can declare you know someone relevant to the current situation — a contact who can provide information, equipment, or access."
+          },
+          {
+            "name": "Favor Economy",
+            "description": "You track favors owed. When someone owes you, you can call it in for a significant service. When you owe someone, they can do the same."
+          }
+        ]
+      },
+      {
+        "id": "hacker_modern",
+        "name": "The Hacker",
+        "description": "The real crimes happen in cyberspace. You move through networks like water through pipes.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Stealth",
+          "Deception",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Custom laptop",
+          "Signal interceptor",
+          "USB exploit drives (5)",
+          "Hoodie"
+        ],
+        "features": [
+          {
+            "name": "System Access",
+            "description": "You can hack into digital systems — security cameras, databases, communications, financial records. Intelligence check vs. system security DC."
+          },
+          {
+            "name": "Digital Ghost",
+            "description": "You can mask your digital presence. Your hacking attempts are untraceable for 1 hour per Intelligence modifier."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "criminal_networks",
+        "name": "Criminal Networks",
+        "base_skill": "Insight",
+        "description": "Understanding the structure, territories, and relationships between organized crime groups."
+      },
+      {
+        "id": "money_laundering",
+        "name": "Money Laundering",
+        "base_skill": "Deception",
+        "description": "Moving money through legitimate businesses to obscure its criminal origins."
+      },
+      {
+        "id": "surveillance",
+        "name": "Surveillance",
+        "base_skill": "Perception",
+        "description": "Following targets, setting up observation posts, and counter-surveillance techniques."
+      },
+      {
+        "id": "arms_knowledge",
+        "name": "Arms Knowledge",
+        "base_skill": "Investigation",
+        "description": "Identifying, acquiring, and maintaining weapons and tactical equipment."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}

@@ -1,0 +1,337 @@
+{
+  "id": "pale_dominion",
+  "name": "The Pale Dominion",
+  "description": "A dying world where gods are corpses and their blood has poisoned the land. Survival is the only virtue.",
+  "genre": "dark_fantasy",
+  "mechanics_genre": "dark_fantasy",
+  "genre_hints": [
+    "dark_fantasy",
+    "horror",
+    "adventure"
+  ],
+  "tone_hints": [
+    "bleak",
+    "brutal",
+    "atmospheric"
+  ],
+  "seed_prompt": "A dark fantasy world of cursed lands, monstrous transformations, and desperate survival where magic always exacts a terrible price.",
+  "lore_content": "The gods died screaming three centuries ago. Their bodies fell across the continent, and where divine blood soaked the earth, the Blight took root. Now the Pale spreads a little further each year — a creeping corruption that twists flesh, stone, and reason into something unrecognizable.\n\nThe Ashen Keep is the last true stronghold. Commander Sera Voss holds it through discipline, rationing, and a willingness to make decisions that haunt her. She lost her arm to a Blighted wolf and replaced it with a prosthetic forged from godbone — the only material the corruption can't touch. The arm works, but she hears whispers from it when she sleeps.\n\nAlchemist Dren operates the only functioning Refinery, distilling godblood into Ichor — the substance that fuels what passes for magic in this broken world. Every drop extends life, enhances strength, or wards off the Blight. Every drop also erodes the user's humanity. Dren has used too much. His eyes have turned to mercury and his skin is porcelain-hard. He insists he's fine.\n\nThe Hollowed are what's left of people the Blight has taken. Not dead — transformed. They wander the wasteland in shapes that mock their former selves, drawn to the living by some remnant of memory. Putting one down feels like murder. Some of them still try to speak.\n\nMother Blackthorn leads a cult that worships the Blight itself, calling it a chrysalis for a new world. Her followers willingly drink corrupted water and eat tainted meat, believing transformation is evolution. Disturbingly, some of them have survived the process with their minds intact — and abilities no human should possess.\n\nThe Cartographer, known only by his title, maps the safe paths through Blighted territory. His prices are exorbitant and his loyalties are to no one, but his maps are never wrong. He claims to have visited the Heartbloom — the place where the largest god fell — and returned sane. No one believes him, but no one can prove otherwise.\n\nBeneath the ruins of the old capital, something is growing. Not Blight — something older. The roots of what might be a new god, feeding on the bones of the old ones. If it wakes, it could save the world or finish what the Blight started.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "ashen_born",
+        "name": "Ashen Born",
+        "description": "Raised in the Keep, you've known nothing but rationed hope and constant vigilance.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Perception"
+        ],
+        "traits": [
+          "Blight Resistance: Advantage on saving throws against poison and disease.",
+          "Rationed Living: You require half the normal amount of food and water."
+        ],
+        "languages": [
+          "Common",
+          "Ashspeak"
+        ]
+      },
+      {
+        "id": "ichor_touched",
+        "name": "Ichor-Touched",
+        "description": "Exposed to godblood in the womb, you were born with abilities that terrify your neighbors.",
+        "base_type": "half-elf",
+        "ability_bonuses": {
+          "charisma": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Intimidation"
+        ],
+        "traits": [
+          "Godblood Veins: You can cast one cantrip of your choice (Charisma-based). Your eyes glow faintly when you use it.",
+          "Unstable Gift: Once per long rest, when you take damage, you can release a burst of raw energy dealing 1d6 force damage to all creatures within 5 feet."
+        ],
+        "languages": [
+          "Common",
+          "Godspeech"
+        ]
+      },
+      {
+        "id": "blight_scarred",
+        "name": "Blight-Scarred",
+        "description": "You survived partial corruption. The scars remain — visible proof you're tougher than the world that tried to break you.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 2,
+          "charisma": -1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Insight"
+        ],
+        "traits": [
+          "Scar Tissue: Your hit point maximum increases by 1 per level.",
+          "Know the Enemy: You can sense the presence of Blighted creatures within 60 feet."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "wanderer",
+        "name": "Wastelander",
+        "description": "You survived outside the walls, in the poisoned wilds where most don't last a week.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Survival"
+        ],
+        "traits": [
+          "Scavenger's Eye: Advantage on Investigation checks to find useful items in ruins or wreckage.",
+          "Ghost Walk: You can move through difficult terrain created by the Blight without penalty."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      },
+      {
+        "id": "cult_defector",
+        "name": "Blackthorn Defector",
+        "description": "You left Mother Blackthorn's cult. The transformation they started hasn't stopped.",
+        "base_type": "tiefling",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Religion",
+          "Deception"
+        ],
+        "traits": [
+          "Partial Transformation: You have resistance to necrotic damage, but vulnerability to radiant damage.",
+          "Cult Knowledge: Advantage on checks related to Blight lore and cult rituals."
+        ],
+        "languages": [
+          "Common",
+          "Blighttongue"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "blight_hunter",
+        "name": "Blight Hunter",
+        "description": "You track and destroy the corrupted — because someone has to.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Survival",
+          "Perception",
+          "Stealth",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Studded leather armor",
+          "Two shortswords",
+          "Longbow and quiver",
+          "Blight ward talisman"
+        ],
+        "features": [
+          {
+            "name": "Favored Enemy: Blighted",
+            "description": "You deal an extra 1d6 damage to Blighted creatures and have advantage on Survival checks to track them."
+          },
+          {
+            "name": "Corruption Sense",
+            "description": "You can detect the presence and intensity of Blight corruption within 120 feet."
+          }
+        ]
+      },
+      {
+        "id": "ichor_alchemist",
+        "name": "Ichor Alchemist",
+        "description": "You distill the blood of dead gods into power. The cost is always higher than you expect.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Medicine",
+          "Investigation",
+          "Nature"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Quarterstaffs",
+          "Light crossbows"
+        ],
+        "starting_equipment": [
+          "Alchemist's supplies",
+          "Vial of Ichor (3 doses)",
+          "Quarterstaff",
+          "Component pouch"
+        ],
+        "features": [
+          {
+            "name": "Ichor Infusion",
+            "description": "You can consume a dose of Ichor to regain one expended spell slot. Each use forces a Constitution save (DC 12) or gain one level of Ichor Dependency."
+          },
+          {
+            "name": "Alchemical Preparation",
+            "description": "During a long rest, you can prepare one alchemical item: a healing poultice (2d4+Int HP), a fire bomb (2d6 fire, 10ft radius), or a smoke bomb (heavily obscured, 20ft radius)."
+          }
+        ]
+      },
+      {
+        "id": "godbone_knight",
+        "name": "Godbone Knight",
+        "description": "You wear armor forged from divine remains — the only material the Blight cannot corrupt.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Medicine",
+          "Religion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "All armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Godbone half-plate",
+          "Longsword",
+          "Shield",
+          "Holy symbol (dead god's sigil)"
+        ],
+        "features": [
+          {
+            "name": "Blight Ward",
+            "description": "While wearing godbone armor, you are immune to Blight corruption and creatures within 10 feet of you have advantage on saves against Blight effects."
+          },
+          {
+            "name": "Lay on Hands",
+            "description": "You have a pool of healing power equal to 5 x your level. You can also spend 5 points from this pool to cure one disease or neutralize one poison."
+          }
+        ]
+      },
+      {
+        "id": "scavenger",
+        "name": "Ruin Delver",
+        "description": "You pick the bones of the old world for anything that still works.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Investigation",
+          "Sleight of Hand",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two daggers",
+          "Thieves' tools",
+          "Salvage satchel",
+          "Rope (50 ft)"
+        ],
+        "features": [
+          {
+            "name": "Trap Sense",
+            "description": "You have advantage on saving throws against traps, and you can detect traps within 30 feet as a bonus action."
+          },
+          {
+            "name": "Resourceful",
+            "description": "Once per short rest, you can jury-rig a broken item to function for 1 hour, or craft an improvised tool from scavenged materials."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "blight_lore",
+        "name": "Blight Lore",
+        "base_skill": "Arcana",
+        "description": "Understanding the nature, behavior, and weaknesses of the Blight."
+      },
+      {
+        "id": "scavenging",
+        "name": "Scavenging",
+        "base_skill": "Investigation",
+        "description": "Finding useful materials, supplies, and artifacts in ruins and wastelands."
+      },
+      {
+        "id": "ichor_craft",
+        "name": "Ichor Craft",
+        "base_skill": "Medicine",
+        "description": "Distilling, administering, and understanding the effects of godblood Ichor."
+      },
+      {
+        "id": "wasteland_nav",
+        "name": "Wasteland Navigation",
+        "base_skill": "Survival",
+        "description": "Finding safe paths through Blighted territory and contaminated landscapes."
+      }
+    ],
+    "ai_generated": true,
+    "admin_reviewed": false
+  }
+}
