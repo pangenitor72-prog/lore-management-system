@@ -27,6 +27,12 @@ from .tension_tracker import TensionTracker
 from .beat_suggester import BeatSuggester
 from .episode_manager import EpisodeManager
 from .arc_engine import ArcEngine
+from .preference_adapter import (
+    get_adapted_description,
+    get_adapted_guidance,
+    get_adapted_tension_target,
+    get_adapted_pacing_guidance,
+)
 
 __all__ = [
     # Models
@@ -45,4 +51,9 @@ __all__ = [
     "EpisodeManager",
     # Main Engine
     "ArcEngine",
+    # Preference Adapter
+    "get_adapted_description",
+    "get_adapted_guidance",
+    "get_adapted_tension_target",
+    "get_adapted_pacing_guidance",
 ]

@@ -399,3 +399,12 @@ The World Tuner is an AI assistant that helps admins configure worlds through na
 - **World Tuner UI**: Search "WORLD TUNER" in `frontend/dist/index.html`
 - **World seeds**: `data/lore_bases/seeds/*.json`
 - **Design tokens**: Search `:root {` in frontend files
+- **Arc Engine**: `src/mantle/arc/` (narrative pacing, Hero's Journey phases, tension tracking)
+- **Storytelling Preferences**: Search "storytelling-preferences" in frontend, `_build_storytelling_preferences_context` in game_routes.py
+
+### TODO: Rules System Review
+Revisit how the rules system (D&D 5e mechanics in `src/mantle/dnd5e/`) is implemented and how transparent it is with the user. Key questions:
+- How visible are the mechanics to the player? (dice rolls, stat checks, HP changes)
+- Should the visibility scaling (Storyteller → Tactician) be more prominent/configurable?
+- Is the current implementation aligned with The Narrow Path philosophy?
+- How do the rules interact with storytelling preferences (lethality, etc.)?

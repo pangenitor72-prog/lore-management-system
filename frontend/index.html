@@ -1261,10 +1261,65 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
-            font-size: 2.5rem;
-            color: var(--text-muted);
-            opacity: 0.5;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            font-size: 3rem;
+            color: rgba(255,255,255,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        .world-card-banner-placeholder::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        /* Genre-specific banner gradients */
+        .world-card-banner-placeholder[data-genre="fantasy"] {
+            background: linear-gradient(135deg, #1a0a2e, #2d1b69, #1a1a3e);
+        }
+        .world-card-banner-placeholder[data-genre="horror"] {
+            background: linear-gradient(135deg, #1a0a0a, #3d0e0e, #1a0a1a);
+        }
+        .world-card-banner-placeholder[data-genre="scifi"],
+        .world-card-banner-placeholder[data-genre="sci-fi"] {
+            background: linear-gradient(135deg, #0a1a2e, #0e2d3d, #0a2a2a);
+        }
+        .world-card-banner-placeholder[data-genre="mystery"] {
+            background: linear-gradient(135deg, #1a1a0a, #2e2a1a, #1a1a2e);
+        }
+        .world-card-banner-placeholder[data-genre="romance"] {
+            background: linear-gradient(135deg, #2e0a1a, #3d1a2d, #1a0a1a);
+        }
+        .world-card-banner-placeholder[data-genre="adventure"] {
+            background: linear-gradient(135deg, #1a2a0a, #2d3d1a, #1a2a1a);
+        }
+        .world-card-banner-placeholder[data-genre="drama"] {
+            background: linear-gradient(135deg, #1a1a2e, #2e1a2e, #2e2a1a);
+        }
+        .world-card-banner-placeholder[data-genre="noir"] {
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a, #0a0a1a);
+        }
+        .world-card-banner-placeholder[data-genre="cyberpunk"] {
+            background: linear-gradient(135deg, #0a0a2e, #2e0a3d, #0a2e2e);
+        }
+        .world-card-banner-placeholder[data-genre="steampunk"] {
+            background: linear-gradient(135deg, #2e1a0a, #3d2a1a, #1a1a0a);
+        }
+        .world-card-banner-placeholder[data-genre="western"] {
+            background: linear-gradient(135deg, #2e1a0a, #3d2d1a, #2e2a1a);
+        }
+        .world-card-banner-placeholder[data-genre="postapoc"] {
+            background: linear-gradient(135deg, #1a1a0a, #2e2e0a, #1a0a0a);
+        }
+        .world-card-banner-placeholder[data-genre="superhero"] {
+            background: linear-gradient(135deg, #0a0a3d, #2e0a2e, #1a0a3d);
+        }
+        .world-card-banner-placeholder[data-genre="mythology"] {
+            background: linear-gradient(135deg, #2e1a0a, #3d2a1a, #1a1a3e);
+        }
+        .world-card-banner-placeholder[data-genre="thriller"] {
+            background: linear-gradient(135deg, #0a0a1a, #1a0a0a, #1a1a1a);
         }
 
         /* Entity Thumbnail */
@@ -9745,8 +9800,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const worldsHtml = worlds.map(world => `
                     <div class="curated-world-card" onclick="quickPlayWorld('${world.id}')" data-world-id="${world.id}">
                         ${world.image_url
-                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
-                            : `<div class="world-card-banner-placeholder">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\' data-genre=\\'${world.genre || ''}\\' >${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
+                            : `<div class="world-card-banner-placeholder" data-genre="${world.genre || ''}">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
                         }
                         <div class="world-card-text">
                             <div class="world-name">${world.name}</div>
@@ -9864,8 +9919,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const worldsHtml = worlds.map(world => `
                     <div class="curated-world-card" onclick="selectTTRPGCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
                         ${world.image_url
-                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
-                            : `<div class="world-card-banner-placeholder">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\' data-genre=\\'${world.genre || ''}\\' >${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
+                            : `<div class="world-card-banner-placeholder" data-genre="${world.genre || ''}">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
                         }
                         <div class="world-card-text">
                             <div class="world-name">${world.name}</div>
@@ -10814,8 +10869,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                          data-lore="${world.id}"
                          style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-soft); cursor: pointer; transition: all 0.3s ease; overflow: hidden;">
                         ${world.image_url
-                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${icon}</div>'">`
-                            : `<div class="world-card-banner-placeholder">${icon}</div>`
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\' data-genre=\\'${world.genre || ''}\\' >${icon}</div>'">`
+                            : `<div class="world-card-banner-placeholder" data-genre="${world.genre || ''}">${icon}</div>`
                         }
                         <div style="padding: 16px 20px;">
                             <div class="world-card-genre">${genre.toUpperCase()}</div>
@@ -10886,8 +10941,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 return `
                     <div class="wb-world-card" onclick="previewWorldLore('${world.id}')" style="overflow: hidden;">
                         ${world.image_url
-                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${icon}</div>'">`
-                            : `<div class="world-card-banner-placeholder">${icon}</div>`
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\' data-genre=\\'${world.genre || ''}\\' >${icon}</div>'">`
+                            : `<div class="world-card-banner-placeholder" data-genre="${world.genre || ''}">${icon}</div>`
                         }
                         <div class="wb-world-info">
                             <h4>${world.name}</h4>
@@ -11459,8 +11514,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 const worldsHtml = worlds.map(world => `
                     <div class="curated-world-card" onclick="selectCuratedWorld('${world.id}', this)" data-world-id="${world.id}">
                         ${world.image_url
-                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\'>${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
-                            : `<div class="world-card-banner-placeholder">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
+                            ? `<img class="world-card-banner" src="${world.image_url}" alt="${world.name}" onerror="this.outerHTML='<div class=\\'world-card-banner-placeholder\\' data-genre=\\'${world.genre || ''}\\' >${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>'">`
+                            : `<div class="world-card-banner-placeholder" data-genre="${world.genre || ''}">${GENRE_ICONS[world.genre] || GENRE_ICONS.default || '&#127760;'}</div>`
                         }
                         <div class="world-card-text">
                             <div class="world-name">${world.name}</div>

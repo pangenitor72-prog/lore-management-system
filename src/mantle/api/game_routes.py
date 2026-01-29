@@ -4444,12 +4444,20 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
 
     # Build arc context for narrative pacing (Hero's Journey phases, tension)
     # Campaigns use subtle mode - structure should emerge naturally, not be announced
+    # Pass storytelling preferences so arc language adapts to player's chosen arc/lethality
     arc_context_str = ""
+    arc_preferences = None
+    if session.get("protagonist_arc") or session.get("lethality_preference") or session.get("moral_complexity_preference"):
+        arc_preferences = {
+            "protagonist_arc": session.get("protagonist_arc"),
+            "lethality": session.get("lethality_preference"),
+            "moral_complexity": session.get("moral_complexity_preference"),
+        }
     if arc_engine:
         try:
             use_subtle = session_scope == "campaign"
-            arc_context_str = arc_engine.get_dm_context_injection(subtle=use_subtle)
-            logger.debug(f"[ARC] Injecting context (subtle={use_subtle}): phase={arc_engine.current_phase.value}, tension={arc_engine.tension_level.value}")
+            arc_context_str = arc_engine.get_dm_context_injection(subtle=use_subtle, preferences=arc_preferences)
+            logger.debug(f"[ARC] Injecting context (subtle={use_subtle}, arc={arc_preferences.get('protagonist_arc') if arc_preferences else 'default'}): phase={arc_engine.current_phase.value}, tension={arc_engine.tension_level.value}")
         except Exception as e:
             logger.warning(f"[ARC] Failed to get context injection: {e}")
 
@@ -4519,7 +4527,8 @@ Write ONLY the narrative (with state tags naturally embedded):"""
     if arc_engine and narrative:
         try:
             # Process the narrative to update arc state (phase transitions, tension)
-            arc_engine.process_narrative(narrative, player_input)
+            # Pass preferences so tension alignment uses lethality-adjusted targets
+            arc_engine.process_narrative(narrative, player_input, preferences=arc_preferences)
 
             # Build arc context for API response
             arc_context = {

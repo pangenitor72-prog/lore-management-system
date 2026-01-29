@@ -204,33 +204,51 @@ class TensionTracker:
             )
         return self._current_tension
 
-    def align_to_phase(self, phase: StoryPhase, strength: float = 0.3) -> float:
+    def align_to_phase(
+        self,
+        phase: StoryPhase,
+        strength: float = 0.3,
+        tension_override: Optional[float] = None,
+    ) -> float:
         """
         Gradually align tension toward the expected level for a phase.
 
         Args:
             phase: The current story phase
             strength: How strongly to pull toward expected tension (0.0-1.0)
+            tension_override: Optional override for expected tension (e.g. from lethality preference)
 
         Returns:
             New tension level
         """
-        expected = phase.expected_tension
+        expected = tension_override if tension_override is not None else phase.expected_tension
         current = self._current_tension
         delta = (expected - current) * strength
         return self.adjust_tension(delta)
 
-    def get_pacing_guidance(self, phase: StoryPhase) -> str:
+    def get_pacing_guidance(
+        self,
+        phase: StoryPhase,
+        lethality: Optional[str] = None,
+    ) -> str:
         """
         Get pacing guidance based on current tension vs. expected.
 
         Args:
             phase: Current story phase
+            lethality: Optional lethality preference to adjust expected tension
+                       and phase-specific language
 
         Returns:
             Guidance text for the DM
         """
-        expected = phase.expected_tension
+        # Use lethality-adjusted tension target when available
+        if lethality:
+            from .preference_adapter import get_adapted_tension_target
+            expected = get_adapted_tension_target(phase, lethality)
+        else:
+            expected = phase.expected_tension
+
         current = self._current_tension
         diff = current - expected
 
@@ -246,7 +264,13 @@ class TensionTracker:
         elif diff < -0.2:
             # Tension too low for this phase
             if phase == StoryPhase.ORDEAL:
-                return "The Ordeal should feel life-or-death. Escalate dramatically."
+                # Adapt language based on lethality
+                if lethality == "plot_armor":
+                    return "The Ordeal should feel emotionally overwhelming. Raise the personal stakes."
+                elif lethality == "brutal":
+                    return "The Ordeal should feel genuinely lethal. This could be the end. Escalate ruthlessly."
+                else:
+                    return "The Ordeal should feel like everything is at stake. Escalate dramatically."
             elif phase == StoryPhase.APPROACH_TO_INMOST_CAVE:
                 return "Build more dread as you approach the central challenge."
             else:
@@ -255,9 +279,9 @@ class TensionTracker:
         else:
             # Tension is appropriate
             trend = self.trend
-            if trend == "rising" and phase.expected_tension < 0.5:
+            if trend == "rising" and expected < 0.5:
                 return "Tension is rising appropriately. Watch for natural peaks."
-            elif trend == "falling" and phase.expected_tension > 0.7:
+            elif trend == "falling" and expected > 0.7:
                 return "Maintain high tension through this critical phase."
             else:
                 return "Pacing feels appropriate for this story phase."

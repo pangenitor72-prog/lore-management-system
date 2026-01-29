@@ -26,6 +26,12 @@ from .story_phase import StoryPhaseManager
 from .tension_tracker import TensionTracker
 from .beat_suggester import BeatSuggester
 from .episode_manager import EpisodeManager, EpisodeConfig
+from .preference_adapter import (
+    get_adapted_description,
+    get_adapted_guidance,
+    get_adapted_tension_target,
+    get_adapted_pacing_guidance,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +112,7 @@ class ArcEngine:
         self,
         narrative_text: str,
         player_action: Optional[str] = None,
+        preferences: Optional[Dict[str, str]] = None,
     ) -> StoryContext:
         """
         Process a narrative segment and return updated context.
@@ -117,6 +124,8 @@ class ArcEngine:
         Args:
             narrative_text: The DM's narrative response
             player_action: Optional player action that preceded it
+            preferences: Optional storytelling preferences dict with keys:
+                         protagonist_arc, lethality, moral_complexity
 
         Returns:
             Updated StoryContext with suggestions
@@ -135,7 +144,12 @@ class ArcEngine:
             self._phase_manager.advance_progress(0.1)
 
         # Align tension toward phase expectation (gentle pull)
-        self._tension_tracker.align_to_phase(self.current_phase, strength=0.1)
+        # Use lethality-adjusted tension target when preferences are available
+        lethality = preferences.get("lethality") if preferences else None
+        tension_target = get_adapted_tension_target(self.current_phase, lethality)
+        self._tension_tracker.align_to_phase(
+            self.current_phase, strength=0.1, tension_override=tension_target
+        )
 
         # Detect episode boundary opportunities
         boundary = self._episode_manager.detect_boundary(
@@ -261,13 +275,21 @@ class ArcEngine:
 
     # === DM GUIDANCE ===
 
-    def get_dm_context_injection(self, subtle: bool = False) -> str:
+    def get_dm_context_injection(
+        self,
+        subtle: bool = False,
+        preferences: Optional[Dict[str, str]] = None,
+    ) -> str:
         """
         Get text to inject into the DM's prompt for arc awareness.
 
         Args:
             subtle: If True, provide gentle guidance without explicit phase names.
                    Use for campaigns where structure should emerge naturally.
+            preferences: Optional storytelling preferences dict with keys:
+                         protagonist_arc, lethality, moral_complexity.
+                         When provided, adapts all language to match the player's
+                         chosen arc and lethality.
 
         Returns:
             Context string for prompt injection
@@ -276,12 +298,17 @@ class ArcEngine:
         tension = self.current_tension
         trend = self._tension_tracker.trend
 
+        # Get arc-adapted description (falls back to default if no preferences)
+        arc_type = preferences.get("protagonist_arc") if preferences else None
+        lethality = preferences.get("lethality") if preferences else None
+        description = get_adapted_description(phase, arc_type)
+
         if subtle:
             # For campaigns: guidance without explicit structure
             tension_word = "calm" if tension < 0.3 else "building" if tension < 0.6 else "high"
             return f"""
 Narrative energy: {tension_word}, {trend}
-{phase.description}"""
+{description}"""
 
         # For finite stories: more explicit structure helps pacing
         lines = [
@@ -290,14 +317,18 @@ Narrative energy: {tension_word}, {trend}
             f"Tension: {tension:.0%} ({self.tension_level.value}), {trend}",
         ]
 
-        # Add phase guidance
-        if phase.description:
-            lines.append(f"Focus: {phase.description}")
+        # Add adapted phase description
+        if description:
+            lines.append(f"Focus: {description}")
 
-        # Add pacing guidance
-        pacing_note = self._tension_tracker.get_pacing_guidance(phase)
-        if pacing_note:
-            lines.append(f"Pacing: {pacing_note}")
+        # Add pacing guidance — prefer lethality-adapted version, fall back to default
+        lethality_pacing = get_adapted_pacing_guidance(phase, lethality)
+        if lethality_pacing:
+            lines.append(f"Pacing: {lethality_pacing}")
+        else:
+            pacing_note = self._tension_tracker.get_pacing_guidance(phase, lethality=lethality)
+            if pacing_note:
+                lines.append(f"Pacing: {pacing_note}")
 
         return "\n".join(lines)
 
