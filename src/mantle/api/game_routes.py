@@ -35,7 +35,7 @@ from src.mantle.guardrails.token_budget import TokenTracker, TokenBudget, Budget
 from src.mantle.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
 # D&D Rules Integration
-from src.mantle.api.dnd_routes import _characters, CharacterSheet
+from src.mantle.api.dnd_routes import _characters, _character_inferred_prefs, CharacterSheet
 from src.mantle.dnd5e.engine.checks import CheckEngine, SKILL_TO_ABILITY
 from src.mantle.dnd5e.engine.combat_resolver import CombatResolver
 from src.mantle.dnd5e.presentation.visibility import VisibilityFilter
@@ -3033,15 +3033,28 @@ async def create_session(
         # Story Length / Pacing
         "session_scope": session_req.session_scope or "one_shot",
         "max_turns": session_req.max_turns or 100,
-        # Player Storytelling Preferences
+        # Player Storytelling Preferences (explicit choices)
         "protagonist_arc": session_req.protagonist_arc,
         "lethality_preference": session_req.lethality_preference,
         "moral_complexity_preference": session_req.moral_complexity_preference,
+        # Description-inferred preferences (soft fallbacks from character concept)
+        "description_inferred_tone": None,
+        "description_inferred_arc": None,
+        "description_inferred_lethality": None,
+        "description_inferred_morality": None,
         # Arc Engine for narrative pacing (per-session instance)
         "arc_engine": ArcEngine(session_id=session_id) if ARC_ENGINE_AVAILABLE else None,
         # Creative Catalyst for narrative variety (per-session instance)
         "creative_catalyst": CreativeCatalyst(genre=primary_genre),
     }
+
+    # Populate description-inferred preferences from character creation (if available)
+    if session_req.character_id and session_req.character_id in _character_inferred_prefs:
+        inf = _character_inferred_prefs[session_req.character_id]
+        session_data["description_inferred_tone"] = inf.get("inferred_tone")
+        session_data["description_inferred_arc"] = inf.get("inferred_arc")
+        session_data["description_inferred_lethality"] = inf.get("inferred_lethality")
+        session_data["description_inferred_morality"] = inf.get("inferred_morality")
 
     _active_sessions[session_id] = session_data
 
@@ -4133,10 +4146,14 @@ Present choices in terms of practical consequences, not moral weight. There are 
 
 
 def _build_storytelling_preferences_context(session: Dict[str, Any]) -> str:
-    """Build the full storytelling preferences prompt section, including world/player blending."""
-    protagonist_arc = session.get("protagonist_arc")
-    lethality_pref = session.get("lethality_preference")
-    moral_pref = session.get("moral_complexity_preference")
+    """Build the full storytelling preferences prompt section, including world/player blending.
+
+    Uses description-inferred preferences as fallbacks when player hasn't
+    explicitly set a preference (from character concept analysis).
+    """
+    protagonist_arc = session.get("protagonist_arc") or session.get("description_inferred_arc")
+    lethality_pref = session.get("lethality_preference") or session.get("description_inferred_lethality")
+    moral_pref = session.get("moral_complexity_preference") or session.get("description_inferred_morality")
 
     # Get individual guidance blocks
     arc_guidance = _get_protagonist_arc_guidance(protagonist_arc)
@@ -4155,7 +4172,7 @@ def _build_storytelling_preferences_context(session: Dict[str, Any]) -> str:
     # Build blending notes where player differs from world
     blending_notes = []
 
-    tone_val = session.get("tone_preference")
+    tone_val = session.get("tone_preference") or session.get("description_inferred_tone")
     if tone_val and world_chars.get("tone"):
         world_tone = world_chars["tone"].lower()
         if tone_val.lower() != world_tone:
@@ -4195,6 +4212,29 @@ def _build_storytelling_preferences_context(session: Dict[str, Any]) -> str:
         parts.extend(blending_notes)
 
     return "\n".join(parts)
+
+
+def _get_character_identity_context(session: Dict[str, Any]) -> str:
+    """Build CHARACTER IDENTITY block from the character's personality data.
+
+    Pulls backstory, traits, ideals, bonds, flaws from the CharacterSheet
+    so the DM can weave them into the narrative naturally.
+    """
+    character_id = session.get("character_id")
+    if not character_id:
+        return ""
+
+    char = _characters.get(character_id)
+    if not char:
+        return ""
+
+    personality = char.get_personality_context()
+    if not personality:
+        return ""
+
+    return f"""CHARACTER IDENTITY:
+{personality}
+Weave the character's backstory and personality naturally — show who they are through action and detail, not exposition."""
 
 
 def _get_guidance_instruction(needs_guidance: bool) -> str:
@@ -4256,7 +4296,7 @@ async def _generate_opening(session: Dict[str, Any], model) -> str:
 
     answers = session.get("session_0_answers", {})
     genre = session.get("genre", "fantasy")
-    tone = session.get("tone_preference", answers.get("tone", "dramatic"))
+    tone = session.get("tone_preference", answers.get("tone", "")) or session.get("description_inferred_tone") or "dramatic"
     style = session.get("storytelling_style", "guided")
     setting = session.get("setting_preference", answers.get("setting", ""))
     character = session.get("character_concept", answers.get("character", ""))
@@ -4340,6 +4380,7 @@ TONE: {tone}
 
 SETTING: {setting if setting else f"Use the world lore above, or create an evocative {genre} setting"}
 CHARACTER: {character if character else "Introduce the player gently - let them discover who they are through the scene"}
+{_get_character_identity_context(session)}
 
 Write an opening that:
 1. Begins IN THE MOMENT - drop them into a lived moment, not exposition
@@ -4385,7 +4426,7 @@ async def _handle_active_play(
     # Get Arc Engine for narrative pacing
     arc_engine = session.get("arc_engine")
     genre = session.get("genre", "fantasy")
-    tone = session.get("tone_preference", answers.get("tone", "dramatic"))
+    tone = session.get("tone_preference", answers.get("tone", "")) or session.get("description_inferred_tone") or "dramatic"
     style = session.get("storytelling_style", "guided")
     setting = session.get("setting_preference", answers.get("setting", ""))
     character = session.get("character_concept", answers.get("character", ""))
@@ -4497,10 +4538,12 @@ ESTABLISHED LORE (stay true to these characters and details):
         # Fallback to _characters dict (may be stale)
         dnd_char = _characters.get(session["character_id"])
         if dnd_char:
+            personality = dnd_char.get_personality_context()
+            personality_block = f"\n{personality}" if personality else ""
             char_context = f"""
 CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
 - Level {dnd_char.level}, {dnd_char.current_hit_points}/{dnd_char.max_hit_points} HP
-- Skills: {', '.join(dnd_char.skill_proficiencies[:4])}"""
+- Skills: {', '.join(dnd_char.skill_proficiencies[:4])}{personality_block}"""
 
     # Get admin-configured world context (from World Tuner / LORE_BASES)
     admin_world_context = ""
@@ -4513,11 +4556,14 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
     # Pass storytelling preferences so arc language adapts to player's chosen arc/lethality
     arc_context_str = ""
     arc_preferences = None
-    if session.get("protagonist_arc") or session.get("lethality_preference") or session.get("moral_complexity_preference"):
+    effective_arc = session.get("protagonist_arc") or session.get("description_inferred_arc")
+    effective_lethality = session.get("lethality_preference") or session.get("description_inferred_lethality")
+    effective_morality = session.get("moral_complexity_preference") or session.get("description_inferred_morality")
+    if effective_arc or effective_lethality or effective_morality:
         arc_preferences = {
-            "protagonist_arc": session.get("protagonist_arc"),
-            "lethality": session.get("lethality_preference"),
-            "moral_complexity": session.get("moral_complexity_preference"),
+            "protagonist_arc": effective_arc,
+            "lethality": effective_lethality,
+            "moral_complexity": effective_morality,
         }
     if arc_engine:
         try:

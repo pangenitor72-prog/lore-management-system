@@ -254,7 +254,7 @@ class TestCharacterCreationGenre:
         
         # Generate a modern character
         generator = ConceptGenerator(genre="modern")
-        character = generator.generate_from_concept_sync(
+        character, _inferred_prefs = generator.generate_from_concept_sync(
             "A detective investigating a murder case",
             player_id="test_player"
         )

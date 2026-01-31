@@ -143,6 +143,7 @@ class GuidedStepRequest(BaseModel):
 # In-memory storage for creation flows (would be session-based in production)
 _creation_flows: Dict[str, Any] = {}
 _characters: Dict[str, CharacterSheet] = {}
+_character_inferred_prefs: Dict[str, Dict[str, Any]] = {}  # character_id -> inferred preferences
 _visibility_settings: Dict[str, RulesVisibility] = {}
 
 
@@ -523,35 +524,42 @@ async def create_character_from_concept(request: CharacterCreateRequest):
         genre=mechanics_genre,
         world_character_options=world_character_options
     )
-    character = generator.generate_from_concept_sync(
+    character, inferred_prefs = generator.generate_from_concept_sync(
         request.concept,
         player_id=request.player_id,
     )
 
     _characters[character.character_id] = character
+    _character_inferred_prefs[character.character_id] = inferred_prefs
     logger.info(
         f"Created {mechanics_genre} character from concept: {character.name} "
-        f"(world={request.world_id}, flavor={flavor_genres})"
+        f"(world={request.world_id}, flavor={flavor_genres}, level={character.level})"
     )
 
     # Get display names using genre-aware lookups
     origin_data = get_origin(character.origin, mechanics_genre)
     archetype_data = get_archetype(character.archetype, mechanics_genre)
 
-    return CharacterResponse(
-        character_id=character.character_id,
-        name=character.name,
-        genre=mechanics_genre,
-        origin=origin_data.display_name if origin_data else character.origin,
-        archetype=archetype_data.display_name if archetype_data else character.archetype,
-        # Backward compatible
-        race=origin_data.display_name if origin_data else character.origin,
-        character_class=archetype_data.display_name if archetype_data else character.archetype,
-        level=character.level,
-        hit_points=character.current_hit_points,
-        max_hit_points=character.max_hit_points,
-        armor_class=character.armor_class,
-    )
+    response_data = {
+        "character_id": character.character_id,
+        "name": character.name,
+        "genre": mechanics_genre,
+        "origin": origin_data.display_name if origin_data else character.origin,
+        "archetype": archetype_data.display_name if archetype_data else character.archetype,
+        "race": origin_data.display_name if origin_data else character.origin,
+        "character_class": archetype_data.display_name if archetype_data else character.archetype,
+        "level": character.level,
+        "hit_points": character.current_hit_points,
+        "max_hit_points": character.max_hit_points,
+        "armor_class": character.armor_class,
+        "inferred_preferences": {
+            "tone": inferred_prefs.get("inferred_tone"),
+            "protagonist_arc": inferred_prefs.get("inferred_arc"),
+            "lethality": inferred_prefs.get("inferred_lethality"),
+            "moral_complexity": inferred_prefs.get("inferred_morality"),
+        },
+    }
+    return response_data
 
 
 class GuidedStartRequest(BaseModel):

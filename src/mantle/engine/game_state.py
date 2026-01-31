@@ -519,6 +519,13 @@ class GameState:
             if self.character.conditions:
                 lines.append(f"Conditions: {', '.join(self.character.conditions)}")
 
+            # Character identity (personality, backstory) — drives roleplay
+            personality_context = self.character.get_personality_context()
+            if personality_context:
+                lines.append("")
+                lines.append("=== CHARACTER IDENTITY ===")
+                lines.append(personality_context)
+
             # Spell/power slots
             if self.character.power_slots_max:
                 slots = []

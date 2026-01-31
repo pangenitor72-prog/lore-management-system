@@ -78,6 +78,10 @@ class CharacterSheet(BaseModel):
     bonds: List[str] = Field(default_factory=list)
     flaws: List[str] = Field(default_factory=list)
 
+    # Character Identity (from concept description)
+    backstory: str = ""  # AI-generated backstory from character description
+    character_concept: str = ""  # Original player description, preserved verbatim
+
     # Metadata
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -288,6 +292,24 @@ class CharacterSheet(BaseModel):
             "conditions": [],
             "updated_at": datetime.now(timezone.utc),
         })
+
+    def get_personality_context(self) -> str:
+        """Return compact personality context for DM prompts.
+
+        Only includes non-empty fields — zero overhead if no description provided.
+        """
+        lines = []
+        if self.backstory:
+            lines.append(f"Backstory: {self.backstory}")
+        if self.personality_traits:
+            lines.append(f"Personality: {', '.join(self.personality_traits)}")
+        if self.ideals:
+            lines.append(f"Ideals: {', '.join(self.ideals)}")
+        if self.bonds:
+            lines.append(f"Bonds: {', '.join(self.bonds)}")
+        if self.flaws:
+            lines.append(f"Flaws: {', '.join(self.flaws)}")
+        return "\n".join(lines)
 
     def to_summary_dict(self) -> Dict:
         """Return a summary for display (respects visibility in presentation layer)."""

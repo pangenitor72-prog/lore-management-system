@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any, List
 
 from ..models.ability_scores import AbilityScores, AbilityName
 from ..models.origins import get_origin, get_origins_for_genre, FANTASY_ORIGINS
-from ..models.archetypes import get_archetype, get_archetypes_for_genre, get_starting_hp, FANTASY_ARCHETYPES
+from ..models.archetypes import get_archetype, get_archetypes_for_genre, get_starting_hp, get_hp_at_level, FANTASY_ARCHETYPES
 from ..models.character_sheet import CharacterSheet
 from ..genre import get_genre
 
@@ -197,7 +197,7 @@ class ConceptGenerator:
         self,
         concept: str,
         player_id: str = "",
-    ) -> CharacterSheet:
+    ) -> tuple:
         """
         Generate a complete character from a concept description.
 
@@ -206,7 +206,7 @@ class ConceptGenerator:
             player_id: Player ID to associate with character
 
         Returns:
-            Complete CharacterSheet
+            Tuple of (CharacterSheet, inferred_preferences dict)
         """
         # Try AI parsing first if available
         if self.gemini_client:
@@ -218,16 +218,35 @@ class ConceptGenerator:
         else:
             parsed = self._keyword_parse_concept(concept)
 
-        return self._build_character(parsed, player_id)
+        character = self._build_character(parsed, player_id, concept)
+
+        # Extract inferred preferences (from AI blueprint or empty from keyword fallback)
+        inferred_prefs = {
+            "inferred_tone": parsed.get("inferred_tone"),
+            "inferred_arc": parsed.get("inferred_arc"),
+            "inferred_lethality": parsed.get("inferred_lethality"),
+            "inferred_morality": parsed.get("inferred_morality"),
+            "inferred_level": parsed.get("inferred_level", 1),
+        }
+
+        return character, inferred_prefs
 
     def generate_from_concept_sync(
         self,
         concept: str,
         player_id: str = "",
-    ) -> CharacterSheet:
+    ) -> tuple:
         """Synchronous version using keyword parsing only."""
         parsed = self._keyword_parse_concept(concept)
-        return self._build_character(parsed, player_id)
+        character = self._build_character(parsed, player_id, concept)
+        inferred_prefs = {
+            "inferred_tone": None,
+            "inferred_arc": None,
+            "inferred_lethality": None,
+            "inferred_morality": None,
+            "inferred_level": 1,
+        }
+        return character, inferred_prefs
 
     async def _ai_parse_concept(self, concept: str) -> Dict[str, Any]:
         """Parse concept using AI (Gemini) with MANTLE vocabulary when available."""
@@ -246,9 +265,19 @@ class ConceptGenerator:
         # Parse JSON from response
         import json
         text = response.text
-        json_match = re.search(r'\{[^}]+\}', text, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
+
+        # Find JSON object — handle nested braces by matching balanced { }
+        start = text.find('{')
+        if start != -1:
+            depth = 0
+            for i in range(start, len(text)):
+                if text[i] == '{':
+                    depth += 1
+                elif text[i] == '}':
+                    depth -= 1
+                    if depth == 0:
+                        return json.loads(text[start:i + 1])
+
         raise ValueError("Could not parse AI response as JSON")
 
     def _build_mantle_ai_prompt(self, concept: str) -> str:
@@ -256,6 +285,7 @@ class ConceptGenerator:
         Build AI prompt using MANTLE vocabulary - world-specific options ONLY.
 
         The AI is STRICTLY FORBIDDEN from using generic D&D terms.
+        Extracts a comprehensive character blueprint from the concept.
         """
         # Build origin list from world options
         origins = self.world_options.get('origins', [])
@@ -264,20 +294,21 @@ class ConceptGenerator:
             for o in origins
         ])
 
-        # Build archetype list from world options
+        # Build archetype list with skill choices
         archetypes = self.world_options.get('archetypes', [])
         archetype_list = "\n".join([
-            f"  - {a.get('id')}: {a.get('name')} - {a.get('description', '')}"
+            f"  - {a.get('id')}: {a.get('name')} - {a.get('description', '')} "
+            f"[skills: {', '.join(a.get('skill_choices', []))}]"
             for a in archetypes
         ])
 
-        return f"""Parse this character concept using ONLY the world-specific options below.
+        return f"""Parse this character concept into a COMPREHENSIVE CHARACTER BLUEPRINT.
 
 STRICT RULES:
 - You MUST use ONLY the origin and archetype IDs listed below
 - DO NOT use generic D&D terms like "human", "elf", "dwarf", "fighter", "rogue", "cleric", "wizard"
 - Match the player's description to the CLOSEST world-specific option
-- If uncertain, pick the option that best matches the character's described role/style
+- Read between the lines of the description. Every word is a signal.
 
 CHARACTER CONCEPT: "{concept}"
 
@@ -287,38 +318,101 @@ AVAILABLE ORIGINS (use the ID value):
 AVAILABLE ARCHETYPES (use the ID value):
 {archetype_list}
 
-Extract and return as JSON:
+CHARACTER BLUEPRINT EXTRACTION:
+
+SKILLS: Choose from the archetype's available skill list shown above. Prioritize skills matching the description. "A tracker who reads the land" -> Survival, Nature. "A charming con artist" -> Deception, Persuasion.
+
+EQUIPMENT: Suggest specific gear matching the character's story. "Carries her grandmother's silver dagger" -> include that. Keep within archetype proficiencies but flavor to the concept.
+
+SPELLS (if the archetype is a caster): Theme spells to the concept. "Pyromancer" -> fire spells. "Healer" -> healing spells. Non-casters: set spell_themes and preferred_spells to empty arrays.
+
+ABILITIES: Primary is usually archetype-driven, but description can shift it. "A scholarly fighter" -> Intelligence secondary. Include tertiary if description suggests a third emphasis.
+
+BACKGROUND: Infer from life experience. "Former soldier" -> soldier. "Grew up on streets" -> urchin. "Noble exile" -> noble. Use standard D&D 5e background names.
+
+PERSONALITY: Synthesize from tone and implications. "Grizzled veteran" -> distrustful, haunted. "Young idealist" -> optimistic, naive.
+
+PLAY STYLE INFERENCE - read the concept for implicit signals:
+- inferred_tone: "lighthearted"|"hopeful"|"balanced"|"serious"|"dark". A "cheerful baker" -> lighthearted. A "haunted detective" -> dark.
+- inferred_arc: "chosen_one"|"reluctant_hero"|"everyman_rising"|"anti_hero"|"redemption". A "destined prince" -> chosen_one. A "retired mercenary dragged back in" -> reluctant_hero.
+- inferred_lethality: "plot_armor"|"forgiving"|"balanced"|"dangerous"|"brutal". A "comedic bard" -> forgiving. A "scarred survivor" -> dangerous.
+- inferred_morality: "clear"|"mostly_clear"|"gray_areas"|"ambiguous"|"no_clear". A "paladin of justice" -> clear. A "thief with a code" -> gray_areas.
+Use "balanced" when unsure.
+
+STARTING LEVEL: Infer experience from description (1-3).
+1 = young/untested/no experience mentioned. 2 = experienced/seasoned. 3 = veteran/renowned/master.
+Default to 1 if unsure.
+
+Return as JSON:
 {{
     "name": "Character Name (if mentioned, or suggest appropriate one)",
     "origin": "origin_id_from_list_above",
     "archetype": "archetype_id_from_list_above",
     "primary_ability": "strength|dexterity|constitution|intelligence|wisdom|charisma",
     "secondary_ability": "ability_name",
+    "tertiary_ability": "ability_name_or_empty_string",
     "skills": ["skill1", "skill2"],
-    "personality_note": "brief personality description"
+    "equipment_preferences": ["item1", "item2", "item3"],
+    "spell_themes": ["theme1"],
+    "preferred_spells": ["spell_id1"],
+    "background": "background_name",
+    "backstory": "2-3 sentence backstory synthesized from the concept",
+    "personality_traits": ["trait1", "trait2"],
+    "ideals": ["core belief"],
+    "bonds": ["important connection"],
+    "flaws": ["weakness or vice"],
+    "inferred_tone": "balanced",
+    "inferred_arc": "everyman_rising",
+    "inferred_lethality": "balanced",
+    "inferred_morality": "gray_areas",
+    "inferred_level": 1
 }}
 
-Return ONLY valid JSON. Use ONLY the IDs from the lists above."""
+Return ONLY valid JSON. Use ONLY the IDs from the lists above for origin and archetype."""
 
     def _build_generic_ai_prompt(self, concept: str) -> str:
-        """Build AI prompt using standard genre-based terms (fallback)."""
+        """Build AI prompt using standard genre-based terms (fallback).
+
+        Extracts a comprehensive character blueprint from the concept.
+        """
         origin_keywords = ORIGIN_KEYWORDS_BY_GENRE.get(self.genre, FANTASY_ORIGIN_KEYWORDS)
         archetype_keywords = ARCHETYPE_KEYWORDS_BY_GENRE.get(self.genre, FANTASY_ARCHETYPE_KEYWORDS)
 
         origins_str = ", ".join(origin_keywords.keys())
         archetypes_str = ", ".join(archetype_keywords.keys())
 
-        return f"""Parse this character concept into structured data for a {self.genre} setting.
+        return f"""Parse this character concept into a COMPREHENSIVE CHARACTER BLUEPRINT for a {self.genre} setting.
 
 Character Concept: "{concept}"
 
-Extract:
-1. Name (if mentioned, otherwise suggest one)
-2. Origin ({origins_str})
-3. Archetype ({archetypes_str})
-4. Primary ability (strength, dexterity, constitution, intelligence, wisdom, or charisma)
-5. Secondary ability
-6. Two suggested skills appropriate for this character
+Read between the lines. Every word is a signal about who this character is and what kind of game the player wants.
+
+AVAILABLE OPTIONS:
+- Origins: {origins_str}
+- Archetypes: {archetypes_str}
+
+CHARACTER BLUEPRINT EXTRACTION:
+
+SKILLS: Choose skills appropriate for the description. "A tracker" -> Survival, Nature. "A con artist" -> Deception, Persuasion.
+
+EQUIPMENT: Suggest specific gear matching the character's story. Keep within archetype proficiencies.
+
+SPELLS (if caster archetype): Theme to concept. "Pyromancer" -> fire spells. Non-casters: empty arrays.
+
+ABILITIES: Primary is archetype-driven but description can shift secondary/tertiary.
+
+BACKGROUND: Infer from description. "Former soldier" -> soldier. "Street orphan" -> urchin.
+
+PERSONALITY: Synthesize backstory, traits, ideals, bonds, flaws from the concept.
+
+PLAY STYLE INFERENCE:
+- inferred_tone: "lighthearted"|"hopeful"|"balanced"|"serious"|"dark"
+- inferred_arc: "chosen_one"|"reluctant_hero"|"everyman_rising"|"anti_hero"|"redemption"
+- inferred_lethality: "plot_armor"|"forgiving"|"balanced"|"dangerous"|"brutal"
+- inferred_morality: "clear"|"mostly_clear"|"gray_areas"|"ambiguous"|"no_clear"
+Use "balanced" when unsure.
+
+STARTING LEVEL (1-3): 1 = young/untested. 2 = experienced. 3 = veteran/master. Default 1.
 
 Return as JSON:
 {{
@@ -327,8 +421,22 @@ Return as JSON:
     "archetype": "archetype_name",
     "primary_ability": "ability_name",
     "secondary_ability": "ability_name",
+    "tertiary_ability": "ability_name_or_empty_string",
     "skills": ["skill1", "skill2"],
-    "personality_note": "brief personality description"
+    "equipment_preferences": ["item1", "item2"],
+    "spell_themes": ["theme1"],
+    "preferred_spells": ["spell_id1"],
+    "background": "background_name",
+    "backstory": "2-3 sentence backstory",
+    "personality_traits": ["trait1", "trait2"],
+    "ideals": ["core belief"],
+    "bonds": ["important connection"],
+    "flaws": ["weakness or vice"],
+    "inferred_tone": "balanced",
+    "inferred_arc": "everyman_rising",
+    "inferred_lethality": "balanced",
+    "inferred_morality": "gray_areas",
+    "inferred_level": 1
 }}
 
 Only use the origins and archetypes listed. Return valid JSON only."""
@@ -541,14 +649,13 @@ Only use the origins and archetypes listed. Return valid JSON only."""
         # Default to first archetype
         return archetypes[0].get('id') if archetypes else "fighter"
 
-    def _build_character(self, parsed: Dict[str, Any], player_id: str) -> CharacterSheet:
-        """Build a CharacterSheet from parsed concept data."""
+    def _build_character(self, parsed: Dict[str, Any], player_id: str, concept: str = "") -> CharacterSheet:
+        """Build a CharacterSheet from parsed concept data (full blueprint)."""
         # Get origin and archetype IDs (MANTLE IDs if using world options)
         origin_id = parsed.get("origin") or parsed.get("race", "human")
         archetype_id = parsed.get("archetype") or parsed.get("class", "fighter")
 
         # For MANTLE: use base_type for mechanics lookup, but keep MANTLE ID in character sheet
-        # This lets us show "Netrunner" to the player while using "rogue" mechanics
         origin_lookup_id = parsed.get("origin_base_type", origin_id)
         archetype_lookup_id = parsed.get("archetype_base_type", archetype_id)
 
@@ -556,79 +663,102 @@ Only use the origins and archetypes listed. Return valid JSON only."""
         archetype_data = get_archetype(archetype_lookup_id, self.genre)
 
         if not origin_data or not archetype_data:
-            # Fallback to defaults
             origins = get_origins_for_genre(self.genre)
             archetypes = get_archetypes_for_genre(self.genre)
             origin_data = origins[0] if origins else None
             archetype_data = archetypes[0] if archetypes else None
 
-        # Generate ability scores optimized for archetype
+        # --- LEVEL (inferred from description, capped at 3) ---
+        level = max(1, min(3, int(parsed.get("inferred_level", 1) or 1)))
+
+        # --- ABILITY SCORES ---
         primary = parsed["primary_ability"]
         secondary = parsed.get("secondary_ability", "constitution")
+        tertiary = parsed.get("tertiary_ability", "")
 
-        # Start with balanced scores, boost primary and secondary
         base_scores = {
-            "strength": 10,
-            "dexterity": 10,
-            "constitution": 12,
-            "intelligence": 10,
-            "wisdom": 10,
-            "charisma": 10,
+            "strength": 10, "dexterity": 10, "constitution": 12,
+            "intelligence": 10, "wisdom": 10, "charisma": 10,
         }
 
-        # Set primary to 15, secondary to 14
         base_scores[primary] = 15
         if secondary != primary:
             base_scores[secondary] = 14
+        # Tertiary ability gets 13 if specified and different from primary/secondary
+        if tertiary and tertiary != primary and tertiary != secondary and tertiary in base_scores:
+            base_scores[tertiary] = max(base_scores[tertiary], 13)
 
-        # Ensure CON is reasonable for survivability
         if base_scores["constitution"] < 12:
             base_scores["constitution"] = 12
 
-        # Apply origin bonuses
         if origin_data:
             for ability, bonus in origin_data.ability_bonuses.items():
                 base_scores[ability] = min(20, base_scores[ability] + bonus)
 
         abilities = AbilityScores(**base_scores)
 
-        # Calculate derived stats
+        # --- HP (level-aware) ---
         con_mod = abilities.get_modifier(AbilityName.CON)
         dex_mod = abilities.get_modifier(AbilityName.DEX)
-        hp = get_starting_hp(archetype_lookup_id, con_mod, self.genre)
+        if level > 1:
+            hp = get_hp_at_level(archetype_lookup_id, level, con_mod, self.genre)
+        else:
+            hp = get_starting_hp(archetype_lookup_id, con_mod, self.genre)
 
-        # Determine AC and equipment based on archetype and genre (use base_type for mechanics)
-        base_ac, equipment = self._get_starting_equipment(archetype_lookup_id, dex_mod)
+        # --- PROFICIENCY BONUS (level-aware) ---
+        proficiency_bonus = 2 + (level - 1) // 4
 
-        # Power/spell setup for casters
+        # --- FEATURES (aggregate through level) ---
+        features = []
+        if archetype_data:
+            for lvl in range(1, level + 1):
+                features.extend(archetype_data.features_by_level.get(lvl, []))
+
+        # --- EQUIPMENT (description-customized) ---
+        base_ac, default_equipment = self._get_starting_equipment(archetype_lookup_id, dex_mod)
+        equipment_prefs = parsed.get("equipment_preferences", [])
+        if equipment_prefs:
+            equipment = self._customize_equipment(default_equipment, equipment_prefs, archetype_data)
+        else:
+            equipment = default_equipment
+
+        # --- POWER/SPELL SETUP (themed to description) ---
         power_slots = {}
         cantrips = []
         abilities_known = []
         if archetype_data and archetype_data.has_powers:
-            power_slots = {1: 2}
+            # Level-aware spell slots
+            if archetype_data.power_slots_by_level:
+                power_slots = archetype_data.power_slots_by_level.get(level, {1: 2})
+            else:
+                power_slots = {1: 2}
 
-            # For fantasy genre, use SRD spells for proper class-based spells
-            # Use archetype_lookup_id (base_type) for spell list lookup
+            spell_themes = parsed.get("spell_themes", [])
+            preferred_spells = parsed.get("preferred_spells", [])
+
             if self.genre == "fantasy":
                 from ..data.loader import get_srd_loader
                 loader = get_srd_loader()
 
-                # Get cantrips and level 1 spells for this class (use base_type for lookup)
                 available_cantrips = loader.get_cantrips_for_class(archetype_lookup_id)
                 available_spells = [s for s in loader.get_spells_for_class(archetype_lookup_id) if s.get("level") == 1]
 
-                # Calculate number of prepared spells
                 num_cantrips = archetype_data.cantrips_known
                 num_prepared = self._get_prepared_spell_count(archetype_data, abilities)
 
-                # Select first N cantrips and spells (auto-selection for concept mode)
+                # Reorder by description preferences
+                if preferred_spells or spell_themes:
+                    available_cantrips = self._reorder_spells_by_preference(
+                        available_cantrips, preferred_spells, spell_themes)
+                    available_spells = self._reorder_spells_by_preference(
+                        available_spells, preferred_spells, spell_themes)
+
                 cantrips = [s.get("id", s.get("name", "").lower().replace(" ", "_"))
                            for s in available_cantrips[:num_cantrips]]
                 abilities_known = [s.get("id", s.get("name", "").lower().replace(" ", "_"))
                                   for s in available_spells[:num_prepared]]
             else:
-                # For non-fantasy genres, use the abilities module (use base_type for lookup)
-                from ..models.abilities import get_cantrips_for_archetype, get_abilities_for_archetype, AbilityType
+                from ..models.abilities import get_cantrips_for_archetype, get_abilities_for_archetype
                 archetype_cantrips = get_cantrips_for_archetype(archetype_lookup_id, self.genre)
                 archetype_abilities = [
                     a for a in get_abilities_for_archetype(archetype_lookup_id, self.genre)
@@ -637,12 +767,11 @@ Only use the origins and archetypes listed. Return valid JSON only."""
                 cantrips = [c.id for c in archetype_cantrips[:2]]
                 abilities_known = [a.id for a in archetype_abilities[:2]]
 
-        # Get skills (limit to archetype available)
+        # --- SKILLS (description-prioritized) ---
         skills = parsed.get("skills", [])
         if archetype_data:
             available = [s.lower() for s in archetype_data.skill_choices]
             skills = [s for s in skills if s.lower() in available]
-            # Fill remaining slots if needed
             while len(skills) < archetype_data.num_skill_choices:
                 for s in available:
                     if s not in skills:
@@ -652,6 +781,9 @@ Only use the origins and archetypes listed. Return valid JSON only."""
                     break
             skills = skills[:archetype_data.num_skill_choices]
 
+        # --- BACKGROUND ---
+        background = parsed.get("background", "")
+
         return CharacterSheet(
             character_id=str(uuid.uuid4()),
             name=parsed["name"],
@@ -659,11 +791,12 @@ Only use the origins and archetypes listed. Return valid JSON only."""
             genre=self.genre,
             origin=origin_id,
             archetype=archetype_id,
-            level=1,
+            level=level,
             ability_scores=abilities,
             max_hit_points=hp,
             current_hit_points=hp,
             armor_class=base_ac,
+            proficiency_bonus=proficiency_bonus,
             speed=origin_data.speed if origin_data else 30,
             skill_proficiencies=skills,
             saving_throw_proficiencies=archetype_data.saving_throw_proficiencies if archetype_data else [],
@@ -673,8 +806,15 @@ Only use the origins and archetypes listed. Return valid JSON only."""
             power_slots_max=power_slots,
             cantrips_known=cantrips,
             abilities_known=abilities_known,
-            features=archetype_data.features_by_level.get(1, []) if archetype_data else [],
-            rules_visibility="guided",  # Concept mode defaults to guided for progressive reveal
+            features=features,
+            background=background,
+            backstory=parsed.get("backstory", ""),
+            character_concept=concept,
+            personality_traits=parsed.get("personality_traits", []),
+            ideals=parsed.get("ideals", []),
+            bonds=parsed.get("bonds", []),
+            flaws=parsed.get("flaws", []),
+            rules_visibility="guided",
         )
 
     def _get_starting_equipment(self, archetype_id: str, dex_mod: int) -> tuple:
@@ -743,3 +883,147 @@ Only use the origins and archetypes listed. Return valid JSON only."""
             return 1
 
         return 2  # Default
+
+    def _customize_equipment(
+        self,
+        default_equipment: List[str],
+        equipment_prefs: List[str],
+        archetype_data,
+    ) -> List[str]:
+        """
+        Customize equipment based on AI-suggested preferences.
+
+        Cross-references AI's equipment_preferences with archetype proficiencies.
+        Replaces defaults with flavored equivalents where valid, adds flavor items.
+        """
+        if not equipment_prefs:
+            return default_equipment
+
+        # Build proficiency set for validation
+        valid_weapon_types = set()
+        valid_armor_types = set()
+        if archetype_data:
+            valid_weapon_types = {w.lower() for w in archetype_data.weapon_proficiencies}
+            valid_armor_types = {a.lower() for a in archetype_data.armor_proficiencies}
+
+        # Weapon equivalences — AI suggestions that map to valid mechanical items
+        weapon_equivalents = {
+            "greatsword": ("martial weapons",),
+            "greataxe": ("martial weapons",),
+            "battleaxe": ("martial weapons",),
+            "warhammer": ("martial weapons",),
+            "longsword": ("martial weapons", "simple weapons"),
+            "rapier": ("martial weapons",),
+            "shortsword": ("martial weapons",),
+            "longbow": ("martial weapons",),
+            "shortbow": ("simple weapons",),
+            "handaxe": ("simple weapons",),
+            "dagger": ("simple weapons",),
+            "quarterstaff": ("simple weapons",),
+            "mace": ("simple weapons",),
+            "spear": ("simple weapons",),
+            "crossbow": ("simple weapons",),
+        }
+
+        result = list(default_equipment)
+
+        for pref in equipment_prefs:
+            pref_lower = pref.lower()
+
+            # Check if it's a weapon the archetype can use
+            required_profs = weapon_equivalents.get(pref_lower, ())
+            if required_profs and any(p in valid_weapon_types for p in required_profs):
+                # Replace the first default weapon with this one
+                for i, item in enumerate(result):
+                    item_lower = item.lower()
+                    if any(w in item_lower for w in ["sword", "axe", "bow", "mace", "staff", "rapier", "dagger", "hammer", "spear", "crossbow", "weapon"]):
+                        result[i] = pref
+                        break
+                else:
+                    # No weapon to replace — add it
+                    if pref not in result:
+                        result.append(pref)
+                continue
+
+            # Check if it's armor
+            armor_keywords = ["armor", "mail", "shield", "vest", "leather"]
+            if any(kw in pref_lower for kw in armor_keywords):
+                for i, item in enumerate(result):
+                    if any(kw in item.lower() for kw in armor_keywords):
+                        result[i] = pref
+                        break
+                continue
+
+            # Otherwise it's a flavor item (spellbook, holy symbol, mentor's journal, etc.)
+            # Add it if not already present
+            if pref not in result and len(result) < 10:
+                result.append(pref)
+
+        return result
+
+    def _reorder_spells_by_preference(
+        self,
+        available_spells: List[Dict[str, Any]],
+        preferred_spells: List[str],
+        spell_themes: List[str],
+    ) -> List[Dict[str, Any]]:
+        """
+        Reorder available spells to prioritize description-matching spells.
+
+        1. Exact matches from preferred_spells go first
+        2. Theme-matching spells go next (scored by keyword overlap)
+        3. Remaining spells keep original order
+        """
+        if not preferred_spells and not spell_themes:
+            return available_spells
+
+        preferred_lower = {s.lower().replace(" ", "_") for s in preferred_spells}
+        theme_lower = {t.lower() for t in spell_themes}
+
+        # Theme keyword expansion — common themes and associated spell words
+        theme_keywords = {
+            "fire": {"fire", "flame", "burn", "scorch", "blaze", "heat", "ignite", "inferno"},
+            "ice": {"ice", "frost", "cold", "freeze", "chill", "snow", "blizzard"},
+            "lightning": {"lightning", "thunder", "storm", "shock", "bolt", "electric"},
+            "healing": {"heal", "cure", "restore", "mend", "aid", "life", "protect"},
+            "necromancy": {"death", "undead", "necrotic", "dark", "shadow", "soul", "blight"},
+            "illusion": {"illusion", "invisible", "disguise", "phantasm", "image", "silent"},
+            "enchantment": {"charm", "command", "hold", "sleep", "suggest", "compel", "dominate"},
+            "divination": {"detect", "see", "identify", "comprehend", "locate", "augury"},
+            "destruction": {"destroy", "blast", "smite", "shatter", "disintegrate"},
+            "protection": {"shield", "ward", "protect", "barrier", "armor", "resist", "sanctuary"},
+            "nature": {"animal", "plant", "beast", "nature", "speak", "thorn", "entangle"},
+            "stealth": {"invisible", "darkness", "silent", "shadow", "fog", "mist", "pass"},
+        }
+
+        # Expand theme words
+        expanded_theme_words = set()
+        for theme in theme_lower:
+            expanded_theme_words.add(theme)
+            if theme in theme_keywords:
+                expanded_theme_words.update(theme_keywords[theme])
+
+        def spell_score(spell: Dict[str, Any]) -> int:
+            """Score a spell by how well it matches preferences. Higher = better match."""
+            spell_id = spell.get("id", "").lower().replace(" ", "_")
+            spell_name = spell.get("name", "").lower()
+            spell_desc = spell.get("description", "").lower()
+
+            # Exact match from preferred_spells: highest priority
+            if spell_id in preferred_lower or spell_name.replace(" ", "_") in preferred_lower:
+                return 1000
+
+            # Theme match: score by keyword overlap
+            score = 0
+            spell_text = f"{spell_name} {spell_desc}"
+            for word in expanded_theme_words:
+                if word in spell_text:
+                    score += 10
+
+            return score
+
+        # Sort: higher scores first, preserve original order for ties
+        scored = [(spell_score(s), i, s) for i, s in enumerate(available_spells)]
+        scored.sort(key=lambda x: (-x[0], x[1]))
+
+        return [s[2] for s in scored]

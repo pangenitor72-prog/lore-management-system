@@ -1076,6 +1076,23 @@ class GuidedCreationFlow:
         # Get speed from origin (default 30 if not found)
         speed = origin_data.speed if origin_data and hasattr(origin_data, 'speed') else 30
 
+        # Populate personality from background SRD data (lightweight fallback
+        # for characters without a concept description)
+        bg_personality_traits = []
+        bg_ideals = []
+        bg_bonds = []
+        bg_flaws = []
+        if background_data:
+            # Pick first trait from each category as a sensible default
+            if background_data.personality_traits:
+                bg_personality_traits = [background_data.personality_traits[0]]
+            if background_data.ideals:
+                bg_ideals = [background_data.ideals[0]]
+            if background_data.bonds:
+                bg_bonds = [background_data.bonds[0]]
+            if background_data.flaws:
+                bg_flaws = [background_data.flaws[0]]
+
         return CharacterSheet(
             character_id=str(uuid.uuid4()),
             name=self.state.name,
@@ -1098,6 +1115,10 @@ class GuidedCreationFlow:
             spells_known=spells_known,
             features=class_data.features_by_level.get(1, []) if class_data else [],
             background=self.state.selected_background or "",
+            personality_traits=bg_personality_traits,
+            ideals=bg_ideals,
+            bonds=bg_bonds,
+            flaws=bg_flaws,
             rules_visibility="guided",
             genre=self.genre,
         )
