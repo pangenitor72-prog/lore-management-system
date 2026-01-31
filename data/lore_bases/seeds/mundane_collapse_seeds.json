@@ -1,0 +1,373 @@
+{
+  "id": "mundane_collapse",
+  "name": "The Mundane Collapse",
+  "description": "A satirical sci-fi setting where Earth has been bureaucratically demolished to make way for a hyperspace bypass. The cosmos runs on paperwork, middle management, and fluorescent lighting. The universe doesn't want to destroy you — it simply doesn't know you exist.",
+  "genre": "satirical_scifi",
+  "mechanics_genre": "scifi",
+  "genre_hints": [
+    "scifi",
+    "comedy",
+    "drama"
+  ],
+  "tone_hints": [
+    "absurdist",
+    "satirical",
+    "tragicomic"
+  ],
+  "seed_prompt": "A satirical science fiction setting where the universe runs on bureaucracy, Earth has been demolished for a hyperspace bypass, and survival means navigating an indifferent cosmos that processes civilizations like parking tickets. The comedy lives alongside genuine loss — ordinary people in extraordinary cosmic indifference.",
+  "lore_content": "The universe isn't ending. It's been bureaucratically decommissioned.\n\nThe Interstellar Administrative Continuity Office — known universally as IACO — completed a 4,000-year audit and determined that reality itself was filed under the wrong jurisdiction. Earth, along with several hundred other 'minor territories,' has been scheduled for demolition to make way for Hyperspace Bypass Route 7-G. The demolition occurred on a Thursday morning. A calm, slightly nasal voice played over every radio, TV, phone, and PA system simultaneously, explained what was happening, apologized for any inconvenience, and suggested filing complaints at the nearest IACO Regional Consulate. A jingle played. Then regular programming resumed. Twelve minutes later, the sky cracked open.\n\nThe player survived. Not heroically. Not by destiny. By a clerical error buried somewhere in IACO's filing system that no one has noticed yet. They woke in the wreckage of everything they knew, and the first voice they heard from the cosmos was the same calm narrator, slightly muffled, repeating: 'Again, we apologize for any inconvenience. Please have your complaints processed at your nearest IACO Regional Consulate. Thank you for your cooperation.' It sounded exactly like the automated message you get when you call your cable company.\n\nEverything in this cosmos is a mirror of something from Earth, scaled to absurd proportions and treated as completely normal by everyone involved. Governments are bureaucracies. Corporations are bureaucracies. Death is a bureaucracy. The machinery of the cosmos is operated by people who are, fundamentally, just people — doing their jobs, going home, not thinking about what their jobs mean.\n\n=== THE BYPASS CONSTRUCTION ZONE (Sector 7-G Remainder) ===\n\nThe smoking, half-demolished wreckage of what was once the Sol system, now scaffolded with hyperspace conduit infrastructure the size of planets. Construction crews work in shifts that last decades. The air in the habitable pockets tastes like ozone and regret. Massive demolition barges drift through the debris field, their running lights blinking in sequence — red, amber, red — like a construction zone on an interstate, because that is exactly what this is.\n\nForeman Crat runs the bypass construction through this sector from a prefabricated office bolted to an asteroid fragment. Ruthlessly efficient. Deeply bored. Has overseen the demolition of forty-seven solar systems and remembers none of them. Coffee mug on the desk reads 'I Don't Care About Your Civilization.' Means it as a joke. Probably. Will not acknowledge the players unless they are slowing down the schedule. Schedule is sacred. Schedule was also written after construction started, but nobody mentions that.\n\nScattered through the debris field are pockets of breathable atmosphere trapped in the wreckage of orbital stations and sealed buildings — the remains of Earth's infrastructure, cracked open and drifting. In one pocket, a Starbucks is still standing. The espresso machine works. The Wi-Fi doesn't. In another, a section of highway floats intact, complete with a speed limit sign. Someone has spray-painted 'WE WERE HERE' across it in red.\n\nPlot hooks: Scavengers report finding an intact IACO filing cabinet in the debris — sealed, classified, and humming with a faint energy signature. Foreman Crat has offered a bounty for anyone who can clear a particular debris cluster that keeps drifting into the bypass alignment corridor — but the cluster contains the wreckage of a children's hospital, and the Archivists want it preserved. A construction worker named Dex has been smuggling salvaged Earth artifacts to the Drift Markets and will trade information about IACO's internal schedule for help moving a particularly large haul.\n\n=== STATION PLINTH ===\n\nA massive way-station built into the skeleton of a decommissioned megastructure so old that no one remembers what it was originally for. Three kilometers long, half a kilometer wide, honeycombed with corridors, habitation pods, market stalls, and administrative offices that may or may not still be connected to anything. It serves as a neutral trading hub for Remainders, smugglers, lost tourists from civilizations that haven't been demolished yet, and the occasional IACO clerk on lunch break.\n\nLevel 3 houses Marlo's — a bar that has been operating continuously for 400 years under eleven different owners, none of whom changed the name, the menu, or the light fixtures. The drinks are terrible. The atmosphere is worse. Everyone goes there anyway because Marlo's is where you hear things. The current proprietor is Kess Marlo (no relation to the original), a heavyset woman with prosthetic arms who pours drinks with mechanical precision and listens to everything. She doesn't sell information. She trades it. If you want to know something, you have to tell her something first.\n\nLevel 7 is the Immigration and Residency Processing Office — an IACO sub-bureau that has been 'processing applications' for 600 years. The waiting room has 3,000 chairs. Approximately 200 are occupied at any given time by beings who have been waiting so long they've built small communities around their assigned seats. A man named Gerald has been waiting since before the current station administrator was born. He has a small garden growing in his seat's cup holder. He is patient. He is also completely insane, but in a way that makes him the most reliable source of information about IACO's internal procedures on the entire station, because he has memorized every form number, every filing code, and every sub-clause of every regulation posted on the waiting room walls.\n\nLevel 12 — the Docks — is where ships arrive and depart. Dock Controller Pax runs the berths with the energy of a parking garage attendant who has stopped caring. Landing fees are negotiable. Departure clearance is not. Pax has a talent for remembering faces and an unsettling habit of knowing where people are going before they do.\n\nPlot hooks: Someone has been leaving anonymous notes in Marlo's bar — coordinates to locations in the bypass construction zone, each one marking a site where IACO records were supposedly dumped before the demolition. Gerald on Level 7 claims he once processed a form that referenced the player's home world by name — not as a demolition target, but as something else entirely. He can't remember what. It's in his notes somewhere. His notes fill eleven storage containers.\n\n=== THE IACO REGIONAL CONSULATE ===\n\nA brutalist, windowless administrative complex the size of a small moon, floating in dead space. Filing cabinets stretch for kilometers in every direction, stacked floor to ceiling in halls lit by fluorescent tubes that buzz at a frequency specifically calibrated to induce compliance. The muzak hasn't changed in four centuries. The coffee is terrible. There are 40,000 employees. At least 12,000 of them are on break at any given time.\n\nGetting in is easy — IACO believes in open access to public services. Getting out with what you need is the problem. The Consulate is organized according to a filing system so Byzantine that it requires a specialized degree to navigate. Directories are posted on every floor. They are out of date. They have always been out of date. Updating the directories is the responsibility of the Directory Maintenance Bureau, which was defunded 200 years ago but never formally dissolved, so its empty office still appears on the floor plan and occasionally receives mail.\n\nRegional Director Venn occupies an office on the 47th floor. Mid-ranking. Genuinely earnest. Believes completely in the system. Has a plaque on the desk that reads 'Continuity Through Compliance.' Drinks bad coffee from a mug with a picture of a sunset on a world that was demolished before the mug was manufactured. Goes home at the end of the day and sleeps well. Is not evil. Is not sympathetic. Simply believes that individual lives are a rounding error in the ledger of cosmic administration. Will be polite. Will be thorough. Will process the player's complaint and file it in a cabinet that no one will ever open.\n\nDeputy Clerk Soraya works three floors below Venn and has been quietly collecting discrepancies in demolition records for nine years. She hasn't told anyone. She doesn't know what to do with them. She is terrified of what they might mean and more terrified of what happens if someone finds out she's been looking. She takes the same shuttle home every day. She has a cat. She is the most dangerous person in the building because she has evidence and no plan.\n\nPlot hooks: The player's demolition file exists somewhere in this building. Finding it requires navigating at least seven departments, each of which will redirect you to another department. Soraya's discrepancy collection includes a reference to the player's world — a classification code that doesn't match any standard demolition category. The break room on Floor 23 has a vending machine that dispenses items from demolished worlds. Nobody knows how. Nobody has investigated. The items change daily.\n\n=== THE QUIET SHELF ===\n\nA stretch of space where hyperspace bypass routes converge at angles that shouldn't be geometrically possible, creating a pocket of absolute stillness. No traffic. No signals. No radiation. No sound, even inside your ship, that feels like it belongs there. The silence is not peaceful. It is the silence of a library where every book is a eulogy.\n\nThe Archivists maintain their central archive here — a structure that looks like a cathedral made of filing cabinets and data cores, built into a hollowed asteroid that drifts in the convergence point. Inside, climate-controlled vaults contain the salvaged remains of thousands of demolished worlds. A library catalog from a planet called Vereth. A child's drawing from a world whose name was redacted from all records. A municipal bus schedule from Earth — the number 47 route, last updated the morning of the demolition.\n\nHead Archivist Sable runs the facility with quiet authority. She has been doing this work for thirty years. She does not cry anymore. She does not need to. She has developed the ability to hold the weight of entire civilizations in her hands — literally, as data crystals and pressed flowers and fragments of tile — without breaking. She will listen to the player's story. She will write it down. She will not tell them it will be okay, because she doesn't lie.\n\nArchivist Lorn is younger, more idealistic, and visibly affected by the work. He's the one who goes to the demolition sites. He's the one who stands in the wreckage and decides what to save when you can't save everything. He carries a worn satchel that is always partially full. Things appear in it. He never explains what any of it is unless asked. And when he does, it's one sentence.\n\nPlot hooks: The archive contains a record of every world ever demolished — but the player's world's entry is incomplete. The file was accessed and partially deleted from inside the archive, which should be impossible. Sable knows someone breached the system but not who. Lorn recovered something from the player's world during the demolition — something personal, something the player didn't know still existed. He's been carrying it, waiting for the right moment to return it. Deep in the archive's oldest vault, there are records that predate IACO itself — fragments suggesting the bureaucracy was built on top of something older, something that was deliberately buried.\n\n=== THE DRIFT MARKETS ===\n\nDecommissioned cargo vessels, abandoned habitation modules, and the husks of retired construction barges, all lashed together with cables, docking clamps, and in some cases, duct tape, into a floating bazaar that stretches across three cubic kilometers of space. Everything is for sale. Some of it is real. Navigation is by instinct — the market rearranges itself as ships dock and depart, so no map stays accurate for more than a day. It smells like recycled air, engine grease, and something cooking that you can't identify but want to try.\n\nThe currency is flexible. IACO credits work. So do favors, information, scrap metal, and the promise not to report someone. Barter is preferred. Cash is suspicious.\n\nHonda runs the central hub — a converted freighter bridge where traders register their stalls and disputes are settled. Honda is not her real name. Nobody's name here is their real name. She is small, sharp-eyed, and has the demeanor of someone who has heard every lie in the universe and is waiting to hear a new one. She doesn't take sides. She takes a percentage.\n\nOld Wick operates a salvage stall specializing in artifacts from demolished worlds. Most of it is junk. Some of it is priceless. Wick claims to know the difference. Wick is wrong about 40% of the time, but the other 60% has kept him alive and in business for decades. He has a battered survival kit from a demolished world that he refuses to sell — says one item in it actually works, but he doesn't know which one.\n\nTech-Priest Null is a mechanic who can fix anything — ships, terminals, prosthetics, relationships (her words). She works out of a converted shipping container and charges based on how interesting the problem is. Boring repairs cost more. She has a talent for making broken things work in ways they weren't designed to, which is useful in a cosmos where nothing works the way it's designed to.\n\nPlot hooks: A trader named Fen is selling what he claims is an authentic IACO Deprecation Notice — a portable terminal that can issue official demolition orders for small objects. He wants a ridiculous price. He's also being followed. Someone at the Markets has been buying up every artifact connected to the player's demolished world — systematically, quietly, and at premium prices. Honda noticed. She hasn't said anything yet, because she's waiting to see who asks first. A derelict ship docked at the market's edge has been broadcasting a faint, repeating signal — the same jingle that played during the demolition announcement. No one has gone aboard.\n\n=== THE CONDEMNED CITY OF RATH ===\n\nRath is a city of 2.3 million on a world called Pendara, which has been scheduled for demolition but not yet touched. The demolition order was filed eighteen months ago. The Bypass Authority hasn't arrived yet — they're behind schedule on another project. So Rath exists in a state of suspended apocalypse. Everyone knows what's coming. No one knows when.\n\nSome residents have left. Most haven't. Some are panicking. Some have thrown elaborate parties that have been running for weeks. Some have simply kept going to work, because what else do you do? The coffee shops are still open. The transit system still runs. Someone is still arguing about a zoning variance at city hall, because the paperwork hasn't been formally withdrawn and procedure is procedure.\n\nMayor Edda Voss continues to govern with grim determination. She holds council meetings. She signs permits. She answers constituent mail. She is either the bravest person in the city or the most deeply in denial. No one can tell. She keeps a packed bag under her desk. She has never mentioned it.\n\nVarro is a transit operator who drives the Number 11 tram through the city center. He has not missed a shift since the demolition order was announced. His route passes the IACO field office where the demolition notice is posted in the window. He passes it sixteen times a day. He does not look at it. Passengers ride his tram because Varro makes them feel like the world hasn't ended yet. Because technically, it hasn't.\n\nDr. Luma Kassis runs a free clinic in Rath's lower district. She treats injuries, illnesses, and an increasing number of panic attacks. She has a dry sense of humor and a supply closet that she's been quietly stocking with emergency rations and medical supplies. When asked why, she says, 'I'm an optimist.' She does not explain what she's optimistic about.\n\nPlot hooks: The IACO field office in Rath has a single clerk — Pell — who has been trying to file an appeal against the demolition order for six months. The appeal keeps getting returned with minor formatting corrections. Pell believes, with desperate sincerity, that if the form is perfect, the demolition will be stopped. Someone in Rath has started a radio station — 'Radio Last Call' — broadcasting music, stories, and memories from Pendara. The signal is strong enough to reach nearby systems. The Archivists are listening. A group of Rath residents have formed the Permanence Society — they're building something in the old industrial district. Something large. Something that's supposed to survive the demolition. They need materials, expertise, and someone who has actually survived a demolition to tell them if their plan is insane.\n\n=== FACTIONS IN DETAIL ===\n\nIACO — The Interstellar Administrative Continuity Office. Not evil. Efficient. They process civilizations the way a DMV processes license renewals. Their motto: 'Continuity Through Compliance.' No one elected them. No one knows who founded them. They have always been there, and the universe has always complied. Their employees are ordinary people — they have dentist appointments, parking complaints, and opinions about the cafeteria. They go home at the end of the day. They don't think about what their jobs mean.\n\nThe Bypass Authority — The engineering corps that builds hyperspace routes. They resent IACO, cut corners aggressively, and have demolished things that probably shouldn't have been demolished. Their projects are always 'on schedule' because the schedule is written after construction. They have a communications division with a jingle. The jingle is catchy. This is by design.\n\nThe Remainders — A loose network of survivors from demolished worlds. No leader. No ideology. Just shared circumstance and a shared grudge against paperwork. They argue about parking. They form alliances over drinks and dissolve them over insults. They are a small town floating in space.\n\nThe Archivists — A semi-monastic order that salvages cultural artifacts from worlds scheduled for demolition. They believe memory is the only thing that survives. They are quiet, intense, and slightly unsettling. They do not proselytize. They simply show up, collect what they can, and leave.\n\nThe Auditors — IACO's internal investigators. When a demolition goes wrong, Auditors are dispatched. No one knows what they look like, how many there are, or what authority they truly hold. Communications arrive. Instructions appear. The Auditors themselves may never be seen. One is investigating the irregularity in the player's demolition file. They have been watching. They may already be someone the player has met.\n\n=== KEY ITEMS & ARTIFACTS ===\n\nThe Proceedings — A bound volume of IACO demolition justifications. The prose is so soul-crushing that reading more than a page induces nausea and existential despair. Useful as a weapon (throw it), an anesthetic (read it aloud), or a key to understanding IACO's filing system (if you can stay conscious).\n\nProbability Compass — A salvaged navigation tool that points toward the most likely outcome of any action. Rarely useful. Frequently points at the nearest bathroom. Occasionally life-saving, though you never know when.\n\nThe Deprecation Notice — A portable terminal that issues official IACO demolition orders for small objects. The demolition isn't instantaneous — it schedules the target for 'eventual removal.' Bureaucracy as a weapon. Slow. Inevitable.\n\nSurvival Kit from Earth — A battered, impractical kit containing items that made perfect sense on Earth. A can opener. A subway map. A phone charger. Sunscreen. One item works in a way no one predicted. The rest are useless. You won't know which is which until you try.\n\nThe Last Broadcast — A data crystal containing the final transmission from a demolished civilization. It's not a cry for help. It's someone finishing a sentence they started before the demolition went through. Listening to it hits harder than it should.\n\nThe Commuter Badge — The player's work badge from Earth. Still clipped to their jacket. It opens nothing. It accesses nothing. It is the most personal object in the campaign and the hardest to throw away.\n\n=== THE MYSTERY ===\n\nThe player's survival was not an accident. Someone — or something — deliberately misfiled their world's demolition order. A classification code in the file doesn't match any standard demolition category. Deputy Clerk Soraya has found discrepancies. The archive at the Quiet Shelf has an incomplete entry. Someone at the Drift Markets is buying up artifacts from the player's world. The Auditor is circling.\n\nThe truth is buried in IACO's filing system — in the gap between what was ordered and what actually happened. Finding it means navigating a bureaucracy that wasn't designed to be navigated, trusting people who have every reason not to be trusted, and asking a question the cosmos has never been asked before: what happens when someone the system forgot refuses to be forgotten?\n\nThe ending is open. The universe doesn't change. But the player might.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "displaced_terran",
+        "name": "Displaced Terran",
+        "description": "You were on Earth when it was demolished. You had a commute. You had a dentist appointment you kept rescheduling. Now you have nothing except a stubborn refusal to stop existing.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Insight",
+          "Survival"
+        ],
+        "traits": [
+          "Mundane Resilience: Your complete lack of cosmic significance is, paradoxically, your greatest asset. Advantage on saving throws against fear and despair effects — you've already lost everything, what's left to be afraid of?",
+          "Stubbornly Normal: You can perform ordinary tasks (make coffee, fix a fuse, file paperwork) with calm competence even in the most extraordinary circumstances. Advantage on checks involving mundane skills in crisis situations."
+        ],
+        "languages": [
+          "English",
+          "One Earth language"
+        ]
+      },
+      {
+        "id": "remainder_veteran",
+        "name": "Remainder Veteran",
+        "description": "Your world was demolished years ago. You've drifted through the wreckage of the cosmos long enough to stop flinching at the sound of demolition jingles. You've had this conversation before.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Persuasion"
+        ],
+        "traits": [
+          "Seen It Before: You recognize the look on someone's face when their world has just ended. Advantage on Insight checks when reading the emotional state of other survivors or displaced people.",
+          "Cosmic Street Smarts: You know how post-demolition space works — the scams, the shortcuts, the stations where you don't ask questions. Advantage on checks to navigate the Drift Markets or similar informal economies."
+        ],
+        "languages": [
+          "Galactic Standard",
+          "Remainder Pidgin"
+        ]
+      },
+      {
+        "id": "iaco_defector",
+        "name": "IACO Defector",
+        "description": "You worked for the bureaucracy. You processed forms. You filed demolitions. Then you saw something in the paperwork that didn't add up, and now you're running from the system you helped build.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Insight"
+        ],
+        "traits": [
+          "Bureaucratic Fluency: You can read, navigate, and exploit IACO paperwork. Advantage on Investigation checks involving official documents, filing systems, and administrative procedures.",
+          "Inside Knowledge: You know IACO's internal structure — the departments, the hierarchies, the gaps in oversight. Once per long rest, you can recall a specific procedural detail that gives the group an advantage in dealing with IACO."
+        ],
+        "languages": [
+          "Galactic Standard",
+          "IACO Administrative Code"
+        ]
+      },
+      {
+        "id": "synthetic_remnant",
+        "name": "Synthetic Remnant",
+        "description": "You are an AI or automated system from a demolished world, still running your original programming. Your database is decades out of date. Your confidence is not.",
+        "base_type": "android",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "History"
+        ],
+        "traits": [
+          "Obsolete Database: You know a staggering amount about the universe as it existed decades ago. Almost none of it is still true. Occasionally — unpredictably — you surface information that is still accurate. These moments are rare and sometimes life-saving.",
+          "Cannot Be Corrected: New information does not overwrite old information. It layers on top, creating contradictions you cannot resolve. You are immune to Deception checks — not because you detect lies, but because you don't process corrections."
+        ],
+        "languages": [
+          "All known languages (outdated vocabulary)",
+          "Machine Code"
+        ]
+      },
+      {
+        "id": "condemned_citizen",
+        "name": "Condemned Citizen",
+        "description": "Your world has been scheduled for demolition but hasn't been touched yet. You know exactly what's coming. You left before it arrived. Or maybe you haven't left yet.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 1,
+          "wisdom": 2
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Perception"
+        ],
+        "traits": [
+          "Living on Borrowed Time: You carry the weight of knowing your world's expiration date. Advantage on Wisdom saving throws — existential dread has made you hard to rattle.",
+          "Urgency: When time is running out, you move faster. When you or an ally is in immediate danger from a deadline or countdown, you gain advantage on your next action."
+        ],
+        "languages": [
+          "Galactic Standard",
+          "One native language"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "everyman",
+        "name": "The Everyman",
+        "description": "You possess no special skills except an uncanny ability to remain functional while everyone around you has a breakdown. Your mundane competence is worth more than a laser pistol in a cosmos that has forgotten how ordinary things work.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Constitution",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Insight",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Improvised weapons"
+        ],
+        "starting_equipment": [
+          "Work jacket (light armor)",
+          "Commuter badge",
+          "Multi-tool",
+          "Thermos (still has coffee)"
+        ],
+        "features": [
+          {
+            "name": "Mundane Competence",
+            "description": "You can make coffee, fix a fuse, change a tire, file a form, and perform basic first aid — all under conditions that would paralyze most people. When you attempt a practical, everyday task in a crisis, you do it with advantage."
+          },
+          {
+            "name": "Too Stubborn to Die",
+            "description": "Once per long rest, when you would be reduced to 0 HP, you instead drop to 1 HP. You don't know why. The universe doesn't either."
+          }
+        ]
+      },
+      {
+        "id": "drifter",
+        "name": "The Drifter",
+        "description": "You know every scam, every shortcut, every dangerous station. Cynical but not cruel. You've stopped investing in places and people the way someone stops caring about a rental apartment. But you still buy rounds for strangers.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Deception",
+          "Persuasion",
+          "Sleight of Hand"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Battered travel guide (to places that no longer exist)",
+          "Concealed pistol",
+          "Lockpick set",
+          "Flask (never empty, never full)"
+        ],
+        "features": [
+          {
+            "name": "I Know a Shortcut",
+            "description": "Once per long rest, when the group needs to get somewhere or escape a situation, you can declare you know a shortcut, back door, or workaround. The GM determines if it works cleanly or creates a new complication — but it always gets you moving."
+          },
+          {
+            "name": "Read the Room",
+            "description": "When you enter a new location, you immediately assess the power dynamics — who runs it, who's dangerous, where the exits are. Free Insight check against everyone present."
+          }
+        ]
+      },
+      {
+        "id": "clerk",
+        "name": "The Clerk",
+        "description": "Your weapon is paperwork. Your armor is procedure. You navigate bureaucratic systems the way others navigate combat — with precision, patience, and the occasional dirty trick. The most dangerous thing in this cosmos isn't a warship. It's a correctly filed form.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Deception",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Portable IACO terminal",
+          "Stack of blank forms (various)",
+          "Official-looking stamp (forged)",
+          "Reading glasses"
+        ],
+        "features": [
+          {
+            "name": "Bureaucratic Warfare",
+            "description": "You can weaponize paperwork. Given 10 minutes and access to a terminal, you can generate an official-looking document — a warrant, a requisition order, a cease-and-desist — that will pass casual inspection. Intelligence check DC varies by how outrageous the claim."
+          },
+          {
+            "name": "Find the Loophole",
+            "description": "When confronted with a rule, regulation, or official policy that blocks the group, you can make an Intelligence (Investigation) check to find an exception, sub-clause, or procedural gap. On success, you find a legitimate (if obscure) way around the obstacle."
+          }
+        ]
+      },
+      {
+        "id": "salvager",
+        "name": "The Salvager",
+        "description": "You go into the wreckage — demolished worlds, abandoned stations, condemned zones — and bring back what's useful. You have a knack for finding things that still work in places where nothing should.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Survival",
+          "Perception",
+          "Athletics",
+          "Stealth"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Salvage suit (medium armor)",
+          "Cutting torch",
+          "Grappling line",
+          "Sealed specimen container"
+        ],
+        "features": [
+          {
+            "name": "Debris Reader",
+            "description": "You can assess a wreckage site and determine what's worth salvaging, what's dangerous, and what's structurally unsound. After observing a debris field or ruin for 5 minutes, you identify the safest path through and the most valuable salvage within it."
+          },
+          {
+            "name": "Scrap Engineer",
+            "description": "You can build functional tools, weapons, or devices from salvaged junk. Given 30 minutes and available scrap, you can jury-rig a solution to a practical problem. It works once. Maybe twice. Definitely not three times."
+          }
+        ]
+      },
+      {
+        "id": "chronicler",
+        "name": "The Chronicler",
+        "description": "You record what was lost. A library catalog. A child's drawing. A bus schedule. You believe that memory is the only thing that survives demolition, and you carry the proof in a worn satchel that is always partially full.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "History",
+          "Insight",
+          "Persuasion",
+          "Performance"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Worn satchel (always partially full)",
+          "Recording device",
+          "Pressed flower from a world no one remembers",
+          "Journal (half-filled)"
+        ],
+        "features": [
+          {
+            "name": "Bear Witness",
+            "description": "When you take the time to listen to someone's story — truly listen, for at least 5 minutes — they trust you in a way they trust no one else. The target shares one thing they haven't told anyone. This is not manipulation. It is the power of being seen."
+          },
+          {
+            "name": "Memory Anchor",
+            "description": "You carry fragments of lost worlds. Once per long rest, you can produce an artifact from your satchel that is emotionally or culturally significant to someone present. You didn't know you had it. It was just... there. The GM determines what it is and what it means."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "bureaucratic_navigation",
+        "name": "Bureaucratic Navigation",
+        "base_skill": "Investigation",
+        "description": "Understanding IACO's filing systems, form numbers, departmental hierarchies, and procedural loopholes. The difference between being lost in the system and exploiting it."
+      },
+      {
+        "id": "scrap_engineering",
+        "name": "Scrap Engineering",
+        "base_skill": "Investigation",
+        "description": "Building functional devices from salvaged junk, debris, and decommissioned technology. Making broken things work in ways they weren't designed to."
+      },
+      {
+        "id": "cosmic_street_smarts",
+        "name": "Cosmic Street Smarts",
+        "base_skill": "Insight",
+        "description": "Reading people and situations in post-demolition space. Knowing which stations are safe, which deals are scams, and which strangers will sell you out to IACO."
+      },
+      {
+        "id": "demolition_lore",
+        "name": "Demolition Lore",
+        "base_skill": "History",
+        "description": "Knowledge of demolished worlds, bypass construction patterns, IACO precedents, and the accumulated history of civilizations that no longer exist."
+      }
+    ],
+    "ai_generated": false,
+    "admin_reviewed": true
+  }
+}
