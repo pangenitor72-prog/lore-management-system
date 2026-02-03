@@ -24,7 +24,7 @@ from typing import Optional, Dict, Any, List
 
 from fastapi import APIRouter, HTTPException, Request, status, Depends, File, UploadFile, Query
 from starlette.concurrency import run_in_threadpool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.mantle.db.neo4j_adapter import Neo4jDatabase
 from src.mantle.api.dependencies import get_neo4j_db
@@ -5018,6 +5018,8 @@ class CustomOrigin(BaseModel):
 
     Example: "Netrunner" in cyberpunk maps to "rogue" for mechanics.
     """
+    model_config = ConfigDict(extra='allow')
+
     id: str = Field(..., description="Unique identifier (e.g., 'netrunner', 'mutant_survivor')")
     name: str = Field(..., description="Display name (e.g., 'Netrunner', 'Mutant Survivor')")
     description: str = Field(..., description="Short description of this origin")
@@ -5031,6 +5033,8 @@ class CustomArchetype(BaseModel):
 
     Example: "Street Samurai" in cyberpunk maps to "fighter" for mechanics.
     """
+    model_config = ConfigDict(extra='allow')
+
     id: str = Field(..., description="Unique identifier (e.g., 'street_samurai', 'corporate_fixer')")
     name: str = Field(..., description="Display name (e.g., 'Street Samurai', 'Corporate Fixer')")
     description: str = Field(..., description="Short description of this archetype")
@@ -5040,6 +5044,8 @@ class CustomArchetype(BaseModel):
 
 class WorldCharacterOptions(BaseModel):
     """Character creation options specific to a world."""
+    model_config = ConfigDict(extra='allow')
+
     origins: List[CustomOrigin] = Field(default_factory=list)
     archetypes: List[CustomArchetype] = Field(default_factory=list)
     ai_generated: bool = Field(default=False, description="True if options were AI-generated")
@@ -5056,6 +5062,7 @@ class LoreBaseResponse(BaseModel):
     name: str
     description: str
     genre: Optional[str] = None
+    mechanics_genre: Optional[str] = None
     genre_hints: List[str]
     tone_hints: List[str]
     entities_count: int
@@ -5108,6 +5115,7 @@ async def list_lore_bases(genre: Optional[str] = None):
             name=base["name"],
             description=base.get("description") or "",
             genre=base.get("genre"),
+            mechanics_genre=base.get("mechanics_genre"),
             genre_hints=base.get("genre_hints") or [],
             tone_hints=base.get("tone_hints") or [],
             entities_count=base.get("entities_count") or 0,
@@ -5157,6 +5165,7 @@ async def get_lore_base(lore_id: str):
         name=base["name"],
         description=base["description"],
         genre=base.get("genre"),
+        mechanics_genre=base.get("mechanics_genre"),
         genre_hints=base.get("genre_hints", []),
         tone_hints=base.get("tone_hints", []),
         entities_count=base.get("entities_count", 0),
