@@ -7674,7 +7674,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleAdminChangelog()">
                     <h3 style="color: #22c55e; margin: 0; display: flex; align-items: center; gap: 10px;">
                         <span>🆕</span> New Admin Features
-                        <span id="admin-changelog-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">2 NEW</span>
+                        <span id="admin-changelog-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">3 NEW</span>
                     </h3>
                     <span id="admin-changelog-arrow" style="font-size: 1.2rem; transition: transform 0.2s;">▼</span>
                 </div>
@@ -7682,18 +7682,48 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                     <!-- Most recent first -->
                     <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <strong style="color: var(--text-primary);">🧠 Meaningful Character Descriptions</strong>
+                            <strong style="color: var(--text-primary);">Setting-Specific Abilities</strong>
                             <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Character creation now shows world-appropriate abilities instead of generic D&D spells. Every archetype (martial and caster alike) has unique minor and major abilities drawn from the world's lore. 350 custom powers across the 7 new hybrid worlds.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">7 New Hybrid Worlds</strong>
+                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            The Drowned Sea (pirate horror), Fallen Capes (superhero post-apoc), Liberty City 1947 (superhero noir), The Shattered Heavens (steampunk sky-pirate), Frequency &amp; Static (post-apoc romance), The Temple of the Monsoon King (adventure romance), The Voltaic Accord (steampunk espionage). 51 total curated worlds.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">Simplified World Selection</strong>
+                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Genre chips removed from Tabletop Mode. The rules genre is now derived automatically from the world you pick, eliminating genre mismatch bugs and simplifying the setup flow.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-lavender);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">Meaningful Character Descriptions</strong>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Feb 2026</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
                             Character descriptions now deeply influence the entire build: skills, equipment, spells, background, personality, and starting level (1-3). The DM also reads backstory, traits, ideals, bonds, and flaws every turn. Descriptions even infer play preferences (tone, arc, lethality, morality) as smart defaults.
                         </p>
                     </div>
 
-                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-lavender);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <strong style="color: var(--text-primary);">🌌 The Mundane Collapse - New World Seed</strong>
-                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                            <strong style="color: var(--text-primary);">The Mundane Collapse - New World Seed</strong>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Feb 2026</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
                             Satirical sci-fi world inspired by Hitchhiker's Guide. Earth has been bureaucratically demolished for a hyperspace bypass. 5 origins, 5 archetypes, 6 locations, and a campaign full of cosmic absurdity.
@@ -10168,6 +10198,15 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // ============================================================
 
         const CHANGELOG = {
+            "v49": {
+                date: "2026-02-03",
+                changes: [
+                    { type: "feature", text: "Setting-specific abilities replace generic D&D spells for all archetypes" },
+                    { type: "feature", text: "7 new hybrid worlds: Drowned Sea, Fallen Capes, Liberty City, Shattered Heavens, and more" },
+                    { type: "improvement", text: "Genre chips removed — rules genre derived automatically from selected world" },
+                    { type: "fix", text: "Spell selection no longer freezes on custom archetype IDs" },
+                ]
+            },
             "v48": {
                 date: "2026-01-16",
                 changes: [
@@ -10220,7 +10259,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const lastSeenVersion = localStorage.getItem('airpg_last_seen_version');
 
             // Extract version number (e.g., "v44-20260116-..." -> "v44")
-            const currentVersion = appVersion?.match(/^v\d+/)?.[0] || 'v44';
+            const currentVersion = appVersion?.match(/^v\d+/)?.[0] || 'v49';
 
             // If same version, don't show
             if (lastSeenVersion === currentVersion) return;
