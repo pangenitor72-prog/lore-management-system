@@ -13598,11 +13598,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     subtitle.textContent = 'Select the spells for your spellbook.';
 
                     const numCantrips = selectedArch5spell?.cantrips_known || 3;
-                    const numPrepared = calculatePreparedSpells(charCreationData.archetype, charCreationData.abilityScores);
+                    const spellClassId = selectedArch5spell?.base_type || charCreationData.archetype;
+                    const numPrepared = calculatePreparedSpells(spellClassId, charCreationData.abilityScores);
 
                     // Load spells if not already loaded for this class
                     if (availableSpells.cantrips.length === 0) {
-                        loadSpellsForClass(charCreationData.archetype);
+                        loadSpellsForClass(spellClassId);
                     }
 
                     content.innerHTML = `
@@ -14039,6 +14040,20 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 }
             } catch (error) {
                 console.error('Error loading spells:', error);
+                // Fallback so the user isn't stuck on "Loading spells..."
+                availableSpells.cantrips = [
+                    { id: 'fire_bolt', name: 'Fire Bolt', school: 'Evocation', casting_time: '1 action' },
+                    { id: 'light', name: 'Light', school: 'Evocation', casting_time: '1 action' },
+                    { id: 'sacred_flame', name: 'Sacred Flame', school: 'Evocation', casting_time: '1 action' },
+                    { id: 'mage_hand', name: 'Mage Hand', school: 'Conjuration', casting_time: '1 action' }
+                ];
+                availableSpells.level_1 = [
+                    { id: 'magic_missile', name: 'Magic Missile', school: 'Evocation', casting_time: '1 action' },
+                    { id: 'cure_wounds', name: 'Cure Wounds', school: 'Evocation', casting_time: '1 action' },
+                    { id: 'shield', name: 'Shield', school: 'Abjuration', casting_time: '1 reaction' },
+                    { id: 'bless', name: 'Bless', school: 'Enchantment', casting_time: '1 action' }
+                ];
+                renderCreationStep();
             }
         }
 
