@@ -1,0 +1,379 @@
+{
+  "id": "the_drowned_sea",
+  "name": "The Drowned Sea",
+  "description": "A cursed fleet sails a sea where the water remembers the drowned. Every island hides something worse.",
+  "genre": "pirate_horror",
+  "mechanics_genre": "horror",
+  "genre_hints": [
+    "pirate",
+    "horror",
+    "adventure"
+  ],
+  "tone_hints": [
+    "dread",
+    "salt-spray beauty",
+    "grim camaraderie"
+  ],
+  "seed_prompt": "A pirate horror setting in an uncharted ocean where the laws of nature bend and break. The water is dark and warm and sometimes moves against the wind. Ships vanish, ghost islands appear on no chart, and the Drowned — dead sailors who came back wrong — hunt the living. Pirates survive by code and cunning, chasing impossible treasure while an ancient intelligence stirs in the deep. The tone blends nautical dread with the fierce loyalty of crews who know every voyage might be their last.",
+  "lore_content": "The Drowned Sea has no fixed borders. It begins where the trade winds stop making sense and the stars shift position between one watch and the next. Sailors call the threshold the Veil — a stretch of fog that rolls in from nowhere and stinks of brine and something older than salt. Ships that enter the Veil don't always come out. Those that do carry crews with haunted eyes and stories they won't repeat sober. The colonial powers sent seven fleets to chart and claim the Drowned Sea over the past century. Two returned. The survivors founded the outpost at Gallows Point and swore they'd never sail past the Veil again. Within a year, the pirates moved in.\n\nCaptain Isolde Vane commands the Pallid Mare, a three-masted brigantine whose hull is stained white by something that grew on it during a three-week drift through the Bleached Straits. Isolde was a privateer commissioned by the Crown until the day her handlers ordered her to shell a fishing village to cover up what the navy had found on the seabed. She turned her cannons on her own escort instead and hasn't looked back. She's sharp-tongued, fiercely protective of her crew, and tormented by recurring nightmares in which she stands on the ocean floor and something vast opens its eyes. She follows the pirate code not out of honor but necessity — in the Drowned Sea, a captain who loses her crew's trust is already dead. Her inner conflict is simple and gnawing: she wants to chart a safe passage out of the Drowned Sea and never return, but every time she reaches the Veil, she turns the ship around. She tells her crew she's hunting treasure. The truth is she's afraid of what she'll become once the sea can't reach her anymore.\n\nBosun Malachai Creel is the oldest living sailor in the Drowned Sea, or so he claims. His skin is leather-dark and covered in tattoos that he swears move when you're not looking. Malachai served on six different ships before joining the Pallid Mare. He lost his left hand to a Drowned that grabbed him over the gunwale during a night watch and now wears a hook carved from the bone of a sea creature no naturalist has ever classified. He functions as the crew's living memory — he knows which waters are safe, which islands shift position, and which sounds mean you need to cut anchor and run. He's gruff, superstitious, and deeply kind to anyone young or frightened, because he remembers being both. His inner conflict is that he hears the whispers from the deep more clearly each year and has begun to understand them. He hasn't told anyone because he's terrified that understanding is the first step toward becoming one of the Drowned.\n\nHarbormistress Theodora Rask runs Gallows Point, the only permanent settlement in the Drowned Sea. Gallows Point is built on an island that doesn't move — the only one — and its harbor is protected by a seawall of rusted chains that the original colonists dredged up from the ocean floor. Theodora is a former accountant from the trading companies who came to the Drowned Sea to audit the colonial outpost's books and ended up staying when the last navy garrison fled. She discovered she had a talent for governance through intimidation and bookkeeping. She charges docking fees, mediates disputes between captains, and maintains the only tavern, dry dock, and powder magazine within a hundred leagues. She is calm, organized, ruthlessly fair, and quietly terrified every single day. Her inner conflict is that she knows Gallows Point's defenses are failing — the chains are corroding, the Drowned come closer to the seawall every month, and the island itself has started to hum at night — but admitting this would cause a panic that would destroy the settlement faster than any monster.\n\nFather Cornelius Salt is the chaplain of the Drowned Sea, though no church ordained him and no god he prays to has a name. He arrived on a raft eight years ago, half-dead and raving about a city he'd seen on the ocean floor. After recovering at Gallows Point, he began preaching to the pirates — not salvation, but survival. His sermons are practical: how to resist the whispers, how to handle a crewmate who's starting to turn, how to maintain hope when the horizon looks wrong. He wears a necklace of shark teeth and carries a battered journal filled with sketches of things he's seen in the deep. Pirates respect him because he goes aboard ships others have written off and brings back the living. His inner conflict is his growing certainty that the intelligence beneath the sea is not evil — merely lonely — and his fear of what that sympathy means for his humanity.\n\nNavigator Sable Osei is the most sought-after pilot in the Drowned Sea. She can read the currents the way other people read weather, and she claims to see the paths of drowned ships glowing faintly beneath the surface. She grew up on a slaver that sank in the Veil when she was fourteen; she survived by clinging to wreckage for three days until a pirate crew pulled her out. She's been sailing the Drowned Sea ever since, mapping its shifting geography with an obsessive precision that borders on mania. Her charts are works of art — layered, annotated, beautiful — and hopelessly incomplete because the sea rearranges itself. She sells her services to whichever captain can afford her and keeps copies of every chart she's ever drawn in a waterproof chest she never lets out of her sight. Her inner conflict is that her ability to read the currents isn't natural. Something gave it to her during those three days in the water, and it's been growing stronger. She's afraid that she's not reading the sea — the sea is reading her.\n\nThe Drowned are the Drowned Sea's most visible horror. They are sailors who died in these waters and came back as something between a corpse and a memory. They walk the ocean floor in vast, silent processions. They climb anchor chains at night. They wear the faces of the dead but their eyes are black and their mouths are always open, as if trying to speak or scream or breathe. A ship that encounters the Drowned at sea will hear knocking on the hull, then scraping, then silence — which is worse, because silence means they've found a way in. The Drowned don't attack so much as collect. They drag the living underwater, and those taken join the procession. There are rumors of Drowned who still remember who they were. Malachai swears he once saw his old captain walking the seabed, still wearing her tricorn hat, and that she looked up at him and waved.\n\nThe Whispering Trench is a chasm in the ocean floor roughly three hundred leagues southeast of Gallows Point — though distance is unreliable in the Drowned Sea. It is unfathomably deep. Ships that sail over it report hearing voices from below: fragments of conversation, names of the dead, lullabies in languages that predate human speech. The trench is where the Drowned emerge from. It is also, according to Father Cornelius, where the intelligence lives — the thing that has no name but which the pirates call the Leviathan, the Mother Below, or simply It. No one has ever descended into the trench and returned. Twice, diving bells have been lowered. The chains came back sheared clean through. The bells did not come back at all.\n\nThe Iron Requiem is a ghost ship that appears without warning, usually during storms or in fog. It is a massive galleon, black-hulled and barnacle-crusted, with tattered sails that move in a wind that doesn't exist. Its deck is crewed by the Drowned, but not the shambling kind — these move with purpose, working the rigging and manning the cannons with mechanical precision. The Iron Requiem does not attack every ship it encounters. Sometimes it simply sails alongside, matching speed and heading, for hours or days, and then vanishes. Other times it opens fire without provocation. There is a figure on its quarterdeck that some sailors claim is Admiral Harkin, who commanded the largest of the colonial fleets that entered the Drowned Sea and never returned. If it is Harkin, he has been dead for forty years and does not appear to have noticed.\n\nThe Red Moon is a phenomenon that occurs roughly once every six weeks, though the interval is irregular. When it rises, the sea turns the color of old blood, the air tastes like copper, and the rain — if it rains — is not water. During a Red Moon, the Drowned become aggressive, the shifting islands move faster, and the whispers from the trench become loud enough to hear on deck without pressing your ear to the hull. Pirates observe strict protocols during a Red Moon: stay below decks, seal the hatches, do not drink the rainwater, and above all, do not look at the moon's reflection in the sea. Those who do see something looking back. The survivors of that experience do not recover fully.\n\nThe Bone Reef is a navigational landmark — a massive coral formation made not of coral but of human bone. It rises from the shallows north of the Whispering Trench, a jagged white ridge half a league long. The bones are fused together in ways that suggest they were grown, not accumulated. At low tide, skulls are visible, hundreds of them, all facing outward as if watching the horizon. The Bone Reef is dangerous to sail near because the Drowned congregate around it, but it is also one of the few fixed points in the Drowned Sea's shifting geography, which makes it invaluable for navigation. Sable Osei uses it as the anchor point for all her charts and has noticed, with growing unease, that it is larger every time she visits.\n\nCaptain Redmond Cask leads the Salted Brotherhood, a loose confederation of pirate crews who have banded together for mutual protection. Cask is a huge, scarred man with a booming laugh and a reputation for generosity — he shares his plunder equally and has never abandoned a ship in distress. He is also the only captain known to have fought the Drowned at close quarters and won, using fire and salt in a desperate battle that cost him half his crew. He holds court at the Flotsam Bazaar, a floating market of lashed-together hulls where pirates trade, resupply, and exchange information. His inner conflict is that his bravery is fueled entirely by rage, and the rage is fueled by grief — his daughter was taken by the Drowned two years ago, and he sails the sea not for treasure but in the irrational hope of finding her in the processions that walk the ocean floor.\n\nDr. Amara Finch is the closest thing the Drowned Sea has to a scientist. A natural philosopher who was expelled from the Royal Society for her insistence that the ocean possesses a form of intelligence, she came to the Drowned Sea to prove her theories and has been gathering evidence for three years. She operates out of a converted cargo hold on one of the Flotsam Bazaar's pontoons, where she dissects specimens, records tidal anomalies, and interviews sailors about their encounters. She has developed a compound of salt, phosphorus, and rendered whale fat that repels the Drowned — temporarily. She is brilliant, obsessive, and socially graceless, and she is slowly coming to terms with the fact that her theory is correct and that being right is far more terrifying than being wrong. Her inner conflict is that the intelligence in the deep has noticed her research and has begun leaving things for her to find — specimens, artifacts, arrangements of bone on the seafloor that look disturbingly like diagrams. She cannot tell if she is being courted or warned.\n\nThe treasure of the Drowned Sea is real. Ships that brave its horrors find things in the water and on the shifting islands that shouldn't exist: gold that doesn't tarnish, gems that glow faintly in darkness, artifacts inscribed with symbols from no known civilization. The largest haul in living memory was brought back by Captain Isolde Vane — a chest of black pearls, each one containing what appears to be a tiny, frozen lightning bolt. She sold them at Gallows Point for enough to refit her ship twice over. But the treasure comes with a cost that no one talks about openly. Those who take too much from the sea begin to change. Their eyes darken. They develop an aversion to fresh water. They start hearing the whispers before the Red Moon rises. The unspoken rule is simple: take what you need, leave the rest, and never take anything from the Bone Reef. The pirates who ignore this rule become the Drowned faster than anyone else.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "veil_runner",
+        "name": "Veil Runner",
+        "description": "Born outside the Drowned Sea, you came through the Veil willingly — or were dragged through it. Either way, you survived the crossing and the sea knows your name now.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Perception"
+        ],
+        "traits": [
+          "Veil-Scarred: Advantage on saving throws against being frightened by supernatural phenomena.",
+          "Outsider's Clarity: You can tell when the sea is shifting geography around you, granting advantage on Navigation checks to avoid being displaced."
+        ],
+        "languages": [
+          "Common",
+          "One additional language"
+        ]
+      },
+      {
+        "id": "drowned_sea_native",
+        "name": "Drowned Sea Native",
+        "description": "You were born in Gallows Point or on a ship. The Drowned Sea is the only world you've ever known. You don't fear it — you respect it.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "wisdom": 2
+        },
+        "skill_proficiencies": [
+          "Nature",
+          "Insight"
+        ],
+        "traits": [
+          "Sea-Sense: You can feel changes in the Drowned Sea's mood — rising aggression, shifting currents, the approach of the Drowned — up to one hour before they manifest.",
+          "Born on the Water: You can hold your breath for twice the normal duration and swim at full movement speed."
+        ],
+        "languages": [
+          "Common",
+          "Drowned Sea Creole"
+        ]
+      },
+      {
+        "id": "reclaimed",
+        "name": "Reclaimed",
+        "description": "You were taken by the Drowned. You came back. Nobody comes back. You don't remember how, and you try not to think about the marks on your skin that glow faintly in moonlight.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Intimidation"
+        ],
+        "traits": [
+          "Death's Reprieve: When you are reduced to 0 hit points, you can choose to stabilize automatically. Once per long rest.",
+          "The Mark: The Drowned do not attack you on sight. They watch. This is not necessarily a comfort."
+        ],
+        "languages": [
+          "Common",
+          "Deep Speech"
+        ]
+      },
+      {
+        "id": "salt_blooded",
+        "name": "Salt-Blooded",
+        "description": "Your family has sailed the Drowned Sea for three generations. The sea is in your blood — perhaps literally. Your grandmother heard the whispers too.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "dexterity": 1,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Acrobatics"
+        ],
+        "traits": [
+          "Sea Legs: Advantage on checks to maintain balance or move on a ship, even in supernatural storms.",
+          "Inherited Resistance: Advantage on saving throws against the Drowned Sea's corrupting influence, including the effects of the Red Moon."
+        ],
+        "languages": [
+          "Common",
+          "Drowned Sea Creole"
+        ]
+      },
+      {
+        "id": "crown_castaway",
+        "name": "Crown Castaway",
+        "description": "You served on one of the colonial fleets sent to chart the Drowned Sea. Your ship went down. The navy thinks you're dead. You intend to keep it that way.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Athletics"
+        ],
+        "traits": [
+          "Naval Training: Proficiency with navigator's tools and cartographer's tools.",
+          "Survivor's Guilt: Once per long rest, when an ally within 30 feet takes damage, you can use your reaction to take that damage instead."
+        ],
+        "languages": [
+          "Common",
+          "One additional language"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "reaver",
+        "name": "Reaver",
+        "description": "You fight with the fury of someone who's seen what waits in the dark and decided to make the dark afraid of you.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Chain shirt",
+          "Cutlass",
+          "Boarding axe"
+        ],
+        "features": [
+          {
+            "name": "Salt and Iron",
+            "description": "Your weapon attacks deal an additional 1d4 damage against undead creatures and the Drowned. You have learned where to strike things that should not be alive."
+          },
+          {
+            "name": "Boarding Fury",
+            "description": "During the first round of any combat that begins on a ship, dock, or shoreline, you have advantage on attack rolls and your movement speed increases by 10 feet."
+          }
+        ]
+      },
+      {
+        "id": "deep_warden",
+        "name": "Deep Warden",
+        "description": "Part priest, part exorcist, part grief counselor. You keep the crew's souls intact when the sea tries to claim them.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Insight",
+          "Religion",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Salt-crystal holy symbol",
+          "Chain shirt",
+          "Mace"
+        ],
+        "features": [
+          {
+            "name": "Ward Against the Deep",
+            "description": "As an action, you can create a 15-foot radius of protection lasting 10 minutes. The Drowned cannot willingly enter this area, and creatures within have advantage on saving throws against fear and charm effects originating from the sea. Once per short rest."
+          },
+          {
+            "name": "Requiem",
+            "description": "You can perform a 1-minute ritual over a corpse to ensure it does not rise as one of the Drowned. You can also attempt to release a Drowned from its torment with a contested Wisdom check."
+          }
+        ]
+      },
+      {
+        "id": "wraith_hunter",
+        "name": "Wraith Hunter",
+        "description": "Silent, quick, and comfortable in the dark. You go where others won't — onto ghost ships, into flooded holds, down into the black water.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Investigation",
+          "Perception",
+          "Acrobatics"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Two silvered daggers",
+          "Grappling hook and rope"
+        ],
+        "features": [
+          {
+            "name": "Ghost Walk",
+            "description": "You can move through areas occupied by the Drowned or other undead without provoking opportunity attacks. You have advantage on Stealth checks made in darkness, fog, or aboard derelict vessels."
+          },
+          {
+            "name": "Dead Reckoning",
+            "description": "You can sense the presence of undead creatures within 60 feet, even through walls and hulls. You know their number and general direction but not their exact position."
+          }
+        ]
+      },
+      {
+        "id": "tide_singer",
+        "name": "Tide Singer",
+        "description": "You learned to listen to the sea, and the sea listened back. Your songs calm storms, lure fish, and keep the Drowned at bay — for now.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Performance",
+          "Persuasion",
+          "Deception",
+          "Arcana"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Leather armor",
+          "Concertina or bone flute",
+          "Cutlass"
+        ],
+        "features": [
+          {
+            "name": "Shanty of Warding",
+            "description": "When you sing or play an instrument, allies within 30 feet gain advantage on saving throws against the whispers of the deep, the effects of the Red Moon, and fear caused by the Drowned. The effect lasts as long as you continue performing."
+          },
+          {
+            "name": "Sea's Voice",
+            "description": "Once per long rest, you can speak directly to the Drowned Sea — asking one question about local currents, hidden dangers, or the location of something lost beneath the waves. The sea always answers, but its answers are cryptic and may carry a price."
+          }
+        ]
+      },
+      {
+        "id": "brine_witch",
+        "name": "Brine Witch",
+        "description": "You study the Drowned Sea's impossible nature with the tools of science and the instincts of a mystic. You brew compounds, read tidal signs, and know more about what lives below than anyone should.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Investigation",
+          "Nature",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Slings",
+          "Quarterstaffs",
+          "Light crossbows"
+        ],
+        "starting_equipment": [
+          "Alchemist's satchel",
+          "Journal of tidal observations",
+          "Vial of Drowned-repelling compound"
+        ],
+        "features": [
+          {
+            "name": "Brine Compound",
+            "description": "You can prepare a compound of salt, phosphorus, and rendered fat. When applied to a weapon or thrown as a splash weapon (20-foot range), it deals 2d6 damage to the Drowned and forces them to flee for 1 round. You can prepare a number of doses equal to your Intelligence modifier per long rest."
+          },
+          {
+            "name": "Anatomist of the Impossible",
+            "description": "When you examine a creature, artifact, or phenomenon native to the Drowned Sea, you can study it for 10 minutes to learn its properties, weaknesses, and behavioral patterns. Advantage on all subsequent checks related to that subject."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "dead_sea_navigation",
+        "name": "Dead Sea Navigation",
+        "base_skill": "Survival",
+        "description": "Reading the Drowned Sea's shifting currents, predicting island displacement, interpreting the behavior of the Drowned as navigational markers, and knowing when to sail and when to drop anchor and pray."
+      },
+      {
+        "id": "drowned_lore",
+        "name": "Drowned Lore",
+        "base_skill": "Arcana",
+        "description": "Knowledge of the Drowned Sea's supernatural phenomena — the behavior and weaknesses of the Drowned, the patterns of the Red Moon, the properties of deep-sea artifacts, and the whispered fragments that drift up from the Whispering Trench."
+      },
+      {
+        "id": "crew_bonds",
+        "name": "Crew Bonds",
+        "base_skill": "Persuasion",
+        "description": "The art of maintaining trust, morale, and cohesion among a pirate crew sailing cursed waters. Knowing when to give a rousing speech, when to share a quiet drink, and when to put a frightened sailor in the brig for their own safety."
+      },
+      {
+        "id": "salvage_craft",
+        "name": "Salvage Craft",
+        "base_skill": "Investigation",
+        "description": "The skills needed to board derelict vessels, search flooded compartments, and recover cargo from wrecks — while recognizing which treasures are safe to take and which carry the sea's curse."
+      }
+    ]
+  },
+  "ai_generated": false,
+  "admin_reviewed": false
+}

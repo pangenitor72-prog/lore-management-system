@@ -1,0 +1,372 @@
+{
+  "id": "shattered_heavens",
+  "name": "The Shattered Heavens",
+  "description": "Airship fleets over impossible skies. Sky pirates raid the trade routes between floating cities while the toxic Murk devours the world below.",
+  "genre": "sky_pirate",
+  "mechanics_genre": "fantasy",
+  "genre_hints": [
+    "steampunk",
+    "pirate",
+    "adventure"
+  ],
+  "tone_hints": [
+    "swashbuckling",
+    "wondrous",
+    "vertiginous"
+  ],
+  "seed_prompt": "A steampunk-pirate hybrid setting where the surface world is lost beneath a toxic miasma called the Murk. Civilization clings to mountaintop cities, mesa plateaus, and massive floating platforms held aloft by the mysterious mineral aetherlift. Airships connect everything, the Imperial Aether Navy controls the major trade routes, and sky pirates prey on merchant convoys. A pirate haven called the Free Docks floats at the edge of charted sky. The tone is swashbuckling and wonder-filled, with a constant sense of verticality, danger, and the romance of open sky.",
+  "lore_content": "Nobody remembers when the Murk came. The oldest records in the Athenaeum of Highspire mention it the way they mention gravity — as a fact of existence, not an event. The surface of the world is gone, buried under an ocean of pale green fog so thick it eats light and so toxic it dissolves metal in hours and flesh in minutes. Mountains still pierce through, their peaks jutting above the poison line like islands in a sea of silence. Everything humanity has left exists above the Murk: cities carved into cliff faces, towns balanced on mesa plateaus, and the great floating platforms — enormous slabs of stone and steel held aloft by veins of aetherlift, a crystalline mineral that defies gravity when exposed to heat. The higher you go, the safer you are. The lower you descend, the closer you come to the breath of something that has already swallowed everything else.\n\nAetherlift is the foundation of civilization. It grows in deep veins inside the mountains, glowing faintly violet in the dark. When heated, it generates lift — not thrust, but a sustained upward force that scales with temperature. The floating platforms that house the largest cities are essentially enormous slabs of aetherlift-laced rock, kept warm by furnace arrays that burn day and night. If the furnaces go out, the platform sinks. This has happened. The city of Grayfall dropped three hundred feet in nine minutes when its eastern furnace bank failed during a winter storm. Two thousand people died. The furnaces were relit. Grayfall still flies, but the eastern district is abandoned, its buildings cracked and tilted at angles that make your stomach drop just looking at them.\n\nThe Imperial Aether Navy is the dominant military power above the Murk. Based out of Highspire — the largest and oldest floating city, a magnificent sprawl of copper domes, iron scaffolding, and stone spires connected by suspension bridges that sway in the wind — the Navy patrols the major trade routes between the Seven Pillars, the mountain cities that form the backbone of civilized commerce. Admiral Corliss Vane commands the Navy from the bridge of the INS Sovereign Will, a dreadnought-class warship carrying sixty cannons, a full marine complement, and an ego to match. Vane is a tactical genius and an unbearable snob. Born to Highspire aristocracy, she views the sky as her personal estate and pirates as vermin. She has never lost a fleet engagement. She has also never set foot below the officer's deck of any vessel she's commanded, and her sailors joke — quietly, carefully — that she navigates by looking down her nose. Her obsession is the capture of Captain Renard Blackwood, the most famous sky pirate alive, and she has diverted Navy resources to the hunt in ways that leave merchant convoys dangerously unprotected on the outer routes.\n\nCaptain Renard Blackwood commands the Stormcrow, a heavily modified corsair fitted with twin aetherlift drives that let it climb faster than any Navy frigate. Blackwood is charming, reckless, and haunted by something he won't discuss. He was a Navy lieutenant once — decorated, promising, destined for admiral's stars. Then he deserted during the Grayfall crisis, stealing a naval cutter and using it to evacuate civilians from the sinking eastern district while his commanding officer ordered a retreat to protect the fleet. The Navy declared him a traitor. The people of Grayfall call him a hero. He calls himself a pirate and says it's simpler. His crew is fiercely loyal, his reputation is enormous, and his ship has a bounty on it so large that half the pirates in the Free Docks have considered turning him in. None have tried. Blackwood's inner conflict is simple and unresolvable: he became a pirate to help people, but piracy requires taking from others, and every cargo he seizes to fund his operations is someone else's livelihood disappearing into the clouds.\n\nThe Free Docks are the sky pirate haven — a sprawling, ramshackle flotilla of decommissioned cargo haulers, retired naval vessels, and purpose-built platforms lashed together with chains and cables at the edge of charted airspace. No flag flies over the Free Docks. No single captain rules them. Governance, such as it is, falls to the Dockmaster, a position currently held by Yara Kessik, a retired smuggler with a mechanical left arm and an institutional memory that stretches back thirty years. Kessik doesn't make laws. She makes suggestions, and people who ignore her suggestions tend to find their mooring lines cut in the middle of the night. The Free Docks survive because they're useful — every pirate needs a place to fence stolen cargo, repair a damaged ship, and drink without watching for Navy patrols. Kessik's one inviolable rule is that no violence occurs on the docking platforms. Disputes are settled in the Cage, a suspended arena dangling beneath the main platform where grudges are resolved with fists or blades while spectators bet from the catwalks above. Kessik herself referees. She hasn't needed to intervene in years. The mechanical arm helps.\n\nDr. Elara Sung operates a workshop on the Free Docks that is half laboratory and half fever dream. She is the foremost expert on aetherlift mechanics alive — possibly the foremost expert who has ever lived — and she is convinced that the Murk is not natural. Her research suggests that aetherlift and the Murk are connected, two expressions of the same phenomenon, and that the mineral's gravity-defying properties are a side effect of whatever catastrophe created the toxic fog below. She has been trying to secure funding to mount an expedition into the Murk itself, equipped with sealed diving suits and aetherlift-powered descent vehicles, to reach the surface and discover what's down there. No one will fund her. The Navy considers her a crank. The pirates consider her insane. She considers everyone else incurious. Sung is brilliant, impatient, socially abrasive, and probably right about everything. She has a cat named Barometer who lives in her workshop and hisses at anyone who touches the equipment.\n\nBrother Ashwin is a Lamplighter — a member of the Order of the Perpetual Flame, the religious organization responsible for maintaining the furnace arrays that keep the floating cities aloft. The Lamplighters are part engineer, part priest. They tend the sacred fires with a devotion that blurs the line between maintenance and worship, and they believe that aetherlift is a divine gift — that the mineral's light is the last echo of a god who sacrificed themselves to lift humanity above the death below. Ashwin is stationed at Grayfall, tending the very furnaces that failed during the catastrophe. He is young, earnest, and quietly terrified that the furnaces will fail again. He has discovered hairline fractures in the eastern array's primary combustion chamber — damage from the original failure that was patched but never properly repaired. He has filed reports. His reports have been ignored. The city's governor doesn't want to shut down the array for repairs because it would require evacuating the eastern district again, and the political cost of admitting the district isn't safe would be catastrophic. Ashwin is running out of official channels and starting to consider unofficial ones.\n\nThe Seven Pillars are the mountain cities that anchor civilized trade. Each sits atop a peak that rises above the Murk line, connected to the others by charted airship routes that the Navy patrols. Highspire is the largest and wealthiest, home to the Admiralty, the Merchant Guilds, and the Athenaeum — the greatest library above the Murk. Ironhold is the industrial heart, its forges burning day and night to produce the engines, weapons, and aetherlift furnace components that keep everything running. Cloudveil is the breadbasket, its terraced farms cascading down the mountainside to within dangerous proximity of the Murk line, growing crops in soil that is rich precisely because the toxic fog deposits minerals as it laps against the rock. The other Pillars — Redcrest, Farlance, Thornpeak, and Windmere — each serve their function in the network, and the trade routes between them are the arteries of civilization. Control the routes and you control the sky.\n\nMerchant-Captain Isolde Varn runs the most profitable independent trading company above the Murk — Varn & Associates, three armed merchantmen that make the Highspire-to-Ironhold circuit carrying refined aetherlift crystals, machine parts, and whatever else pays. Varn is pragmatic, sharp-tongued, and ruthlessly fair. She pays her crews well, keeps her ships maintained, and has standing arrangements with two different pirate captains to leave her convoys alone in exchange for a percentage of profits and occasional no-questions-asked cargo runs. She considers this good business. The Navy considers it treason. Varn considers the Navy's opinion irrelevant, since the Navy hasn't been able to keep the outer routes safe in three years. Her real concern is the rumors coming from Ironhold — whispers that the deep aetherlift mines are running dry, that the veins are thinning, and that the mineral that holds everything aloft is a finite resource that civilization is burning through faster than it regenerates. If the rumors are true, every floating city in the sky is living on borrowed time.\n\nFlynn Delaney is a seventeen-year-old rigger on the Stormcrow — Captain Blackwood's youngest crew member and the best natural climber anyone has seen in a generation. Flynn grew up on the Free Docks, orphaned, feral, surviving by running messages and stealing food from cargo crates. Blackwood caught him stealing from the Stormcrow's galley and offered him a job instead of a beating. Flynn is fast, fearless in the rigging, and utterly devoted to the captain who gave him a chance. He is also in over his head. The pirate life seemed romantic from the docking platforms. Up close, it involves blood, hard choices, and watching people you've robbed weep over lost cargo that was supposed to feed their families. Flynn hasn't reconciled this yet. He's starting to understand why Blackwood drinks.\n\nBelow everything, the Murk churns. It is not still. Sailors who fly too low report seeing shapes moving in the fog — vast, slow shadows that could be geological formations shifting in the toxic currents or could be something else entirely. Expeditions into the upper Murk layer have recovered fragments of the old world: a stone archway encrusted with crystallized toxin, a bronze bell green with corrosion, the prow of a ship that sailed on water instead of air. Dr. Sung has catalogued over three hundred such artifacts and believes they point to a civilization far more advanced than the one currently clinging to the mountaintops. The question no one wants to ask is obvious: if the old world was more advanced, why couldn't they survive the Murk? And the question no one dares to ask is worse: what if they created it?\n\nCommodore Hestia Rourke commands the Navy's outer patrol squadron from the deck of the INS Galebinder, a fast frigate tasked with protecting the routes Admiral Vane considers beneath her attention — the supply lines to Windmere, the mining convoys from Thornpeak, the refugee transports from settlements that have slipped too close to the Murk line. Rourke is everything Vane is not: common-born, scarred, practical, and deeply aware that the people she protects don't care about fleet politics. She has thirteen ships, needs thirty, and makes do. She respects Blackwood, though she'd never say it aloud, because she saw what he did at Grayfall before the Navy rewrote the report. Her loyalty to the Admiralty is fraying. Not because she's lost faith in the Navy's mission, but because she's lost faith in the people giving the orders. When the next crisis comes — and she can feel it coming, the way old sailors feel a storm — she doesn't know whose side she'll be on. She suspects that bothers her less than it should.\n\nThe sky between the Pillars is not empty. Wind currents carve invisible highways through the open air — the Trades, the pirates call them — and a skilled navigator can ride a favorable current from Highspire to Ironhold in half the time it takes a Navy dreadnought plowing against the headwind on its charted lane. The sky is also home to things that don't have names in any Pillar language: vast gasbag creatures that drift through the upper atmosphere like living clouds, bioluminescent swarms that light up the night sky in shifting patterns the Lamplighters call the God-Script, and the occasional wreck of an ancient vessel — not wooden, not metal, built from materials no Gearwright can identify — tumbling through the currents as if it fell from somewhere higher still. The Athenaeum has catalogued seven such wrecks. None match any known construction technique. The most recent one was warm to the touch when the salvage crew reached it, as though its engines had only just stopped running.\n\nThe Murk also rises. Not quickly — inches per year at most, sometimes less. But the records in the Athenaeum are clear. The old maps show cities on peaks that are now submerged. The Murk line creeps upward, slow and patient, and the farms on Cloudveil's lower terraces have to be abandoned and replanted higher every few decades. At its current rate, the lowest of the Seven Pillars — Windmere — will be swallowed within two centuries. The Lamplighters preach that the sacred fires will hold the darkness at bay. The Navy insists the situation is under control. The merchants adjust their routes and raise their prices. And the pirates do what pirates have always done — they steal what they can and fly fast, because the sky is wide and the Murk is patient, and nobody lives forever above the clouds.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "skydock_rat",
+        "name": "Skydock Rat",
+        "description": "Raised on the Free Docks with nothing but quick hands and a head for heights. You learned to climb before you learned to read.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Acrobatics",
+          "Sleight of Hand"
+        ],
+        "traits": [
+          "Born Climber: You have a climbing speed equal to your walking speed and advantage on checks to climb rigging, masts, or vertical structures.",
+          "Dockside Instincts: You can't be surprised while you are conscious, and other creatures don't gain advantage on attack rolls against you as a result of being hidden from you."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      },
+      {
+        "id": "pillar_born",
+        "name": "Pillar-Born",
+        "description": "A citizen of one of the Seven Pillars — educated, connected, and raised with the mountain wind in your lungs.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Persuasion"
+        ],
+        "traits": [
+          "Civic Education: You have proficiency with one set of artisan's tools of your choice and advantage on Intelligence checks related to trade, law, or politics.",
+          "Mountain Lungs: You are adapted to high altitude. You have advantage on Constitution saving throws related to thin air, cold, or altitude sickness."
+        ],
+        "languages": [
+          "Common",
+          "One Pillar dialect"
+        ]
+      },
+      {
+        "id": "lamplighter_acolyte",
+        "name": "Lamplighter Acolyte",
+        "description": "Trained by the Order of the Perpetual Flame to tend the sacred furnaces. You understand aetherlift the way most people understand breathing.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Religion",
+          "Investigation"
+        ],
+        "traits": [
+          "Furnace Sense: You can detect aetherlift mineral within 30 feet and can determine if an aetherlift-powered device is functioning properly or about to fail.",
+          "Heat Resistant: You have resistance to fire damage and advantage on saving throws against extreme heat."
+        ],
+        "languages": [
+          "Common",
+          "Ignan"
+        ]
+      },
+      {
+        "id": "murk_diver",
+        "name": "Murk Diver",
+        "description": "You've been below the cloud line. You've breathed recycled air in a sealed suit and seen the shapes that move in the fog. You came back up. Most don't.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Perception"
+        ],
+        "traits": [
+          "Fog Walker: You can see through fog, mist, and smoke as if it were lightly obscured rather than heavily obscured, to a range of 30 feet.",
+          "Toxin Hardened: You have advantage on saving throws against poison and resistance to poison damage."
+        ],
+        "languages": [
+          "Common",
+          "Old Surface Cant"
+        ]
+      },
+      {
+        "id": "navy_washout",
+        "name": "Navy Washout",
+        "description": "You wore the Imperial uniform. You know Navy signals, Navy tactics, and exactly where Navy discipline breaks down.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "dexterity": 1,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Intimidation"
+        ],
+        "traits": [
+          "Naval Discipline: You have proficiency with navigator's tools and water vehicles (airship equivalent). You can accurately read and produce Navy signal flags.",
+          "Know the Formation: You have advantage on Intelligence checks to predict or analyze Imperial Aether Navy tactics and patrol patterns."
+        ],
+        "languages": [
+          "Common",
+          "Navy Signal Code"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "corsair",
+        "name": "Corsair",
+        "description": "A sky pirate through and through — deadly with a blade on a swaying deck, fearless in a boarding action, and always first over the rail.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Acrobatics",
+          "Intimidation",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Studded leather armor",
+          "Cutlass (longsword)",
+          "Flintlock pistol with 20 rounds"
+        ],
+        "features": [
+          {
+            "name": "Boarding Rush",
+            "description": "When you move at least 10 feet in a straight line and make a melee attack on the same turn, you deal an extra 1d6 damage on a hit. If the target is on a different vessel or platform than where you started your movement, the extra damage increases to 1d10."
+          },
+          {
+            "name": "Sky Legs",
+            "description": "You have advantage on Dexterity saving throws and ability checks made to keep your footing on a moving surface — airship decks, swinging ropes, tilting platforms, or collapsing structures."
+          }
+        ]
+      },
+      {
+        "id": "windcaller",
+        "name": "Windcaller",
+        "description": "A practitioner of sky magic — the old art of speaking to the wind, bending currents, and pulling lightning from clear air. Some say the Windcallers learned from the Murk itself.",
+        "base_type": "sorcerer",
+        "hit_die": "d6",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Constitution",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Nature",
+          "Perception",
+          "Intimidation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Quarterstaffs",
+          "Light crossbows"
+        ],
+        "starting_equipment": [
+          "Wind-scored staff",
+          "Component pouch with storm glass and feathers",
+          "Traveler's clothes"
+        ],
+        "features": [
+          {
+            "name": "Galeforce",
+            "description": "As an action, you can unleash a 15-foot cone of concentrated wind. Each creature in the area must make a Strength saving throw (DC 8 + proficiency bonus + Charisma modifier) or be pushed 10 feet and knocked prone. You can use this feature a number of times equal to your Charisma modifier (minimum 1), regaining all uses after a long rest."
+          },
+          {
+            "name": "Skydancer",
+            "description": "You can slow your rate of falling to 60 feet per round and take no falling damage. While falling slowly, you can move horizontally up to 30 feet per round. Additionally, you have advantage on saving throws against effects that would push, pull, or knock you prone."
+          }
+        ]
+      },
+      {
+        "id": "gearwright",
+        "name": "Gearwright",
+        "description": "Engineer, inventor, and mad tinkerer. You keep the engines running, the guns firing, and the ship in the air. Without you, everyone falls.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Investigation",
+          "Perception",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows"
+        ],
+        "starting_equipment": [
+          "Leather apron (light armor)",
+          "Tinker's tools and wrench set",
+          "Hand crossbow with 20 bolts"
+        ],
+        "features": [
+          {
+            "name": "Jury-Rig",
+            "description": "You can repair a broken device, weapon, or vehicle component with 10 minutes of work and available scrap materials. The repair holds for 24 hours or until the object takes damage, whichever comes first. During a short rest, you can make the repair permanent with a DC 13 Intelligence check."
+          },
+          {
+            "name": "Aetherlift Attunement",
+            "description": "You can sense aetherlift mineral within 60 feet and intuitively understand the mechanical state of any aetherlift-powered device you can see. Once per short rest, you can supercharge an aetherlift device you are touching, doubling its lift output for 1 minute."
+          }
+        ]
+      },
+      {
+        "id": "skyrunner",
+        "name": "Skyrunner",
+        "description": "Scout, saboteur, and infiltrator. You go where others can't — across mooring lines, through ventilation shafts, over the hull in a gale. If there's a way in, you'll find it.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Acrobatics",
+          "Sleight of Hand",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Dark leather armor",
+          "Two daggers",
+          "Grappling hook and 50 feet of silk rope"
+        ],
+        "features": [
+          {
+            "name": "Rigger's Grace",
+            "description": "You have a climbing speed equal to your walking speed. When you make a running jump, the distance you cover increases by a number of feet equal to your Dexterity modifier. You do not provoke opportunity attacks when you climb."
+          },
+          {
+            "name": "Ventilation Expert",
+            "description": "You can squeeze through spaces as narrow as 1 foot wide without penalty to movement speed. You have advantage on Dexterity (Stealth) checks made while moving through or hiding in tight spaces, crawlways, or structural gaps."
+          }
+        ]
+      },
+      {
+        "id": "aether_surgeon",
+        "name": "Aether Surgeon",
+        "description": "Part doctor, part alchemist. You treat wounds with one hand and mix volatile aetherlift tinctures with the other. Up here, a good surgeon is worth more than a good gunner.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Nature",
+          "Insight",
+          "Persuasion"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Surgeon's kit with aetherlift salves",
+          "Chain shirt",
+          "Mace"
+        ],
+        "features": [
+          {
+            "name": "Aether Salve",
+            "description": "You carry a supply of aetherlift-infused healing salves. As an action, you can apply a salve to a creature within 5 feet, restoring hit points equal to 1d8 + your Wisdom modifier. You can use this feature a number of times equal to your Wisdom modifier (minimum 1), regaining all uses after a long rest."
+          },
+          {
+            "name": "Altitude Triage",
+            "description": "You have advantage on Medicine checks and can stabilize a dying creature as a bonus action instead of an action. When you stabilize a creature, they regain 1 hit point instead of remaining at 0."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "airmanship",
+        "name": "Airmanship",
+        "base_skill": "Survival",
+        "description": "Knowledge of airship handling, wind currents, rigging, and navigation between the Pillars. Reading the sky the way a sailor reads the sea."
+      },
+      {
+        "id": "aetherlift_mechanics",
+        "name": "Aetherlift Mechanics",
+        "base_skill": "Arcana",
+        "description": "Understanding the properties, applications, and dangers of aetherlift mineral — from furnace maintenance to engine repair to explosive volatility."
+      },
+      {
+        "id": "murk_lore",
+        "name": "Murk Lore",
+        "base_skill": "Investigation",
+        "description": "Knowledge of the toxic miasma below — its behavior, its tides, the artifacts it yields, and the shapes that move within it."
+      },
+      {
+        "id": "black_market_connections",
+        "name": "Black Market Connections",
+        "base_skill": "Persuasion",
+        "description": "Contacts and know-how for fencing stolen cargo, acquiring contraband, and navigating the shadow economy of the Free Docks and pirate havens."
+      }
+    ]
+  },
+  "ai_generated": false,
+  "admin_reviewed": false
+}

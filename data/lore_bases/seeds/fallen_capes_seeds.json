@@ -1,0 +1,370 @@
+{
+  "id": "fallen_capes",
+  "name": "Fallen Capes",
+  "description": "The heroes failed. The world ended. Now the last few supers try to rebuild, haunted by what they couldn't stop.",
+  "genre": "fallen_capes",
+  "mechanics_genre": "horror",
+  "genre_hints": [
+    "superhero",
+    "postapoc",
+    "drama"
+  ],
+  "tone_hints": [
+    "elegiac",
+    "hopeful",
+    "guilt-laden"
+  ],
+  "seed_prompt": "A post-apocalyptic world five years after the greatest supervillain won and broke reality itself. Most powered individuals died stopping him, and he died too. The surviving supers — a handful out of thousands — now live among the rubble and the ordinary people trying to rebuild. Some settlements worship them, some blame them, some hunt them. Unstable 'bleed zones' where physics broke still scar the landscape. The tone is heavy with survivor's guilt, tempered by stubborn hope, and driven by the question of whether powers are a gift worth keeping or a curse that ended the world.",
+  "lore_content": "Five years ago, the sky tore open and the world ended. They call it The Unraveling — the day Entropy won. Not a battle. Not an invasion. A fundamental breaking. Marcus Fell, the man who called himself Entropy, didn't want to conquer the world. He wanted to prove it was fragile. He spent eleven years building a device that could destabilize the basic forces holding matter together, and on a Tuesday in October, he turned it on. The device worked. It worked so well that it didn't just affect its target zone — it sent fractures rippling through the planet's physical laws like cracks through ice. Gravity reversed in São Paulo. Time dilated across the Eastern Seaboard. In a belt stretching from Ankara to Mumbai, electromagnetism simply stopped functioning for nine minutes, and everything that depended on chemical bonds — which is everything — came apart.\n\nThe heroes responded. All of them. The Vanguard, the world's premier super team, hit the device site in Iceland within four minutes. Regional teams mobilized across every continent. Solo operators came out of retirement. Villains who had spent decades fighting heroes showed up and fought alongside them, because there is no point in ruling a world that no longer exists. It wasn't enough. The fractures were self-propagating. Every time a team shut down one cascade, two more opened. Powered individuals threw themselves into the breaches — literally, in some cases, using their bodies to absorb and contain destabilized physics. Ninety percent of the world's powered population died in the first seventy-two hours. Entropy died too, crushed beneath the weight of his own collapsing device when a last-ditch assault by what remained of the Vanguard destabilized its power source. The fractures slowed. They didn't stop entirely, but they slowed enough for the world to survive — broken, scarred, and emptied of almost everyone who could have protected it.\n\nThe world that remains is wounded in ways that don't heal cleanly. The bleed zones are the most visible scars — regions where the Unraveling's fractures left permanent damage to physical law. In some, gravity fluctuates unpredictably. In others, time moves at different speeds depending on where you stand. The worst zones are places where reality itself feels thin, where the air tastes like static and shadows fall in the wrong direction. Most bleed zones are mapped and avoided. Some shift. A few are growing. No one knows why. The world's population dropped by roughly thirty percent in the first year — not just from the direct damage, but from the cascading collapse of infrastructure, supply chains, and governments that followed. Famine. Disease. Violence. The usual horsemen, riding hard.\n\nNow, five years later, humanity is rebuilding. Slowly, stubbornly, imperfectly. Settlements have formed around resources, geography, and the presence — or absence — of powered individuals. The largest is New Foundation, built in the ruins of Denver, Colorado, population roughly twelve thousand. It sits in one of the most stable regions on the continent, far from any major bleed zone. Governor Dara Okafor runs New Foundation with pragmatic authority. She was a city councilwoman before the Unraveling and one of the first civilians to organize survivors into a functioning community. She is not powered. She does not trust people who are. She has seen what powers did to the world, and while she doesn't say it publicly, she believes every living super is a detonation waiting to happen. She allows them in New Foundation because she needs them — for defense, for construction, for dealing with bleed zone incursions — but she watches them. She has a file on every powered individual in the settlement. She sleeps three hours a night. She is holding everything together with willpower and spreadsheets.\n\nLiving in New Foundation under a kind of informal house arrest is Elena Vasquez, formerly known as Radiance, once the field leader of the Vanguard. Elena could channel solar energy into devastating force — flight, energy projection, shields capable of tanking a missile strike. She was the most powerful hero on Earth. During the Unraveling, she led the assault teams into the worst fractures. She survived because she was pulling civilians out of a collapsing hospital in Buenos Aires when the final assault on Entropy's device happened without her. The team that went in — her team, the people she had trained and led and loved — died. All of them. She has carried that weight for five years. She still has her powers. She doesn't use them. She works in New Foundation's water treatment facility, maintaining pumps and checking filtration systems. She's good at it. The people who know who she is either worship her or blame her. She accepts both with the same quiet expression. She hasn't flown in three years. When asked why, she says, 'It doesn't feel like mine anymore.'\n\nOn the outskirts of New Foundation, in a converted auto repair shop, a man named Jonas Hale runs a free clinic. Before the Unraveling, Jonas was Mender — a healer whose touch could repair tissue damage, cure disease, and stabilize critical injuries. He was never a frontline hero. He worked hospital wards, disaster zones, refugee camps. He was in Jakarta when the Unraveling hit, healing burn victims from a factory fire. He healed four hundred people in the first six hours of the crisis. Then he passed out from overuse and woke up three days later to find the world had ended. Now he heals who he can, when he can, rationing his power because overuse still nearly kills him. He is the most universally valued person in the region — and the loneliest, because everyone who comes to him comes in pain, and he absorbs an echo of it every time he heals. He keeps a journal. The entries are getting shorter.\n\nThirty miles east of New Foundation lies the Ashfield Bleed Zone — a patch of warped reality roughly four miles across where gravity inverts at random intervals, temperatures swing between extremes without warning, and sounds from the past echo through the air like radio bleed. Scavengers sometimes enter the zone for pre-Unraveling salvage — medicine, electronics, canned food — but the zone is dangerous and unpredictable. At its center sits the remains of a small town called Millhaven. No one has reached Millhaven and returned in over a year. The last team to attempt it reported hearing voices — not ghostly, not threatening, just ordinary people talking. Conversations from before the Unraveling, trapped in the broken physics like insects in amber.\n\nFifty miles north of New Foundation, a settlement called Iron Ridge operates under very different principles. Founded by Victor Stenmark, a retired military officer, Iron Ridge runs on discipline, hierarchy, and the absolute exclusion of powered individuals. Stenmark lost his family in the São Paulo gravity inversion — his wife and two daughters were pulled into the sky and never came back down. He blames supers. Not just Entropy, but all of them. The heroes who failed to stop it. The heroes who survived when his children didn't. Iron Ridge has a wall. It has armed patrols. It has a standing bounty on any powered individual found within twenty miles of the settlement. Stenmark is not irrational. He is articulate, organized, and deeply convinced that powers are a contagion — that every super, no matter how well-intentioned, is a vector for the same kind of catastrophe that ended the world. His people believe him because he gives them someone to blame, and blame is easier than grief.\n\nIn the opposite direction, nestled in a mountain valley accessible only through a narrow canyon, is Haven — a community of roughly three hundred people, about forty of whom are powered. Haven was founded by Kwame Asante, formerly known as Bastion, a super with the ability to generate impenetrable force fields. During the Unraveling, Kwame shielded a school bus full of children for eleven hours straight while reality fractured around them. When it was over, he had saved thirty-one children and given himself permanent nerve damage — his hands shake constantly, and generating a field now causes him crippling pain. He founded Haven as a place where supers could exist without being worshipped or hunted. It's part commune, part therapy group, part training camp. Residents share labor, pool resources, and hold weekly circles where they talk about what they lost. Kwame runs it with gentle authority, but he's tired. His hands hurt all the time. He's started having nightmares about the bus again. He doesn't tell anyone.\n\nNot everyone who survived the Unraveling chose a settlement. Cassandra Liu, formerly Wraith — a super with the ability to phase through solid matter and render herself invisible — moves between communities as a courier and information broker. She's one of the few people welcome in both New Foundation and Haven. She survived the Unraveling because she was already invisible when it happened — on a deep-cover infiltration of a criminal syndicate in Hong Kong — and she phased through the worst of the fractures by instinct. She doesn't talk about what she saw while phased during those hours, when reality was breaking and she was between states of matter. Whatever it was changed her. She sleeps with the lights on. She never fully solidifies anymore — there's always a slight translucence to her, as if she's not entirely committed to being present. She carries messages, trades information, and keeps her own counsel. She knows things about the Unraveling that she hasn't told anyone, including the fact that in the moment of Entropy's death, she saw something inside the collapsing device. Something that wasn't technology. Something that looked back.\n\nThen there are the Inheritors — the children. Kids who were too young to fight during the Unraveling, some of whom have developed powers in the five years since, possibly triggered by exposure to bleed zone energy. The oldest are teenagers now. They didn't fail the world. They didn't make the choices that led to the Unraveling. But they carry the weight of their parents' generation — the expectations, the fear, the hope that maybe this time, powers won't end in catastrophe. The most notable is a sixteen-year-old girl named Zara Kim who can manipulate electromagnetic fields with terrifying precision. She lives in Haven and trains with whoever will teach her. She is powerful, disciplined, and absolutely furious — at the old heroes for failing, at the world for breaking, at the people in Iron Ridge who want her dead for something she didn't do. Kwame watches her carefully. He sees in her the same intensity that drove the Vanguard. He doesn't know if that's a reason for hope or terror.\n\nThe deepest wound isn't physical. It's the question that no one asks aloud but everyone carries: did we cause this? Not just the heroes who failed to stop Entropy in time, but the entire culture of powers. Entropy was a super. His device was built with super-science. The fractures propagated because the world's physics had already been stressed by decades of super-powered conflicts — every energy blast, every reality warp, every cosmic incursion had weakened the fabric that Entropy finally tore. The heroes didn't just fail to save the world. They may have helped break it. This is the guilt that Elena carries when she chooses not to fly. The guilt that makes Jonas wince every time someone calls him a hero. The guilt that gives Stenmark his audience and his anger its teeth. And it's the question the Inheritors will have to answer: if powers are the disease, is the cure to stop using them? Or is it to use them better than the last generation did?\n\nThe world is quiet now, in a way it never was before. No more super-battles shaking cities. No more cosmic threats lighting up the sky. Just people — some of them extraordinary, most of them ordinary — trying to figure out how to live in the ruins of the extraordinary. The bleed zones pulse and shift. The settlements grow and struggle. Somewhere in the wreckage, the echo of The Unraveling still hums, a low vibration at the edge of hearing, like the world remembering the moment it almost died. It is five years later. The heroes failed. The world ended. And in the cracks of what's left, something is trying to grow.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "faded_cape",
+        "name": "Faded Cape",
+        "description": "You were a powered individual before the Unraveling. You fought. You survived. Most of the people you fought beside didn't. Your powers still work, but using them feels like touching a bruise that never healed.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Insight"
+        ],
+        "traits": [
+          "Survivor's Burden: You have advantage on saving throws against fear and charm effects — you've already faced the worst thing imaginable. However, when you use your powers in a dramatic or destructive way, you must succeed on a DC 12 Wisdom saving throw or become shaken (disadvantage on your next action) as the guilt resurfaces.",
+          "Battle-Scarred Instinct: Years of super-powered combat left permanent reflexes. You cannot be surprised while conscious, and you have +2 to initiative rolls."
+        ],
+        "languages": [
+          "Common",
+          "One additional language"
+        ]
+      },
+      {
+        "id": "inheritor",
+        "name": "Inheritor",
+        "description": "You developed powers after the Unraveling, likely triggered by bleed zone exposure. You're part of the first post-collapse generation of supers. You didn't break the world, but you carry the weight of those who did.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Acrobatics",
+          "Persuasion"
+        ],
+        "traits": [
+          "Untempered Power: Your abilities are raw and instinctive. Once per long rest, when you roll a 1 on an attack roll or ability check using your powers, you can reroll it. You must use the new roll — but if it's a 20, the power surges dramatically beyond your intent.",
+          "New Generation: People project their hopes and fears onto you. You have advantage on Charisma checks with those who see you as a symbol of hope, but disadvantage on Charisma checks with those who fear powered individuals."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "baseline_survivor",
+        "name": "Baseline Survivor",
+        "description": "No powers. No enhancements. Just five years of surviving in a broken world through grit, resourcefulness, and a refusal to stop breathing. You've earned everything you have the hard way.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Perception"
+        ],
+        "traits": [
+          "Unpowered Resilience: You are immune to effects that specifically target powered individuals, and you have advantage on saving throws against bleed zone environmental hazards — your body doesn't resonate with the same frequencies that destabilized physics.",
+          "Hard-Won Trust: Ordinary people trust you instinctively. You have advantage on Charisma checks when dealing with non-powered communities and settlements."
+        ],
+        "languages": [
+          "Common",
+          "One additional language"
+        ]
+      },
+      {
+        "id": "bleed_touched",
+        "name": "Bleed-Touched",
+        "description": "You were caught in a bleed zone and it changed you. Not like a super — stranger. Your body remembers what broken physics feels like, and sometimes it still acts as though the rules haven't fully come back.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Arcana",
+          "Investigation"
+        ],
+        "traits": [
+          "Reality Scar: You can sense bleed zone energy within 60 feet, including invisible fractures, destabilized matter, and residual Unraveling radiation. You know the direction and approximate intensity without needing to make a check.",
+          "Phase Flicker: Once per long rest, when you would take damage from a physical source, you can flicker partially out of phase with local reality, reducing the damage by 1d10. Each time you use this, there is a 10% chance you briefly perceive something from the other side of the fracture."
+        ],
+        "languages": [
+          "Common"
+        ]
+      },
+      {
+        "id": "reformed_rogue",
+        "name": "Reformed Rogue",
+        "description": "Before the Unraveling, you were on the wrong side. Villain. Mercenary. Profiteer. When the world ended, the lines blurred. You fought alongside heroes to stop Entropy because there was nothing left to fight over. Now you're trying to be something better, and not everyone believes you.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Stealth"
+        ],
+        "traits": [
+          "Checkered Past: You have contacts in the pre-Unraveling underworld — smugglers, black marketeers, information brokers who survived the collapse. Once per long rest, you can call in a favor or make a connection that provides useful information, supplies, or passage. The GM determines the cost.",
+          "Redemption Arc: When you take an action that is clearly selfless and puts you at personal risk to help someone else, you gain advantage on your next ability check or saving throw. The universe, or at least your own conscience, rewards the effort."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "remnant",
+        "name": "Remnant",
+        "description": "A powered survivor of the Unraveling who still fights, still protects, still stands between people and danger. You are what's left of the age of heroes — battered, guilt-ridden, and refusing to stop.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Salvaged body armor (medium armor)",
+          "A signature weapon from before the Unraveling",
+          "A tattered cape or mask kept but never worn"
+        ],
+        "features": [
+          {
+            "name": "Last One Standing",
+            "description": "When an ally within 30 feet of you drops to 0 hit points, you can use your reaction to move up to your speed toward them and make one melee attack against the creature that downed them. If you hit, you deal an additional 1d8 damage. This represents the desperate fury of someone who has already watched too many people die."
+          },
+          {
+            "name": "Endure",
+            "description": "Once per long rest, when you are reduced to 0 hit points, you can instead drop to 1 hit point. When you use this feature, you gain temporary hit points equal to your level for 1 minute. You've been knocked down before. You always get back up."
+          }
+        ]
+      },
+      {
+        "id": "conduit",
+        "name": "Conduit",
+        "description": "Your powers channel raw energy — the same energy that broke the world. You are a living reminder that the force which destroyed civilization also lives inside a person who is trying to save it.",
+        "base_type": "sorcerer",
+        "hit_die": "d6",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Constitution",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Arcana",
+          "Intimidation",
+          "Persuasion",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Quarterstaffs"
+        ],
+        "starting_equipment": [
+          "A focus object tied to your power's origin",
+          "A journal documenting your power's behavior since the Unraveling",
+          "Salvaged rations (3 days)"
+        ],
+        "features": [
+          {
+            "name": "Unstable Resonance",
+            "description": "Your energy powers interact with bleed zones. When you cast a spell within 100 feet of a bleed zone, you can choose to draw on the ambient instability: the spell's damage increases by 1d6, but there is a 25% chance of a minor reality hiccup — a brief gravity fluctuation, a flash of displaced sound, or a moment of visual distortion. The GM determines the specific effect."
+          },
+          {
+            "name": "Controlled Burn",
+            "description": "You have learned, painfully, that restraint matters more than power. When you deal energy damage, you can choose to halve the damage to prevent any collateral effects to the environment or bystanders. When you do, you gain advantage on your next Charisma check as people see you choosing control over destruction."
+          }
+        ]
+      },
+      {
+        "id": "mender",
+        "name": "Mender",
+        "description": "You heal. In a world this broken, that makes you the most valuable and most exhausted person in any room. Everyone needs you. No one asks how you're doing.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Insight",
+          "Persuasion",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "Salvaged medical kit",
+          "A worn coat (light armor)",
+          "A journal with increasingly short entries"
+        ],
+        "features": [
+          {
+            "name": "Empathic Healing",
+            "description": "When you heal a creature, you can choose to absorb an echo of their pain, healing additional hit points equal to your Wisdom modifier. However, you take psychic damage equal to half the additional healing (minimum 1). This damage cannot be reduced or prevented. The weight is real."
+          },
+          {
+            "name": "Triage Instinct",
+            "description": "You can assess the physical and emotional condition of any creature you can see within 30 feet as a bonus action. You learn their current hit points relative to their maximum, any conditions affecting them, and their general emotional state. Five years of nonstop crisis has given you eyes that read damage like text."
+          }
+        ]
+      },
+      {
+        "id": "ghost",
+        "name": "Ghost",
+        "description": "You move between settlements, between factions, between the cracks. Scout, courier, spy, saboteur. You go where others can't and see what others won't. You've been alone so long that solitude feels like armor.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Investigation",
+          "Perception",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Shadow suit (light armor, dark gray)",
+          "Two combat knives",
+          "Binoculars and a hand-drawn map of regional bleed zones"
+        ],
+        "features": [
+          {
+            "name": "Zone Runner",
+            "description": "You have spent years navigating bleed zones and unstable terrain. You have advantage on Dexterity saving throws against environmental hazards, and you can move through bleed zone terrain at full speed without penalty. When you enter a new bleed zone, you can spend 10 minutes observing to identify its current behavior patterns, gaining advantage on all checks within the zone for the next hour."
+          },
+          {
+            "name": "Sneak Attack",
+            "description": "When you hit a creature with an attack and you have advantage on the roll, or an ally is within 5 feet of the target, you deal an additional 1d6 damage. This increases as you gain levels. In the ruins, striking first and striking precisely is the difference between survival and a memorial no one will build."
+          }
+        ]
+      },
+      {
+        "id": "beacon",
+        "name": "Beacon",
+        "description": "You lead. Not because you're the strongest or the smartest, but because someone has to stand up and say 'this is what we do next' — and mean it badly enough that people follow.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Insight",
+          "Athletics",
+          "Medicine"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Reinforced jacket (medium armor)",
+          "A weapon that belonged to a fallen hero",
+          "A hand-written charter of principles for the community you protect"
+        ],
+        "features": [
+          {
+            "name": "Rally",
+            "description": "As a bonus action, you can speak words of encouragement to one ally within 30 feet who can hear you. They gain temporary hit points equal to your Charisma modifier + your level. You can use this feature a number of times equal to your Charisma modifier (minimum 1), regaining all uses on a long rest. In a world this broken, sometimes all people need is someone who sounds like they believe tomorrow will come."
+          },
+          {
+            "name": "Oath of the Fallen",
+            "description": "You have sworn to honor those who died during the Unraveling by protecting those who survived. When you are defending civilians or non-combatants, you gain +2 to AC and saving throws. This bonus lasts as long as you remain between the threat and the people you are protecting. The oath isn't magical. It's personal. That makes it harder to break."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "bleed_navigation",
+        "name": "Bleed Navigation",
+        "base_skill": "Survival",
+        "description": "Reading the signs of bleed zone instability — pressure changes, light distortion, the taste of static in the air. Knowing when a zone is safe to cross, when it's shifting, and when you need to run."
+      },
+      {
+        "id": "cape_history",
+        "name": "Cape History",
+        "base_skill": "History",
+        "description": "Knowledge of the pre-Unraveling super-powered world — hero teams, villain organizations, power classifications, and the events that led to the collapse. Who fought where, who died, and what their powers could do."
+      },
+      {
+        "id": "settlement_politics",
+        "name": "Settlement Politics",
+        "base_skill": "Insight",
+        "description": "Understanding the web of alliances, rivalries, and tensions between post-Unraveling settlements. Reading a community's attitude toward supers, knowing which factions hold power, and navigating the politics of survival."
+      },
+      {
+        "id": "salvage_craft",
+        "name": "Salvage Craft",
+        "base_skill": "Investigation",
+        "description": "The art of recovering useful materials from pre-Unraveling ruins and bleed zone debris. Identifying what's salvageable, what's contaminated, and how to repurpose old-world technology for new-world needs."
+      }
+    ]
+  },
+  "ai_generated": false,
+  "admin_reviewed": false
+}

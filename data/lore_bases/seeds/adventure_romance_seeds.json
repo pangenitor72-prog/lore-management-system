@@ -1,0 +1,380 @@
+{
+  "id": "monsoon_temple",
+  "name": "The Temple of the Monsoon King",
+  "description": "1936, Southeast Asia. Rival archaeologists race to a legendary lost temple. They hate each other. Then the monsoon traps them together.",
+  "genre": "adventure_romance",
+  "mechanics_genre": "fantasy",
+  "genre_hints": [
+    "adventure",
+    "romance",
+    "historical"
+  ],
+  "tone_hints": [
+    "swashbuckling",
+    "passionate",
+    "bittersweet"
+  ],
+  "seed_prompt": "A pulp adventure romance set in 1930s Southeast Asia where rival archaeologists from competing institutions race to find a legendary temple while navigating colonial politics, local resistance, a shadowy collector, and the complicated history between them. The tone balances thrilling action with genuine emotional stakes -- enemies-to-lovers tension, forbidden connections across social lines, and old wounds that never quite healed. Think Indiana Jones meets The English Patient.",
+  "lore_content": "The jungle canopy closes overhead like a cathedral ceiling, filtering the Burmese sun into columns of green-gold light that shift with every breath of wind. Somewhere beneath this forest, buried under centuries of root and rain, lies the Temple of the Monsoon King -- a structure that appears in the margins of three separate historical traditions and the fever dreams of every archaeologist who has ever worked the region. The Pyu inscriptions call it the Place Where the Sky Kneels. A fragmentary Khmer text refers to the Hall of Ten Thousand Rains. And in the oral traditions of the Karen hill people who have lived in these mountains for longer than any empire, it is simply the Forbidden Room -- the place where a king tried to own the monsoon itself, and the monsoon taught him what ownership really means.\n\nDr. Eleanor Hartley, 33, leads the British Museum expedition. She is the youngest woman to hold a senior research fellowship at the Museum, a distinction she earned by publishing three landmark papers on Pyu-era hydraulic engineering before she turned thirty. She is meticulous, fiercely intelligent, and carries herself with the controlled composure of someone who learned early that showing emotion in a room full of older male colleagues was the fastest way to be dismissed. What her colleagues don't know -- what she has never told anyone -- is that her interest in the Monsoon Temple is personal. Her mother was Burmese, a translator who worked with Eleanor's father on his early expeditions before the marriage collapsed under the weight of colonial judgment. Eleanor's mother returned to Burma when Eleanor was nine. She sent letters for three years, then stopped. The last letter mentioned the temple. Eleanor has read it four hundred times.\n\nDr. Lucien Moreau, 36, leads the Sorbonne expedition, funded by the French Institute of Oriental Studies. He is brilliant, charming, and infuriating -- a man who treats archaeology like a conversation rather than a science, who trusts intuition over methodology, and who has an unsettling habit of being right. He and Eleanor were classmates at Oxford, where they spent three years in a state of intellectual combat that everyone around them recognized as something more complicated than rivalry. There was one night, near the end of their final term, involving a bottle of Burgundy and a rooftop overlooking the Bodleian. Neither of them has mentioned it since. They correspond through academic journals, each paper a precisely aimed rebuttal of the other's last. Lucien's private motivation is less romantic than Eleanor's: his funding depends on results, and the Sorbonne has made it clear that this expedition is his last chance. He has debts, professional and personal, and the temple is his way out.\n\nColonel James Whitfield, 52, is the British Colonial Administrator for the Upper Burma region. He is a career officer who genuinely believes the Empire is a civilizing force, a conviction that allows him to sleep soundly despite the mounting evidence to the contrary. He has granted Eleanor's expedition its permits and assigned a military escort, partly because the Museum asked and partly because he's heard rumors that the temple site sits near a planned railway route. If the archaeological value can justify a military presence in the area, so much the better. He is not a villain -- he is something more dangerous: a decent man operating inside an indecent system without ever questioning its foundations.\n\nNaw Mu Tha, 40, is the leader of the Karen Resistance Council in the hill country surrounding the suspected temple site. A former teacher who watched the British close her school and conscript her students as porters, she now coordinates a network of villages that share intelligence, hide supplies, and quietly resist colonial authority through a hundred small acts of defiance. She knows exactly where the temple is. Her people have known for generations. They have also known, for generations, that some knowledge is not meant to be taken -- it is meant to be earned. She is willing to negotiate with the archaeologists, but her price is not money. It is recognition. She wants a written agreement, witnessed by representatives of both the British and French governments, acknowledging the Karen people's custodianship of the site. She is practical enough to know this agreement may be worthless, and stubborn enough to demand it anyway.\n\nVictor Renault, 48, is a Belgian antiquities dealer who operates under the polite fiction of being a private collector. In reality, he is the procurement arm for a consortium of wealthy European buyers who want artifacts the way other men want racehorses -- as trophies. He has funded his own small, quiet expedition to the temple region, led by mercenaries rather than scholars. He doesn't care about the temple's historical significance. He cares about the Monsoon Seal -- a legendary artifact described in the Khmer text as a golden tablet inscribed with the secret of controlling the rains. Whether it's real or metaphorical doesn't concern him. His buyers believe it's real, and that's enough to make it worth a fortune. He is ruthlessly efficient, impeccably polite, and has the unnerving calm of a man who has never been troubled by conscience.\n\nU Tun Myint, 58, is a Burmese scholar and monk who serves as the expedition's local liaison and translator. He holds a doctorate from the University of Rangoon and has forgotten more about Pyu epigraphy than most Western scholars will ever learn. He accepted the position with the British expedition not out of loyalty to the Empire but because he believes the temple's inscriptions contain knowledge that belongs to his people, and he would rather be present when they're found than read about their removal in a London newspaper. He is gentle, patient, and harbors a quiet fury about the systematic looting of his country's heritage that surfaces only in the precision of his academic disagreements. He and Eleanor share a mutual respect that has slowly become something like friendship. He has not yet told her that he knew her mother.\n\nMadeleine Lefevre, 29, is officially the Sorbonne expedition's photographer and cartographer. She is also Lucien's ex-wife, a fact that makes every expedition meeting a masterclass in French passive aggression. Their marriage lasted two years and ended over his inability to be present for anything that wasn't buried underground. She took the position because she is the best cartographer in France and refuses to let a failed marriage define her career. The fact that she and Lucien still argue with the intensity of people who haven't finished being in love is something she addresses by not addressing it. She has also noticed that Colonel Whitfield's maps of the region don't match the actual terrain, and the discrepancies are too consistent to be errors.\n\nSaw Bwe Mu, 25, is Naw Mu Tha's nephew and the council's youngest strategist. He is impulsive, idealistic, and speaks four languages fluently, including English learned from missionary schools he simultaneously resented and excelled at. He has been assigned to shadow the expeditions and report their movements. He was not supposed to develop a genuine fascination with archaeology, or an inconvenient attraction to Madeleine Lefevre, whose sketches of the landscape he has been watching from the treeline with an attention that has nothing to do with intelligence gathering.\n\nThe race began in earnest three weeks ago, when both expeditions arrived in Mandalay within days of each other and the colonial rumor mill did the rest. Eleanor's team took the northern approach, following the river routes mapped by her mother's letters. Lucien's team pushed through the eastern passes, guided by a translation of the Khmer fragment that he has not shared with anyone. Both teams are converging on the same valley -- a basin in the Shan Hills where three rivers meet and the locals say the rain falls differently than anywhere else in the world.\n\nThe monsoon is coming. Everyone knows it. The locals can feel it in the way the air thickens and the insects change their songs. When it arrives, it will turn the mountain trails to rivers, the rivers to lakes, and the valley to an impassable bowl of mud and water. Anyone caught in the basin when the monsoon breaks will be trapped there for weeks, possibly months. The smart move would be to find the temple fast and get out. But archaeology is not a fast science, and the jungle has its own schedule.\n\nThe valley itself is extraordinary. The ruins are everywhere once you know how to look -- foundation stones disguised as natural rock formations, irrigation channels hidden under centuries of leaf litter, carvings on cliff faces that only become visible when the light hits at specific angles. The temple complex, if it exists as described, would be one of the largest pre-Angkor structures ever discovered. Its significance would rewrite the history of hydraulic engineering in Southeast Asia and prove that the Pyu civilization was far more advanced than current scholarship admits. For Eleanor, this is vindication. For Lucien, this is survival. For Victor Renault, this is a shopping trip.\n\nThe first expedition camps have been established on opposite sides of the valley, close enough that their cooking fires are visible to each other at night. The tension is a living thing. Eleanor and Lucien have not spoken directly since a disastrous conference in Paris two years ago where their academic disagreement became personal in a way that emptied a lecture hall. Now they communicate through intermediaries, through the pointed placement of survey markers, through the elaborate courtesy of two people who would rather die than admit they care what the other thinks.\n\nBut the valley is doing what valleys do. The space is shrinking. The expeditions are finding the same features, following the same clues, arriving at the same conclusions through different methods. Their paths are converging. And above them, the clouds are building -- great purple-black towers of moisture that climb the sky each afternoon, higher and closer, like a countdown that everyone can see and no one can stop.\n\nWhen the monsoon breaks, it will trap them all together in this valley -- the rival archaeologists, the colonial administrator, the resistance fighters, the mercenary collector, the monk with secrets, the cartographer with questions, and the young man watching from the trees. Whatever happens next will happen in the rain, in the mud, in the ruins of a temple built by a king who believed he could control the weather. The monsoon, as always, will have its own opinion about that.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "colonial_academic",
+        "name": "Colonial Academic",
+        "description": "A scholar from a European university, trained in the classics and accustomed to institutions that open doors. You know how to navigate funding boards, lecture halls, and the quiet politics of academia -- but the field is a different classroom entirely.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "History",
+          "Investigation"
+        ],
+        "traits": [
+          "Institutional Access: You can invoke your university's name to gain access to archives, collections, and official cooperation. Advantage on Persuasion checks when dealing with colonial or academic authorities.",
+          "Trained Eye: You can spend 10 minutes examining an artifact or inscription to determine its approximate age, origin, and cultural significance."
+        ],
+        "languages": [
+          "English",
+          "French",
+          "Latin"
+        ]
+      },
+      {
+        "id": "local_scholar",
+        "name": "Local Scholar",
+        "description": "Educated in both Western and indigenous traditions, you carry knowledge that no foreign expedition can replicate. The colonizers need you more than they admit, and you know it.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "wisdom": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Religion",
+          "Insight"
+        ],
+        "traits": [
+          "Living Tradition: You have advantage on checks to interpret local inscriptions, oral histories, and religious iconography that Western scholars misread.",
+          "Trusted Outsider: Local communities will speak to you when they refuse to speak to foreigners. You can attempt Persuasion checks with indigenous groups that would otherwise be hostile."
+        ],
+        "languages": [
+          "Burmese",
+          "Karen",
+          "English"
+        ]
+      },
+      {
+        "id": "frontier_veteran",
+        "name": "Frontier Veteran",
+        "description": "A former soldier, surveyor, or colonial officer who has spent years in the region. The jungle doesn't scare you. The politics might.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Survival",
+          "Athletics"
+        ],
+        "traits": [
+          "Jungle Hardened: You have advantage on Constitution saving throws against disease, exhaustion from heat, and poison from jungle flora and fauna.",
+          "Trailbreaker: You can navigate through dense jungle without penalty to movement speed, and you have advantage on Survival checks to find paths and avoid natural hazards."
+        ],
+        "languages": [
+          "English",
+          "Burmese"
+        ]
+      },
+      {
+        "id": "resistance_fighter",
+        "name": "Resistance Fighter",
+        "description": "You fight for your people, your land, and a future free of foreign control. The temple is yours by right, and you will not let outsiders steal what your ancestors protected.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Perception"
+        ],
+        "traits": [
+          "Guerrilla Tactics: You have advantage on Stealth checks in jungle and mountain terrain, and you can hide even when only lightly obscured by natural cover.",
+          "Network of Eyes: You can spend one hour sending word through local villages. Within a day, you receive reliable intelligence about troop movements, expedition routes, or stranger activity within a ten-mile radius."
+        ],
+        "languages": [
+          "Karen",
+          "Burmese",
+          "English"
+        ]
+      },
+      {
+        "id": "adventuring_dilettante",
+        "name": "Adventuring Dilettante",
+        "description": "Wealthy, restless, and drawn to danger the way moths are drawn to flame. You fund your own passage and answer to no institution -- which makes you either the most free person here or the most lost.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "dexterity": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Deception"
+        ],
+        "traits": [
+          "Independent Wealth: You begin with additional funds and can acquire supplies, bribes, and favors that others cannot. Once per long rest, you can produce an item worth up to 50 gold that you 'happened to have packed.'",
+          "Well-Traveled: You have advantage on Intelligence checks to recall information about foreign cultures, geography, and customs from your extensive travels."
+        ],
+        "languages": [
+          "English",
+          "French",
+          "One additional language of your choice"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "field_archaeologist",
+        "name": "Field Archaeologist",
+        "description": "Part scholar, part survivalist, part treasure hunter. You are equally comfortable in a library and a collapsing ruin, and you have the scars to prove both.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "History",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Firearms"
+        ],
+        "starting_equipment": [
+          "Leather jacket and field boots",
+          "A revolver with 18 rounds",
+          "Excavation tools (trowel, brush, pick)"
+        ],
+        "features": [
+          {
+            "name": "Ruin Sense",
+            "description": "You have advantage on Perception checks to detect traps, hidden passages, and structural weaknesses in ancient buildings. You can spend 10 minutes studying a ruin to determine its approximate layout, including likely locations of sealed chambers."
+          },
+          {
+            "name": "Favored Terrain: Jungle",
+            "description": "You have advantage on Wisdom (Survival) checks and Intelligence (Nature) checks in jungle environments. Your travel pace in jungle terrain does not impose a penalty to your passive Perception."
+          }
+        ]
+      },
+      {
+        "id": "charming_operative",
+        "name": "Charming Operative",
+        "description": "You get what you want through wit, audacity, and the kind of smile that makes people forget they were saying no. Whether you are negotiating with a warlord or talking your way past a guard, you are always performing.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Insight",
+          "Performance"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Rapiers"
+        ],
+        "starting_equipment": [
+          "A linen suit (surprisingly clean)",
+          "A forged letter of introduction from a minor dignitary",
+          "A concealed derringer with 6 rounds"
+        ],
+        "features": [
+          {
+            "name": "Disarming Presence",
+            "description": "You have advantage on Persuasion checks against creatures that have not seen you in combat. Once per short rest, you can automatically shift a non-hostile creature's attitude one step in your favor (hostile to indifferent, indifferent to friendly)."
+          },
+          {
+            "name": "Inspiring Words",
+            "description": "As a bonus action, you can speak encouragement to an ally within 30 feet. They add 1d6 to their next ability check, attack roll, or saving throw within the next minute."
+          }
+        ]
+      },
+      {
+        "id": "expedition_muscle",
+        "name": "Expedition Muscle",
+        "description": "Someone has to carry the heavy things, punch the dangerous things, and stand between the scholars and whatever is trying to kill them. That someone is you.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Firearms"
+        ],
+        "starting_equipment": [
+          "A bolt-action rifle with 20 rounds",
+          "A machete",
+          "A battered rucksack with rope, rations, and a first aid kit"
+        ],
+        "features": [
+          {
+            "name": "Second Wind",
+            "description": "On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once used, you must finish a short or long rest before using this feature again."
+          },
+          {
+            "name": "Protector's Instinct",
+            "description": "When an ally within 5 feet of you is targeted by an attack, you can use your reaction to impose disadvantage on the attack roll. You must be able to see the attacker."
+          }
+        ]
+      },
+      {
+        "id": "field_medic",
+        "name": "Field Medic",
+        "description": "In the jungle, the most dangerous enemies are the ones you cannot see -- malaria, dysentery, infected wounds, venomous bites. You keep people alive in places where the land itself is trying to kill them.",
+        "base_type": "cleric",
+        "hit_die": "d8",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Medicine",
+          "Nature",
+          "Insight",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons"
+        ],
+        "starting_equipment": [
+          "A comprehensive medical kit with surgical tools",
+          "A field journal of tropical diseases and treatments",
+          "A sidearm pistol with 12 rounds"
+        ],
+        "features": [
+          {
+            "name": "Battlefield Medicine",
+            "description": "As an action, you can treat a creature within 5 feet, restoring hit points equal to 1d8 + your Wisdom modifier. You can use this feature a number of times equal to your Wisdom modifier (minimum 1) per long rest."
+          },
+          {
+            "name": "Tropical Expertise",
+            "description": "You have advantage on Medicine checks to treat diseases, poisoning, and environmental ailments. You can spend 10 minutes foraging in jungle terrain to find medicinal plants sufficient to create one antitoxin or healing poultice."
+          }
+        ]
+      },
+      {
+        "id": "shadow_broker",
+        "name": "Shadow Broker",
+        "description": "You deal in information, favors, and things that fall off the backs of lorries. Every faction in this valley wants something, and you know how to be the person standing between supply and demand.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Sleight of Hand",
+          "Deception",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Shortswords",
+          "Rapiers"
+        ],
+        "starting_equipment": [
+          "Dark, practical clothing with many hidden pockets",
+          "Thieves' tools and a set of forged documents",
+          "A stiletto knife and a silenced pistol with 8 rounds"
+        ],
+        "features": [
+          {
+            "name": "Expertise",
+            "description": "Choose two of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies."
+          },
+          {
+            "name": "Sneak Attack",
+            "description": "Once per turn, you can deal an extra 1d6 damage to one creature you hit with an attack if you have advantage on the attack roll, or if another enemy of the target is within 5 feet of it. The attack must use a finesse or ranged weapon."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "archaeological_survey",
+        "name": "Archaeological Survey",
+        "base_skill": "Investigation",
+        "description": "Reading ruins, interpreting stratigraphy, identifying architectural periods, and knowing where to dig. The difference between finding a temple and finding a pile of rocks."
+      },
+      {
+        "id": "colonial_politics",
+        "name": "Colonial Politics",
+        "base_skill": "Insight",
+        "description": "Navigating the overlapping jurisdictions of British colonial administration, French diplomatic interests, local power structures, and the unwritten rules that determine who gets permits, who gets arrested, and who gets quietly disappeared."
+      },
+      {
+        "id": "jungle_navigation",
+        "name": "Jungle Navigation",
+        "base_skill": "Survival",
+        "description": "Finding your way through dense tropical forest where compasses lie, trails vanish, and the canopy blocks the stars. Knowing which rivers lead somewhere and which rivers lead to leeches."
+      },
+      {
+        "id": "cross_cultural_negotiation",
+        "name": "Cross-Cultural Negotiation",
+        "base_skill": "Persuasion",
+        "description": "Bridging the vast gaps between European academic institutions, colonial governments, local communities, and resistance movements. Understanding that what counts as a fair deal depends entirely on which side of the table you are sitting on."
+      }
+    ]
+  },
+  "ai_generated": false,
+  "admin_reviewed": false
+}

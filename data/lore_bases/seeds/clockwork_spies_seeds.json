@@ -1,0 +1,375 @@
+{
+  "id": "clockwork_spies",
+  "name": "The Voltaic Accord",
+  "description": "The Great Powers race to build impossible weapons. You're a spy in a world of clockwork surveillance and pneumatic dead drops.",
+  "genre": "clockwork_espionage",
+  "mechanics_genre": "modern",
+  "genre_hints": [
+    "steampunk",
+    "thriller",
+    "mystery"
+  ],
+  "tone_hints": [
+    "paranoid",
+    "elegant",
+    "dangerous"
+  ],
+  "seed_prompt": "An alternate 1889 where four Great Powers are locked in a cold war fueled by impossible steam technology. The discovery of voltaic essence has triggered an arms race of clockwork automata, pneumatic intelligence networks, and devastating new weapons. Geneva is the neutral epicenter of espionage, where every embassy is a nest of agents and a single stolen schematic could shift the balance of power. A rogue scientist has vanished with plans for a weapon that could end the cold war or ignite a catastrophic hot one. Trust no one. Verify everything. The gears are always listening.",
+  "lore_content": "The year is 1889, and the world is not the one your grandmother knew. Thirty years ago, a Prussian mining expedition in the Carpathian Mountains struck a vein of something that was not coal, not iron, not any mineral in the geological record. They called it voltaic essence — a crystalline substance, violet-black and faintly warm to the touch, that supercharged steam engines to outputs that defied the laws of thermodynamics. A single grain could power a locomotive for a month. A fistful could drive a battleship across the Atlantic without refueling. Within a decade, the Great Powers had redrawn every strategic calculation around one question: who controls the voltaic supply?\n\nFour empires now stand at the edge of annihilation, held apart by a web of treaties, espionage, and mutually assured destruction. The British Imperium commands the largest navy in the world, its Dreadnought-class ironclads fitted with voltaic turbines that let them outrun anything afloat. The Prussian Confederation, birthplace of the essence, fields armies of Taktisch automata — clockwork soldiers that march without food, sleep, or mercy. The Ottoman Ascendancy has married voltaic engineering to ancient alchemical traditions, producing devices that border on the miraculous: healing engines, perception lenses, and communication orbs that transmit voice across continents. The American Republic, youngest and hungriest of the four, has weaponized industry itself, mass-producing voltaic-enhanced machinery at a pace that terrifies the old world. Each power believes it is one breakthrough away from decisive advantage. Each is correct. That is the problem.\n\nGeneva sits at the center of this invisible war. Officially neutral under the Lausanne Convention of 1878, the city is a jeweled trap — beautiful, cosmopolitan, and saturated with spies. The Grand Hotel Beau-Rivage hosts diplomatic receptions where ambassadors smile and intelligence officers steal documents from coat pockets. The Jardin Anglais conceals three known dead drops and at least two that remain undetected. The pneumatic tube network that runs beneath the city — originally built for postal service — now carries encrypted intelligence capsules between safehouses, and the Swiss Postal Authority pretends not to notice. Every cafe on the Rue du Mont-Blanc has at least one patron who is not what they appear. The clockwork street lamps record the faces of passersby, their daguerreotype drums spinning silently behind frosted glass. Geneva does not sleep. Geneva watches.\n\nMadame Celeste Valaron runs the Beau-Rivage's concierge desk with the precision of a field marshal. Sixty-two years old, silver-haired, impeccably dressed, she has held her position for thirty-one years and knows every guest, every affair, every secret meeting conducted in her hotel's private dining rooms. The British believe she works for them. The Prussians believe the same. The truth is that Celeste Valaron works for Celeste Valaron. She sells information to all four powers, carefully calibrated to maintain the balance — because the balance keeps Geneva neutral, and neutrality keeps her hotel profitable. She has a ledger locked in a vault beneath the wine cellar that contains enough material to start three wars. She considers it insurance. Lately, she has noticed something that troubles her: agents from all four powers asking about the same man, using the same cover story, within the same week. That has never happened before. Someone has upset the balance, and Celeste does not yet know who.\n\nDoctor Emil Voss was, until six weeks ago, the Prussian Confederation's foremost voltaic weapons researcher. He held the rank of Geheimrat — Privy Councillor — and directed a laboratory in the Black Forest where the most dangerous experiments in the world were conducted behind walls of reinforced steel and armed automata. Then he vanished. His laboratory was found locked from the inside, every schematic removed, every prototype disassembled. The automata guards stood at their posts, functioning perfectly, having apparently seen nothing. Voss took with him the plans for something the Prussians call Projekt Donnerfall — Project Thunderfall — a voltaic weapon capable of disabling every steam engine within a fifty-mile radius. A single detonation over London would ground the Royal Air Fleet, freeze the Thames shipyards, and leave the Imperium defenseless. Over Constantinople, it would silence the Ottoman communication network. Over New York, it would halt American production lines for months. Every power wants Voss. Every power wants Donnerfall. And Emil Voss, a quiet man who once told a colleague he became a scientist to understand the world and now fears he has built the means to end it, has disappeared into the alleys of Geneva with the most dangerous blueprint on Earth.\n\nColonel Reginald Ashworth is the British Imperium's intelligence chief in Geneva, operating under the cover of Cultural Attache at the embassy on the Quai Wilson. A career officer from a military family, Ashworth is methodical, patient, and utterly ruthless when the mission demands it. He has run agents across three continents and never lost one to capture — a record he maintains by cutting loose anyone who becomes a liability. His network in Geneva includes informants in the Swiss banking sector, a mole inside the Prussian consulate, and a team of field operatives he trusts with his life. He does not trust them with each other's identities. Ashworth's orders from London are unambiguous: acquire Projekt Donnerfall by any means. His private concern, which he shares with no one, is that London wants the weapon not as a deterrent but as a first-strike capability. He has served the Imperium his entire life. He is not certain the Imperium deserves what it is asking for.\n\nKomtesse Annika Dreschner is the Prussian Confederation's chief operative in Geneva, officially listed as a trade representative. She is thirty-four, sharp-featured, and possesses a social charm that conceals a mind trained in cryptanalysis and close-quarters combat. The Confederation selected her for this posting because she studied under Voss at Heidelberg and knows his habits, his fears, and the way he thinks. She also knows that Voss was not merely a weapons designer — he was a man of deep moral conviction who agonized over every project and kept a private journal filled with philosophical arguments against his own work. Annika believes she can find Voss because she understands that he did not flee out of greed or ideology. He fled out of conscience. Her orders are to recover Voss and the Donnerfall plans and return both to Berlin. She has not been told what happens to Voss after that, and she has not asked, because she already knows.\n\nHasan al-Rashid operates out of the Ottoman Ascendancy's legation as a commercial liaison, though his actual title within Ottoman intelligence is Basmufettis — Senior Inspector. He is forty-one, bearded, deliberate in speech, and possesses an encyclopedic knowledge of voltaic theory that rivals the researchers he is tasked with monitoring. Before entering intelligence work, Hasan was an engineer in Constantinople's great Voltaic Works, where the Ascendancy's communication orbs and healing engines are manufactured. He understands, at a technical level, exactly what Donnerfall would do and exactly why it must not be built. His orders from Constantinople are to find Voss and offer him asylum — the Ascendancy wants the scientist, not the weapon. At least, that is what Hasan has been told. He has served long enough to know that what superiors say and what they intend are rarely identical. His personal network in Geneva includes a circle of Ottoman expatriate scholars, a Sufi mystic who reads voltaic aura patterns, and a Swiss clockmaker who owes him a very large favor.\n\nAgent Josephine Cross arrived in Geneva three weeks ago on an American Republic diplomatic passport that is technically real but practically fictional. She is twenty-eight, resourceful, impatient with protocol, and answers to the Department of Frontier Sciences — an American intelligence bureau so secret that the President was briefed on its existence only after his inauguration. Josephine's background is unusual for a spy: she was a frontier surveyor in the Dakota Territory before the Department recruited her for her talent with mechanical systems and her unnerving ability to read people. America wants Donnerfall. America also wants every other piece of voltaic intelligence it can get its hands on, because the Republic is thirty years behind the old powers in voltaic research and knows it. Josephine's cover is that of a journalist writing about Swiss watchmaking. She finds Geneva claustrophobic, its espionage community incestuous, and its food overpriced. She is also very good at her job, and she has already identified two of the other powers' operatives by their shoe leather.\n\nBeneath the visible conflict, a fifth player moves in the shadows. The Consortium of the Cog is an underground network of engineers, machinists, and former weapons researchers who believe that voltaic essence is too dangerous for any single nation to control. Founded a decade ago by disillusioned scientists from all four powers, the Consortium operates through cells that communicate via modified pneumatic capsules — messages that self-destruct after a single reading, their brass casings dissolving into inert powder. Their symbol is a broken gear, scratched into walls and doorframes in cities across Europe. Some members are idealists who want to share voltaic knowledge freely. Some are radicals who want to destroy the voltaic supply entirely, returning the world to conventional steam. And some, it is whispered, are agents provocateurs planted by the Great Powers to monitor dissent from the inside. The Consortium's leader is known only as the Mechanist, and no one — not even most Consortium members — knows their identity, their nationality, or their true agenda. What is known is that the Mechanist has been in contact with Emil Voss.\n\nThe city of Geneva itself is a character in this drama. The old town climbs the hill above the lake, its medieval streets too narrow for the new voltaic carriages, preserving a pocket of the old world amidst the brass and steam. The Jet d'Eau fountain throws its plume two hundred feet into the air, powered now by a voltaic pump that never stops. The University of Geneva's Polytechnic Hall houses one of Europe's finest voltaic research libraries, and its reading room is a battleground of academic espionage where students from four nations study side by side and steal each other's notes. Below the streets, the pneumatic network spreads like a nervous system — miles of brass tubing connecting post offices, banks, government buildings, and destinations that appear on no official map. The Swiss Federal Council maintains the fiction of neutrality while quietly profiting from every side. Swiss banks hold voltaic patents for all four powers. Swiss watchmakers build the timing mechanisms for weapons they pretend not to understand. And the Swiss Mechanical Police — automata constables with porcelain faces and truncheons of hardened brass — patrol the streets enforcing a peace that everyone knows is temporary.\n\nThe rules of the game are understood by all players. Open violence in Geneva is forbidden — the Lausanne Convention guarantees it, and the Swiss Mechanical Police enforce it with humorless efficiency. But a body pulled from Lake Geneva with no identification is not violence; it is an accident. A fire in a safehouse is not sabotage; it is faulty wiring. A diplomat who suffers a nervous collapse and is shipped home is not a broken agent; he is merely unwell. The war in Geneva is fought with cipher wheels and stolen keys, with seduction and blackmail, with clockwork listening devices hidden inside music boxes and camera obscura built into opera glasses. The weapons are information, leverage, and the precise application of pressure to the right person at the right moment. Death is a last resort, not because these people are merciful, but because a dead agent tells you nothing, and a turned agent tells you everything.\n\nTime is running out. Last week, a Prussian courier was found dead in his hotel room, his pneumatic capsule case empty. Three days later, an Ottoman cipher clerk disappeared from her boarding house, leaving behind a half-decoded message that referenced Donnerfall by its codename. Yesterday, Celeste Valaron discovered that someone had accessed her private vault — not the ledger, but something else, something she had almost forgotten was there: a letter from Emil Voss, written ten years ago, when he was still a young researcher and she was already the most connected woman in Geneva. The letter asked a single question: 'If a man builds a thing that could destroy the world, does the world have the right to know?' Celeste had never answered. She is beginning to wish she had. The gears are turning. The clock is running. And somewhere in the narrow streets of Geneva, a quiet scientist with the most dangerous blueprint on Earth is trying to decide whether to save the world or set it on fire.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "imperial_expatriate",
+        "name": "Imperial Expatriate",
+        "description": "You grew up in the service of one of the Great Powers — embassy compounds, military garrisons, foreign postings. You learned early that loyalty is performed, not felt, and that the flag you salute matters less than the people standing behind you.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "Insight"
+        ],
+        "traits": [
+          "Diplomatic Immunity: You know how to invoke protocol and rank to deflect suspicion. Advantage on Charisma checks when dealing with officials, guards, or bureaucrats in formal settings.",
+          "Polyglot Ear: Years in foreign postings have trained your ear for accents and linguistic tells. You can identify a speaker's national origin and social class after hearing them speak for one minute."
+        ],
+        "languages": [
+          "Common",
+          "Two languages of your choice"
+        ]
+      },
+      {
+        "id": "gutter_mechanist",
+        "name": "Gutter Mechanist",
+        "description": "You came up through the factory floors and back-alley workshops where voltaic essence is handled without gloves and safety is a luxury. You know machines the way a surgeon knows bodies — by touch, by sound, by the smell of hot brass.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "intelligence": 2
+        },
+        "skill_proficiencies": [
+          "Sleight of Hand",
+          "Investigation"
+        ],
+        "traits": [
+          "Voltaic Intuition: You can sense the hum of voltaic essence through walls, floors, and sealed containers within 15 feet. You know when a device is voltaic-powered and can estimate its output by listening.",
+          "Jury-Rig: Given 10 minutes and access to mechanical parts, you can disable or bypass one clockwork lock, automaton sensor, or pneumatic valve. The bypass lasts 1 hour before the system resets."
+        ],
+        "languages": [
+          "Common",
+          "Thieves' Cant"
+        ]
+      },
+      {
+        "id": "salon_aristocrat",
+        "name": "Salon Aristocrat",
+        "description": "You were born to wealth, education, and the suffocating expectations of a noble house. Drawing rooms are your battlefield. You learned to read a lie in a smile before you learned to ride a horse.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "History"
+        ],
+        "traits": [
+          "Social Camouflage: You move through high society as naturally as breathing. Advantage on checks to blend into aristocratic or diplomatic gatherings, and you can identify social hierarchies and alliances within a room after observing for 5 minutes.",
+          "Old Money Network: You have contacts among the European elite. Once per long rest, you can call upon a social connection to gain access to a restricted location, a private event, or a piece of gossip that is not publicly known."
+        ],
+        "languages": [
+          "Common",
+          "French",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "clockwork_augmented",
+        "name": "Clockwork Augmented",
+        "description": "An accident, a wound, or a deliberate choice left part of your body replaced with voltaic-powered machinery. A brass hand. A mechanical eye. A lung that ticks instead of breathes. You are more than human and less than whole, and the world cannot decide whether to admire you or fear you.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "strength": 1
+        },
+        "skill_proficiencies": [
+          "Perception",
+          "Athletics"
+        ],
+        "traits": [
+          "Mechanical Enhancement: One of your augmentations provides a tangible benefit. Choose one: a clockwork eye grants advantage on Perception checks relying on sight, a brass limb grants advantage on Strength checks using that limb, or a voltaic lung grants advantage on Constitution saves against inhaled poisons and gases.",
+          "Uncanny Presence: Your visible augmentation unsettles most people but commands respect in technical circles. You have advantage on Intimidation checks against those unfamiliar with clockwork prosthetics, but disadvantage on checks to appear inconspicuous in crowds."
+        ],
+        "languages": [
+          "Common",
+          "One language of your choice"
+        ]
+      },
+      {
+        "id": "consortium_defector",
+        "name": "Consortium Defector",
+        "description": "You were part of the Consortium of the Cog — the underground network that believes voltaic essence is too dangerous for any nation to control. You left. Or you were pushed out. Or maybe you never really left at all. The broken gear is still scratched into the leather of your belt, and old loyalties die harder than old enemies.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "dexterity": 2
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Arcana"
+        ],
+        "traits": [
+          "Cell Structure: You understand how clandestine organizations operate — compartmentalization, dead drops, cut-outs, deniability. Advantage on Intelligence checks to analyze or predict the behavior of secret organizations and their communication methods.",
+          "Dissolving Messages: You know how to prepare and read Consortium-style self-destructing pneumatic capsules. You can craft a message that destroys itself after being read, and you can identify a Consortium dead drop or safe signal on sight."
+        ],
+        "languages": [
+          "Common",
+          "Consortium Cipher"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "shadow_operative",
+        "name": "Shadow Operative",
+        "description": "You are the knife in the dark, the ghost in the embassy corridor. Trained in infiltration, disguise, and the precise application of violence when diplomacy fails. You do the work that governments deny and memoirs omit.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Deception",
+          "Acrobatics",
+          "Sleight of Hand"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Hand crossbows",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Dark leather coat (light armor)",
+          "Concealed spring-blade and derringer pistol",
+          "Lockpick set with voltaic bypass probes"
+        ],
+        "features": [
+          {
+            "name": "Sneak Attack",
+            "description": "You know how to strike where it hurts. Once per turn, you can deal an extra 1d6 damage to one creature you hit with an attack if you have advantage on the attack roll, or if another ally is within 5 feet of the target. The attack must use a finesse or ranged weapon."
+          },
+          {
+            "name": "Ghost Protocol",
+            "description": "You can adopt a false identity with 10 minutes of preparation and appropriate clothing. While maintaining the identity, you have advantage on Deception checks to sustain it. If your cover is blown, you can use a reaction to create a distraction — smoke, flash powder, a thrown object — granting you the opportunity to take the Disengage or Hide action as a bonus action on your next turn."
+          }
+        ]
+      },
+      {
+        "id": "cipher_analyst",
+        "name": "Cipher Analyst",
+        "description": "Information is the deadliest weapon in the voltaic age, and you are its master. You break codes, intercept pneumatic transmissions, and see patterns where others see noise. Every encrypted message is a locked door, and you always find the key.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Cryptography",
+          "History",
+          "Perception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [],
+        "weapon_proficiencies": [
+          "Daggers",
+          "Darts",
+          "Light crossbows"
+        ],
+        "starting_equipment": [
+          "Portable cipher wheel and codebook",
+          "Pneumatic message interceptor (brass listening device)",
+          "Scholar's satchel with writing supplies and reference texts"
+        ],
+        "features": [
+          {
+            "name": "Codebreaker",
+            "description": "You can attempt to decrypt any coded message or cipher you encounter. Make an Intelligence (Investigation) check against a DC set by the cipher's complexity (DC 12 for field codes, DC 16 for military ciphers, DC 20 for state-level encryption). On success, you decrypt the message. On failure by 5 or less, you extract partial information."
+          },
+          {
+            "name": "Pattern Recognition",
+            "description": "Your mind processes information at extraordinary speed. Once per short rest, when you observe a scene, conversation, or set of documents, you can ask the DM one question about a hidden pattern, connection, or inconsistency present in the information. The DM provides a truthful clue."
+          }
+        ]
+      },
+      {
+        "id": "diplomatic_fixer",
+        "name": "Diplomatic Fixer",
+        "description": "You work the rooms that matter — the salons, the embassies, the private dining rooms where treaties are drafted on napkins. Your weapons are charm, leverage, and the knowledge of exactly which skeleton lives in which closet. In a world of secrets, you are the broker.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Insight",
+          "Tradecraft"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Rapiers",
+          "Shortswords"
+        ],
+        "starting_equipment": [
+          "Set of fine evening clothes with concealed pockets",
+          "Forged diplomatic credentials from two nations",
+          "Silver cigarette case containing microfilm viewer"
+        ],
+        "features": [
+          {
+            "name": "Inspiring Confidence",
+            "description": "Your presence steadies nerves and sharpens focus. As a bonus action, choose one ally within 60 feet who can hear you. They gain an Inspiration die (d6) that they can add to one ability check, attack roll, or saving throw within the next 10 minutes. A creature can hold only one Inspiration die at a time."
+          },
+          {
+            "name": "Leverage",
+            "description": "When you spend at least 10 minutes in conversation with a target, you can make a Charisma (Insight) check contested by their Wisdom. On success, you identify one thing the target fears, desires, or is hiding. You gain advantage on your next Persuasion or Intimidation check against that target, as long as you use this knowledge."
+          }
+        ]
+      },
+      {
+        "id": "voltaic_saboteur",
+        "name": "Voltaic Saboteur",
+        "description": "You understand machines the way a predator understands prey — not to build them, but to break them. You can disable an automaton with a hatpin, overload a voltaic engine with a copper wire, and turn any piece of clockwork technology into an improvised weapon. Armies fear what you can do with ten minutes and a toolbox.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Investigation",
+          "Perception",
+          "Voltaic Engineering"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Reinforced work coat (medium armor)",
+          "Saboteur's toolkit (specialized wrenches, wire cutters, voltaic probes)",
+          "Satchel of improvised explosive components"
+        ],
+        "features": [
+          {
+            "name": "Mechanical Vulnerability",
+            "description": "You can identify the weak points in any clockwork device or automaton. Spend 1 minute observing a mechanical target to learn its vulnerabilities. Your next attack against that target deals an additional 1d8 damage, and if the target is a construct, it must make a Constitution saving throw (DC 8 + your proficiency bonus + your Dexterity modifier) or become incapacitated until the end of its next turn."
+          },
+          {
+            "name": "Controlled Demolition",
+            "description": "Given 5 minutes and access to a voltaic-powered device, you can rig it to overload at a time of your choosing (up to 1 hour). The overload disables the device and deals 2d6 thunder damage to all creatures within 10 feet (Dexterity save DC 13 for half). You can also set the overload to be silent — a quiet mechanical failure that draws no attention."
+          }
+        ]
+      },
+      {
+        "id": "iron_sentinel",
+        "name": "Iron Sentinel",
+        "description": "You are the shield, the bodyguard, the last line of defense when an extraction goes wrong and the automata close in. Trained in direct combat and protective tactics, you keep your people alive in a world that is very good at killing them.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor",
+          "Heavy armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons"
+        ],
+        "starting_equipment": [
+          "Reinforced brass cuirass (heavy armor)",
+          "Military saber and voltaic stun baton",
+          "Field medical kit and signal flare"
+        ],
+        "features": [
+          {
+            "name": "Defensive Stance",
+            "description": "When an ally within 5 feet of you is targeted by an attack, you can use your reaction to impose disadvantage on the attack roll. If the attack still hits, you can choose to take the damage instead of your ally. You can use this feature a number of times equal to your proficiency bonus per long rest."
+          },
+          {
+            "name": "Second Wind",
+            "description": "You have a reserve of stamina forged through brutal training. On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once you use this feature, you must finish a short or long rest before you can use it again."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "cryptography",
+        "name": "Cryptography",
+        "base_skill": "Investigation",
+        "description": "The art of creating and breaking codes, ciphers, and encrypted communications. Encompasses pneumatic message protocols, cipher wheel operation, and the analysis of steganographic techniques used by the Great Powers."
+      },
+      {
+        "id": "tradecraft",
+        "name": "Tradecraft",
+        "base_skill": "Insight",
+        "description": "The practical skills of espionage — recognizing surveillance, servicing dead drops, running counter-surveillance routes, identifying fellow agents, and maintaining cover identities under pressure."
+      },
+      {
+        "id": "voltaic_engineering",
+        "name": "Voltaic Engineering",
+        "base_skill": "Arcana",
+        "description": "Understanding of voltaic essence, steam-powered machinery, clockwork automata, and the impossible technologies of the Great Powers. Covers both construction and sabotage of voltaic devices."
+      },
+      {
+        "id": "high_society",
+        "name": "High Society",
+        "base_skill": "Performance",
+        "description": "Knowledge of aristocratic customs, diplomatic protocol, ballroom etiquette, and the social hierarchies of the Great Powers. The ability to navigate elite gatherings, recognize social signals, and blend into the world of embassies and salons."
+      }
+    ]
+  },
+  "ai_generated": false,
+  "admin_reviewed": false
+}

@@ -1,0 +1,374 @@
+{
+  "id": "liberty_city_1947",
+  "name": "Liberty City, 1947",
+  "description": "A post-war metropolis where licensed superheroes take bribes, the government runs black ops with powered agents, and the murder of America's most beloved cape threatens to unravel it all.",
+  "genre": "superhero_noir",
+  "mechanics_genre": "modern",
+  "genre_hints": [
+    "superhero",
+    "noir",
+    "mystery"
+  ],
+  "tone_hints": [
+    "cynical",
+    "morally gray",
+    "atmospheric"
+  ],
+  "seed_prompt": "A 1940s noir setting where superheroes are licensed by the government after WWII. The most beloved hero in America has been murdered with his powers drained, and the player must investigate a conspiracy that reaches from rain-slicked back alleys to the halls of power. Think Watchmen meets Chinatown — fedoras, jazz clubs, moral compromise, and superpowers as political currency.",
+  "lore_content": "Liberty City sits on the eastern seaboard like a bruise that never healed. The war is over. The boys came home. The ticker tape got swept up. But the city didn't go back to the way it was before, because the war changed what people are. In 1943, a classified military program called Project Prometheus created the first Specials — soldiers with abilities that bent physics and broke the Geneva Convention in ways nobody could prove. They won battles no conventional force could touch. They ended the war faster than anyone predicted. And when the war ended, the government had a problem: what do you do with people who can punch through concrete and read minds?\n\nThe answer was the Hero Registration Act of 1946. Every Special in the United States must register with the Bureau of Heroic Affairs, a division of the Department of Justice. Registered heroes receive a federal license, a modest stipend, and legal authority to intervene in criminal matters. Unregistered Specials are classified as unlawful combatants. The law is clear, the penalties are severe, and the enforcement is selective. If you have the right friends in the Bureau, your paperwork moves fast. If you don't, you disappear into a processing facility upstate and nobody asks questions.\n\nLiberty City is where most of the Specials ended up. It's the biggest city on the coast, the media capital, the place where a hero can get famous and a villain can get rich. The Bureau's main field office occupies four floors of the Federal Building downtown. The heroes who play ball with the government get corner offices and magazine covers. The ones who don't get surveillance files and midnight visits. In between, there's a whole ecosystem of licensed heroes doing freelance work — protecting businesses for a fee, providing security at society events, doing the kind of jobs that are technically legal and morally bankrupt. The line between hero and hired muscle is a matter of who signs your checks.\n\nThe Beacon was different. Everyone agreed on that, even his enemies. Thomas Calloway was a high school science teacher from Queens who got caught in a Prometheus energy discharge during a factory accident in 1944. The energy didn't kill him — it rewrote him. He could generate and manipulate light in every spectrum: blinding flashes, laser-precise beams, hard-light constructs that could stop a tank. He could fly by riding his own photon emissions. But what made The Beacon special wasn't his powers. It was that he actually believed in what the Hero Registration Act was supposed to mean. He testified before Congress. He visited children's hospitals. He stopped muggings in neighborhoods that the other heroes wouldn't touch because there was no money in it. He was the one Special that every poll said Americans trusted more than their own senators. He was proof that the system could work.\n\nThey found him in a back alley behind the Orpheum Theatre on West 47th Street at 3:17 AM on a Tuesday. He was still in costume — the white and gold suit that every kid in America could draw from memory. But the suit was dim. The Beacon's powers made him glow, a faint luminescence that was visible even through his clothes. When they found him, there was no glow. His skin was gray. His eyes were open and colorless — Thomas Calloway had brown eyes, but the body's eyes were the flat white of milk glass. The coroner listed cause of death as 'systemic energy depletion,' which is a clinical way of saying that every trace of Prometheus energy had been extracted from his body. Someone had drained The Beacon like a battery. Nobody knew that was possible.\n\nThe police took one look at the case and punted it to the Bureau. The Bureau took one look at the case and buried it. Director Harold Grimshaw held a press conference, called it a 'tragic accident related to power instability,' and closed the investigation in seventy-two hours. The file was sealed. The body was cremated before the family could request an independent autopsy. The Beacon got a state funeral with full honors, a renamed bridge, and a postage stamp. Case closed. Except it wasn't.\n\n=== KEY LOCATIONS ===\n\nThe Federal Building houses the Bureau of Heroic Affairs on floors 7 through 10. The lobby has a marble mural depicting Specials winning the war — muscular figures in dramatic poses, the American flag billowing behind them. It looks nothing like what actually happened. Floor 7 is public-facing: registration, licensing, the PR office. Floor 8 is field operations, where licensed heroes get their assignments. Floor 9 is classified — Intelligence and Monitoring. Nobody talks about what's on Floor 9. Floor 10 is Director Grimshaw's office and the sealed archives. Getting above Floor 8 without clearance requires either an invitation or a death wish.\n\nThe Gaslight District is Liberty City's entertainment quarter — jazz clubs, dance halls, theaters, restaurants that stay open until 4 AM. The marquee attraction is The Blue Room, a jazz club owned by a man named Solomon Vance. Every Special in the city passes through The Blue Room eventually. It's neutral ground. Heroes, villains, Bureau agents, and criminals all drink at the same bar, because Solomon has a rule: no powers inside. The rule is enforced by Solomon himself, which tells you something about Solomon that he'd rather you didn't know.\n\nThe Hollows is the neighborhood south of the rail yards where unregistered Specials live. It's technically a slum, but it's organized — the people there look out for each other because nobody else will. The buildings are pre-war tenements, the streets are narrow, and the Bureau doesn't patrol here because sending licensed heroes into the Hollows tends to start fights that level buildings. The Hollows has its own economy, its own justice, and its own protector: a woman who calls herself Nightshade, who can manipulate shadows and has made it very clear that the Hollows is not Bureau territory.\n\nThe waterfront district runs along Liberty City's southern edge — docks, warehouses, shipping offices, and the kind of bars where longshoremen drink alongside smugglers and nobody comments on it. Warehouse 31 on Pier 9 is where The Beacon's body was taken before the Bureau intercepted it. The warehouse is now locked and under Bureau seal. The night watchman, a retired dock worker named Eddie Pulaski, saw something that night. He won't say what. He's started drinking more than usual.\n\nCalloway Heights is the middle-class neighborhood in Liberty City's north end where Thomas Calloway lived with his wife, Margaret, and their two children. The house at 44 Birch Lane still has a porch light on. Margaret Calloway has not spoken to the press. She has not accepted the government's condolence payment. She has hired no lawyer. She is waiting. For what, nobody is sure, but there is something in the way she looks at Bureau agents that suggests she knows more than she's saying.\n\n=== THE MAJOR PLAYERS ===\n\nDirector Harold Grimshaw runs the Bureau of Heroic Affairs with the efficiency of a man who learned management in military intelligence. Silver-haired, square-jawed, perpetually in a charcoal suit. He was a colonel in the Army program that created the Specials, which means he knows exactly what they're capable of and exactly how to control them. He is not corrupt in the way people expect — he doesn't take bribes or skim budgets. His corruption is ideological. He genuinely believes that Specials are weapons, that weapons must be controlled, and that the American public must never learn what Project Prometheus actually did or what the Specials actually are. The Beacon's murder terrifies him, not because a hero died, but because the method — power draining — suggests someone has technology that the Bureau doesn't control. Grimshaw will do anything to keep that technology out of the public eye, including framing an innocent person for the murder if it makes the problem go away.\n\nSolomon Vance owns The Blue Room and is the closest thing Liberty City's underworld has to a king. He's in his late fifties, heavyset, impeccably dressed, with a voice like warm gravel. Everyone assumes Solomon is a normal human who happens to be well-connected. Everyone is wrong. Solomon was one of the original Project Prometheus subjects — Batch One, the first cohort, before the process was refined. His abilities are subtle and deeply unsettling: he can sense the emotional states of everyone within a hundred-foot radius, and he can dampen or amplify those emotions at will. He's never registered. He's never been caught. He uses his power the way a card sharp uses a marked deck — gently, invisibly, always to his advantage. Solomon knows things about The Beacon's death that he shouldn't know, and he's waiting to see who comes asking before he decides which side to help.\n\nMargaret Calloway is Thomas Calloway's widow. She was a nurse during the war and met Thomas before he had powers. She is quiet, precise, and devastatingly intelligent. She doesn't have abilities. She has something potentially more dangerous: her husband's private journal, which Thomas kept hidden even from the Bureau. The journal contains details about Project Prometheus, about the other Batch One subjects, about experiments the government conducted on Specials who didn't cooperate, and about a conversation Thomas had with Director Grimshaw three weeks before his death — a conversation that ended with Thomas saying he was going to 'tell the truth about Prometheus' and Grimshaw saying nothing at all. Margaret knows the journal exists. She hasn't read it yet. She's afraid of what it contains, and she's afraid of what happens to her children if the wrong people learn she has it.\n\nVictor Hale is a licensed hero who operates under the name Ironclad. His body is covered in a metallic substance that makes him nearly invulnerable and gives him tremendous strength. He was The Beacon's partner for three years and the last person known to have seen Thomas alive. Victor is devastated by his partner's death, and he's furious that the Bureau closed the case. He wants answers. He also has a secret: Victor has been taking payments from Solomon Vance for two years, providing security for Solomon's less-than-legal business operations. It started as a favor and became a dependency. If the investigation into The Beacon's death digs deep enough, Victor's corruption will surface, which means Victor is simultaneously the most motivated ally and the most conflicted one. He wants the killer found. He doesn't want anyone looking too closely at how the sausage gets made.\n\nDr. Evelyn Cross is the Bureau's chief scientist, responsible for monitoring Specials' health and studying Prometheus energy. She's in her forties, clinical, precise, and haunted by something she won't discuss. She examined The Beacon's body before it was cremated and her official report matches Grimshaw's narrative — 'power instability leading to spontaneous energy discharge.' Her unofficial notes, locked in her personal safe, tell a different story. The energy wasn't discharged — it was extracted, methodically and deliberately, using equipment that she designed. Equipment that was supposed to be theoretical. Equipment that was part of a classified Bureau project called 'Operation Harvest' — a contingency plan for neutralizing rogue Specials. Someone built her theoretical designs and used them to kill the most famous hero in America, and Evelyn Cross doesn't know who, but she knows the list of people with access to those plans is very short.\n\nNightshade is the self-appointed guardian of the Hollows. Her real name is Dolores Reyes, a former factory worker who developed shadow-manipulation abilities after exposure to Prometheus waste dumped in the Hollows' water supply. She can become functionally invisible in any shadow, extend shadows to restrain or blind opponents, and create zones of absolute darkness. She's in her thirties, wiry, intense, and deeply distrustful of the Bureau and everyone associated with it. She's also the only person in Liberty City with a network of informants that rivals Solomon Vance's. Nightshade knows that three unregistered Specials in the Hollows have gone missing in the past month — quietly, without struggle, without witnesses. She suspects the disappearances are connected to The Beacon's death. She's right.\n\nDetective Frank Malone works Homicide for the Liberty City Police Department. He's old-school — fedora, trench coat, flask in the desk drawer. He caught the Beacon case initially, before the Bureau pulled jurisdiction. In the forty-five minutes he had the scene, he noticed things the Bureau's team either missed or ignored: scorch marks on the alley walls that didn't match The Beacon's known energy signature, a partial boot print from a size 13 military-issue shoe, and a faint chemical smell that reminded him of the munitions factories where they made Prometheus compounds during the war. Malone has been told to drop it. He hasn't. He's investigating on his own time, and he's running out of both patience and leads. He needs someone with powers to go places a regular detective can't.\n\n=== FACTIONS ===\n\nThe Bureau of Heroic Affairs is the federal agency tasked with registering, licensing, and monitoring all Specials. It functions as part regulatory body, part law enforcement, and part intelligence agency. Its public mission is protecting American citizens. Its actual mission is ensuring that the government maintains a monopoly on superhuman force. The Bureau employs licensed heroes as agents, maintains surveillance on unregistered Specials, and runs classified programs that Congress has never been briefed on. Not everyone in the Bureau is corrupt — many agents genuinely believe they're protecting people. But the institution itself has a rot at the top that has been growing since Prometheus.\n\nThe Underground is a loose network of unregistered Specials who refuse to submit to the Hero Registration Act. They live in the Hollows, in safe houses across the city, and in communities that have learned to hide in plain sight. They're not organized enough to be called a resistance — they're families, workers, people who just want to live without the Bureau's boot on their neck. Nightshade provides protection, but she's one person. The Underground is vulnerable, and the disappearances have them terrified.\n\nThe War Profiteers are a consortium of businessmen and former military officers who made fortunes off Project Prometheus during the war and have no intention of letting that revenue stream dry up. They fund Bureau operations, lobby Congress to expand the Registration Act, and quietly finance research into new applications of Prometheus technology — including weaponized power extraction. They don't get their hands dirty. They hire people for that. Their figurehead is a defense contractor named Aldric Weems, who smiles too much and shakes hands like he's measuring you for a coffin.\n\nThe Fourth Estate is Liberty City's press corps, centered around the Liberty Herald newspaper. Most reporters know the Bureau's official story about The Beacon is garbage, but nobody can prove it. The Herald's star reporter, a woman named Iris Chen, has been investigating Prometheus since before the Registration Act. She has sources inside the Bureau, inside the Underground, and inside places she won't name. She's published enough to be a nuisance and not enough to be a target — yet. She's close to something big. She knows it. So does someone else.\n\n=== THE CONSPIRACY ===\n\nThe Beacon wasn't killed by a villain. He was killed by a system. Operation Harvest was designed as a fail-safe: if a Special ever went rogue, the Bureau needed a way to neutralize them permanently. Dr. Evelyn Cross designed the theoretical framework — a device that could extract Prometheus energy from a living host. The project was shelved as too dangerous and too politically toxic. But the War Profiteers saw the commercial potential. A device that could extract and store superhuman energy could do more than neutralize threats — it could transfer powers, stockpile them, sell them to the highest bidder. They secretly funded the construction of a working prototype.\n\nThe Beacon found out. His journal documents meetings with a Bureau whistleblower who told him about Harvest. Thomas Calloway was going to go public — to the press, to Congress, to anyone who would listen. Director Grimshaw learned of this three weeks before the murder. What happened next is the central mystery: Did Grimshaw order the kill? Did the War Profiteers act independently? Was there a rogue element inside the Bureau? The three missing Specials from the Hollows were test subjects — the Harvest device was refined on them before it was used on The Beacon. The evidence exists. It's scattered across the city in pieces — in Margaret's journal, in Dr. Cross's safe, in Malone's case notes, in the sealed files on Floor 10, in the memories of a dock worker who saw something at Warehouse 31. Putting the pieces together means making enemies of the most powerful people in the country. The question isn't whether the truth is worth finding. The question is whether the truth is worth what it costs.\n\n=== STORY HOOKS ===\n\nMargaret Calloway reaches out through a trusted intermediary — she needs someone with abilities to protect her while she reads her husband's journal. She doesn't trust the Bureau, doesn't trust other heroes, and is running out of time before Grimshaw's people figure out the journal exists.\n\nDetective Malone leaves a message at The Blue Room: he has evidence from the crime scene that the Bureau doesn't know about, and he needs a partner who can access places a badge won't open. He's being followed.\n\nNightshade sends word that a fourth Special has gone missing from the Hollows — this time someone with a family, someone people will notice. She wants the disappearances investigated, and she's willing to share what her network knows about Bureau activity in the Hollows in exchange for help.\n\nSolomon Vance invites the player to a private conversation in the back room of The Blue Room. He knows who built the Harvest device. He knows where it's being kept. He'll share this information — but he wants something in return, and what he wants will compromise everything the player believes about justice.\n\nIris Chen at the Liberty Herald has been receiving anonymous tips — fragments of classified Bureau documents, mailed to the newspaper with no return address. The fragments reference Operation Harvest by name. She needs someone to verify the documents' authenticity before she can publish, and verification means breaking into the Bureau's sealed archives on Floor 10.",
+  "character_options": {
+    "origins": [
+      {
+        "id": "prometheus_veteran",
+        "name": "Prometheus Veteran",
+        "description": "You were one of the soldiers enhanced by Project Prometheus during the war. You came home with powers, a medal, and nightmares. The government calls you an asset. You call yourself a survivor.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 2,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Survival"
+        ],
+        "traits": [
+          "War-Forged: You've seen worse than anything Liberty City can throw at you. Advantage on saving throws against fear and intimidation effects.",
+          "Military Training: You are proficient with all martial weapons and have advantage on checks involving military procedures, protocols, and installations."
+        ],
+        "languages": [
+          "Common",
+          "Military Code"
+        ]
+      },
+      {
+        "id": "accidental_special",
+        "name": "Accidental Special",
+        "description": "You weren't part of any program. A factory leak, a lab accident, a piece of Prometheus shrapnel — something gave you abilities you never asked for. The Bureau wants you registered. You want to be left alone.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Deception",
+          "Stealth"
+        ],
+        "traits": [
+          "Unremarkable: You've spent years hiding what you are. Advantage on Deception checks to conceal your Special status or pass as a normal civilian.",
+          "Unstable Powers: Your abilities are unpredictable. Once per long rest, when you use your powers under stress, the DM may rule that they surge — producing an effect stronger or stranger than intended."
+        ],
+        "languages": [
+          "Common",
+          "Street Slang"
+        ]
+      },
+      {
+        "id": "hollows_born",
+        "name": "Hollows-Born",
+        "description": "You grew up in the Hollows, where Prometheus waste seeped into the water and the soil. Half the kids on your block developed abilities. None of them got licenses. You learned early that powers don't make you a hero — survival does.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "dexterity": 2,
+          "constitution": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Perception"
+        ],
+        "traits": [
+          "Street Survivor: You know the Hollows like the back of your hand. Advantage on Stealth and Perception checks in urban environments, especially back alleys, rooftops, and tenement buildings.",
+          "Unregistered: You have never appeared in a Bureau file. You are invisible to the system. This is both your greatest protection and your greatest vulnerability."
+        ],
+        "languages": [
+          "Common",
+          "Hollows Cant"
+        ]
+      },
+      {
+        "id": "licensed_operative",
+        "name": "Licensed Operative",
+        "description": "You did it by the book. Registration, licensing, Bureau assignments. You wore the badge and followed orders. Then you saw something that made the badge feel heavy. You're still licensed — for now.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 1,
+          "charisma": 2
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Persuasion"
+        ],
+        "traits": [
+          "Bureau Credentials: You carry a valid federal hero license. Advantage on Persuasion checks when dealing with law enforcement, government officials, and civilians who respect authority.",
+          "Inside Knowledge: You know Bureau procedures, internal politics, and the names on classified rosters. Once per long rest, you can recall a specific detail about Bureau operations that gives the group a tactical advantage."
+        ],
+        "languages": [
+          "Common",
+          "Bureau Code"
+        ]
+      },
+      {
+        "id": "war_correspondent",
+        "name": "War Correspondent",
+        "description": "You covered the Specials during the war — the real stories, not the propaganda reels. You don't have powers, but you have contacts, instincts, and a notebook full of secrets that powerful people would rather stay buried.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Insight"
+        ],
+        "traits": [
+          "Nose for a Story: You can sense when someone is hiding something. Advantage on Insight checks to detect lies, omissions, or discomfort in conversation.",
+          "Press Credentials: Doors open for the press that stay closed for everyone else. Advantage on checks to gain access to restricted areas, official events, and reluctant sources — as long as your cover holds."
+        ],
+        "languages": [
+          "Common",
+          "French",
+          "German"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "powered_detective",
+        "name": "Powered Detective",
+        "description": "Half gumshoe, half Special. You use your abilities to find what others can't — hidden evidence, buried lies, the things people do when they think nobody's watching. The city is full of secrets. You're the one who digs them up.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Perception",
+          "Deception"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns",
+          "Hand crossbows"
+        ],
+        "starting_equipment": [
+          "Trench coat (light armor)",
+          "Snub-nose revolver",
+          "Detective's notebook and magnifying glass"
+        ],
+        "features": [
+          {
+            "name": "Scene Reconstruction",
+            "description": "After spending 1 minute examining a crime scene or location, you can reconstruct what happened there in the last 48 hours — general events, number of people present, signs of violence, and whether superhuman abilities were used."
+          },
+          {
+            "name": "Read the Angles",
+            "description": "You can use Investigation instead of Insight to determine if someone is lying or withholding information. Your deductive reasoning catches contradictions that gut instinct might miss."
+          }
+        ]
+      },
+      {
+        "id": "brawler",
+        "name": "The Brawler",
+        "description": "Your powers make you hard to hurt and harder to stop. You don't fly or shoot beams — you take hits that would kill a normal person and keep walking forward. In a city where everyone has an angle, you're the blunt instrument.",
+        "base_type": "fighter",
+        "hit_die": "d10",
+        "primary_ability": "Strength",
+        "saving_throws": [
+          "Strength",
+          "Constitution"
+        ],
+        "skill_choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Insight"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "All armor",
+          "Shields"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Reinforced leather jacket (medium armor)",
+          "Brass knuckles",
+          "Hip flask"
+        ],
+        "features": [
+          {
+            "name": "Superhuman Durability",
+            "description": "Your Prometheus-enhanced body can absorb tremendous punishment. You have resistance to bludgeoning damage from non-superhuman sources, and when you are reduced to 0 hit points but not killed outright, you drop to 1 hit point instead. Once per long rest."
+          },
+          {
+            "name": "Intimidating Presence",
+            "description": "As an action, choose one creature that can see you within 30 feet. It must make a Wisdom save (DC 8 + proficiency + Strength modifier) or be frightened of you for 1 minute. A creature that has seen you shrug off damage has disadvantage on this save."
+          }
+        ]
+      },
+      {
+        "id": "mentalist",
+        "name": "The Mentalist",
+        "description": "Your powers are invisible — telepathy, psychometry, precognitive flashes. You see what others think and feel what objects remember. In a city built on lies, you're the most dangerous person in the room and nobody knows it.",
+        "base_type": "wizard",
+        "hit_die": "d6",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Intelligence",
+          "Wisdom"
+        ],
+        "skill_choices": [
+          "Insight",
+          "Investigation",
+          "Perception",
+          "Arcana"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "None"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Nondescript suit and hat",
+          "Derringer pistol",
+          "Pair of leather gloves (to control psychometric flashes)"
+        ],
+        "features": [
+          {
+            "name": "Psychometric Reading",
+            "description": "By touching an object and concentrating for 1 minute, you can perceive impressions of the last person who handled it — their emotional state, a flash of what they were doing, and a general sense of when they touched it. Stronger emotions leave stronger impressions."
+          },
+          {
+            "name": "Surface Thoughts",
+            "description": "You can read the surface thoughts of one creature within 30 feet. The target makes a Wisdom save (DC 8 + proficiency + Intelligence modifier). On a failure, you perceive their current thoughts and emotional state for 1 minute. The target is unaware of the intrusion unless they are themselves psychic."
+          }
+        ]
+      },
+      {
+        "id": "vigilante",
+        "name": "The Vigilante",
+        "description": "You work outside the system because the system is broken. No license, no Bureau oversight, no rules except your own. You protect the people the registered heroes have forgotten — and you've made powerful enemies doing it.",
+        "base_type": "ranger",
+        "hit_die": "d10",
+        "primary_ability": "Dexterity",
+        "saving_throws": [
+          "Strength",
+          "Dexterity"
+        ],
+        "skill_choices": [
+          "Stealth",
+          "Perception",
+          "Athletics",
+          "Survival"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Martial weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Dark coat and mask (light armor)",
+          "Grappling hook and line",
+          "Pair of .45 automatics"
+        ],
+        "features": [
+          {
+            "name": "Shadow of the City",
+            "description": "In urban environments at night or in dimly lit areas, you can move unseen with supernatural ease. Advantage on Stealth checks in urban terrain, and you can move at full speed while hiding without penalty."
+          },
+          {
+            "name": "Rooftop Runner",
+            "description": "You treat urban rooftops, fire escapes, and building exteriors as favored terrain. You can climb at full speed, leap gaps of up to 20 feet without a check, and you never take falling damage from heights of 30 feet or less."
+          }
+        ]
+      },
+      {
+        "id": "fixer",
+        "name": "The Fixer",
+        "description": "You don't punch criminals or read minds. You talk. You negotiate. You know who owes favors and where the bodies are buried — sometimes literally. In a city where everyone has secrets, the person who trades in information is the most powerful player at the table.",
+        "base_type": "bard",
+        "hit_die": "d8",
+        "primary_ability": "Charisma",
+        "saving_throws": [
+          "Dexterity",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Persuasion",
+          "Deception",
+          "Insight",
+          "Investigation"
+        ],
+        "num_skill_choices": 2,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Handguns"
+        ],
+        "starting_equipment": [
+          "Tailored suit (light armor)",
+          "Concealed pocket pistol",
+          "Black book of contacts"
+        ],
+        "features": [
+          {
+            "name": "I Know a Guy",
+            "description": "Once per long rest, when the group needs information, resources, or access, you can declare that you know someone who can help. The DM determines the contact's reliability and what they want in return — but you always know someone."
+          },
+          {
+            "name": "Silver Tongue",
+            "description": "When you speak with someone for at least 1 minute, you can make a Charisma (Persuasion) check opposed by their Wisdom. On success, they regard you as a trusted acquaintance and are inclined to share information or do small favors. This effect lasts for 1 hour or until you do something to break their trust."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "gumshoe_work",
+        "name": "Gumshoe Work",
+        "base_skill": "Investigation",
+        "description": "Old-fashioned detective legwork — canvassing witnesses, tailing suspects, picking locks, examining crime scenes, and piecing together evidence that the Bureau would rather stay buried."
+      },
+      {
+        "id": "power_sense",
+        "name": "Power Sense",
+        "base_skill": "Arcana",
+        "description": "Understanding Prometheus energy — identifying a Special's abilities by their energy signature, recognizing when powers have been used in an area, and detecting Prometheus technology."
+      },
+      {
+        "id": "streetwise",
+        "name": "Streetwise",
+        "base_skill": "Insight",
+        "description": "Reading Liberty City's underworld — knowing who runs what territory, which cops are on the take, where the safe houses are, and how to move through the city without attracting the wrong attention."
+      },
+      {
+        "id": "bureau_protocol",
+        "name": "Bureau Protocol",
+        "base_skill": "Persuasion",
+        "description": "Navigating the Bureau of Heroic Affairs — understanding its chain of command, exploiting its procedures, talking your way past agents, and knowing which forms to file and which to lose."
+      }
+    ]
+  },
+  "ai_generated": false,
+  "admin_reviewed": false
+}
