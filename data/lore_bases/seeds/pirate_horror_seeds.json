@@ -172,7 +172,30 @@
             "name": "Boarding Fury",
             "description": "During the first round of any combat that begins on a ship, dock, or shoreline, you have advantage on attack rolls and your movement speed increases by 10 feet."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "gunwale_strike", "name": "Gunwale Strike", "category": "Combat", "description": "Slam an enemy into the ship's railing or nearby terrain, dealing bonus damage and knocking them off balance."},
+            {"id": "salted_edge", "name": "Salted Edge", "category": "Combat", "description": "Coat your blade in sea salt mid-swing, causing searing pain to Drowned and undead on contact."},
+            {"id": "dread_roar", "name": "Dread Roar", "category": "Leadership", "description": "Unleash a battle cry that forces a nearby enemy to make a saving throw or become frightened until the end of their next turn."},
+            {"id": "rigging_leap", "name": "Rigging Leap", "category": "Seamanship", "description": "Swing from ropes, rigging, or masts to reposition yourself up to 15 feet without provoking opportunity attacks."},
+            {"id": "iron_brace", "name": "Iron Brace", "category": "Survival", "description": "Plant your feet and harden your stance, granting resistance to being moved or knocked prone until the start of your next turn."}
+          ],
+          "abilities": [
+            {"id": "boarding_avalanche", "name": "Boarding Avalanche", "category": "Combat", "description": "Launch yourself onto an enemy vessel or into a group of foes, dealing damage to all creatures in a 10-foot radius where you land and knocking them prone."},
+            {"id": "reavers_fury", "name": "Reaver's Fury", "category": "Combat", "description": "Enter a terrifying rage that grants an extra attack each turn and advantage on Intimidation checks for one minute, but you cannot retreat."},
+            {"id": "hull_breaker", "name": "Hull Breaker", "category": "Seamanship", "description": "Deliver a devastating strike to a ship's hull, barrier, or large structure, dealing triple damage to objects and creating a breach large enough to pass through."},
+            {"id": "dead_mans_gambit", "name": "Dead Man's Gambit", "category": "Combat", "description": "When reduced below half health, make a retaliatory strike with advantage that deals an additional 3d6 damage, fueled by the certainty that you have nothing left to lose."},
+            {"id": "chain_sweep", "name": "Chain Sweep", "category": "Combat", "description": "Swing an anchor chain, boarding hook, or heavy weapon in a brutal arc, hitting all creatures in a 15-foot cone and pulling them 5 feet toward you."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Techniques",
+          "cantrip_hint": "Minor abilities you can use at will — the skills that keep you alive day to day.",
+          "ability_hint": "Powerful techniques that take their toll — use them when it matters."
+        }
       },
       {
         "id": "deep_warden",
@@ -214,7 +237,30 @@
             "name": "Requiem",
             "description": "You can perform a 1-minute ritual over a corpse to ensure it does not rise as one of the Drowned. You can also attempt to release a Drowned from its torment with a contested Wisdom check."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "salt_blessing", "name": "Salt Blessing", "category": "Occult", "description": "Trace a salt sigil on a person or object, granting them minor protection against the Drowned's touch for one hour."},
+            {"id": "whisper_ward", "name": "Whisper Ward", "category": "Occult", "description": "Muffle the deep-sea whispers in a small area, giving one ally advantage on their next saving throw against supernatural fear or madness."},
+            {"id": "mend_the_living", "name": "Mend the Living", "category": "Survival", "description": "Lay hands on a wounded ally to heal 1d4 hit points and remove the chilling numbness left by contact with the Drowned."},
+            {"id": "lantern_of_the_drowned", "name": "Lantern of the Drowned", "category": "Occult", "description": "Conjure a pale ghostlight that illuminates hidden undead, spectral traces, and cursed objects within 30 feet."},
+            {"id": "steadfast_word", "name": "Steadfast Word", "category": "Leadership", "description": "Speak a word of calm authority that ends the frightened condition on one ally within earshot."}
+          ],
+          "abilities": [
+            {"id": "exorcism_of_the_drowned", "name": "Exorcism of the Drowned", "category": "Occult", "description": "Perform a forceful banishing prayer that deals 3d8 radiant damage to all Drowned within 20 feet and forces them to flee for one minute."},
+            {"id": "bulwark_of_faith", "name": "Bulwark of Faith", "category": "Survival", "description": "Erect an invisible barrier across a doorway, hatch, or breach that no undead creature can pass through for ten minutes, sealing the living safely inside."},
+            {"id": "absolution", "name": "Absolution", "category": "Occult", "description": "Touch a creature showing early signs of the sea's corruption and purge the taint, restoring them to their natural state and granting immunity to corruption for 24 hours."},
+            {"id": "anchor_the_soul", "name": "Anchor the Soul", "category": "Leadership", "description": "Bind an ally's spirit to their body so fiercely that if they die within the next hour, they automatically stabilize and cannot be raised as one of the Drowned."},
+            {"id": "sermon_of_defiance", "name": "Sermon of Defiance", "category": "Leadership", "description": "Deliver a rousing invocation that grants all allies within 30 feet temporary hit points equal to your level plus your Wisdom modifier and advantage on saving throws for one minute."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Techniques",
+          "cantrip_hint": "Minor abilities you can use at will — the skills that keep you alive day to day.",
+          "ability_hint": "Powerful techniques that take their toll — use them when it matters."
+        }
       },
       {
         "id": "wraith_hunter",
@@ -257,7 +303,30 @@
             "name": "Dead Reckoning",
             "description": "You can sense the presence of undead creatures within 60 feet, even through walls and hulls. You know their number and general direction but not their exact position."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "shadow_step", "name": "Shadow Step", "category": "Stealth", "description": "Melt into a nearby shadow and reappear in another shadow within 15 feet, bypassing obstacles and enemies between the two points."},
+            {"id": "corpse_read", "name": "Corpse Read", "category": "Occult", "description": "Touch a dead body to glimpse its final moments, learning how it died and whether it is likely to rise as one of the Drowned."},
+            {"id": "silent_rigging", "name": "Silent Rigging", "category": "Seamanship", "description": "Move across ropes, chains, and rigging without making a sound, automatically succeeding on Stealth checks while climbing aboard a vessel."},
+            {"id": "spectral_lure", "name": "Spectral Lure", "category": "Occult", "description": "Toss a small object imbued with ghost-light that draws the attention of undead in a 30-foot radius, pulling them toward it for one round."},
+            {"id": "vital_strike", "name": "Vital Strike", "category": "Combat", "description": "Identify and exploit a weak point in an enemy's guard, dealing an extra 1d6 damage on your next attack if you are hidden or flanking."}
+          ],
+          "abilities": [
+            {"id": "ghost_ship_breach", "name": "Ghost Ship Breach", "category": "Seamanship", "description": "Board a derelict or ghost vessel undetected, granting yourself and up to three allies advantage on Stealth checks for five minutes after crossing onto the target ship."},
+            {"id": "wraith_snare", "name": "Wraith Snare", "category": "Occult", "description": "Set a trap using salt and silver wire that immobilizes the first undead creature to cross it for one minute, dealing 2d8 radiant damage each round."},
+            {"id": "deaths_whisper", "name": "Death's Whisper", "category": "Combat", "description": "Strike from hiding with such precision that the target must succeed on a Constitution save or be paralyzed with shock for one round, taking an additional 4d6 damage."},
+            {"id": "drowned_disguise", "name": "Drowned Disguise", "category": "Stealth", "description": "Slow your heartbeat and chill your skin so completely that undead perceive you as one of their own for up to ten minutes, allowing you to walk among the Drowned unharmed."},
+            {"id": "black_water_dive", "name": "Black Water Dive", "category": "Survival", "description": "Plunge into cursed water and navigate it safely for up to thirty minutes, able to see in magical darkness and immune to the sea's whispers while submerged."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Techniques",
+          "cantrip_hint": "Minor abilities you can use at will — the skills that keep you alive day to day.",
+          "ability_hint": "Powerful techniques that take their toll — use them when it matters."
+        }
       },
       {
         "id": "tide_singer",
@@ -300,7 +369,30 @@
             "name": "Sea's Voice",
             "description": "Once per long rest, you can speak directly to the Drowned Sea — asking one question about local currents, hidden dangers, or the location of something lost beneath the waves. The sea always answers, but its answers are cryptic and may carry a price."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "hauling_shanty", "name": "Hauling Shanty", "category": "Leadership", "description": "Sing a rhythmic work song that grants one ally advantage on their next Strength or Athletics check, making heavy labor feel effortless."},
+            {"id": "fog_call", "name": "Fog Call", "category": "Navigation", "description": "Hum a low note that parts fog or mist in a 30-foot cone ahead of you, revealing what hides within for one round."},
+            {"id": "siren_whisper", "name": "Siren Whisper", "category": "Occult", "description": "Whisper a phrase laced with the sea's resonance that compels one creature to hesitate, wasting their reaction until the start of their next turn."},
+            {"id": "tide_pulse", "name": "Tide Pulse", "category": "Seamanship", "description": "Press your hand to the deck and feel the currents beneath the hull, learning the depth, direction, and whether anything large is moving below."},
+            {"id": "gallows_humor", "name": "Gallows Humor", "category": "Leadership", "description": "Crack a dark joke or sing a bawdy verse that removes the frightened condition from one ally and grants them 1d4 temporary hit points."}
+          ],
+          "abilities": [
+            {"id": "requiem_of_the_lost", "name": "Requiem of the Lost", "category": "Occult", "description": "Sing a mournful dirge that causes all Drowned within 40 feet to stop moving and listen, transfixed and unable to act for up to one minute or until they take damage."},
+            {"id": "storm_chorus", "name": "Storm Chorus", "category": "Navigation", "description": "Raise your voice against a storm to calm winds and waves in a quarter-mile radius for one hour, or intensify them against a pursuing vessel."},
+            {"id": "song_of_the_deep", "name": "Song of the Deep", "category": "Occult", "description": "Sing a melody that reaches the intelligence below the waves, compelling it to reveal the location of one hidden thing — a sunken ship, a safe passage, or a lost soul."},
+            {"id": "rally_the_crew", "name": "Rally the Crew", "category": "Leadership", "description": "Belt out a roaring shanty that restores 2d8 hit points to every ally who can hear you and grants them advantage on their next attack roll or saving throw."},
+            {"id": "drowning_verse", "name": "Drowning Verse", "category": "Combat", "description": "Sing a terrible inverted shanty that fills the lungs of up to three enemies within 30 feet with spectral brine, dealing 3d6 cold damage and silencing them for one round."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Techniques",
+          "cantrip_hint": "Minor abilities you can use at will — the skills that keep you alive day to day.",
+          "ability_hint": "Powerful techniques that take their toll — use them when it matters."
+        }
       },
       {
         "id": "brine_witch",
@@ -344,7 +436,30 @@
             "name": "Anatomist of the Impossible",
             "description": "When you examine a creature, artifact, or phenomenon native to the Drowned Sea, you can study it for 10 minutes to learn its properties, weaknesses, and behavioral patterns. Advantage on all subsequent checks related to that subject."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "phosphor_flare", "name": "Phosphor Flare", "category": "Occult", "description": "Ignite a pinch of alchemical powder that produces a blinding flash in a 10-foot radius, disorienting the Drowned and revealing invisible entities."},
+            {"id": "tidal_reading", "name": "Tidal Reading", "category": "Navigation", "description": "Dip your hand in seawater and read its temperature, salinity, and current to determine what lies ahead -- reefs, depths, or the Drowned gathering below."},
+            {"id": "corrosive_splash", "name": "Corrosive Splash", "category": "Combat", "description": "Hurl a vial of briny acid at a target within 20 feet, dealing 1d8 acid damage and dissolving barnacle-armor or organic shields on contact."},
+            {"id": "specimen_jar", "name": "Specimen Jar", "category": "Survival", "description": "Capture a small sample of any supernatural substance -- ghost-light, Red Moon rain, Drowned tissue -- in a warded jar for later study or use as a reagent."},
+            {"id": "pressure_sense", "name": "Pressure Sense", "category": "Navigation", "description": "Attune yourself to changes in water pressure and atmospheric density, detecting approaching storms, rising Drowned, or depth changes within 100 feet."}
+          ],
+          "abilities": [
+            {"id": "tidal_surge", "name": "Tidal Surge", "category": "Occult", "description": "Command the water around a vessel or shoreline to rise in a crushing wave, dealing 4d6 bludgeoning damage to all creatures in a 20-foot line and pushing them 15 feet."},
+            {"id": "deep_sea_autopsy", "name": "Deep Sea Autopsy", "category": "Survival", "description": "Perform a rapid dissection of a Drowned or sea creature to extract a reagent that can be used to create one dose of any compound you know, or to learn a critical weakness of that creature type."},
+            {"id": "abyssal_ink", "name": "Abyssal Ink", "category": "Occult", "description": "Release a cloud of enchanted black ink that fills a 30-foot sphere with impenetrable darkness for one minute, blinding all creatures except you within it."},
+            {"id": "leviathan_lure", "name": "Leviathan Lure", "category": "Occult", "description": "Prepare a compound that attracts the attention of the intelligence below, causing deep-sea phenomena to manifest in a targeted area -- tremors, whirlpools, or the Drowned turning on each other."},
+            {"id": "formula_of_preservation", "name": "Formula of Preservation", "category": "Survival", "description": "Apply a warding salve to up to five allies that renders them immune to the corrupting effects of the Drowned Sea, the Red Moon's rain, and deep-water pressure for eight hours."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Techniques",
+          "cantrip_hint": "Minor abilities you can use at will — the skills that keep you alive day to day.",
+          "ability_hint": "Powerful techniques that take their toll — use them when it matters."
+        }
       }
     ],
     "setting_skills": [

@@ -171,7 +171,30 @@
             "name": "Read the Angles",
             "description": "You can use Investigation instead of Insight to determine if someone is lying or withholding information. Your deductive reasoning catches contradictions that gut instinct might miss."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "trace_echo", "name": "Trace Echo", "category": "Investigation", "description": "You brush your fingers over a surface and sense faint impressions of who last touched it and when, like fingerprints only you can read."},
+            {"id": "gut_check", "name": "Gut Check", "category": "Investigation", "description": "You lock eyes with someone and your Prometheus-sharpened instincts tell you whether they are afraid, hiding something, or lying through their teeth."},
+            {"id": "peripheral_scan", "name": "Peripheral Scan", "category": "Meta", "description": "Your enhanced senses let you notice details at the edge of your vision that normal eyes would miss — a tail across the street, a gun under a coat, ink still wet on a document."},
+            {"id": "shadow_tail", "name": "Shadow Tail", "category": "Streetwise", "description": "You can follow a target through crowded streets without being noticed, your movements instinctively syncing to the flow of foot traffic around you."},
+            {"id": "evidence_whisper", "name": "Evidence Whisper", "category": "Investigation", "description": "You focus on a piece of physical evidence and get a flash of context — not a vision, but a strong intuitive sense of its significance to the case."}
+          ],
+          "abilities": [
+            {"id": "crime_scene_replay", "name": "Crime Scene Replay", "category": "Meta", "description": "You close your eyes at a location and perceive a ghostly reconstruction of the most violent or emotionally charged event that occurred there in the last week."},
+            {"id": "lie_detector", "name": "Lie Detector", "category": "Investigation", "description": "You concentrate on a speaker and your enhanced perception reads their micro-expressions, pulse, and breathing — for the next minute, you know with certainty when they speak a direct lie."},
+            {"id": "bullet_time_instinct", "name": "Bullet-Time Instinct", "category": "Combat", "description": "When ambushed or attacked by surprise, your Prometheus-enhanced reflexes kick in and the world slows to a crawl, giving you one full round of action before anyone else reacts."},
+            {"id": "connect_the_threads", "name": "Connect the Threads", "category": "Investigation", "description": "You enter a trance-like state of deduction and mentally connect disparate clues, revealing a hidden relationship between two pieces of evidence the DM confirms as linked."},
+            {"id": "phantom_badge", "name": "Phantom Badge", "category": "Influence", "description": "You project such an aura of quiet authority that for a brief encounter, people treat you as if you carry federal credentials — doors open, questions get answered, and nobody asks for ID."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Powers",
+          "cantrip_hint": "Subtle talents you can use without drawing attention.",
+          "ability_hint": "The big guns — abilities that change everything when you unleash them."
+        }
       },
       {
         "id": "brawler",
@@ -214,7 +237,30 @@
             "name": "Intimidating Presence",
             "description": "As an action, choose one creature that can see you within 30 feet. It must make a Wisdom save (DC 8 + proficiency + Strength modifier) or be frightened of you for 1 minute. A creature that has seen you shrug off damage has disadvantage on this save."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "iron_jaw", "name": "Iron Jaw", "category": "Survival", "description": "You tighten your muscles and shrug off a hit that would stagger a normal person, reducing minor damage to little more than a bruise."},
+            {"id": "heavy_hands", "name": "Heavy Hands", "category": "Combat", "description": "You channel Prometheus energy into your fists, making your next unarmed strike hit like a sledgehammer against concrete."},
+            {"id": "dead_stare", "name": "Dead Stare", "category": "Influence", "description": "You fix someone with a flat, unflinching look and they feel the weight of how many fights you have walked away from — most people decide this conversation is not worth continuing."},
+            {"id": "shake_it_off", "name": "Shake It Off", "category": "Survival", "description": "You spit blood, roll your shoulders, and push through pain that should keep you down, clearing a minor condition like being dazed or staggered."},
+            {"id": "read_the_room", "name": "Read the Room", "category": "Streetwise", "description": "Years of bar fights and back-alley scraps have given you an instinct for when a situation is about to go sideways — you always know who in a room is carrying and who is looking for trouble."}
+          ],
+          "abilities": [
+            {"id": "unstoppable_advance", "name": "Unstoppable Advance", "category": "Combat", "description": "You start walking toward a target and nothing short of a freight train will stop you — for one round, you are immune to being pushed, knocked prone, or slowed by any non-superhuman force."},
+            {"id": "prometheus_surge", "name": "Prometheus Surge", "category": "Meta", "description": "You let the raw Prometheus energy in your body flare, doubling your strength for a single devastating action — ripping a door off its hinges, flipping a car, or throwing a man through a brick wall."},
+            {"id": "take_the_bullet", "name": "Take the Bullet", "category": "Survival", "description": "When an ally within 10 feet is hit by an attack, you throw yourself in the way and absorb the blow with your enhanced body, taking the damage instead."},
+            {"id": "ground_shaker", "name": "Ground Shaker", "category": "Combat", "description": "You slam your fist or foot into the ground and send a shockwave rippling outward, knocking everyone within 15 feet off their feet unless they are braced for it."},
+            {"id": "last_man_standing", "name": "Last Man Standing", "category": "Survival", "description": "When you drop below a quarter of your health, adrenaline and Prometheus energy flood your system — you gain temporary hit points and your attacks hit harder until the fight ends or you go down."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Powers",
+          "cantrip_hint": "Subtle talents you can use without drawing attention.",
+          "ability_hint": "The big guns — abilities that change everything when you unleash them."
+        }
       },
       {
         "id": "mentalist",
@@ -255,7 +301,30 @@
             "name": "Surface Thoughts",
             "description": "You can read the surface thoughts of one creature within 30 feet. The target makes a Wisdom save (DC 8 + proficiency + Intelligence modifier). On a failure, you perceive their current thoughts and emotional state for 1 minute. The target is unaware of the intrusion unless they are themselves psychic."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "mood_read", "name": "Mood Read", "category": "Meta", "description": "You open your senses and perceive the dominant emotion of everyone within arm's reach — fear, guilt, desire, or deception light up like neon signs to your inner eye."},
+            {"id": "memory_nudge", "name": "Memory Nudge", "category": "Influence", "description": "With a touch and a quiet word, you help someone recall a specific memory more clearly, pulling forgotten details to the surface of their mind."},
+            {"id": "static_shield", "name": "Static Shield", "category": "Survival", "description": "You fill your own mind with psychic white noise, making it impossible for other telepaths or empaths to read your thoughts or emotions for several minutes."},
+            {"id": "premonition_twitch", "name": "Premonition Twitch", "category": "Investigation", "description": "You get a split-second flash of warning before something bad happens nearby — not enough to see the future, but enough to flinch before the punch lands."},
+            {"id": "object_whisper", "name": "Object Whisper", "category": "Investigation", "description": "You pick up a personal item and sense a single strong emotion tied to it — love, grief, rage, terror — giving you a window into its owner's state of mind."}
+          ],
+          "abilities": [
+            {"id": "deep_dive", "name": "Deep Dive", "category": "Meta", "description": "You push past surface thoughts and plunge into a target's deeper memories, experiencing a specific scene from their past as if you were standing in the room when it happened."},
+            {"id": "psychic_scream", "name": "Psychic Scream", "category": "Combat", "description": "You unleash a wave of raw mental anguish that hits every hostile mind within 20 feet, causing searing pain and disorientation that drops most people to their knees."},
+            {"id": "implant_suggestion", "name": "Implant Suggestion", "category": "Influence", "description": "You plant a single compelling thought in a target's mind — not mind control, but a suggestion so natural they believe it was their own idea until they have reason to question it."},
+            {"id": "trauma_echo", "name": "Trauma Echo", "category": "Investigation", "description": "You touch a location where violence occurred and experience the event from the victim's perspective — their fear, their pain, and crucially, what they saw before the end."},
+            {"id": "mind_fortress", "name": "Mind Fortress", "category": "Survival", "description": "You erect an impenetrable psychic barrier around yourself and nearby allies, rendering the group immune to mental intrusion, emotional manipulation, and psychic detection for one scene."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Powers",
+          "cantrip_hint": "Subtle talents you can use without drawing attention.",
+          "ability_hint": "The big guns — abilities that change everything when you unleash them."
+        }
       },
       {
         "id": "vigilante",
@@ -298,7 +367,30 @@
             "name": "Rooftop Runner",
             "description": "You treat urban rooftops, fire escapes, and building exteriors as favored terrain. You can climb at full speed, leap gaps of up to 20 feet without a check, and you never take falling damage from heights of 30 feet or less."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "night_eyes", "name": "Night Eyes", "category": "Meta", "description": "Your pupils dilate with Prometheus energy and you see in total darkness as clearly as daylight, picking out details that would be invisible to anyone without a flashlight."},
+            {"id": "silent_drop", "name": "Silent Drop", "category": "Streetwise", "description": "You fall from any height up to three stories and land without a sound, absorbing the impact through enhanced joints and tendons that bend without breaking."},
+            {"id": "marked_target", "name": "Marked Target", "category": "Investigation", "description": "You designate a person you can see and your enhanced senses lock onto them — for the next hour, you can track their general direction within a mile, like a compass needle pointing at trouble."},
+            {"id": "wall_cling", "name": "Wall Cling", "category": "Survival", "description": "You press your hands and feet against a vertical surface and hold fast, clinging to brick, concrete, or stone as naturally as standing on flat ground."},
+            {"id": "alley_ghost", "name": "Alley Ghost", "category": "Streetwise", "description": "You step into a patch of shadow and become nearly invisible to casual observation, blending into the urban darkness until you move or someone specifically searches for you."}
+          ],
+          "abilities": [
+            {"id": "shadow_step", "name": "Shadow Step", "category": "Meta", "description": "You dissolve into one shadow and reappear from another within 60 feet, passing through the space between them like smoke through a keyhole — silent, instant, and impossible to follow."},
+            {"id": "fear_of_the_dark", "name": "Fear of the Dark", "category": "Influence", "description": "You project an aura of primal dread that floods a room with the feeling of being hunted — every hostile creature within 30 feet must save or become paralyzed with terror for one round."},
+            {"id": "predator_strike", "name": "Predator Strike", "category": "Combat", "description": "You attack from concealment with superhuman speed and precision, striking a vital point that drops most targets in a single blow before they know you are there."},
+            {"id": "vanishing_act", "name": "Vanishing Act", "category": "Survival", "description": "When outnumbered or outgunned, you throw down a burst of darkness and disappear completely — no one can track, follow, or detect you for the next ten minutes as you fade into the city."},
+            {"id": "rooftop_ambush", "name": "Rooftop Ambush", "category": "Combat", "description": "You set up a perfect kill zone from above, and when you spring it, your first two attacks in the round automatically hit and deal maximum damage against targets who did not know you were there."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Powers",
+          "cantrip_hint": "Subtle talents you can use without drawing attention.",
+          "ability_hint": "The big guns — abilities that change everything when you unleash them."
+        }
       },
       {
         "id": "fixer",
@@ -339,7 +431,30 @@
             "name": "Silver Tongue",
             "description": "When you speak with someone for at least 1 minute, you can make a Charisma (Persuasion) check opposed by their Wisdom. On success, they regard you as a trusted acquaintance and are inclined to share information or do small favors. This effect lasts for 1 hour or until you do something to break their trust."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "tell_finder", "name": "Tell Finder", "category": "Investigation", "description": "You watch someone's hands, eyes, and breathing during conversation and your Prometheus-enhanced perception reveals their tell — the specific tic they display when they are bluffing or withholding."},
+            {"id": "smooth_operator", "name": "Smooth Operator", "category": "Influence", "description": "You adjust your voice, posture, and micro-expressions to put a target at ease, making them instinctively lower their guard and speak more freely than they intended."},
+            {"id": "quick_exit", "name": "Quick Exit", "category": "Survival", "description": "You always know the fastest way out of any building you have been in for more than five minutes, including exits that are not obvious — service doors, basement windows, fire escapes behind curtains."},
+            {"id": "crowd_fade", "name": "Crowd Fade", "category": "Streetwise", "description": "You slip into a crowd of three or more people and become functionally invisible, your movements and appearance blending so naturally that pursuers lose track of you within seconds."},
+            {"id": "favor_ledger", "name": "Favor Ledger", "category": "Streetwise", "description": "You recall with perfect clarity who owes what to whom in Liberty City's underworld — debts, grudges, alliances, and betrayals filed away in your mind like a card catalog of leverage."}
+          ],
+          "abilities": [
+            {"id": "voice_of_reason", "name": "Voice of Reason", "category": "Influence", "description": "You speak with such calm, measured authority that a hostile situation de-escalates instantly — all combatants within earshot must save or lose the will to fight for one full round, weapons lowered, fists unclenched."},
+            {"id": "blackmail_file", "name": "Blackmail File", "category": "Influence", "description": "You reveal that you know a target's worst secret — real or convincingly fabricated — and they must do what you ask for the next hour or risk having that secret made public."},
+            {"id": "network_pulse", "name": "Network Pulse", "category": "Streetwise", "description": "You put the word out through your network and within the hour receive a reliable answer to a single question about events, people, or locations anywhere in Liberty City."},
+            {"id": "deal_broker", "name": "Deal Broker", "category": "Influence", "description": "You mediate between two hostile parties with such skill that both sides believe they got the better end of the arrangement, creating a temporary alliance or ceasefire that holds for at least 24 hours."},
+            {"id": "disappearing_act", "name": "Disappearing Act", "category": "Survival", "description": "You call in every favor you have and vanish from Liberty City for 48 hours — no one can find you, contact you, or verify your location, as your network scrubs your trail and provides cover stories."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tricks",
+          "ability_label": "Powers",
+          "cantrip_hint": "Subtle talents you can use without drawing attention.",
+          "ability_hint": "The big guns — abilities that change everything when you unleash them."
+        }
       }
     ],
     "setting_skills": [

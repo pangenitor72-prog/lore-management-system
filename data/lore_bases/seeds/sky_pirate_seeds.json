@@ -172,7 +172,30 @@
             "name": "Sky Legs",
             "description": "You have advantage on Dexterity saving throws and ability checks made to keep your footing on a moving surface — airship decks, swinging ropes, tilting platforms, or collapsing structures."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "rope_swing", "name": "Rope Swing", "category": "Aerial", "description": "You hook a line and launch yourself up to 30 feet through the air, landing on your feet with blade drawn."},
+            {"id": "deck_stomp", "name": "Deck Stomp", "category": "Combat", "description": "You slam your boot into the deck planking hard enough to stagger an adjacent foe and rattle their footing."},
+            {"id": "cutlass_flourish", "name": "Cutlass Flourish", "category": "Swagger", "description": "A dazzling display of bladework that forces a nearby enemy to flinch, granting you advantage on your next strike."},
+            {"id": "wind_read", "name": "Wind Read", "category": "Navigation", "description": "You taste the air and determine the wind direction, speed, and whether a storm is building within the hour."},
+            {"id": "hull_runner", "name": "Hull Runner", "category": "Aerial", "description": "You sprint across a ship's outer hull or tilted surface without slowing, ignoring difficult terrain caused by angles or movement."}
+          ],
+          "abilities": [
+            {"id": "broadside_charge", "name": "Broadside Charge", "category": "Combat", "description": "You vault between vessels mid-combat, dealing devastating impact damage to the first enemy you reach on the opposing deck."},
+            {"id": "grapple_and_grind", "name": "Grapple and Grind", "category": "Aerial", "description": "You lash a grappling hook to an enemy ship's rigging and slide down the line blade-first, carving through sails and crew alike."},
+            {"id": "captains_roar", "name": "Captain's Roar", "category": "Swagger", "description": "You unleash a thunderous battle cry that bolsters nearby allies and shakes the nerve of every enemy who hears it."},
+            {"id": "keel_haul_strike", "name": "Keel-Haul Strike", "category": "Combat", "description": "You seize an opponent and drag them across the deck with enough force to leave them battered, prone, and disarmed."},
+            {"id": "dead_drop", "name": "Dead Drop", "category": "Aerial", "description": "You deliberately fall from the rigging onto an enemy below, converting your plummeting weight into a crushing downward strike."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Maneuvers",
+          "cantrip_hint": "Quick tricks and trained instincts — the skills that keep you aloft.",
+          "ability_hint": "Bold maneuvers that turn the tide — risky but spectacular."
+        }
       },
       {
         "id": "windcaller",
@@ -212,7 +235,30 @@
             "name": "Skydancer",
             "description": "You can slow your rate of falling to 60 feet per round and take no falling damage. While falling slowly, you can move horizontally up to 30 feet per round. Additionally, you have advantage on saving throws against effects that would push, pull, or knock you prone."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "zephyr_whisper", "name": "Zephyr Whisper", "category": "Aerial", "description": "You send a message on a directed gust of wind that only your intended target can hear, up to 120 feet away."},
+            {"id": "spark_snap", "name": "Spark Snap", "category": "Combat", "description": "You crackle static charge between your fingers and release it as a stinging bolt that jolts a single target at range."},
+            {"id": "cloud_step", "name": "Cloud Step", "category": "Aerial", "description": "You compress the air beneath your feet into a momentary platform, allowing you to take one step on empty sky."},
+            {"id": "barometer_sense", "name": "Barometer Sense", "category": "Navigation", "description": "You feel pressure changes in your bones and can predict weather shifts, incoming storms, or altitude changes within minutes."},
+            {"id": "breeze_turn", "name": "Breeze Turn", "category": "Navigation", "description": "You nudge a gentle wind current to shift a sail, turn a weathervane, or push a small unattended object up to 20 feet."}
+          ],
+          "abilities": [
+            {"id": "stormcall", "name": "Stormcall", "category": "Combat", "description": "You rip a bolt of lightning from the charged sky and hurl it at a target, dealing heavy damage and briefly blinding nearby enemies."},
+            {"id": "tailwind_surge", "name": "Tailwind Surge", "category": "Navigation", "description": "You summon a roaring gale behind your ship that doubles its speed for the next minute, outrunning any pursuit."},
+            {"id": "vortex_shield", "name": "Vortex Shield", "category": "Aerial", "description": "You spin the air around yourself into a screaming cyclone wall that deflects projectiles and hurls back anyone who charges you."},
+            {"id": "suffocating_calm", "name": "Suffocating Calm", "category": "Combat", "description": "You steal the wind from an enemy ship's sails, becalming it in dead air and leaving the crew gasping in thinned atmosphere."},
+            {"id": "skyquake", "name": "Skyquake", "category": "Aerial", "description": "You clap your hands and compress the air so violently it detonates in a shockwave, staggering everyone within 30 feet."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Maneuvers",
+          "cantrip_hint": "Quick tricks and trained instincts — the skills that keep you aloft.",
+          "ability_hint": "Bold maneuvers that turn the tide — risky but spectacular."
+        }
       },
       {
         "id": "gearwright",
@@ -253,7 +299,30 @@
             "name": "Aetherlift Attunement",
             "description": "You can sense aetherlift mineral within 60 feet and intuitively understand the mechanical state of any aetherlift-powered device you can see. Once per short rest, you can supercharge an aetherlift device you are touching, doubling its lift output for 1 minute."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "spark_weld", "name": "Spark Weld", "category": "Engineering", "description": "You touch two broken metal pieces and fuse them with a burst of concentrated heat from a fingertip arc-tool."},
+            {"id": "pressure_gauge", "name": "Pressure Gauge", "category": "Engineering", "description": "You lay a hand on any machine and instantly diagnose its mechanical health, stress points, and time until failure."},
+            {"id": "spring_bolt", "name": "Spring Bolt", "category": "Clockwork", "description": "You fire a coiled spring-loaded bolt from a wrist launcher that punches through light cover and pins objects in place."},
+            {"id": "gear_speak", "name": "Gear Speak", "category": "Clockwork", "description": "You listen to the rhythm of an engine and can tell by sound alone what is broken, strained, or about to explode."},
+            {"id": "aether_lantern", "name": "Aether Lantern", "category": "Engineering", "description": "You coax a shard of aetherlift crystal into a steady violet glow that illuminates 30 feet and reveals hidden mechanical seams."}
+          ],
+          "abilities": [
+            {"id": "overclock", "name": "Overclock", "category": "Clockwork", "description": "You push a machine far beyond its design limits, tripling its output for one explosive minute before it needs emergency cooldown."},
+            {"id": "aether_bomb", "name": "Aether Bomb", "category": "Engineering", "description": "You rig a volatile aetherlift charge that detonates on impact, launching everything in the blast radius violently upward."},
+            {"id": "clockwork_sentinel", "name": "Clockwork Sentinel", "category": "Clockwork", "description": "You deploy a small spring-wound automaton that patrols an area, raises an alarm, and delivers a nasty shock to intruders."},
+            {"id": "emergency_patch", "name": "Emergency Patch", "category": "Engineering", "description": "You slam reinforced plating over a critical hull breach mid-combat, sealing the gap and restoring structural integrity in seconds."},
+            {"id": "sabotage_charge", "name": "Sabotage Charge", "category": "Clockwork", "description": "You plant a delayed-fuse device on an enemy engine that cripples its aetherlift output, causing the vessel to list and drop altitude."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Maneuvers",
+          "cantrip_hint": "Quick tricks and trained instincts — the skills that keep you aloft.",
+          "ability_hint": "Bold maneuvers that turn the tide — risky but spectacular."
+        }
       },
       {
         "id": "skyrunner",
@@ -296,7 +365,30 @@
             "name": "Ventilation Expert",
             "description": "You can squeeze through spaces as narrow as 1 foot wide without penalty to movement speed. You have advantage on Dexterity (Stealth) checks made while moving through or hiding in tight spaces, crawlways, or structural gaps."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "silent_drop", "name": "Silent Drop", "category": "Aerial", "description": "You fall up to 30 feet and land without a sound, absorbing the impact through trained flexion and leaving no trace of your arrival."},
+            {"id": "rigging_dash", "name": "Rigging Dash", "category": "Aerial", "description": "You scramble through ropes, masts, and cables at full sprint speed, treating the rigging as flat ground for one burst of movement."},
+            {"id": "shadow_cling", "name": "Shadow Cling", "category": "Combat", "description": "You press into a narrow shadow on the hull or superstructure and become nearly invisible to anyone more than 10 feet away."},
+            {"id": "lockjaw_pick", "name": "Lockjaw Pick", "category": "Clockwork", "description": "You produce a set of articulated clockwork picks that defeat most mechanical locks in seconds with a satisfying click."},
+            {"id": "signal_mirror", "name": "Signal Mirror", "category": "Navigation", "description": "You flash a coded message across open sky using a polished steel mirror, communicating silently with allies up to a mile away."}
+          ],
+          "abilities": [
+            {"id": "zipline_ambush", "name": "Zipline Ambush", "category": "Aerial", "description": "You hook a line between two points and slide down it at terrifying speed, striking a target below before they register your approach."},
+            {"id": "powder_keg_cut", "name": "Powder Keg Cut", "category": "Combat", "description": "You slash a critical fuel line or powder store on an enemy vessel, triggering a chain of small explosions that throws the crew into chaos."},
+            {"id": "ghost_walk", "name": "Ghost Walk", "category": "Combat", "description": "You move through an occupied ship like a phantom, slipping past guards and locked doors to reach any location aboard undetected."},
+            {"id": "mast_drop_snare", "name": "Mast-Drop Snare", "category": "Aerial", "description": "You cut a rigging line at precisely the right angle to send a boom or spar swinging into an enemy, sweeping them off their feet."},
+            {"id": "escape_artist", "name": "Escape Artist", "category": "Swagger", "description": "When cornered with no visible exit, you find one anyway — a vent, a loose plate, a gap in the hull — and vanish before your enemies can react."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Maneuvers",
+          "cantrip_hint": "Quick tricks and trained instincts — the skills that keep you aloft.",
+          "ability_hint": "Bold maneuvers that turn the tide — risky but spectacular."
+        }
       },
       {
         "id": "aether_surgeon",
@@ -337,7 +429,30 @@
             "name": "Altitude Triage",
             "description": "You have advantage on Medicine checks and can stabilize a dying creature as a bonus action instead of an action. When you stabilize a creature, they regain 1 hit point instead of remaining at 0."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "pressure_stitch", "name": "Pressure Stitch", "category": "Engineering", "description": "You apply a quick-setting aetherlift compound to a wound that bonds flesh together and stops bleeding within seconds."},
+            {"id": "vitals_check", "name": "Vitals Check", "category": "Navigation", "description": "You press two fingers to a patient and instantly read their pulse, blood pressure, toxin levels, and internal injuries."},
+            {"id": "smelling_salts", "name": "Smelling Salts", "category": "Clockwork", "description": "You crack a vial of pungent aether-distilled ammonia under a creature's nose, snapping them out of unconsciousness or daze."},
+            {"id": "tincture_toss", "name": "Tincture Toss", "category": "Combat", "description": "You hurl a small vial of caustic alchemical solution that bursts on contact, stinging eyes and burning exposed skin."},
+            {"id": "steady_hands", "name": "Steady Hands", "category": "Swagger", "description": "You enter a state of focused calm where your hands cannot shake, granting precision to any delicate task even on a pitching deck."}
+          ],
+          "abilities": [
+            {"id": "adrenaline_shot", "name": "Adrenaline Shot", "category": "Combat", "description": "You inject a stimulant cocktail that floods an ally with desperate energy, granting them an extra action and temporary hit points."},
+            {"id": "purge_toxin", "name": "Purge Toxin", "category": "Engineering", "description": "You administer a powerful counteragent that neutralizes any poison, disease, or Murk contamination burning through a patient's system."},
+            {"id": "bone_setter", "name": "Bone Setter", "category": "Engineering", "description": "You realign shattered bones and bind them with aetherlift-hardened splints, restoring a crippled limb to partial function immediately."},
+            {"id": "volatile_infusion", "name": "Volatile Infusion", "category": "Clockwork", "description": "You weaponize your medical supplies, creating an explosive aetherlift compound that detonates with concussive force and searing heat."},
+            {"id": "last_breath_protocol", "name": "Last Breath Protocol", "category": "Swagger", "description": "You perform a desperate, all-or-nothing resuscitation on a creature at death's door, hauling them back from the brink with a surge of aetherlift energy."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Maneuvers",
+          "cantrip_hint": "Quick tricks and trained instincts — the skills that keep you aloft.",
+          "ability_hint": "Bold maneuvers that turn the tide — risky but spectacular."
+        }
       }
     ],
     "setting_skills": [

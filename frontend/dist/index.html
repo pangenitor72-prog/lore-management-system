@@ -13583,17 +13583,75 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     nextBtn.disabled = charCreationData.selectedSkills.length !== numSkills4;
                     break;
 
-                case 5: // Spell Selection (spellcasters only)
+                case 5: // Abilities / Spell Selection
                     const selectedArch5spell = availableArchetypes.find(a => a.id === charCreationData.archetype);
-                    const hasPowers = selectedArch5spell?.has_powers || false;
+                    const seedPowers = selectedArch5spell?.powers;
+                    const hasSeedPowers = seedPowers && ((seedPowers.cantrips?.length > 0) || (seedPowers.abilities?.length > 0));
+                    const hasPowers = hasSeedPowers || (selectedArch5spell?.has_powers || false);
 
-                    // Non-casters skip spell selection, go to equipment
+                    // No powers of any kind — skip to equipment
                     if (!hasPowers) {
                         charCreationStep = 6;
                         renderCreationStep();
                         return;
                     }
 
+                    // Seed-defined powers: use those instead of D&D spells API
+                    if (hasSeedPowers) {
+                        title.textContent = 'Choose Your Abilities';
+                        subtitle.textContent = `Select the abilities that define your ${selectedArch5spell?.name || 'character'}.`;
+
+                        const seedCantrips = seedPowers.cantrips || [];
+                        const seedAbilities = seedPowers.abilities || [];
+                        const numMinor = seedPowers.num_cantrips || Math.min(3, Math.max(2, seedCantrips.length - 1));
+                        const numMajor = seedPowers.num_abilities || Math.min(2, Math.max(1, seedAbilities.length - 1));
+
+                        content.innerHTML = `
+                            ${seedCantrips.length > 0 ? `
+                            <div class="spell-selection-section">
+                                <h4 style="color: var(--text-primary); margin-bottom: 10px;">
+                                    ${seedPowers.cantrip_label || 'Minor Abilities'} (${charCreationData.selectedCantrips.length}/${numMinor})
+                                </h4>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 10px;">${seedPowers.cantrip_hint || 'At-will abilities you can use freely.'}</p>
+                                <div class="spell-selection-grid">
+                                    ${seedCantrips.map(p => `
+                                        <div class="spell-card ${charCreationData.selectedCantrips.includes(p.id) ? 'selected' : ''}"
+                                             onclick="toggleSpellSelection('${p.id}', 'cantrip', ${numMinor})"
+                                             title="${(p.description || '').replace(/"/g, '&quot;')}">
+                                            <div class="spell-name">${p.name}</div>
+                                            <div class="spell-school">${p.category || ''}</div>
+                                            <div class="spell-meta" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">${p.description || ''}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>` : ''}
+                            ${seedAbilities.length > 0 ? `
+                            <div class="spell-selection-section" style="margin-top: 20px;">
+                                <h4 style="color: var(--text-primary); margin-bottom: 10px;">
+                                    ${seedPowers.ability_label || 'Major Abilities'} (${charCreationData.selectedSpells.length}/${numMajor})
+                                </h4>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 10px;">${seedPowers.ability_hint || 'Powerful abilities with limited uses.'}</p>
+                                <div class="spell-selection-grid">
+                                    ${seedAbilities.map(p => `
+                                        <div class="spell-card ${charCreationData.selectedSpells.includes(p.id) ? 'selected' : ''}"
+                                             onclick="toggleSpellSelection('${p.id}', 'spell', ${numMajor})"
+                                             title="${(p.description || '').replace(/"/g, '&quot;')}">
+                                            <div class="spell-name">${p.name}</div>
+                                            <div class="spell-school">${p.category || ''}</div>
+                                            <div class="spell-meta" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">${p.description || ''}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>` : ''}
+                        `;
+                        const cantripsOk = seedCantrips.length === 0 || charCreationData.selectedCantrips.length === numMinor;
+                        const abilitiesOk = seedAbilities.length === 0 || charCreationData.selectedSpells.length === numMajor;
+                        nextBtn.textContent = 'Next';
+                        nextBtn.disabled = !(cantripsOk && abilitiesOk);
+                        break;
+                    }
+
+                    // Fallback: D&D spells API for traditional spellcasters
                     title.textContent = 'Choose Your Spells';
                     subtitle.textContent = 'Select the spells for your spellbook.';
 

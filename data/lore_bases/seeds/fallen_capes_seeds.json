@@ -170,7 +170,30 @@
             "name": "Endure",
             "description": "Once per long rest, when you are reduced to 0 hit points, you can instead drop to 1 hit point. When you use this feature, you gain temporary hit points equal to your level for 1 minute. You've been knocked down before. You always get back up."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "iron_echo", "name": "Iron Echo", "category": "Remnant", "description": "Your skin briefly hardens with a metallic sheen that absorbs a blow, though the ringing in your bones lasts longer than the protection."},
+            {"id": "rubble_strike", "name": "Rubble Strike", "category": "Combat", "description": "You channel what's left of your super-strength into a single devastating hit that cracks stone, but the tremor in your hands afterward reminds you how far you've fallen."},
+            {"id": "threat_pulse", "name": "Threat Pulse", "category": "Survival", "description": "Your old battlefield awareness flickers to life, letting you sense hostile intent within 30 feet as a dull pressure behind your eyes."},
+            {"id": "gritted_teeth", "name": "Gritted Teeth", "category": "Remnant", "description": "You push through pain that would drop anyone else, shrugging off a minor wound through sheer refusal to stay down."},
+            {"id": "cape_presence", "name": "Cape Presence", "category": "Psych", "description": "You project the weight of what you used to be — a flicker of the old authority that makes enemies hesitate for just a moment."}
+          ],
+          "abilities": [
+            {"id": "unraveling_stance", "name": "Unraveling Stance", "category": "Combat", "description": "You unlock a fragment of your peak combat form, moving with impossible speed and precision for a few brutal seconds before your body screams at you to stop."},
+            {"id": "shieldwall_memory", "name": "Shieldwall Memory", "category": "Remnant", "description": "You project a flickering barrier of force around nearby allies, a ghost of the formations you once held with teammates who are all dead now."},
+            {"id": "extinction_burst", "name": "Extinction Burst", "category": "Combat", "description": "You unleash everything you have left in one devastating surge of super-powered violence, knowing you'll be hollow and shaking when it's over."},
+            {"id": "survivor_instinct", "name": "Survivor's Instinct", "category": "Survival", "description": "Your body reacts before your mind does, dodging an attack that should have killed you with reflexes burned into your nervous system by years of war."},
+            {"id": "hold_the_line", "name": "Hold the Line", "category": "Community", "description": "You plant yourself and refuse to be moved, becoming an immovable point that enemies break against while your body pays the price in fractures and blood."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Remnants",
+          "ability_label": "Surges",
+          "cantrip_hint": "Fragments of power that still work reliably — echoes of what you used to be.",
+          "ability_hint": "Unstable surges of your former power — dangerous to use, impossible to ignore."
+        }
       },
       {
         "id": "conduit",
@@ -209,7 +232,30 @@
             "name": "Controlled Burn",
             "description": "You have learned, painfully, that restraint matters more than power. When you deal energy damage, you can choose to halve the damage to prevent any collateral effects to the environment or bystanders. When you do, you gain advantage on your next Charisma check as people see you choosing control over destruction."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "static_arc", "name": "Static Arc", "category": "Remnant", "description": "You discharge a crackling tendril of energy from your fingertips — a pale, stuttering imitation of the lightning storms you once commanded effortlessly."},
+            {"id": "heat_shimmer", "name": "Heat Shimmer", "category": "Survival", "description": "You radiate a pulse of thermal energy that warms the air around you, enough to ward off cold or ignite tinder, but never again enough to melt steel."},
+            {"id": "force_whisper", "name": "Force Whisper", "category": "Psych", "description": "You push a faint telekinetic nudge at a nearby object or person, barely enough to knock a cup off a table, a humiliating shadow of the force that once leveled buildings."},
+            {"id": "bleed_taste", "name": "Bleed Taste", "category": "Mutation", "description": "Your attunement to raw energy lets you sense disturbances in local physics, tasting ozone and static before a bleed zone shifts or an anomaly awakens."},
+            {"id": "dampening_field", "name": "Dampening Field", "category": "Community", "description": "You absorb ambient energy in a small radius, muffling sound and dimming light — useful for hiding, though it leaves you with a migraine that lasts for hours."}
+          ],
+          "abilities": [
+            {"id": "cascade_release", "name": "Cascade Release", "category": "Combat", "description": "You stop holding back and let the energy pour out of you in a devastating wave that scorches everything nearby, tasting exactly like the force that ended the world."},
+            {"id": "reality_stitch", "name": "Reality Stitch", "category": "Remnant", "description": "You channel your energy inward to temporarily stabilize a small area of broken physics, sealing a bleed zone fracture for a few precious minutes at the cost of searing internal pain."},
+            {"id": "overload", "name": "Overload", "category": "Combat", "description": "You supercharge a single attack with everything you can muster, wreathing yourself in blinding energy that leaves burn marks on your own skin when it fades."},
+            {"id": "emp_pulse", "name": "EMP Pulse", "category": "Survival", "description": "You release a burst that fries electronics and disrupts energy-based powers in a wide radius, including your own, leaving a dead zone of silence that feels like penance."},
+            {"id": "conduit_shield", "name": "Conduit Shield", "category": "Community", "description": "You weave your unstable energy into a crackling barrier around allies, absorbing incoming damage while the feedback loop sends jolts of agony through your nervous system."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Remnants",
+          "ability_label": "Surges",
+          "cantrip_hint": "Fragments of power that still work reliably — echoes of what you used to be.",
+          "ability_hint": "Unstable surges of your former power — dangerous to use, impossible to ignore."
+        }
       },
       {
         "id": "mender",
@@ -250,7 +296,30 @@
             "name": "Triage Instinct",
             "description": "You can assess the physical and emotional condition of any creature you can see within 30 feet as a bonus action. You learn their current hit points relative to their maximum, any conditions affecting them, and their general emotional state. Five years of nonstop crisis has given you eyes that read damage like text."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "pain_siphon", "name": "Pain Siphon", "category": "Remnant", "description": "You draw a thread of someone's suffering into yourself through touch, dulling their pain while a ghost of it settles behind your ribs and stays."},
+            {"id": "mending_touch", "name": "Mending Touch", "category": "Community", "description": "Your hands glow faintly as you close a minor wound — cuts seal, bruises fade — but the warmth leaves your own fingers numb and cold for a while after."},
+            {"id": "vital_read", "name": "Vital Read", "category": "Survival", "description": "You sense the biological state of a creature nearby with uncomfortable clarity, feeling their heartbeat, their fever, their fear as if they were your own."},
+            {"id": "calming_presence", "name": "Calming Presence", "category": "Psych", "description": "You project a wave of neurochemical calm that soothes panic and steadies trembling hands, though you absorb the anxiety you pull from others like a sponge."},
+            {"id": "toxin_taste", "name": "Toxin Taste", "category": "Survival", "description": "You can detect poison, infection, or bleed-zone contamination in food, water, or a person's body by proximity, tasting bitterness on your tongue that isn't yours."}
+          ],
+          "abilities": [
+            {"id": "crisis_mend", "name": "Crisis Mend", "category": "Community", "description": "You pour everything into a single act of healing, knitting bone and tissue with desperate focus while your vision blurs and your nose bleeds from the strain."},
+            {"id": "empathic_purge", "name": "Empathic Purge", "category": "Remnant", "description": "You take a condition or affliction from another creature into your own body, suffering its effects so they don't have to, because that's what you've always done."},
+            {"id": "pain_echo_burst", "name": "Pain Echo Burst", "category": "Combat", "description": "You release the accumulated pain you've absorbed from others as a psychic shockwave, weaponizing the suffering that was never meant to be yours."},
+            {"id": "triage_field", "name": "Triage Field", "category": "Community", "description": "You extend your healing awareness into a wide area, stabilizing every dying creature within range simultaneously while the echoes of all their pain hit you at once."},
+            {"id": "last_resort", "name": "Last Resort", "category": "Mutation", "description": "You burn your own life force to fuel a healing surge of impossible potency, saving someone from the edge of death at a cost your body will remind you of for weeks."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Remnants",
+          "ability_label": "Surges",
+          "cantrip_hint": "Fragments of power that still work reliably — echoes of what you used to be.",
+          "ability_hint": "Unstable surges of your former power — dangerous to use, impossible to ignore."
+        }
       },
       {
         "id": "ghost",
@@ -292,7 +361,30 @@
             "name": "Sneak Attack",
             "description": "When you hit a creature with an attack and you have advantage on the roll, or an ally is within 5 feet of the target, you deal an additional 1d6 damage. This increases as you gain levels. In the ruins, striking first and striking precisely is the difference between survival and a memorial no one will build."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "fade_out", "name": "Fade Out", "category": "Remnant", "description": "You become translucent for a few heartbeats, not truly invisible but close enough that people's eyes slide past you like you're a trick of the light."},
+            {"id": "silent_step", "name": "Silent Step", "category": "Survival", "description": "Your footfalls produce no sound at all for a short stretch, a leftover from the phasing abilities you can no longer fully control."},
+            {"id": "wall_whisper", "name": "Wall Whisper", "category": "Survival", "description": "You press your palm to a wall and sense vibrations on the other side — footsteps, voices, heartbeats — hearing through solid matter like it's thin glass."},
+            {"id": "shadow_meld", "name": "Shadow Meld", "category": "Remnant", "description": "You sink into a shadow and it clings to you like a second skin, deepening your concealment as long as you hold still and don't breathe too loud."},
+            {"id": "flicker_dodge", "name": "Flicker Dodge", "category": "Combat", "description": "You phase partially out of sync for a split second when attacked, the blow passing half-through you, though the nausea that follows is the price of cheating physics."}
+          ],
+          "abilities": [
+            {"id": "full_phase", "name": "Full Phase", "category": "Remnant", "description": "You push through the barrier between solid and not, passing through walls and obstacles like a true ghost, though the world on the other side of matter is dark and whispering and wrong."},
+            {"id": "zone_slip", "name": "Zone Slip", "category": "Mutation", "description": "You exploit a bleed zone fracture to step sideways through warped space, appearing somewhere nearby in an instant while reality screams briefly at the intrusion."},
+            {"id": "vanishing_act", "name": "Vanishing Act", "category": "Psych", "description": "You become completely invisible and undetectable for a short time, erased from perception so thoroughly that even you start to wonder if you're still really there."},
+            {"id": "wraith_strike", "name": "Wraith Strike", "category": "Combat", "description": "You phase your hand or weapon through armor and defenses to strike directly at what's underneath, a violation of physics that leaves your arm tingling and half-numb."},
+            {"id": "extraction", "name": "Extraction", "category": "Community", "description": "You grab an ally and pull them partially into your phased state, dragging them through a wall or out of danger in a nauseating instant that neither of you will enjoy."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Remnants",
+          "ability_label": "Surges",
+          "cantrip_hint": "Fragments of power that still work reliably — echoes of what you used to be.",
+          "ability_hint": "Unstable surges of your former power — dangerous to use, impossible to ignore."
+        }
       },
       {
         "id": "beacon",
@@ -335,7 +427,30 @@
             "name": "Oath of the Fallen",
             "description": "You have sworn to honor those who died during the Unraveling by protecting those who survived. When you are defending civilians or non-combatants, you gain +2 to AC and saving throws. This bonus lasts as long as you remain between the threat and the people you are protecting. The oath isn't magical. It's personal. That makes it harder to break."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "voice_of_conviction", "name": "Voice of Conviction", "category": "Psych", "description": "Your words carry a resonance that cuts through fear and despair, steadying the people around you with a certainty you're not always sure you feel."},
+            {"id": "warden_sense", "name": "Warden's Sense", "category": "Survival", "description": "You feel a prickle of awareness when someone under your protection is threatened, an instinct forged from too many times you weren't fast enough."},
+            {"id": "stubborn_light", "name": "Stubborn Light", "category": "Remnant", "description": "You project a faint golden glow from your hands or body — not a weapon, barely a tool, just a light that refuses to go out when everything else has."},
+            {"id": "oath_mark", "name": "Oath Mark", "category": "Community", "description": "You lock eyes with a hostile creature and it feels the weight of your conviction, sensing that harming the people behind you will cost more than it's worth."},
+            {"id": "steady_hand", "name": "Steady Hand", "category": "Community", "description": "Your touch stabilizes a panicking or injured person, slowing their heart rate and clearing their vision through a calm you project but rarely possess yourself."}
+          ],
+          "abilities": [
+            {"id": "martyrs_shield", "name": "Martyr's Shield", "category": "Remnant", "description": "You throw yourself in front of an attack meant for someone else, absorbing the full impact with a flash of golden light that draws on reserves you didn't know you had."},
+            {"id": "rallying_cry", "name": "Rallying Cry", "category": "Community", "description": "You shout a single phrase that cuts through chaos and reaches every ally in earshot, filling them with desperate resolve and the temporary conviction that this fight is winnable."},
+            {"id": "final_stand", "name": "Final Stand", "category": "Combat", "description": "You channel your oath into a burst of superhuman endurance, becoming nearly impossible to bring down for a few brutal moments while your body burns through itself."},
+            {"id": "hope_is_contagious", "name": "Hope Is Contagious", "category": "Psych", "description": "You project an aura of defiant hope that bolsters everyone nearby, granting them the strength to push past wounds and exhaustion — though the weight you lift from them settles onto you."},
+            {"id": "memorial_strike", "name": "Memorial Strike", "category": "Combat", "description": "You strike with the weight of everyone you've lost behind the blow, channeling grief into force that hits harder than muscle alone could deliver, and hurts you almost as much as the target."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Remnants",
+          "ability_label": "Surges",
+          "cantrip_hint": "Fragments of power that still work reliably — echoes of what you used to be.",
+          "ability_hint": "Unstable surges of your former power — dangerous to use, impossible to ignore."
+        }
       }
     ],
     "setting_skills": [

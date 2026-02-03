@@ -168,7 +168,30 @@
             "name": "Trusted Presence",
             "description": "Your reputation as a healer opens doors. When you offer medical aid, even hostile NPCs will typically allow you to approach. Advantage on Persuasion checks when offering help or mediating disputes."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "steady_hands", "name": "Steady Hands", "category": "Survival", "description": "Your hands never shake under pressure, granting advantage on delicate tasks like suturing wounds, splinting bones, or disarming traps."},
+            {"id": "read_the_hurt", "name": "Read the Hurt", "category": "Connection", "description": "By watching someone for a moment, you can sense whether their pain is physical, emotional, or both — and roughly how severe it is."},
+            {"id": "herbal_intuition", "name": "Herbal Intuition", "category": "Craft", "description": "You can identify medicinal plants by smell and touch alone, knowing instinctively which remedy a situation calls for."},
+            {"id": "calming_touch", "name": "Calming Touch", "category": "Connection", "description": "A hand on someone's shoulder can slow their breathing and ease their panic, granting them advantage on their next save against fear or stress."},
+            {"id": "jury_rig_splint", "name": "Jury-Rig Splint", "category": "Craft", "description": "You can fashion a functional splint, bandage, or medical tool from whatever debris is at hand, no proper supplies needed."}
+          ],
+          "abilities": [
+            {"id": "triage_surge", "name": "Triage Surge", "category": "Survival", "description": "In a crisis with multiple casualties, you enter a focused state that lets you stabilize up to three dying creatures in a single round."},
+            {"id": "the_talk", "name": "The Talk", "category": "Connection", "description": "You sit someone down and give them the honest conversation they have been avoiding, potentially resolving a festering emotional wound or broken relationship."},
+            {"id": "brew_remedy", "name": "Brew Remedy", "category": "Craft", "description": "Given an hour and basic ingredients, you can brew a poultice or tincture that cures one disease, neutralizes one poison, or grants temporary hit points."},
+            {"id": "i_am_not_losing_you", "name": "I Am Not Losing You", "category": "Instinct", "description": "When an ally drops to zero hit points within your reach, your refusal to let go pulls them back — you may immediately use your reaction to heal them for 1d8 plus your Wisdom modifier."},
+            {"id": "emotional_suture", "name": "Emotional Suture", "category": "Connection", "description": "Through patient conversation and genuine care, you help someone process a traumatic memory, removing one level of exhaustion or a lingering emotional condition."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Gifts",
+          "cantrip_hint": "Small talents that come naturally — the things that make you who you are.",
+          "ability_hint": "Rare abilities that define your role in the community."
+        }
       },
       {
         "id": "scavenger",
@@ -210,7 +233,30 @@
             "name": "Quick Hands",
             "description": "You can use a bonus action to make a Dexterity (Sleight of Hand) check, use thieves' tools to open a lock, or retrieve a stowed item. Years of grabbing things and running have made your hands faster than your thoughts."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "rubble_sense", "name": "Rubble Sense", "category": "Instinct", "description": "You can feel when a floor is about to give way or a wall is ready to collapse, giving you advantage on saves to avoid structural hazards."},
+            {"id": "silent_entry", "name": "Silent Entry", "category": "Survival", "description": "You know how to open doors, windows, and hatches without making a sound, even when the hinges are rusted and the frames are warped."},
+            {"id": "treasure_eye", "name": "Treasure Eye", "category": "Scavenging", "description": "When you enter a ruin, you instinctively spot the most valuable salvageable item within sight, even if it is buried or partially hidden."},
+            {"id": "light_packer", "name": "Light Packer", "category": "Craft", "description": "You can carry an improbable amount of salvage efficiently, gaining advantage on checks to haul, organize, or quickly retrieve stowed gear."},
+            {"id": "read_the_room", "name": "Read the Room", "category": "Connection", "description": "Years of reading dangerous spaces have made you equally good at reading dangerous people — you can sense when someone in a conversation is about to turn hostile or dishonest."}
+          ],
+          "abilities": [
+            {"id": "ghost_run", "name": "Ghost Run", "category": "Survival", "description": "You can move through a dangerous area — a collapsing building, a guarded perimeter, a trapped corridor — at full speed without triggering hazards or detection."},
+            {"id": "the_perfect_find", "name": "The Perfect Find", "category": "Scavenging", "description": "Once per day when searching a ruin, you discover exactly the item your group desperately needs, as if the old world left it there just for you."},
+            {"id": "escape_artist", "name": "Escape Artist", "category": "Instinct", "description": "When you are grabbed, pinned, trapped, or cornered, you can use your reaction to slip free and move up to half your speed without provoking opportunity attacks."},
+            {"id": "cache_network", "name": "Cache Network", "category": "Scavenging", "description": "You have hidden supply caches across the valley — when you are in a known area, you can locate a stash with food, tools, or first aid supplies you left for exactly this kind of emergency."},
+            {"id": "someone_worth_coming_back_to", "name": "Someone Worth Coming Back To", "category": "Connection", "description": "When you are alone on a dangerous run, the thought of a specific person waiting for you grants you advantage on all death saving throws and saves against exhaustion."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Gifts",
+          "cantrip_hint": "Small talents that come naturally — the things that make you who you are.",
+          "ability_hint": "Rare abilities that define your role in the community."
+        }
       },
       {
         "id": "warden",
@@ -253,7 +299,30 @@
             "name": "Overwatch",
             "description": "When you spend at least 1 minute observing an area, you can identify the number and general type of creatures within 300 feet. You notice ambushes, traps, and unusual activity automatically."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "weather_reading", "name": "Weather Reading", "category": "Survival", "description": "You can predict the weather for the next twelve hours by reading the sky, the wind, and the behavior of animals — your forecasts are rarely wrong."},
+            {"id": "silent_patrol", "name": "Silent Patrol", "category": "Instinct", "description": "You move through brush, rubble, and undergrowth without making a sound, even at normal speed, as if the valley itself clears a path for you."},
+            {"id": "night_eyes", "name": "Night Eyes", "category": "Survival", "description": "Your eyes adjust to darkness faster than anyone else's, granting you advantage on Perception checks in low-light conditions after just one round."},
+            {"id": "steady_presence", "name": "Steady Presence", "category": "Leadership", "description": "When you stand watch, people sleep better — allies who rest while you are on guard recover one additional hit point per hit die spent during a short rest."},
+            {"id": "read_the_trail", "name": "Read the Trail", "category": "Instinct", "description": "By examining tracks, broken branches, and scuff marks, you can determine not just what passed by but how they were feeling — afraid, confident, injured, or lost."}
+          ],
+          "abilities": [
+            {"id": "hold_the_line", "name": "Hold the Line", "category": "Leadership", "description": "When you plant your feet and refuse to move, allies within 10 feet gain advantage on saves against fear and cannot be forcibly moved while you stand."},
+            {"id": "mercy_shot", "name": "Mercy Shot", "category": "Instinct", "description": "You can choose to make a single precise ranged attack that incapacitates rather than kills, dropping a target to exactly one hit point — because not everything out there deserves to die."},
+            {"id": "the_long_walk_home", "name": "The Long Walk Home", "category": "Survival", "description": "When you or an ally is injured in the field, you can navigate the fastest safe route back to settlement, halving travel time and granting advantage on Constitution saves against exhaustion during the journey."},
+            {"id": "someone_to_protect", "name": "Someone to Protect", "category": "Connection", "description": "When a person you have a bond with is threatened, you may move up to your full speed as a reaction to place yourself between them and the danger, gaining temporary hit points equal to your level."},
+            {"id": "valley_whisper", "name": "Valley Whisper", "category": "Connection", "description": "You have learned to communicate across distances using bird calls, mirror flashes, and subtle trail signs, sending complex messages to anyone who knows your personal signal language."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Gifts",
+          "cantrip_hint": "Small talents that come naturally — the things that make you who you are.",
+          "ability_hint": "Rare abilities that define your role in the community."
+        }
       },
       {
         "id": "voice",
@@ -295,7 +364,30 @@
             "name": "Bridge Words",
             "description": "You can communicate across factional lines without triggering suspicion. Advantage on Persuasion and Deception checks when acting as a mediator, translator, or neutral party between hostile groups."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "voice_that_carries", "name": "Voice That Carries", "category": "Leadership", "description": "Your voice projects with unnatural clarity — you can be heard distinctly across a crowded room, through a storm, or over the static of a damaged radio."},
+            {"id": "read_the_crowd", "name": "Read the Crowd", "category": "Connection", "description": "You can sense the emotional temperature of a group instantly — who is angry, who is afraid, who is about to speak up, and who is hiding something."},
+            {"id": "the_right_song", "name": "The Right Song", "category": "Connection", "description": "You always know which song, story, or memory will resonate most deeply with your listener, granting advantage on Performance checks to shift someone's mood."},
+            {"id": "honeyed_deflection", "name": "Honeyed Deflection", "category": "Survival", "description": "When a conversation turns dangerous, you can redirect it with a well-placed joke, compliment, or change of subject, granting advantage on checks to de-escalate tense situations."},
+            {"id": "late_night_frequency", "name": "Late Night Frequency", "category": "Craft", "description": "You know how to coax a signal out of damaged radio equipment, picking up faint broadcasts and distant transmissions that others would dismiss as static."}
+          ],
+          "abilities": [
+            {"id": "broadcast_truth", "name": "Broadcast Truth", "category": "Leadership", "description": "When you speak a genuine truth over the radio or to an assembled crowd, listeners must make a Wisdom save or be deeply moved, shifting their attitude one step toward your position."},
+            {"id": "the_love_song", "name": "The Love Song", "category": "Connection", "description": "You perform a piece of music or speak words so achingly sincere that one listener who harbors hidden feelings for someone present must make a Charisma save or reveal those feelings openly."},
+            {"id": "words_like_armor", "name": "Words Like Armor", "category": "Survival", "description": "Before your allies enter danger, you speak a few quiet words that stay with them — up to three allies gain temporary hit points equal to your Charisma modifier plus your level for one hour."},
+            {"id": "name_the_wound", "name": "Name the Wound", "category": "Connection", "description": "You articulate exactly what someone is feeling before they can — naming their grief, their guilt, or their longing aloud, which breaks through emotional defenses and opens the door to genuine conversation."},
+            {"id": "signal_fire", "name": "Signal Fire", "category": "Leadership", "description": "You deliver a rallying speech or broadcast so compelling that scattered, demoralized, or divided allies within earshot regroup, gaining advantage on all checks for the next ten minutes."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Gifts",
+          "cantrip_hint": "Small talents that come naturally — the things that make you who you are.",
+          "ability_hint": "Rare abilities that define your role in the community."
+        }
       },
       {
         "id": "keeper",
@@ -335,7 +427,30 @@
             "name": "Methodical Analysis",
             "description": "When you spend at least 10 minutes studying a problem — a broken machine, a sick patient, a structural failure — you can make an Intelligence check with advantage to determine the cause and suggest a solution."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "perfect_recall", "name": "Perfect Recall", "category": "Craft", "description": "You can recall the exact contents of any page you have read in the last month, reproducing diagrams, recipes, or technical instructions from memory with perfect accuracy."},
+            {"id": "pattern_recognition", "name": "Pattern Recognition", "category": "Instinct", "description": "You notice recurring patterns in data, behavior, and events that others miss, granting advantage on Investigation checks to identify causes, connections, or hidden structures."},
+            {"id": "careful_hands", "name": "Careful Hands", "category": "Craft", "description": "You handle fragile things — old books, seed samples, unstable compounds, broken hearts — with extraordinary delicacy, gaining advantage on checks to preserve or restore deteriorating materials."},
+            {"id": "teach_the_basics", "name": "Teach the Basics", "category": "Connection", "description": "You can explain complex concepts in simple terms so effectively that an untrained person can attempt a skilled task at no disadvantage after ten minutes of your instruction."},
+            {"id": "cataloger_instinct", "name": "Cataloger's Instinct", "category": "Scavenging", "description": "When you encounter a collection — a library, a warehouse, a seed vault — you immediately sense its organizational system and can locate specific items in half the normal time."}
+          ],
+          "abilities": [
+            {"id": "the_missing_piece", "name": "The Missing Piece", "category": "Craft", "description": "After studying a broken system or unsolved problem for at least an hour, you identify the one critical component or piece of information needed to fix it, and you know where it might be found."},
+            {"id": "legacy_letter", "name": "Legacy Letter", "category": "Connection", "description": "You write a document — a letter, a manual, a last testament — so precisely and movingly that anyone who reads it gains the benefit of your expertise on one specific subject, even after you are gone."},
+            {"id": "controlled_burn", "name": "Controlled Burn", "category": "Survival", "description": "Your knowledge of chemistry and materials lets you create fire, smoke, or controlled explosions from common salvage, dealing damage to structures or creating diversions with surgical precision."},
+            {"id": "the_question_that_matters", "name": "The Question That Matters", "category": "Connection", "description": "You ask someone a single, precisely worded question that cuts through evasion and pretense — the target must make a Wisdom save or answer honestly, not because they are compelled but because the question deserves truth."},
+            {"id": "seed_of_the_future", "name": "Seed of the Future", "category": "Leadership", "description": "You identify and preserve one critical piece of knowledge, one irreplaceable seed, or one essential blueprint that will matter more than anything else in the long run, granting your community a lasting strategic advantage."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Knacks",
+          "ability_label": "Gifts",
+          "cantrip_hint": "Small talents that come naturally — the things that make you who you are.",
+          "ability_hint": "Rare abilities that define your role in the community."
+        }
       }
     ],
     "setting_skills": [

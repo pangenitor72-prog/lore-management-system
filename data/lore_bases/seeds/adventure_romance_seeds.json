@@ -175,7 +175,30 @@
             "name": "Favored Terrain: Jungle",
             "description": "You have advantage on Wisdom (Survival) checks and Intelligence (Nature) checks in jungle environments. Your travel pace in jungle terrain does not impose a penalty to your passive Perception."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "read_the_stones", "name": "Read the Stones", "category": "Scholarship", "description": "You can glance at weathered carvings or masonry and immediately determine the construction period, culture of origin, and whether the structure has been disturbed."},
+            {"id": "steady_footing", "name": "Steady Footing", "category": "Exploration", "description": "You instinctively find solid ground on crumbling ruins, unstable slopes, and rain-slicked temple stairs, moving across treacherous surfaces without slowing down."},
+            {"id": "jungle_reading", "name": "Jungle Reading", "category": "Survival", "description": "You can read the jungle like a book -- broken branches, disturbed soil, and insect behavior tell you who passed through here and how recently."},
+            {"id": "quick_sketch", "name": "Quick Sketch", "category": "Scholarship", "description": "You can produce an accurate field sketch of any ruin, artifact, or landscape feature in under a minute, capturing details that photographs miss in low light."},
+            {"id": "campfire_confidence", "name": "Campfire Confidence", "category": "Charm", "description": "When you tell stories of past expeditions around a fire, your companions find their nerves settling and their trust in you deepening, no matter how dire the circumstances."}
+          ],
+          "abilities": [
+            {"id": "temple_intuition", "name": "Temple Intuition", "category": "Exploration", "description": "Years of fieldwork have given you a sixth sense for hidden chambers -- you can spend ten minutes in any ruin and identify the most likely location of sealed or buried passages."},
+            {"id": "desperate_leap", "name": "Desperate Leap", "category": "Combat", "description": "When a floor gives way or a wall collapses, you can hurl yourself to safety with preternatural timing, pulling one nearby ally with you if you choose."},
+            {"id": "artifact_authentication", "name": "Artifact Authentication", "category": "Scholarship", "description": "By handling an artifact for one minute, you can determine whether it is genuine, a forgery, or has been tampered with, along with its approximate historical significance."},
+            {"id": "monsoon_sense", "name": "Monsoon Sense", "category": "Survival", "description": "You can predict weather changes hours before they arrive by reading the sky, the wind, and the behavior of animals, giving your expedition critical time to prepare or relocate."},
+            {"id": "rivals_respect", "name": "Rival's Respect", "category": "Charm", "description": "Your reputation precedes you -- even a hostile competing archaeologist will pause to hear your professional opinion before resorting to sabotage, giving you a window to negotiate or redirect conflict."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Skills",
+          "ability_label": "Expertise",
+          "cantrip_hint": "Practiced skills that come as naturally as breathing.",
+          "ability_hint": "Hard-won expertise that sets you apart from ordinary adventurers."
+        }
       },
       {
         "id": "charming_operative",
@@ -217,7 +240,30 @@
             "name": "Inspiring Words",
             "description": "As a bonus action, you can speak encouragement to an ally within 30 feet. They add 1d6 to their next ability check, attack roll, or saving throw within the next minute."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "read_the_room", "name": "Read the Room", "category": "Instinct", "description": "Within moments of entering any social situation, you can identify the power dynamics at play -- who is in charge, who is afraid, and who can be turned."},
+            {"id": "silver_tongue", "name": "Silver Tongue", "category": "Charm", "description": "You can deliver a lie so smoothly that even people who suspect you are lying find themselves wanting to believe you anyway."},
+            {"id": "memorable_entrance", "name": "Memorable Entrance", "category": "Charm", "description": "When you walk into a room, you command attention without raising your voice, ensuring that everyone present remembers your face and your confidence."},
+            {"id": "quick_disguise", "name": "Quick Disguise", "category": "Survival", "description": "Using minimal props and a shift in posture and accent, you can pass as a servant, official, or local in under two minutes, fooling casual inspection."},
+            {"id": "flirtatious_deflection", "name": "Flirtatious Deflection", "category": "Charm", "description": "When a conversation turns dangerous, you can redirect it with a well-timed compliment or provocative remark that makes the other person forget what they were asking."}
+          ],
+          "abilities": [
+            {"id": "double_cross_instinct", "name": "Double-Cross Instinct", "category": "Instinct", "description": "You have been betrayed enough times to sense it coming -- when someone you are dealing with intends to break faith, you feel it in your gut and can act before the trap closes."},
+            {"id": "dangerous_liaison", "name": "Dangerous Liaison", "category": "Charm", "description": "You can cultivate an intimate connection with a key figure during a single evening of conversation, gaining their trust and a significant piece of information they would not normally share."},
+            {"id": "commanding_bluff", "name": "Commanding Bluff", "category": "Combat", "description": "By projecting absolute authority, you can convince armed opponents to hesitate, lower their weapons, or stand aside for one critical moment -- long enough to escape or strike."},
+            {"id": "expedient_alliance", "name": "Expedient Alliance", "category": "Exploration", "description": "You can broker a temporary truce or cooperation agreement between two hostile parties, holding it together through sheer force of personality for as long as you remain present."},
+            {"id": "the_perfect_toast", "name": "The Perfect Toast", "category": "Charm", "description": "At a shared meal or campfire, you can deliver words so perfectly chosen that tensions between rivals ease, old grudges soften, and even enemies share a moment of genuine warmth."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Skills",
+          "ability_label": "Expertise",
+          "cantrip_hint": "Practiced skills that come as naturally as breathing.",
+          "ability_hint": "Hard-won expertise that sets you apart from ordinary adventurers."
+        }
       },
       {
         "id": "expedition_muscle",
@@ -261,7 +307,30 @@
             "name": "Protector's Instinct",
             "description": "When an ally within 5 feet of you is targeted by an attack, you can use your reaction to impose disadvantage on the attack roll. You must be able to see the attacker."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "brute_force_solution", "name": "Brute Force Solution", "category": "Exploration", "description": "When a door is stuck, a stone slab is too heavy, or a passage is blocked by debris, you can force it open or clear it through sheer physical power where others would need tools."},
+            {"id": "danger_sense", "name": "Danger Sense", "category": "Instinct", "description": "Years of surviving ambushes and cave-ins have given you an instinct for when something is about to go wrong -- you react to threats a heartbeat before anyone else."},
+            {"id": "intimidating_presence", "name": "Intimidating Presence", "category": "Combat", "description": "Your size and bearing are enough to make armed men reconsider their choices, giving hostile strangers pause before they start a fight with your expedition."},
+            {"id": "jungle_endurance", "name": "Jungle Endurance", "category": "Survival", "description": "You can march through monsoon rain, oppressive heat, and rough terrain for hours beyond what breaks other people, carrying loads that would fell a pack mule."},
+            {"id": "quiet_tenderness", "name": "Quiet Tenderness", "category": "Charm", "description": "Despite your rough exterior, you show unexpected gentleness in small moments -- mending a torn strap, steadying a frightened companion -- that earns a deeper trust than words ever could."}
+          ],
+          "abilities": [
+            {"id": "human_shield", "name": "Human Shield", "category": "Combat", "description": "When an explosion, collapse, or volley of gunfire threatens your companions, you can throw yourself over them, absorbing the worst of the damage and keeping them alive."},
+            {"id": "unstoppable_charge", "name": "Unstoppable Charge", "category": "Combat", "description": "You can barrel through a line of enemies or a barricade with such force that anyone in your path is knocked aside, clearing an escape route for your entire expedition."},
+            {"id": "field_fortification", "name": "Field Fortification", "category": "Survival", "description": "Given thirty minutes and available materials, you can turn any ruin, cave, or camp into a defensible position that grants significant cover and is difficult to approach undetected."},
+            {"id": "carry_them_home", "name": "Carry Them Home", "category": "Exploration", "description": "You can carry an injured or unconscious companion across miles of difficult terrain without slowing down, refusing to leave anyone behind regardless of the cost to yourself."},
+            {"id": "unspoken_promise", "name": "Unspoken Promise", "category": "Charm", "description": "When you look someone in the eye and tell them you will protect them, they believe it absolutely -- your word becomes an anchor that steadies their courage in the darkest moments."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Skills",
+          "ability_label": "Expertise",
+          "cantrip_hint": "Practiced skills that come as naturally as breathing.",
+          "ability_hint": "Hard-won expertise that sets you apart from ordinary adventurers."
+        }
       },
       {
         "id": "field_medic",
@@ -302,7 +371,30 @@
             "name": "Tropical Expertise",
             "description": "You have advantage on Medicine checks to treat diseases, poisoning, and environmental ailments. You can spend 10 minutes foraging in jungle terrain to find medicinal plants sufficient to create one antitoxin or healing poultice."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "triage_instinct", "name": "Triage Instinct", "category": "Instinct", "description": "With a single glance at an injured person, you can assess the severity of their condition, identify the most dangerous wound, and know exactly what needs to happen first."},
+            {"id": "herbal_identification", "name": "Herbal Identification", "category": "Scholarship", "description": "You can identify useful medicinal plants in any jungle environment on sight, knowing which roots reduce fever, which bark stops bleeding, and which leaves should never be touched."},
+            {"id": "steady_hands", "name": "Steady Hands", "category": "Survival", "description": "Your hands do not shake, even under fire, in monsoon rain, or by guttering lamplight -- you can perform delicate medical procedures in conditions that would make other doctors refuse to try."},
+            {"id": "bedside_manner", "name": "Bedside Manner", "category": "Charm", "description": "Your calm voice and gentle confidence can ease panic, reduce a patient's pain through sheer reassurance, and convince the gravely injured to keep fighting when their body wants to quit."},
+            {"id": "contagion_awareness", "name": "Contagion Awareness", "category": "Survival", "description": "You can detect the early signs of waterborne illness, infected food, and disease vectors in a campsite before anyone falls sick, preventing outbreaks through vigilance."}
+          ],
+          "abilities": [
+            {"id": "emergency_surgery", "name": "Emergency Surgery", "category": "Scholarship", "description": "Using improvised tools if necessary, you can perform field surgery that stabilizes a mortally wounded companion, pulling them back from the edge of death when proper hospitals are weeks away."},
+            {"id": "jungle_pharmacy", "name": "Jungle Pharmacy", "category": "Exploration", "description": "Given one hour of foraging, you can prepare potent remedies from the surrounding jungle -- antitoxins, fever reducers, pain suppressants, and stimulants that rival anything in your medical kit."},
+            {"id": "quarantine_authority", "name": "Quarantine Authority", "category": "Instinct", "description": "When disease threatens the expedition, your medical authority overrides all other hierarchies -- even colonels and expedition leaders defer to your judgment on matters of contamination and quarantine."},
+            {"id": "the_long_vigil", "name": "The Long Vigil", "category": "Charm", "description": "You can sit with the wounded through the night, keeping them alive through the critical hours by force of will, conversation, and tireless attention until the fever breaks or the bleeding stops."},
+            {"id": "poison_resistance_prep", "name": "Inoculation Protocol", "category": "Survival", "description": "Through careful preparation of micro-doses, you can build up your companions' resistance to specific jungle toxins and venoms before the expedition enters dangerous territory."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Skills",
+          "ability_label": "Expertise",
+          "cantrip_hint": "Practiced skills that come as naturally as breathing.",
+          "ability_hint": "Hard-won expertise that sets you apart from ordinary adventurers."
+        }
       },
       {
         "id": "shadow_broker",
@@ -345,7 +437,30 @@
             "name": "Sneak Attack",
             "description": "Once per turn, you can deal an extra 1d6 damage to one creature you hit with an attack if you have advantage on the attack roll, or if another enemy of the target is within 5 feet of it. The attack must use a finesse or ranged weapon."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "light_fingers", "name": "Light Fingers", "category": "Exploration", "description": "You can lift a key, a document, or a small artifact from someone's person or tent without them noticing until you are long gone."},
+            {"id": "shadow_movement", "name": "Shadow Movement", "category": "Survival", "description": "You move through darkness and dense jungle cover as if you were part of it, making no sound and leaving no trace that casual observers would ever detect."},
+            {"id": "coded_signals", "name": "Coded Signals", "category": "Instinct", "description": "You can communicate silently with allies using subtle gestures, bird calls, and pre-arranged signals that look perfectly natural to anyone not in on the code."},
+            {"id": "know_your_mark", "name": "Know Your Mark", "category": "Charm", "description": "After five minutes of conversation with someone, you can identify their deepest insecurity, their greatest desire, and exactly which lever to pull to get what you want from them."},
+            {"id": "escape_artist", "name": "Escape Artist", "category": "Survival", "description": "Ropes, handcuffs, locked rooms, and improvised cells are temporary inconveniences -- you can work your way free of most restraints given a few unobserved minutes."}
+          ],
+          "abilities": [
+            {"id": "blackmail_dossier", "name": "Blackmail Dossier", "category": "Instinct", "description": "You have a talent for uncovering compromising information -- given access to someone's quarters or correspondence, you can find leverage that ensures their cooperation or silence."},
+            {"id": "midnight_requisition", "name": "Midnight Requisition", "category": "Exploration", "description": "Under cover of darkness, you can infiltrate a rival camp or guarded location and extract a specific item, document, or piece of intelligence without raising an alarm."},
+            {"id": "the_double_deal", "name": "The Double Deal", "category": "Charm", "description": "You can play two opposing factions against each other so skillfully that both believe you are working exclusively for them, maintaining the deception until you choose to reveal the truth."},
+            {"id": "vanishing_act", "name": "Vanishing Act", "category": "Combat", "description": "When a situation turns violent, you can disappear from the scene so completely that even people who were looking directly at you cannot say where you went or which direction you fled."},
+            {"id": "pillow_talk", "name": "Pillow Talk", "category": "Charm", "description": "Through intimacy, vulnerability, or the careful performance of both, you can draw out secrets that your target would never reveal in any other context, learning what no interrogation could extract."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Skills",
+          "ability_label": "Expertise",
+          "cantrip_hint": "Practiced skills that come as naturally as breathing.",
+          "ability_hint": "Hard-won expertise that sets you apart from ordinary adventurers."
+        }
       }
     ],
     "setting_skills": [

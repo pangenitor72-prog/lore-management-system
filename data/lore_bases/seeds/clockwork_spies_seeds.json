@@ -172,7 +172,30 @@
             "name": "Ghost Protocol",
             "description": "You can adopt a false identity with 10 minutes of preparation and appropriate clothing. While maintaining the identity, you have advantage on Deception checks to sustain it. If your cover is blown, you can use a reaction to create a distraction — smoke, flash powder, a thrown object — granting you the opportunity to take the Disengage or Hide action as a bonus action on your next turn."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "shadow_step", "name": "Shadow Step", "category": "Tradecraft", "description": "You move through dim light and shadow without making a sound, allowing you to reposition undetected during tense moments."},
+            {"id": "quick_disguise", "name": "Quick Disguise", "category": "Deception", "description": "With a hat, a scarf, and thirty seconds, you alter your silhouette enough to pass a casual glance from someone who saw your face minutes ago."},
+            {"id": "dead_drop_scan", "name": "Dead Drop Scan", "category": "Tradecraft", "description": "You can read the subtle chalk marks, scratches, and positioning signals that mark dead drops, safe houses, and warning signs left by fellow operatives."},
+            {"id": "lockwork_whisper", "name": "Lockwork Whisper", "category": "Clockwork", "description": "By pressing your ear to a clockwork lock and feeling its vibrations, you can estimate its complexity and identify the type of mechanism before attempting entry."},
+            {"id": "vanishing_act", "name": "Vanishing Act", "category": "Deception", "description": "You carry a palm-sized smoke capsule that creates a momentary cloud of concealment, giving you just enough cover to slip around a corner or behind a curtain."}
+          ],
+          "abilities": [
+            {"id": "phantom_extraction", "name": "Phantom Extraction", "category": "Tradecraft", "description": "You execute a flawless exfiltration from a hostile location, moving yourself and one ally through a pre-planned escape route that bypasses guards, locks, and surveillance."},
+            {"id": "face_stealer", "name": "Face Stealer", "category": "Deception", "description": "After observing a target for ten minutes, you can replicate their mannerisms, voice, and gait convincingly enough to fool even close associates for a short window."},
+            {"id": "spring_blade_flurry", "name": "Spring-Blade Flurry", "category": "Combat", "description": "You deploy concealed spring-loaded blades from your sleeves or boots, striking with lethal precision before your target realizes the conversation has ended."},
+            {"id": "clockwork_shadow", "name": "Clockwork Shadow", "category": "Clockwork", "description": "You deploy a palm-sized clockwork decoy that mimics footsteps and breathing sounds, drawing pursuers down the wrong corridor while you slip away unseen."},
+            {"id": "nerve_strike", "name": "Nerve Strike", "category": "Combat", "description": "You deliver a precise blow to a pressure point that temporarily paralyzes a limb or renders a target silent, neutralizing them without the mess of a proper fight."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tradecraft",
+          "ability_label": "Gambits",
+          "cantrip_hint": "The basic tools of the trade — subtle skills that keep you one step ahead.",
+          "ability_hint": "High-stakes gambits that can make or break an operation."
+        }
       },
       {
         "id": "cipher_analyst",
@@ -212,7 +235,30 @@
             "name": "Pattern Recognition",
             "description": "Your mind processes information at extraordinary speed. Once per short rest, when you observe a scene, conversation, or set of documents, you can ask the DM one question about a hidden pattern, connection, or inconsistency present in the information. The DM provides a truthful clue."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "frequency_tap", "name": "Frequency Tap", "category": "Analysis", "description": "You attune your brass listening device to the harmonic frequency of a nearby pneumatic tube, picking up fragments of messages passing through it."},
+            {"id": "ink_revelation", "name": "Ink Revelation", "category": "Analysis", "description": "By applying a chemical reagent from your kit, you reveal invisible ink, erased writing, or hidden watermarks on any document you examine."},
+            {"id": "mental_cipher", "name": "Mental Cipher", "category": "Tradecraft", "description": "You can encode or decode short messages in your head using memorized cipher tables, communicating in code without any physical evidence of encryption."},
+            {"id": "automaton_read", "name": "Automaton Read", "category": "Clockwork", "description": "You can observe the repetitive patterns of a clockwork automaton's behavior and predict its patrol route, response triggers, and blind spots within minutes."},
+            {"id": "information_cross_reference", "name": "Cross-Reference", "category": "Analysis", "description": "When presented with two or more pieces of intelligence, you can rapidly identify contradictions, confirming details, or hidden connections between them."}
+          ],
+          "abilities": [
+            {"id": "pneumatic_intercept", "name": "Pneumatic Intercept", "category": "Clockwork", "description": "You splice into a pneumatic tube line and divert a message capsule to your position, reading its contents and resealing it before sending it onward with no visible sign of tampering."},
+            {"id": "cipher_cascade", "name": "Cipher Cascade", "category": "Analysis", "description": "You feed false encrypted messages into an enemy's communication network, creating a cascade of contradictory intelligence that sows confusion and delays their operations for hours."},
+            {"id": "dossier_synthesis", "name": "Dossier Synthesis", "category": "Analysis", "description": "After gathering fragments of intelligence from multiple sources, you assemble a comprehensive dossier that reveals a target's true identity, allegiances, and vulnerabilities."},
+            {"id": "voltaic_trace", "name": "Voltaic Trace", "category": "Clockwork", "description": "You calibrate a handheld voltaic resonance detector to track the unique energy signature of a specific device, message capsule, or augmented individual across the city."},
+            {"id": "mirror_cipher", "name": "Mirror Cipher", "category": "Deception", "description": "You craft a fiendishly convincing forged document in an enemy's own cipher, planting false intelligence that reads as authentic even to their own codebreakers."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tradecraft",
+          "ability_label": "Gambits",
+          "cantrip_hint": "The basic tools of the trade — subtle skills that keep you one step ahead.",
+          "ability_hint": "High-stakes gambits that can make or break an operation."
+        }
       },
       {
         "id": "diplomatic_fixer",
@@ -254,7 +300,30 @@
             "name": "Leverage",
             "description": "When you spend at least 10 minutes in conversation with a target, you can make a Charisma (Insight) check contested by their Wisdom. On success, you identify one thing the target fears, desires, or is hiding. You gain advantage on your next Persuasion or Intimidation check against that target, as long as you use this knowledge."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "silver_tongue", "name": "Silver Tongue", "category": "Deception", "description": "You deliver a perfectly calibrated compliment, deflection, or half-truth that shifts a conversation's tone in your favor before anyone realizes what happened."},
+            {"id": "reading_the_room", "name": "Reading the Room", "category": "Analysis", "description": "Upon entering a social gathering, you immediately identify the power dynamics — who is courting whom, who is angry, who is afraid, and who is pretending."},
+            {"id": "social_alibi", "name": "Social Alibi", "category": "Deception", "description": "You manufacture a plausible reason for your presence in any location by name-dropping the right people and referencing invitations that may or may not exist."},
+            {"id": "whisper_network", "name": "Whisper Network", "category": "Tradecraft", "description": "You pass a message to a contact across a crowded room using nothing but eye contact, gestures, and the position of a wine glass — no words required."},
+            {"id": "charm_offensive", "name": "Charm Offensive", "category": "Deception", "description": "You engage a target in such captivating conversation that they fail to notice your ally slipping past, searching their coat, or exiting through the side door."}
+          ],
+          "abilities": [
+            {"id": "blackmail_dossier", "name": "Blackmail Dossier", "category": "Tradecraft", "description": "You reveal to a target that you possess compromising information about them — real or convincingly fabricated — forcing them to cooperate or risk public ruin."},
+            {"id": "diplomatic_incident", "name": "Diplomatic Incident", "category": "Deception", "description": "You engineer a social catastrophe at a gathering — a scandal, an insult between delegations, a shocking revelation — that clears a room or creates the perfect cover for an operation."},
+            {"id": "double_agent_turn", "name": "Double Agent Turn", "category": "Tradecraft", "description": "Through a combination of empathy, pressure, and a compelling offer, you convince an enemy operative to feed you information while continuing to report to their own handlers."},
+            {"id": "safe_passage", "name": "Safe Passage", "category": "Deception", "description": "You call in favors from embassy contacts to secure diplomatic protection for yourself and your allies, granting temporary immunity from arrest or search by local authorities."},
+            {"id": "poison_pill_rumor", "name": "Poison Pill Rumor", "category": "Analysis", "description": "You plant a piece of carefully crafted disinformation into Geneva's social circuit, designed to surface at a specific moment and discredit a rival or derail their plans."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tradecraft",
+          "ability_label": "Gambits",
+          "cantrip_hint": "The basic tools of the trade — subtle skills that keep you one step ahead.",
+          "ability_hint": "High-stakes gambits that can make or break an operation."
+        }
       },
       {
         "id": "voltaic_saboteur",
@@ -296,7 +365,30 @@
             "name": "Controlled Demolition",
             "description": "Given 5 minutes and access to a voltaic-powered device, you can rig it to overload at a time of your choosing (up to 1 hour). The overload disables the device and deals 2d6 thunder damage to all creatures within 10 feet (Dexterity save DC 13 for half). You can also set the overload to be silent — a quiet mechanical failure that draws no attention."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "voltaic_sniff", "name": "Voltaic Sniff", "category": "Engineering", "description": "You detect the presence and approximate strength of voltaic essence in devices, walls, or hidden compartments within arm's reach by feeling for telltale heat and vibration."},
+            {"id": "gear_jam", "name": "Gear Jam", "category": "Engineering", "description": "You flick a pebble, hairpin, or shard of metal into an exposed gear train, causing a clockwork mechanism to stutter and grind for a few precious seconds."},
+            {"id": "wire_splice", "name": "Wire Splice", "category": "Clockwork", "description": "You splice into a voltaic power line or pneumatic tube with a quick twist of copper wire, rerouting a small amount of energy or pressure for your own purposes."},
+            {"id": "timed_fuse", "name": "Timed Fuse", "category": "Engineering", "description": "You fashion a crude but reliable delay mechanism from pocket watch parts, allowing you to set any device or charge to activate on a timer of up to thirty minutes."},
+            {"id": "structural_assessment", "name": "Structural Assessment", "category": "Analysis", "description": "You study a mechanical structure or device and identify the single component whose failure would cause the most catastrophic chain reaction."}
+          ],
+          "abilities": [
+            {"id": "cascade_overload", "name": "Cascade Overload", "category": "Engineering", "description": "You trigger a chain reaction through interconnected voltaic systems, shutting down every powered device in a building as the overload propagates through shared power lines."},
+            {"id": "automaton_hijack", "name": "Automaton Hijack", "category": "Clockwork", "description": "You physically access an automaton's command drum and rewrite its instructions, turning it against its masters or commanding it to perform a single complex task before it resets."},
+            {"id": "ghost_charge", "name": "Ghost Charge", "category": "Engineering", "description": "You rig an explosive device so precisely that it destroys its target while leaving the surrounding structure intact, making the destruction look like mechanical failure rather than sabotage."},
+            {"id": "voltaic_trap", "name": "Voltaic Trap", "category": "Combat", "description": "You wire a doorknob, floor plate, or object with a concealed voltaic capacitor that delivers a devastating shock to the next person who touches it, stunning them cold."},
+            {"id": "kill_switch", "name": "Kill Switch", "category": "Clockwork", "description": "You install a hidden failsafe in any clockwork device you have access to for five minutes, allowing you to remotely disable it at any time within the next twenty-four hours."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tradecraft",
+          "ability_label": "Gambits",
+          "cantrip_hint": "The basic tools of the trade — subtle skills that keep you one step ahead.",
+          "ability_hint": "High-stakes gambits that can make or break an operation."
+        }
       },
       {
         "id": "iron_sentinel",
@@ -340,7 +432,30 @@
             "name": "Second Wind",
             "description": "You have a reserve of stamina forged through brutal training. On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once you use this feature, you must finish a short or long rest before you can use it again."
           }
-        ]
+        ],
+        "has_powers": true,
+        "powers": {
+          "cantrips": [
+            {"id": "threat_assessment", "name": "Threat Assessment", "category": "Analysis", "description": "You scan a room and instantly catalog every exit, weapon, potential improvised weapon, and hostile individual, establishing a mental map of the tactical situation."},
+            {"id": "iron_composure", "name": "Iron Composure", "category": "Combat", "description": "You project an aura of unshakable calm and controlled menace that makes aggressors hesitate, buying precious seconds before violence erupts."},
+            {"id": "field_patch", "name": "Field Patch", "category": "Tradecraft", "description": "You apply a quick field dressing or stimulant from your kit, stabilizing a wounded ally enough to keep them moving until proper medical attention is available."},
+            {"id": "perimeter_check", "name": "Perimeter Check", "category": "Tradecraft", "description": "You conduct a methodical sweep of a location, identifying compromised locks, tampered windows, hidden listening devices, and other signs of hostile surveillance."},
+            {"id": "crowd_shield", "name": "Crowd Shield", "category": "Combat", "description": "You position yourself and your charge within a crowd so that any attacker would have to go through civilians, using the social cost of collateral damage as a deterrent."}
+          ],
+          "abilities": [
+            {"id": "last_stand", "name": "Last Stand", "category": "Combat", "description": "When an operation goes catastrophically wrong, you plant yourself between your allies and danger, becoming an immovable wall of brass and fury that holds the line while they escape."},
+            {"id": "automaton_breaker", "name": "Automaton Breaker", "category": "Combat", "description": "You deliver a devastating strike to a clockwork construct's central mechanism, exploiting the structural weakness where the command drum meets the chassis to cripple it in a single blow."},
+            {"id": "safe_house_lockdown", "name": "Safe House Lockdown", "category": "Tradecraft", "description": "You fortify a location in minutes — barricading doors, setting tripwires, establishing sight lines — transforming any room into a defensible position that buys your team critical time."},
+            {"id": "bullet_catch", "name": "Bullet Catch", "category": "Combat", "description": "You interpose your reinforced brass vambrace or armored coat at the exact moment a ranged attack targets an ally, deflecting the shot and absorbing the impact yourself."},
+            {"id": "forced_extraction", "name": "Forced Extraction", "category": "Tradecraft", "description": "You physically carry, drag, or shield a compromised ally through hostile territory, smashing through obstacles and suppressing threats with overwhelming force to reach the extraction point."}
+          ],
+          "num_cantrips": 3,
+          "num_abilities": 2,
+          "cantrip_label": "Tradecraft",
+          "ability_label": "Gambits",
+          "cantrip_hint": "The basic tools of the trade — subtle skills that keep you one step ahead.",
+          "ability_hint": "High-stakes gambits that can make or break an operation."
+        }
       }
     ],
     "setting_skills": [
