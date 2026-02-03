@@ -1,0 +1,237 @@
+{
+  "id": "whitechapel",
+  "name": "Whitechapel",
+  "description": "Victorian London, 1888. Fog, gaslight, and a killer the city cannot catch. A psychological thriller where the investigation changes the investigator.",
+  "genre": "mystery",
+  "mechanics_genre": "modern",
+  "genre_hints": [
+    "mystery",
+    "thriller",
+    "horror"
+  ],
+  "tone_hints": [
+    "oppressive",
+    "psychological",
+    "atmospheric",
+    "dark"
+  ],
+  "seed_prompt": "A Victorian London murder mystery blending Sherlock Holmes deduction, forensic investigation, and Silence of the Lambs psychological tension.",
+  "lore_content": "London, 1888. The fog does not lift so much as thin, trading opacity for a wet grey gauze that clings to everything. Gaslight turns the streets into corridors of amber and shadow. The Thames smells of industry and sewage. Somewhere in Whitechapel, someone is killing with method and purpose, and the city has not yet decided whether to be afraid.\n\nThe East End is a world apart from the gentlemen's clubs and parliamentary chambers of the West. Here, families of eight share a single room. Gin palaces outnumber churches. The streets are narrow, poorly lit, and navigable only by those who grew up walking them. Whitechapel, Spitalfields, Aldgate — these names carry weight. They mean poverty, crime, anonymity. A person can disappear here and no one asks questions.\n\nScotland Yard sits at 4 Whitehall Place, a stone fortress of institutional authority. The Metropolitan Police are under pressure from all sides — the public wants safety, the press wants sensation, and Parliament wants the whole mess to go away quietly. Cases are political. Promotions depend on clean resolutions. The truth is secondary to a story that plays well in the morning papers.\n\nInspector Arthur Hargrove is a competent man trapped inside a political machine. Twenty years on the force, a solid record, and a genuine desire to see justice done — but he answers to men who care more about headlines than evidence. When the pressure mounts, Hargrove bends. He does not break, but he bends, and the distance between bending and breaking shrinks with every case that forces him to choose between the right answer and the convenient one. He is not corrupt. He is compromised, and he knows it.\n\nClerk Pemberton works the records room at Scotland Yard. He has been there longer than most inspectors and knows the filing system the way a librarian knows the stacks — not just where things are, but what they mean next to each other. Pemberton is nervous by nature, loyal to the institution by habit, and quietly horrified by some of what passes across his desk. He will not volunteer information. But if approached correctly — with patience, not pressure — he can connect dots that no detective would think to connect. He has a memory for names and dates that borders on unsettling.\n\nDr. Elias Maren operates the mortuary with the demeanor of a man who has long since stopped being surprised by what the human body can endure or what other humans are willing to do to it. He is the city's foremost forensic examiner, and he does not soften his findings for anyone. His autopsy reports are precise, clinical, and occasionally devastating to official narratives. He respects competence and has no patience for rank. A detective who asks smart questions gets honest answers. One who tries to tell Maren what his findings should say gets shown the door.\n\nCassie Wren works the spaces between the law and the lawless. She trades information the way others trade goods — for profit, for protection, for leverage. She operates out of the Fox and Hound, a gin house in the East End where conversations happen in corners and nobody remembers faces. Cassie knows the underworld because she lives in it. Her loyalty is transactional. She will sell information to anyone who pays, and she will lie when it serves her interests. But her information is usually good, because bad information is bad for business.\n\nMrs. Adelaide Howe runs a boarding house that serves as an unofficial base of operations for those working outside institutional channels. She is warm, practical, and fiercely protective of her tenants. She has her own moral boundaries — she will not harbor anyone she believes to be genuinely dangerous, and she does not tolerate violence under her roof. But she will cover for a tenant who needs covering for, and she notices everything that happens on her street without appearing to notice anything at all.\n\nVictor Ashford is a brilliant, independent investigator who operates in the same circles as any consulting detective the player might be. He is not a friend. He is a rival — someone whose mind works the same way yours does, which makes him both a potential source of insight and a constant threat to your ego. Ashford is prideful and theatrical. He solves cases to prove he is the sharpest mind in the room, and he does not share credit. Cross him and he will actively work to discredit your findings. Earn his grudging respect and he may, on occasion, share a lead.\n\nEdmund Holloway writes for the Morning Star. He is hungry, ambitious, and dangerous in the way that only a journalist with nothing to lose can be. He wants the story. He does not care whose investigation he compromises to get it. Information given to Holloway becomes public. Publicity can apply useful pressure — or it can spook a suspect into hiding, destroy a fragile lead, or turn the public against the investigator. He is a tool that cuts both ways.\n\nMagistrate Aldric Vane is the kind of official who makes the system work for himself. He can issue warrants, authorize searches, and open doors that are otherwise locked. He can also close those doors with equal speed if the investigation threatens someone he protects. Vane is not ideological. He is transactional. He helps those who can help him, and he destroys those who become inconvenient. Approaching him requires understanding what he wants and being prepared to either provide it or leverage something he cannot afford to have exposed.\n\nMargaret Thorne lost someone to the killer. Grief has made her unreliable in the ways that investigators find frustrating — her timeline shifts, her memories contradict themselves, her anger flares at the wrong moments. But her instincts are sharper than anyone credits. She has been living with this loss, turning it over in her mind, and she has noticed things that the official investigation dismissed. Listening to her requires patience. Dismissing her is a mistake.\n\nThe killer is not a monster from a penny dreadful. The killer is someone's neighbor, someone's customer, someone who walks through Whitechapel without drawing a second glance. That is what makes them dangerous — not supernatural cunning, but the simple invisibility of an unremarkable life. The people who interact with the killer daily describe someone polite, quiet, ordinary. The disconnect between that description and what the evidence reveals is the central horror of the case. The killer's psychology unfolds through the investigation — through evidence patterns, through items left behind or taken away, through the methodology that becomes legible only as understanding deepens. There is a logic to the killings. It is not random. It is not frenzy. It is organized, deliberate, and driven by an internal framework that the player must reconstruct in order to solve the case. Understanding the killer is not optional. It is the mechanism by which the case is solved.\n\nThe Scotland Yard precinct is where the official machinery of justice operates. Case files are stored here, briefings happen here, and the political pressure from above filters down through here. A Scotland Yard detective has full access — records, resources, subordinates. A consulting detective must earn entry or find another way in. The precinct is not just a location. It is an institution with its own priorities, and those priorities do not always align with finding the truth.\n\nThe mortuary is Dr. Maren's domain. Autopsy tables, specimen jars, and the clinical smell of carbolic acid. This is where physical evidence speaks — cause of death, wound patterns, toxicology, the small details that change the shape of a theory. Returning to the mortuary as the investigation progresses reveals new information, because understanding what to ask changes what the evidence can tell you.\n\nThe crime scene is the anchor point of the investigation. The first visit reveals surface details — the layout, the obvious evidence, the initial impressions. But the scene is layered. Returning with new knowledge, new questions, or new forensic tools reveals details that were invisible before. The crime scene does not change. The investigator does.\n\nThe Fox and Hound is a gin house in the East End where the underworld conducts its business. Cassie Wren holds court in a corner booth. Information flows here, but it costs something — money, favors, risk. The atmosphere is thick with pipe smoke and suspicion. Nobody in the Fox and Hound trusts easily, and nobody gives anything away for free.\n\nWhitmore Boarding House is a cramped, anonymous establishment where people come to disappear. The rooms are small, the walls are thin, and the management asks no questions. It is a place to find people who do not want to be found, and a place where danger lives behind closed doors after dark.\n\nThe Aldgate Pawnbroker operates in the grey economy. Stolen goods surface here. Evidence can turn up among the inventory — a victim's watch, a distinctive tool, a piece of jewelry that should not be for sale. The proprietor sees everything and claims to remember nothing.\n\nThe fog-choked alleyways of Whitechapel are not locations so much as a condition. At night, visibility drops to arm's length. Footsteps echo. Shapes resolve into people only at close range. Moving through the alleys after dark is a calculated risk — the player's safety is never guaranteed, and encounters can turn dangerous without warning.\n\nSt. Catharine's Chapel is the spiritual center of the community. It is where the desperate pray and where the grieving mourn. It is also a place where bodies might be found — and finding a body in sanctified ground carries an emotional weight that a body in an alley does not. The violation of that space is itself a statement about the killer.\n\nThe Thames riverbank is where the city deposits what it does not want. Bodies, evidence, secrets — the river carries them all. The mudlarks who scavenge the banks occasionally find things that matter to someone. The riverbank is accessible but dangerous, especially at night.\n\nThe Athenaeum Club is where the powerful gather. Gentlemen in tailored suits discuss policy, business, and the affairs of the city over brandy and cigars. Information flows freely among members, but membership is restricted by class and connection. A Scotland Yard detective can gain entry through official channels. A consulting detective needs a more creative approach. The killer may have connections in these circles.\n\nThe Morning Star offices are Edmund Holloway's domain. The newsroom is loud, chaotic, and filled with reporters chasing deadlines. Holloway controls what gets published, and publication has consequences — for the investigation, for the public, and for anyone named in print.\n\nThe working-class housing of Spitalfields is where the victims lived. Dense, cramped, families stacked on top of each other. People here know their neighbors' business because the walls are too thin for privacy. They heard things. They saw things. Whether they will talk about what they heard and saw depends on trust, fear, and the investigator's approach.\n\nThe case opens cold. No preamble, no briefing — the player arrives at a crime scene with incomplete information and must begin working immediately. The first phase is pure observation and forensic detail. Evidence accumulates through investigation, NPC interviews, and careful examination of physical clues. The trail deepens as the player pushes further, but it will eventually hit a wall — a point where standard investigative technique stops producing results. Breaking through that wall requires understanding the killer's psychology, not just collecting evidence. The convergence comes when psychological insight unlocks what physical evidence could not. The identity becomes clear. The confrontation is not simply an arrest. It is a direct encounter with an intelligent adversary who has been aware of the investigation and has prepared for this moment.\n\nParallel to the case, the institution exerts its own pressure. Scotland Yard wants a clean resolution. The press is circling. Someone above wants the case closed quickly with a convenient suspect. The truth is secondary to political expediency. This pressure exists regardless of the player's class — the Scotland Yard detective feels it as direct orders from superiors, the consulting detective feels it as institutional obstruction. How much truth the player pursues when the institution wants a tidy story is a choice with real consequences.\n\nThe personal cost of the investigation accumulates quietly. Getting closer to the killer's psychology changes how NPCs perceive the investigator. Methods get questioned. Relationships strain. The deeper the player goes into understanding the antagonist's mind, the more it costs them in standing, trust, and personal stability. This is tracked and visible — not a hidden mechanic, but a felt consequence.\n\nAvailable case openings:\n\nThe Wrong Arrest — Someone has already been charged. The official story is clean. But a detail does not track. Something in the evidence contradicts the confession or the timeline. Pursuing this means going against the institution's preferred narrative.\n\nThe Copycat — A killer echoing a famous historical case appears to be active. Or someone believes they are. Is it the same person? A tribute killer? A frame? The case demands forensic comparison with old files and the question of whether the original case was ever actually solved.\n\nThe Disappearance — Not a body. A missing person, someone wealthier or more connected than the area warrants. The powerful want it kept quiet. The trail goes cold fast, and the case becomes a murder investigation organically as the player digs deeper.\n\nThe Confession — Someone turns themselves in for a crime that does not match the evidence. Guilty and lying about details? Innocent and covering for someone? The interrogation of the confession itself becomes the investigation.",
+  "ai_generated": false,
+  "admin_reviewed": false,
+  "character_options": {
+    "origins": [
+      {
+        "id": "east_end_native",
+        "name": "East End Native",
+        "description": "Born and raised in the slums of Whitechapel or Spitalfields. You know the back alleys, the gin houses, and the unwritten rules of survival in London's poorest quarters.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "constitution": 1,
+          "dexterity": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Stealth",
+          "Insight"
+        ],
+        "traits": [
+          "Street Survivor: You have advantage on checks to navigate, find people, or avoid danger in the East End and similar urban slums.",
+          "Unseen Face: In crowds or busy streets, you can blend in without effort. You have advantage on Stealth checks to avoid being followed in urban environments."
+        ],
+        "languages": [
+          "English",
+          "Thieves' Cant"
+        ]
+      },
+      {
+        "id": "professional_class",
+        "name": "Professional Class",
+        "description": "Educated and respectable — a doctor, solicitor, clerk, or similar professional. You move through institutional spaces with ease and know how systems work from the inside.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "intelligence": 2,
+          "charisma": 1
+        },
+        "skill_proficiencies": [
+          "Investigation",
+          "Persuasion"
+        ],
+        "traits": [
+          "Institutional Access: You have advantage on checks to access official records, offices, or professional networks."
+        ],
+        "languages": [
+          "English",
+          "Latin"
+        ]
+      },
+      {
+        "id": "gentry",
+        "name": "Gentry",
+        "description": "Old money, old name, old expectations. You were raised in drawing rooms and educated at the finest schools. Doors open for you that are locked to others — but obligations come with the privilege.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "charisma": 2,
+          "intelligence": 1
+        },
+        "skill_proficiencies": [
+          "Persuasion",
+          "History"
+        ],
+        "traits": [
+          "Social Standing: You have advantage on Persuasion checks when dealing with officials, aristocrats, or anyone impressed by title and breeding.",
+          "Club Member: You can gain entry to exclusive establishments where the powerful gather, provided your reputation remains intact."
+        ],
+        "languages": [
+          "English",
+          "French"
+        ]
+      },
+      {
+        "id": "colonial_returnee",
+        "name": "Colonial Returnee",
+        "description": "You served the Empire abroad — India, Africa, the Far East — and came back changed. London feels smaller now, and softer, but the discipline and nerve you built overseas have not faded.",
+        "base_type": "human",
+        "ability_bonuses": {
+          "strength": 1,
+          "constitution": 1,
+          "wisdom": 1
+        },
+        "skill_proficiencies": [
+          "Athletics",
+          "Perception"
+        ],
+        "traits": [
+          "Seasoned Nerve: You have advantage on saving throws against being frightened.",
+          "Worldly Experience: You have advantage on Wisdom checks to assess danger or recognize threats before they materialize."
+        ],
+        "languages": [
+          "English",
+          "Hindustani"
+        ]
+      }
+    ],
+    "archetypes": [
+      {
+        "id": "scotland_yard_detective",
+        "name": "Scotland Yard Detective",
+        "description": "An officer of the Metropolitan Police, armed with institutional authority, official resources, and the weight of the law — constrained by politics, public pressure, and the chain of command.",
+        "base_type": "paladin",
+        "hit_die": "d10",
+        "primary_ability": "Wisdom",
+        "saving_throws": [
+          "Wisdom",
+          "Charisma"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Intimidation",
+          "Perception",
+          "Persuasion"
+        ],
+        "num_skill_choices": 3,
+        "armor_proficiencies": [
+          "Light armor",
+          "Medium armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Service revolvers",
+          "Truncheons"
+        ],
+        "starting_equipment": [
+          "Detective's badge",
+          "Case file portfolio",
+          "Service revolver with 12 rounds",
+          "Handcuffs",
+          "Truncheon",
+          "Whistle"
+        ],
+        "features": [
+          {
+            "name": "Official Authority",
+            "description": "You can invoke your badge to compel cooperation from civilians and lower officials. You have advantage on Intimidation and Persuasion checks when presenting your credentials to those bound by law. You have the legal authority to arrest suspects and commandeer resources."
+          },
+          {
+            "name": "Chain of Command",
+            "description": "You can delegate tasks to subordinates and access Scotland Yard's records and resources. However, your superiors can override your decisions, shut down investigations, or redirect your efforts. Disobedience carries career consequences — promotion, demotion, or dismissal are all possible outcomes."
+          }
+        ]
+      },
+      {
+        "id": "consulting_detective",
+        "name": "Consulting Detective",
+        "description": "An independent intellect operating outside official channels. No badge, no backup, no institutional protection — but sharper instincts, freedom of movement, and the ability to go where the law cannot.",
+        "base_type": "rogue",
+        "hit_die": "d8",
+        "primary_ability": "Intelligence",
+        "saving_throws": [
+          "Dexterity",
+          "Intelligence"
+        ],
+        "skill_choices": [
+          "Investigation",
+          "Insight",
+          "Perception",
+          "Stealth",
+          "Deception",
+          "Sleight of Hand"
+        ],
+        "num_skill_choices": 4,
+        "armor_proficiencies": [
+          "Light armor"
+        ],
+        "weapon_proficiencies": [
+          "Simple weapons",
+          "Daggers",
+          "Swordcanes",
+          "Hand crossbows"
+        ],
+        "starting_equipment": [
+          "Magnifying loupe",
+          "Leather notebook",
+          "Disguise kit",
+          "Lock picks",
+          "Swordcane"
+        ],
+        "features": [
+          {
+            "name": "Keen Deduction",
+            "description": "Your eye for detail is unmatched. You gain advantage on Investigation checks to examine crime scenes, physical evidence, or documents. When you study a scene, you notice details others overlook."
+          },
+          {
+            "name": "Master of Disguise",
+            "description": "You can spend 10 minutes to adopt a convincing disguise, allowing you to move through social spaces your class or reputation would not normally permit. Creatures must succeed on a Wisdom (Insight) check contested by your Charisma (Deception) to see through it."
+          }
+        ]
+      }
+    ],
+    "setting_skills": [
+      {
+        "id": "forensic_analysis",
+        "name": "Forensic Analysis",
+        "base_skill": "Investigation",
+        "description": "Examining physical evidence, crime scenes, and autopsy findings to extract meaningful conclusions. The science of reading what the dead and the damaged have to tell."
+      },
+      {
+        "id": "criminal_psychology",
+        "name": "Criminal Psychology",
+        "base_skill": "Insight",
+        "description": "Understanding the behavioral patterns, motivations, and methodology of criminals. Reading the mind behind the crime — not what happened, but why."
+      },
+      {
+        "id": "underworld_contacts",
+        "name": "Underworld Contacts",
+        "base_skill": "Persuasion",
+        "description": "Navigating London's criminal underworld to extract information, make deals, or find people who do not want to be found. Knowing who to ask and what it will cost."
+      },
+      {
+        "id": "victorian_etiquette",
+        "name": "Victorian Etiquette",
+        "base_skill": "History",
+        "description": "Navigating the rigid social hierarchies of Victorian London. Knowing which doors open with a title, which require a bribe, and which will never open at all."
+      }
+    ]
+  }
+}
