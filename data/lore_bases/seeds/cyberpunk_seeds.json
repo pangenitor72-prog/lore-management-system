@@ -299,16 +299,28 @@
     ],
     "setting_skills": [
       {
-        "id": "streetwise",
-        "name": "Streetwise",
-        "base_skill": "Insight",
-        "description": "Knowledge of the urban underground and its inhabitants."
-      },
-      {
         "id": "hacking",
         "name": "Hacking",
         "base_skill": "Arcana",
-        "description": "Understanding of code and networks; used to gain access to and manipulate systems."
+        "description": "Penetrating ICE, navigating the NET, and manipulating digital systems. The difference between a script kiddie and a real netrunner."
+      },
+      {
+        "id": "chrome_knowledge",
+        "name": "Chrome Knowledge",
+        "base_skill": "Medicine",
+        "description": "Understanding cybernetic implants — compatibility, installation risks, rejection symptoms, and the psychological toll of replacing too much flesh with metal."
+      },
+      {
+        "id": "corporate_espionage",
+        "name": "Corporate Espionage",
+        "base_skill": "Deception",
+        "description": "Infiltrating corporate structures, extracting data, and navigating the shadow war between megacorps. Knowing which corps are hiring, which are purging, and which are about to go hot."
+      },
+      {
+        "id": "street_deals",
+        "name": "Street Deals",
+        "base_skill": "Insight",
+        "description": "Reading the underground economy of Neo-Tokyo — black market prices, fixer reputations, gang territory, and the unwritten rules that keep the Stacks from tearing themselves apart."
       }
     ],
     "ai_generated": true,

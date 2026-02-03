@@ -271,10 +271,28 @@
     ],
     "setting_skills": [
       {
-        "id": "streetwise",
-        "name": "Streetwise",
-        "base_skill": "Insight",
-        "description": "Knowledge of the urban underground and criminal element"
+        "id": "supernatural_politics",
+        "name": "Supernatural Politics",
+        "base_skill": "Persuasion",
+        "description": "Navigating the power structures, debts, and rivalries between immortal factions. Knowing who holds domain, who owes whom, and where the alliances fracture."
+      },
+      {
+        "id": "blood_lore",
+        "name": "Blood Lore",
+        "base_skill": "Arcana",
+        "description": "Knowledge of vampiric bloodlines, lycanthropic traditions, and the occult mechanics of undeath. Understanding what each lineage can do and what it costs them."
+      },
+      {
+        "id": "the_masquerade",
+        "name": "Maintaining the Masquerade",
+        "base_skill": "Deception",
+        "description": "The art of keeping the supernatural hidden from mortal eyes. Covering up incidents, crafting plausible explanations, and detecting when others have blown their cover."
+      },
+      {
+        "id": "shadow_geography",
+        "name": "Shadow Geography",
+        "base_skill": "Survival",
+        "description": "Navigating the city's hidden supernatural landscape — hunting grounds, spirit-scarred territories, safe havens, and the places where the boundary between worlds runs thin."
       }
     ],
     "ai_generated": true,

@@ -302,10 +302,28 @@
     ],
     "setting_skills": [
       {
-        "id": "streetwise",
-        "name": "Streetwise",
+        "id": "gilded_age_society",
+        "name": "Gilded Age Society",
+        "base_skill": "Persuasion",
+        "description": "Navigating the intricate social rules of New York's upper class — calling cards, ballroom etiquette, and the unspoken codes that determine who is received and who is shunned."
+      },
+      {
+        "id": "labor_organizing",
+        "name": "Labor Organizing",
+        "base_skill": "Intimidation",
+        "description": "Rallying workers, coordinating strikes, and navigating the dangerous politics of the labor movement without getting beaten, arrested, or both."
+      },
+      {
+        "id": "machine_politics",
+        "name": "Machine Politics",
         "base_skill": "Insight",
-        "description": "Knowledge of the urban underground and ability to read people's intentions."
+        "description": "Understanding the corrupt political machinery of Tammany Hall. Knowing which officials can be bought, which can be pressured, and which are genuinely dangerous."
+      },
+      {
+        "id": "tenement_life",
+        "name": "Tenement Life",
+        "base_skill": "Survival",
+        "description": "Surviving and navigating the overcrowded, disease-ridden tenements of the Lower East Side. Knowing which buildings are safe, where to find help, and how immigrant communities protect their own."
       }
     ],
     "ai_generated": true,

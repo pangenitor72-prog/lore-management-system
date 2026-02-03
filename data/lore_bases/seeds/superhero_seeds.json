@@ -313,13 +313,25 @@
         "id": "technology",
         "name": "Technology",
         "base_skill": "Investigation",
-        "description": "Knowledge of computer systems, hardware, and digital devices."
+        "description": "Knowledge of advanced tech systems, gadget engineering, and the digital infrastructure that connects Titan City. From Sentinel Tower's mainframe to Syndicate comm channels."
       },
       {
-        "id": "streetwise",
-        "name": "Streetwise",
+        "id": "metahuman_knowledge",
+        "name": "Metahuman Knowledge",
+        "base_skill": "Arcana",
+        "description": "Understanding the origins, capabilities, and weaknesses of super-powered beings — from cosmic entities to street-level mutants. Knowing what a power set can and cannot do."
+      },
+      {
+        "id": "hero_culture",
+        "name": "Hero Culture",
+        "base_skill": "History",
+        "description": "Knowledge of Titan City's heroic legacy — the Champions' history, villain profiles, the unwritten code between heroes, and the sixty-year lineage of those who have worn a mask."
+      },
+      {
+        "id": "the_hollows",
+        "name": "The Hollows",
         "base_skill": "Insight",
-        "description": "Knowledge of the urban underground and its inhabitants."
+        "description": "Understanding the impoverished district the Champions overlook. Reading its people, navigating its dangers, and knowing the difference between those who need help and those who exploit the powerless."
       }
     ],
     "ai_generated": true,

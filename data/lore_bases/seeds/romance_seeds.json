@@ -309,16 +309,28 @@
     ],
     "setting_skills": [
       {
-        "id": "streetwise",
-        "name": "Streetwise",
-        "base_skill": "Insight",
-        "description": "Knowledge of the urban underground."
-      },
-      {
         "id": "teaching",
         "name": "Teaching",
         "base_skill": "Persuasion",
-        "description": "Effectively communicating information and concepts."
+        "description": "Effectively communicating complex ideas, mentoring students, and commanding a classroom. The skill that separates a brilliant mind from a brilliant educator."
+      },
+      {
+        "id": "academic_politics",
+        "name": "Academic Politics",
+        "base_skill": "Insight",
+        "description": "Navigating tenure committees, departmental rivalries, grant competitions, and the unspoken hierarchies that determine who rises and who is quietly sidelined."
+      },
+      {
+        "id": "social_dynamics",
+        "name": "Social Dynamics",
+        "base_skill": "Perception",
+        "description": "Reading romantic interest, managing interpersonal tension, and understanding the complex web of relationships, rivalries, and unspoken feelings that defines campus life."
+      },
+      {
+        "id": "campus_lore",
+        "name": "Campus Lore",
+        "base_skill": "History",
+        "description": "Knowledge of Avalon's traditions, secret societies, campus legends, and the stories that define the university's culture. Every building has a history, and every history has a scandal."
       }
     ],
     "ai_generated": true,

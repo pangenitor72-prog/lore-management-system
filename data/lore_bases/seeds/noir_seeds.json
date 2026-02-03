@@ -322,10 +322,28 @@
     ],
     "setting_skills": [
       {
-        "id": "streetwise",
-        "name": "Streetwise",
+        "id": "studio_politics",
+        "name": "Studio Politics",
         "base_skill": "Insight",
-        "description": "Knowledge of the urban underground; information on gangs, informants, and the criminal element."
+        "description": "Understanding Hollywood's power dynamics — who controls which studio, who owes whom, what scandals are being buried, and whose career is one photograph away from ruin."
+      },
+      {
+        "id": "mob_connections",
+        "name": "Mob Connections",
+        "base_skill": "Persuasion",
+        "description": "Navigating organized crime networks. Knowing who to approach in the Marcone family, what debts are owed, and the etiquette that keeps you from ending up in the river."
+      },
+      {
+        "id": "lapd_politics",
+        "name": "LAPD Politics",
+        "base_skill": "Investigation",
+        "description": "Knowing which cops are clean, which are bought, and how to work the department's internal politics. Understanding what gets buried, what gets leaked, and who decides."
+      },
+      {
+        "id": "the_jazz_circuit",
+        "name": "The Jazz Circuit",
+        "base_skill": "Performance",
+        "description": "Access to Central Avenue's jazz scene, where secrets flow as freely as the music. The clubs operate across the color line, creating both barriers and hiding places for those who know the scene."
       }
     ],
     "ai_generated": true,

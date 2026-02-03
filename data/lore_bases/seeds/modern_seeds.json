@@ -279,10 +279,28 @@
     ],
     "setting_skills": [
       {
-        "id": "streetwise",
-        "name": "Streetwise",
+        "id": "city_politics",
+        "name": "City Politics",
+        "base_skill": "Persuasion",
+        "description": "Understanding Chicago's layered power structures — aldermen, unions, gang territories, and police districts. Knowing who really controls what and where the pressure points are."
+      },
+      {
+        "id": "forensic_awareness",
+        "name": "Forensic Awareness",
+        "base_skill": "Investigation",
+        "description": "Knowledge of modern forensic techniques, crime scene procedure, and digital evidence. Understanding what the police can find and how to use or avoid that process."
+      },
+      {
+        "id": "neighborhood_knowledge",
+        "name": "Neighborhood Knowledge",
         "base_skill": "Insight",
-        "description": "Knowledge of the urban underground, knowing who to trust and where to find information."
+        "description": "Reading the social dynamics of Chicago's neighborhoods — turf boundaries, community trust, and the unwritten rules that determine who belongs and who is an outsider."
+      },
+      {
+        "id": "media_savvy",
+        "name": "Media Savvy",
+        "base_skill": "Deception",
+        "description": "Managing public perception, working with or manipulating the press, and understanding how information spreads in a modern city — from newsrooms to social media."
       }
     ],
     "ai_generated": true,

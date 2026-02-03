@@ -280,10 +280,28 @@
     ],
     "setting_skills": [
       {
-        "id": "streetwise",
-        "name": "Streetwise",
+        "id": "eldritch_lore",
+        "name": "Eldritch Lore",
+        "base_skill": "Arcana",
+        "description": "Knowledge of cosmic entities, forbidden texts, and the rituals that connect Ravenhollow to forces beyond human comprehension. Understanding what should not be understood."
+      },
+      {
+        "id": "town_secrets",
+        "name": "Town Secrets",
         "base_skill": "Insight",
-        "description": "Knowledge of the urban underground and ability to read people."
+        "description": "Reading the unspoken histories and hidden connections between Ravenhollow's families, institutions, and buried past. Knowing which silences are protective and which are guilty."
+      },
+      {
+        "id": "mental_fortitude",
+        "name": "Mental Fortitude",
+        "base_skill": "Medicine",
+        "description": "Techniques for maintaining psychological stability when confronted with truths the human mind was not designed to process. Recognizing the signs of cosmic madness in yourself and others."
+      },
+      {
+        "id": "occult_investigation",
+        "name": "Occult Investigation",
+        "base_skill": "Investigation",
+        "description": "Investigating supernatural phenomena — reading signs and omens, connecting mundane evidence to otherworldly causes, and knowing when a clue points beyond the natural world."
       }
     ],
     "ai_generated": true,
