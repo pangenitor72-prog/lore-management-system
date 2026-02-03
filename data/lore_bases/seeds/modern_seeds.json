@@ -3,6 +3,7 @@
   "name": "City Shadows",
   "description": "Contemporary Chicago, where ordinary people face extraordinary challenges in their daily lives.",
   "genre": "modern",
+  "mechanics_genre": "modern",
   "genre_hints": [
     "modern",
     "drama",

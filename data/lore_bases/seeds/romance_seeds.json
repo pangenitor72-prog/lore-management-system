@@ -3,6 +3,7 @@
   "name": "Hearts of Avalon",
   "description": "A prestigious university town where passion and ambition intertwine among students and faculty.",
   "genre": "romance",
+  "mechanics_genre": "modern",
   "genre_hints": [
     "romance",
     "drama",

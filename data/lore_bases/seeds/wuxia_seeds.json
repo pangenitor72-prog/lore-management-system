@@ -3,6 +3,7 @@
   "name": "The Jade Kingdom",
   "description": "Ancient China, where martial arts masters walk among clouds and honor means more than life.",
   "genre": "wuxia",
+  "mechanics_genre": "fantasy",
   "genre_hints": [
     "wuxia",
     "adventure",

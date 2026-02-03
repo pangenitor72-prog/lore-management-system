@@ -3,6 +3,7 @@
   "name": "The Lost Expedition",
   "description": "1925. A team of explorers ventures into an uncharted jungle searching for a legendary lost city.",
   "genre": "adventure",
+  "mechanics_genre": "fantasy",
   "genre_hints": [
     "adventure",
     "mystery",

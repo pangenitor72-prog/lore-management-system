@@ -3,6 +3,7 @@
   "name": "City of Angles",
   "description": "Los Angeles, 1947. The war is over, but the shadows are just beginning.",
   "genre": "noir",
+  "mechanics_genre": "modern",
   "genre_hints": [
     "noir",
     "mystery",

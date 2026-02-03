@@ -3,6 +3,7 @@
   "name": "The Shattered Kingdoms",
   "description": "A realm fractured by an ancient war. Noble houses vie for power while darker forces stir in the shadows.",
   "genre": "fantasy",
+  "mechanics_genre": "fantasy",
   "genre_hints": [
     "fantasy",
     "adventure",

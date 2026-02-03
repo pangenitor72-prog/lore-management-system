@@ -3,6 +3,7 @@
   "name": "Titan City",
   "description": "A metropolis where superheroes and villains clash, and ordinary people live in the shadow of gods.",
   "genre": "superhero",
+  "mechanics_genre": "scifi",
   "genre_hints": [
     "superhero",
     "action",

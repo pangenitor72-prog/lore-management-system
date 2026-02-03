@@ -3,6 +3,7 @@
   "name": "Thornwood Chronicles",
   "description": "A mystical forest where fey courts hold sway. Ancient pacts, forbidden love, and the boundaries between worlds grow thin.",
   "genre": "fantasy",
+  "mechanics_genre": "fantasy",
   "genre_hints": [
     "fantasy",
     "romance",

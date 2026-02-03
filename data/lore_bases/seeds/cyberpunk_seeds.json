@@ -3,6 +3,7 @@
   "name": "Neon Shadows",
   "description": "Neo-Tokyo 2087. Megacorporations rule, hackers rebel, and chrome is the only way to survive.",
   "genre": "cyberpunk",
+  "mechanics_genre": "scifi",
   "genre_hints": [
     "cyberpunk",
     "thriller",

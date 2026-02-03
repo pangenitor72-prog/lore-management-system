@@ -3,6 +3,7 @@
   "name": "Gilded Shadows",
   "description": "New York, 1889. The Gilded Age glitters with wealth and ambition while the underclass struggles in darkness.",
   "genre": "historical",
+  "mechanics_genre": "modern",
   "genre_hints": [
     "historical",
     "drama",

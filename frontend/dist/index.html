@@ -8451,32 +8451,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             <div class="setup-section">
                 <h3>Choose Your World</h3>
                 <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    Pick a ready-to-play world, or select a genre
+                    Each world has its own characters, skills, and story hooks
                 </p>
 
                 <!-- Curated Worlds (loaded from API) -->
                 <div id="ttrpg-curated-worlds" class="curated-worlds-grid" style="margin-bottom: 20px;">
                     <!-- Populated by JS -->
-                </div>
-
-                <!-- Genre chips -->
-                <div class="tone-options" style="margin-bottom: 10px;">
-                    <span class="tone-chip ttrpg-genre-chip selected" data-ttrpg-genre="fantasy" onclick="selectTTRPGGenre('fantasy')">⚔️ Fantasy</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="scifi" onclick="selectTTRPGGenre('scifi')">🚀 Sci-Fi</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="horror" onclick="selectTTRPGGenre('horror')">👻 Horror</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="modern" onclick="selectTTRPGGenre('modern')">🏙️ Modern</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="western" onclick="selectTTRPGGenre('western')">🤠 Western</span>
-                </div>
-                <div class="tone-options" style="margin-bottom: 10px;">
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="mystery" onclick="selectTTRPGGenre('mystery')">🔍 Mystery</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="adventure" onclick="selectTTRPGGenre('adventure')">🗺️ Adventure</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="noir" onclick="selectTTRPGGenre('noir')">🌃 Noir</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="mythology" onclick="selectTTRPGGenre('mythology')">🏛️ Mythology</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="wuxia" onclick="selectTTRPGGenre('wuxia')">🥋 Wuxia</span>
-                </div>
-                <div class="tone-options" style="margin-bottom: 15px;">
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="urban_fantasy" onclick="selectTTRPGGenre('urban_fantasy')">🔮 Urban Fantasy</span>
-                    <span class="tone-chip ttrpg-genre-chip" data-ttrpg-genre="gothic" onclick="selectTTRPGGenre('gothic')">🦇 Gothic</span>
                 </div>
             </div>
 
@@ -9358,6 +9338,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             'drama': 'modern',
             'western': 'modern',
             'urban_fantasy': 'modern',  // Modern setting with magic
+            'thriller': 'modern',
+            'historical': 'modern',
             // Horror-based
             'horror': 'horror',
             'postapoc': 'horror',
@@ -9422,7 +9404,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let currentWorldGenre = 'fantasy';  // Track current world's genre for equipment selection
 
         // TTRPG Mode State
-        let ttrpgGenre = 'fantasy';
         let ttrpgCreationMode = 'guided';  // Changed default from 'concept' to 'guided'
         let ttrpgVisibility = 'classic';
         let selectedTTRPGWorld = null;
@@ -9890,14 +9871,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // TTRPG Mode Flow - D&D rules enabled by default
         function ttrpgModeFlow() {
             // Reset TTRPG state to match UI defaults
-            ttrpgGenre = 'fantasy';
             ttrpgCreationMode = 'guided';
             ttrpgVisibility = 'classic';
             selectedTTRPGWorld = null;
 
             // Reset UI selection state to match defaults
-            document.querySelectorAll('.ttrpg-genre-chip').forEach(c => c.classList.remove('selected'));
-            document.querySelector('[data-ttrpg-genre="fantasy"]')?.classList.add('selected');
             document.querySelectorAll('.creation-chip').forEach(c => c.classList.remove('selected'));
             document.querySelector('[data-creation="guided"]')?.classList.add('selected');
             document.querySelectorAll('.visibility-chip').forEach(c => c.classList.remove('selected'));
@@ -9967,23 +9945,17 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.querySelectorAll('#ttrpg-curated-worlds .curated-world-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            // Deselect all genre chips when a world is selected
-            document.querySelectorAll('.ttrpg-genre-chip').forEach(chip => {
-                chip.classList.remove('selected');
-            });
 
             // Select this world
             element.classList.add('selected');
             selectedTTRPGWorld = worldId;
-            ttrpgGenre = null;  // Clear genre when world is selected
 
             // CRITICAL: World's mechanics_genre determines character creation options
             const world = ttrpgLoadedWorlds.find(w => w.id === worldId);
-            if (world && world.mechanics_genre) {
-                rulesGenre = getRulesGenre(world.mechanics_genre);
-                selectedGenre = world.mechanics_genre;
-                console.log('[TTRPG World] Selected:', world.name, '| mechanics_genre:', world.mechanics_genre, '-> rulesGenre:', rulesGenre);
-            }
+            const worldGenre = world?.mechanics_genre || world?.genre || 'fantasy';
+            rulesGenre = getRulesGenre(worldGenre);
+            selectedGenre = worldGenre;
+            console.log('[TTRPG World] Selected:', world?.name, '| genre:', worldGenre, '-> rulesGenre:', rulesGenre);
         }
 
         // Quick Play - start game immediately with selected genre
@@ -10009,21 +9981,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             await beginStory();
         }
 
-        // TTRPG Genre Selection
-        function selectTTRPGGenre(genre) {
-            ttrpgGenre = genre;
-            selectedTTRPGWorld = null;  // Clear world selection when genre is selected
-
-            // Deselect all curated worlds
-            document.querySelectorAll('#ttrpg-curated-worlds .curated-world-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-
-            // Update genre chip selection
-            document.querySelectorAll('.ttrpg-genre-chip').forEach(c => c.classList.remove('selected'));
-            document.querySelector(`[data-ttrpg-genre="${genre}"]`)?.classList.add('selected');
-        }
-
         // TTRPG Creation Mode Selection
         function selectCreationMode(mode) {
             ttrpgCreationMode = mode;
@@ -10042,12 +9999,21 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         async function beginTTRPGStory() {
             const concept = document.getElementById('ttrpg-character-concept')?.value?.trim() || '';
 
-            // Use selected world or fall back to genre (default to 'fantasy' if neither selected)
-            const effectiveGenre = ttrpgGenre || 'fantasy';
+            // Derive genre from the selected world's mechanics_genre
+            let effectiveGenre = 'fantasy';  // fallback
+            if (selectedTTRPGWorld) {
+                const world = ttrpgLoadedWorlds.find(w => w.id === selectedTTRPGWorld);
+                if (world && world.mechanics_genre) {
+                    effectiveGenre = world.mechanics_genre;
+                } else if (world && world.genre) {
+                    effectiveGenre = world.genre;
+                }
+            }
 
             console.log('[TTRPG] Starting with:', {
                 ttrpgCreationMode,
-                ttrpgGenre,
+                selectedTTRPGWorld,
+                effectiveGenre,
                 ttrpgVisibility,
                 concept
             });
@@ -10058,12 +10024,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             selectedTone = 'dramatic';
             selectedStyle = 'guided';
             rulesMode = 'dnd';
-            rulesGenre = effectiveGenre;
+            rulesGenre = getRulesGenre(effectiveGenre);
             rulesVisibility = ttrpgVisibility;
             creationMode = ttrpgCreationMode;
             sessionScope = 'medium';
 
-            console.log('[TTRPG] creationMode set to:', creationMode);
+            console.log('[TTRPG] creationMode set to:', creationMode, '| rulesGenre:', rulesGenre);
 
             // If a curated world is selected, use it
             if (selectedTTRPGWorld) {

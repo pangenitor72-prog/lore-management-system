@@ -3,6 +3,7 @@
   "name": "Ash and Dust",
   "description": "Fifty years after the Fall, survivors build new societies in the ruins of the old world.",
   "genre": "postapoc",
+  "mechanics_genre": "horror",
   "genre_hints": [
     "postapoc",
     "adventure",

@@ -3,6 +3,7 @@
   "name": "Shadow Protocol",
   "description": "A web of espionage and betrayal spanning from Washington to Moscow.",
   "genre": "thriller",
+  "mechanics_genre": "modern",
   "genre_hints": [
     "thriller",
     "drama",

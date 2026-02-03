@@ -3,6 +3,7 @@
   "name": "Whispers Beneath Ravenhollow",
   "description": "A sleepy New England town harbors cosmic horrors that have slumbered for millennia.",
   "genre": "horror",
+  "mechanics_genre": "horror",
   "genre_hints": [
     "horror",
     "mystery",

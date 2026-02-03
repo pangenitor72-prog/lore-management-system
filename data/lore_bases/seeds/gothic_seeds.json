@@ -3,6 +3,7 @@
   "name": "City of Night",
   "description": "Vampires, werewolves, and darker things rule the shadows of a gothic metropolis. The great secret keeps mortals blind to the monsters among them.",
   "genre": "gothic",
+  "mechanics_genre": "horror",
   "genre_hints": [
     "gothic",
     "horror",

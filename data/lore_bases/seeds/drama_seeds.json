@@ -3,6 +3,7 @@
   "name": "Autumn Falls",
   "description": "A small Vermont town where three generations of a family gather for a wedding that will change everything.",
   "genre": "drama",
+  "mechanics_genre": "modern",
   "genre_hints": [
     "drama",
     "romance",

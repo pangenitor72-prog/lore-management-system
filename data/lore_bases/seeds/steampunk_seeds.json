@@ -3,6 +3,7 @@
   "name": "The Clockwork Empire",
   "description": "An alternate Victorian Britain where steam power and impossible science have created wonders and terrors.",
   "genre": "steampunk",
+  "mechanics_genre": "scifi",
   "genre_hints": [
     "steampunk",
     "adventure",

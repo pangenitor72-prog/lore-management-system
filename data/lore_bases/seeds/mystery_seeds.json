@@ -3,6 +3,7 @@
   "name": "Raven's Crossing",
   "description": "A coastal New England town where generations of secrets are buried beneath the surface.",
   "genre": "mystery",
+  "mechanics_genre": "modern",
   "genre_hints": [
     "mystery",
     "drama",

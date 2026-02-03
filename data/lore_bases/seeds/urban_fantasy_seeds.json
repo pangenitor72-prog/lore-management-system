@@ -3,6 +3,7 @@
   "name": "The Veiled City",
   "description": "Magic hides in plain sight in a modern metropolis. Wizards, fae, and monsters walk among the unknowing mortals.",
   "genre": "urban_fantasy",
+  "mechanics_genre": "modern",
   "genre_hints": [
     "urban_fantasy",
     "mystery",

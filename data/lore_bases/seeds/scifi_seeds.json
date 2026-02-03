@@ -3,6 +3,7 @@
   "name": "The Stellar Frontier",
   "description": "Humanity has spread across the stars, but ancient alien ruins hold secrets that could change everything.",
   "genre": "scifi",
+  "mechanics_genre": "scifi",
   "genre_hints": [
     "scifi",
     "adventure",

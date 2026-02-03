@@ -3,6 +3,7 @@
   "name": "The Age of Heroes",
   "description": "Ancient Greece, where gods walk among mortals and heroes undertake legendary quests.",
   "genre": "mythology",
+  "mechanics_genre": "fantasy",
   "genre_hints": [
     "mythology",
     "adventure",

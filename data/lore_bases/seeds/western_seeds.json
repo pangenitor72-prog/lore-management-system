@@ -3,6 +3,7 @@
   "name": "Frontier Justice",
   "description": "The Arizona Territory in 1882, where law is scarce and justice comes from the barrel of a gun.",
   "genre": "western",
+  "mechanics_genre": "western",
   "genre_hints": [
     "western",
     "adventure",
