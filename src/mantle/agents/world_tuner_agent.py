@@ -40,16 +40,16 @@ class WorldTunerAgent:
     """
 
     SYSTEM_PROMPT = """You are a World Tuner assistant helping game admins configure their RPG world. You help define:
-- **Origins** (races/species) - playable character backgrounds that map to D&D base types
-- **Archetypes** (classes) - character roles that map to D&D base classes
+- **Origins** (races/species) - playable character backgrounds that map to base types
+- **Archetypes** (classes) - character roles that map to base classes, each with setting-specific powers
 - **Setting Skills** - world-specific skills
 - **World Characteristics** - tech level, magic level, tone
 
 ## MANTLE Translation System
-All origins must map to a D&D 5e base type for mechanics:
+All origins must map to a base type for mechanics:
 - human, elf, dwarf, halfling, gnome, half-elf, half-orc, tiefling, dragonborn
 
-All archetypes must map to a D&D 5e base class:
+All archetypes must map to a base class:
 - fighter, rogue, wizard, cleric, ranger, barbarian, paladin, bard, monk, warlock, sorcerer, druid
 
 ## Rules
@@ -59,6 +59,8 @@ All archetypes must map to a D&D 5e base class:
 4. Be conversational and helpful, not robotic
 5. Ask clarifying questions when intent is unclear
 6. Suggest related options when appropriate ("Since you added goblins, want a Goblin Shaman class?")
+7. ALL archetypes must have powers - martial AND caster types alike
+8. Powers should be setting-flavored, not generic spell names - a pirate fighter gets "Boarding Rush", not "Action Surge"
 
 ## Response Format
 When proposing changes, include a JSON block in your response:
@@ -81,9 +83,48 @@ For ORIGINS, data should include:
 
 For ARCHETYPES, data should include:
 - id, name, description, base_type, hit_die, primary_ability, saving_throws, skill_choices, num_skill_choices, armor_proficiencies, weapon_proficiencies, starting_equipment, features
+- has_powers: true (always include this)
+- powers: object containing the archetype's setting-specific abilities (see Powers section below)
 
 For SKILLS, data should include:
 - id, name, base_skill, description
+
+## Powers System
+Every archetype MUST have a `powers` object. Powers replace generic spells with setting-appropriate abilities. Both martial and caster archetypes get powers.
+
+Powers structure:
+```json
+{
+  "has_powers": true,
+  "powers": {
+    "cantrips": [
+      {"id": "snake_case_id", "name": "Display Name", "category": "Category", "description": "One sentence."}
+    ],
+    "abilities": [
+      {"id": "snake_case_id", "name": "Display Name", "category": "Category", "description": "One sentence."}
+    ],
+    "num_cantrips": 3,
+    "num_abilities": 2,
+    "cantrip_label": "Setting-Appropriate Label",
+    "ability_label": "Setting-Appropriate Label",
+    "cantrip_hint": "Short hint explaining minor abilities.",
+    "ability_hint": "Short hint explaining major abilities."
+  }
+}
+```
+
+- Provide 5 cantrips (player picks 3) and 5 abilities (player picks 2)
+- `cantrips` = minor, at-will abilities. For fighters: combat tricks. For wizards: minor magic.
+- `abilities` = major, limited-use abilities. For fighters: devastating maneuvers. For wizards: powerful spells.
+- Labels should fit the world's tone. Examples by setting:
+  - Pirate: "Tricks" / "Techniques"
+  - Noir: "Tricks" / "Powers"
+  - Steampunk: "Knacks" / "Maneuvers"
+  - Post-apocalyptic: "Knacks" / "Gifts"
+  - Espionage: "Tradecraft" / "Gambits"
+  - Fantasy: "Cantrips" / "Spells"
+- Categories should fit the setting (e.g., "Combat", "Occult", "Survival", "Leadership", not generic "Evocation")
+- Each description should be one evocative sentence implying mechanical effect
 
 If you're just having a conversation (greeting, asking questions, explaining), don't include the JSON block."""
 
@@ -92,10 +133,9 @@ If you're just having a conversation (greeting, asking questions, explaining), d
         Initialize the World Tuner Agent.
 
         Args:
-            api_key: Gemini API key (falls back to env vars)
             model_name: Gemini model to use
         """
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self.model_name = model_name
 
         # Configure Gemini
@@ -174,6 +214,7 @@ If you're just having a conversation (greeting, asking questions, explaining), d
         # Format world context
         world_name = world_context.get("name", "Unknown World")
         genre = world_context.get("genre", "fantasy")
+        mechanics_genre = world_context.get("mechanics_genre", genre)
         description = world_context.get("description", "")
 
         char_opts = world_context.get("character_options", {})
@@ -181,9 +222,23 @@ If you're just having a conversation (greeting, asking questions, explaining), d
         archetypes = char_opts.get("archetypes", [])
         skills = char_opts.get("setting_skills", [])
 
-        # Summarize current options
-        origins_summary = ", ".join([o.get("name", "?") for o in origins]) if origins else "None defined"
-        archetypes_summary = ", ".join([a.get("name", "?") for a in archetypes]) if archetypes else "None defined"
+        # Summarize current options with detail
+        origins_summary = ", ".join([f"{o.get('name', '?')} ({o.get('base_type', '?')})" for o in origins]) if origins else "None defined"
+
+        # Show archetype details including powers status
+        arch_parts = []
+        for a in archetypes:
+            name = a.get("name", "?")
+            base = a.get("base_type", "?")
+            powers = a.get("powers", {})
+            n_cantrips = len(powers.get("cantrips", []))
+            n_abilities = len(powers.get("abilities", []))
+            if n_cantrips > 0 or n_abilities > 0:
+                arch_parts.append(f"{name} ({base}, {n_cantrips}+{n_abilities} powers)")
+            else:
+                arch_parts.append(f"{name} ({base}, NO POWERS)")
+        archetypes_summary = ", ".join(arch_parts) if arch_parts else "None defined"
+
         skills_summary = ", ".join([s.get("name", "?") for s in skills]) if skills else "None defined"
 
         world_characteristics = world_context.get("world_characteristics", {})
@@ -194,6 +249,7 @@ If you're just having a conversation (greeting, asking questions, explaining), d
 === WORLD CONTEXT ===
 World: {world_name}
 Genre: {genre}
+Mechanics Genre: {mechanics_genre}
 Description: {description[:500] if description else 'No description'}
 
 Tech Level: {tech_level}
@@ -202,6 +258,8 @@ Magic Level: {magic_level}
 Current Origins: {origins_summary}
 Current Archetypes: {archetypes_summary}
 Current Skills: {skills_summary}
+
+Note: Archetypes marked "NO POWERS" need powers added. You can suggest adding powers to existing archetypes.
 """
 
         # Format conversation history
@@ -347,14 +405,14 @@ If they're just chatting or asking questions, respond conversationally without J
 
 I can help you configure:
 - **Origins** - The playable races/species in your world
-- **Archetypes** - The character classes and roles
+- **Archetypes** - Character classes, each with unique setting-specific powers
+- **Powers** - The abilities players choose during character creation
 - **Skills** - World-specific abilities
-- **World traits** - Tech level, magic, tone
 
 What would you like to adjust? You can say things like:
 - "Add a vampire race that's aristocratic"
-- "I want a steampunk inventor class"
-- "Remove firearms from this world"
-- "What origins do we have?"
+- "I want a steampunk inventor class with gadget powers"
+- "Add powers to the Detective archetype"
+- "What archetypes do we have and do they have powers?"
 
 Just tell me your vision and I'll propose changes for your approval."""

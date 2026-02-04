@@ -19839,9 +19839,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     const data = await res.json();
                     const opts = data.character_options || {};
 
-                    document.getElementById('wt-origins-count').textContent = (opts.origins || []).length;
-                    document.getElementById('wt-archetypes-count').textContent = (opts.archetypes || []).length;
-                    document.getElementById('wt-skills-count').textContent = (opts.setting_skills || []).length;
+                    const origins = opts.origins || [];
+                    const archetypes = opts.archetypes || [];
+                    const skills = opts.setting_skills || [];
+                    const withPowers = archetypes.filter(a => a.has_powers || (a.powers && (a.powers.cantrips?.length > 0 || a.powers.abilities?.length > 0))).length;
+
+                    document.getElementById('wt-origins-count').textContent = origins.length;
+                    document.getElementById('wt-archetypes-count').textContent = withPowers === archetypes.length && archetypes.length > 0
+                        ? `${archetypes.length} (all have powers)`
+                        : withPowers > 0
+                            ? `${archetypes.length} (${withPowers} with powers)`
+                            : archetypes.length;
+                    document.getElementById('wt-skills-count').textContent = skills.length;
 
                     // Get genre from worldManagerData
                     const world = worldManagerData?.worlds?.find(w => w.id === wtCurrentWorldId);
@@ -20015,7 +20024,13 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                     ${data.ability_bonuses ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Bonuses: <span style="color: var(--text-primary);">${formatAbilityBonuses(data.ability_bonuses)}</span></div>` : ''}
 
-                    ${data.traits && data.traits.length > 0 ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Traits: <span style="color: var(--text-primary);">${data.traits.length}</span></div>` : ''}
+                    ${data.traits && data.traits.length > 0 ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Traits: <span style="color: var(--text-primary);">${data.traits.length}</span></div>` : ''}
+
+                    ${data.features && data.features.length > 0 ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">Features: <span style="color: var(--text-primary);">${data.features.length}</span></div>` : ''}
+
+                    ${data.powers ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+                        Powers: <span style="color: var(--text-primary);">${(data.powers.cantrips || []).length} ${data.powers.cantrip_label || 'minor'} + ${(data.powers.abilities || []).length} ${data.powers.ability_label || 'major'}</span>
+                    </div>` : ''}
 
                     <div style="display: flex; gap: 8px; margin-top: 12px;">
                         <button onclick="approveProposal(${index})" style="flex: 1; padding: 8px 12px; background: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">

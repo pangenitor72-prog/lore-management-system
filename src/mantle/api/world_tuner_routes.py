@@ -57,6 +57,7 @@ async def world_tuner_chat(
         "id": lore_id,
         "name": base.get("name", lore_id),
         "genre": base.get("genre", "fantasy"),
+        "mechanics_genre": base.get("mechanics_genre", base.get("genre", "fantasy")),
         "description": base.get("description", ""),
         "character_options": base.get("character_options", {}),
         "world_characteristics": base.get("world_characteristics", {})
