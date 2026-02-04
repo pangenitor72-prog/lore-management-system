@@ -7674,7 +7674,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleAdminChangelog()">
                     <h3 style="color: #22c55e; margin: 0; display: flex; align-items: center; gap: 10px;">
                         <span>🆕</span> New Admin Features
-                        <span id="admin-changelog-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">3 NEW</span>
+                        <span id="admin-changelog-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">5 NEW</span>
                     </h3>
                     <span id="admin-changelog-arrow" style="font-size: 1.2rem; transition: transform 0.2s;">▼</span>
                 </div>
@@ -7682,28 +7682,68 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                     <!-- Most recent first -->
                     <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <strong style="color: var(--text-primary);">Setting-Specific Abilities</strong>
+                            <strong style="color: var(--text-primary);">Creation Pipeline Connected</strong>
                             <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Player choices during character creation (powers, equipment, background, concept) now flow all the way through to the backend and into the DM's context. The DM reads your backstory, abilities, and build every turn.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">Journal &amp; Discoveries</strong>
+                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Non-physical narrative acquisitions (clues, secrets, lore) now tracked in a Journal section inside the inventory panel. Genre-aware labels: "Case File" for horror, "Rumors &amp; Charts" for pirate, "Mission Intel" for sci-fi. DM sees your journal and can reference it.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">Inventory Cleanup</strong>
+                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Inventory no longer includes abstract concepts like "clear skies" or "ancient knowledge." Backend filters non-physical nouns; frontend requires whitelist match. Structured tags stripped from displayed narrative.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">Code Audit</strong>
+                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Removed orphaned code, fixed genre-unsafe dictionary lookups that could crash on non-fantasy worlds, cleaned dead frontend references, and eliminated duplicate function definitions.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-lavender);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">Setting-Specific Abilities</strong>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Feb 2026</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
                             Character creation now shows world-appropriate abilities instead of generic D&D spells. Every archetype (martial and caster alike) has unique minor and major abilities drawn from the world's lore. 350 custom powers across the 7 new hybrid worlds.
                         </p>
                     </div>
 
-                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-lavender);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <strong style="color: var(--text-primary);">7 New Hybrid Worlds</strong>
-                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Feb 2026</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
                             The Drowned Sea (pirate horror), Fallen Capes (superhero post-apoc), Liberty City 1947 (superhero noir), The Shattered Heavens (steampunk sky-pirate), Frequency &amp; Static (post-apoc romance), The Temple of the Monsoon King (adventure romance), The Voltaic Accord (steampunk espionage). 51 total curated worlds.
                         </p>
                     </div>
 
-                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-lavender);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <strong style="color: var(--text-primary);">Simplified World Selection</strong>
-                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Feb 2026</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
                             Genre chips removed from Tabletop Mode. The rules genre is now derived automatically from the world you pick, eliminating genre mismatch bugs and simplifying the setup flow.
@@ -10209,6 +10249,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // ============================================================
 
         const CHANGELOG = {
+            "v50": {
+                date: "2026-02-04",
+                changes: [
+                    { type: "feature", text: "Player choices (powers, equipment, background) now flow end-to-end through creation pipeline" },
+                    { type: "feature", text: "Journal system tracks narrative discoveries, clues, and lore — genre-aware labels" },
+                    { type: "feature", text: "DM reads character backstory, concept, abilities, and journal every turn" },
+                    { type: "improvement", text: "Inventory no longer includes abstract concepts — physical items only" },
+                    { type: "fix", text: "Code audit: removed orphaned code, fixed genre-unsafe lookups, cleaned dead references" },
+                ]
+            },
             "v49": {
                 date: "2026-02-03",
                 changes: [
@@ -10270,7 +10320,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const lastSeenVersion = localStorage.getItem('airpg_last_seen_version');
 
             // Extract version number (e.g., "v44-20260116-..." -> "v44")
-            const currentVersion = appVersion?.match(/^v\d+/)?.[0] || 'v49';
+            const currentVersion = appVersion?.match(/^v\d+/)?.[0] || 'v50';
 
             // If same version, don't show
             if (lastSeenVersion === currentVersion) return;
@@ -15607,11 +15657,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         }
                         updateCharacterHUD();
                     }
-                    // Update gold display if we have inventory panel
-                    if (update.gold !== undefined) {
-                        const goldDisplay = document.getElementById('inventory-gold');
-                        if (goldDisplay) goldDisplay.textContent = update.gold + ' gp';
-                    }
+                    // Gold updates are reflected when inventory modal is opened
+                    // (renderBackendInventory fetches fresh data from backend)
                     console.log('[GameState] Character update:', update);
                 }
 
@@ -16024,14 +16071,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         document.addEventListener('DOMContentLoaded', initFileExplorer);
 
         // Legacy handler (backwards compat)
-        let selectedFiles = [];
         async function handleFileSelect(event) {
             // Redirect to new explorer system
             handleExplorerFileSelect(event);
-        }
-
-        function readFileContent(file) {
-            return readFileContentAsync(file);
         }
 
         // ============================================

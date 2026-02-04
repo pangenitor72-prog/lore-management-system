@@ -143,7 +143,6 @@ class GuidedStepRequest(BaseModel):
 # In-memory storage for creation flows (would be session-based in production)
 _creation_flows: Dict[str, Any] = {}
 _characters: Dict[str, CharacterSheet] = {}
-_character_inferred_prefs: Dict[str, Dict[str, Any]] = {}  # character_id -> inferred preferences
 _visibility_settings: Dict[str, RulesVisibility] = {}
 
 
@@ -530,7 +529,6 @@ async def create_character_from_concept(request: CharacterCreateRequest):
     )
 
     _characters[character.character_id] = character
-    _character_inferred_prefs[character.character_id] = inferred_prefs
     logger.info(
         f"Created {mechanics_genre} character from concept: {character.name} "
         f"(world={request.world_id}, flavor={flavor_genres}, level={character.level})"
@@ -793,10 +791,12 @@ async def get_character(character_id: str, visibility: Optional[str] = None):
     display = character.to_summary_dict()
     if vis_mode == RulesVisibility.STORYTELLER:
         # Minimal mechanical info
+        race_data = RACES.get(character.race)
+        class_data = CLASSES.get(character.character_class)
         display = {
             "name": character.name,
-            "race": RACES[character.race].display_name,
-            "class": CLASSES[character.character_class].display_name,
+            "race": race_data.display_name if race_data else character.origin,
+            "class": class_data.display_name if class_data else character.archetype,
             "health_status": "healthy" if character.current_hit_points > character.max_hit_points // 2 else "wounded",
         }
     elif vis_mode == RulesVisibility.GUIDED:
