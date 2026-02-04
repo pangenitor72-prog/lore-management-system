@@ -35,7 +35,7 @@ from src.mantle.guardrails.token_budget import TokenTracker, TokenBudget, Budget
 from src.mantle.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
 # D&D Rules Integration
-from src.mantle.api.dnd_routes import _characters, _character_inferred_prefs, CharacterSheet
+from src.mantle.api.dnd_routes import _characters, CharacterSheet
 from src.mantle.dnd5e.engine.checks import CheckEngine, SKILL_TO_ABILITY
 from src.mantle.dnd5e.engine.combat_resolver import CombatResolver
 from src.mantle.dnd5e.presentation.visibility import VisibilityFilter
@@ -3049,14 +3049,6 @@ async def create_session(
         # Creative Catalyst for narrative variety (per-session instance)
         "creative_catalyst": CreativeCatalyst(genre=primary_genre),
     }
-
-    # Populate description-inferred preferences from character creation (if available)
-    if session_req.character_id and session_req.character_id in _character_inferred_prefs:
-        inf = _character_inferred_prefs[session_req.character_id]
-        session_data["description_inferred_tone"] = inf.get("inferred_tone")
-        session_data["description_inferred_arc"] = inf.get("inferred_arc")
-        session_data["description_inferred_lethality"] = inf.get("inferred_lethality")
-        session_data["description_inferred_morality"] = inf.get("inferred_morality")
 
     _active_sessions[session_id] = session_data
 
