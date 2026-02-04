@@ -3199,6 +3199,7 @@ async def get_session_inventory(session_id: str):
         "copper": inventory_data.get("copper", 0),
         "equipped": inventory_data.get("equipped", {}),
         "item_count": len(inventory_data.get("items", [])),
+        "discoveries": game_state.discoveries,
     }
 
 
@@ -3782,18 +3783,56 @@ def _extract_state_changes_from_narrative(narrative: str, game_state: GameState)
         except (ValueError, Exception) as e:
             logger.warning(f"Failed to apply healing from tag: {e}")
 
+    # [DISCOVERY: text] — narrative-important non-physical information
+    discovery_pattern = r'\[DISCOVERY:\s*([^\]]+)\]'
+    discovery_matches = re.findall(discovery_pattern, narrative, re.IGNORECASE)
+    for match in discovery_matches:
+        text = match.strip()
+        if text and len(text) >= 3:
+            game_state.add_discovery(text)
+            changes.append({"type": "discovery", "text": text, "source": "structured_tag"})
+            logger.info(f"[DISCOVERY] {text}")
+
     # =================================================================
     # PHASE 2: Fallback to regex parsing (for backwards compatibility)
-    # Only if no structured tags were found
+    # Only if no structured item/gold/damage/heal tags were found
+    # (Discovery tags don't count — they're separate from inventory)
     # =================================================================
 
-    if not changes:
+    has_inventory_tags = any(c["type"] in ("item_added", "gold_added", "damage_taken", "healed") for c in changes)
+    if not has_inventory_tags:
         # Item pickup patterns - look for things the player received
         item_patterns = [
             r"(?:you\s+)?(?:find|pick up|receive|acquire|take|grab|obtain|discover)s?\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[a-z]+)*)",
             r"(?:hands? you|gives? you|rewards? you with|presents? you with)\s+(?:a|an|the|some)?\s*([A-Z][a-z]+(?:\s+[a-z]+)*)",
             r"([A-Z][a-z]+(?:\s+[a-z]+)*)\s+(?:is now yours|added to your inventory|goes into your pack)",
         ]
+
+        # Words that indicate abstract concepts, not physical objects
+        _ABSTRACT_WORDS = {
+            "truth", "realization", "knowledge", "feeling", "sense", "memory", "memories",
+            "understanding", "awareness", "clarity", "insight", "vision", "dream", "dreams",
+            "hope", "fear", "dread", "courage", "wisdom", "power", "presence", "silence",
+            "darkness", "light", "shadow", "shadows", "warmth", "cold", "peace", "calm",
+            "skies", "sky", "wind", "breeze", "air", "rain", "storm", "weather",
+            "way", "path", "direction", "distance", "freedom", "relief", "breath",
+            "moment", "time", "chance", "opportunity", "rest", "sleep", "death",
+            "idea", "thought", "plan", "impression", "suspicion", "rumor", "story",
+            "greeting", "welcome", "farewell", "thanks", "gratitude", "respect",
+            "nothing", "something", "everything", "anything",
+        }
+
+        def _looks_like_physical_item(name: str) -> bool:
+            """Check if a name plausibly refers to a physical object."""
+            words = name.lower().split()
+            # Reject if any word is clearly abstract
+            for w in words:
+                if w in _ABSTRACT_WORDS:
+                    return False
+            # Reject very long names (likely sentences, not items)
+            if len(words) > 5:
+                return False
+            return True
 
         for pattern in item_patterns:
             matches = re.findall(pattern, narrative, re.IGNORECASE)
@@ -3803,6 +3842,10 @@ def _extract_state_changes_from_narrative(narrative: str, game_state: GameState)
                 if len(item_name) < 3 or len(item_name) > 50:
                     continue
                 if item_name.lower() in ["the", "a", "an", "you", "your", "they", "their", "it", "them", "this"]:
+                    continue
+                # Filter out abstract concepts — inventory is physical objects only
+                if not _looks_like_physical_item(item_name):
+                    logger.debug(f"[INVENTORY] Rejected non-physical: '{item_name}'")
                     continue
                 # Add to inventory
                 try:
@@ -4540,10 +4583,31 @@ ESTABLISHED LORE (stay true to these characters and details):
         if dnd_char:
             personality = dnd_char.get_personality_context()
             personality_block = f"\n{personality}" if personality else ""
+            # Build powers context
+            powers_block = ""
+            if dnd_char.cantrips_known:
+                powers_block += f"\n- Minor Powers: {', '.join(dnd_char.cantrips_known)}"
+            if dnd_char.abilities_known:
+                powers_block += f"\n- Major Powers: {', '.join(dnd_char.abilities_known)}"
+            # Build identity context
+            identity_block = ""
+            if dnd_char.character_concept:
+                identity_block += f"\n- Concept: {dnd_char.character_concept}"
+            if dnd_char.background:
+                identity_block += f"\n- Background: {dnd_char.background}"
+            # Features
+            features_block = ""
+            if dnd_char.features:
+                features_block = f"\n- Features: {', '.join(dnd_char.features)}"
+            # Equipment from character sheet
+            equip_block = ""
+            if dnd_char.equipment:
+                equip_block = f"\n- Equipment: {', '.join(dnd_char.equipment[:8])}"
+
             char_context = f"""
 CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
 - Level {dnd_char.level}, {dnd_char.current_hit_points}/{dnd_char.max_hit_points} HP
-- Skills: {', '.join(dnd_char.skill_proficiencies[:4])}{personality_block}"""
+- Skills: {', '.join(dnd_char.skill_proficiencies)}{powers_block}{features_block}{equip_block}{identity_block}{personality_block}"""
 
     # Get admin-configured world context (from World Tuner / LORE_BASES)
     admin_world_context = ""
@@ -4613,13 +4677,19 @@ Continue:
 - NO suggestions or questions
 
 STATE CHANGE TAGS (use when player gains items, gold, or takes damage):
-- When player acquires an item: include [ACQUIRED: Item Name] or [ACQUIRED: Item Name, rarity, type]
+- When player acquires a PHYSICAL item they can hold, wear, or carry: [ACQUIRED: Item Name] or [ACQUIRED: Item Name, rarity, type]
+  ONLY for tangible objects: weapons, armor, potions, keys, books, tools, food, treasure, etc.
+  NEVER for concepts, feelings, knowledge, weather, scenery, or abstract ideas.
   Example: "You pocket the ancient key. [ACQUIRED: Ancient Key, rare, quest]"
-- When player gains gold/currency: include [GOLD: amount] or [CURRENCY: silver, amount]
+- When player discovers important narrative information: [DISCOVERY: Short description]
+  Use for: clues, secrets learned, NPC relationships revealed, plot revelations, lore uncovered.
+  Example: "The inscription reveals the dragon's true name. [DISCOVERY: The dragon is called Vaelthrix]"
+  Example: "The merchant's nervous glance confirms your suspicion. [DISCOVERY: Merchant works with the thieves guild]"
+- When player gains gold/currency: [GOLD: amount] or [CURRENCY: silver, amount]
   Example: "The merchant pays you well. [GOLD: 50]"
-- When player takes damage: include [DAMAGE: amount] or [DAMAGE: amount, type]
+- When player takes damage: [DAMAGE: amount] or [DAMAGE: amount, type]
   Example: "The blade bites deep. [DAMAGE: 8, slashing]"
-- When player heals: include [HEAL: amount]
+- When player heals: [HEAL: amount]
   Example: "The potion takes effect. [HEAL: 10]"
 
 Write ONLY the narrative (with state tags naturally embedded):"""

@@ -177,6 +177,9 @@ class GameState:
     # Combat state
     combat: CombatState = field(default_factory=CombatState)
 
+    # Journal / Discoveries (narrative-important non-physical acquisitions)
+    discoveries: List[str] = field(default_factory=list)
+
     # Events this turn (for frontend notifications)
     pending_events: List[GameEvent] = field(default_factory=list)
 
@@ -351,6 +354,21 @@ class GameState:
         logger.info(f"[GameState] Removed condition: {condition}")
         return event
 
+    def add_discovery(self, text: str) -> GameEvent:
+        """Add a narrative discovery (clue, secret, lore, relationship)."""
+        # Avoid duplicates
+        if text not in self.discoveries:
+            self.discoveries.append(text)
+
+        event = GameEvent(
+            type=GameEventType.DISCOVERY,
+            turn=self.turn_count,
+            data={"text": text}
+        )
+        self.pending_events.append(event)
+        logger.info(f"[GameState] Discovery: {text}")
+        return event
+
     def use_spell_slot(self, level: int) -> bool:
         """Use a spell slot. Returns True if successful."""
         if not self.character:
@@ -519,11 +537,31 @@ class GameState:
             if self.character.conditions:
                 lines.append(f"Conditions: {', '.join(self.character.conditions)}")
 
-            # Character identity (personality, backstory) — drives roleplay
-            personality_context = self.character.get_personality_context()
-            if personality_context:
+            # Character abilities and powers (player's creation choices)
+            if self.character.cantrips_known:
+                lines.append(f"Minor Powers: {', '.join(self.character.cantrips_known)}")
+            if self.character.abilities_known:
+                lines.append(f"Major Powers: {', '.join(self.character.abilities_known)}")
+            if self.character.features:
+                lines.append(f"Features: {', '.join(self.character.features)}")
+            if self.character.skill_proficiencies:
+                lines.append(f"Skills: {', '.join(self.character.skill_proficiencies)}")
+
+            # Character identity (personality, backstory, concept) — drives roleplay
+            if self.character.character_concept:
                 lines.append("")
                 lines.append("=== CHARACTER IDENTITY ===")
+                lines.append(f"Concept: {self.character.character_concept}")
+            if self.character.background:
+                if not self.character.character_concept:
+                    lines.append("")
+                    lines.append("=== CHARACTER IDENTITY ===")
+                lines.append(f"Background: {self.character.background}")
+            personality_context = self.character.get_personality_context()
+            if personality_context:
+                if not self.character.character_concept and not self.character.background:
+                    lines.append("")
+                    lines.append("=== CHARACTER IDENTITY ===")
                 lines.append(personality_context)
 
             # Spell/power slots
@@ -551,6 +589,13 @@ class GameState:
         else:
             lines.append("(empty)")
         lines.append(f"Gold: {self.inventory.gold}")
+
+        # Journal / Discoveries (what the player has learned)
+        if self.discoveries:
+            lines.append("")
+            lines.append("=== JOURNAL (things the player has learned) ===")
+            for discovery in self.discoveries[-10:]:  # Last 10 discoveries
+                lines.append(f"- {discovery}")
 
         # Current scene
         lines.append("")
@@ -595,6 +640,7 @@ class GameState:
             "world_id": self.world_id,
             "character": self.character.model_dump() if self.character else None,
             "inventory": self.inventory.to_dict(),
+            "discoveries": self.discoveries,
             "turn_count": self.turn_count,
             "phase": self.phase,
             "history": self.history,
@@ -622,6 +668,9 @@ class GameState:
         # Restore inventory
         if data.get("inventory"):
             state.inventory = Inventory.from_dict(data["inventory"])
+
+        # Restore discoveries
+        state.discoveries = data.get("discoveries", [])
 
         # Restore NPCs
         for npc_id, npc_data in data.get("active_npcs", {}).items():

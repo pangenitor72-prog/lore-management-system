@@ -8660,8 +8660,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 <h3 style="color: var(--accent-gold); margin-bottom: 5px;">Your Inventory</h3>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Items you've collected on your journey.</p>
 
-                <div id="inventory-list" style="max-height: 350px; overflow-y: auto;">
+                <div id="inventory-list" style="max-height: 250px; overflow-y: auto;">
                     <!-- Populated by JavaScript -->
+                </div>
+
+                <!-- Journal / Discoveries section -->
+                <div id="journal-section" style="display: none; margin-top: 15px; border-top: 1px solid var(--border-subtle); padding-top: 15px;">
+                    <h4 id="journal-label" style="color: #a8c8ff; margin-bottom: 8px; font-size: 0.9rem;">
+                        <span style="margin-right: 6px;">📜</span>Journal
+                    </h4>
+                    <div id="journal-list" style="max-height: 150px; overflow-y: auto;">
+                        <!-- Populated by JavaScript -->
+                    </div>
                 </div>
 
                 <div class="btn-group" style="justify-content: flex-end; margin-top: 20px;">
@@ -9326,6 +9336,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let currentSessionId = null;
         let currentPhase = null;
         let playerInventory = [];  // Track player's inventory items
+        let playerJournal = [];    // Track narrative discoveries (clues, lore, secrets)
         const API_BASE = window.location.origin + '/api';
 
         // Browser ID for save isolation (each browser gets its own saves)
@@ -14789,6 +14800,70 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             console.log('[CharCreate] Final dndCharacter:', dndCharacter.name, dndCharacter.race, dndCharacter.character_class);
 
+            // ===== ENRICH dndCharacter with ALL player creation choices =====
+            // These are collected during creation but must be stored on the character
+            // so they can be sent to the backend during registration
+
+            // Powers / abilities selected by the player
+            dndCharacter.cantrips_known = charCreationData.selectedCantrips || [];
+            dndCharacter.abilities_known = charCreationData.selectedSpells || [];
+
+            // Background and character concept
+            dndCharacter.background = charCreationData.selectedBackground || '';
+            dndCharacter.character_concept = charCreationData.concept || '';
+
+            // Saving throws and features from the selected archetype
+            const selectedArchFinal = availableArchetypes.find(a => a.id === charCreationData.archetype);
+            if (selectedArchFinal) {
+                dndCharacter.saving_throw_proficiencies = selectedArchFinal.saving_throws || [];
+                dndCharacter.features = (selectedArchFinal.features || []).map(f =>
+                    typeof f === 'string' ? f : (f.name || f.id || '')
+                ).filter(Boolean);
+            }
+
+            // Collect equipment names synchronously for backend registration
+            // (getStartingInventory populates playerInventory async with staggered notifications)
+            const equipForRegistration = [];
+            if (availableEquipment.fixed && availableEquipment.fixed.length > 0) {
+                equipForRegistration.push(...availableEquipment.fixed);
+            }
+            if (availableEquipment.choices && charCreationData.selectedEquipment) {
+                for (const [choiceKey, selectedId] of Object.entries(charCreationData.selectedEquipment)) {
+                    const choice = availableEquipment.choices[choiceKey];
+                    if (choice) {
+                        const option = choice.options.find(opt => opt.id === selectedId);
+                        if (option && option.items) equipForRegistration.push(...option.items);
+                    }
+                }
+            }
+            // Also check custom genre-based equipment selections
+            const hasCustomEquip = Object.values(customEquipmentSelections).some(v => v !== null);
+            if (hasCustomEquip) {
+                const genreEquip = getEquipmentChoicesForGenre(currentWorldGenre);
+                for (const [category, selectedId] of Object.entries(customEquipmentSelections)) {
+                    if (selectedId && selectedId !== 'shield_no' && selectedId !== 'no_armor' && selectedId !== 'no_armor_modern') {
+                        const cat = genreEquip[category];
+                        if (cat) {
+                            const opt = cat.options.find(o => o.id === selectedId);
+                            if (opt) equipForRegistration.push(opt.name);
+                        }
+                    }
+                }
+            }
+            if (equipForRegistration.length > 0) {
+                dndCharacter.equipment = equipForRegistration;
+            }
+
+            console.log('[CharCreate] Enriched dndCharacter with player choices:', {
+                cantrips: dndCharacter.cantrips_known?.length || 0,
+                abilities: dndCharacter.abilities_known?.length || 0,
+                equipment: dndCharacter.equipment?.length || 0,
+                background: dndCharacter.background || 'none',
+                concept: dndCharacter.character_concept ? 'yes' : 'none',
+                savingThrows: dndCharacter.saving_throw_proficiencies?.length || 0,
+                features: dndCharacter.features?.length || 0
+            });
+
             // Load starting inventory based on character's archetype/class (always runs now)
             const archetype = dndCharacter.character_class || dndCharacter.archetype || charCreationData.archetype || 'fighter';
             console.log('[Equipment] Character archetype sources:', {
@@ -15188,6 +15263,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             clearStatus('setup-status');
             playerInventory = [];  // Reset inventory for new story
+            playerJournal = [];    // Reset journal for new story
             dndCharacter = null;   // Reset D&D character
             resetPlayerProfile();  // Reset player psychology for new story
 
@@ -15315,9 +15391,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                             armor_class: dndCharacter.armor_class || 10,
                             proficiency_bonus: dndCharacter.proficiency_bonus || 2,
                             skill_proficiencies: dndCharacter.skill_proficiencies || [],
-                            equipment: [],
+                            saving_throw_proficiencies: dndCharacter.saving_throw_proficiencies || [],
+                            equipment: dndCharacter.equipment || [],
                             genre: selectedGenre || 'fantasy',
-                            session_id: currentSessionId
+                            session_id: currentSessionId,
+                            // Player creation choices
+                            cantrips_known: dndCharacter.cantrips_known || [],
+                            abilities_known: dndCharacter.abilities_known || [],
+                            background: dndCharacter.background || '',
+                            character_concept: dndCharacter.character_concept || '',
+                            features: dndCharacter.features || []
                         })
                     });
                     if (regRes.ok) {
@@ -15476,7 +15559,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 const data = await response.json();
                 currentPhase = data.phase;
-                addPassage(data.narrative, 'narrator');
+
+                // Strip structured tags from narrative before displaying
+                // Tags like [ACQUIRED:], [DISCOVERY:], [GOLD:], [DAMAGE:], [HEAL:] are
+                // machine-readable signals — the player should see prose, not tags
+                const cleanNarrative = stripStateTags(data.narrative);
+                addPassage(cleanNarrative, 'narrator');
 
                 // Display suggested actions if available (guided mode)
                 if (data.suggested_actions && data.suggested_actions.length > 0) {
@@ -15484,6 +15572,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 } else {
                     hideSuggestedActions();
                 }
+
+                // Parse discoveries from narrative (before stripping)
+                parseDiscoveries(data.narrative);
 
                 // Parse narrative for inventory changes
                 parseInventoryChanges(data.narrative);
@@ -16709,6 +16800,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 icon: i.icon || getItemIcon(i.name),
                 rarity: i.rarity
             }));
+
+            // Render journal section if discoveries exist (from backend or local)
+            const discoveries = data.discoveries || playerJournal;
+            if (discoveries.length > 0) {
+                // Sync local journal from backend
+                playerJournal = [...discoveries];
+            }
+            renderJournal();
         }
 
         function renderLocalInventory(listEl) {
@@ -16739,6 +16838,65 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     </div>
                 `).join('');
             }
+            renderJournal();
+        }
+
+        // Render the journal/discoveries section in the inventory modal
+        // Setting-aware: uses journal_label from world config if available
+        function renderJournal() {
+            const section = document.getElementById('journal-section');
+            const listEl = document.getElementById('journal-list');
+            const labelEl = document.getElementById('journal-label');
+
+            if (!section || !listEl) return;
+
+            if (playerJournal.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+
+            // Setting-aware label (defaults to "Journal")
+            const journalConfig = getJournalConfig();
+            labelEl.innerHTML = `<span style="margin-right: 6px;">${journalConfig.icon}</span>${journalConfig.label}`;
+
+            listEl.innerHTML = playerJournal.map(entry => `
+                <div style="
+                    display: flex;
+                    align-items: flex-start;
+                    padding: 8px 12px;
+                    background: rgba(58, 90, 138, 0.1);
+                    border: 1px solid rgba(58, 90, 138, 0.2);
+                    border-radius: 6px;
+                    margin-bottom: 6px;
+                    font-size: 0.85rem;
+                    color: #a8c8ff;
+                ">
+                    <span style="margin-right: 8px; opacity: 0.7;">•</span>
+                    <span>${entry}</span>
+                </div>
+            `).join('');
+        }
+
+        // Get setting-appropriate journal label and icon
+        function getJournalConfig() {
+            const genre = (selectedGenre || currentWorldGenre || 'fantasy').toLowerCase();
+            const configs = {
+                'horror':       { label: 'Case File',       icon: '🔍' },
+                'noir':         { label: 'Case Board',      icon: '📋' },
+                'mystery':      { label: 'Case Notes',      icon: '🔎' },
+                'scifi':        { label: 'Data Log',        icon: '💾' },
+                'cyberpunk':    { label: 'Data Log',        icon: '💾' },
+                'pirate':       { label: 'Rumors & Charts', icon: '🗺️' },
+                'espionage':    { label: 'Dossier',         icon: '📁' },
+                'postapoc':     { label: 'Survival Notes',  icon: '📝' },
+                'western':      { label: 'Trail Notes',     icon: '📜' },
+                'romance':      { label: 'Diary',           icon: '💌' },
+                'superhero':    { label: 'Intel File',      icon: '📂' },
+                'steampunk':    { label: 'Field Notes',     icon: '⚙️' },
+            };
+            return configs[genre] || { label: 'Journal', icon: '📜' };
         }
 
         function closeInventory(event) {
@@ -17301,6 +17459,58 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             return '📦';
         }
 
+        // Strip structured state tags from narrative before displaying to player
+        // These tags are machine signals — [ACQUIRED:], [DISCOVERY:], [GOLD:], [DAMAGE:], [HEAL:]
+        // The player should see clean prose, not raw markup
+        function stripStateTags(text) {
+            if (!text) return text;
+            return text
+                .replace(/\[ACQUIRED:\s*[^\]]*\]/gi, '')
+                .replace(/\[DISCOVERY:\s*[^\]]*\]/gi, '')
+                .replace(/\[GOLD:\s*\d+\]/gi, '')
+                .replace(/\[CURRENCY:\s*[^\]]*\]/gi, '')
+                .replace(/\[DAMAGE:\s*[^\]]*\]/gi, '')
+                .replace(/\[HEAL:\s*\d+\]/gi, '')
+                .replace(/\n{3,}/g, '\n\n')  // Clean up extra blank lines left by tag removal
+                .trim();
+        }
+
+        // Parse [DISCOVERY: ...] tags from narrative and add to player's journal
+        function parseDiscoveries(text) {
+            if (!text) return;
+            const pattern = /\[DISCOVERY:\s*([^\]]+)\]/gi;
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+                const discovery = match[1].trim();
+                if (discovery && !playerJournal.includes(discovery)) {
+                    playerJournal.push(discovery);
+                    showDiscoveryNotification(discovery);
+                    console.log('[Journal] New discovery:', discovery);
+                }
+            }
+        }
+
+        // Show a notification when the player discovers something narratively important
+        function showDiscoveryNotification(text) {
+            const notification = document.createElement('div');
+            notification.className = 'inventory-notification discovery-notification';
+            notification.innerHTML = `<span style="margin-right: 6px;">📜</span> ${text}`;
+            notification.style.cssText = `
+                position: fixed; top: 80px; right: 20px; z-index: 10000;
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                color: #a8c8ff; border: 1px solid #3a5a8a; border-radius: 8px;
+                padding: 10px 16px; font-size: 0.85rem; max-width: 320px;
+                box-shadow: 0 4px 20px rgba(58, 90, 138, 0.3);
+                animation: slideIn 0.4s ease-out;
+                pointer-events: none; opacity: 1; transition: opacity 0.5s;
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 500);
+            }, 4000);
+        }
+
         // Validate if a captured string is likely an actual item (not NPC, location, or abstract concept)
         function isValidItem(name) {
             const lowerName = name.toLowerCase();
@@ -17372,8 +17582,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 return false;
             }
 
-            // Accept short names that passed blacklist
-            return name.length >= 3 && name.length <= 35;
+            // If it didn't match the whitelist, it's NOT an item.
+            // Physical objects contain recognizable item words (sword, potion, key, etc.)
+            // Unknown things like "Clear Skies Beyond" should not become inventory items.
+            return false;
         }
 
         // Parse narrative for inventory changes
@@ -17464,8 +17676,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     skill_proficiencies: dndCharacter.skill_proficiencies
                 } : null,
 
-                // Inventory
+                // Inventory & Journal
                 inventory: playerInventory,
+                journal: playerJournal,
 
                 // Story content
                 story_html: storyHTML,
@@ -17593,6 +17806,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Don't generate local ID here - server will provide new session_id
                 currentPhase = saveData.phase || 'exploration';
                 playerInventory = saveData.inventory || [];
+                playerJournal = saveData.journal || [];
                 rulesGenre = saveData.genre || 'fantasy';
 
                 // Restore game mode settings

@@ -822,9 +822,17 @@ class CharacterRegisterRequest(BaseModel):
     armor_class: int
     proficiency_bonus: int = 2
     skill_proficiencies: List[str] = []
+    saving_throw_proficiencies: List[str] = []
     equipment: List[Any] = []
     genre: str = "fantasy"
     session_id: Optional[str] = None  # Link to game session
+
+    # Player choices from creation
+    cantrips_known: List[str] = []  # Selected cantrips/minor powers
+    abilities_known: List[str] = []  # Selected spells/major powers
+    background: str = ""  # Selected background
+    character_concept: str = ""  # Player's character description
+    features: List[str] = []  # Archetype/origin features
 
 
 @router.post("/characters/register", response_model=CharacterResponse)
@@ -839,7 +847,7 @@ async def register_character(request: CharacterRegisterRequest):
 
     character_id = str(uuid.uuid4())
 
-    # Build CharacterSheet from frontend data
+    # Build CharacterSheet from frontend data, preserving ALL player choices
     character = CharacterSheet(
         character_id=character_id,
         name=request.name,
@@ -852,7 +860,14 @@ async def register_character(request: CharacterRegisterRequest):
         armor_class=request.armor_class,
         proficiency_bonus=request.proficiency_bonus,
         skill_proficiencies=request.skill_proficiencies,
-        equipment=[],  # Will be converted to proper equipment objects if needed
+        saving_throw_proficiencies=request.saving_throw_proficiencies,
+        equipment=request.equipment,
+        cantrips_known=request.cantrips_known,
+        abilities_known=request.abilities_known,
+        background=request.background,
+        character_concept=request.character_concept,
+        features=request.features,
+        genre=request.genre,
         rules_visibility=RulesVisibility.GUIDED.value,
     )
 

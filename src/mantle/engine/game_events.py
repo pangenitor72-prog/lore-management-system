@@ -73,6 +73,7 @@ class GameEventType(str, Enum):
     NPC_MET = "NPC_MET"
     QUEST_STARTED = "QUEST_STARTED"
     QUEST_COMPLETED = "QUEST_COMPLETED"
+    DISCOVERY = "DISCOVERY"  # Narrative discoveries (clues, lore, secrets)
 
     # Session
     SESSION_STARTED = "SESSION_STARTED"
