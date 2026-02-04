@@ -178,7 +178,13 @@ class GameState:
     combat: CombatState = field(default_factory=CombatState)
 
     # Journal / Discoveries (narrative-important non-physical acquisitions)
-    discoveries: List[str] = field(default_factory=list)
+    # Each entry: {"text": str, "turn": int, "heat": "hot"|"warm"|"cold",
+    #              "matched_entity_id": str|None, "matched_entity_name": str|None}
+    # Legacy format (List[str]) is auto-converted on load
+    discoveries: List[Any] = field(default_factory=list)
+
+    # Entities the player has connected to via discoveries (graph links)
+    known_entities: List[Dict[str, str]] = field(default_factory=list)
 
     # Events this turn (for frontend notifications)
     pending_events: List[GameEvent] = field(default_factory=list)
@@ -355,10 +361,24 @@ class GameState:
         return event
 
     def add_discovery(self, text: str) -> GameEvent:
-        """Add a narrative discovery (clue, secret, lore, relationship)."""
-        # Avoid duplicates
-        if text not in self.discoveries:
-            self.discoveries.append(text)
+        """Add a narrative discovery (clue, secret, lore, relationship).
+
+        Creates a structured dict entry with heat metadata.
+        Initially 'cold' — heat is assigned later by graph matching.
+        """
+        # Avoid duplicates (check both dict and legacy string entries)
+        existing_texts = [
+            d["text"] if isinstance(d, dict) else d
+            for d in self.discoveries
+        ]
+        if text not in existing_texts:
+            self.discoveries.append({
+                "text": text,
+                "turn": self.turn_count,
+                "heat": "cold",
+                "matched_entity_id": None,
+                "matched_entity_name": None,
+            })
 
         event = GameEvent(
             type=GameEventType.DISCOVERY,
@@ -594,8 +614,16 @@ class GameState:
         if self.discoveries:
             lines.append("")
             lines.append("=== JOURNAL (things the player has learned) ===")
-            for discovery in self.discoveries[-10:]:  # Last 10 discoveries
-                lines.append(f"- {discovery}")
+            for d in self.discoveries[-10:]:  # Last 10 discoveries
+                if isinstance(d, dict):
+                    text = d.get("text", str(d))
+                    heat = d.get("heat", "cold")
+                    entity_name = d.get("matched_entity_name")
+                    marker = "🔥 " if heat == "hot" else "✦ " if heat == "warm" else ""
+                    entity_note = f" [→ {entity_name}]" if entity_name else ""
+                    lines.append(f"- {marker}{text}{entity_note}")
+                else:
+                    lines.append(f"- {d}")
 
         # Current scene
         lines.append("")
@@ -641,6 +669,7 @@ class GameState:
             "character": self.character.model_dump() if self.character else None,
             "inventory": self.inventory.to_dict(),
             "discoveries": self.discoveries,
+            "known_entities": self.known_entities,
             "turn_count": self.turn_count,
             "phase": self.phase,
             "history": self.history,
@@ -669,8 +698,18 @@ class GameState:
         if data.get("inventory"):
             state.inventory = Inventory.from_dict(data["inventory"])
 
-        # Restore discoveries
-        state.discoveries = data.get("discoveries", [])
+        # Restore discoveries (convert legacy string entries to dict format)
+        raw_discoveries = data.get("discoveries", [])
+        state.discoveries = [
+            d if isinstance(d, dict) else {
+                "text": d, "turn": 0, "heat": "cold",
+                "matched_entity_id": None, "matched_entity_name": None,
+            }
+            for d in raw_discoveries
+        ]
+
+        # Restore known entities (graph links from discoveries)
+        state.known_entities = data.get("known_entities", [])
 
         # Restore NPCs
         for npc_id, npc_data in data.get("active_npcs", {}).items():

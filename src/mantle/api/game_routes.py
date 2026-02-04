@@ -2200,6 +2200,8 @@ class DMResponse(BaseModel):
     events: Optional[List[GameEventData]] = None  # ITEM_ADDED, GOLD_CHANGED, etc.
     # Session state flags
     session_ended: bool = False  # True when ONE_SHOT reaches THE END
+    # Narrative Heat: discoveries matched to knowledge graph this turn
+    heat_matches: Optional[List[Dict[str, Any]]] = None
 
 
 # ============================================================
@@ -3191,6 +3193,15 @@ async def get_session_inventory(session_id: str):
     # Build inventory response
     inventory_data = game_state.inventory.to_dict()
 
+    # Ensure all discoveries are in dict format for the frontend
+    structured_discoveries = [
+        d if isinstance(d, dict) else {
+            "text": d, "turn": 0, "heat": "cold",
+            "matched_entity_id": None, "matched_entity_name": None,
+        }
+        for d in game_state.discoveries
+    ]
+
     return {
         "session_id": session_id,
         "items": inventory_data.get("items", []),
@@ -3199,7 +3210,8 @@ async def get_session_inventory(session_id: str):
         "copper": inventory_data.get("copper", 0),
         "equipped": inventory_data.get("equipped", {}),
         "item_count": len(inventory_data.get("items", [])),
-        "discoveries": game_state.discoveries,
+        "discoveries": structured_discoveries,
+        "known_entities": game_state.known_entities,
     }
 
 
@@ -3434,10 +3446,19 @@ async def process_action(
 
     # EXTRACT STATE CHANGES FROM NARRATIVE AND APPLY TO GAME STATE
     # This catches items picked up, gold found, damage mentioned in narrative
+    heat_matches = []
     if game_state:
         state_changes = _extract_state_changes_from_narrative(response_text, game_state)
         if state_changes:
             logger.info(f"[STATE] Applied {len(state_changes)} state changes from narrative: {state_changes}")
+
+        # Match discoveries to knowledge graph (assigns heat, updates party_knowledge)
+        try:
+            heat_matches = await _match_discoveries_to_graph(game_state, db, session)
+            if heat_matches:
+                logger.info(f"[HEAT] Matched {len(heat_matches)} discoveries to graph entities")
+        except Exception as e:
+            logger.debug(f"[HEAT] Discovery matching failed (non-fatal): {e}")
 
         # Add to history and advance turn
         game_state.add_to_history("user", action.action)
@@ -3501,6 +3522,7 @@ async def process_action(
         suggested_actions=suggested_actions,
         events=events if events else None,
         session_ended=session_ended,
+        heat_matches=heat_matches if heat_matches else None,
     )
 
 
@@ -4449,6 +4471,273 @@ Complete your thoughts - never end mid-sentence."""
     )
 
 
+async def _get_graph_aware_entity_context(
+    db: Neo4jDatabase,
+    session: Dict[str, Any],
+    game_state=None,
+) -> str:
+    """Build DM context from knowledge graph, bucketed by party_knowledge.
+
+    Returns a formatted string with KNOWN/RUMORED/SECRET entity sections,
+    including one-hop relationship traversal. Falls back gracefully if
+    the graph is empty or unavailable.
+    """
+    session_world_id = session.get("session_world_id", "")
+    world_id = session.get("world_id", "")
+
+    # Collect entity IDs the player has already connected to via discoveries
+    known_ids = []
+    if game_state and hasattr(game_state, "known_entities"):
+        known_ids = [e.get("canon_id", "") for e in game_state.known_entities]
+
+    try:
+        results = await db.execute("""
+            MATCH (e:Entity)
+            WHERE e.world_id IN [$session_world_id, $world_id]
+            OPTIONAL MATCH (e)-[r]->(t:Entity)
+            WITH e,
+                 collect(DISTINCT {type: type(r), target: t.name})[0..3] AS rels,
+                 CASE
+                   WHEN e.canon_id IN $known_ids THEN 'KNOWN'
+                   WHEN e.party_knowledge = 'KNOWN' THEN 'KNOWN'
+                   WHEN e.party_knowledge = 'RUMORED' THEN 'RUMORED'
+                   ELSE 'SECRET'
+                 END AS knowledge
+            RETURN e.name AS name, e.description AS description,
+                   e.entity_type AS type, e.canon_id AS canon_id,
+                   knowledge, rels
+            ORDER BY CASE knowledge
+                       WHEN 'SECRET' THEN 0
+                       WHEN 'RUMORED' THEN 1
+                       ELSE 2
+                     END, rand()
+            LIMIT 15
+        """, {
+            "session_world_id": session_world_id,
+            "world_id": world_id,
+            "known_ids": known_ids,
+        })
+
+        if not results:
+            return ""
+
+        # Bucket entities
+        known, rumored, secrets = [], [], []
+        for r in results:
+            desc = (r.get("description") or "")[:120]
+            name = r.get("name", "Unknown")
+            etype = r.get("type", "Entity")
+
+            # Format relationships
+            rels = r.get("rels") or []
+            rel_parts = []
+            for rel in rels:
+                if rel.get("target"):
+                    rel_parts.append(f"{rel['type']} {rel['target']}")
+            rel_str = f". {', '.join(rel_parts)}" if rel_parts else ""
+
+            entry = f"- {name} ({etype}): {desc}{rel_str}"
+            bucket = r.get("knowledge", "SECRET")
+            if bucket == "KNOWN":
+                known.append(entry)
+            elif bucket == "RUMORED":
+                rumored.append(entry)
+            else:
+                secrets.append(entry)
+
+        # Format for DM prompt
+        sections = ["\n=== KNOWLEDGE GRAPH (entities in your world) ==="]
+
+        if known:
+            sections.append("\nENTITIES THE PLAYER KNOWS:")
+            sections.extend(known)
+
+        if rumored:
+            sections.append("\nRUMORS THE PLAYER HAS HEARD (develop these, add detail):")
+            sections.extend(rumored)
+
+        if secrets:
+            sections.append("\nSECRETS THE PLAYER DOESN'T KNOW YET (reveal when dramatically appropriate):")
+            sections.extend(secrets)
+
+        sections.append(
+            "\nWeave KNOWN entities as established facts. Drop hints about RUMORED entities."
+            "\nWhen revealing a SECRET, use [DISCOVERY:] tag so the system tracks it."
+        )
+
+        return "\n".join(sections)
+
+    except Exception as e:
+        logger.debug(f"[GRAPH] Failed to get entity context: {e}")
+        return ""
+
+
+async def _match_discoveries_to_graph(
+    game_state,
+    db: Optional[Neo4jDatabase],
+    session: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Match unmatched discoveries against the knowledge graph.
+
+    For each discovery without a matched_entity_id, queries the graph for
+    entity candidates, then uses Gemini to determine which discoveries
+    reference which entities. Updates party_knowledge in Neo4j and assigns
+    heat to matched discoveries.
+
+    Returns list of newly matched discovery dicts (for frontend heat_matches).
+    """
+    if not game_state or not db or not game_state.discoveries:
+        return []
+
+    # Find unmatched discoveries
+    unmatched = []
+    for i, d in enumerate(game_state.discoveries):
+        if isinstance(d, dict) and d.get("matched_entity_id") is None:
+            unmatched.append((i, d))
+        elif isinstance(d, str):
+            # Legacy string — convert in place
+            converted = {
+                "text": d, "turn": 0, "heat": "cold",
+                "matched_entity_id": None, "matched_entity_name": None,
+            }
+            game_state.discoveries[i] = converted
+            unmatched.append((i, converted))
+
+    if not unmatched:
+        return []
+
+    # Get entity candidates from the graph
+    session_world_id = session.get("session_world_id", "")
+    world_id = session.get("world_id", "")
+
+    try:
+        candidates = await db.execute("""
+            MATCH (e:Entity)
+            WHERE e.world_id IN [$session_world_id, $world_id]
+            RETURN e.name AS name, e.canon_id AS canon_id,
+                   e.entity_type AS type, e.party_knowledge AS knowledge
+            LIMIT 50
+        """, {"session_world_id": session_world_id, "world_id": world_id})
+    except Exception as e:
+        logger.debug(f"[HEAT] Failed to query entity candidates: {e}")
+        return []
+
+    if not candidates:
+        return []  # Sparse world — no entities to match against
+
+    # Build matching prompt for Gemini
+    discovery_list = "\n".join([
+        f"{i}. \"{d['text']}\""
+        for idx, (i, d) in enumerate(unmatched)
+    ])
+    entity_list = "\n".join([
+        f"- \"{c['name']}\" (type: {c.get('type', 'Entity')}, id: {c['canon_id']})"
+        for c in candidates
+    ])
+
+    matching_prompt = f"""You are matching narrative discoveries from an RPG session to entities in a knowledge graph.
+
+DISCOVERIES (things the player just learned):
+{discovery_list}
+
+ENTITIES IN THE WORLD:
+{entity_list}
+
+For each discovery, determine if it references or relates to any entity.
+Return ONLY a JSON array of matches. If a discovery doesn't match any entity, omit it.
+
+Format: [{{"discovery_index": 0, "canon_id": "the_id", "entity_name": "the name", "confidence": 0.9}}]
+
+Rules:
+- Only match if the discovery clearly references the entity (mentions by name, describes their role, reveals something about them)
+- confidence should be 0.7-1.0 for clear matches
+- Return empty array [] if nothing matches
+- Return ONLY the JSON array, no other text"""
+
+    try:
+        model = get_gemini_model()
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: model.generate_content(matching_prompt).text
+        )
+
+        # Parse JSON from response
+        json_text = response.strip()
+        if json_text.startswith("```"):
+            json_text = json_text.split("```")[1]
+            if json_text.startswith("json"):
+                json_text = json_text[4:]
+        matches = json.loads(json_text)
+
+        if not isinstance(matches, list):
+            return []
+
+    except Exception as e:
+        logger.debug(f"[HEAT] Gemini matching failed: {e}")
+        return []
+
+    # Process matches
+    heat_results = []
+    candidate_map = {c["canon_id"]: c for c in candidates}
+
+    for match in matches:
+        confidence = match.get("confidence", 0)
+        if confidence < 0.7:
+            continue
+
+        canon_id = match.get("canon_id")
+        disc_idx = match.get("discovery_index")
+        entity_name = match.get("entity_name", "")
+
+        if canon_id not in candidate_map or disc_idx is None:
+            continue
+
+        # Look up the entity's current knowledge level
+        entity = candidate_map[canon_id]
+        old_knowledge = entity.get("knowledge", "SECRET")
+
+        # Determine heat based on what we just revealed
+        if old_knowledge == "SECRET":
+            heat = "hot"
+        elif old_knowledge == "RUMORED":
+            heat = "warm"
+        else:
+            heat = "warm"  # Already known, but still connected
+
+        # Update the discovery in GameState
+        if 0 <= disc_idx < len(game_state.discoveries):
+            d = game_state.discoveries[disc_idx]
+            if isinstance(d, dict):
+                d["matched_entity_id"] = canon_id
+                d["matched_entity_name"] = entity_name or entity.get("name", "")
+                d["heat"] = heat
+                heat_results.append(dict(d))
+
+        # Update party_knowledge in Neo4j (SECRET/RUMORED → KNOWN)
+        if old_knowledge in ("SECRET", "RUMORED"):
+            try:
+                await db.execute("""
+                    MATCH (e:Entity {canon_id: $canon_id})
+                    SET e.party_knowledge = 'KNOWN'
+                """, {"canon_id": canon_id})
+                logger.info(f"[HEAT] {entity_name}: {old_knowledge} → KNOWN (heat={heat})")
+            except Exception as e:
+                logger.debug(f"[HEAT] Failed to update party_knowledge: {e}")
+
+        # Track in game_state.known_entities
+        already_known = any(
+            ke.get("canon_id") == canon_id for ke in game_state.known_entities
+        )
+        if not already_known:
+            game_state.known_entities.append({
+                "canon_id": canon_id,
+                "name": entity_name or entity.get("name", ""),
+                "entity_type": entity.get("type", "Entity"),
+            })
+
+    return heat_results
+
+
 async def _handle_active_play(
     session: Dict[str, Any],
     player_input: str,
@@ -4552,25 +4841,11 @@ ESTABLISHED LORE (stay true to these characters and details):
 {lore_excerpt}
 """
 
-    # Query for additional entities from database (supplementary)
-    # Use session_world_id for isolation - only get entities from THIS game
+    # Query knowledge graph for entities bucketed by party_knowledge
+    # Includes relationship traversal and KNOWN/RUMORED/SECRET sections
     db_context = ""
     if db:
-        try:
-            results = await db.execute("""
-                MATCH (e:Entity)
-                WHERE e.world_id = $session_world_id
-                RETURN e.name as name, e.description as description, e.entity_type as type
-                LIMIT 5
-            """, {"session_world_id": session.get("session_world_id", "")})
-
-            if results:
-                db_context = "\nAdditional discovered lore:\n" + "\n".join([
-                    f"- {r['name']} ({r['type']}): {r['description'][:100]}"
-                    for r in results if r.get('description')
-                ])
-        except Exception:
-            pass
+        db_context = await _get_graph_aware_entity_context(db, session, game_state)
 
     # Build character context - prefer game_state (authoritative) over _characters
     char_context = ""

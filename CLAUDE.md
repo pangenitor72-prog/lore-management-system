@@ -408,3 +408,31 @@ Revisit how the rules system (D&D 5e mechanics in `src/mantle/dnd5e/`) is implem
 - Should the visibility scaling (Storyteller → Tactician) be more prominent/configurable?
 - Is the current implementation aligned with The Narrow Path philosophy?
 - How do the rules interact with storytelling preferences (lethality, etc.)?
+
+### TODO: Dormant Systems to Activate
+These systems are **built but not wired into active gameplay**. Each has working code that just needs to be connected.
+
+- **OCEAN Personality Profiles** — `src/mantle/core/models.py:238-549`, `personality_pipeline.py` — Every NPC has a full 5-factor personality model with dialogue style guidance ("terse and needs prompting" vs "warm and helpful"). DM never sees OCEAN data during play. **Wire:** Inject `OCEANProfile.get_dialogue_style()` into DM context when an NPC is present in a scene.
+
+- **Arc Engine Beat Suggestions** — `src/mantle/arc/` (8 files) — Tracks Hero's Journey phases, tension (0.0-1.0), and suggests next narrative beats. The engine processes narrative for state tracking but its suggestions are not used. **Wire:** Call `suggest_beats()` and inject pacing guidance into the DM prompt.
+
+- **Memory System** — `src/mantle/memory/` (4 files: manager.py, models.py, experiential.py) — Three-tier memory: Neo4j (canonical) + Vectors (semantic) + Experiential (NPC beliefs/impressions about the player). Complete framework, never called from gameplay endpoints. **Wire:** Call `memory.record_event()` on game events, query `memory.get_npc_beliefs()` before DM generates NPC dialogue.
+
+- **Entity Embeddings / Vector Search** — `src/mantle/services/vector_service.py`, `embedding_service.py` — 768-dim Gemini embeddings indexed in Neo4j. Generated during ingestion, barely queried in gameplay. **Wire:** Use semantic similarity for finding relevant entities based on current scene context, not just name matching.
+
+- **Overlay/Instance System** — `src/mantle/db/neo4j_adapter.py:172-278` — Session-scoped entity mutations: `read_entity_with_overlay()`, `write_entity_delta()`. Lets NPCs develop opinions or locations change state without touching canon data. Built, almost never used. **Wire:** Use overlays to track NPC relationship changes during gameplay sessions.
+
+- **Confidence Level Filtering** — Entities have `confidence_level` (CONFIRMED, PROBABLE, SPECULATIVE, UNCERTAIN, AI_GENERATED). Indexed but never filtered during gameplay. **Wire:** DM could present uncertain entities with qualifiers ("you've heard rumors that...") based on confidence.
+
+- **Auditor Agent in Gameplay** — `src/mantle/agents/auditor_agent.py` — Detects 9 contradiction types (temporal impossibility, resurrection without explanation, etc.). Currently admin/ingestion only. **Wire:** Run auditor on DM-generated narrative to flag when the DM contradicts established lore mid-session.
+
+- **Relationship Graph Traversal** — `query_agent.py` has `RELATIONSHIP_ALLOWLIST` for KNOWS, ALLIED_WITH, ENEMY_OF, MEMBER_OF, etc. Relationships exist in Neo4j but are rarely traversed in gameplay. **Status:** Partially activated in v50 (Narrative Heat system queries one hop). Could go deeper for faction dynamics and NPC social networks.
+
+### Narrative Heat System (v50)
+The Narrative Heat system connects the knowledge graph to active gameplay:
+- DM sees graph entities bucketed by party_knowledge (KNOWN/RUMORED/SECRET) with relationship context
+- Discoveries are matched against the graph via Gemini AI call
+- Matched discoveries update `party_knowledge` in Neo4j (SECRET/RUMORED -> KNOWN)
+- Heat signal (hot/warm/cold) tells the player what's narratively important
+- Gracefully degrades: sparse worlds stay cold, rich worlds light up
+- **Key files:** `game_routes.py` (`_get_graph_aware_entity_context`, `_match_discoveries_to_graph`), `game_state.py` (structured discoveries, known_entities), frontend journal rendering

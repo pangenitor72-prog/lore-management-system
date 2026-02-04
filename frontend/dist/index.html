@@ -15626,6 +15626,21 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 // Parse discoveries from narrative (before stripping)
                 parseDiscoveries(data.narrative);
 
+                // Apply heat matches from graph matching (upgrades cold discoveries to hot/warm)
+                if (data.heat_matches && data.heat_matches.length > 0) {
+                    data.heat_matches.forEach(match => {
+                        const idx = playerJournal.findIndex(d =>
+                            (typeof d === 'string' ? d : (d.text || '')) === match.text
+                        );
+                        if (idx !== -1) {
+                            playerJournal[idx] = match;  // Replace with enriched version
+                            showDiscoveryNotification(match.text, match.heat);
+                        }
+                    });
+                    renderJournal();
+                    console.log('[HEAT] Applied', data.heat_matches.length, 'graph matches');
+                }
+
                 // Parse narrative for inventory changes
                 parseInventoryChanges(data.narrative);
 
@@ -16903,22 +16918,42 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const journalConfig = getJournalConfig();
             labelEl.innerHTML = `<span style="margin-right: 6px;">${journalConfig.icon}</span>${journalConfig.label}`;
 
-            listEl.innerHTML = playerJournal.map(entry => `
-                <div style="
-                    display: flex;
-                    align-items: flex-start;
-                    padding: 8px 12px;
-                    background: rgba(58, 90, 138, 0.1);
-                    border: 1px solid rgba(58, 90, 138, 0.2);
-                    border-radius: 6px;
-                    margin-bottom: 6px;
-                    font-size: 0.85rem;
-                    color: #a8c8ff;
-                ">
-                    <span style="margin-right: 8px; opacity: 0.7;">•</span>
-                    <span>${entry}</span>
-                </div>
-            `).join('');
+            // Heat color mapping for narrative importance
+            const heatStyles = {
+                hot:  { border: 'rgba(255, 140, 50, 0.4)', bg: 'rgba(255, 140, 50, 0.08)', color: '#ff9044', icon: '\uD83D\uDD25', shadow: '0 0 8px rgba(255, 140, 50, 0.15)' },
+                warm: { border: 'rgba(212, 175, 55, 0.3)',  bg: 'rgba(212, 175, 55, 0.06)', color: '#D4AF37', icon: '\u2726', shadow: 'none' },
+                cold: { border: 'rgba(58, 90, 138, 0.2)',   bg: 'rgba(58, 90, 138, 0.1)',  color: '#a8c8ff', icon: '\u2022', shadow: 'none' },
+            };
+
+            listEl.innerHTML = playerJournal.map(entry => {
+                // Handle both string (legacy) and dict (new) formats
+                const text = typeof entry === 'string' ? entry : (entry.text || String(entry));
+                const heat = typeof entry === 'object' ? (entry.heat || 'cold') : 'cold';
+                const entityName = typeof entry === 'object' ? entry.matched_entity_name : null;
+                const style = heatStyles[heat] || heatStyles.cold;
+
+                const entityBadge = entityName
+                    ? `<span style="font-size: 0.75rem; color: ${style.color}; opacity: 0.7; margin-left: 6px;">[${entityName}]</span>`
+                    : '';
+
+                return `
+                    <div style="
+                        display: flex;
+                        align-items: flex-start;
+                        padding: 8px 12px;
+                        background: ${style.bg};
+                        border: 1px solid ${style.border};
+                        border-radius: 6px;
+                        margin-bottom: 6px;
+                        font-size: 0.85rem;
+                        color: ${style.color};
+                        box-shadow: ${style.shadow};
+                    ">
+                        <span style="margin-right: 8px; opacity: 0.7;">${style.icon}</span>
+                        <span>${text}${entityBadge}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Get setting-appropriate journal label and icon
@@ -17524,25 +17559,42 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             let match;
             while ((match = pattern.exec(text)) !== null) {
                 const discovery = match[1].trim();
-                if (discovery && !playerJournal.includes(discovery)) {
-                    playerJournal.push(discovery);
-                    showDiscoveryNotification(discovery);
+                // Check for duplicates (handle both string and dict entries)
+                const alreadyExists = playerJournal.some(d =>
+                    (typeof d === 'string' ? d : (d.text || '')) === discovery
+                );
+                if (discovery && !alreadyExists) {
+                    // Initially cold — backend upgrades heat after graph matching
+                    playerJournal.push({
+                        text: discovery,
+                        heat: 'cold',
+                        matched_entity_id: null,
+                        matched_entity_name: null,
+                    });
+                    showDiscoveryNotification(discovery, 'cold');
                     console.log('[Journal] New discovery:', discovery);
                 }
             }
         }
 
         // Show a notification when the player discovers something narratively important
-        function showDiscoveryNotification(text) {
+        function showDiscoveryNotification(text, heat = 'cold') {
+            const heatColors = {
+                hot:  { bg: 'linear-gradient(135deg, #2d1a0a 0%, #1a0f06 100%)', border: '#ff9044', color: '#ffb77a', icon: '\uD83D\uDD25', shadow: '0 4px 20px rgba(255, 140, 50, 0.3)' },
+                warm: { bg: 'linear-gradient(135deg, #1a1a0a 0%, #16160a 100%)', border: '#D4AF37', color: '#e8d48b', icon: '\u2726', shadow: '0 4px 20px rgba(212, 175, 55, 0.3)' },
+                cold: { bg: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', border: '#3a5a8a', color: '#a8c8ff', icon: '\uD83D\uDCDC', shadow: '0 4px 20px rgba(58, 90, 138, 0.3)' },
+            };
+            const style = heatColors[heat] || heatColors.cold;
+
             const notification = document.createElement('div');
             notification.className = 'inventory-notification discovery-notification';
-            notification.innerHTML = `<span style="margin-right: 6px;">📜</span> ${text}`;
+            notification.innerHTML = `<span style="margin-right: 6px;">${style.icon}</span> ${text}`;
             notification.style.cssText = `
                 position: fixed; top: 80px; right: 20px; z-index: 10000;
-                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-                color: #a8c8ff; border: 1px solid #3a5a8a; border-radius: 8px;
+                background: ${style.bg};
+                color: ${style.color}; border: 1px solid ${style.border}; border-radius: 8px;
                 padding: 10px 16px; font-size: 0.85rem; max-width: 320px;
-                box-shadow: 0 4px 20px rgba(58, 90, 138, 0.3);
+                box-shadow: ${style.shadow};
                 animation: slideIn 0.4s ease-out;
                 pointer-events: none; opacity: 1; transition: opacity 0.5s;
             `;
