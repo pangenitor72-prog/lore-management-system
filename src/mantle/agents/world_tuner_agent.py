@@ -137,10 +137,18 @@ If you're just having a conversation (greeting, asking questions, explaining), d
         """
         self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self.model_name = model_name
+        self.model = None
 
-        # Configure Gemini
-        genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel(self.model_name)
+        # Configure Gemini - validate API key first
+        if not self.api_key:
+            logger.error("WorldTunerAgent: No GEMINI_API_KEY or GOOGLE_API_KEY found in environment")
+        else:
+            try:
+                genai.configure(api_key=self.api_key)
+                self.model = genai.GenerativeModel(self.model_name)
+                logger.info(f"WorldTunerAgent: Initialized with model {self.model_name}")
+            except Exception as e:
+                logger.error(f"WorldTunerAgent: Failed to initialize Gemini model: {e}")
 
     async def chat(
         self,
@@ -164,6 +172,14 @@ If you're just having a conversation (greeting, asking questions, explaining), d
                 "proposals": []  # List of proposed changes (if any)
             }
         """
+        # Check if model is initialized
+        if not self.model:
+            logger.error("WorldTunerAgent: Model not initialized - API key may be missing")
+            return {
+                "message": "World Tuner is not available - the AI model could not be initialized. Please check that GEMINI_API_KEY is set.",
+                "proposals": []
+            }
+
         # Build the full prompt
         prompt = self._build_prompt(message, history, world_context)
 
@@ -185,7 +201,7 @@ If you're just having a conversation (greeting, asking questions, explaining), d
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
             return {
-                "message": "I encountered an error processing your request. Please try again.",
+                "message": f"I encountered an error communicating with the AI: {str(e)[:100]}. Please try again.",
                 "proposals": []
             }
 

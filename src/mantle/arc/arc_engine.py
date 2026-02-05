@@ -306,9 +306,12 @@ class ArcEngine:
         if subtle:
             # For campaigns: guidance without explicit structure
             tension_word = "calm" if tension < 0.3 else "building" if tension < 0.6 else "high"
+            # Get a single beat suggestion for gentle guidance
+            beats = self._beat_suggester.suggest_beats(phase=phase, current_tension=tension, count=1)
+            beat_hint = f"\nOpportunity: {beats[0].description}" if beats else ""
             return f"""
 Narrative energy: {tension_word}, {trend}
-{description}"""
+{description}{beat_hint}"""
 
         # For finite stories: more explicit structure helps pacing
         lines = [
@@ -329,6 +332,18 @@ Narrative energy: {tension_word}, {trend}
             pacing_note = self._tension_tracker.get_pacing_guidance(phase, lethality=lethality)
             if pacing_note:
                 lines.append(f"Pacing: {pacing_note}")
+
+        # Add beat suggestions for narrative direction
+        beats = self._beat_suggester.suggest_beats(
+            phase=phase,
+            current_tension=tension,
+            count=2,  # Top 2 suggestions to avoid prompt bloat
+        )
+        if beats:
+            lines.append("Consider:")
+            for beat in beats:
+                # Format: "- [COMBAT] Face the supreme challenge - everything at stake"
+                lines.append(f"  - [{beat.beat_type.value.upper()}] {beat.description}")
 
         return "\n".join(lines)
 

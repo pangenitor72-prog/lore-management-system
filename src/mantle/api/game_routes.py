@@ -34,6 +34,9 @@ from src.mantle.agents.lore_parsing_agent import LoreParsingAgent
 from src.mantle.guardrails.token_budget import TokenTracker, TokenBudget, BudgetExceeded, RateLimitExceeded, estimate_tokens
 from src.mantle.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
+# OCEAN Personality Profiles
+from src.mantle.core.models import OCEANProfile
+
 # D&D Rules Integration
 from src.mantle.api.dnd_routes import _characters, CharacterSheet
 from src.mantle.dnd5e.engine.checks import CheckEngine, SKILL_TO_ABILITY
@@ -71,6 +74,26 @@ from src.mantle.suggestions.action_engine import generate_action_suggestions, Pl
 
 # Creative Catalyst for narrative variety
 from src.mantle.creative.catalyst import CreativeCatalyst
+
+# Experiential Memory System for NPC beliefs, impressions, legends
+try:
+    from src.mantle.memory.manager import MemoryManager
+    from src.mantle.memory.experiential import ExperientialMemory
+    MEMORY_SYSTEM_AVAILABLE = True
+except ImportError:
+    MEMORY_SYSTEM_AVAILABLE = False
+    MemoryManager = None
+    ExperientialMemory = None
+
+# Vector Search for semantic entity retrieval
+try:
+    from src.mantle.services.vector_service import VectorService
+    from src.mantle.services.embedding_orchestrator import EmbeddingOrchestrator
+    VECTOR_SEARCH_AVAILABLE = True
+except ImportError:
+    VECTOR_SEARCH_AVAILABLE = False
+    VectorService = None
+    EmbeddingOrchestrator = None
 
 logger = logging.getLogger(__name__)
 
@@ -3048,6 +3071,8 @@ async def create_session(
         "arc_engine": ArcEngine(session_id=session_id) if ARC_ENGINE_AVAILABLE else None,
         # Creative Catalyst for narrative variety (per-session instance)
         "creative_catalyst": CreativeCatalyst(genre=primary_genre),
+        # Memory Manager for NPC beliefs, impressions, legends (per-session instance)
+        "memory_manager": MemoryManager(experiential=ExperientialMemory(f"data/sessions/{session_id}_memory.db")) if MEMORY_SYSTEM_AVAILABLE else None,
     }
 
     _active_sessions[session_id] = session_data
@@ -4486,19 +4511,37 @@ async def _get_graph_aware_entity_context(
         results = await db.execute("""
             MATCH (e:Entity)
             WHERE e.world_id IN [$session_world_id, $world_id]
-            OPTIONAL MATCH (e)-[r]->(t:Entity)
+              AND coalesce(e.confidence_level, 'CONFIRMED') <> 'UNCERTAIN'
+            // Outgoing relationships (e.g., "SERVES Lord Blackwood")
+            OPTIONAL MATCH (e)-[r_out]->(t_out:Entity)
+            // Incoming relationships (e.g., "Lord Blackwood EMPLOYS this character")
+            OPTIONAL MATCH (e)<-[r_in]-(t_in:Entity)
+            // Faction membership (e.g., "member of The Iron Guard")
+            OPTIONAL MATCH (e)-[:MEMBER_OF|:BELONGS_TO]->(faction:Entity {entity_type: 'Faction'})
             WITH e,
-                 collect(DISTINCT {type: type(r), target: t.name})[0..3] AS rels,
+                 collect(DISTINCT {type: type(r_out), target: t_out.name})[0..3] AS rels_out,
+                 collect(DISTINCT {type: type(r_in), source: t_in.name})[0..2] AS rels_in,
+                 collect(DISTINCT faction.name)[0..2] AS factions,
                  CASE
                    WHEN e.canon_id IN $known_ids THEN 'KNOWN'
                    WHEN e.party_knowledge = 'KNOWN' THEN 'KNOWN'
                    WHEN e.party_knowledge = 'RUMORED' THEN 'RUMORED'
                    ELSE 'SECRET'
-                 END AS knowledge
+                 END AS knowledge,
+                 coalesce(e.confidence_level, 'CONFIRMED') AS confidence
             RETURN e.name AS name, e.description AS description,
                    e.entity_type AS type, e.canon_id AS canon_id,
-                   knowledge, rels
-            ORDER BY CASE knowledge
+                   knowledge, rels_out, rels_in, factions, confidence,
+                   e.openness AS openness, e.conscientiousness AS conscientiousness,
+                   e.extraversion AS extraversion, e.agreeableness AS agreeableness,
+                   e.neuroticism AS neuroticism
+            ORDER BY CASE confidence
+                       WHEN 'CONFIRMED' THEN 0
+                       WHEN 'PROBABLE' THEN 1
+                       WHEN 'SPECULATIVE' THEN 2
+                       ELSE 3
+                     END,
+                     CASE knowledge
                        WHEN 'SECRET' THEN 0
                        WHEN 'RUMORED' THEN 1
                        ELSE 2
@@ -4519,16 +4562,46 @@ async def _get_graph_aware_entity_context(
             desc = (r.get("description") or "")[:120]
             name = r.get("name", "Unknown")
             etype = r.get("type", "Entity")
+            confidence = r.get("confidence", "CONFIRMED")
 
-            # Format relationships
-            rels = r.get("rels") or []
+            # Format relationships (outgoing, incoming, and factions)
             rel_parts = []
-            for rel in rels:
+            # Outgoing: "SERVES Lord Blackwood"
+            for rel in (r.get("rels_out") or []):
                 if rel.get("target"):
                     rel_parts.append(f"{rel['type']} {rel['target']}")
+            # Incoming: "Lord Blackwood EMPLOYS"
+            for rel in (r.get("rels_in") or []):
+                if rel.get("source"):
+                    rel_parts.append(f"{rel['source']} {rel['type']}")
+            # Faction membership
+            for faction in (r.get("factions") or []):
+                rel_parts.append(f"member of {faction}")
             rel_str = f". {', '.join(rel_parts)}" if rel_parts else ""
 
-            entry = f"- {name} ({etype}): {desc}{rel_str}"
+            # Add OCEAN dialogue style for Characters
+            dialogue_str = ""
+            if etype == "Character" and r.get("openness") is not None:
+                try:
+                    ocean = OCEANProfile(
+                        openness=r.get("openness", 0.5),
+                        conscientiousness=r.get("conscientiousness", 0.5),
+                        extraversion=r.get("extraversion", 0.5),
+                        agreeableness=r.get("agreeableness", 0.5),
+                        neuroticism=r.get("neuroticism", 0.5),
+                    )
+                    style = ocean.get_dialogue_style()
+                    if style and style != "neutral conversational style":
+                        dialogue_str = f" [Speaks: {style}]"
+                except Exception:
+                    pass  # Graceful degradation if OCEAN data is malformed
+
+            # Mark low-confidence entities so DM knows to treat them as flexible
+            confidence_marker = ""
+            if confidence in ("SPECULATIVE", "AI_GENERATED"):
+                confidence_marker = " [unverified - treat as flexible]"
+
+            entry = f"- {name} ({etype}): {desc}{rel_str}{dialogue_str}{confidence_marker}"
             bucket = r.get("knowledge", "SECRET")
             if bucket == "KNOWN":
                 known.append(entry)
@@ -4555,12 +4628,93 @@ async def _get_graph_aware_entity_context(
         sections.append(
             "\nWeave KNOWN entities as established facts. Drop hints about RUMORED entities."
             "\nWhen revealing a SECRET, use [DISCOVERY:] tag so the system tracks it."
+            "\nFor Characters with [Speaks:] tags, embody that dialogue style when they talk."
         )
 
         return "\n".join(sections)
 
     except Exception as e:
         logger.debug(f"[GRAPH] Failed to get entity context: {e}")
+        return ""
+
+
+async def _get_semantically_relevant_entities(
+    db: Neo4jDatabase,
+    player_action: str,
+    session: Dict[str, Any],
+    limit: int = 3,
+) -> str:
+    """Find entities semantically relevant to the player's action via vector search.
+
+    Uses embeddings to find thematically related entities even without keyword match.
+    For example, "I search for clues about the murder" might surface a SECRET character
+    who is secretly the murderer, even though "murder" isn't in their description.
+
+    Returns formatted string for DM context injection, or empty string if unavailable.
+    """
+    if not VECTOR_SEARCH_AVAILABLE:
+        return ""
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return ""
+
+    session_world_id = session.get("session_world_id", "")
+    world_id = session.get("world_id", "")
+
+    try:
+        orchestrator = EmbeddingOrchestrator(api_key=api_key)
+        vector_service = VectorService(db, orchestrator)
+
+        # Search for entities relevant to the player's action
+        results = await vector_service.vector_search(
+            query_text=player_action,
+            label="Entity",
+            limit=limit
+        )
+
+        if not results:
+            return ""
+
+        # Filter to only entities from this world
+        filtered = []
+        for r in results:
+            # Fetch full entity to check world_id
+            entity = await db.execute("""
+                MATCH (e:Entity {canon_id: $canon_id})
+                WHERE e.world_id IN [$session_world_id, $world_id]
+                RETURN e.name AS name, e.description AS description,
+                       e.entity_type AS type, e.party_knowledge AS knowledge
+            """, {
+                "canon_id": r.get("id"),
+                "session_world_id": session_world_id,
+                "world_id": world_id,
+            })
+            if entity:
+                filtered.append({
+                    **entity[0],
+                    "score": r.get("score", 0)
+                })
+
+        if not filtered:
+            return ""
+
+        # Format for DM prompt
+        lines = ["\n=== SEMANTICALLY RELEVANT (thematically connected to player's action) ==="]
+        for e in filtered:
+            desc = (e.get("description") or "")[:80]
+            name = e.get("name", "Unknown")
+            etype = e.get("type", "Entity")
+            knowledge = e.get("knowledge", "SECRET")
+            score = e.get("score", 0)
+            lines.append(f"- {name} ({etype}, {knowledge}): {desc} [relevance: {score:.0%}]")
+
+        lines.append("Consider weaving these thematically related elements if dramatically appropriate.")
+        logger.debug(f"[VECTOR] Found {len(filtered)} semantically relevant entities")
+        return "\n".join(lines)
+
+    except Exception as e:
+        logger.debug(f"[VECTOR] Semantic search failed: {e}")
         return ""
 
 
@@ -4839,6 +4993,11 @@ ESTABLISHED LORE (stay true to these characters and details):
     if db:
         db_context = await _get_graph_aware_entity_context(db, session, game_state)
 
+        # Add semantically relevant entities based on player's action
+        semantic_context = await _get_semantically_relevant_entities(db, player_input, session)
+        if semantic_context:
+            db_context = db_context + semantic_context
+
     # Build character context - prefer game_state (authoritative) over _characters
     char_context = ""
     if game_state and game_state.character:
@@ -4904,14 +5063,56 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         except Exception as e:
             logger.warning(f"[ARC] Failed to get context injection: {e}")
 
+    # Build memory context for NPC beliefs, impressions, legends
+    memory_context_str = ""
+    memory_manager = session.get("memory_manager")
+    if memory_manager:
+        try:
+            memory_lines = []
+            # Get player legends (mythology about the player)
+            legends = memory_manager.get_player_legends()
+            if legends:
+                legend_strs = [f'"{l.epithet}"' for l in legends[:3]]
+                memory_lines.append(f"PLAYER REPUTATION: Known as {', '.join(legend_strs)}")
+
+            # Get active narrative threads (unresolved tensions)
+            threads = memory_manager.get_active_threads()
+            if threads:
+                thread_strs = [f"- {t.description} (urgency: {t.urgency:.0%})" for t in threads[:3]]
+                memory_lines.append("OPEN THREADS:\n" + "\n".join(thread_strs))
+
+            # Get impressions (how NPCs view the player)
+            friendly = memory_manager.get_friendly_npcs()
+            hostile = memory_manager.get_hostile_npcs()
+            if friendly or hostile:
+                impression_parts = []
+                if friendly:
+                    impression_parts.append(f"{len(friendly)} friendly NPCs")
+                if hostile:
+                    impression_parts.append(f"{len(hostile)} hostile NPCs")
+                memory_lines.append(f"NPC DISPOSITION: {', '.join(impression_parts)}")
+
+            if memory_lines:
+                memory_context_str = "\n=== WORLD MEMORY ===\n" + "\n".join(memory_lines)
+                logger.debug(f"[MEMORY] Injecting context: {len(legends)} legends, {len(threads)} threads")
+        except Exception as e:
+            logger.warning(f"[MEMORY] Failed to get context: {e}")
+
     # Handle genre blending
     genre_display = session.get("genre_blend", genre)
 
     prompt = f"""You are a master storyteller continuing someone's story.
 
 YOUR JOB: Read between the lines. When they act, ask yourself what experience they're seeking. "I attack the dragon" might mean they want to feel brave, or test if you'll let them be bold. "I look around carefully" means they want to be rewarded for caution. "I try to talk to them" means they want diplomacy to matter. Give them what they're actually asking for, not just the literal response.
+
+POWER PARITY: All archetype powers are equally impactful. A detective's "Cold Read" that breaks a suspect is as mechanically decisive as a wizard's Fireball. A diplomat's persuasion WORKS on NPCs - they comply, reveal secrets, change sides. Social and investigative powers aren't "soft skills" that might work; they're protagonist abilities that succeed dramatically. The noir detective and the combat mage should both feel like the main character of their genre.
+
+PLAYER AGENCY: NPC powers never force player actions. A charming villain can be compelling, but the player always chooses whether to be swayed. Present temptation, not compulsion. The player is the protagonist - they decide their character's responses to social pressure, mind effects, or manipulation. NPCs can try; players choose the outcome.
+
+DIVERSE SOLUTIONS: Every challenge should have multiple viable paths - combat, diplomacy, stealth, investigation, magic, social leverage. When the player chooses a non-combat approach, reward it with satisfying outcomes. A talked-down enemy can become an ally. A bribed guard stays bribed. A well-researched plan works. Don't funnel players toward fighting unless THEY choose violence.
 {scope_guidance}
 {arc_context_str}
+{memory_context_str}
 GENRE: {genre_display.upper()}
 Voice: {genre_info['voice']}
 {magic_guidance}
