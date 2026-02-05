@@ -6695,7 +6695,7 @@
 
             <!-- Footer links -->
             <p class="landing-footer">
-                <a href="#" onclick="showScreen('welcome'); return false;">Advanced Setup</a>
+                <a href="#" onclick="showScreen('setup'); return false;">Advanced Setup</a>
                 <span>|</span>
                 <a href="#" onclick="showSiteMap(); return false;">Site Map</a>
                 <span>|</span>
@@ -6722,7 +6722,6 @@
                     <a href="#" onclick="closeSiteMap(); showScreen('saves'); return false;" class="sitemap-link">📖 Saved Stories</a>
 
                     <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">CREATE</div>
-                    <a href="#" onclick="closeSiteMap(); showScreen('welcome'); return false;" class="sitemap-link">🎭 Genre Selection</a>
                     <a href="#" onclick="closeSiteMap(); showScreen('setup'); return false;" class="sitemap-link">⚙️ Story Setup</a>
 
                     <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; margin-bottom: 5px;">EXPLORE</div>
@@ -6794,110 +6793,6 @@
         </div>
 
         <!-- Welcome Screen -->
-        <div id="welcome" class="screen">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                <div class="welcome-intro" style="margin-bottom: 0;">
-                    <h2>What kind of story calls to you?</h2>
-                    <p>Select one or more genres to blend together.</p>
-                </div>
-                <button class="btn btn-secondary" onclick="showScreen('start')" style="padding: 6px 15px; white-space: nowrap;">← Home</button>
-            </div>
-
-            <div class="genre-grid" style="max-width: 650px;">
-                <!-- Story-Focused Genres -->
-                <div class="genre-card" data-genre="romance" onclick="selectGenre('romance')">
-                    <span class="icon">💕</span>
-                    <span class="label">Romance</span>
-                </div>
-                <div class="genre-card" data-genre="mystery" onclick="selectGenre('mystery')">
-                    <span class="icon">🔍</span>
-                    <span class="label">Mystery</span>
-                </div>
-                <div class="genre-card" data-genre="drama" onclick="selectGenre('drama')">
-                    <span class="icon">🎭</span>
-                    <span class="label">Drama</span>
-                </div>
-                <div class="genre-card" data-genre="adventure" onclick="selectGenre('adventure')">
-                    <span class="icon">🗺️</span>
-                    <span class="label">Adventure</span>
-                </div>
-                <!-- Classic Genres -->
-                <div class="genre-card" data-genre="fantasy" onclick="selectGenre('fantasy')">
-                    <span class="icon">⚔️</span>
-                    <span class="label">Fantasy</span>
-                </div>
-                <div class="genre-card" data-genre="scifi" onclick="selectGenre('scifi')">
-                    <span class="icon">🚀</span>
-                    <span class="label">Sci-Fi</span>
-                </div>
-                <div class="genre-card" data-genre="horror" onclick="selectGenre('horror')">
-                    <span class="icon">👻</span>
-                    <span class="label">Horror</span>
-                </div>
-                <div class="genre-card" data-genre="modern" onclick="selectGenre('modern')">
-                    <span class="icon">🏙️</span>
-                    <span class="label">Modern</span>
-                </div>
-                <!-- Magic-Focused Genres -->
-                <div class="genre-card" data-genre="urban_fantasy" onclick="selectGenre('urban_fantasy')">
-                    <span class="icon">🔮</span>
-                    <span class="label">Urban Fantasy</span>
-                </div>
-                <div class="genre-card" data-genre="gothic" onclick="selectGenre('gothic')">
-                    <span class="icon">🦇</span>
-                    <span class="label">Gothic</span>
-                </div>
-                <!-- Historical & Cultural -->
-                <div class="genre-card" data-genre="western" onclick="selectGenre('western')">
-                    <span class="icon">🤠</span>
-                    <span class="label">Western</span>
-                </div>
-                <div class="genre-card" data-genre="noir" onclick="selectGenre('noir')">
-                    <span class="icon">🕵️</span>
-                    <span class="label">Noir</span>
-                </div>
-                <div class="genre-card" data-genre="mythology" onclick="selectGenre('mythology')">
-                    <span class="icon">🏛️</span>
-                    <span class="label">Mythology</span>
-                </div>
-                <div class="genre-card" data-genre="wuxia" onclick="selectGenre('wuxia')">
-                    <span class="icon">🥋</span>
-                    <span class="label">Wuxia</span>
-                </div>
-                <!-- Speculative Genres -->
-                <div class="genre-card" data-genre="cyberpunk" onclick="selectGenre('cyberpunk')">
-                    <span class="icon">🌃</span>
-                    <span class="label">Cyberpunk</span>
-                </div>
-                <div class="genre-card" data-genre="steampunk" onclick="selectGenre('steampunk')">
-                    <span class="icon">⚙️</span>
-                    <span class="label">Steampunk</span>
-                </div>
-                <div class="genre-card" data-genre="postapoc" onclick="selectGenre('postapoc')">
-                    <span class="icon">☢️</span>
-                    <span class="label">Post-Apoc</span>
-                </div>
-                <div class="genre-card" data-genre="superhero" onclick="selectGenre('superhero')">
-                    <span class="icon">🦸</span>
-                    <span class="label">Superhero</span>
-                </div>
-            </div>
-
-            <div class="btn-group">
-                <button class="btn btn-primary" id="begin-btn" onclick="showScreen('setup')" disabled>Continue</button>
-            </div>
-
-            <div class="btn-group" style="margin-top: 25px;">
-                <button class="btn btn-secondary" onclick="showScreen('saves')">Load Saved Game</button>
-                <button class="btn btn-secondary" onclick="showScreen('ingest')">Import Lore</button>
-            </div>
-
-            <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
-                <a href="#" onclick="showScreen('onboarding'); return false;" style="color: var(--text-muted);">How does this work?</a>
-                <span style="margin: 0 10px;">|</span>
-                <a href="#" onclick="showPinModal(); return false;" style="color: var(--text-muted);">Admin / File Manager</a>
-            </p>
-        </div>
 
         <!-- Saves Screen -->
         <div id="saves" class="screen">
@@ -6951,23 +6846,31 @@
                 </div>
             </div>
 
-            <!-- GENRE BLEND SECTION (customizable) -->
+            <!-- GENRE SECTION -->
             <div class="setup-section" id="genre-blend-section">
-                <h3 id="genre-blend-heading">Add More Genres?</h3>
+                <h3 id="genre-blend-heading">Genre <span style="font-size: 0.75rem; color: var(--accent-sage); font-weight: normal;">(optional)</span></h3>
                 <p id="genre-blend-hint" style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    Optional: blend in additional genres like romance, mystery, or horror. Or skip this and jump right in!
+                    Pick one or more genres, or skip to let your world decide.
                 </p>
                 <div id="genre-blend-container" class="tone-options" style="flex-wrap: wrap; gap: 8px;">
-                    <span class="tone-chip genre-blend-chip" data-blend-genre="fantasy" onclick="toggleBlendGenre('fantasy')">⚔️ Fantasy</span>
                     <span class="tone-chip genre-blend-chip" data-blend-genre="romance" onclick="toggleBlendGenre('romance')">💕 Romance</span>
                     <span class="tone-chip genre-blend-chip" data-blend-genre="mystery" onclick="toggleBlendGenre('mystery')">🔍 Mystery</span>
-                    <span class="tone-chip genre-blend-chip" data-blend-genre="horror" onclick="toggleBlendGenre('horror')">👻 Horror</span>
-                    <span class="tone-chip genre-blend-chip" data-blend-genre="adventure" onclick="toggleBlendGenre('adventure')">🗺️ Adventure</span>
                     <span class="tone-chip genre-blend-chip" data-blend-genre="drama" onclick="toggleBlendGenre('drama')">🎭 Drama</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="adventure" onclick="toggleBlendGenre('adventure')">🗺️ Adventure</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="fantasy" onclick="toggleBlendGenre('fantasy')">⚔️ Fantasy</span>
                     <span class="tone-chip genre-blend-chip" data-blend-genre="scifi" onclick="toggleBlendGenre('scifi')">🚀 Sci-Fi</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="horror" onclick="toggleBlendGenre('horror')">👻 Horror</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="modern" onclick="toggleBlendGenre('modern')">🏙️ Modern</span>
                     <span class="tone-chip genre-blend-chip" data-blend-genre="urban_fantasy" onclick="toggleBlendGenre('urban_fantasy')">🔮 Urban Fantasy</span>
                     <span class="tone-chip genre-blend-chip" data-blend-genre="gothic" onclick="toggleBlendGenre('gothic')">🦇 Gothic</span>
-                    <span class="tone-chip genre-blend-chip" data-blend-genre="noir" onclick="toggleBlendGenre('noir')">🌃 Noir</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="western" onclick="toggleBlendGenre('western')">🤠 Western</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="noir" onclick="toggleBlendGenre('noir')">🕵️ Noir</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="mythology" onclick="toggleBlendGenre('mythology')">🏛️ Mythology</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="wuxia" onclick="toggleBlendGenre('wuxia')">🥋 Wuxia</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="cyberpunk" onclick="toggleBlendGenre('cyberpunk')">🌃 Cyberpunk</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="steampunk" onclick="toggleBlendGenre('steampunk')">⚙️ Steampunk</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="postapoc" onclick="toggleBlendGenre('postapoc')">☢️ Post-Apoc</span>
+                    <span class="tone-chip genre-blend-chip" data-blend-genre="superhero" onclick="toggleBlendGenre('superhero')">🦸 Superhero</span>
                 </div>
                 <p id="genre-blend-result" style="color: var(--accent-gold); margin-top: 10px; font-size: 0.85rem; display: none;">
                     Your blend: <span id="blend-genres-list"></span>
@@ -7128,7 +7031,7 @@
             <div id="setup-status"></div>
 
             <div class="btn-group" style="margin-top: 15px;">
-                <button class="btn btn-secondary" onclick="showScreen('welcome')">← Back</button>
+                <button class="btn btn-secondary" onclick="showScreen('start')">← Back</button>
             </div>
         </div>
 
@@ -8432,7 +8335,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
             <div class="btn-group" style="margin-top: 30px;">
                 <button class="btn btn-secondary" onclick="showScreen('start')">← Back</button>
-                <button class="btn btn-secondary" onclick="showScreen('welcome')">More Options</button>
+                <button class="btn btn-secondary" onclick="showScreen('setup')">More Options</button>
             </div>
         </div>
 
@@ -10581,7 +10484,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             } else {
                 // Tutorial complete
                 hideTutorialOverlay();
-                showScreen('welcome');
+                showScreen('start');
                 document.getElementById('tutorial-badge').style.display = 'block';
             }
         }
@@ -11520,7 +11423,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.querySelectorAll('.genre-card').forEach(card => {
                 card.classList.toggle('selected', selectedGenres.includes(card.dataset.genre));
             });
-            document.getElementById('begin-btn').disabled = selectedGenres.length === 0;
+            const beginBtn = document.getElementById('begin-btn');
+            if (beginBtn) beginBtn.disabled = selectedGenres.length === 0;
 
             // Show genre blend hint
             updateGenreBlendHint();
@@ -11693,15 +11597,15 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const hintEl = document.getElementById('genre-blend-hint');
 
             if (selectedCuratedWorld && curatedWorldGenres.length > 0) {
-                // World already has genres - make it clear they're adding ADDITIONAL ones
+                // World already has genres - show what's included
                 const worldGenreList = curatedWorldGenres.slice(0, 3).join(', ');
-                headingEl.textContent = 'Add More Genres? (Optional)';
+                headingEl.innerHTML = 'Genre <span style="font-size: 0.75rem; color: var(--accent-sage); font-weight: normal;">(optional)</span>';
                 hintEl.innerHTML = `Your world already includes <strong>${worldGenreList}</strong>. ` +
-                    `Click below to add more, or just skip this section!`;
+                    `Click below to add or change genres, or just skip this section.`;
             } else {
                 // No world selected - this IS their genre selection
-                headingEl.textContent = 'Add More Genres?';
-                hintEl.textContent = 'Optional: blend in additional genres like romance, mystery, or horror. Or skip this and jump right in!';
+                headingEl.innerHTML = 'Genre <span style="font-size: 0.75rem; color: var(--accent-sage); font-weight: normal;">(optional)</span>';
+                hintEl.textContent = 'Pick one or more genres, or skip to let your world decide.';
             }
         }
 
@@ -11800,11 +11704,12 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 genreSelect.value = rulesGenre;
             }
 
-            // Sync welcome screen genre cards
+            // Sync genre cards
             document.querySelectorAll('.genre-card').forEach(card => {
                 card.classList.toggle('selected', selectedGenres.includes(card.dataset.genre));
             });
-            document.getElementById('begin-btn').disabled = selectedGenres.length === 0;
+            const beginBtnSync = document.getElementById('begin-btn');
+            if (beginBtnSync) beginBtnSync.disabled = selectedGenres.length === 0;
             updateGenreBlendHint();
 
             // Update rules section display
@@ -15707,7 +15612,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 currentSessionId = null;
                 currentPhase = null;
                 document.getElementById('story-container').innerHTML = '';
-                showScreen('welcome');
+                showScreen('start');
             }
         }
 
@@ -15734,7 +15639,8 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 // Clear genre selections visually
                 document.querySelectorAll('.genre-card').forEach(c => c.classList.remove('selected'));
-                document.getElementById('begin-btn').disabled = true;
+                const beginBtnReset = document.getElementById('begin-btn');
+                if (beginBtnReset) beginBtnReset.disabled = true;
 
                 // Go back to main landing
                 showScreen('start');
