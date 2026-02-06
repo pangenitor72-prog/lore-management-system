@@ -7577,12 +7577,23 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleAdminChangelog()">
                     <h3 style="color: #22c55e; margin: 0; display: flex; align-items: center; gap: 10px;">
                         <span>🆕</span> New Admin Features
-                        <span id="admin-changelog-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">6 NEW</span>
+                        <span id="admin-changelog-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">7 NEW</span>
                     </h3>
                     <span id="admin-changelog-arrow" style="font-size: 1.2rem; transition: transform 0.2s;">▼</span>
                 </div>
                 <div id="admin-changelog-content" style="margin-top: 15px;">
                     <!-- Most recent first -->
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">NPC HP Tracking + Softened Mechanics</strong>
+                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            <strong>NPC HP tracking:</strong> Enemies now tracked with HP/AC. DM uses [ENEMY: Name | HP: X | AC: Y] tags to register combatants. Player attacks auto-apply damage. Untracked targets auto-register with level-scaled stats. DM sees enemy health status each turn.<br><br>
+                            <strong>Softened mechanical constraints:</strong> Dice rolls still happen first and constrain outcomes, but the AI DM now has more latitude in HOW to narrate results. A miss doesn't have to be embarrassing; a hit can be described however fits the moment. The system enforces outcomes, not descriptions.
+                        </p>
+                    </div>
+
                     <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <strong style="color: var(--text-primary);">Dormant Systems Activated + Gameplay Philosophy</strong>

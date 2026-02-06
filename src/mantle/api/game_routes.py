@@ -3479,12 +3479,31 @@ async def process_action(
                                     # Apply damage to target (NPC/enemy)
                                     # For now we track this in the mechanical_context for the DM
                                     logger.info(f"[COMBAT] Player dealt {damage} damage to {target}")
-                                    # If we have a tracked enemy, apply it
+                                    # Apply damage to target - auto-register if not tracked
                                     try:
-                                        if target in game_state.active_npcs or target in game_state.combat.combatants:
-                                            game_state.apply_damage_to_npc(target, damage, source="player")
+                                        game_state.apply_damage_to_npc(target, damage, source="player")
                                     except ValueError:
-                                        pass  # Target not tracked yet
+                                        # Target not tracked - auto-register with estimated stats
+                                        # Scale HP/AC based on player level for balanced encounters
+                                        player_level = 1
+                                        if game_state.character:
+                                            player_level = getattr(game_state.character, 'level', 1) or 1
+                                        # Base HP: 15 + (5 * level), AC: 12 + (level // 4)
+                                        estimated_hp = 15 + (5 * player_level)
+                                        estimated_ac = 12 + (player_level // 4)
+
+                                        from src.mantle.engine.game_state import CombatantState
+                                        auto_npc = CombatantState(
+                                            id=target.lower().replace(" ", "_"),
+                                            name=target,
+                                            max_hp=estimated_hp,
+                                            current_hp=estimated_hp,
+                                            armor_class=estimated_ac,
+                                        )
+                                        game_state.add_npc(auto_npc)
+                                        logger.info(f"[COMBAT] Auto-registered NPC '{target}' with HP:{estimated_hp} AC:{estimated_ac}")
+                                        # Now apply the damage
+                                        game_state.apply_damage_to_npc(target, damage, source="player")
 
                 except Exception as e:
                     logger.warning(f"Failed to resolve mechanical action: {e}")
@@ -3953,6 +3972,89 @@ def _extract_state_changes_from_narrative(narrative: str, game_state: GameState)
             game_state.add_discovery(text)
             changes.append({"type": "discovery", "text": text, "source": "structured_tag"})
             logger.info(f"[DISCOVERY] {text}")
+
+    # [ENEMY: name | HP: amount | AC: amount] — register an NPC/enemy for HP tracking
+    # Example: [ENEMY: Goblin Warrior | HP: 15 | AC: 13]
+    # AC is optional, defaults to 12
+    enemy_pattern = r'\[ENEMY:\s*([^|\]]+)\s*\|\s*HP:\s*(\d+)(?:\s*\|\s*AC:\s*(\d+))?\]'
+    enemy_matches = re.findall(enemy_pattern, narrative, re.IGNORECASE)
+    for name, hp_str, ac_str in enemy_matches:
+        try:
+            name = name.strip()
+            hp = int(hp_str)
+            ac = int(ac_str) if ac_str else 12
+            if name and 1 <= hp <= 500 and 1 <= ac <= 30:
+                # Create a unique ID for this NPC
+                npc_id = f"{name.lower().replace(' ', '_')}_{game_state.turn_count}"
+                from src.mantle.engine.game_state import CombatantState
+                npc = CombatantState(
+                    id=npc_id,
+                    name=name,
+                    max_hp=hp,
+                    current_hp=hp,
+                    armor_class=ac,
+                )
+                game_state.add_npc(npc)
+                changes.append({
+                    "type": "enemy_appeared",
+                    "name": name,
+                    "npc_id": npc_id,
+                    "hp": hp,
+                    "ac": ac,
+                    "source": "structured_tag",
+                })
+                logger.info(f"[ENEMY] Registered {name} (HP: {hp}, AC: {ac}) as {npc_id}")
+        except (ValueError, Exception) as e:
+            logger.warning(f"Failed to register enemy from tag: {e}")
+
+    # [NPC_DAMAGE: name | amount] — apply damage to a tracked NPC
+    # Example: [NPC_DAMAGE: Goblin Warrior | 8]
+    npc_damage_pattern = r'\[NPC_DAMAGE:\s*([^|\]]+)\s*\|\s*(\d+)\]'
+    npc_damage_matches = re.findall(npc_damage_pattern, narrative, re.IGNORECASE)
+    for name, amount_str in npc_damage_matches:
+        try:
+            name = name.strip()
+            amount = int(amount_str)
+            if name and 0 < amount < 1000:
+                # Try to find and damage this NPC
+                try:
+                    event = game_state.apply_damage_to_npc(name, amount, source="narrative")
+                    changes.append({
+                        "type": "npc_damaged",
+                        "name": name,
+                        "amount": amount,
+                        "new_hp": event.data.get("new_hp", 0),
+                        "is_dead": event.data.get("is_dead", False),
+                        "source": "structured_tag",
+                    })
+                    logger.info(f"[NPC_DAMAGE] {name} took {amount} damage")
+                except ValueError:
+                    logger.warning(f"[NPC_DAMAGE] NPC '{name}' not tracked, damage not applied")
+        except (ValueError, Exception) as e:
+            logger.warning(f"Failed to apply NPC damage from tag: {e}")
+
+    # [ENEMY_DEFEATED: name] — mark an enemy as defeated/dead
+    # Example: [ENEMY_DEFEATED: Goblin Warrior]
+    defeated_pattern = r'\[ENEMY_DEFEATED:\s*([^\]]+)\]'
+    defeated_matches = re.findall(defeated_pattern, narrative, re.IGNORECASE)
+    for name in defeated_matches:
+        try:
+            name = name.strip()
+            if name:
+                # Find and kill this NPC
+                for npc_id, npc in list(game_state.active_npcs.items()):
+                    if npc.name.lower() == name.lower():
+                        npc.current_hp = 0
+                        changes.append({
+                            "type": "enemy_defeated",
+                            "name": name,
+                            "npc_id": npc_id,
+                            "source": "structured_tag",
+                        })
+                        logger.info(f"[ENEMY_DEFEATED] {name} has been defeated")
+                        break
+        except Exception as e:
+            logger.warning(f"Failed to mark enemy defeated: {e}")
 
     # =================================================================
     # PHASE 2: Fallback to regex parsing (for backwards compatibility)
@@ -5521,6 +5623,18 @@ STATE CHANGE TAGS (use when player gains items, gold, or takes damage):
   Example: "The blade bites deep. [DAMAGE: 8, slashing]"
 - When player heals: [HEAL: amount]
   Example: "The potion takes effect. [HEAL: 10]"
+
+COMBAT TRACKING TAGS (for tracking enemy HP during fights):
+- When introducing a combat-ready enemy: [ENEMY: Name | HP: amount | AC: amount]
+  Use when enemies appear that might be fought. This registers them for HP tracking.
+  Example: "The bandit draws his blade. [ENEMY: Bandit | HP: 22 | AC: 13]"
+  Example: "Three goblins burst from the underbrush. [ENEMY: Goblin Scout | HP: 15 | AC: 14]"
+- When an enemy takes damage in narrative (not from player dice rolls): [NPC_DAMAGE: Name | amount]
+  Use for: environmental damage, ally attacks, traps, poison. Player dice damage is tracked automatically.
+  Example: "The chandelier crashes down on the cultist. [NPC_DAMAGE: Cultist | 12]"
+- When an enemy is defeated/killed: [ENEMY_DEFEATED: Name]
+  Use when an enemy dies or is otherwise removed from combat.
+  Example: "The orc collapses, clutching its wound. [ENEMY_DEFEATED: Orc Warrior]"
 
 Write ONLY the narrative (with state tags naturally embedded):"""
 
