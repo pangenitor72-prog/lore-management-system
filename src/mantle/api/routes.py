@@ -155,8 +155,9 @@ async def lifespan(app: FastAPI):
     neo4j_user = os.getenv("NEO4J_USER", "neo4j")
     neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
 
-    # Default to None to prevent AttributeError in endpoints
+    # Default to None/empty to prevent AttributeError in endpoints
     app.state.neo4j_db = None
+    app.state.lore_bases = {}
     connected = False
 
     if not neo4j_uri:
@@ -172,15 +173,18 @@ async def lifespan(app: FastAPI):
     # -------------------------
     if connected:
         try:
-            from src.mantle.api.game_routes import load_lore_bases_from_neo4j, load_world_images_from_neo4j
+            from src.mantle.api.game_routes import load_lore_bases_from_neo4j, load_world_images_from_neo4j, LORE_BASES
             neo4j_count = await load_lore_bases_from_neo4j(app.state.neo4j_db)
             if neo4j_count > 0:
                 await AuditLogger.log(f"✅ Loaded {neo4j_count} admin-created lore bases from Neo4j")
             img_count = await load_world_images_from_neo4j(app.state.neo4j_db)
             if img_count > 0:
                 await AuditLogger.log(f"✅ Loaded {img_count} world images from Neo4j")
+            # Make LORE_BASES available for graph_routes
+            app.state.lore_bases = LORE_BASES
         except Exception as e:
             logger.error(f"Failed to load lore bases from Neo4j: {e}")
+            app.state.lore_bases = {}
 
     # -------------------------
     # MIGRATE SEED WORLDS TO NEO4J
@@ -2578,6 +2582,10 @@ app.include_router(memory_router, prefix="/api")
 # D&D 5e rules system routes
 from src.mantle.api.dnd_routes import router as dnd_router
 app.include_router(dnd_router, prefix="/api")
+
+# Graph visualization routes
+from src.mantle.api.graph_routes import router as graph_router
+app.include_router(graph_router, prefix="/api")
 
 
 # ============================================================
