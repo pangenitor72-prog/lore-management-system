@@ -95,6 +95,22 @@ except ImportError:
     VectorService = None
     EmbeddingOrchestrator = None
 
+# Decoherence Engine for lazy world simulation
+try:
+    from src.mantle.engine.decoherence import DecoherenceEngine
+    DECOHERENCE_AVAILABLE = True
+except ImportError:
+    DECOHERENCE_AVAILABLE = False
+    DecoherenceEngine = None
+
+# Investment Tracker for player interest signals
+try:
+    from src.mantle.engine.investment_tracker import InvestmentTracker
+    INVESTMENT_TRACKING_AVAILABLE = True
+except ImportError:
+    INVESTMENT_TRACKING_AVAILABLE = False
+    InvestmentTracker = None
+
 logger = logging.getLogger(__name__)
 
 from src.mantle.services.broadcaster import broadcaster
@@ -2325,6 +2341,26 @@ async def _persist_session_to_db(session_id: str, session: Dict[str, Any], db) -
         elif "creative_catalyst" in session_copy:
             del session_copy["creative_catalyst"]
 
+        # Serialize Decoherence Engine state if present
+        decoherence_engine = session.get("decoherence_engine")
+        if decoherence_engine and hasattr(decoherence_engine, 'to_dict'):
+            session_copy["decoherence_engine_state"] = decoherence_engine.to_dict()
+            del session_copy["decoherence_engine"]
+        elif "decoherence_engine" in session_copy:
+            del session_copy["decoherence_engine"]
+
+        # Memory Manager is SQLite-backed (file per session), remove from serialization
+        if "memory_manager" in session_copy:
+            del session_copy["memory_manager"]
+
+        # Serialize Investment Tracker state if present
+        investment_tracker = session.get("investment_tracker")
+        if investment_tracker and hasattr(investment_tracker, 'to_dict'):
+            session_copy["investment_tracker_state"] = investment_tracker.to_dict()
+            del session_copy["investment_tracker"]
+        elif "investment_tracker" in session_copy:
+            del session_copy["investment_tracker"]
+
         # Serialize character data if present
         character_id = session.get("character_id")
         if character_id and character_id in _characters:
@@ -2413,6 +2449,33 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
                 session_data["creative_catalyst"] = CreativeCatalyst(genre=session_data.get("genre", "fantasy"))
         else:
             session_data["creative_catalyst"] = CreativeCatalyst(genre=session_data.get("genre", "fantasy"))
+
+        # Restore Decoherence Engine from saved state if available
+        decoherence_state = session_data.pop("decoherence_engine_state", None)
+        if decoherence_state and DECOHERENCE_AVAILABLE:
+            try:
+                session_data["decoherence_engine"] = DecoherenceEngine.from_dict(
+                    decoherence_state,
+                    gemini_api_key=os.getenv("GEMINI_API_KEY"),
+                )
+                logger.debug(f"Restored Decoherence Engine state for session {session_id}")
+            except Exception as deco_err:
+                logger.warning(f"Failed to restore Decoherence Engine for {session_id}: {deco_err}")
+                session_data["decoherence_engine"] = DecoherenceEngine(gemini_api_key=os.getenv("GEMINI_API_KEY"))
+        elif DECOHERENCE_AVAILABLE:
+            session_data["decoherence_engine"] = DecoherenceEngine(gemini_api_key=os.getenv("GEMINI_API_KEY"))
+
+        # Restore Investment Tracker from saved state if available
+        investment_state = session_data.pop("investment_tracker_state", None)
+        if investment_state and INVESTMENT_TRACKING_AVAILABLE:
+            try:
+                session_data["investment_tracker"] = InvestmentTracker.from_dict(investment_state)
+                logger.debug(f"Restored Investment Tracker state for session {session_id}")
+            except Exception as inv_err:
+                logger.warning(f"Failed to restore Investment Tracker for {session_id}: {inv_err}")
+                session_data["investment_tracker"] = InvestmentTracker()
+        elif INVESTMENT_TRACKING_AVAILABLE:
+            session_data["investment_tracker"] = InvestmentTracker()
 
         # Restore character from saved character_data if present
         character_data = session_data.get("character_data")
@@ -3073,6 +3136,10 @@ async def create_session(
         "creative_catalyst": CreativeCatalyst(genre=primary_genre),
         # Memory Manager for NPC beliefs, impressions, legends (per-session instance)
         "memory_manager": MemoryManager(experiential=ExperientialMemory(f"data/sessions/{session_id}_memory.db")) if MEMORY_SYSTEM_AVAILABLE else None,
+        # Decoherence Engine for lazy world simulation (world evolves when player absent)
+        "decoherence_engine": DecoherenceEngine(gemini_api_key=os.getenv("GEMINI_API_KEY")) if DECOHERENCE_AVAILABLE else None,
+        # Investment Tracker for detecting what the player cares about
+        "investment_tracker": InvestmentTracker() if INVESTMENT_TRACKING_AVAILABLE else None,
     }
 
     _active_sessions[session_id] = session_data
@@ -3393,6 +3460,14 @@ async def process_action(
     # Add action to history
     session["history"].append({"role": "user", "content": action.action})
 
+    # Record player action for investment tracking
+    investment_tracker = session.get("investment_tracker")
+    if investment_tracker and game_state:
+        try:
+            investment_tracker.record_player_action(action.action, game_state.turn_count)
+        except Exception as e:
+            logger.warning(f"[INVESTMENT] Failed to record action: {e}")
+
     # Handle Session 0 (collaborative world-building)
     arc_context = None  # Arc Engine context for narrative pacing
     if session["phase"] == "session_0":
@@ -3476,6 +3551,21 @@ async def process_action(
                 logger.info(f"[HEAT] Matched {len(heat_matches)} discoveries to graph entities")
         except Exception as e:
             logger.debug(f"[HEAT] Discovery matching failed (non-fatal): {e}")
+
+        # Record significant events to memory system (fire-and-forget)
+        memory_manager = session.get("memory_manager")
+        if memory_manager:
+            asyncio.create_task(
+                _record_narrative_events_to_memory(
+                    narrative=response_text,
+                    player_action=action.action,
+                    session_id=session_id,
+                    memory_manager=memory_manager,
+                    arc_engine=session.get("arc_engine"),
+                    game_state=game_state,
+                    location=game_state.location if game_state else None,
+                )
+            )
 
         # Add to history and advance turn
         game_state.add_to_history("user", action.action)
@@ -4071,6 +4161,55 @@ Phase: {phase}
     return f"Turn: {turn_count}/{max_turns}"
 
 
+def _extract_entity_names_from_text(text: str) -> List[str]:
+    """
+    Extract potential entity names from narrative text.
+
+    Uses simple heuristics to find named entities:
+    - Capitalized multi-word names (e.g., "Lord Blackwood", "The Iron Guard")
+    - Single capitalized words that aren't sentence starters
+    - Named locations and places
+
+    This is imperfect but sufficient for decoherence tracking.
+    """
+    if not text:
+        return []
+
+    entities = set()
+
+    # Pattern 1: Titles + Names (Lord/Lady/Captain/etc. + Name)
+    title_pattern = re.compile(
+        r'\b(Lord|Lady|King|Queen|Prince|Princess|Captain|General|Master|Mistress|'
+        r'Father|Mother|Brother|Sister|Elder|Chief|Mayor|Governor|Baron|Baroness|'
+        r'Count|Countess|Duke|Duchess|Sir|Dame|Doctor|Professor)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)',
+        re.IGNORECASE
+    )
+    for match in title_pattern.finditer(text):
+        entities.add(match.group(0).strip())
+
+    # Pattern 2: "The X" patterns (The Iron Guard, The Crimson Tower)
+    the_pattern = re.compile(r'\bThe\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})')
+    for match in the_pattern.finditer(text):
+        full_match = match.group(0).strip()
+        # Filter out common non-entities
+        if full_match.lower() not in ("the story", "the player", "the air", "the room",
+                                       "the door", "the ground", "the sky", "the sun",
+                                       "the moon", "the night", "the day", "the darkness"):
+            entities.add(full_match)
+
+    # Pattern 3: Standalone capitalized names (not at sentence start)
+    # Look for patterns like "spoke to Marcus" or "from Elena"
+    name_pattern = re.compile(r'(?<=[a-z]\s)([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]+)?)')
+    for match in name_pattern.finditer(text):
+        name = match.group(1).strip()
+        # Filter out common words that might be capitalized
+        if name.lower() not in ("the", "a", "an", "he", "she", "it", "they", "you", "i",
+                                 "but", "and", "or", "so", "yet", "for", "nor"):
+            entities.add(name)
+
+    return list(entities)[:20]  # Limit to prevent excessive tracking
+
+
 def _get_genre_guidance(genre: str) -> Dict[str, str]:
     """Get narrative guidance specific to each genre.
 
@@ -4397,6 +4536,16 @@ async def _generate_opening(session: Dict[str, Any], model) -> str:
     scope_guidance = _get_story_scope_guidance(session_scope, turn_count, max_turns)
     storytelling_prefs = _build_storytelling_preferences_context(session)
 
+    # Build visibility guidance based on player's rules visibility preference
+    rules_visibility = session.get("rules_visibility", "guided")
+    visibility_guidance_map = {
+        "storyteller": "\nMECHANICS VISIBILITY: HIDDEN. Never mention dice, DCs, modifiers, or game terms. Pure narrative - the player wants immersion, not numbers.",
+        "guided": "\nMECHANICS VISIBILITY: GUIDED. You may hint at what helped ('Your quick reflexes saved you') but don't show numbers. Results are felt, not calculated.",
+        "classic": "\nMECHANICS VISIBILITY: CLASSIC. You can reference checks and results in standard D&D style ('Your Persuasion check succeeds'). Player wants to see the system working.",
+        "tactician": "\nMECHANICS VISIBILITY: FULL. Player wants complete mechanical transparency. Reference specific rolls, modifiers, and DCs when relevant. They enjoy the tactical layer.",
+    }
+    visibility_guidance = visibility_guidance_map.get(rules_visibility, "")
+
     # Get world rules from session (user's explicit choice) or fall back to genre defaults
     world_rules = session.get("world_rules", {})
     has_magic = world_rules.get("magic", genre_info.get("magic") == "yes")
@@ -4448,6 +4597,7 @@ IMPORTANT: Stay true to these characters and this setting. The player is enterin
     prompt = f"""You are a master storyteller, beginning someone's story.
 
 YOUR JOB: Understand what experience they're seeking - not just what they say, but what they actually want to feel. Read their character concept for the fantasy underneath. A "humble farmer" wants the underdog journey. A "legendary warrior" wants to feel powerful. An "orphan with mysterious past" wants to discover they're special. Give them the story they came for.
+{visibility_guidance}
 {scope_guidance}
 
 GENRE: {genre.upper()}
@@ -4471,6 +4621,8 @@ Write an opening that:
 4. Creates intrigue through {genre_info['hooks']}
 5. Honors the fantasy their character concept implies
 6. Ends at a natural pause - DO NOT suggest choices or ask questions
+
+SHOW DON'T TELL: Write a SCENE with dialogue and action, not a summary. NPCs speak in their own voices. Describe sensory details. Make it feel like the opening scene of a film or novel, not a plot synopsis.
 {_get_opening_catalyst_directive(session)}
 Length: 2-3 paragraphs. Write ONLY the narrative.
 Complete your thoughts - never end mid-sentence."""
@@ -4636,6 +4788,123 @@ async def _get_graph_aware_entity_context(
     except Exception as e:
         logger.debug(f"[GRAPH] Failed to get entity context: {e}")
         return ""
+
+
+async def _record_narrative_events_to_memory(
+    narrative: str,
+    player_action: str,
+    session_id: str,
+    memory_manager,
+    arc_engine,
+    game_state,
+    location: Optional[str] = None,
+) -> None:
+    """
+    Extract and record significant events from narrative to the memory system.
+
+    This populates:
+    - Echoes (events that happened)
+    - Triggers impression updates for NPCs involved
+    - Starts rumors spreading for witnessed events
+
+    Runs asynchronously after DM response to not block gameplay.
+    """
+    from src.mantle.memory.models import SalienceLevel
+
+    if not memory_manager or not narrative:
+        return
+
+    try:
+        # Extract event signals from narrative
+        # Look for significant actions: combat, dialogue, discoveries, social moments
+
+        # Pattern 1: Combat events (attacks, damage, death)
+        combat_patterns = [
+            (r'(?:strikes?|hits?|slashes?|stabs?)\s+(?:you|the\s+)?(\w+)', "combat"),
+            (r'(?:kills?|defeats?|slays?)\s+(?:the\s+)?(\w+)', "death"),
+            (r'(?:you|player)\s+(?:take|took|receive)\s+(\d+)\s+damage', "damage_taken"),
+        ]
+
+        # Pattern 2: Social/dialogue events
+        social_patterns = [
+            (r'(\w+)\s+(?:agrees?|accepts?|joins?)', "agreement"),
+            (r'(\w+)\s+(?:refuses?|rejects?|betrays?)', "conflict"),
+            (r'(\w+)\s+(?:reveals?|confesses?|admits?)', "revelation"),
+        ]
+
+        # Pattern 3: Discovery events (already tracked by discoveries, but echo for memory)
+        discovery_patterns = [
+            (r'\[DISCOVERY:\s*([^\]]+)\]', "discovery"),
+        ]
+
+        events_recorded = 0
+        arc_phase = arc_engine.current_phase.value if arc_engine else None
+
+        # Check for combat events
+        for pattern, event_type in combat_patterns:
+            matches = re.findall(pattern, narrative, re.IGNORECASE)
+            if matches:
+                for match in matches[:2]:  # Limit to 2 per type
+                    summary = f"{event_type.replace('_', ' ').title()}: {match if isinstance(match, str) else match[0]}"
+                    await memory_manager.record_event(
+                        event_type=event_type,
+                        description=narrative[:200],  # First 200 chars for context
+                        summary=summary,
+                        session_id=session_id,
+                        location_id=location,
+                        player_involved=True,
+                        salience=SalienceLevel.NOTABLE if event_type != "death" else SalienceLevel.SIGNIFICANT,
+                        emotional_weight=0.7 if event_type == "death" else 0.5,
+                        arc_phase=arc_phase,
+                    )
+                    events_recorded += 1
+
+        # Check for social events
+        for pattern, event_type in social_patterns:
+            matches = re.findall(pattern, narrative, re.IGNORECASE)
+            if matches:
+                for match in matches[:2]:
+                    npc_name = match if isinstance(match, str) else match[0]
+                    summary = f"{event_type.title()} with {npc_name}"
+                    await memory_manager.record_event(
+                        event_type=event_type,
+                        description=narrative[:200],
+                        summary=summary,
+                        session_id=session_id,
+                        location_id=location,
+                        participants=[npc_name.lower()],
+                        player_involved=True,
+                        salience=SalienceLevel.NOTABLE,
+                        emotional_weight=0.6,
+                        arc_phase=arc_phase,
+                    )
+                    events_recorded += 1
+
+        # Check for explicit discoveries
+        for pattern, event_type in discovery_patterns:
+            matches = re.findall(pattern, narrative, re.IGNORECASE)
+            if matches:
+                for match in matches[:3]:
+                    summary = f"Discovery: {match[:50]}"
+                    await memory_manager.record_event(
+                        event_type=event_type,
+                        description=match,
+                        summary=summary,
+                        session_id=session_id,
+                        location_id=location,
+                        player_involved=True,
+                        salience=SalienceLevel.NOTABLE,
+                        emotional_weight=0.5,
+                        narrative_weight=0.7,  # Discoveries are narratively important
+                        arc_phase=arc_phase,
+                    )
+                    events_recorded += 1
+
+        if events_recorded > 0:
+            logger.debug(f"[MEMORY] Recorded {events_recorded} events to memory system")
+
+    except Exception as e:
+        logger.warning(f"[MEMORY] Failed to record events: {e}")
 
 
 async def _get_semantically_relevant_entities(
@@ -4859,6 +5128,19 @@ Rules:
                 d["heat"] = heat
                 heat_results.append(dict(d))
 
+                # Record discovery for investment tracking
+                investment_tracker = session.get("investment_tracker")
+                if investment_tracker:
+                    try:
+                        investment_tracker.record_discovery(
+                            entity_name=entity_name or entity.get("name", ""),
+                            entity_type=entity.get("type", "Entity"),
+                            heat=heat,
+                            turn=game_state.turn_count,
+                        )
+                    except Exception as inv_err:
+                        logger.debug(f"[INVESTMENT] Failed to record discovery: {inv_err}")
+
         # Update party_knowledge in Neo4j (SECRET/RUMORED → KNOWN)
         if old_knowledge in ("SECRET", "RUMORED"):
             try:
@@ -4922,6 +5204,16 @@ async def _handle_active_play(
     style_instructions = _get_style_instructions(style)
     scope_guidance = _get_story_scope_guidance(session_scope, turn_count, max_turns)
     storytelling_prefs = _build_storytelling_preferences_context(session)
+
+    # Build visibility guidance based on player's rules visibility preference
+    rules_visibility = session.get("rules_visibility", "guided")
+    visibility_guidance_map = {
+        "storyteller": "\nMECHANICS VISIBILITY: HIDDEN. Never mention dice, DCs, modifiers, or game terms. Pure narrative - the player wants immersion, not numbers.",
+        "guided": "\nMECHANICS VISIBILITY: GUIDED. You may hint at what helped ('Your quick reflexes saved you') but don't show numbers. Results are felt, not calculated.",
+        "classic": "\nMECHANICS VISIBILITY: CLASSIC. You can reference checks and results in standard D&D style ('Your Persuasion check succeeds'). Player wants to see the system working.",
+        "tactician": "\nMECHANICS VISIBILITY: FULL. Player wants complete mechanical transparency. Reference specific rolls, modifiers, and DCs when relevant. They enjoy the tactical layer.",
+    }
+    visibility_guidance = visibility_guidance_map.get(rules_visibility, "")
 
     # Get world rules from session (user's explicit choice) or fall back to genre defaults
     world_rules = session.get("world_rules", {})
@@ -5098,6 +5390,38 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         except Exception as e:
             logger.warning(f"[MEMORY] Failed to get context: {e}")
 
+    # Build decoherence context (world evolved while player was away)
+    decoherence_context_str = ""
+    decoherence_engine = session.get("decoherence_engine")
+    if decoherence_engine and game_state:
+        try:
+            # Get entities mentioned in the current scene (from last DM response)
+            # This is a simple extraction - look for named entities in the scene
+            entities_in_scene = _extract_entity_names_from_text(last_dm_response)
+            if entities_in_scene:
+                decoherence_context_str = decoherence_engine.get_dm_context_injection(
+                    current_turn=game_state.turn_count,
+                    entities_in_scene=entities_in_scene,
+                    world_context=world_name,
+                )
+                if decoherence_context_str:
+                    logger.debug(f"[DECOHERENCE] Injecting context for {len(entities_in_scene)} scene entities")
+        except Exception as e:
+            logger.warning(f"[DECOHERENCE] Failed to get context: {e}")
+
+    # Build investment context (what the player cares about)
+    investment_context_str = ""
+    investment_tracker = session.get("investment_tracker")
+    if investment_tracker and game_state:
+        try:
+            investment_context_str = investment_tracker.get_dm_context_injection(
+                current_turn=game_state.turn_count,
+            )
+            if investment_context_str:
+                logger.debug(f"[INVESTMENT] Injecting context for player interests")
+        except Exception as e:
+            logger.warning(f"[INVESTMENT] Failed to get context: {e}")
+
     # Handle genre blending
     genre_display = session.get("genre_blend", genre)
 
@@ -5110,9 +5434,14 @@ POWER PARITY: All archetype powers are equally impactful. A detective's "Cold Re
 PLAYER AGENCY: NPC powers never force player actions. A charming villain can be compelling, but the player always chooses whether to be swayed. Present temptation, not compulsion. The player is the protagonist - they decide their character's responses to social pressure, mind effects, or manipulation. NPCs can try; players choose the outcome.
 
 DIVERSE SOLUTIONS: Every challenge should have multiple viable paths - combat, diplomacy, stealth, investigation, magic, social leverage. When the player chooses a non-combat approach, reward it with satisfying outcomes. A talked-down enemy can become an ally. A bribed guard stays bribed. A well-researched plan works. Don't funnel players toward fighting unless THEY choose violence.
+
+SHOW DON'T TELL: Generate immersive SCENES, not summaries. Instead of "The guard seems suspicious of you" write dialogue: "The guard's eyes narrow as he blocks your path. 'Papers,' he grunts, one hand resting on his sword hilt." Use sensory details - the crackle of fire, the smell of rain on stone, the taste of copper when fear hits. NPCs speak in their own voices. Actions unfold moment by moment. Every response should feel like a scene the player could picture, not a report of what happened.
+{visibility_guidance}
 {scope_guidance}
 {arc_context_str}
 {memory_context_str}
+{decoherence_context_str}
+{investment_context_str}
 GENRE: {genre_display.upper()}
 Voice: {genre_info['voice']}
 {magic_guidance}
@@ -5143,6 +5472,7 @@ Continue:
 - Show consequences that feel meaningful
 - 2-3 paragraphs, natural pause
 - NO suggestions or questions
+- Write a SCENE: dialogue, action, sensory detail - not a summary
 
 STATE CHANGE TAGS (use when player gains items, gold, or takes damage):
 - When player acquires a PHYSICAL item they can hold, wear, or carry: [ACQUIRED: Item Name] or [ACQUIRED: Item Name, rarity, type]
@@ -5193,6 +5523,30 @@ Write ONLY the narrative (with state tags naturally embedded):"""
             logger.info(f"[ARC] Post-narrative: phase={arc_context['current_phase']}, tension={arc_context['tension_level']}, progress={arc_context['journey_progress']:.0%}")
         except Exception as e:
             logger.warning(f"[ARC] Failed to process narrative: {e}")
+
+    # Record entity observations for decoherence tracking
+    # This updates "last seen" timestamps for entities that appeared in the narrative
+    if decoherence_engine and narrative and game_state:
+        try:
+            entities_observed = _extract_entity_names_from_text(narrative)
+            for entity_name in entities_observed:
+                # Infer entity type from context (simple heuristic)
+                entity_type = "Character"  # Default to character
+                if any(loc in entity_name.lower() for loc in ["tower", "castle", "city", "forest", "cave", "inn", "tavern"]):
+                    entity_type = "Location"
+                elif any(faction in entity_name.lower() for faction in ["guard", "guild", "order", "brotherhood", "council"]):
+                    entity_type = "Faction"
+
+                decoherence_engine.record_observation(
+                    entity_name=entity_name,
+                    entity_type=entity_type,
+                    current_turn=game_state.turn_count,
+                    context_note=player_input[:50] if player_input else None,
+                )
+            if entities_observed:
+                logger.debug(f"[DECOHERENCE] Recorded observations: {', '.join(entities_observed[:5])}{'...' if len(entities_observed) > 5 else ''}")
+        except Exception as e:
+            logger.warning(f"[DECOHERENCE] Failed to record observations: {e}")
 
     return narrative, arc_context
 
