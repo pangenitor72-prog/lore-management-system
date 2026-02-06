@@ -3417,20 +3417,49 @@ async def process_action(
                     visibility = RulesVisibility(session.get("rules_visibility", "guided"))
                     mechanical_result = resolve_mechanical_action(action_info, character, visibility)
 
-                    # Build context for AI narrative
+                    # Build context for AI narrative - soft guidance, not rigid constraints
+                    # The AI should respect outcomes but has latitude on HOW to narrate them
                     if mechanical_result.get("rolls"):
                         roll = mechanical_result["rolls"][0]
                         if roll.get("type") == "attack":
+                            total = roll.get("total", 0)
+                            is_crit = roll.get("is_critical", False)
+
                             if roll.get("is_hit"):
                                 dmg = mechanical_result["rolls"][1]["damage"] if len(mechanical_result["rolls"]) > 1 else 0
-                                mechanical_context = f"[MECHANICAL: Attack HIT for {dmg} damage. Incorporate this success into your narrative.]"
+                                if is_crit:
+                                    mechanical_context = f"[DICE OUTCOME: Critical hit! {dmg} damage. This should feel spectacular - a perfect strike, a moment of triumph. But you decide how to describe it.]"
+                                elif total >= 18:
+                                    mechanical_context = f"[DICE OUTCOME: Solid hit ({total} vs AC). {dmg} damage. A clean, effective strike. Narrate the success however fits the moment.]"
+                                else:
+                                    mechanical_context = f"[DICE OUTCOME: Hit ({total} vs AC). {dmg} damage. The attack connects - could be a solid blow, a lucky graze, or anything in between. You have latitude here.]"
                             else:
-                                mechanical_context = "[MECHANICAL: Attack MISSED. Describe the miss narratively.]"
+                                # Miss - give context on how close it was
+                                if total >= 11:  # Close miss
+                                    mechanical_context = f"[DICE OUTCOME: Near miss ({total} vs AC). The attack doesn't land cleanly. This could be a dodge, a parry, armor deflection, or a blade that just barely misses. Make it feel close, not embarrassing.]"
+                                else:  # Clear miss
+                                    mechanical_context = f"[DICE OUTCOME: Miss ({total} vs AC). The attack fails to connect. Narrate this in whatever way serves the story - a skilled dodge, bad footing, divine intervention. Avoid making the character look foolish unless that fits the tone.]"
+
                         elif roll.get("type") == "skill":
+                            skill_name = roll.get('skill', 'skill').title()
+                            total = roll.get("total", 0)
+                            dc = roll.get("dc", 15)
+                            margin = total - dc
+
                             if roll.get("success"):
-                                mechanical_context = f"[MECHANICAL: {roll['skill'].title()} check SUCCEEDED. The character accomplishes their goal.]"
+                                if margin >= 10:
+                                    mechanical_context = f"[DICE OUTCOME: Exceptional {skill_name} success ({total} vs DC {dc}). This went very well. Narrate accordingly, but you decide how spectacular.]"
+                                elif margin >= 5:
+                                    mechanical_context = f"[DICE OUTCOME: Solid {skill_name} success ({total} vs DC {dc}). The character accomplishes their goal competently. You decide the details.]"
+                                else:
+                                    mechanical_context = f"[DICE OUTCOME: {skill_name} success ({total} vs DC {dc}). They succeed, but just barely. Could be clean or messy - your call based on what's interesting.]"
                             else:
-                                mechanical_context = f"[MECHANICAL: {roll['skill'].title()} check FAILED. Describe a complication or setback.]"
+                                if margin >= -2:  # Very close failure
+                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check falls just short ({total} vs DC {dc}). So close. This shouldn't feel like incompetence - more like bad luck, tough circumstances, or a worthy challenge. Maybe partial progress?]"
+                                elif margin >= -5:
+                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check fails ({total} vs DC {dc}). It doesn't work out. Create an interesting complication rather than a humiliating failure - unless humiliation serves the story.]"
+                                else:
+                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check fails significantly ({total} vs DC {dc}). This went poorly. You have latitude on consequences - could be comedic, dramatic, or simply unfortunate. Match the tone of the scene.]"
 
                     logger.info(f"Mechanical action resolved: {mechanical_result['action_type']}")
 
