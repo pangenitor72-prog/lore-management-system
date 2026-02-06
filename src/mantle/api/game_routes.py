@@ -2247,6 +2247,8 @@ class DMResponse(BaseModel):
     session_ended: bool = False  # True when ONE_SHOT reaches THE END
     # Narrative Heat: discoveries matched to knowledge graph this turn
     heat_matches: Optional[List[Dict[str, Any]]] = None
+    # Combat state changes (enemy appeared, damaged, defeated)
+    state_changes: Optional[List[Dict[str, Any]]] = None
 
 
 # ============================================================
@@ -3590,6 +3592,7 @@ async def process_action(
     # EXTRACT STATE CHANGES FROM NARRATIVE AND APPLY TO GAME STATE
     # This catches items picked up, gold found, damage mentioned in narrative
     heat_matches = []
+    state_changes = []  # Combat state changes (enemy appeared, damaged, defeated)
     if game_state:
         state_changes = _extract_state_changes_from_narrative(response_text, game_state)
         if state_changes:
@@ -3681,6 +3684,7 @@ async def process_action(
         events=events if events else None,
         session_ended=session_ended,
         heat_matches=heat_matches if heat_matches else None,
+        state_changes=state_changes if state_changes else None,
     )
 
 
@@ -5635,6 +5639,9 @@ COMBAT TRACKING TAGS (for tracking enemy HP during fights):
 - When an enemy is defeated/killed: [ENEMY_DEFEATED: Name]
   Use when an enemy dies or is otherwise removed from combat.
   Example: "The orc collapses, clutching its wound. [ENEMY_DEFEATED: Orc Warrior]"
+- To show enemy movement/positioning: [POSITION: Name | zone]
+  Zones: melee (close combat), near (ranged/approaching), far (distant)
+  Example: "The archer retreats to higher ground. [POSITION: Goblin Archer | far]"
 
 Write ONLY the narrative (with state tags naturally embedded):"""
 
