@@ -2587,6 +2587,10 @@ app.include_router(dnd_router, prefix="/api")
 from src.mantle.api.graph_routes import router as graph_router
 app.include_router(graph_router, prefix="/api")
 
+# Save/Load system routes
+from src.mantle.api.save_routes import router as save_router
+app.include_router(save_router, prefix="/api")
+
 
 # ============================================================
 # FEEDBACK SYSTEM (for playtester feedback collection)
