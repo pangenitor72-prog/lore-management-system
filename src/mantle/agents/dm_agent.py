@@ -200,7 +200,7 @@ class DMAgent:
         self._pending_events: List[GameEvent] = []
 
         # Visual Engine integration
-        self._visual_engine_enabled = os.getenv("VISUAL_ENGINE_ENABLED", "false").lower() == "true"
+        self._visual_engine_enabled = os.getenv("VISUAL_ENGINE_ENABLED", "true").lower() == "true"
         self._last_visual_assessment: Optional[Dict[str, Any]] = None
 
     @property

@@ -3593,7 +3593,7 @@ async def process_action(
 
     # Extract visual assessment if present (for image generation)
     visual_assessment = None
-    if os.getenv("VISUAL_ENGINE_ENABLED", "false").lower() == "true":
+    if os.getenv("VISUAL_ENGINE_ENABLED", "true").lower() == "true":
         visual_assessment = _extract_visual_assessment(response_text)
 
     # EXTRACT STATE CHANGES FROM NARRATIVE AND APPLY TO GAME STATE
@@ -9621,7 +9621,7 @@ async def generate_visual(
         VisualGenerationResponse with image URL and metadata
     """
     # Check if visual engine is enabled
-    if os.getenv("VISUAL_ENGINE_ENABLED", "false").lower() != "true":
+    if os.getenv("VISUAL_ENGINE_ENABLED", "true").lower() != "true":
         raise HTTPException(
             status_code=503,
             detail="Visual engine is not enabled. Set VISUAL_ENGINE_ENABLED=true"
@@ -9690,7 +9690,7 @@ async def visual_engine_status():
     Returns:
         Dict with visual engine status info
     """
-    enabled = os.getenv("VISUAL_ENGINE_ENABLED", "false").lower() == "true"
+    enabled = os.getenv("VISUAL_ENGINE_ENABLED", "true").lower() == "true"
     provider_preference = os.getenv("VISUAL_PROVIDER_PREFERENCE", "flux")
 
     # Check provider availability
