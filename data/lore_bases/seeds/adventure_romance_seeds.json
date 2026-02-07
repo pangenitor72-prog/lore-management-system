@@ -490,6 +490,20 @@
       }
     ]
   },
+  "visual_identity": {
+    "style_profile_id": "storybook_whimsical",
+    "world_descriptors": {
+      "architecture": "Crumbling temple complexes half-swallowed by jungle, colonial expedition camps with canvas tents, ancient stone bridges over rushing waters, monastery ruins on misty hillsides",
+      "landscape": "Emerald jungle valleys where rivers converge, mountain passes shrouded in monsoon clouds, terraced hillsides with hidden paths, ancient irrigation channels now choked with vines",
+      "vegetation": "Banyan trees with cathedral-like root systems, orchids blooming on temple stones, bamboo groves that whisper secrets, lotus pools reflecting ancient carvings",
+      "weather": "Monsoon storms building on the horizon, mist rising from jungle rivers at dawn, dramatic lightning illuminating ruins, the heavy stillness before the rains break",
+      "people": "Rival archaeologists with complicated histories, weathered local guides who know the old stories, colonial officers caught between duty and doubt, resistance fighters with fire in their eyes",
+      "clothing": "Linen expedition wear soaked with rain, leather boots caked with mud, elegant 1930s field attire now disheveled, traditional Karen textiles bright against the green",
+      "technology": "Survey equipment and cartographer's tools, vintage cameras with brass fittings, revolvers in worn holsters, kerosene lanterns casting dancing shadows",
+      "lighting": "Shafts of golden light breaking through the canopy, lantern light flickering on ancient inscriptions, the silver gleam of rain on stone, firelight shared between rivals"
+    },
+    "visual_exclusions": "Modern technology, contemporary clothing, anything that breaks the 1930s pulp adventure aesthetic, explicit violence, grimdark imagery"
+  },
   "ai_generated": false,
   "admin_reviewed": false
 }

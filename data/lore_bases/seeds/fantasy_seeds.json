@@ -312,6 +312,20 @@
         "description": "Knowledge of dragons and other draconic creatures."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "high_fantasy_watercolor",
+      "world_descriptors": {
+        "architecture": "Gothic stone castles, soaring wizard towers, dwarven mountain halls, elven crystal spires, thatched village cottages",
+        "landscape": "Misty mountain ranges, dark enchanted forests, rolling green hills, rocky coastlines, ancient battlefields",
+        "vegetation": "Ancient oaks, mystical glowing fungi, thorny brambles, flowering meadows, creeping ivy on ruins",
+        "weather": "Dramatic thunderstorms, golden sunset light, morning fog in valleys, starlit nights, snow on mountain peaks",
+        "people": "Armored knights, robed wizards, hooded rogues, noble lords and ladies, weathered peasants, dwarven smiths, elven archers",
+        "clothing": "Plate armor with heraldic crests, flowing wizard robes, leather adventuring gear, noble court finery, peasant tunics",
+        "technology": "Forged steel weapons, magical artifacts, horse-drawn carts, sailing ships, alchemical equipment",
+        "lighting": "Torchlit dungeons, candlelit throne rooms, magical glowing runes, fireplace warmth, moonlight through forest canopy"
+      },
+      "visual_exclusions": "Modern technology, firearms, electric lights, contemporary clothing, urban buildings"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

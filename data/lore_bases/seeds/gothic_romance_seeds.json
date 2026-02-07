@@ -295,6 +295,20 @@
         "description": "Understanding the power dynamics, alliances, and secrets within a great household."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Brooding English estates, locked east wings, secret attic rooms, the village of Blackmoor-under-Hill, candlelit corridors",
+        "landscape": "Yorkshire moors stretching to the horizon, windswept cliffs, fog-shrouded paths, overgrown gardens with hidden gates",
+        "vegetation": "Creeping ivy on ancient walls, twisted old oaks, moor heather in purple and brown, neglected rose gardens",
+        "weather": "Perpetual overcast, driving rain against windows, mist rolling across the moors, storms that match emotional turmoil",
+        "people": "Brooding lords in dark coats, practical governesses, silent servants who know too much, ghostly women in white",
+        "clothing": "Victorian mourning attire, crinolines and corsets, servants' uniforms, mud-spattered riding clothes, wedding dresses stained with secrets",
+        "technology": "Candlelight and oil lamps, horse-drawn carriages, medical bags with laudanum, spirit boards and crystal pendulums",
+        "lighting": "Guttering candles casting long shadows, moonlight through curtained windows, firelight in lonely drawing rooms, the pale glow of spectral apparitions"
+      },
+      "visual_exclusions": "Modern elements, bright cheerful scenes, explicit horror gore, anything breaking Victorian atmosphere"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

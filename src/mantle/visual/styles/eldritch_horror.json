@@ -1,0 +1,50 @@
+{
+  "style_profile_id": "eldritch_horror",
+  "display_name": "Eldritch Horror",
+
+  "prompt_prefix": "eldritch horror illustration, Beksinski inspired, organic nightmare architecture, impossible geometry, cosmic dread, surrealist horror, dark biomechanical forms",
+  "prompt_suffix": "no text, no watermarks, unsettling wrongness, masterful dark surrealism, disturbing beauty",
+  "negative_prompt": "cute, friendly, bright colors, anime, cartoon, cheerful, safe, normal architecture, photographic, clean, orderly",
+
+  "mood_modifiers": {
+    "tense": "writhing shadows, geometry beginning to bend, wrongness creeping in at edges",
+    "joyful": "alien beauty, terrible wonder, colors from outside space, transcendent horror",
+    "eerie": "fog obscuring true forms, suggestions of vast things moving, wrongness felt not seen",
+    "epic": "cosmic scale revealed, insignificant humans before vast entities, sublime terror",
+    "peaceful": "deceptive calm, the eye of madness, beauty that shouldn't exist, false serenity",
+    "melancholy": "ruins of sanity, aftermath of revelation, broken minds reflected in broken space",
+    "awe": "full revelation of the incomprehensible, sanity-breaking vistas, terrible majesty",
+    "dread": "something approaching, geometry collapsing, the moment before the mind breaks"
+  },
+
+  "composition_templates": {
+    "scene": {
+      "wide": "impossible landscape, non-euclidean architecture, scale that breaks perspective",
+      "medium": "figure confronting wrongness, human scale against inhuman geometry",
+      "close": "details that shouldn't exist, organic-mechanical fusion, eyes where none should be",
+      "low_angle": "towering impossible structures, things looming from angles that don't exist",
+      "overhead": "patterns that suggest consciousness, fractal wrongness, cult circles",
+      "default": "dreamscape composition, multiple impossible perspectives, creeping unreality"
+    },
+    "portrait": {
+      "default": "face showing transformation or revelation, sanity slipping visible in eyes, something wrong with the features"
+    },
+    "location_card": {
+      "default": "impossible location establishing shot, architecture that hurts to perceive, alien beauty"
+    },
+    "item": {
+      "default": "artifact that shouldn't exist, organic curves meeting impossible angles, faint glow of wrongness"
+    },
+    "moment": {
+      "default": "the moment of revelation, reality tearing, cosmic horror revealed, sanity shattering"
+    }
+  },
+
+  "image_specs": {
+    "scene": { "aspect_ratio": "16:9", "width": 1024, "height": 576 },
+    "portrait": { "aspect_ratio": "2:3", "width": 512, "height": 768 },
+    "location_card": { "aspect_ratio": "3:2", "width": 768, "height": 512 },
+    "item": { "aspect_ratio": "1:1", "width": 512, "height": 512 },
+    "moment": { "aspect_ratio": "21:9", "width": 1024, "height": 440 }
+  }
+}

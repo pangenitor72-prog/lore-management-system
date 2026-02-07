@@ -301,6 +301,20 @@
         "description": "Navigating government archives, property records, court filings, and FOIA requests to uncover documented history."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Abandoned canneries, small-town police stations, county courthouses, modest single-family homes, storage units full of evidence",
+        "landscape": "Pacific Northwest forests, rain-slicked rural highways, trailheads at dusk, small-town main streets, industrial wastelands",
+        "vegetation": "Dense evergreen forests, overgrown vacant lots, memorial flowers at crime scenes, moss-covered ruins",
+        "weather": "Steady Oregon rain, fog rolling through valleys, grey overcast skies, cold drizzle at gravesides",
+        "people": "Haunted detectives, grieving family members, tight-lipped locals, podcasters with recording equipment, retired officials with guilty secrets",
+        "clothing": "Practical rain jackets, police uniforms, casual small-town wear, interview-appropriate business casual, mourning black",
+        "technology": "Case files in boxes, laptops with database access, recording equipment, crime scene photography, FOIA documents",
+        "lighting": "Harsh interrogation room fluorescents, dim evidence lockers, computer screens in dark rooms, flashlights at night scenes, overcast daylight"
+      },
+      "visual_exclusions": "Bright sunshine, cheerful small-town charm, sensationalized violence, clean resolution imagery, colorful settings"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

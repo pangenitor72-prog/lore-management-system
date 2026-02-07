@@ -480,6 +480,20 @@
       }
     ]
   },
+  "visual_identity": {
+    "style_profile_id": "storybook_whimsical",
+    "world_descriptors": {
+      "architecture": "Reclaimed college buildings with gardens on the roof, cozy settlements built from salvaged materials, radio towers standing sentinel over the valley, bridge markets strung with handmade lanterns",
+      "landscape": "River valleys reclaimed by nature, overgrown highways becoming meadows, ruins softened by twenty years of ivy, wildflowers blooming in parking lots",
+      "vegetation": "Community gardens bursting with heirloom vegetables, fruit trees planted in old foundations, wildflowers reclaiming the roads, seed libraries more precious than gold",
+      "weather": "Gentle rains that water the gardens, golden sunsets over the river, morning mist softening the ruins, the first snow of winter blanketing old wounds",
+      "people": "Radio operators with warm voices, healers who never give up, traders who bridge divided communities, old survivors finding love again, young people building something new",
+      "clothing": "Patched but clean hand-sewn garments, cozy knitted sweaters, practical boots worn soft with use, salvaged accessories treasured for their stories",
+      "technology": "Hand-cranked radios playing love songs, repaired solar panels, salvaged bicycles, printing presses preserving knowledge, the warm glow of restored electricity",
+      "lighting": "Campfire light bringing people together, the warm glow of radio dials at night, candles in cottage windows, sunrise over hopeful ruins"
+    },
+    "visual_exclusions": "Grimdark imagery, realistic gore or violence, hopeless wastelands, aggressive raider aesthetics, anything that undermines the bittersweet hopeful tone"
+  },
   "ai_generated": false,
   "admin_reviewed": false
 }

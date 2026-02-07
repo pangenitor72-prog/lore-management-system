@@ -324,6 +324,20 @@
         "description": "Reading the underground economy of Neo-Tokyo — black market prices, fixer reputations, gang territory, and the unwritten rules that keep the Stacks from tearing themselves apart."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "Towering megacorp arcologies piercing smog-choked skies, cramped street-level slums beneath elevated highways, neon-drenched market stalls, brutalist concrete housing blocks, glass-walled corporate penthouses",
+        "landscape": "Endless urban sprawl from horizon to horizon, rooftop gardens above the pollution line, flooded lower districts, industrial wastelands beyond city limits, the perpetual glow of Neo-Tokyo at night",
+        "vegetation": "Engineered bonsai in corporate lobbies, hydroponic grow-ops in abandoned buildings, gene-spliced ornamental plants, moss and mold reclaiming abandoned structures, plastic flowers in noodle shops",
+        "weather": "Perpetual rain from engineered weather systems, acid fog rolling through lower levels, smog halos around neon signs, occasional glimpses of actual sky for the wealthy, steam rising from street grates",
+        "people": "Chrome-armed street samurai, pale netrunners with glowing neural ports, corporate executives in designer suits, street vendors with augmented eyes, gang members with faction tattoos and visible cyberware",
+        "clothing": "Armored longcoats over synthleather, corporate minimalism in black and white, street fashion mixing vintage and tech, gang colors and LED-threaded jackets, surgical masks and augmented-reality glasses",
+        "technology": "Neural interfaces with visible ports, holographic advertisements everywhere, cybernetic limbs from military-grade to jury-rigged, data chips and credsticks, combat drones hovering overhead",
+        "lighting": "Neon signs in pink and cyan reflecting off wet streets, holographic billboards cycling through ads, the cold blue of terminal screens, red warning lights in the Stacks, the occasional golden warmth of an underground club"
+      },
+      "visual_exclusions": "Natural wilderness, traditional fantasy elements, clean suburban environments, pastoral scenes, historical settings, bright daylight, blue skies"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

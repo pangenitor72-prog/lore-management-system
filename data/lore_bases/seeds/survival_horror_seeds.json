@@ -299,6 +299,20 @@
         "description": "Evaluating dangers — whether from the environment, unknown organisms, or compromised colleagues."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Prefab research buildings half-buried in snow, heated corridors with frosted windows, Sample Lab B with its inexplicable frost patterns, the radio room",
+        "landscape": "Endless Antarctic ice shelf, the crushing darkness of polar night, ice formations that look almost deliberate, the void beyond the station lights",
+        "vegetation": "None - only ice, frost crystals on interior walls, the wrongness of something growing where nothing should",
+        "weather": "Screaming polar winds, whiteout blizzards, the oppressive silence between storms, temperatures that kill in minutes",
+        "people": "Exhausted researchers with hollow eyes, paranoid glances between colleagues, Dr. Sokov with his wrong vital signs, the dog that doesn't blink",
+        "clothing": "Heavy parkas, thermal layers, expedition gear, the informal dress of people trapped together, increasing dishevelment",
+        "technology": "1982-era Antarctic research equipment, flickering fluorescent lights, the dead long-range radio, generators that strain against the cold",
+        "lighting": "Harsh fluorescent station lighting, flashlight beams cutting darkness, the inadequate glow of emergency lights, absolute darkness beyond the windows"
+      },
+      "visual_exclusions": "Warmth, sunlight, open sky, green vegetation, crowds of people, modern technology, tropical settings, comfortable environments, safety"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

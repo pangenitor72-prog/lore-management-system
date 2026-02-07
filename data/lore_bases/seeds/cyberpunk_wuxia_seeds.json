@@ -303,6 +303,20 @@
         "description": "Understanding criminal organization protocols, hierarchy, and the codes of the Undergarden."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "Vertical megacity rising forty levels from ancient foundations, traditional dojos with holographic training systems, neon-lit temple complexes, Qilin Corp's Crystal Pagoda gleaming above the clouds, cramped Undergarden warrens mixing Ming Dynasty aesthetics with exposed circuitry",
+        "landscape": "Neo-Shanghai's layered cityscape stretching into haze, rooftop gardens bridging between levels, the dark depths of maintenance tunnels, glimpses of old Shanghai buried beneath new construction, wire-strung training courtyards suspended between buildings",
+        "vegetation": "Bonsai trees in corporate meditation rooms, bamboo groves in protected parks, gene-modified orchids in triad meeting halls, hydroponic rice paddies on arcology farms, ancient temple gardens preserved as heritage sites",
+        "weather": "Neon-lit fog drifting between levels, acid rain on the surface, artificial sunlight filtered through upper-level floors, steam from street food vendors, holographic cherry blossom projections during festivals",
+        "people": "Unaugmented martial artists in traditional training robes, chrome-enhanced triad enforcers, Qilin Corp executives in tailored suits, street healers mixing acupuncture and cybernetic repair, masked vigilantes blending wuxia silhouettes with modern tactical gear",
+        "clothing": "Traditional martial arts uniforms adapted with modern materials, flowing robes concealing cyber-limbs, corporate attire blending Eastern and Western influences, Undergarden fashion mixing antique silk with LED threading, training weights and cybernetic enhancement ports",
+        "technology": "Wuxia Suite combat augmentations replicating martial arts, neural interfaces styled like jade ornaments, monofilament chain-whips, holographic calligraphy displays, qi-detection medical scanners, wire-running gear for level traversal",
+        "lighting": "Red paper lanterns casting warm glow in traditional spaces, neon Chinese characters reflecting off wet streets, the cold blue of corporate lobbies, golden sunlight in upper-level gardens, green holographic training projections in dojos"
+      },
+      "visual_exclusions": "Western medieval fantasy, pure historical ancient China (always blend with cyberpunk), pastoral countryside, clean suburban environments, military science fiction aesthetics without martial arts influence"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

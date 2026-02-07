@@ -335,6 +335,20 @@
         "description": "Understanding the impoverished district the Champions overlook. Reading its people, navigating its dangers, and knowing the difference between those who need help and those who exploit the powerless."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "Art deco skyscrapers, hero headquarters, secret bases, metropolitan cityscapes, Sentinel Tower gleaming in Valor Plaza",
+        "landscape": "Glittering skylines, rooftop chase paths, iconic bridges and monuments, the Hollows impoverished district",
+        "vegetation": "Urban parks, rooftop gardens, the contrast of nature against steel and glass",
+        "weather": "Dramatic storm clouds for confrontations, clear skies symbolizing hope, night for stealth missions",
+        "people": "Costumed heroes, masked vigilantes, ordinary citizens in peril, colorful villains, the Champions team",
+        "clothing": "Tight suits, flowing capes, utility belts, armored costumes, civilian secret identities",
+        "technology": "Advanced gadgets, energy weapons, power suits, hero vehicles, surveillance tech, Sentinel Tower mainframe",
+        "lighting": "Dramatic spotlights, searchlight beams, energy glow from powers, city lights below, cosmic radiance"
+      },
+      "visual_exclusions": "Excessive gore, photorealistic violence, mundane everyday scenes without heroic elements"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

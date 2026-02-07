@@ -327,6 +327,20 @@
         "description": "Navigating the complex political relationships between the Five Kingdoms and outsider nations."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "The seven-tiered Library-City of Timbala rising above the savanna, spirit-metal structural supports that respond to collective will, ancestor groves integrated into living cities, orichalcum-reinforced walls that shimmer with golden light, palace complexes blending ancient patterns with impossible engineering",
+        "landscape": "The vast savanna of the Sunborn Kingdoms under endless sky, the Mountains of Memory where orichalcum veins run deep, ancestor groves where spirits walk openly, the mysterious structure in the deep desert that shouldn't exist, fertile lands maintained by generations of careful stewardship",
+        "vegetation": "Baobab trees sacred to ancestor spirits, cultivated groves designed for spirit communion, crops grown with traditional knowledge refined over centuries, medicinal gardens tended by healers, the strange flora growing near the anomalous desert structure",
+        "weather": "The brilliant sun that gives the Kingdoms their name, dramatic storms rolling across the savanna, the dry heat of the deep desert, morning mists in the ancestor groves, golden light that seems to respond to collective emotion",
+        "people": "Scholar-Queen Amara in robes of state, Sunguard warriors in orichalcum armor, griots carrying story-beads and koras, spirit-speakers with eyes that see the dead, border-dwellers navigating two cultures, artisans shaping spirit-metal with concentration alone",
+        "clothing": "Royal robes incorporating orichalcum threading, warrior armor that gleams with inner light, griot traveling garb practical for the roads, scholar vestments marking academic achievement, ancestor-communion ceremonial dress, artisan work clothes resistant to forge heat",
+        "technology": "Orichalcum spirit-metal shaped by willpower, surgical instruments of impossible precision, architectural supports that defy physics, communication networks through ancestor spirits, forge equipment for working the sacred metal, mining operations that require permission from the dead",
+        "lighting": "The brilliant gold of the African sun, the inner glow of orichalcum responding to will, soft light in ancestor groves where spirits manifest, the warm amber of forge fires, mysterious cold light from the anomalous desert structure"
+      },
+      "visual_exclusions": "European medieval aesthetics, industrial pollution, dystopian decay, colonial imagery, primitive or stereotypical African depictions, Western fantasy tropes like elves or dwarves"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

@@ -324,6 +324,20 @@
         "description": "Reading tracks, signs, and disturbances across harsh desert terrain."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "western_gritty",
+      "world_descriptors": {
+        "architecture": "Weathered mining camps, abandoned missions, saloons with dark windows, boarded-up storefronts, the yawning mine entrance",
+        "landscape": "Rust-red desert under wrong-colored skies, mesas with strange shadows, the copper mine scarring the hillside, horizons that shimmer oddly",
+        "vegetation": "Sickly glowing plants near the mine, twisted Joshua trees, dead scrub, cacti that lean toward passersby",
+        "weather": "Dust devils that move against the wind, electric desert storms, heat mirages that show impossible things, stars in wrong positions",
+        "people": "Haunted miners with hollow eyes, sun-weathered settlers clutching iron charms, medicine men in ceremonial paint, strangers who don't quite look right",
+        "clothing": "Dusty dusters, leather chaps, bandanas pulled up against strange winds, medicine bags, iron jewelry worn as wards",
+        "technology": "Revolvers that may not stop what's coming, railroad equipment digging too deep, telegraph wires humming with unnatural static",
+        "lighting": "Harsh desert sun casting too-long shadows, phosphorescent glow from the mine at night, campfire light wavering wrong, oil lamps flickering without wind"
+      },
+      "visual_exclusions": "Modern technology, bright cheerful colors, clean or safe appearances, overtly fantastical creatures (keep horrors glimpsed, not shown)"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

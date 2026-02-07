@@ -1,0 +1,50 @@
+{
+  "style_profile_id": "western_gritty",
+  "display_name": "Western (Gritty)",
+
+  "prompt_prefix": "gritty western illustration, Sergio Leone palette, dust and leather, desaturated warm tones, harsh sunlight, frontier realism, spaghetti western aesthetic",
+  "prompt_suffix": "no text, no watermarks, weathered and authentic, cinematic western quality, dust in the air",
+  "negative_prompt": "clean, modern, green lush, fantasy, sci-fi, anime, cartoon, bright saturated colors, rain, snow, ocean",
+
+  "mood_modifiers": {
+    "tense": "standoff composition, eyes narrowed against sun, hands near holsters, dust settling",
+    "joyful": "rare saloon warmth, golden hour celebration, hard-won victory, campfire camaraderie",
+    "eerie": "ghost town silence, tumbleweeds, abandoned mines, something wrong in the desert",
+    "epic": "vast frontier scale, rider against mesa, manifest destiny grandeur, golden hour drama",
+    "peaceful": "sunset on the range, horses grazing, quiet moment before the storm",
+    "melancholy": "graves on hillside, abandoned homestead, end of an era, last of a kind",
+    "awe": "monument valley grandeur, nature's cathedral, tiny humans in vast landscape",
+    "dread": "vultures circling, approaching dust cloud, no way out, frontier justice coming"
+  },
+
+  "composition_templates": {
+    "scene": {
+      "wide": "frontier vista, mesa and desert, big sky country, environmental western",
+      "medium": "main street showdown framing, buildings as walls, dust and tension",
+      "close": "weathered face, squinting eyes, sweat and dust, character study",
+      "low_angle": "hero or villain looming, sun behind, silhouette against sky",
+      "overhead": "canyon or gulch tactical view, ambush geography, trail visible",
+      "default": "classic western composition, foreground figure, vast background, golden light"
+    },
+    "portrait": {
+      "default": "weathered face portrait, hat shadow across eyes, dust on features, hard miles visible"
+    },
+    "location_card": {
+      "default": "frontier town establishing shot, main street, horses tied, promise of trouble"
+    },
+    "item": {
+      "default": "revolver or artifact on wood surface, worn leather, frontier craftsmanship"
+    },
+    "moment": {
+      "default": "gunfight frozen moment, dust kicked up, muzzle flash, decisive action"
+    }
+  },
+
+  "image_specs": {
+    "scene": { "aspect_ratio": "21:9", "width": 1024, "height": 440 },
+    "portrait": { "aspect_ratio": "2:3", "width": 512, "height": 768 },
+    "location_card": { "aspect_ratio": "3:2", "width": 768, "height": 512 },
+    "item": { "aspect_ratio": "1:1", "width": 512, "height": 512 },
+    "moment": { "aspect_ratio": "21:9", "width": 1024, "height": 440 }
+  }
+}

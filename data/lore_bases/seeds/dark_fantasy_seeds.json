@@ -331,6 +331,20 @@
         "description": "Finding safe paths through Blighted territory and contaminated landscapes."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Crumbling gothic spires, bone buttresses, structures fused with organic corruption, the Ashen Keep's desperate fortifications",
+        "landscape": "Ashen wastelands, poisoned rivers running black, dead forests twisted into impossible shapes, the spreading Pale corruption",
+        "vegetation": "Withered thorned brambles, bioluminescent fungi, plants that shouldn't exist, corruption-touched growth with teeth",
+        "weather": "Perpetual overcast, ash-falls drifting like snow, sickly green storms on the horizon, corpse-light at dusk",
+        "people": "Gaunt survivors with hollow cheeks, mutation scars partially hidden, desperate haunted eyes, weathered skin",
+        "clothing": "Layered salvaged rags, patched armor with godbone reinforcements, plague masks, hooded cloaks against the ash",
+        "technology": "Godbone-forged prosthetics and tools, ichor-powered mechanisms dripping golden fluid, corroded pre-Blight artifacts",
+        "lighting": "Dim torchlight through perpetual haze, bioluminescent glow from corruption, shafts of sickly light through ruined roofs, no clean sunlight"
+      },
+      "visual_exclusions": "Modern technology, bright cheerful colors, clean pristine environments, healthy green vegetation, clear blue skies, smiling faces, vibrant sunlight, untouched beauty"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

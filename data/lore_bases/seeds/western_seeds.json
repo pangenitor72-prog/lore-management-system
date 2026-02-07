@@ -387,6 +387,20 @@
         "description": "Negotiating fair prices and trades with merchants and other individuals."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "western_gritty",
+      "world_descriptors": {
+        "architecture": "Weathered clapboard storefronts, adobe missions, saloons with batwing doors, wooden jailhouses",
+        "landscape": "Endless dusty plains, red mesas, tumbleweeds, distant mountain ranges, parched creek beds",
+        "vegetation": "Saguaro cacti, scrub brush, cottonwoods by creek beds, dead grass, mesquite trees",
+        "weather": "Harsh desert sun, dust storms, dramatic thunderheads, punishing midday heat",
+        "people": "Sun-weathered ranchers, gunslingers in dusters, prospectors, Native peoples, outlaws with bandanas",
+        "clothing": "Dusty dusters, leather chaps, bandanas, wide-brimmed hats, gun belts, worn boots",
+        "technology": "Revolvers, Winchester rifles, steam trains, telegraph wires, mining equipment, horse-drawn wagons",
+        "lighting": "Harsh noon shadows, golden hour on mesa tops, firelight in camp, oil lamp glow in saloons"
+      },
+      "visual_exclusions": "Modern technology, lush green landscapes, urban environments, clean or polished appearances"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

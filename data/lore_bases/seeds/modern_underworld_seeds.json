@@ -302,6 +302,20 @@
         "description": "Identifying, acquiring, and maintaining weapons and tactical equipment."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Glass-walled penthouses, anonymous warehouse meeting spots, luxury hotel lobbies, underground parking structures, nondescript shell company offices",
+        "landscape": "International airports, container port shipping yards, Dubai skylines, Miami waterfronts, anonymous European cities",
+        "vegetation": "Manicured penthouse gardens, tropical palms at resort meetings, sparse urban landscaping, yacht deck potted plants",
+        "weather": "Night rain in any city, pre-dawn darkness, overcast surveillance weather, oppressive tropical heat, cold Eastern European winters",
+        "people": "Tailored criminals, stone-faced enforcers, nervous accountants, undercover operatives whose covers are slipping, corrupt officials",
+        "clothing": "Designer suits, tactical black for operations, casual wealth, disguises for every occasion, concealed carry fashion",
+        "technology": "Encrypted phones and laptops, surveillance equipment, offshore banking systems, burner phones, tracking devices",
+        "lighting": "Penthouse city views at night, car headlights in parking garages, laptop screens in dark rooms, club neon, interrogation spotlights"
+      },
+      "visual_exclusions": "Bright cheerful settings, poverty aesthetics, dated technology, comic violence, family-friendly imagery"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

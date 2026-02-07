@@ -306,6 +306,20 @@
         "description": "The intricate social rules of Valdris's political court — what to say, when, and to whom."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "high_fantasy_watercolor",
+      "world_descriptors": {
+        "architecture": "Crystalline palaces with volcanic glass, marble-and-gold great houses, geothermal-powered workshops, elegant masked ballrooms, hidden underground markets",
+        "landscape": "Volcanic island city, steaming geothermal vents, terraced pleasure gardens, harbor views, shadowed back alleys, moonlit rooftops",
+        "vegetation": "Exotic hothouse flowers, poisonous ornamental plants, climbing roses on trellises, manicured topiary gardens, rare alchemical herbs",
+        "weather": "Warm volcanic mists, dramatic sunset skies over the sea, lantern-lit foggy nights, occasional ash falls, balmy Mediterranean climate",
+        "people": "Elegantly dressed nobles, masked attendees at galas, scheming advisors, poisoners disguised as healers, armored house guards, anonymous mask-market dealers",
+        "clothing": "Lavish court gowns, house-sigil jewelry, concealed daggers, velvet and silk, masked attire for the underground market, duelist's formal wear",
+        "technology": "Geothermal power sources, alchemical laboratories, scrying mirrors, enchanted locks and wards, coded correspondence equipment",
+        "lighting": "Chandelier-lit ballrooms, candlelit private chambers, mysterious mask-market lanterns, magical surveillance glows, dramatic shadows in intrigue scenes"
+      },
+      "visual_exclusions": "Modern technology, industrial machinery, firearms, casual contemporary clothing, rural peasant scenes"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

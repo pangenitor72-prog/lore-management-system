@@ -199,6 +199,10 @@ class DMAgent:
         # Pending structured events for frontend
         self._pending_events: List[GameEvent] = []
 
+        # Visual Engine integration
+        self._visual_engine_enabled = os.getenv("VISUAL_ENGINE_ENABLED", "false").lower() == "true"
+        self._last_visual_assessment: Optional[Dict[str, Any]] = None
+
     @property
     def arc_engine(self) -> Optional[ArcEngine]:
         """Get the Arc Engine instance (if available)."""
@@ -970,18 +974,24 @@ GUIDELINES:
 NAMING: {template.naming_conventions}
 """
 
-        json_instruction = """
+        # Build JSON instruction with optional visual assessment
+        visual_schema = ""
+        if self._visual_engine_enabled:
+            visual_schema = DMPrompts.get_visual_schema()
+
+        json_instruction = f"""
 === OUTPUT FORMAT ===
 At the end of your response, you MUST include a JSON block for system use:
 ```json
-{
+{{
   "visual_summary": "Evocative visual description of the current scene (max 30 words) suitable for image generation.",
   "new_entities": [
     // Include definitions for any NEW entities you introduced based on the guidelines above.
     // If no new entities, leave this list empty.
   ]
-}
+}}
 ```
+{visual_schema}
 """
 
         # 4. Build full prompt
@@ -999,6 +1009,11 @@ At the end of your response, you MUST include a JSON block for system use:
 
         # Get canon truths for consistency enforcement
         canon_truths_context = self.get_canon_truths_context()
+
+        # Get visual direction if visual engine is enabled
+        visual_direction = ""
+        if self._visual_engine_enabled:
+            visual_direction = DMPrompts.get_visual_direction()
 
         prompt = f"""{self.system_prompt}
 {canon_truths_context}
@@ -1020,6 +1035,7 @@ Turn: {turn_count}
 {json_instruction}
 {pacing_context}
 {complexity_context}
+{visual_direction}
 === PLAYER'S ACTION ===
 {player_input}
 
@@ -1044,11 +1060,15 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
         response_text = response.text
         
         # 6. Extract and create any new entities from the response
-        narrative, new_entities, visual_summary = self._parse_response_with_entities(response_text)
-        
+        narrative, new_entities, visual_summary, visual_assessment = self._parse_response_with_entities(response_text)
+
         if visual_summary and self.session:
             await self.session.add_event("VISUAL_SCENE", visual_summary)
             logging.info(f"[VISUAL] Generated scene: {visual_summary}")
+
+        if visual_assessment and self.session:
+            await self.session.add_event("VISUAL_ASSESSMENT", json.dumps(visual_assessment))
+            logging.info(f"[VISUAL] Assessment: type={visual_assessment.get('image_type')}, mood={visual_assessment.get('mood')}")
 
         if new_entities and self.session:
             for entity in new_entities:
@@ -1069,30 +1089,64 @@ Do NOT ask for dice rolls or reference game mechanics unless a ruleset is specif
         
         return narrative
 
-    def _parse_response_with_entities(self, response_text: str) -> tuple[str, List[Dict[str, Any]], Optional[str]]:
+    def _parse_response_with_entities(self, response_text: str) -> tuple[str, List[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
         """
-        Parse DM response to extract narrative and any new entity definitions.
-        
-        Returns: (narrative_text, list_of_new_entities, visual_summary)
+        Parse DM response to extract narrative, entities, and visual assessment.
+
+        Returns: (narrative_text, list_of_new_entities, visual_summary, visual_assessment)
         """
         # Try to find JSON block at end of response
         json_match = re.search(r'```json\s*(\{[\s\S]*?\})\s*```', response_text)
-        
+
         if json_match:
             try:
                 data = json.loads(json_match.group(1))
                 new_entities = data.get("new_entities", [])
                 visual_summary = data.get("visual_summary")
-                
+                visual_assessment = data.get("visual_assessment")
+
+                # Store visual assessment for later retrieval
+                if visual_assessment:
+                    self._last_visual_assessment = visual_assessment
+                    logging.info(f"[VISUAL] Assessment extracted: {visual_assessment.get('image_type')} - {visual_assessment.get('mood')}")
+
                 # Remove JSON block from narrative
                 narrative = response_text[:json_match.start()].strip()
-                
-                return narrative, new_entities, visual_summary
+
+                return narrative, new_entities, visual_summary, visual_assessment
             except json.JSONDecodeError:
                 pass
-        
+
         # No valid JSON found - return full response as narrative
-        return response_text, [], None
+        return response_text, [], None, None
+
+    def get_last_visual_assessment(self) -> Optional[Dict[str, Any]]:
+        """Get the most recent visual assessment from the last response."""
+        return self._last_visual_assessment
+
+    def clear_visual_assessment(self) -> None:
+        """Clear the stored visual assessment after it's been processed."""
+        self._last_visual_assessment = None
+
+    def get_visual_assessment_for_engine(self) -> Optional["VisualAssessment"]:
+        """
+        Get the last visual assessment as a VisualAssessment object for the Visual Engine.
+
+        Returns:
+            VisualAssessment object or None if no assessment available
+        """
+        if not self._last_visual_assessment:
+            return None
+
+        try:
+            from src.mantle.visual.types import VisualAssessment
+            return VisualAssessment.from_dict(self._last_visual_assessment)
+        except ImportError:
+            logging.warning("[VISUAL] Visual engine types not available")
+            return None
+        except Exception as e:
+            logging.error(f"[VISUAL] Failed to convert assessment: {e}")
+            return None
 
     # ==========================================
     # PERSONALITY-AWARE GENERATION (OCEAN Model)

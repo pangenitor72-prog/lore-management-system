@@ -317,6 +317,20 @@
         "description": "Ability to negotiate and build alliances."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "high_fantasy_watercolor",
+      "world_descriptors": {
+        "architecture": "White marble temples with columns, Olympian palaces on cloud peaks, Athenian acropolis, seaside amphitheaters, sacred groves with altars",
+        "landscape": "Aegean coastlines with azure waters, olive-covered hillsides, volcanic islands, wine-dark seas, mythic labyrinths, mountain homes of gods",
+        "vegetation": "Olive groves, cypress trees, grapevines, laurel wreaths, wildflower meadows, sacred oak forests",
+        "weather": "Mediterranean sun, dramatic sea storms sent by Poseidon, Zeus's lightning, golden dawn light, starlit nights with visible constellations",
+        "people": "Muscular heroes, flowing-robed oracles, bronze-armored hoplites, Amazon warriors, toga-clad philosophers, divine beings in radiant forms",
+        "clothing": "Flowing chitons and himations, bronze cuirasses and greaves, laurel crowns, sandals, divine golden raiment",
+        "technology": "Bronze weapons and shields, triremes, pottery and amphorae, divine artifacts, chariots drawn by mythical beasts",
+        "lighting": "Warm Mediterranean sunlight, temple fire glow, divine radiance, torch-lit cave interiors, ethereal Olympian light"
+      },
+      "visual_exclusions": "Modern technology, medieval European elements, firearms, contemporary architecture, non-Greek cultural elements"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

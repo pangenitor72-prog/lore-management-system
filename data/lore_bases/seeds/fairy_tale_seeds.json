@@ -329,6 +329,20 @@
         "description": "Knowledge of magical plants, brewing remedies, and preparing protective charms."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "storybook_whimsical",
+      "world_descriptors": {
+        "architecture": "Thatched cottages with crooked chimneys, castle spires wreathed in thorns, witch huts on chicken legs, gingerbread houses with sugar-glass windows",
+        "landscape": "Enchanted forests where paths twist mysteriously, crystal rivers that show your desires, mushroom circles at crossroads, briars that grow overnight",
+        "vegetation": "Talking trees with watchful eyes, flowers that turn to follow you, thorned rose walls, magic beans, herbs that glow at midnight",
+        "weather": "Eternal golden autumn, convenient dramatic storms, snow that sparkles like diamonds, rainbows that appear after tears",
+        "people": "Princesses with knowing eyes, woodcutters with kind hearts, wise old women at forest edges, handsome princes with hidden burdens, changelings who almost pass for human",
+        "clothing": "Flowing gowns of impossible colors, patched traveling cloaks, pointed hats, glass slippers, crowns of living briars",
+        "technology": "Magic mirrors that speak truth, spinning wheels that curse, enchanted objects with personalities, talking animals with agendas",
+        "lighting": "Golden hour glow through forest canopy, dappled sunlight on forest paths, moonlit clearings, candlelit cottage windows, the gleam of fairy lights"
+      },
+      "visual_exclusions": "Modern technology, realistic violence, mundane contemporary settings, harsh industrial elements"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

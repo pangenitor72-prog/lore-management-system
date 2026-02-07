@@ -304,6 +304,20 @@
         "description": "Treating injuries without hospitals, accessing medical supplies through unofficial channels."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Georgian townhouses, smoke-blackened factories, cramped East End tenements, grand Mayfair estates, boxing gyms in converted warehouses",
+        "landscape": "Cobblestone streets slick with rain, the Thames at night, railway viaducts, smog-choked skylines, dockside wharves",
+        "vegetation": "Soot-covered plane trees, windowbox flowers in wealthy districts, overgrown bomb sites, muddy parklands",
+        "weather": "London fog, coal smoke haze, drizzling rain, bitter winter cold, rare pale sunshine through clouds",
+        "people": "Flat-capped gangsters, razor-scarred enforcers, war-haunted veterans, determined policewomen, society hostesses with secrets",
+        "clothing": "Flat caps and overcoats, sharp three-piece suits, evening gowns for Mayfair parties, workers' rough wool, police uniforms",
+        "technology": "Rotary telephones, early motorcars, trams, wireless sets, manual typewriters, flashbulb press cameras",
+        "lighting": "Gas lamp glow, single bare bulbs in back rooms, firelight in pubs, headlights cutting fog, stage footlights in music halls"
+      },
+      "visual_exclusions": "Modern technology, bright colors, contemporary fashion, American settings, cheerful atmospheres"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

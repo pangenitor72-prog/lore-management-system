@@ -305,6 +305,20 @@
         "description": "Investigating supernatural phenomena — reading signs and omens, connecting mundane evidence to otherworldly causes, and knowing when a clue points beyond the natural world."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Colonial-era mansions with crooked angles, the stone church with wrong proportions, narrow streets where shadows pool, the Whispering Library that shouldn't exist",
+        "landscape": "Fog-shrouded New England hills, ancient forests pressing close to town, the old cemetery at night, paths that lead nowhere",
+        "vegetation": "Gnarled oaks with too many branches, overgrown ivy consuming facades, gardens that bloom out of season, dead flowers in window boxes",
+        "weather": "Perpetual overcast, creeping fog banks, rain that falls at odd angles, moonless nights darker than they should be",
+        "people": "Townsfolk with knowing smiles, eyes that reflect wrong, skin too pale, movements slightly off-tempo with reality",
+        "clothing": "1920s-1940s period attire faded and worn, outdated fashion preserved too perfectly, mourning clothes in muted colors",
+        "technology": "Gas lamps and candlelight, rotary phones that ring when disconnected, radios playing static between stations",
+        "lighting": "Flickering gaslight, moonlight through stained glass casting wrong colors, shadows that move independently, darkness that gathers in corners"
+      },
+      "visual_exclusions": "Modern technology, bright cheerful colors, contemporary clothing, clear sunny skies, happy crowds, electric lighting, smartphones, cars newer than 1950"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

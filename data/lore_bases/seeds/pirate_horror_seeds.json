@@ -489,6 +489,20 @@
       }
     ]
   },
+  "visual_identity": {
+    "style_profile_id": "dark_fantasy_painterly",
+    "world_descriptors": {
+      "architecture": "Gallows Point seawall of rusted chains, derelict ghost ships, the ramshackle Flotsam Bazaar, salt-stained taverns with wards scratched into doorframes",
+      "landscape": "Dark warm waters that move against the wind, fog banks that smell of brine and something older, the Bone Reef of fused skulls, islands that shift position overnight",
+      "vegetation": "Seaweed that glows faintly wrong, barnacle-crusted everything, waterlogged driftwood, nothing grows right in cursed waters",
+      "weather": "The Veil fog rolling in, the blood-red light of the Red Moon, supernatural storms, the oppressive humidity of waters that remember the drowned",
+      "people": "Haunted sailors with too-knowing eyes, the Drowned walking the ocean floor, captains scarred by what they've seen, crews bound by desperate loyalty",
+      "clothing": "Salt-stained coats, shark-tooth necklaces, iron and salt charms, waterlogged leather, the tattered uniforms of naval castaways",
+      "technology": "Wooden ships held together by desperation, harpoons and cutlasses, salt-and-phosphorus compounds against the Drowned, Dr. Finch's specimen jars",
+      "lighting": "Ghostlight from drowned lanterns, the sickly luminescence of bioluminescent swarms, moonlight on waters that shouldn't reflect, the pale glow of the Whispering Trench"
+    },
+    "visual_exclusions": "Bright cheerful colors, safe harbors, modern vessels, anything that undermines the dread and beauty of cursed seas"
+  },
   "ai_generated": false,
   "admin_reviewed": false
 }

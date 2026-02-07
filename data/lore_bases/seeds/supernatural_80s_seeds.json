@@ -296,6 +296,20 @@
         "description": "High-speed riding, jumps, tight turns, and the art of the quick getaway on two wheels."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "storybook_whimsical",
+      "world_descriptors": {
+        "architecture": "Small-town Main Street with diner and hardware store, Millbrook Public Library, the abandoned military installation in Briar Hollow, suburban split-levels",
+        "landscape": "Flat Indiana corn country, big Midwestern sky, the ominous woods of Briar Hollow with its spiral-growing trees, the old water tower",
+        "vegetation": "Endless cornfields, autumn leaves, overgrown paths to forbidden places, the warm-ground clearing in the woods",
+        "weather": "Golden afternoon light, misty mornings, thunderstorms that knock out power, crisp autumn evenings",
+        "people": "Kids on bikes, worried parents, the lone deputy who believes, eccentric librarians, veterans who recognize the signals",
+        "clothing": "Denim jackets, band t-shirts, sneakers, walkie-talkies on belts, backpacks stuffed with investigation gear",
+        "technology": "Boomboxes, arcade cabinets, rotary phones, homemade EMF detectors, modified walkie-talkies, VHS tapes",
+        "lighting": "Warm Spielberg glow through windows, flashlight beams in dark places, TV static illumination, the eerie lights rising from Briar Hollow"
+      },
+      "visual_exclusions": "Graphic horror violence, modern technology, cynical or dark adult themes that overshadow wonder"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

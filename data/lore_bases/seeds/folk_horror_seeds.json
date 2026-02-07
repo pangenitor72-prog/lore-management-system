@@ -293,6 +293,20 @@
         "description": "Interpreting natural omens, weather patterns, and the subtle warnings the countryside provides."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Thatched-roof cottages, the stone church of St. Brigid with wrong stained glass, the pub called The Green Man, the Green Chapel of living trees",
+        "landscape": "Rolling English countryside, standing stones on Barrow Hill, ancient hedgerows, fields with crop circles that weren't there yesterday",
+        "vegetation": "Sacred oaks, hawthorn barriers, the chapel oak that grows without sunlight, wildflowers that bloom in winter, roots that go too deep",
+        "weather": "Grey English overcast, morning mist that lingers too long, summer warmth that feels wrong, the strange stillness before May Day",
+        "people": "Cheerful villagers with too-wide smiles, elderly who move too easily, the May Queen with her hawthorn crown, Old Cob tending the stones in silence",
+        "clothing": "1970s rural English fashion, tweed and wool, wellies and wax jackets, white ceremonial robes for the festivals, flower crowns",
+        "technology": "1973-era British rural life, rotary phones, manual typewriters, landrover series, the surgery's limited equipment",
+        "lighting": "Hazy English daylight, firelight through cottage windows, bonfires on festival nights, the strange glow from the Green Chapel, candlelight in the church"
+      },
+      "visual_exclusions": "Modern technology, smartphones, contemporary cars, American settings, urban environments, winter scenes, industrial machinery, explicit violence"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

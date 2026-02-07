@@ -480,6 +480,20 @@
       }
     ]
   },
+  "visual_identity": {
+    "style_profile_id": "scifi_concept_art",
+    "world_descriptors": {
+      "architecture": "New Foundation's fortified structures built from Denver's bones, Haven's mountain valley sanctuary, Iron Ridge's hostile walls and watchtowers, the ruins of cities where physics still remembers breaking, bleed zone anomalies where buildings twist at wrong angles, Elena's mundane water treatment facility",
+      "landscape": "The scarred Earth five years after the Unraveling, bleed zones where reality bends visible from miles away, the ruins of São Paulo still pointing at the sky, rubble fields that were once suburbs, patches of normalcy that feel precious, the Ashfield Bleed Zone where gravity and time fluctuate",
+      "vegetation": "Stubborn plants reclaiming ruins, community gardens in settlements, the strange growth patterns in bleed zones where physics behave differently, nature returning where humans have retreated, contaminated zones where nothing grows right",
+      "weather": "Skies that still carry the memory of the day they tore open, localized anomalies in bleed zones where weather doesn't behave, the mundane seasons that feel like miracles now, storms that might be natural or might be aftershocks, the perpetual wrongness near major fracture sites",
+      "people": "Elena Vasquez working the water plant instead of flying, Jonas Hale exhausted from endless healing, Cassandra Liu never fully solid anymore, Governor Okafor holding things together with willpower, Kwame Asante's hands shaking constantly, the Inheritors like Zara Kim carrying inherited expectations, Stenmark's hardened anti-super militia",
+      "clothing": "Practical post-collapse wear without superhero flash, tattered capes kept but never worn, salvaged civilian clothing, Iron Ridge military discipline, Haven's communal simplicity, the occasional glimpse of old hero iconography repurposed or hidden away",
+      "technology": "Pre-Unraveling tech when it still works, salvaged and repaired essentials, the absence of super-science that once filled the world, communications networks barely functioning, medical equipment stretched thin, the strange not-quite-technology glimpsed at Entropy's device",
+      "lighting": "The ordinary sun that survived the Unraveling, the wrong light in bleed zones that casts no proper shadows, campfire and generator light in settlements, the faint golden glow some supers still emit when they use their powers, the darkness of ruins where no one lives anymore"
+    },
+    "visual_exclusions": "Bright superhero costumes in active use, pristine hero headquarters, functioning pre-Unraveling civilization, cosmic events and alien invasions, clean comic book aesthetics, triumphant heroic poses"
+  },
   "ai_generated": false,
   "admin_reviewed": false
 }

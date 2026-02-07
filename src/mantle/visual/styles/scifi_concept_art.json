@@ -1,0 +1,50 @@
+{
+  "style_profile_id": "scifi_concept_art",
+  "display_name": "Sci-Fi Concept Art",
+
+  "prompt_prefix": "hard sci-fi concept art, Syd Mead inspired, clean industrial design, neon accent lighting, chrome and glass, futuristic architecture, cinematic sci-fi quality",
+  "prompt_suffix": "no text, no watermarks, high detail mechanical design, professional concept art quality, cinematic lighting",
+  "negative_prompt": "fantasy, medieval, organic, painterly, soft focus, cartoon, anime, low tech, steampunk, magical",
+
+  "mood_modifiers": {
+    "tense": "red warning lights, steam venting, alarms implied, confined spaces, system failure aesthetic",
+    "joyful": "bright clean future, utopian design, natural light through vast windows, hope in technology",
+    "eerie": "abandoned tech, flickering lights, empty corridors, AI presence implied, liminal spaces",
+    "epic": "massive scale engineering, fleet shots, planetary scale structures, technological sublime",
+    "peaceful": "observation deck serenity, stars visible, quiet hum of systems, contemplative future",
+    "melancholy": "derelict ships, fading systems, last transmissions, entropy claiming technology",
+    "awe": "first contact scale, megastructures revealed, dyson spheres, technological transcendence",
+    "dread": "hull breach imminent, alien contamination, something in the ship, isolation of space"
+  },
+
+  "composition_templates": {
+    "scene": {
+      "wide": "establishing shot of installation or ship, scale indicators, environmental storytelling",
+      "medium": "character at console or viewport, technology interaction, human scale reference",
+      "close": "interface detail, suit helmet reflection, technological intimacy",
+      "low_angle": "towering machinery, ship from below, awe at engineering",
+      "overhead": "tactical display view, ship schematic perspective, strategic overview",
+      "default": "cinematic sci-fi composition, depth through atmospheric perspective, light sources as design"
+    },
+    "portrait": {
+      "default": "character in environment suit or uniform, visor reflections optional, professional future aesthetic"
+    },
+    "location_card": {
+      "default": "station or ship exterior, planet or stars in background, establishing the frontier"
+    },
+    "item": {
+      "default": "technological artifact on display, holographic elements optional, clean presentation"
+    },
+    "moment": {
+      "default": "action in zero-g or at speed, energy weapons, ship combat, technological conflict"
+    }
+  },
+
+  "image_specs": {
+    "scene": { "aspect_ratio": "16:9", "width": 1024, "height": 576 },
+    "portrait": { "aspect_ratio": "2:3", "width": 512, "height": 768 },
+    "location_card": { "aspect_ratio": "3:2", "width": 768, "height": 512 },
+    "item": { "aspect_ratio": "1:1", "width": 512, "height": 512 },
+    "moment": { "aspect_ratio": "21:9", "width": 1024, "height": 440 }
+  }
+}

@@ -1867,6 +1867,231 @@
             padding: 10px;
         }
 
+        /* Visual Engine - Image Panel */
+        .image-panel {
+            display: none;
+            margin-bottom: 15px;
+            border-radius: var(--radius-soft);
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .image-panel.visible {
+            display: block;
+        }
+
+        .image-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(15, 15, 18, 0.95), rgba(22, 22, 26, 0.95));
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .image-panel-title {
+            font-size: 0.8rem;
+            color: var(--accent-warm);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .image-panel-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .image-panel-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .image-panel-btn:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .image-container.portrait {
+            aspect-ratio: 2/3;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .image-container.location {
+            aspect-ratio: 3/2;
+        }
+
+        .image-container.item {
+            aspect-ratio: 1/1;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .image-container.moment {
+            aspect-ratio: 21/9;
+        }
+
+        .scene-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .scene-image.loaded {
+            opacity: 1;
+        }
+
+        /* Shimmer placeholder while loading */
+        .image-shimmer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                var(--shimmer-base) 0%,
+                var(--shimmer-highlight) 50%,
+                var(--shimmer-base) 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .image-shimmer.hidden {
+            display: none;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Mood-based shimmer colors */
+        .image-panel[data-mood="tense"] {
+            --shimmer-base: #1a1a2e;
+            --shimmer-highlight: #2a2a4e;
+        }
+        .image-panel[data-mood="joyful"] {
+            --shimmer-base: #4a3728;
+            --shimmer-highlight: #6a5748;
+        }
+        .image-panel[data-mood="eerie"] {
+            --shimmer-base: #0a2a2a;
+            --shimmer-highlight: #1a4a4a;
+        }
+        .image-panel[data-mood="epic"] {
+            --shimmer-base: #2a1a0a;
+            --shimmer-highlight: #4a3a2a;
+        }
+        .image-panel[data-mood="peaceful"] {
+            --shimmer-base: #1a2a1a;
+            --shimmer-highlight: #3a4a3a;
+        }
+        .image-panel[data-mood="melancholy"] {
+            --shimmer-base: #1a1a2a;
+            --shimmer-highlight: #2a2a4a;
+        }
+        .image-panel[data-mood="awe"] {
+            --shimmer-base: #0a0a2a;
+            --shimmer-highlight: #1a1a4a;
+        }
+        .image-panel[data-mood="dread"] {
+            --shimmer-base: #1a0a0a;
+            --shimmer-highlight: #2a1a1a;
+        }
+
+        /* Image type badge */
+        .image-type-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Fullscreen overlay */
+        .image-fullscreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .image-fullscreen.visible {
+            display: flex;
+        }
+
+        .image-fullscreen img {
+            max-width: 95vw;
+            max-height: 95vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .image-fullscreen-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .image-fullscreen-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Portrait inset for NPC dialogue */
+        .dialogue-portrait {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-warm);
+            float: left;
+            margin-right: 12px;
+            margin-bottom: 8px;
+        }
+
         /* Story Arc Indicator */
         .story-arc {
             padding: 8px 16px;
@@ -7240,6 +7465,28 @@
                 </div>
             </div>
 
+            <!-- Visual Engine - Image Panel -->
+            <div id="image-panel" class="image-panel" data-mood="tense">
+                <div class="image-panel-header">
+                    <span class="image-panel-title">🎨 Scene</span>
+                    <div class="image-panel-controls">
+                        <button class="image-panel-btn" onclick="toggleImagePanel()" title="Hide image">Hide</button>
+                        <button class="image-panel-btn" onclick="openImageFullscreen()" title="View fullscreen">⛶</button>
+                    </div>
+                </div>
+                <div class="image-container" id="image-container" onclick="openImageFullscreen()">
+                    <div class="image-shimmer" id="image-shimmer"></div>
+                    <img id="scene-image" class="scene-image" src="" alt="Scene illustration">
+                    <span class="image-type-badge" id="image-type-badge">scene</span>
+                </div>
+            </div>
+
+            <!-- Fullscreen Image Overlay -->
+            <div id="image-fullscreen" class="image-fullscreen" onclick="closeImageFullscreen()">
+                <button class="image-fullscreen-close" onclick="closeImageFullscreen()">×</button>
+                <img id="fullscreen-image" src="" alt="Fullscreen scene">
+            </div>
+
             <div class="story-container" id="story-container"></div>
 
             <div class="input-area">
@@ -11060,6 +11307,205 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         function onEnemyDefeated(name) {
             updateTacticalMapToken(name, { dead: true, hp: 0 });
         }
+
+        // =========================================
+        // VISUAL ENGINE - IMAGE PANEL
+        // =========================================
+
+        let imagePanelState = {
+            visible: false,
+            enabled: true,  // User preference to enable/disable images
+            currentImage: null,
+            currentType: 'scene',
+            currentMood: 'tense',
+            loading: false,
+            portraitCache: {}  // character_id -> image URL
+        };
+
+        function showImagePanel() {
+            if (!imagePanelState.enabled) return;
+            imagePanelState.visible = true;
+            document.getElementById('image-panel').classList.add('visible');
+        }
+
+        function hideImagePanel() {
+            imagePanelState.visible = false;
+            document.getElementById('image-panel').classList.remove('visible');
+        }
+
+        function toggleImagePanel() {
+            if (imagePanelState.visible) {
+                hideImagePanel();
+            } else if (imagePanelState.currentImage) {
+                showImagePanel();
+            }
+        }
+
+        function setImageLoading(loading, mood = 'tense') {
+            imagePanelState.loading = loading;
+            const shimmer = document.getElementById('image-shimmer');
+            const panel = document.getElementById('image-panel');
+
+            if (loading) {
+                panel.dataset.mood = mood;
+                imagePanelState.currentMood = mood;
+                shimmer.classList.remove('hidden');
+                showImagePanel();
+            } else {
+                shimmer.classList.add('hidden');
+            }
+        }
+
+        function displayImage(imageUrl, imageType = 'scene', mood = 'tense') {
+            if (!imagePanelState.enabled) return;
+
+            const img = document.getElementById('scene-image');
+            const container = document.getElementById('image-container');
+            const badge = document.getElementById('image-type-badge');
+            const title = document.querySelector('.image-panel-title');
+            const panel = document.getElementById('image-panel');
+
+            // Set mood for shimmer color
+            panel.dataset.mood = mood;
+            imagePanelState.currentMood = mood;
+
+            // Update container class for aspect ratio
+            container.className = 'image-container';
+            if (imageType === 'portrait') container.classList.add('portrait');
+            else if (imageType === 'location_card') container.classList.add('location');
+            else if (imageType === 'item') container.classList.add('item');
+            else if (imageType === 'moment') container.classList.add('moment');
+
+            // Update badge and title
+            badge.textContent = imageType.replace('_', ' ');
+            const typeLabels = {
+                'scene': '🎨 Scene',
+                'portrait': '👤 Portrait',
+                'location_card': '🏰 Location',
+                'item': '⚔️ Item',
+                'moment': '✨ Moment'
+            };
+            title.textContent = typeLabels[imageType] || '🎨 Scene';
+
+            // Show shimmer while loading
+            setImageLoading(true, mood);
+            img.classList.remove('loaded');
+
+            // Load the image
+            img.onload = function() {
+                setImageLoading(false);
+                img.classList.add('loaded');
+                imagePanelState.currentImage = imageUrl;
+                imagePanelState.currentType = imageType;
+            };
+
+            img.onerror = function() {
+                console.error('[VISUAL] Failed to load image:', imageUrl);
+                setImageLoading(false);
+                hideImagePanel();
+            };
+
+            img.src = imageUrl;
+        }
+
+        function openImageFullscreen() {
+            if (!imagePanelState.currentImage) return;
+
+            const overlay = document.getElementById('image-fullscreen');
+            const img = document.getElementById('fullscreen-image');
+
+            img.src = imagePanelState.currentImage;
+            overlay.classList.add('visible');
+        }
+
+        function closeImageFullscreen() {
+            document.getElementById('image-fullscreen').classList.remove('visible');
+        }
+
+        // Cache portrait for NPC dialogue
+        function cachePortrait(characterId, imageUrl) {
+            imagePanelState.portraitCache[characterId] = imageUrl;
+        }
+
+        function getCachedPortrait(characterId) {
+            return imagePanelState.portraitCache[characterId] || null;
+        }
+
+        // Toggle image feature on/off
+        function toggleImageFeature(enabled) {
+            imagePanelState.enabled = enabled;
+            if (!enabled) {
+                hideImagePanel();
+            }
+            // Save preference
+            try {
+                localStorage.setItem('visual_engine_enabled', enabled ? 'true' : 'false');
+            } catch (e) {}
+        }
+
+        // Load preference
+        function loadImagePreference() {
+            try {
+                const pref = localStorage.getItem('visual_engine_enabled');
+                if (pref !== null) {
+                    imagePanelState.enabled = pref === 'true';
+                }
+            } catch (e) {}
+        }
+
+        // Process visual assessment from API response
+        async function processVisualAssessment(assessment, campaignId) {
+            if (!assessment || !imagePanelState.enabled) return;
+
+            console.log('[VISUAL] Processing assessment:', assessment.image_type, assessment.mood);
+
+            // Show loading state
+            setImageLoading(true, assessment.mood);
+
+            try {
+                // Call backend to generate/retrieve image
+                const response = await fetch(API_BASE + '/game/visual/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        assessment: assessment,
+                        campaign_id: campaignId || currentCampaign
+                    })
+                });
+
+                if (!response.ok) {
+                    console.error('[VISUAL] Generation failed:', response.status);
+                    setImageLoading(false);
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (result.url) {
+                    displayImage(result.url, assessment.image_type, assessment.mood);
+
+                    // Cache portraits
+                    if (assessment.image_type === 'portrait' && assessment.character_id) {
+                        cachePortrait(assessment.character_id, result.url);
+                    }
+                }
+            } catch (error) {
+                console.error('[VISUAL] Error processing assessment:', error);
+                setImageLoading(false);
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadImagePreference();
+
+            // Close fullscreen on escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeImageFullscreen();
+                }
+            });
+        });
 
         // Quick Actions
         function quickAction(action) {
@@ -15983,6 +16429,11 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
                 // Parse tactical position tags from narrative
                 parseTacticalTags(data.narrative);
+
+                // Process visual assessment for image generation
+                if (data.visual_assessment) {
+                    processVisualAssessment(data.visual_assessment, currentCampaign);
+                }
 
                 // Update story arc progress
                 updateStoryArc();

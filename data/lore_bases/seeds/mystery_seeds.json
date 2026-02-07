@@ -309,6 +309,20 @@
         "description": "Knowledge of boating and ship navigation."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Weathered colonial homes, white clapboard churches, Victorian mansions on cliff edges, fishing wharves with peeling paint",
+        "landscape": "Rocky Atlantic coastline, fog-shrouded harbors, pine forests, river mouths meeting the sea, gravel driveways",
+        "vegetation": "Salt-stunted pines, beach roses, seaweed-draped rocks, autumn maples, overgrown graveyards",
+        "weather": "Coastal fog, nor'easters, grey drizzle, crisp autumn mornings, winter ice storms",
+        "people": "Weathered fishermen, tight-lipped locals, returning detectives, elderly matriarchs with secrets, harried journalists",
+        "clothing": "Rain slickers, wool sweaters, sensible boots, faded flannel, tweed jackets with leather patches",
+        "technology": "Landline phones, newspaper archives, microfiche readers, old police radios, developing darkrooms",
+        "lighting": "Lighthouse beams cutting fog, dim library lamps, overcast skies, fireplace glow, bare bulbs in basements"
+      },
+      "visual_exclusions": "Tropical settings, bright sunshine, modern smartphones, urban sprawl, cheerful beach scenes"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

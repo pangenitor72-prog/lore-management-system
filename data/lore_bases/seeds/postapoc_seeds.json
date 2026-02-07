@@ -345,6 +345,20 @@
         "description": "Used to trade effectively and get a good deal out of merchants."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "Haven's fortified walls built from salvaged materials, the rusted skeletons of Dead Cities, Vault 17 still sealed and mysterious, Reclaimer camps in collapsed structures, the Children of New Dawn's repurposed church, Iron Legion's military compounds, Refuge's welcoming but ramshackle buildings",
+        "landscape": "The shattered American wasteland stretching to every horizon, Dead Cities as tombs of rust and bone, the Chicago Exclusion Zone where rad-ghouls roam, the Rocky Mountains hiding sealed Vaults, patches of recovery where nature is returning, the contrast between devastation and stubborn regrowth",
+        "vegetation": "Mutated plants in the wastes, carefully tended crops in protected settlements, overgrown ruins being reclaimed by nature, Elder Moss and other Changed with plant-like mutations, poisonous flora in contaminated zones, the precious seeds of pre-Fall varieties",
+        "weather": "Rad-storms sweeping across the wastes, the permanent haze over Dead Cities, clear skies in stable zones that feel like gifts, dust devils on the open plains, the occasional acid rain from lingering atmospheric damage",
+        "people": "Wastelanders hardened by survival, Haven's diverse community behind protective walls, Reclaimers geared up for dangerous runs, the Changed with visible mutations, Jackson Cross with his jury-rigged prosthetic, the Iron Legion's well-fed soldiers, Prophet Sarah's fervent followers",
+        "clothing": "Layered scavenged clothing for protection, Reclaimer gear with radiation badges and tool belts, Iron Legion uniforms kept in military order, the Changed adapting clothing to their mutations, Road Preachers in modified religious vestments, Doc Martinez in her traveling medical coat",
+        "technology": "Scavenged Old World tech carefully maintained, rad-ghouls and other mutated threats, Vault-Tec equipment preserved for decades, the armored RV of traveling traders, jury-rigged weapons and vehicles, pre-Fall medicine worth more than gold, Stormcaller mutations channeling waste energies",
+        "lighting": "The harsh sun on open wasteland, campfire warmth in settlements at night, the eerie glow of radiation zones, flickering pre-Fall electronics, the complete darkness of sealed Vaults, dust filtering light into amber haze"
+      },
+      "visual_exclusions": "Clean modern environments, functioning infrastructure, large populations, luxury goods, pre-Fall normalcy, pristine technology, verdant untouched nature"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

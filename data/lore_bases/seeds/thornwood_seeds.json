@@ -344,6 +344,20 @@
         "description": "The art of subtle lies and misdirection favored by the fey."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Palaces of black ice, the Crossroads Inn with its shadowed booths, ancient oaks hollowed into sanctuaries, the Well of Echoes beneath gnarled roots",
+        "landscape": "Ancient forest where trees remember, borders between realms growing thin, the Sunlit Glade eternal in bloom, paths that shift with the moon",
+        "vegetation": "Thornwood's living canopy, flowers that bloom year-round in Summer's domain, frost-touched brambles of Winter, mushroom circles marking fairy rings",
+        "weather": "Moonless nights when the Wild Hunt rides, mist between the trees, eternal golden light in Titania's court, bitter cold radiating from Mab's domain",
+        "people": "The terrible beauty of the fey, half-fey Rangers caught between worlds, mortals marked by fairy bargains, the faceless Keeper of the Well",
+        "clothing": "Courtly finery woven from moonlight and shadow, Ranger leathers marked by both courts, mortal clothes that feel suddenly plain, glamours that shift with mood",
+        "technology": "None - only ancient magic, bargains sealed in blood, and the old ways that have always been",
+        "lighting": "Dappled forest light, the cold gleam of Mab's palace, warm glow of the Crossroads Inn hearth, the otherworldly radiance of fairy courts"
+      },
+      "visual_exclusions": "Modern elements, technological items, bright cheerful fairy tale imagery, sanitized whimsy without darkness"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

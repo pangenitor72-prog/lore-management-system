@@ -484,6 +484,20 @@
       }
     ]
   },
+  "visual_identity": {
+    "style_profile_id": "noir_inkwash",
+    "world_descriptors": {
+      "architecture": "Art deco federal buildings, marble-floored Bureau offices, smoky jazz clubs, brick tenement safe houses, waterfront warehouses",
+      "landscape": "Rain-slicked city streets, elevated train lines, industrial waterfronts, foggy alleyways, rooftop silhouettes against searchlights",
+      "vegetation": "Potted ferns in lobby corners, window boxes in the Hollows, dead flowers at memorials, overgrown vacant lots",
+      "weather": "Perpetual rain, fog rolling off the harbor, oppressive summer heat, dramatic thunderstorms, noir nights",
+      "people": "Costumed heroes in dramatic poses, fedora-wearing detectives, Bureau agents in charcoal suits, unregistered Specials in shadows",
+      "clothing": "1940s suits and fedoras, superhero costumes mixing spandex and military aesthetic, trench coats, evening wear at society galas",
+      "technology": "Prometheus energy devices, 1940s radio equipment, early television sets, classified military tech, rotary phones",
+      "lighting": "Neon signs reflected in puddles, Venetian blind shadows, Prometheus energy glow, single desk lamps, searchlight beams"
+    },
+    "visual_exclusions": "Bright comic book colors, modern technology, cheerful superhero imagery, daylight optimism, clean heroic triumph"
+  },
   "ai_generated": false,
   "admin_reviewed": false
 }

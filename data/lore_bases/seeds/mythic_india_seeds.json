@@ -329,6 +329,20 @@
         "description": "The precise recitation of sacred verses for ritual, healing, and divine invocation."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "high_fantasy_watercolor",
+      "world_descriptors": {
+        "architecture": "Ornate palace complexes with domes and spires, riverside ghats, mountain ashrams, carved temple gopurams, jeweled throne rooms, sacred forest hermitages",
+        "landscape": "Golden plains with peacocks, snow-capped Himalayan peaks, sacred rivers flowing with light, dense jungle kingdoms, lotus-filled lakes, divine mountains touching heaven",
+        "vegetation": "Banyan and peepal trees, lotus flowers, jasmine gardens, mango orchards, sacred tulsi plants, flowering champak trees",
+        "weather": "Monsoon rains, blazing summer heat, golden morning light, dramatic evening skies, auspicious dawn hours, stars aligned in cosmic patterns",
+        "people": "Divine avatars walking among mortals, warrior princes with celestial weapons, sages in meditation, nagas with serpentine grace, apsara dancers, ascetics with matted hair",
+        "clothing": "Silk saris in jewel tones, warrior's armor with divine symbols, dhoti and angavastra, royal turbans with jewels, ascetic's simple cloth, divine beings in radiant garments",
+        "technology": "Divine astras (celestial weapons), temple bells and conch shells, sacred fire altars, chariots drawn by divine horses, vedic ritual implements, prayer beads",
+        "lighting": "Divine radiance from avatars, oil lamp glow in temples, sunrise over sacred rivers, cosmic light during celestial events, moonlight on palace domes"
+      },
+      "visual_exclusions": "Modern technology, Western architecture, firearms, contemporary clothing, non-Indian cultural elements, industrial settings"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

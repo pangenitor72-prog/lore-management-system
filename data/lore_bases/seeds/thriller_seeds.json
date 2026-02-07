@@ -290,6 +290,20 @@
         "description": "Detecting espionage and rooting out enemy agents"
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Glass-walled embassies, brutalist intelligence bunkers, anonymous safe houses, luxury hotel suites, underground parking garages",
+        "landscape": "Airport tarmacs at night, snow-covered Eastern European cities, Mediterranean ports, Swiss mountain passes, foggy London streets",
+        "vegetation": "Manicured embassy gardens, bare winter trees, potted plants in sterile offices, frozen forests",
+        "weather": "Cold rain, snowstorms, overcast European skies, Mediterranean heat haze, pre-dawn darkness",
+        "people": "Stone-faced operatives, elegant handlers, nervous assets, shadowy contacts, bureaucrats with classified access",
+        "clothing": "Tailored suits, tactical black, diplomatic formal wear, nondescript civilian covers, concealed holsters",
+        "technology": "Encrypted phones, surveillance equipment, hidden cameras, secure laptops, dead drop containers",
+        "lighting": "Interrogation spotlights, monitor glow in dark rooms, streetlights through rain, emergency exit signs, shadowed faces"
+      },
+      "visual_exclusions": "Bright cheerful settings, casual vacation scenes, obvious weaponry displays, comic book action, family-friendly environments"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

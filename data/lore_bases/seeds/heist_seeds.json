@@ -305,6 +305,20 @@
         "description": "Navigating elite social circles, galas, and exclusive establishments."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Casino Aurelian on limestone cliffs, French Riviera villas, Monaco hotel suites, vault interiors with reinforced steel, planning rooms with floor plans spread across tables",
+        "landscape": "Mediterranean coastline, winding cliff-side roads, yacht harbors, the glamorous European Riviera",
+        "vegetation": "Manicured casino gardens, palm trees along boulevards, potted orchids in exclusive establishments",
+        "weather": "Warm Mediterranean evenings, dramatic sunsets over the sea, tension-building storm fronts",
+        "people": "Glamorous criminals in tailored suits, aristocrats with dangerous secrets, Interpol inspectors in rumpled coats, casino staff in formal attire",
+        "clothing": "1960s high fashion, tailored suits, evening gowns, disguises and false identities, driving gloves and leather jackets",
+        "technology": "Safecracking tools, hidden microphones, vintage sports cars, forged documents, surveillance equipment",
+        "lighting": "High-contrast shadows, spotlight tension during the job, neon casino glow, the harsh interrogation light, moonlit escape routes"
+      },
+      "visual_exclusions": "Cartoonish heist comedy, modern technology, overly bright or cheerful imagery that undermines tension"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

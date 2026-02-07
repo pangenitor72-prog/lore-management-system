@@ -334,6 +334,20 @@
         "description": "Knowledge of Avalon's traditions, secret societies, campus legends, and the stories that define the university's culture. Every building has a history, and every history has a scandal."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "storybook_whimsical",
+      "world_descriptors": {
+        "architecture": "Ivy-covered university halls with Gothic spires, cozy coffee shops with steamed windows, grand library reading rooms, charming bookshops with creaky floors",
+        "landscape": "Tree-lined campus paths with autumn leaves, manicured quadrangles, romantic bridges over reflecting ponds, secret garden courtyards",
+        "vegetation": "Cherry blossoms in spring, golden leaves drifting in autumn, wisteria climbing ancient walls, roses in hidden gardens",
+        "weather": "Soft rain perfect for sharing umbrellas, golden afternoon light through library windows, first snowfall of winter, warm summer evenings",
+        "people": "Brilliant professors with hidden depths, passionate students chasing dreams, charming baristas with stories to tell, old flames returning unexpectedly",
+        "clothing": "Cozy sweaters and scarves, elegant academic dress, vintage dresses with modern flair, well-worn leather bags full of books",
+        "technology": "Antique typewriters, leather-bound journals, vintage record players, handwritten letters sealed with care",
+        "lighting": "Warm lamplight in study corners, fairy lights strung across coffee shop patios, candlelit dinners, the soft glow of screens at midnight"
+      },
+      "visual_exclusions": "Harsh modern corporate settings, explicit content, cynical or dark imagery, anything that undermines the hopeful romantic tone"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

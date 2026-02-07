@@ -482,6 +482,20 @@
       }
     ]
   },
+  "visual_identity": {
+    "style_profile_id": "dark_fantasy_painterly",
+    "world_descriptors": {
+      "architecture": "Floating platform cities held aloft by furnace arrays, cliff-carved settlements, airship docks of brass and iron, the ramshackle Free Docks flotilla",
+      "landscape": "Endless sky above the pale green Murk, mountain peaks piercing the poison line, floating platforms connected by suspension bridges, the void below",
+      "vegetation": "Terraced farms on cliff faces, rooftop gardens on floating cities, hardy mountain scrub above the Murk line, nothing below",
+      "weather": "Wind currents carving invisible highways, storms that form without warning, the Murk churning below like a toxic sea",
+      "people": "Goggled airship pilots, grease-stained gearwrights, scarred sky pirates, Lamplighters in flame-resistant robes, Pillar-born aristocrats",
+      "clothing": "Leather flying jackets, brass goggles, wind-worn coats, harnesses for rigging work, captain's tricorns, engineer's aprons",
+      "technology": "Airships powered by aetherlift furnaces, grappling hooks and ziplines, flintlock pistols, navigation instruments, aetherlift crystals glowing violet",
+      "lighting": "Furnace glow from platform cities, gaslight through porthole windows, the pale green luminescence of the Murk far below, sunset painting the upper clouds gold and crimson"
+    },
+    "visual_exclusions": "Ground-level environments, ocean sailing vessels, modern technology, anything touching the surface world"
+  },
   "ai_generated": false,
   "admin_reviewed": false
 }

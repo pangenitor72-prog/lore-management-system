@@ -1,0 +1,50 @@
+{
+  "style_profile_id": "noir_inkwash",
+  "display_name": "Noir (Ink Wash)",
+
+  "prompt_prefix": "noir ink wash illustration, high contrast black and white, selective color accents, heavy shadows, Sin City inspired, graphic novel quality, dramatic silhouettes",
+  "prompt_suffix": "no text, no watermarks, stark contrast, ink splatter textures, cinematic noir lighting",
+  "negative_prompt": "colorful, bright, cheerful, anime, cartoon, soft lighting, low contrast, photographic, 3D render, fantasy",
+
+  "mood_modifiers": {
+    "tense": "extreme contrast, faces half in shadow, sharp angles, venetian blind shadows",
+    "joyful": "rare warm color accent breaking through, softer shadows, hint of hope in darkness",
+    "eerie": "fog effects in ink wash, distorted shadows, things lurking at edge of light",
+    "epic": "dramatic low angle, heroic silhouette against light source, rain-slicked streets reflecting",
+    "peaceful": "quieter contrast, contemplative lone figure, cigarette smoke curling, still moment",
+    "melancholy": "rain streaks, isolated figure, empty streets, neon reflection in puddles",
+    "awe": "towering city architecture, tiny figure dwarfed, art deco grandeur in shadow",
+    "dread": "almost pure black, minimal light, predatory shapes in darkness, horror noir"
+  },
+
+  "composition_templates": {
+    "scene": {
+      "wide": "establishing city shot, dramatic shadows, rain or fog, neon signs as color accents",
+      "medium": "figure in doorway or alley, environmental noir storytelling, dramatic lighting",
+      "close": "face emerging from shadow, cigarette glow, eyes catching light",
+      "low_angle": "threatening figure looming, or hero rising, dramatic perspective",
+      "overhead": "body on floor composition, detective scene, stark overhead light",
+      "default": "classic noir composition, deep shadows, single light source, mystery atmosphere"
+    },
+    "portrait": {
+      "default": "face half in shadow, dramatic side lighting, fedora shadow across eyes optional, intense gaze"
+    },
+    "location_card": {
+      "default": "rain-slicked street, neon signs reflected, establishing the urban jungle, dangerous beauty"
+    },
+    "item": {
+      "default": "object on desk under lamp light, dramatic shadow, noir still life, evidence photography style"
+    },
+    "moment": {
+      "default": "action frozen in ink splash, gun flash as light source, dramatic confrontation, rain frozen"
+    }
+  },
+
+  "image_specs": {
+    "scene": { "aspect_ratio": "16:9", "width": 1024, "height": 576 },
+    "portrait": { "aspect_ratio": "2:3", "width": 512, "height": 768 },
+    "location_card": { "aspect_ratio": "3:2", "width": 768, "height": 512 },
+    "item": { "aspect_ratio": "1:1", "width": 512, "height": 512 },
+    "moment": { "aspect_ratio": "21:9", "width": 1024, "height": 440 }
+  }
+}

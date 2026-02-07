@@ -354,6 +354,20 @@
         "description": "Understanding of language construction and deciphering ancient texts."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "storybook_whimsical",
+      "world_descriptors": {
+        "architecture": "Crumbling Mayan pyramids swallowed by jungle, vine-covered temple gates, ancient stone bridges across chasms, expedition camps with canvas tents",
+        "landscape": "Emerald jungle canopy stretching to the horizon, mist-shrouded river valleys, treacherous mountain passes, hidden cenotes glowing with turquoise light",
+        "vegetation": "Giant ferns and prehistoric-looking palms, orchids blooming in temple ruins, strangler figs embracing ancient stones, bioluminescent fungi in deep caves",
+        "weather": "Dramatic thunderstorms over the jungle, golden shafts of light breaking through the canopy, morning mist rising from rivers, oppressive tropical heat",
+        "people": "Weathered explorers in safari gear, indigenous guides with ancient knowledge, elegant academics out of their element, mysterious figures in white linen suits",
+        "clothing": "Leather jackets and jodhpurs, pith helmets and fedoras, practical khaki expedition wear, elegant 1920s travel attire now mud-stained",
+        "technology": "Compass and sextant, worn leather map cases, expedition cameras with brass fittings, bolt-action rifles, biplanes glimpsed through trees",
+        "lighting": "Shafts of golden light piercing the jungle canopy, torchlight flickering on temple carvings, the warm glow of campfires, moonlight on ancient stone"
+      },
+      "visual_exclusions": "Modern technology, contemporary clothing, urban settings, anything that breaks the 1920s pulp adventure aesthetic"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

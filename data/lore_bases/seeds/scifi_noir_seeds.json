@@ -303,6 +303,20 @@
         "description": "Repairing cybernetics, synthetic persons, and station machinery."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Welded-on hab modules, jury-rigged corridors, corporate towers with smart glass, cramped maintenance tunnels, neon-lit underdocks",
+        "landscape": "Orbital station interiors, rain from broken humidity cycling, cargo bays, observation decks showing distant stars, endless metal corridors",
+        "vegetation": "Hydroponic gardens gone feral, artificial plants in corporate lobbies, algae tanks, mold in neglected sectors",
+        "weather": "Interior rain dripping from conduit failures, humidity haze, recycled air currents, temperature gradients between sectors",
+        "people": "Weary investigators, synthetic persons, dock workers in jumpsuits, corporate executives, back-alley surgeons, desperate refugees",
+        "clothing": "Armored coats, utilitarian jumpsuits, corporate formal wear, patched street clothes, neural interface headwear",
+        "technology": "Wrist terminals, cybernetic implants, holographic displays, hovering drones, medical stim injectors, encrypted data spikes",
+        "lighting": "Flickering neon signs, emergency red lighting, monitor glow, distant stars through viewports, harsh industrial fluorescents"
+      },
+      "visual_exclusions": "Natural sunlight, pastoral landscapes, clean futuristic utopias, organic environments, bright optimistic futures"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

@@ -1,0 +1,50 @@
+{
+  "style_profile_id": "high_fantasy_watercolor",
+  "display_name": "High Fantasy (Watercolor)",
+
+  "prompt_prefix": "watercolor illustration, ethereal luminous washes, Alan Lee inspired, soft edges bleeding into paper, delicate linework, fantasy book illustration quality, Tolkien aesthetic",
+  "prompt_suffix": "no text, no watermarks, no UI elements, no borders, paper texture visible, masterful watercolor technique",
+  "negative_prompt": "digital art, sharp edges, photographic, 3D render, anime, cartoon, dark gritty, horror, oversaturated, neon colors",
+
+  "mood_modifiers": {
+    "tense": "darker washes, storm clouds gathering, muted palette, dramatic shadows in the wash",
+    "joyful": "bright luminous washes, golden light suffusing the scene, warm yellows and soft greens",
+    "eerie": "pale ghostly washes, mist effects, cool blue-grey palette, things half-seen",
+    "epic": "sweeping vistas, dramatic cloud formations, tiny figures against vast landscapes, golden hour light",
+    "peaceful": "soft morning light, gentle color gradients, pastoral scenes, dappled sunlight through leaves",
+    "melancholy": "grey washes, autumn colors, fading light, lonely figures, rain-soft edges",
+    "awe": "towering spires, impossible architecture, divine light breaking through, overwhelming scale",
+    "dread": "darker palette unusual for watercolor, creeping shadows, twisted forms suggested in washes"
+  },
+
+  "composition_templates": {
+    "scene": {
+      "wide": "panoramic vista, layered depth with atmospheric perspective, sky as major element",
+      "medium": "figure in landscape, environmental storytelling, natural framing elements",
+      "close": "intimate natural detail, flowers or foliage framing, soft focus background",
+      "low_angle": "looking up at towers or trees, dramatic sky, sense of wonder",
+      "overhead": "map-like perspective, terrain features visible, storybook quality",
+      "default": "classic landscape composition, foreground interest, middle ground subject, atmospheric background"
+    },
+    "portrait": {
+      "default": "gentle three-quarter portrait, soft lighting, delicate features, hair and fabric rendered with flowing brushwork"
+    },
+    "location_card": {
+      "default": "establishing vista, location emerging from mist or distance, sense of journey and discovery"
+    },
+    "item": {
+      "default": "item on natural surface, soft shadows, botanical elements nearby, aged paper background"
+    },
+    "moment": {
+      "default": "dynamic action with flowing movement, capes and hair in motion, dramatic lighting breakthrough"
+    }
+  },
+
+  "image_specs": {
+    "scene": { "aspect_ratio": "16:9", "width": 1024, "height": 576 },
+    "portrait": { "aspect_ratio": "2:3", "width": 512, "height": 768 },
+    "location_card": { "aspect_ratio": "3:2", "width": 768, "height": 512 },
+    "item": { "aspect_ratio": "1:1", "width": 512, "height": 512 },
+    "moment": { "aspect_ratio": "21:9", "width": 1024, "height": 440 }
+  }
+}

@@ -296,6 +296,20 @@
         "description": "Navigating the city's hidden supernatural landscape — hunting grounds, spirit-scarred territories, safe havens, and the places where the boundary between worlds runs thin."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Victorian gothic towers, gargoyle-studded cathedrals, abandoned mansions with lit windows, art deco nightclubs hiding ancient basements",
+        "landscape": "Rain-slicked city streets, industrial districts bleeding rust, sacred groves hidden in urban parks, the Underworld glimpsed through storm drains",
+        "vegetation": "Dead roses in iron planters, cemetery trees with reaching branches, rooftop gardens gone wild, vines consuming abandoned buildings",
+        "weather": "Perpetual night in the city center, rain that washes nothing clean, fog rising from the river, storms that gather around supernatural conflict",
+        "people": "Vampires with predator elegance, werewolves with barely contained fury, mortals who sense something wrong, mages with knowing eyes",
+        "clothing": "Gothic fashion from multiple eras layered, leather and velvet, formal attire stained with hidden blood, street clothes hiding weapons",
+        "technology": "Modern city infrastructure, neon signs reflected in wet pavement, security cameras that vampires avoid, clubs with thumping bass",
+        "lighting": "Neon glow through rain, candlelit vampire courts, moonlight on rooftops, the sickly orange of streetlamps, darkness in alleyways"
+      },
+      "visual_exclusions": "Bright daylight scenes, cheerful suburban settings, clean wholesome environments, pastoral countryside, children playing, family gatherings, clear blue skies"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

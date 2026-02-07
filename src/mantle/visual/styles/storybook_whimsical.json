@@ -1,0 +1,50 @@
+{
+  "style_profile_id": "storybook_whimsical",
+  "display_name": "Storybook (Whimsical)",
+
+  "prompt_prefix": "whimsical storybook illustration, Ghibli-adjacent warmth, soft rounded forms, inviting colors, children's book quality, gentle wonder, cozy fantasy",
+  "prompt_suffix": "no text, no watermarks, heartwarming quality, masterful children's illustration, gentle and inviting",
+  "negative_prompt": "dark, gritty, horror, violent, scary, photographic, harsh shadows, desaturated, adult themes, sharp edges, threatening",
+
+  "mood_modifiers": {
+    "tense": "gentle tension, storm clouds with silver linings, worried but hopeful expressions",
+    "joyful": "celebration colors, warm golden light, characters mid-laugh, pure happiness",
+    "eerie": "gentle mystery, friendly shadows, curious rather than scary, wonderment at unknown",
+    "epic": "grand adventure scale, but friendly, heroes small against beautiful vastness",
+    "peaceful": "cozy interiors, warm hearth light, tea and comfort, safe haven",
+    "melancholy": "gentle sadness, autumn leaves, goodbyes that promise return, bittersweet beauty",
+    "awe": "wonder at nature or magic, childlike amazement, beautiful discovery",
+    "dread": "worry for friends, gentle stakes, concern without terror, solvable problems"
+  },
+
+  "composition_templates": {
+    "scene": {
+      "wide": "storybook landscape, rolling hills, friendly architecture, paths inviting exploration",
+      "medium": "character in cozy environment, warm details, lived-in spaces",
+      "close": "character expression focus, emotive and readable, gentle features",
+      "low_angle": "looking up at friendly giant or tree, wonder not fear",
+      "overhead": "map-like storybook view, locations as destinations for adventure",
+      "default": "classic illustration composition, character journey implied, welcoming world"
+    },
+    "portrait": {
+      "default": "friendly character portrait, expressive eyes, approachable design, warmth in expression"
+    },
+    "location_card": {
+      "default": "welcoming location establishing shot, path leading in, lights in windows, adventure awaits"
+    },
+    "item": {
+      "default": "magical item with gentle glow, friendly design, storybook prop quality"
+    },
+    "moment": {
+      "default": "heartwarming action, friends helping friends, gentle triumph, emotional climax"
+    }
+  },
+
+  "image_specs": {
+    "scene": { "aspect_ratio": "16:9", "width": 1024, "height": 576 },
+    "portrait": { "aspect_ratio": "2:3", "width": 512, "height": 768 },
+    "location_card": { "aspect_ratio": "3:2", "width": 768, "height": 512 },
+    "item": { "aspect_ratio": "1:1", "width": 512, "height": 512 },
+    "moment": { "aspect_ratio": "21:9", "width": 1024, "height": 440 }
+  }
+}

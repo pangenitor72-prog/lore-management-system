@@ -370,6 +370,20 @@
         "description": "Reading, creating, and interpreting nautical charts and treasure maps."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Fortress walls built on bones, ramshackle port towns, floating cities of lashed-together hulls, colonial governor's mansions, taverns with salt-stained floors",
+        "landscape": "Turquoise Caribbean waters, scattered islands with hidden coves, coral reefs, mangrove labyrinths, the Shattered Isles stretching to the horizon",
+        "vegetation": "Palm trees, mangrove forests, tropical undergrowth hiding treasure, sugar cane plantations, seaweed-draped shorelines",
+        "weather": "Blazing tropical sun, sudden squalls, hurricane season fury, salt spray and trade winds, blood-red sunsets",
+        "people": "Weathered pirates with cutlass scars, Royal Navy officers in pristine uniforms, sea witches in the mangroves, merchant captains, press-ganged sailors",
+        "clothing": "Tricorn hats, salt-stained coats, bandanas, baldrics with pistols and cutlasses, naval uniforms, islander wraps",
+        "technology": "Wooden sailing ships with cannon batteries, flintlock pistols, spyglasses, navigational charts, diving bells, the golden Drowned Crown of legend",
+        "lighting": "Harsh tropical sun, lantern light below decks, moonlight on calm waters, the flash of cannon fire, torch-lit pirate haven nights"
+      },
+      "visual_exclusions": "Modern vessels, cold climates, industrial environments, anything not fitting the golden age of piracy aesthetic"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

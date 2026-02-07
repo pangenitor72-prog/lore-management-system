@@ -327,6 +327,20 @@
         "description": "Techniques of concealment, infiltration, and covert movement."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "high_fantasy_watercolor",
+      "world_descriptors": {
+        "architecture": "Elegant castle keeps, Shinto shrines with torii gates, traditional machiya townhouses, pleasure quarter tea houses, mountain temples, rice paper screens",
+        "landscape": "Misty mountain valleys, cherry blossom groves, terraced rice fields, haunted bamboo forests, sacred lakes, volcanic peaks in distance",
+        "vegetation": "Cherry and plum blossoms, moss-covered stone gardens, ancient cryptomeria, maple trees in autumn, iris ponds, bonsai arrangements",
+        "weather": "Spring cherry blossom rain, summer monsoons, autumn moon viewing nights, winter snow on temples, morning fog in valleys, foxfire on moonless nights",
+        "people": "Proud samurai, mysterious ronin, elegant geisha, shrine maidens, yamabushi monks, ninja in shadows, yokai in human guise",
+        "clothing": "Formal samurai kamishimo, practical hakama and gi, elegant kimono, monk's robes, ninja's dark garb, court nobles' elaborate dress",
+        "technology": "Katana and wakizashi swords, paper ofuda talismans, shamisen and koto, ink and brush, shoji screens, traditional woodblock art",
+        "lighting": "Paper lantern glow, moonlight through shoji screens, shrine fire light, foxfire in forests, dawn light on wet stones, candlelit tea ceremonies"
+      },
+      "visual_exclusions": "Modern technology, Western architecture, firearms, contemporary clothing, industrial elements, non-Japanese cultural elements"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

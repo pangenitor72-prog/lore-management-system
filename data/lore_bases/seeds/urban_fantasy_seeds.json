@@ -354,6 +354,20 @@
         "description": "Understanding the hidden history of the Veiled City and its supernatural inhabitants."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Modern skyscrapers with hidden glyphs, Covenant sanctums behind ordinary facades, Fae nightclubs Solstice and Permafrost, the used bookstore Between the Lines",
+        "landscape": "Rain-slicked city streets, neon-lit alleys, the sprawling Undertown tunnels beneath the metropolis",
+        "vegetation": "Overgrown urban corners where magic pools, rooftop herb gardens, enchanted plants in hidden conservatories",
+        "weather": "Perpetual overcast, fog that moves with purpose, sudden storms during magical confrontations",
+        "people": "Wardens with silver blades, Fae nobles in modern couture, vampires in nightclub attire, goblins in worker's clothes, mages hiding in plain sight",
+        "clothing": "Contemporary fashion with hidden talismans, tactical gear for Wardens, elegant Fae attire that shifts between courts",
+        "technology": "Smartphones alongside enchanted items, surveillance versus scrying, mundane cars with protective wards",
+        "lighting": "Neon reflections on wet pavement, candlelit rituals, the cold glow of Fae magic, thresholds that shimmer at twilight"
+      },
+      "visual_exclusions": "Overly cartoonish magic effects, high fantasy creatures in full visibility, bright sunny scenes without mystical undertones"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

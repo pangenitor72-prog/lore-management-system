@@ -485,6 +485,20 @@
       }
     ]
   },
+  "visual_identity": {
+    "style_profile_id": "dark_fantasy_painterly",
+    "world_descriptors": {
+      "architecture": "Grand hotels with diplomatic intrigue, embassy compounds behind iron gates, Swiss clocktowers, pneumatic tube networks beneath cobblestones, gaslit cafe terraces",
+      "landscape": "Geneva lakeside promenades, Alpine peaks in the distance, manicured gardens concealing dead drops, the Jet d'Eau fountain powered by voltaic pumps",
+      "vegetation": "Formal gardens, potted palms in hotel lobbies, winter-bare trees along the Rue du Mont-Blanc, hidden courtyard greenery",
+      "weather": "Fog rolling off Lake Geneva, cold Alpine rain, overcast skies perfect for surveillance, gaslight halos in evening mist",
+      "people": "Elegantly dressed diplomats, shadowy intelligence operatives, clockwork-augmented veterans, automaton constables with porcelain faces, coded-message couriers",
+      "clothing": "Evening dress with concealed pockets, diplomatic attire, leather gloves hiding mechanical hands, pocket watches with hidden compartments, dark overcoats for street work",
+      "technology": "Voltaic-powered devices, clockwork surveillance lamps, pneumatic message capsules, cipher wheels, Taktisch automata, analytical engines, listening devices hidden in music boxes",
+      "lighting": "Gaslight through hotel windows, the glow of voltaic essence, dim safehouse interiors, the clinical brightness of embassy reception halls"
+    },
+    "visual_exclusions": "Modern electronics, overt violence (keep tension shadowy), bright daylight scenes (prefer atmospheric lighting), rural or industrial settings"
+  },
   "ai_generated": false,
   "admin_reviewed": false
 }

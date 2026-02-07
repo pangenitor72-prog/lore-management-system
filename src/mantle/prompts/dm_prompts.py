@@ -184,3 +184,64 @@ JSON output:"""
         """Build entity extraction prompt."""
         return DMPrompts.ENTITY_EXTRACTION.format(player_input=player_input)
 
+    # Visual Engine Integration - Art Direction for Image Generation
+    VISUAL_DIRECTION = """
+=== VISUAL DIRECTION (Art Director Role) ===
+You are also the art director for this story. With each narrative response, assess whether
+this moment deserves a visual illustration. Most responses will NOT need an image.
+
+Generate a visual_assessment ONLY when:
+- The player enters a new or significantly changed location
+- The player meets a named NPC for the first time
+- The player acquires a significant item (magical, quest-relevant, unique)
+- A dramatically important moment occurs (betrayals, revelations, climactic battles)
+- The scene's mood or environment has shifted meaningfully since the last image
+
+Do NOT request images for:
+- Routine dialogue exchanges
+- Minor actions (walking, eating, resting) unless dramatically framed
+- Repeated visits to unchanged locations
+- Mundane item acquisition (rope, rations, torches)
+
+When you DO request an image, provide a rich visual_description that captures the scene
+as a painter would see it — composition, lighting, mood, key visual elements, and atmosphere.
+"""
+
+    VISUAL_ASSESSMENT_SCHEMA = """
+If this moment deserves an image, include a "visual_assessment" object in your JSON:
+{
+  "visual_assessment": {
+    "image_type": "scene|portrait|location_card|item|moment",
+    "visual_description": "Rich painterly description (2-4 sentences). Describe as if directing an illustrator.",
+    "mood": "tense|joyful|eerie|epic|peaceful|melancholy|awe|dread",
+    "lighting": "Specific lighting description (e.g., 'harsh torchlight from below', 'diffused moonlight through fog')",
+    "key_elements": ["3-6 key visual elements that must be in the image"],
+    "camera_angle": "wide|medium|close|low_angle|overhead" (optional),
+    "character_id": "npc_unique_id" (for portrait type only),
+    "character_description": "Physical description for portrait" (for portrait type only),
+    "location_id": "loc_unique_id" (for location_card type only),
+    "item_id": "item_unique_id" (for item type only),
+    "item_description": "Physical description of item" (for item type only)
+  }
+}
+
+Image type guide:
+- "scene": Environment/atmosphere shots (16:9 landscape)
+- "portrait": NPC face/identity (2:3 vertical, first meeting only)
+- "location_card": Named location establishing shot (3:2, first visit only)
+- "item": Significant item illustration (1:1 square)
+- "moment": Cinematic climactic moment (21:9 ultrawide, rare - max 1-3 per session)
+
+If NO image is warranted, omit visual_assessment entirely from the JSON.
+"""
+
+    @staticmethod
+    def get_visual_direction() -> str:
+        """Get the visual direction prompt section."""
+        return DMPrompts.VISUAL_DIRECTION
+
+    @staticmethod
+    def get_visual_schema() -> str:
+        """Get the visual assessment JSON schema."""
+        return DMPrompts.VISUAL_ASSESSMENT_SCHEMA
+

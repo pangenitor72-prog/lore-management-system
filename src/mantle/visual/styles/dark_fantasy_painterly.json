@@ -1,0 +1,50 @@
+{
+  "style_profile_id": "dark_fantasy_painterly",
+  "display_name": "Dark Fantasy (Painterly)",
+
+  "prompt_prefix": "dark fantasy illustration, painterly style, rich oil painting textures, dramatic chiaroscuro lighting, muted earth tones with jewel-tone accents, concept art quality",
+  "prompt_suffix": "no text, no watermarks, no UI elements, no borders, high detail, masterful composition",
+  "negative_prompt": "cartoon, anime, chibi, photographic, 3D render, low quality, blurry, oversaturated, modern, cheerful, bright colors, clean lines, digital art style",
+
+  "mood_modifiers": {
+    "tense": "deep shadows, high contrast, desaturated, tight framing, oppressive atmosphere",
+    "joyful": "warm golden light, slightly higher saturation, open composition, hopeful undertones",
+    "eerie": "cool blue-green undertones, fog, diffused light, unsettling angles, something wrong",
+    "epic": "dramatic rim lighting, god rays, saturated accent colors, wide cinematic framing, heroic scale",
+    "peaceful": "soft diffused light, gentle warm tones, open sky, breathing room in composition",
+    "melancholy": "muted cool tones, rain or mist, isolated subjects, vast empty space, fading light",
+    "awe": "extreme scale contrast, low angle, overwhelming architecture or nature, tiny figures, sublime",
+    "dread": "deep darkness, minimal light sources, claustrophobic framing, something wrong in the shadows"
+  },
+
+  "composition_templates": {
+    "scene": {
+      "wide": "wide establishing shot, cinematic aspect ratio, environmental storytelling",
+      "medium": "medium shot, environmental context visible, character in setting",
+      "close": "intimate framing, character and immediate surroundings, emotional focus",
+      "low_angle": "low angle dramatic perspective, subject looming, heroic or threatening",
+      "overhead": "bird's eye view, tactical perspective, revealing layout",
+      "default": "cinematic wide shot, rule of thirds, depth layering"
+    },
+    "portrait": {
+      "default": "head and shoulders portrait, three-quarter view, eye contact with viewer, detailed face, painterly brushwork on skin"
+    },
+    "location_card": {
+      "default": "wide establishing shot, location as hero subject, dramatic sky, sense of place and history"
+    },
+    "item": {
+      "default": "centered on dark background, dramatic side lighting, slight angle, detailed texture, museum quality presentation"
+    },
+    "moment": {
+      "default": "cinematic action composition, dynamic pose, motion implied, focused center, dramatic lighting"
+    }
+  },
+
+  "image_specs": {
+    "scene": { "aspect_ratio": "16:9", "width": 1024, "height": 576 },
+    "portrait": { "aspect_ratio": "2:3", "width": 512, "height": 768 },
+    "location_card": { "aspect_ratio": "3:2", "width": 768, "height": 512 },
+    "item": { "aspect_ratio": "1:1", "width": 512, "height": 512 },
+    "moment": { "aspect_ratio": "21:9", "width": 1024, "height": 440 }
+  }
+}

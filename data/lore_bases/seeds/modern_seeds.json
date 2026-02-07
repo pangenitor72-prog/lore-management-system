@@ -304,6 +304,20 @@
         "description": "Managing public perception, working with or manipulating the press, and understanding how information spreads in a modern city — from newsrooms to social media."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "Chicago skyline, elevated train platforms, glass towers and crumbling tenements, hospital corridors and police precincts",
+        "landscape": "Urban canyons, lakefront at dawn, neighborhood boundaries drawn in concrete, the Loop at night",
+        "vegetation": "Struggling street trees, community gardens, weeds through sidewalk cracks, carefully maintained window boxes",
+        "weather": "Lake effect snow, humid summer nights, rain slicking city streets, cold that cuts through everything",
+        "people": "Diverse faces of a real city, exhaustion and determination in equal measure, uniforms and street clothes that tell stories",
+        "clothing": "Detective coats, hospital scrubs, expensive suits and working class layers, clothes that fit the neighborhood",
+        "technology": "Modern surveillance, medical equipment, smartphones and burner phones, the infrastructure of a connected city",
+        "lighting": "Fluorescent hospital halls, streetlight pools, the glow of screens in dark apartments, sunrise over the lake"
+      },
+      "visual_exclusions": "Supernatural elements, fantastical creatures, stylized unrealistic action"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

@@ -330,6 +330,20 @@
         "description": "Understanding of Norse legal customs, blood feuds, and assembly politics."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "high_fantasy_watercolor",
+      "world_descriptors": {
+        "architecture": "Timber longhouses with carved dragons, mead halls with roaring fires, stave churches, sea-cliff fortresses, völva island shrines, runic standing stones",
+        "landscape": "Deep fjords with dark waters, glacier-carved valleys, frozen lakes, dense pine forests, rocky coastlines, snow-capped mountains, aurora-lit night skies",
+        "vegetation": "Ancient pines and birch forests, moss-covered boulders, hardy mountain flowers, mushroom circles, berry bushes, sacred groves of ash and oak",
+        "weather": "Bitter winter storms, northern lights dancing, driving rain, pale summer midnight sun, fog rolling off glaciers, howling mountain winds",
+        "people": "Fierce Viking warriors, wise völva seers, stoic jarls, skilled skalds with lyres, Christian missionaries, Sámi reindeer herders, jötunn giants in shadows",
+        "clothing": "Fur-lined cloaks, chainmail byrnies, carved bone jewelry, practical wool tunics, sealskin boots, rune-inscribed arm rings, horn helmets (ceremonial)",
+        "technology": "Longships with dragon prows, forged iron weapons, carved runestones, bone dice for divination, drinking horns, smith's forge and bellows",
+        "lighting": "Roaring hearth fires, aurora borealis glow, torch-lit mead halls, pale northern sun, moonlight on snow, mysterious foxfire in forests"
+      },
+      "visual_exclusions": "Modern technology, Mediterranean architecture, firearms, contemporary clothing, non-Norse cultural elements, tropical or desert settings"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

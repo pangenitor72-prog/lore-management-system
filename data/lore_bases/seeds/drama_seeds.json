@@ -281,6 +281,20 @@
         "description": "Ability to gauge someone's emotional state or honesty."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "New England clapboard houses, family homesteads with wraparound porches, intimate interiors heavy with memory and unspoken tension",
+        "landscape": "Vermont autumn, covered bridges, small town main streets, cemeteries where generations rest",
+        "vegetation": "Maple trees in full color, overgrown gardens, untended family plots, seasonal decay",
+        "weather": "Crisp autumn air, morning fog over the valley, rain on wedding days, clear skies that feel earned",
+        "people": "Weathered faces carrying decades of history, body language that speaks louder than words, eyes that avoid or confront",
+        "clothing": "Sunday best and comfortable old sweaters, wedding attire that reveals character, layers against the cold",
+        "technology": "Landline phones, kitchen appliances from different decades, cars that have seen the family through",
+        "lighting": "Golden hour through lace curtains, kitchen light at midnight conversations, candles at the rehearsal dinner"
+      },
+      "visual_exclusions": "Action sequences, supernatural elements, bright cheerful tones without underlying tension"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

@@ -367,6 +367,20 @@
         "description": "Knowledge of demolished worlds, bypass construction patterns, IACO precedents, and the accumulated history of civilizations that no longer exist."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Brutalist administrative complexes, prefabricated offices bolted to asteroids, kilometer-long filing cabinets, waiting rooms with 3000 chairs",
+        "landscape": "Debris fields of demolished worlds, hyperspace bypass construction scaffolding, the smoking wreckage of familiar places made strange",
+        "vegetation": "A Starbucks floating in space, Gerald's cup-holder garden, pressed flowers from worlds that no longer exist",
+        "weather": "The static hum of fluorescent lighting, recycled air that tastes like ozone and regret, the silence of deep space",
+        "people": "Exhausted bureaucrats, survivors with haunted eyes, clerks who go home at the end of the day, everyone just doing their jobs",
+        "clothing": "Corporate casual across species, work jackets and commuter badges, official IACO uniforms, the battered clothes of Remainders",
+        "technology": "Portable IACO terminals, demolition barges the size of planets, filing systems that predate memory, vending machines that dispense impossible things",
+        "lighting": "Fluorescent tubes calibrated for compliance, construction lights blinking red-amber-red, the soft glow of data terminals, the darkness between stars"
+      },
+      "visual_exclusions": "Heroic action poses, sleek glamorous spacecraft, cosmic wonder without underlying absurdity, anything that takes itself too seriously"
+    },
     "ai_generated": false,
     "admin_reviewed": true
   }

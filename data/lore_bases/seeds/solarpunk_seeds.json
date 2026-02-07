@@ -298,6 +298,20 @@
         "description": "Finding edible plants, medicinal herbs, and useful materials in reclaimed wilderness."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "Vertical arcologies wrapped in living green walls, solar panel arrays integrated into organic building curves, community gathering spaces with natural light, transparent recycling facilities, bridges and walkways woven with growing vines, geodesic greenhouse domes",
+        "landscape": "Reclaimed wilderness slowly healing from the Collapse, solar rail lines cutting through restored forests, vertical farms cascading down arcology sides, wetland restoration zones, the contrast between vibrant green and fading gray ruins of the old world",
+        "vegetation": "Vertical forests breathing life back into the atmosphere, community gardens abundant with heirloom varieties, seed vault specimens carefully cultivated, mycorrhizal networks visibly connecting restored groves, rooftop meadows buzzing with pollinators",
+        "weather": "Clean rain falling on transparent collection surfaces, golden sunlight streaming through arcology atria, morning mist over restoration zones, the occasional storm that still carries echoes of unstable climate, wind turbines spinning against blue skies",
+        "people": "Restoration engineers in practical work clothes with soil-stained hands, community mediators facilitating consensus circles, Rootstock farmers weathered by honest work, tech dissidents moving quietly through monitored spaces, couriers on solar bicycles",
+        "clothing": "Practical work wear in natural fibers and earth tones, community robes for ceremonial occasions, Rootstock handwoven textiles, recycled and upcycled fashion statements, solar-powered accessories and tools integrated into garments",
+        "technology": "Solar panels seamlessly integrated into every surface, greywater recycling systems, soil testing equipment, seed preservation technology, transparent monitoring systems, solar bicycles and rail, consensus-building communication networks",
+        "lighting": "Abundant natural sunlight through smart glass, warm amber evening lighting to preserve circadian rhythms, bioluminescent pathway markers, the green glow of healthy growing things, soft community lighting designed for gathering"
+      },
+      "visual_exclusions": "Dystopian decay, neon-drenched nightscapes, corporate brutalism, weapons and military hardware, pollution and environmental destruction, surveillance state aesthetics, dark oppressive environments"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

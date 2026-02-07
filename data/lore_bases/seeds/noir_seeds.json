@@ -347,6 +347,20 @@
         "description": "Access to Central Avenue's jazz scene, where secrets flow as freely as the music. The clubs operate across the color line, creating both barriers and hiding places for those who know the scene."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "noir_inkwash",
+      "world_descriptors": {
+        "architecture": "Art deco facades, smoky jazz clubs, cramped walkup offices, ornate movie palaces, palm-lined studio lots",
+        "landscape": "Rain-slicked streets, palm-lined boulevards, neon signs reflecting in puddles, the Hollywood Hills at dusk",
+        "vegetation": "Potted palms, wilting flowers in vases, overgrown lots, bougainvillea climbing stucco walls",
+        "weather": "Night rain, fog rolling in from the bay, oppressive heat, Santa Ana winds stirring dust",
+        "people": "Fedora-wearing detectives, glamorous starlets, hard-faced mobsters, world-weary cops, jazz musicians",
+        "clothing": "Double-breasted suits, pencil skirts, trench coats, evening gowns, suspenders and shoulder holsters",
+        "technology": "Rotary phones, typewriters, black sedans, radio consoles, flashbulb cameras",
+        "lighting": "Venetian blind shadows, neon glow, single desk lamps, streetlight pools, marquee lights"
+      },
+      "visual_exclusions": "Bright colors, cheerful atmospheres, modern technology, daytime sunshine, casual contemporary clothing"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

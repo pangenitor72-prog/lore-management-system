@@ -2249,6 +2249,8 @@ class DMResponse(BaseModel):
     heat_matches: Optional[List[Dict[str, Any]]] = None
     # Combat state changes (enemy appeared, damaged, defeated)
     state_changes: Optional[List[Dict[str, Any]]] = None
+    # Visual Engine: assessment for image generation
+    visual_assessment: Optional[Dict[str, Any]] = None
 
 
 # ============================================================
@@ -3589,6 +3591,11 @@ async def process_action(
     turn_count = len(session.get("history", [])) // 2
     events = _extract_events_from_narrative(response_text, mechanical_result, turn_count)
 
+    # Extract visual assessment if present (for image generation)
+    visual_assessment = None
+    if os.getenv("VISUAL_ENGINE_ENABLED", "false").lower() == "true":
+        visual_assessment = _extract_visual_assessment(response_text)
+
     # EXTRACT STATE CHANGES FROM NARRATIVE AND APPLY TO GAME STATE
     # This catches items picked up, gold found, damage mentioned in narrative
     heat_matches = []
@@ -3685,6 +3692,7 @@ async def process_action(
         session_ended=session_ended,
         heat_matches=heat_matches if heat_matches else None,
         state_changes=state_changes if state_changes else None,
+        visual_assessment=visual_assessment,
     )
 
 
@@ -3749,6 +3757,41 @@ async def _handle_session_0(
         return opening, "active_play"
 
     return "Session 0 complete. Begin your adventure.", "active_play"
+
+
+def _extract_visual_assessment(narrative: str) -> Optional[Dict[str, Any]]:
+    """
+    Extract visual_assessment from the JSON block in the narrative response.
+
+    The DM may include a visual_assessment object in its JSON block when
+    a moment deserves an image. This function extracts it.
+
+    Args:
+        narrative: The raw DM response text (may contain JSON block)
+
+    Returns:
+        visual_assessment dict if found, None otherwise
+    """
+    import re
+
+    # Try to find JSON block at end of response
+    json_match = re.search(r'```json\s*(\{[\s\S]*?\})\s*```', narrative)
+
+    if json_match:
+        try:
+            data = json.loads(json_match.group(1))
+            visual_assessment = data.get("visual_assessment")
+
+            if visual_assessment:
+                logger.info(
+                    f"[VISUAL] Extracted assessment: type={visual_assessment.get('image_type')}, "
+                    f"mood={visual_assessment.get('mood')}"
+                )
+                return visual_assessment
+        except json.JSONDecodeError:
+            pass
+
+    return None
 
 
 def _extract_events_from_narrative(
@@ -9536,4 +9579,131 @@ async def delete_cross_world_relationships(
         "dry_run": False,
         "deleted": deleted,
         "message": f"Successfully deleted {deleted} cross-world relationships"
+    }
+
+
+# =========================================
+# VISUAL ENGINE ENDPOINTS
+# =========================================
+
+class VisualGenerationRequest(BaseModel):
+    """Request to generate an image from visual assessment."""
+    assessment: Dict[str, Any]
+    campaign_id: Optional[str] = None
+
+
+class VisualGenerationResponse(BaseModel):
+    """Response from visual generation."""
+    url: str
+    from_cache: bool
+    image_type: str
+    generation_time_ms: int = 0
+    cost_estimate: float = 0.0
+
+
+@router.post("/visual/generate", response_model=VisualGenerationResponse)
+async def generate_visual(
+    request: VisualGenerationRequest,
+):
+    """
+    Generate an image from a visual assessment.
+
+    This endpoint is called by the frontend when the DM returns a visual_assessment
+    in its response. It uses the Visual Engine to:
+    1. Check if a cached image exists
+    2. If not, generate a new image using Flux/DALL-E
+    3. Return the image URL
+
+    Args:
+        request: Contains the visual assessment and campaign ID
+
+    Returns:
+        VisualGenerationResponse with image URL and metadata
+    """
+    # Check if visual engine is enabled
+    if os.getenv("VISUAL_ENGINE_ENABLED", "false").lower() != "true":
+        raise HTTPException(
+            status_code=503,
+            detail="Visual engine is not enabled. Set VISUAL_ENGINE_ENABLED=true"
+        )
+
+    try:
+        from src.mantle.visual import VisualEngine, VisualEngineConfig
+        from src.mantle.visual.types import VisualAssessment, WorldVisualIdentity, WorldDescriptors
+
+        # Convert assessment dict to VisualAssessment
+        assessment = VisualAssessment.from_dict(request.assessment)
+
+        # Get the world's visual identity (from campaign or use default)
+        # For now, use a default dark fantasy style
+        # TODO: Load from campaign/world configuration
+        style_id = "dark_fantasy_painterly"
+
+        # Try to create engine
+        config = VisualEngineConfig(
+            enabled=True,
+            max_images_per_session=int(os.getenv("VISUAL_MAX_IMAGES_PER_SESSION", "30")),
+        )
+
+        engine = await VisualEngine.create_with_style_id(
+            style_id=style_id,
+            config=config,
+        )
+
+        # Generate or retrieve cached image
+        campaign_id = request.campaign_id or "default"
+        result = await engine.process_assessment(assessment, campaign_id)
+
+        return VisualGenerationResponse(
+            url=result.url,
+            from_cache=result.from_cache,
+            image_type=result.image_type,
+            generation_time_ms=result.generation_time_ms,
+            cost_estimate=result.cost_estimate,
+        )
+
+    except ImportError as e:
+        logger.error(f"Visual engine import failed: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Visual engine dependencies not available"
+        )
+    except RuntimeError as e:
+        logger.error(f"Visual engine error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Visual generation failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Image generation failed: {str(e)}"
+        )
+
+
+@router.get("/visual/status")
+async def visual_engine_status():
+    """
+    Check visual engine status and configuration.
+
+    Returns:
+        Dict with visual engine status info
+    """
+    enabled = os.getenv("VISUAL_ENGINE_ENABLED", "false").lower() == "true"
+    provider_preference = os.getenv("VISUAL_PROVIDER_PREFERENCE", "flux")
+
+    # Check provider availability
+    providers_available = []
+
+    if os.getenv("FAL_KEY"):
+        providers_available.append("flux")
+    if os.getenv("OPENAI_API_KEY"):
+        providers_available.append("dalle")
+
+    return {
+        "enabled": enabled,
+        "provider_preference": provider_preference,
+        "providers_available": providers_available,
+        "max_images_per_session": int(os.getenv("VISUAL_MAX_IMAGES_PER_SESSION", "30")),
     }

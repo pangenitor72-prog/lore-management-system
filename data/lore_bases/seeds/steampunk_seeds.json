@@ -286,6 +286,20 @@
         "description": "Knowledge of the urban underground."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "dark_fantasy_painterly",
+      "world_descriptors": {
+        "architecture": "Brass and iron factories, Victorian clocktowers, airship docks, smog-stained cathedrals, the Crystal Palace workshop",
+        "landscape": "Industrial London sprawl, coal-smoked skies, brass spires against perpetual overcast, the soot-choked Undercity below",
+        "vegetation": "Soot-covered parks, potted ferns in conservatories, rooftop gardens above the smog line, withered street trees",
+        "weather": "Perpetual overcast, yellow fog, smog halos around gaslights, acid rain streaking brass fixtures",
+        "people": "Goggled inventors, top-hatted industrialists, factory workers in soot-stained aprons, automata with porcelain faces, masked revolutionaries",
+        "clothing": "Brass goggles, leather flying jackets, corsets with gear motifs, mechanical prosthetics, waistcoats with pocket watch chains",
+        "technology": "Clockwork automata, analytical engines, pneumatic tubes, airships with brass fittings, vitality engines, difference machines",
+        "lighting": "Gaslight glow through fog, furnace flicker, electro-arc lamps, aether leaks casting strange violet light"
+      },
+      "visual_exclusions": "Modern electronics, clean pastoral environments, bright natural lighting, anything that looks post-industrial revolution"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

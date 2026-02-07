@@ -337,6 +337,20 @@
         "description": "Knowledge of the urban underground."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "Sleek starship interiors with curved corridors, orbital stations with rotating rings, alien megastructures of impossible geometry, frontier colonies under pressure domes, chrome and glass command bridges",
+        "landscape": "Alien worlds with purple skies and crystalline formations, asteroid fields glittering with mining operations, nebula views through reinforced viewports, terraformed surfaces with engineered ecosystems",
+        "vegetation": "Bioluminescent alien flora pulsing with inner light, vast hydroponic gardens aboard stations, engineered crop domes, Precursor ruins overgrown with strange organic matter",
+        "weather": "Atmospheric storms on colony worlds, solar flares visible from observation decks, dust clouds on frontier planets, ion storms disrupting communications",
+        "people": "Uniformed Confederacy crews in crisp jumpsuits, weathered frontier settlers in practical gear, crystalline Axiom ambassadors, Syndicate operatives in shadow, cybernetically enhanced humans with visible chrome",
+        "clothing": "Flight suits with mission patches, military dress uniforms, practical jumpsuits with cargo pockets, alien diplomatic attire, smuggler leather jackets",
+        "technology": "Holographic displays floating in mid-air, sleek energy weapons, massive jump gates crackling with power, neural interface ports, Precursor artifacts glowing with unknown purpose",
+        "lighting": "Cool blue shipboard lighting, warm amber from alien suns through viewports, hologram glow casting faces in cyan, engine exhaust trails in deep space, Precursor technology emanating golden light"
+      },
+      "visual_exclusions": "Medieval fantasy elements, horses, traditional swords (unless energy-based), castles, pre-industrial architecture, dragons, magic wands"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

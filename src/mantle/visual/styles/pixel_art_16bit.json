@@ -1,0 +1,50 @@
+{
+  "style_profile_id": "pixel_art_16bit",
+  "display_name": "Pixel Art (16-bit)",
+
+  "prompt_prefix": "16-bit pixel art, SNES era graphics, Chrono Trigger style, clean pixel sprites, limited color palette, dithering for shading, retro game aesthetic",
+  "prompt_suffix": "no anti-aliasing, crisp pixels, visible pixel grid, retro game quality, no modern effects",
+  "negative_prompt": "photographic, 3D render, smooth gradients, high resolution, modern, realistic, blurry, soft edges, painterly",
+
+  "mood_modifiers": {
+    "tense": "darker limited palette, red and black accents, dramatic pixel shading, storm effects",
+    "joyful": "bright saturated colors, blue sky pixels, warm golden tones, celebration sprites",
+    "eerie": "desaturated blues and greens, fog dithering, ghostly sprite effects, dark edges",
+    "epic": "dramatic sky gradients, large sprite work, parallax layers suggested, boss battle energy",
+    "peaceful": "soft pastoral colors, gentle dithered shadows, village warmth, safe zone feeling",
+    "melancholy": "muted greys and blues, rain pixel effects, isolated sprite, autumn palette",
+    "awe": "towering pixel structures, scale contrast with tiny character sprites, divine light rays",
+    "dread": "near-black palette, minimal light sources, creeping shadow pixels, horror game aesthetic"
+  },
+
+  "composition_templates": {
+    "scene": {
+      "wide": "side-scrolling game view, layered parallax background, full environment visible",
+      "medium": "RPG exploration view, character centered, surrounding area visible",
+      "close": "dialogue scene framing, character portrait with background, visual novel style",
+      "low_angle": "looking up at castle or mountain, dramatic pixel clouds",
+      "overhead": "top-down RPG view, tactical perspective, dungeon map style",
+      "default": "classic JRPG scene composition, character in environment, UI-free"
+    },
+    "portrait": {
+      "default": "character portrait box style, detailed pixel face, expressive despite limitations, SNES dialogue portrait"
+    },
+    "location_card": {
+      "default": "title card style, location name area, establishing pixel vista, mode 7 perspective optional"
+    },
+    "item": {
+      "default": "inventory icon style but larger, item centered, subtle glow effect, treasure chest presentation"
+    },
+    "moment": {
+      "default": "cutscene composition, dramatic pixel action, special attack animation frame, climactic moment"
+    }
+  },
+
+  "image_specs": {
+    "scene": { "aspect_ratio": "16:9", "width": 512, "height": 288 },
+    "portrait": { "aspect_ratio": "1:1", "width": 256, "height": 256 },
+    "location_card": { "aspect_ratio": "16:9", "width": 512, "height": 288 },
+    "item": { "aspect_ratio": "1:1", "width": 128, "height": 128 },
+    "moment": { "aspect_ratio": "16:9", "width": 512, "height": 288 }
+  }
+}

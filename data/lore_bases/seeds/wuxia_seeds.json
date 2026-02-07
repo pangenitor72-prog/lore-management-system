@@ -349,6 +349,20 @@
         "description": "Mastery of the written word, enabling the character to forge documents, decipher ancient texts, and create works of art."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "high_fantasy_watercolor",
+      "world_descriptors": {
+        "architecture": "Elegant pagodas, mountain monasteries, jade-inlaid imperial palaces, bamboo training halls, humble tea houses, hidden sect compounds",
+        "landscape": "Mist-shrouded peaks, cascading waterfalls, terraced rice paddies, sacred rivers, cherry blossom valleys, bamboo forests, moonlit mountain passes",
+        "vegetation": "Bamboo forests, lotus ponds, ancient pines, peach orchards, plum blossoms, medicinal herb gardens, willow-lined riverbanks",
+        "weather": "Morning mists, gentle spring rain, dramatic thunderstorms, golden autumn light, winter snow on mountains, moonlit nights",
+        "people": "Martial artists in flowing robes, wandering swordsmen, temple monks, imperial scholars, beggar sect members, mysterious sect leaders",
+        "clothing": "Flowing hanfu robes, warrior training garments, monk's simple attire, elaborate court dress, traveler's practical wear, sect-specific colors",
+        "technology": "Brush and ink calligraphy, paper lanterns, traditional weapons (jian swords, dao sabers, staffs), tea ceremony implements, acupuncture needles",
+        "lighting": "Soft diffused mountain light, lantern glow in tea houses, sunrise through mist, moonlight on water, candlelit training halls"
+      },
+      "visual_exclusions": "Modern technology, Western architecture, industrial elements, firearms, contemporary clothing"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }

@@ -304,6 +304,20 @@
         "description": "Knowledge of the mysterious Architect ruins found across Reach worlds."
       }
     ],
+    "visual_identity": {
+      "style_profile_id": "scifi_concept_art",
+      "world_descriptors": {
+        "architecture": "Frontier settlements built from salvaged ship parts and local materials, the Jackrabbit's worn but functional interior, Doc Okafor's clinic cobbled together from pre-Collapse equipment, Iron Fortune's imposing bulk, Architect ruins of unknown alloy pointing at something in deep space, Settlement Elara's struggling prefab structures",
+        "landscape": "Dusty frontier worlds under harsh suns, the endless black between colonies, mysterious Architect ruins on every planet, Dust's sprawling settlement visible from orbit, the mountains near Elara broadcasting strange signals, asteroid fields hiding smuggler routes",
+        "vegetation": "Hardy crops struggling in alien soil, hydroponic systems aboard ships, whatever native flora each colony world offers, the strange growth patterns near Architect ruins, community gardens in established settlements",
+        "weather": "Dust storms on frontier worlds, the artificial climate of ship interiors, contaminated water tables, electromagnetic interference near Elara's mountains, the unforgiving vacuum of space, harsh sunlight on worlds with thin atmospheres",
+        "people": "Captain Josie Malone weathered by hard years, Marshal Vasquez alone against impossible odds, Boss Zheng commanding respect, Doc Okafor exhausted but dedicated, colonists building lives from nothing, bounty hunters tracking fugitives across multiple worlds",
+        "clothing": "Flight jackets worn soft from use, practical frontier wear in dusty earth tones, Combine enforcers in matching gear, medical coats stained with work, Marshal's badge tarnished but polished, mechanic coveralls covered in engine grease",
+        "technology": "Modified cargo haulers held together by skill and prayer, frontier medical equipment making do with what's available, the broken beacon network at the edge of known space, Architect artifacts no one understands, jury-rigged everything, weapons well-maintained because they have to be",
+        "lighting": "Harsh alien sunlight on settlement streets, the warm amber of ship interiors, cold stars visible through viewports, the eerie glow of Architect ruins, flickering power in struggling colonies, the red warning lights of system alerts"
+      },
+      "visual_exclusions": "Clean high-tech aesthetics, military discipline and polish, urban environments, large populations, luxury or abundance, stable government presence"
+    },
     "ai_generated": true,
     "admin_reviewed": false
   }
