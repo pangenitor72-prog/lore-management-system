@@ -2583,9 +2583,9 @@ app.include_router(memory_router, prefix="/api")
 from src.mantle.api.dnd_routes import router as dnd_router
 app.include_router(dnd_router, prefix="/api")
 
-# Graph visualization routes
+# Graph visualization routes (mounted at /api/game/graph for frontend compatibility)
 from src.mantle.api.graph_routes import router as graph_router
-app.include_router(graph_router, prefix="/api")
+app.include_router(graph_router, prefix="/api/game")
 
 # Save/Load system routes
 from src.mantle.api.save_routes import router as save_router
