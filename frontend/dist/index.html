@@ -7188,25 +7188,12 @@
             <div class="setup-section">
                 <h3>Choose Your World</h3>
                 <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
-                    Pick a ready-to-play world, or create your own adventure
+                    Pick a ready-to-play world to begin your adventure
                 </p>
 
                 <!-- Curated Worlds (loaded from API) -->
                 <div id="setup-curated-worlds" class="curated-worlds-grid" style="margin-bottom: 20px;">
                     <!-- Populated by JS -->
-                </div>
-
-                <!-- Quick presets as fallback/additions -->
-                <div class="tone-options" style="margin-bottom: 15px;">
-                    <span class="tone-chip world-preset" data-world="A quiet coastal town where secrets wash ashore with every tide" onclick="selectWorldPreset(this)">🌊 Coastal Mystery</span>
-                    <span class="tone-chip world-preset" data-world="A glittering royal court where whispered alliances matter more than swords" onclick="selectWorldPreset(this)">👑 Royal Intrigue</span>
-                    <span class="tone-chip world-preset" data-world="A small town where everyone knows everyone, and old flames never quite die" onclick="selectWorldPreset(this)">💕 Small Town Romance</span>
-                    <span class="tone-chip world-preset" data-world="" onclick="selectWorldPreset(this)">✨ Surprise Me</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="world-seed" style="color: var(--text-secondary);">Or describe your own world:</label>
-                    <textarea id="world-seed" placeholder="A cozy bookshop where the books whisper secrets at midnight... A space station on the edge of known space... Leave blank to be surprised!"></textarea>
                 </div>
             </div>
 
@@ -10788,7 +10775,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             {
                 icon: '🌍',
                 title: "Step 2: Choose a World",
-                text: "Next, you'll pick a world to play in. Each world has its own characters, places, and secrets. Or you can describe your own world!",
+                text: "Next, you'll pick a world to play in. Each world has its own characters, places, and secrets waiting to be discovered.",
                 example: { label: "Tip", text: "Don't worry about getting it 'right' - just pick what sounds interesting!" }
             },
             {
@@ -10821,12 +10808,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 title: "Visibility Modes",
                 text: "In Tabletop Mode, you control how much mechanics you see:<br><br>• <b>Storyteller</b> - Hidden rolls, pure narrative<br>• <b>Guided</b> - See results, not numbers<br>• <b>Classic</b> - See dice & modifiers<br>• <b>Tactician</b> - Full mechanical breakdown",
                 example: { label: "Tip", text: "Start with Guided, then try Tactician once comfortable!" }
-            },
-            {
-                icon: '🛠️',
-                title: "World Creator",
-                text: "Create your own worlds! From the main menu, go to <b>World Creator</b> to:<br><br>• Write lore, history, and locations<br>• Define characters and factions<br>• Upload existing world documents<br>• The AI will remember EVERYTHING",
-                example: { label: "Great for", text: "DMs with existing campaigns, authors with book settings, homebrew worlds!" }
             },
             {
                 icon: '📚',
@@ -12195,10 +12176,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                         'success'
                     );
 
-                    // Auto-fill the world seed on the setup page
-                    if (data.seed_prompt) {
-                        document.getElementById('world-seed').value = data.seed_prompt;
-                    }
                 } else {
                     // For now, show placeholder message
                     showStatus('ingest-status',
@@ -12356,11 +12333,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             document.querySelectorAll('.curated-world-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            document.querySelectorAll('.world-preset').forEach(chip => {
-                chip.classList.remove('selected');
-            });
-            document.getElementById('world-seed').value = '';
-
             // Select this one
             element.classList.add('selected');
             selectedCuratedWorld = worldId;
@@ -12432,28 +12404,6 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                 headingEl.innerHTML = 'Genre <span style="font-size: 0.75rem; color: var(--accent-sage); font-weight: normal;">(optional)</span>';
                 hintEl.textContent = 'Pick one or more genres, or skip to let your world decide.';
             }
-        }
-
-        // World Preset Selection
-        function selectWorldPreset(el) {
-            // Clear curated world selection
-            document.querySelectorAll('.curated-world-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            selectedCuratedWorld = null;
-
-            // Clear genre blend when selecting a preset (not a curated world)
-            blendGenres = [];
-            curatedWorldGenres = [];
-            updateGenreBlendDisplay();
-
-            // Select this preset
-            document.querySelectorAll('.world-preset').forEach(chip => {
-                chip.classList.remove('selected');
-            });
-            el.classList.add('selected');
-            const worldText = el.dataset.world;
-            document.getElementById('world-seed').value = worldText;
         }
 
         // Storytelling Style Selection
@@ -16020,7 +15970,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         // Begin Story
         async function beginStory() {
-            const worldSeed = document.getElementById('world-seed').value.trim();
+            const worldSeed = ''; // Custom world creation removed - use curated worlds only
             const characterConcept = document.getElementById('character-concept').value.trim();
 
             // Default tone if not selected
@@ -16136,7 +16086,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
 
         // Continue to story after session and character are ready
         async function continueToStory() {
-            const worldSeed = document.getElementById('world-seed').value.trim();
+            const worldSeed = ''; // Custom world creation removed - use curated worlds only
             const characterConcept = document.getElementById('character-concept').value.trim();
 
             // Wait for background session creation if still pending
