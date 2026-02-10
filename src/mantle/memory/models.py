@@ -224,6 +224,13 @@ class Impression(BaseModel):
     # What they call the player (evolves with relationship)
     forms_of_address: List[str] = Field(default_factory=lambda: ["stranger", "traveler"])
 
+    # Debt and favor tracking
+    debt_to_player: float = 0.0          # -1.0 (player owes them) to 1.0 (they owe player)
+    debt_reason: Optional[str] = None    # "You saved my daughter from bandits"
+    promises_made: List[str] = Field(default_factory=list)   # NPC's unfulfilled commitments to player
+    promises_broken: List[str] = Field(default_factory=list) # Player's broken promises to NPC
+    shared_secrets: List[str] = Field(default_factory=list)  # Secrets NPC has shared with player
+
 
 class Legend(BaseModel):
     """

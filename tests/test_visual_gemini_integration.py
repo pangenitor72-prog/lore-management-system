@@ -230,8 +230,8 @@ with collapsed walls and centuries of decay.
 class TestVisualEngineToggle:
     """Tests for visual engine enable/disable."""
 
-    def test_visual_engine_disabled_by_default(self):
-        """Test that visual engine is disabled by default."""
+    def test_visual_engine_enabled_by_default(self):
+        """Test that visual engine is enabled by default (trial period)."""
         import os
         from src.mantle.agents.dm_agent import DMAgent
 
@@ -240,7 +240,7 @@ class TestVisualEngineToggle:
 
         try:
             agent = DMAgent()
-            assert agent._visual_engine_enabled is False
+            assert agent._visual_engine_enabled is True
         finally:
             if original:
                 os.environ["VISUAL_ENGINE_ENABLED"] = original

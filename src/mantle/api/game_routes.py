@@ -31,6 +31,7 @@ from src.mantle.api.dependencies import get_neo4j_db
 from src.mantle.agents.query_agent import QueryAgent
 from src.mantle.agents.auditor_agent import AuditorAgent
 from src.mantle.agents.lore_parsing_agent import LoreParsingAgent
+from src.mantle.agents.relationship_agent import RelationshipExtractionAgent
 from src.mantle.guardrails.token_budget import TokenTracker, TokenBudget, BudgetExceeded, RateLimitExceeded, estimate_tokens
 from src.mantle.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
@@ -3628,6 +3629,18 @@ async def process_action(
                 )
             )
 
+            # Extract and apply NPC relationship changes (fire-and-forget)
+            # This runs in the background to update how NPCs feel about the player
+            asyncio.create_task(
+                _extract_and_apply_relationship_changes(
+                    player_action=action.action,
+                    dm_narrative=response_text,
+                    session=session,
+                    memory_manager=memory_manager,
+                    session_id=session_id,
+                )
+            )
+
         # Add to history and advance turn
         game_state.add_to_history("user", action.action)
         game_state.add_to_history("assistant", response_text)
@@ -4019,89 +4032,6 @@ def _extract_state_changes_from_narrative(narrative: str, game_state: GameState)
             game_state.add_discovery(text)
             changes.append({"type": "discovery", "text": text, "source": "structured_tag"})
             logger.info(f"[DISCOVERY] {text}")
-
-    # [ENEMY: name | HP: amount | AC: amount] — register an NPC/enemy for HP tracking
-    # Example: [ENEMY: Goblin Warrior | HP: 15 | AC: 13]
-    # AC is optional, defaults to 12
-    enemy_pattern = r'\[ENEMY:\s*([^|\]]+)\s*\|\s*HP:\s*(\d+)(?:\s*\|\s*AC:\s*(\d+))?\]'
-    enemy_matches = re.findall(enemy_pattern, narrative, re.IGNORECASE)
-    for name, hp_str, ac_str in enemy_matches:
-        try:
-            name = name.strip()
-            hp = int(hp_str)
-            ac = int(ac_str) if ac_str else 12
-            if name and 1 <= hp <= 500 and 1 <= ac <= 30:
-                # Create a unique ID for this NPC
-                npc_id = f"{name.lower().replace(' ', '_')}_{game_state.turn_count}"
-                from src.mantle.engine.game_state import CombatantState
-                npc = CombatantState(
-                    id=npc_id,
-                    name=name,
-                    max_hp=hp,
-                    current_hp=hp,
-                    armor_class=ac,
-                )
-                game_state.add_npc(npc)
-                changes.append({
-                    "type": "enemy_appeared",
-                    "name": name,
-                    "npc_id": npc_id,
-                    "hp": hp,
-                    "ac": ac,
-                    "source": "structured_tag",
-                })
-                logger.info(f"[ENEMY] Registered {name} (HP: {hp}, AC: {ac}) as {npc_id}")
-        except (ValueError, Exception) as e:
-            logger.warning(f"Failed to register enemy from tag: {e}")
-
-    # [NPC_DAMAGE: name | amount] — apply damage to a tracked NPC
-    # Example: [NPC_DAMAGE: Goblin Warrior | 8]
-    npc_damage_pattern = r'\[NPC_DAMAGE:\s*([^|\]]+)\s*\|\s*(\d+)\]'
-    npc_damage_matches = re.findall(npc_damage_pattern, narrative, re.IGNORECASE)
-    for name, amount_str in npc_damage_matches:
-        try:
-            name = name.strip()
-            amount = int(amount_str)
-            if name and 0 < amount < 1000:
-                # Try to find and damage this NPC
-                try:
-                    event = game_state.apply_damage_to_npc(name, amount, source="narrative")
-                    changes.append({
-                        "type": "npc_damaged",
-                        "name": name,
-                        "amount": amount,
-                        "new_hp": event.data.get("new_hp", 0),
-                        "is_dead": event.data.get("is_dead", False),
-                        "source": "structured_tag",
-                    })
-                    logger.info(f"[NPC_DAMAGE] {name} took {amount} damage")
-                except ValueError:
-                    logger.warning(f"[NPC_DAMAGE] NPC '{name}' not tracked, damage not applied")
-        except (ValueError, Exception) as e:
-            logger.warning(f"Failed to apply NPC damage from tag: {e}")
-
-    # [ENEMY_DEFEATED: name] — mark an enemy as defeated/dead
-    # Example: [ENEMY_DEFEATED: Goblin Warrior]
-    defeated_pattern = r'\[ENEMY_DEFEATED:\s*([^\]]+)\]'
-    defeated_matches = re.findall(defeated_pattern, narrative, re.IGNORECASE)
-    for name in defeated_matches:
-        try:
-            name = name.strip()
-            if name:
-                # Find and kill this NPC
-                for npc_id, npc in list(game_state.active_npcs.items()):
-                    if npc.name.lower() == name.lower():
-                        npc.current_hp = 0
-                        changes.append({
-                            "type": "enemy_defeated",
-                            "name": name,
-                            "npc_id": npc_id,
-                            "source": "structured_tag",
-                        })
-                        logger.info(f"[ENEMY_DEFEATED] {name} has been defeated")
-                        break
-        except Exception as e:
-            logger.warning(f"Failed to mark enemy defeated: {e}")
 
     # =================================================================
     # PHASE 2: Fallback to regex parsing (for backwards compatibility)
@@ -5088,6 +5018,73 @@ async def _record_narrative_events_to_memory(
         logger.warning(f"[MEMORY] Failed to record events: {e}")
 
 
+async def _extract_and_apply_relationship_changes(
+    player_action: str,
+    dm_narrative: str,
+    session: Dict[str, Any],
+    memory_manager,
+    session_id: str,
+) -> None:
+    """
+    Extract and apply NPC relationship changes from player-NPC interactions.
+
+    Uses the RelationshipExtractionAgent to analyze the narrative and identify
+    how NPCs' impressions of the player should change based on:
+    - Trust (kept/broken promises, reliability)
+    - Respect (competence, bravery, achievements)
+    - Fear (threats, violence, intimidation)
+    - Affection (kindness, gifts, personal connection)
+    - Debt (favors owed, lives saved)
+
+    Runs asynchronously after DM response to not block gameplay.
+    """
+    if not memory_manager or not dm_narrative:
+        return
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return
+
+    try:
+        # Extract NPCs mentioned in the narrative
+        entities_in_scene = _extract_entity_names_from_text(dm_narrative)
+
+        if not entities_in_scene:
+            logger.debug("[RELATIONSHIP] No NPCs detected in narrative, skipping extraction")
+            return
+
+        # Build NPC list with names and IDs
+        # For now, use the entity names as both name and ID
+        # TODO: Match against knowledge graph for canonical IDs
+        npcs_present = [
+            {"name": name, "canon_id": name.lower().replace(" ", "_")}
+            for name in entities_in_scene[:5]  # Limit to 5 NPCs per scene
+        ]
+
+        # Create agent and extract changes
+        agent = RelationshipExtractionAgent(
+            api_key=api_key,
+            experiential=memory_manager.experiential,
+        )
+
+        changes = await agent.extract_relationship_changes(
+            player_action=player_action,
+            dm_narrative=dm_narrative,
+            npcs_present=npcs_present,
+            session_id=session_id,
+        )
+
+        if changes:
+            # Apply the extracted changes to the memory system
+            await agent.apply_relationship_changes(changes, session_id)
+            logger.info(f"[RELATIONSHIP] Applied {len(changes)} relationship changes")
+        else:
+            logger.debug("[RELATIONSHIP] No relationship changes detected")
+
+    except Exception as e:
+        logger.warning(f"[RELATIONSHIP] Failed to extract/apply changes: {e}")
+
+
 async def _get_semantically_relevant_entities(
     db: Neo4jDatabase,
     player_action: str,
@@ -5565,6 +5562,21 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
                     impression_parts.append(f"{len(hostile)} hostile NPCs")
                 memory_lines.append(f"NPC DISPOSITION: {', '.join(impression_parts)}")
 
+            # Get per-NPC relationship context for NPCs in the current scene
+            # This gives the DM specific guidance on how each NPC should behave
+            if last_dm_response:
+                scene_npcs = _extract_entity_names_from_text(last_dm_response)
+                if scene_npcs:
+                    # Get formatted relationship context for scene NPCs
+                    npc_ids = [name.lower().replace(" ", "_") for name in scene_npcs[:5]]
+                    relationship_context = memory_manager.get_formatted_relationship_context(npc_ids)
+                    if relationship_context:
+                        # Add behavioral guidance when we have relationship data
+                        from src.mantle.prompts.dm_prompts import DMPrompts
+                        memory_lines.append(relationship_context)
+                        memory_lines.append(DMPrompts.get_npc_relationship_behavior())
+                        logger.debug(f"[MEMORY] Injecting relationship context for {len(npc_ids)} scene NPCs")
+
             if memory_lines:
                 memory_context_str = "\n=== WORLD MEMORY ===\n" + "\n".join(memory_lines)
                 logger.debug(f"[MEMORY] Injecting context: {len(legends)} legends, {len(threads)} threads")
@@ -5670,21 +5682,6 @@ STATE CHANGE TAGS (use when player gains items, gold, or takes damage):
   Example: "The blade bites deep. [DAMAGE: 8, slashing]"
 - When player heals: [HEAL: amount]
   Example: "The potion takes effect. [HEAL: 10]"
-
-COMBAT TRACKING TAGS (for tracking enemy HP during fights):
-- When introducing a combat-ready enemy: [ENEMY: Name | HP: amount | AC: amount]
-  Use when enemies appear that might be fought. This registers them for HP tracking.
-  Example: "The bandit draws his blade. [ENEMY: Bandit | HP: 22 | AC: 13]"
-  Example: "Three goblins burst from the underbrush. [ENEMY: Goblin Scout | HP: 15 | AC: 14]"
-- When an enemy takes damage in narrative (not from player dice rolls): [NPC_DAMAGE: Name | amount]
-  Use for: environmental damage, ally attacks, traps, poison. Player dice damage is tracked automatically.
-  Example: "The chandelier crashes down on the cultist. [NPC_DAMAGE: Cultist | 12]"
-- When an enemy is defeated/killed: [ENEMY_DEFEATED: Name]
-  Use when an enemy dies or is otherwise removed from combat.
-  Example: "The orc collapses, clutching its wound. [ENEMY_DEFEATED: Orc Warrior]"
-- To show enemy movement/positioning: [POSITION: Name | zone]
-  Zones: melee (close combat), near (ranged/approaching), far (distant)
-  Example: "The archer retreats to higher ground. [POSITION: Goblin Archer | far]"
 
 Write ONLY the narrative (with state tags naturally embedded):"""
 

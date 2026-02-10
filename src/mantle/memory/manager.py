@@ -21,6 +21,7 @@ from .models import (
     SalienceLevel, BeliefStrength, ImpressionValence, WhisperMutation
 )
 from .experiential import ExperientialMemory
+from .formatting import format_npc_relationship_context
 
 logger = logging.getLogger(__name__)
 
@@ -402,18 +403,45 @@ class MemoryManager:
                 for e in self.experiential.get_echoes_for_session(session_id)[-10:]
             ]
 
-        # Get NPC context
+        # Get NPC context with rich relationship data
         if npc_ids:
+            context["npc_relationship_context"] = []  # Formatted strings for DM prompt
+
             for npc_id in npc_ids:
                 impression = self.get_npc_impression(npc_id)
                 if impression:
+                    # Basic data for API responses
                     context["npc_impressions"][npc_id] = {
                         "valence": impression.valence.value,
                         "trust": impression.trust,
                         "respect": impression.respect,
+                        "fear": impression.fear,
+                        "affection": impression.affection,
+                        "debt_to_player": impression.debt_to_player,
+                        "debt_reason": impression.debt_reason,
                         "will_help": impression.will_help,
+                        "will_share_secrets": impression.will_share_secrets,
+                        "will_betray": impression.will_betray,
                         "forms_of_address": impression.forms_of_address,
+                        "interaction_count": impression.interaction_count,
                     }
+
+                    # Rich formatted context for DM prompts
+                    # Try to get NPC name from Neo4j if available
+                    npc_name = npc_id  # Fallback to ID
+                    if self.neo4j:
+                        try:
+                            result = self.neo4j.execute_sync(
+                                "MATCH (n {canon_id: $id}) RETURN n.name as name",
+                                {"id": npc_id}
+                            )
+                            if result and result[0].get("name"):
+                                npc_name = result[0]["name"]
+                        except Exception:
+                            pass  # Use ID as fallback
+
+                    formatted = format_npc_relationship_context(impression, npc_name)
+                    context["npc_relationship_context"].append(formatted)
 
                 beliefs = self.get_npc_beliefs(npc_id)
                 if beliefs:
@@ -458,6 +486,41 @@ class MemoryManager:
     # ============================================================
     # STATS AND OVERVIEW
     # ============================================================
+
+    def get_formatted_relationship_context(self, npc_ids: List[str]) -> str:
+        """
+        Get formatted relationship context for NPCs, ready for DM prompt injection.
+
+        Returns a formatted string block describing each NPC's relationship
+        with the player, including trust, debts, promises, and behavioral hints.
+        """
+        if not npc_ids:
+            return ""
+
+        context_blocks = []
+        for npc_id in npc_ids:
+            impression = self.get_npc_impression(npc_id)
+            if impression:
+                # Try to get NPC name from Neo4j
+                npc_name = npc_id
+                if self.neo4j:
+                    try:
+                        result = self.neo4j.execute_sync(
+                            "MATCH (n {canon_id: $id}) RETURN n.name as name",
+                            {"id": npc_id}
+                        )
+                        if result and result[0].get("name"):
+                            npc_name = result[0]["name"]
+                    except Exception:
+                        pass
+
+                formatted = format_npc_relationship_context(impression, npc_name)
+                context_blocks.append(formatted)
+
+        if not context_blocks:
+            return ""
+
+        return "\n\n=== NPC RELATIONSHIPS ===\n" + "\n\n".join(context_blocks)
 
     def get_memory_summary(self) -> Dict[str, Any]:
         """Get a summary of the world's memory state."""
