@@ -7811,7 +7811,7 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleAdminChangelog()">
                     <h3 style="color: #22c55e; margin: 0; display: flex; align-items: center; gap: 10px;">
                         <span>🆕</span> New Admin Features
-                        <span id="admin-changelog-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">8 NEW</span>
+                        <span id="admin-changelog-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">9 NEW</span>
                     </h3>
                     <span id="admin-changelog-arrow" style="font-size: 1.2rem; transition: transform 0.2s;">▼</span>
                 </div>
@@ -7819,8 +7819,28 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                     <!-- Most recent first -->
                     <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <strong style="color: var(--text-primary);">Softened Mechanical Constraints</strong>
+                            <strong style="color: var(--text-primary);">Narrative-First Character System</strong>
                             <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Character descriptions are now the source of truth. The DM honors what you wrote about your character. New <strong>Competence Spectrum</strong>: characters have proven, untested, and weak domains — the DM adapts difficulty accordingly. <strong>Emotional Friction Points</strong>: what they protect, what they've lost, what they avoid, what they believe. The AI finds and engages these naturally in the story.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #22c55e;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">V3.0 DM Philosophy</strong>
+                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">NEW</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Major DM prompt rewrite. Stakes come from narrative consequence, not dice. Proven domains succeed — challenge through situation, not skill checks. Untested domains learn through failure — make it revelation, not punishment. Weak domains struggle — success is hard-won. The DM reads your whole character context every turn.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-lavender);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">Softened Mechanical Constraints</strong>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Feb 2026</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
                             Dice rolls still happen first and constrain outcomes, but the AI DM now has more latitude in HOW to narrate results. A miss doesn't have to be embarrassing; a hit can be described however fits the moment. The system enforces outcomes, not descriptions.
@@ -10407,6 +10427,16 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // ============================================================
 
         const CHANGELOG = {
+            "v51": {
+                date: "2026-02-10",
+                changes: [
+                    { type: "feature", text: "Narrative-first DM philosophy: Character descriptions are now the source of truth" },
+                    { type: "feature", text: "Competence spectrum: Characters have proven, untested, and weak domains" },
+                    { type: "feature", text: "Emotional friction points: DM tracks what characters protect, lost, avoid, and believe" },
+                    { type: "feature", text: "Character extraction API: AI extracts narrative elements from descriptions" },
+                    { type: "improvement", text: "V3.0 DM prompt integration: Richer character context flows to every response" },
+                ]
+            },
             "v50": {
                 date: "2026-02-04",
                 changes: [
@@ -10478,7 +10508,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             const lastSeenVersion = localStorage.getItem('airpg_last_seen_version');
 
             // Extract version number (e.g., "v44-20260116-..." -> "v44")
-            const currentVersion = appVersion?.match(/^v\d+/)?.[0] || 'v50';
+            const currentVersion = appVersion?.match(/^v\d+/)?.[0] || 'v51';
 
             // If same version, don't show
             if (lastSeenVersion === currentVersion) return;
