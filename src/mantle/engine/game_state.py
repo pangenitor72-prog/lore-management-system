@@ -567,22 +567,22 @@ class GameState:
             if self.character.skill_proficiencies:
                 lines.append(f"Skills: {', '.join(self.character.skill_proficiencies)}")
 
-            # Character identity (personality, backstory, concept) — drives roleplay
-            if self.character.character_concept:
-                lines.append("")
-                lines.append("=== CHARACTER IDENTITY ===")
-                lines.append(f"Concept: {self.character.character_concept}")
-            if self.character.background:
-                if not self.character.character_concept:
-                    lines.append("")
+            # Character identity and narrative context
+            # Uses narrative context (competencies, friction points) if available,
+            # otherwise falls back to legacy personality context
+            lines.append("")
+            narrative_context = self.character.get_narrative_context()
+            if narrative_context:
+                lines.append(narrative_context)
+            else:
+                # Legacy fallback
+                if self.character.character_concept:
                     lines.append("=== CHARACTER IDENTITY ===")
-                lines.append(f"Background: {self.character.background}")
-            personality_context = self.character.get_personality_context()
-            if personality_context:
-                if not self.character.character_concept and not self.character.background:
-                    lines.append("")
-                    lines.append("=== CHARACTER IDENTITY ===")
-                lines.append(personality_context)
+                    lines.append(f"Concept: {self.character.character_concept}")
+                if self.character.background:
+                    if not self.character.character_concept:
+                        lines.append("=== CHARACTER IDENTITY ===")
+                    lines.append(f"Background: {self.character.background}")
 
             # Spell/power slots
             if self.character.power_slots_max:

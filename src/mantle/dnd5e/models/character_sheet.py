@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field, computed_field, model_validator
 
 from .ability_scores import AbilityScores, AbilityName
+from .narrative import Competency, FrictionPoint, CompetenceLevel
 
 
 class CharacterSheet(BaseModel):
@@ -81,6 +82,21 @@ class CharacterSheet(BaseModel):
     # Character Identity (from concept description)
     backstory: str = ""  # AI-generated backstory from character description
     character_concept: str = ""  # Original player description, preserved verbatim
+
+    # Narrative Character System (V3.0 DM prompt integration)
+    character_description: str = ""  # Full rich description from narrative creation flow
+    competencies: List[Competency] = Field(
+        default_factory=list,
+        description="Competency spectrum: proven, untested, weak domains"
+    )
+    friction_points: List[FrictionPoint] = Field(
+        default_factory=list,
+        description="Emotional friction points: protects, lost, avoids, believes"
+    )
+    player_confirmed: bool = Field(
+        default=False,
+        description="True if player reviewed and confirmed AI extraction"
+    )
 
     # Metadata
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -309,6 +325,60 @@ class CharacterSheet(BaseModel):
             lines.append(f"Bonds: {', '.join(self.bonds)}")
         if self.flaws:
             lines.append(f"Flaws: {', '.join(self.flaws)}")
+        return "\n".join(lines)
+
+    def get_narrative_context(self) -> str:
+        """Return narrative context for V3.0 DM prompts.
+
+        Includes competency spectrum and friction points.
+        Falls back to legacy personality context if no narrative data.
+        """
+        lines = []
+
+        # Full character description (if provided)
+        if self.character_description:
+            lines.append("=== CHARACTER DESCRIPTION ===")
+            lines.append(self.character_description)
+            lines.append("")
+
+        # Competency spectrum
+        if self.competencies:
+            lines.append("=== COMPETENCY SPECTRUM ===")
+            level_icons = {
+                CompetenceLevel.PROVEN: "★",
+                CompetenceLevel.UNTESTED: "◐",
+                CompetenceLevel.WEAK: "○",
+            }
+            for comp in self.competencies:
+                icon = level_icons.get(comp.level, "·")
+                lines.append(f"{icon} {comp.domain.upper()} ({comp.level.value})")
+                guidance = comp.dm_guidance or comp.get_default_guidance()
+                if guidance:
+                    lines.append(f"   → {guidance}")
+            lines.append("")
+
+        # Friction points
+        if self.friction_points:
+            lines.append("=== WHAT MATTERS TO THEM ===")
+            category_icons = {
+                "protects": "♥",
+                "lost": "💔",
+                "avoids": "⚠",
+                "believes": "✦",
+            }
+            for fp in self.friction_points:
+                icon = category_icons.get(fp.category.value, "·")
+                intensity_marker = " (central)" if fp.intensity == "central" else ""
+                lines.append(f"{icon} {fp.category.value.upper()}: {fp.target}{intensity_marker}")
+                hook = fp.narrative_hook or fp.get_default_hook()
+                if hook:
+                    lines.append(f"   → {hook}")
+            lines.append("")
+
+        # Fall back to legacy personality if no narrative data
+        if not lines:
+            return self.get_personality_context()
+
         return "\n".join(lines)
 
     def to_summary_dict(self) -> Dict:
