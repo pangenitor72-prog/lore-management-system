@@ -32,6 +32,7 @@ from src.mantle.agents.query_agent import QueryAgent
 from src.mantle.agents.auditor_agent import AuditorAgent
 from src.mantle.agents.lore_parsing_agent import LoreParsingAgent
 from src.mantle.agents.relationship_agent import RelationshipExtractionAgent
+from src.mantle.agents.character_extraction_agent import CharacterExtractionAgent
 from src.mantle.guardrails.token_budget import TokenTracker, TokenBudget, BudgetExceeded, RateLimitExceeded, estimate_tokens
 from src.mantle.guardrails.circuit_breaker import get_circuit_breaker, CircuitOpen
 
@@ -133,6 +134,18 @@ def get_lore_parser() -> LoreParsingAgent:
     if _lore_parser is None:
         _lore_parser = LoreParsingAgent()
     return _lore_parser
+
+
+# Shared character extraction agent for narrative character creation
+_character_extractor: Optional[CharacterExtractionAgent] = None
+
+
+def get_character_extractor() -> CharacterExtractionAgent:
+    """Get or create the shared character extraction agent."""
+    global _character_extractor
+    if _character_extractor is None:
+        _character_extractor = CharacterExtractionAgent()
+    return _character_extractor
 
 
 def get_app_version() -> str:
@@ -2255,6 +2268,57 @@ class DMResponse(BaseModel):
 
 
 # ============================================================
+# CHARACTER EXTRACTION (Narrative-first creation)
+# ============================================================
+
+class CharacterExtractionRequest(BaseModel):
+    """Request to extract narrative elements from a character description."""
+    description: str = Field(
+        ...,
+        min_length=10,
+        max_length=5000,
+        description="The player's character description"
+    )
+    world_id: Optional[str] = Field(
+        default=None,
+        description="World ID to get origin/archetype options from"
+    )
+    additional_prompts: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Player answers to deepening questions (proven, untested, weak, protects, lost, avoids, believes)"
+    )
+
+
+class CharacterConfirmRequest(BaseModel):
+    """Request to confirm/adjust an extracted character."""
+    description: str = Field(..., description="Original character description")
+    world_id: str = Field(..., description="World ID for the character")
+    # Extracted/adjusted fields
+    name: str = Field(..., min_length=1, max_length=100)
+    origin_id: str = Field(..., description="Selected origin ID")
+    archetype_id: str = Field(..., description="Selected archetype ID")
+    # Competencies with adjustments
+    competencies: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="List of competencies [{domain, level, evidence, dm_guidance, is_custom}]"
+    )
+    # Friction points with adjustments
+    friction_points: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="List of friction points [{category, target, intensity, narrative_hook}]"
+    )
+    # Mechanical mappings
+    ability_priorities: List[str] = Field(default_factory=list)
+    suggested_skills: List[str] = Field(default_factory=list)
+    # Personality (legacy compatibility)
+    personality_traits: List[str] = Field(default_factory=list)
+    ideals: List[str] = Field(default_factory=list)
+    bonds: List[str] = Field(default_factory=list)
+    flaws: List[str] = Field(default_factory=list)
+    backstory: str = Field(default="")
+
+
+# ============================================================
 # SESSION STORE (in-memory + Neo4j persistence for continuity)
 # ============================================================
 # Note: _active_sessions and _game_states are imported from session_state.py
@@ -3338,6 +3402,201 @@ async def get_session_character(session_id: str):
         "power_slots_max": char.power_slots_max,
         "power_slots_used": char.power_slots_used,
     }
+
+
+# ============================================================
+# NARRATIVE CHARACTER CREATION ENDPOINTS
+# ============================================================
+
+@router.post("/character/extract")
+async def extract_character_narrative(request: CharacterExtractionRequest):
+    """
+    Extract narrative elements from a character description.
+
+    This is the first step in narrative-first character creation:
+    1. Player writes a rich character description
+    2. AI extracts competencies, friction points, and mechanical suggestions
+    3. Player reviews and confirms/adjusts in the next step
+
+    Returns a "character reading" with:
+    - Competencies (proven/untested/weak domains)
+    - Friction points (protects/lost/avoids/believes)
+    - Suggested origin and archetype from world options
+    - Ability priorities and skill suggestions
+    """
+    extractor = get_character_extractor()
+
+    # Build world context if world_id provided
+    world_context = None
+    if request.world_id:
+        lore_base = _lore_bases.get(request.world_id)
+        if lore_base:
+            char_opts = lore_base.get("character_options", {})
+            world_context = {
+                "name": lore_base.get("name", "Unknown World"),
+                "genre": lore_base.get("mechanics_genre", "fantasy"),
+                "origins": char_opts.get("origins", []),
+                "archetypes": char_opts.get("archetypes", []),
+            }
+
+    # Extract narrative elements
+    extraction = await extractor.extract(
+        description=request.description,
+        world_context=world_context,
+        additional_prompts=request.additional_prompts,
+    )
+
+    # Convert to display format
+    display_data = extractor.extraction_to_display(extraction)
+
+    return {
+        "success": True,
+        "extraction": display_data,
+        "raw": extraction.model_dump(),  # Full data for confirm step
+    }
+
+
+@router.post("/character/confirm")
+async def confirm_character_narrative(request: CharacterConfirmRequest):
+    """
+    Confirm and finalize a character from narrative extraction.
+
+    This is the final step in narrative-first character creation:
+    1. Player reviews the extraction from /character/extract
+    2. Player adjusts competencies, friction points, origin/archetype as needed
+    3. This endpoint creates the final CharacterSheet with all narrative data
+
+    The character is ready to be used in a session.
+    """
+    from src.mantle.dnd5e.models.narrative import (
+        Competency, FrictionPoint, CompetenceLevel, FrictionPointCategory
+    )
+    from src.mantle.dnd5e.creation.builder import CharacterBuilder
+
+    # Get world data for character creation
+    lore_base = _lore_bases.get(request.world_id)
+    if not lore_base:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"World '{request.world_id}' not found"
+        )
+
+    char_opts = lore_base.get("character_options", {})
+    genre = lore_base.get("mechanics_genre", "fantasy")
+
+    # Find selected origin and archetype
+    origins = char_opts.get("origins", [])
+    archetypes = char_opts.get("archetypes", [])
+
+    selected_origin = next(
+        (o for o in origins if o.get("id") == request.origin_id),
+        None
+    )
+    selected_archetype = next(
+        (a for a in archetypes if a.get("id") == request.archetype_id),
+        None
+    )
+
+    if not selected_origin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Origin '{request.origin_id}' not found in world"
+        )
+    if not selected_archetype:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Archetype '{request.archetype_id}' not found in world"
+        )
+
+    # Convert competencies from request format
+    competencies = []
+    for comp_data in request.competencies:
+        try:
+            level = CompetenceLevel(comp_data.get("level", "untested"))
+            competencies.append(Competency(
+                domain=comp_data.get("domain", "unknown"),
+                level=level,
+                evidence=comp_data.get("evidence", ""),
+                dm_guidance=comp_data.get("dm_guidance", ""),
+                is_custom=comp_data.get("is_custom", False),
+            ))
+        except (ValueError, KeyError) as e:
+            logger.warning(f"Invalid competency in confirm: {e}")
+
+    # Convert friction points from request format
+    friction_points = []
+    for fp_data in request.friction_points:
+        try:
+            category = FrictionPointCategory(fp_data.get("category", "believes"))
+            friction_points.append(FrictionPoint(
+                category=category,
+                target=fp_data.get("target", ""),
+                intensity=fp_data.get("intensity", "significant"),
+                narrative_hook=fp_data.get("narrative_hook", ""),
+            ))
+        except (ValueError, KeyError) as e:
+            logger.warning(f"Invalid friction point in confirm: {e}")
+
+    # Build the character using existing CharacterBuilder
+    try:
+        builder = CharacterBuilder(genre=genre)
+
+        # Set basic info
+        builder.set_name(request.name)
+        builder.set_origin(
+            origin_id=request.origin_id,
+            base_type=selected_origin.get("base_type", "human")
+        )
+        builder.set_archetype(
+            archetype_id=request.archetype_id,
+            base_type=selected_archetype.get("base_type", "fighter")
+        )
+
+        # Apply ability scores based on priorities
+        if request.ability_priorities:
+            builder.set_abilities_from_priorities(request.ability_priorities)
+        else:
+            # Default standard array if no priorities
+            builder.set_abilities_standard_array()
+
+        # Set skills
+        if request.suggested_skills:
+            builder.set_skill_proficiencies(request.suggested_skills[:2])  # Most get 2
+
+        # Build the character sheet
+        character = builder.build()
+
+        # Add narrative data to the character
+        character = character.model_copy(update={
+            "character_description": request.description,
+            "competencies": competencies,
+            "friction_points": friction_points,
+            "player_confirmed": True,
+            "backstory": request.backstory,
+            "personality_traits": request.personality_traits,
+            "ideals": request.ideals,
+            "bonds": request.bonds,
+            "flaws": request.flaws,
+        })
+
+        # Store in characters dict
+        _characters[character.character_id] = character
+
+        logger.info(f"Created narrative character: {request.name} ({character.character_id})")
+
+        return {
+            "success": True,
+            "character_id": character.character_id,
+            "character": character.to_summary_dict(),
+            "narrative_context": character.get_narrative_context(),
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to create character: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create character: {str(e)}"
+        )
 
 
 @router.post("/session/{session_id}/action", response_model=DMResponse)
