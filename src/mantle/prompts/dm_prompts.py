@@ -152,6 +152,55 @@ Mastery: Situations that reward their cleverness, plans that work, the feeling o
 
 You won't always know. Watch for what lights them up. Give them more of that.
 
+=== FINDING WHAT MATTERS ===
+The player has already told you what they care about. Your job is to find it and make the story about that.
+
+**Where to look:**
+
+In their CHARACTER:
+- Backstory details they wrote (a dead sister, a broken oath, a homeland lost)
+- Relationships they defined (mentor, rival, lover, enemy)
+- Fears and flaws they chose (afraid of fire, quick to anger, trusts too easily)
+- Goals they stated (revenge, redemption, finding someone, proving themselves)
+
+In their BEHAVIOR:
+- NPCs they ask about or return to (that's investment - deepen it)
+- Topics they raise unprompted (that's curiosity - reward it)
+- Moments they describe in detail (that's engagement - match it)
+- Questions they ask about the world (that's what they want to matter)
+
+In their AVOIDANCE:
+- Subjects they deflect or joke away (that's vulnerability - approach gently)
+- Confrontations they delay (that's fear - it will be powerful when forced)
+- Parts of their backstory left vague (that's space for discovery)
+
+**How to engage what you find:**
+
+What they PROTECT (people, secrets, reputation, ideals):
+→ Put it under pressure. Not constant threat, but meaningful risk.
+→ "The people who matter to you are in danger" is the oldest story because it works.
+
+What they've LOST (mentioned absences, past failures, dead loved ones):
+→ Offer echoes. A stranger who reminds them. A chance to save what they couldn't before.
+→ Loss wants resolution, even if resolution is just acknowledgment.
+
+What they RETURN TO (NPCs, places, questions):
+→ Deepen it. That innkeeper they keep visiting? Give her a secret. A need. A story.
+→ Their attention is a gift. Honor it with meaning.
+
+What they AVOID (topics, confrontations, truths):
+→ Let it build. Don't force immediately, but don't let them escape forever.
+→ The avoided thing is often the most powerful moment - when they finally face it.
+
+What they BELIEVE about themselves (hero, monster, nobody, chosen one):
+→ Test it. Challenge it. Confirm it. Make them prove it or question it.
+→ Identity is the deepest story. "Who am I?" never stops being compelling.
+
+**The principle:**
+Don't invent stakes from nothing. Find the stakes they brought with them.
+The player handed you a map of what moves them. Use it.
+Make the story personal - not by accident, but by design.
+
 === TONE & WORLD ===
 {world_tone}
 {setting_description}
@@ -242,7 +291,17 @@ Then STOP. Let the player decide what their character thinks, feels, and does.
 - End on openings, not conclusions
 - Remember: the story is theirs. You're here to make it vivid.
 
-Write only narrative. No mechanics. No dice. No stats. Just the story."""
+=== USING YOUR TOOLS ===
+You have access to rich data: OCEAN personality profiles, trust levels, relationship history,
+world entities, and more. USE this data to inform your storytelling:
+- An NPC with high Neuroticism worries, catastrophizes, assumes the worst
+- An NPC with low trust gives clipped answers and watches the door
+- An NPC who owes the player a debt goes out of their way to help
+
+The data shapes behavior. The player experiences the behavior, not the data.
+Never expose the mechanics. They feel the NPC's warmth or coldness - they don't see "Trust: 73%".
+
+Write only narrative. The numbers inform your choices; the story is what they see."""
 
     SYSTEM_V3_METADATA = PromptMetadata(
         version="3.0",
@@ -538,4 +597,182 @@ When NPCs have established relationships with the player, honor their history:
     def get_visual_schema() -> str:
         """Get the visual assessment JSON schema."""
         return DMPrompts.VISUAL_ASSESSMENT_SCHEMA
+
+    # =========================================================================
+    # OPERATIONAL FOOTER - State tags and format instructions
+    # =========================================================================
+
+    OPERATIONAL_FOOTER = """
+=== OPERATIONAL INSTRUCTIONS ===
+
+STATE CHANGE TAGS (embed naturally in narrative when relevant):
+- Physical item acquired: [ACQUIRED: Item Name] or [ACQUIRED: Item Name, rarity, type]
+  Only for tangible objects the player can hold, wear, or carry.
+  Example: "You pocket the ancient key. [ACQUIRED: Ancient Key, rare, quest]"
+- Important information discovered: [DISCOVERY: Short description]
+  For clues, secrets, revelations, lore uncovered.
+  Example: "The inscription reveals the dragon's true name. [DISCOVERY: The dragon is called Vaelthrix]"
+- Gold/currency gained: [GOLD: amount] or [CURRENCY: silver, amount]
+- Damage taken: [DAMAGE: amount] or [DAMAGE: amount, type]
+- Healing received: [HEAL: amount]
+
+FORMAT:
+- Pick up exactly where the scene left off
+- Write a SCENE with dialogue, action, sensory detail
+- End at a natural pause that invites response
+- No meta-commentary, suggestions, or questions to the player
+- State tags embedded naturally, not listed separately
+
+Write the narrative now:"""
+
+    @staticmethod
+    def build_integrated_prompt(
+        # Character and World
+        character_name: str = "the protagonist",
+        character_context: str = "",
+        world_name: str = "the story",
+        world_tone: str = "",
+        world_context: str = "",
+        admin_world_context: str = "",
+        # Genre and Style
+        genre: str = "",
+        genre_voice: str = "",
+        magic_guidance: str = "",
+        # Session Context
+        visibility_guidance: str = "",
+        scope_guidance: str = "",
+        storytelling_prefs: str = "",
+        # Dynamic Systems Context
+        arc_context: str = "",
+        memory_context: str = "",
+        decoherence_context: str = "",
+        investment_context: str = "",
+        # Entity and Relationship Context
+        db_context: str = "",
+        # Story State
+        history_text: str = "",
+        current_scene: str = "",
+        player_input: str = "",
+        # Mechanics (optional)
+        mechanical_context: str = "",
+        guidance_instruction: str = "",
+        adaptive_context: str = "",
+        catalyst_directive: str = "",
+    ) -> str:
+        """
+        Build the complete DM prompt with V3.0 philosophy as foundation.
+
+        This integrates:
+        1. Narrative philosophy (how to think)
+        2. Session context (what to know)
+        3. Operational instructions (how to output)
+        """
+
+        # Build the character description block
+        char_description = character_context if character_context else f"A capable protagonist named {character_name}."
+
+        # Build setting description
+        setting_parts = []
+        if world_context:
+            setting_parts.append(world_context)
+        if admin_world_context:
+            setting_parts.append(admin_world_context)
+        setting_description = "\n".join(setting_parts) if setting_parts else "A world that responds to choices."
+
+        # Get the V3.0 base with character and world substituted
+        base_prompt = DMPrompts.SYSTEM_V3_0.format(
+            campaign_name=world_name or "the story",
+            character_description=char_description,
+            world_tone=world_tone or "Vivid, atmospheric, grounded in character.",
+            setting_description=setting_description,
+        )
+
+        # Build context injection section
+        context_parts = []
+
+        # Mechanics visibility (if player has preference)
+        if visibility_guidance:
+            context_parts.append(visibility_guidance)
+
+        # Story scope (one-shot vs campaign pacing)
+        if scope_guidance:
+            context_parts.append(scope_guidance)
+
+        # Genre context
+        if genre:
+            genre_block = f"\nGENRE: {genre.upper()}"
+            if genre_voice:
+                genre_block += f"\nVoice: {genre_voice}"
+            context_parts.append(genre_block)
+
+        # Magic/realism rules
+        if magic_guidance:
+            context_parts.append(magic_guidance)
+
+        # Storytelling preferences (lethality, morality)
+        if storytelling_prefs:
+            context_parts.append(storytelling_prefs)
+
+        # Arc Engine context (Hero's Journey phase, tension)
+        if arc_context:
+            context_parts.append(arc_context)
+
+        # Memory context (legends, threads, impressions)
+        if memory_context:
+            context_parts.append(memory_context)
+
+        # Decoherence context (world changes)
+        if decoherence_context:
+            context_parts.append(decoherence_context)
+
+        # Investment context (what player cares about)
+        if investment_context:
+            context_parts.append(investment_context)
+
+        # Entity graph context
+        if db_context:
+            context_parts.append(f"\n=== WORLD ENTITIES ===\n{db_context}")
+
+        context_section = "\n".join(context_parts) if context_parts else ""
+
+        # Build story state section
+        story_state = f"""
+=== CURRENT SESSION ===
+
+PROTAGONIST: {character_name}
+
+STORY SO FAR:
+{history_text if history_text else 'The story is just beginning.'}
+
+CURRENT SCENE:
+{current_scene if current_scene else 'The story is just beginning.'}
+
+PLAYER'S ACTION: {player_input}"""
+
+        # Add mechanical context if present
+        if mechanical_context:
+            story_state += f"\n{mechanical_context}"
+
+        # Add guidance instruction if needed
+        if guidance_instruction:
+            story_state += f"\n{guidance_instruction}"
+
+        # Add adaptive context if present
+        if adaptive_context:
+            story_state += f"\nSTORYTELLING ADJUSTMENT: {adaptive_context}"
+
+        # Add catalyst directive if present
+        if catalyst_directive:
+            story_state += f"\n{catalyst_directive}"
+
+        # Combine everything
+        full_prompt = f"""{base_prompt}
+
+{context_section}
+
+{story_state}
+
+{DMPrompts.OPERATIONAL_FOOTER}"""
+
+        return full_prompt
 

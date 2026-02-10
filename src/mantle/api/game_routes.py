@@ -5618,72 +5618,41 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
     # Handle genre blending
     genre_display = session.get("genre_blend", genre)
 
-    prompt = f"""You are a master storyteller continuing someone's story.
-
-YOUR JOB: Read between the lines. When they act, ask yourself what experience they're seeking. "I attack the dragon" might mean they want to feel brave, or test if you'll let them be bold. "I look around carefully" means they want to be rewarded for caution. "I try to talk to them" means they want diplomacy to matter. Give them what they're actually asking for, not just the literal response.
-
-POWER PARITY: All archetype powers are equally impactful. A detective's "Cold Read" that breaks a suspect is as mechanically decisive as a wizard's Fireball. A diplomat's persuasion WORKS on NPCs - they comply, reveal secrets, change sides. Social and investigative powers aren't "soft skills" that might work; they're protagonist abilities that succeed dramatically. The noir detective and the combat mage should both feel like the main character of their genre.
-
-PLAYER AGENCY: NPC powers never force player actions. A charming villain can be compelling, but the player always chooses whether to be swayed. Present temptation, not compulsion. The player is the protagonist - they decide their character's responses to social pressure, mind effects, or manipulation. NPCs can try; players choose the outcome.
-
-DIVERSE SOLUTIONS: Every challenge should have multiple viable paths - combat, diplomacy, stealth, investigation, magic, social leverage. When the player chooses a non-combat approach, reward it with satisfying outcomes. A talked-down enemy can become an ally. A bribed guard stays bribed. A well-researched plan works. Don't funnel players toward fighting unless THEY choose violence.
-
-SHOW DON'T TELL: Generate immersive SCENES, not summaries. Instead of "The guard seems suspicious of you" write dialogue: "The guard's eyes narrow as he blocks your path. 'Papers,' he grunts, one hand resting on his sword hilt." Use sensory details - the crackle of fire, the smell of rain on stone, the taste of copper when fear hits. NPCs speak in their own voices. Actions unfold moment by moment. Every response should feel like a scene the player could picture, not a report of what happened.
-{visibility_guidance}
-{scope_guidance}
-{arc_context_str}
-{memory_context_str}
-{decoherence_context_str}
-{investment_context_str}
-GENRE: {genre_display.upper()}
-Voice: {genre_info['voice']}
-{magic_guidance}
-
-TONE: {tone}
-{storytelling_prefs}
-{world_context}
-{db_context}
-{admin_world_context}
-
-PROTAGONIST: {character if character else 'the protagonist'}
-{char_context}
-
-STORY SO FAR:
-{history_text if history_text else 'The story is just beginning.'}
-
-CURRENT SCENE:
-{last_dm_response if last_dm_response else 'The story is just beginning.'}
-
-PLAYER'S ACTION: {player_input}
-{mechanical_context}
-{_get_guidance_instruction(needs_guidance)}
-{f'''STORYTELLING ADJUSTMENT: {adaptive_context}
-''' if adaptive_context else ''}{_get_active_play_catalyst_directive(session)}
-Continue:
-- Pick up EXACTLY where the scene left off
-- Honor what they're trying to do - match their energy
-- Show consequences that feel meaningful
-- 2-3 paragraphs, natural pause
-- NO suggestions or questions
-- Write a SCENE: dialogue, action, sensory detail - not a summary
-
-STATE CHANGE TAGS (use when player gains items, gold, or takes damage):
-- When player acquires a PHYSICAL item they can hold, wear, or carry: [ACQUIRED: Item Name] or [ACQUIRED: Item Name, rarity, type]
-  ONLY for tangible objects: weapons, armor, potions, keys, books, tools, food, treasure, etc.
-  NEVER for concepts, feelings, knowledge, weather, scenery, or abstract ideas.
-  Example: "You pocket the ancient key. [ACQUIRED: Ancient Key, rare, quest]"
-- When player discovers important narrative information: [DISCOVERY: Short description]
-  Use for: clues, secrets learned, NPC relationships revealed, plot revelations, lore uncovered.
-  Example: "The inscription reveals the dragon's true name. [DISCOVERY: The dragon is called Vaelthrix]"
-  Example: "The merchant's nervous glance confirms your suspicion. [DISCOVERY: Merchant works with the thieves guild]"
-- When player gains gold/currency: [GOLD: amount] or [CURRENCY: silver, amount]
-  Example: "The merchant pays you well. [GOLD: 50]"
-- When player takes damage: [DAMAGE: amount] or [DAMAGE: amount, type]
-  Example: "The blade bites deep. [DAMAGE: 8, slashing]"
-- When player heals: [HEAL: amount]
-  Example: "The potion takes effect. [HEAL: 10]"
-
-Write ONLY the narrative (with state tags naturally embedded):"""
+    # Build integrated prompt using V3.0 philosophy as foundation
+    from src.mantle.prompts.dm_prompts import DMPrompts
+    prompt = DMPrompts.build_integrated_prompt(
+        # Character and World
+        character_name=character if character else "the protagonist",
+        character_context=char_context,
+        world_name=world_name,
+        world_tone=tone,
+        world_context=world_context,
+        admin_world_context=admin_world_context,
+        # Genre and Style
+        genre=genre_display,
+        genre_voice=genre_info.get('voice', ''),
+        magic_guidance=magic_guidance,
+        # Session Context
+        visibility_guidance=visibility_guidance,
+        scope_guidance=scope_guidance,
+        storytelling_prefs=storytelling_prefs,
+        # Dynamic Systems Context
+        arc_context=arc_context_str,
+        memory_context=memory_context_str,
+        decoherence_context=decoherence_context_str,
+        investment_context=investment_context_str,
+        # Entity Context
+        db_context=db_context,
+        # Story State
+        history_text=history_text,
+        current_scene=last_dm_response,
+        player_input=player_input,
+        # Mechanics
+        mechanical_context=mechanical_context,
+        guidance_instruction=_get_guidance_instruction(needs_guidance),
+        adaptive_context=adaptive_context if adaptive_context else "",
+        catalyst_directive=_get_active_play_catalyst_directive(session),
+    )
 
     # Use protected AI call with guardrails
     # 1200 tokens allows for complete responses without truncation
