@@ -8712,14 +8712,14 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             <div class="setup-section">
                 <h3>Character Creation</h3>
                 <div class="tone-options">
-                    <span class="tone-chip creation-chip selected" data-creation="guided" onclick="selectCreationMode('guided')">
-                        Step by Step <span style="font-size: 0.75rem; opacity: 0.7;">(recommended)</span>
+                    <span class="tone-chip creation-chip selected" data-creation="narrative" onclick="selectCreationMode('narrative')">
+                        Tell Your Story <span style="font-size: 0.75rem; opacity: 0.7;">(recommended)</span>
+                    </span>
+                    <span class="tone-chip creation-chip" data-creation="guided" onclick="selectCreationMode('guided')">
+                        Step by Step <span style="font-size: 0.75rem; opacity: 0.7;">(traditional)</span>
                     </span>
                     <span class="tone-chip creation-chip" data-creation="concept" onclick="selectCreationMode('concept')">
                         Quick Create <span style="font-size: 0.75rem; opacity: 0.7;">(describe & go)</span>
-                    </span>
-                    <span class="tone-chip creation-chip" data-creation="classic" onclick="selectCreationMode('classic')">
-                        Detailed <span style="font-size: 0.75rem; opacity: 0.7;">(full control)</span>
                     </span>
                 </div>
             </div>
@@ -9609,7 +9609,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             return STORY_TO_RULES_GENRE[storyGenre] || 'fantasy';
         }
         let rulesVisibility = 'guided';  // storyteller, guided, classic, tactician
-        let creationMode = 'concept';  // concept, guided, classic
+        let creationMode = 'narrative';  // narrative, concept, guided, classic
         let sessionScope = 'one_shot';  // one_shot, short, medium, long, campaign
         let maxTurnsForScope = { one_shot: 200, short: 300, medium: 500, long: 800, campaign: 0 };
         // Player Storytelling Preferences
@@ -9663,7 +9663,7 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         let currentWorldGenre = 'fantasy';  // Track current world's genre for equipment selection
 
         // TTRPG Mode State
-        let ttrpgCreationMode = 'guided';  // Changed default from 'concept' to 'guided'
+        let ttrpgCreationMode = 'narrative';  // Default to narrative-first mode
         let ttrpgVisibility = 'classic';
         let selectedTTRPGWorld = null;
         let ttrpgWorldsLoaded = false;
@@ -13306,8 +13306,18 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
                     intelligence: null,
                     wisdom: null,
                     charisma: null
-                }
+                },
+                // Narrative mode fields
+                narrativeDescription: '',
+                narrativeProven: '',
+                narrativeUntested: '',
+                narrativeWeak: '',
+                narrativeProtects: '',
+                narrativeLost: '',
+                narrativeRaw: null  // Raw extraction data
             };
+            // Reset narrative extraction
+            narrativeExtraction = null;
 
             // Reset world-specific data from previous creation attempts
             worldSettingSkills = [];
@@ -13722,8 +13732,10 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             // Step labels for each creation mode
             const standardLabels = ['Name', 'Origin', 'Class', 'Abilities', 'Skills', 'Review'];
             const conceptLabels = ['Concept', 'Review', 'Confirm'];
+            const narrativeLabels = ['Describe', 'Deepen', 'Reading', 'Confirm'];
 
-            const labels = creationMode === 'concept' ? conceptLabels : standardLabels;
+            const labels = creationMode === 'narrative' ? narrativeLabels :
+                          creationMode === 'concept' ? conceptLabels : standardLabels;
             const numSteps = labels.length;
 
             let stepsHtml = '';
@@ -13769,10 +13781,334 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
             preview.style.display = 'none';
             updateCreationSteps();
 
-            if (creationMode === 'concept') {
+            if (creationMode === 'narrative') {
+                renderNarrativeModeStep(content, title, subtitle, nextBtn, preview);
+            } else if (creationMode === 'concept') {
                 renderConceptModeStep(content, title, subtitle, nextBtn, preview);
             } else {
                 renderGuidedModeStep(content, title, subtitle, nextBtn, preview);
+            }
+        }
+
+        // ============================================================
+        // NARRATIVE MODE - Tell Your Story (describe → extract → confirm)
+        // ============================================================
+
+        // Store extraction result for confirmation step
+        let narrativeExtraction = null;
+
+        function renderNarrativeModeStep(content, title, subtitle, nextBtn, preview) {
+            switch (charCreationStep) {
+                case 0: // Describe Your Character
+                    title.textContent = 'Tell Your Story';
+                    subtitle.textContent = 'Who is your character? What makes them interesting?';
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label for="narrative-description">Character Description</label>
+                            <textarea id="narrative-description" placeholder="A legendary assassin haunted by the one target she couldn't kill - her sister...
+
+A young scholar who discovered forbidden knowledge and must now hide from those who would silence him...
+
+A battle-scarred veteran seeking redemption for crimes committed in a war that destroyed her homeland..."
+                                      style="min-height: 180px;">${charCreationData.narrativeDescription || ''}</textarea>
+                            <p class="hint">Write freely. The more you share, the better we understand who they are.</p>
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Continue';
+                    break;
+
+                case 1: // Deepen (optional prompts)
+                    title.textContent = 'Deepen Your Character';
+                    subtitle.textContent = 'Optional: Help us understand them better.';
+                    content.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div class="form-group">
+                                <label>What have they already proven they can do?</label>
+                                <input type="text" id="narrative-proven" value="${charCreationData.narrativeProven || ''}"
+                                       placeholder="Combat, magic, diplomacy, survival...">
+                            </div>
+                            <div class="form-group">
+                                <label>What are they capable of but still learning?</label>
+                                <input type="text" id="narrative-untested" value="${charCreationData.narrativeUntested || ''}"
+                                       placeholder="Trust, leadership, restraint...">
+                            </div>
+                            <div class="form-group">
+                                <label>What do they genuinely struggle with?</label>
+                                <input type="text" id="narrative-weak" value="${charCreationData.narrativeWeak || ''}"
+                                       placeholder="Peace, forgiveness, connection...">
+                            </div>
+                            <hr style="border-color: var(--border-subtle); margin: 10px 0;">
+                            <div class="form-group">
+                                <label>Who or what would they sacrifice everything for?</label>
+                                <input type="text" id="narrative-protects" value="${charCreationData.narrativeProtects || ''}"
+                                       placeholder="A person, ideal, place...">
+                            </div>
+                            <div class="form-group">
+                                <label>What absence still haunts them?</label>
+                                <input type="text" id="narrative-lost" value="${charCreationData.narrativeLost || ''}"
+                                       placeholder="A loved one, home, innocence...">
+                            </div>
+                        </div>
+                        <p class="hint" style="margin-top: 15px;">Skip any that don't feel right. We'll work with what you give us.</p>
+                    `;
+                    nextBtn.textContent = 'Analyze Character';
+                    break;
+
+                case 2: // Character Reading (extraction result)
+                    title.textContent = 'Your Character Reading';
+                    subtitle.textContent = 'Here\'s what we understood. Adjust anything that doesn\'t fit.';
+
+                    if (!narrativeExtraction) {
+                        content.innerHTML = `<div style="text-align: center; padding: 40px;"><span class="loading"></span> Analyzing your character...</div>`;
+                        nextBtn.style.display = 'none';
+                        return;
+                    }
+
+                    const ext = narrativeExtraction;
+                    content.innerHTML = `
+                        <div class="narrative-reading">
+                            <!-- Name -->
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label>Character Name</label>
+                                <input type="text" id="narrative-name" value="${ext.name || charCreationData.name || ''}"
+                                       placeholder="Enter a name" style="font-size: 1.1rem;">
+                            </div>
+
+                            <!-- Competencies -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--accent-gold); margin-bottom: 10px;">Competency Spectrum</h4>
+                                ${ext.competencies.map((c, i) => `
+                                    <div class="competency-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 6px;">
+                                        <span style="font-size: 1.2rem;">${c.icon}</span>
+                                        <span style="min-width: 80px; font-weight: 600;">${c.domain}</span>
+                                        <select id="comp-level-${i}" data-index="${i}" style="flex: 1; padding: 4px 8px;">
+                                            <option value="proven" ${c.level === 'proven' ? 'selected' : ''}>★ Proven</option>
+                                            <option value="untested" ${c.level === 'untested' ? 'selected' : ''}>◐ Untested</option>
+                                            <option value="weak" ${c.level === 'weak' ? 'selected' : ''}>○ Weak</option>
+                                        </select>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <!-- Friction Points -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--accent-gold); margin-bottom: 10px;">What Matters to Them</h4>
+                                ${ext.friction_points.map((fp, i) => `
+                                    <div class="friction-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 6px;">
+                                        <span style="font-size: 1.2rem;">${fp.icon}</span>
+                                        <span style="min-width: 70px; font-size: 0.85rem; color: var(--text-secondary);">${fp.category}</span>
+                                        <input type="text" id="friction-target-${i}" value="${fp.target}" style="flex: 1;">
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <!-- Origin & Archetype -->
+                            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Origin</label>
+                                    <select id="narrative-origin">
+                                        ${availableOrigins.map(o => `
+                                            <option value="${o.id}" ${o.id === ext.origin_id ? 'selected' : ''}>${o.display_name || o.name}</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Archetype</label>
+                                    <select id="narrative-archetype">
+                                        ${availableArchetypes.map(a => `
+                                            <option value="${a.id}" ${a.id === ext.archetype_id ? 'selected' : ''}>${a.display_name || a.name}</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Backstory Preview -->
+                            ${ext.backstory ? `
+                                <div style="padding: 12px; background: var(--bg-tertiary); border-radius: 8px; border-left: 3px solid var(--accent-gold);">
+                                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Backstory</div>
+                                    <div style="color: var(--text-primary); font-style: italic;">${ext.backstory}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Confirm Character';
+                    nextBtn.style.display = 'inline-block';
+                    break;
+
+                case 3: // Final confirmation / summary
+                    title.textContent = 'Ready to Begin';
+                    subtitle.textContent = 'Your character is ready for adventure.';
+
+                    const finalChar = charCreationData.generatedChar;
+                    if (!finalChar) {
+                        content.innerHTML = `<div style="text-align: center; padding: 40px;"><span class="loading"></span> Creating your character...</div>`;
+                        nextBtn.style.display = 'none';
+                        return;
+                    }
+
+                    content.innerHTML = `
+                        <div class="char-summary" style="text-align: center; padding: 20px;">
+                            <div style="font-size: 1.5rem; color: var(--accent-gold); margin-bottom: 5px;">${finalChar.name}</div>
+                            <div style="color: var(--text-secondary); margin-bottom: 20px;">${finalChar.race || finalChar.origin} ${finalChar.character_class || finalChar.archetype}</div>
+
+                            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;">
+                                <div>
+                                    <div style="font-size: 1.5rem; color: var(--accent-rose);">${finalChar.max_hit_points}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">HP</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 1.5rem; color: var(--accent-lavender);">${finalChar.armor_class || 10}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">AC</div>
+                                </div>
+                            </div>
+
+                            <p style="color: var(--text-secondary); font-style: italic; max-width: 400px; margin: 0 auto;">
+                                "${charCreationData.narrativeDescription?.substring(0, 150)}${charCreationData.narrativeDescription?.length > 150 ? '...' : ''}"
+                            </p>
+                        </div>
+                    `;
+                    nextBtn.textContent = 'Begin Adventure';
+                    nextBtn.style.display = 'inline-block';
+                    break;
+            }
+        }
+
+        async function handleNarrativeModeNext() {
+            if (charCreationStep === 0) {
+                // Save description and move to deepen step
+                const desc = document.getElementById('narrative-description')?.value?.trim();
+                if (!desc || desc.length < 10) {
+                    showNotification('Please describe your character (at least a sentence or two)', 'warning');
+                    return;
+                }
+                charCreationData.narrativeDescription = desc;
+                charCreationStep = 1;
+                renderCreationStep();
+
+            } else if (charCreationStep === 1) {
+                // Save deepening prompts and call extraction API
+                charCreationData.narrativeProven = document.getElementById('narrative-proven')?.value?.trim() || '';
+                charCreationData.narrativeUntested = document.getElementById('narrative-untested')?.value?.trim() || '';
+                charCreationData.narrativeWeak = document.getElementById('narrative-weak')?.value?.trim() || '';
+                charCreationData.narrativeProtects = document.getElementById('narrative-protects')?.value?.trim() || '';
+                charCreationData.narrativeLost = document.getElementById('narrative-lost')?.value?.trim() || '';
+
+                charCreationStep = 2;
+                narrativeExtraction = null;
+                renderCreationStep(); // Show loading state
+
+                try {
+                    const additionalPrompts = {};
+                    if (charCreationData.narrativeProven) additionalPrompts.proven = charCreationData.narrativeProven;
+                    if (charCreationData.narrativeUntested) additionalPrompts.untested = charCreationData.narrativeUntested;
+                    if (charCreationData.narrativeWeak) additionalPrompts.weak = charCreationData.narrativeWeak;
+                    if (charCreationData.narrativeProtects) additionalPrompts.protects = charCreationData.narrativeProtects;
+                    if (charCreationData.narrativeLost) additionalPrompts.lost = charCreationData.narrativeLost;
+
+                    const response = await fetch(API_BASE + '/game/character/extract', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            description: charCreationData.narrativeDescription,
+                            world_id: currentWorldId,
+                            additional_prompts: Object.keys(additionalPrompts).length > 0 ? additionalPrompts : null
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Extraction failed');
+
+                    const data = await response.json();
+                    narrativeExtraction = data.extraction;
+                    charCreationData.narrativeRaw = data.raw; // Store for confirm step
+                    renderCreationStep();
+
+                } catch (err) {
+                    console.error('Character extraction failed:', err);
+                    showNotification('Failed to analyze character. Please try again.', 'error');
+                    charCreationStep = 1;
+                    renderCreationStep();
+                }
+
+            } else if (charCreationStep === 2) {
+                // Gather adjustments and call confirm API
+                const name = document.getElementById('narrative-name')?.value?.trim();
+                if (!name) {
+                    showNotification('Please enter a character name', 'warning');
+                    return;
+                }
+
+                const originId = document.getElementById('narrative-origin')?.value;
+                const archetypeId = document.getElementById('narrative-archetype')?.value;
+
+                // Gather adjusted competencies
+                const competencies = narrativeExtraction.competencies.map((c, i) => {
+                    const levelSelect = document.getElementById(`comp-level-${i}`);
+                    return {
+                        domain: c.domain.toLowerCase(),
+                        level: levelSelect?.value || c.level,
+                        evidence: c.evidence || '',
+                        dm_guidance: c.guidance || '',
+                        is_custom: false
+                    };
+                });
+
+                // Gather adjusted friction points
+                const frictionPoints = narrativeExtraction.friction_points.map((fp, i) => {
+                    const targetInput = document.getElementById(`friction-target-${i}`);
+                    return {
+                        category: fp.category.toLowerCase(),
+                        target: targetInput?.value || fp.target,
+                        intensity: fp.intensity || 'significant',
+                        narrative_hook: fp.hook || ''
+                    };
+                });
+
+                charCreationStep = 3;
+                charCreationData.generatedChar = null;
+                renderCreationStep(); // Show loading
+
+                try {
+                    const response = await fetch(API_BASE + '/game/character/confirm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            description: charCreationData.narrativeDescription,
+                            world_id: currentWorldId,
+                            name: name,
+                            origin_id: originId,
+                            archetype_id: archetypeId,
+                            competencies: competencies,
+                            friction_points: frictionPoints,
+                            ability_priorities: narrativeExtraction.ability_priorities || [],
+                            suggested_skills: narrativeExtraction.suggested_skills || [],
+                            personality_traits: narrativeExtraction.personality?.traits || [],
+                            ideals: narrativeExtraction.personality?.ideals || [],
+                            bonds: narrativeExtraction.personality?.bonds || [],
+                            flaws: narrativeExtraction.personality?.flaws || [],
+                            backstory: narrativeExtraction.backstory || ''
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Character creation failed');
+
+                    const data = await response.json();
+                    charCreationData.generatedChar = data.character;
+                    charCreationData.characterId = data.character_id;
+                    charCreationData.name = name;
+                    charCreationData.origin = originId;
+                    charCreationData.archetype = archetypeId;
+                    renderCreationStep();
+
+                } catch (err) {
+                    console.error('Character confirmation failed:', err);
+                    showNotification('Failed to create character. Please try again.', 'error');
+                    charCreationStep = 2;
+                    renderCreationStep();
+                }
+
+            } else if (charCreationStep === 3) {
+                // Done - finalize character and start game
+                finalizeCharacter();
             }
         }
 
@@ -14758,7 +15094,9 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         }
 
         async function charCreationNext() {
-            if (creationMode === 'concept') {
+            if (creationMode === 'narrative') {
+                await handleNarrativeModeNext();
+            } else if (creationMode === 'concept') {
                 await handleConceptModeNext();
             } else {
                 await handleGuidedModeNext();
