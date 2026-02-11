@@ -33,6 +33,9 @@ COPY data/ ./data/
 # Copy frontend dist (self-contained HTML UI)
 COPY frontend/dist/ ./frontend/dist/
 
+# Copy frontend games (mini-games)
+COPY frontend/games/ ./frontend/games/
+
 EXPOSE 9000
 
 # Health check

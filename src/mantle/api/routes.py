@@ -352,6 +352,17 @@ if frontend_dist.exists():
             name="frontend-images"
         )
 
+# Mount games directory (mini-games like Liar's Dice)
+frontend_games = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "games"
+if frontend_games.exists():
+    logger.info(f"Mounting tavern games from {frontend_games}")
+    app.mount(
+        "/games",
+        StaticFiles(directory=str(frontend_games), html=True),
+        name="tavern-games"
+    )
+
+if frontend_dist.exists():
     # Serve manifest.json
     @app.get("/manifest.json")
     async def get_manifest():
