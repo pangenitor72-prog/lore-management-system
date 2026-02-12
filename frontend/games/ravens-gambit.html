@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Raven's Gambit - A MANTLE Tavern Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f12;
+            --bg-secondary: #16161a;
+            --bg-card: #1c1c21;
+            --bg-hover: #26262d;
+            --text-primary: #f0ede8;
+            --text-secondary: #a8a29e;
+            --text-muted: #78716c;
+            --accent-warm: #c9a55c;
+            --accent-gold: #D4AF37;
+            --accent-gold-hover: #e5c45c;
+            --accent-glow: rgba(212, 175, 55, 0.15);
+            --accent-sage: #2d8a55;
+            --accent-rose: #a33b3b;
+            --accent-lavender: #7c5cbf;
+            --border-subtle: #2a2a32;
+            --border-accent: #3d3d47;
+            --radius-sharp: 4px;
+            --radius-medium: 8px;
+            --radius-soft: 12px;
+            --font-narrative: 'Crimson Pro', Georgia, serif;
+            --font-ui: 'JetBrains Mono', 'Fira Code', monospace;
+
+            /* Bird colors */
+            --crow-color: #4a4a5a;
+            --owl-color: #6b5b3d;
+            --hawk-color: #8b4513;
+            --vulture-color: #3d3d3d;
+            --raven-color: #1a1a2e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #0f0f12, #12121a, #0f1215, #15120f, #0f0f12);
+            background-size: 400% 400%;
+            animation: gradientShift 30s ease infinite;
+            color: var(--text-primary);
+            font-family: var(--font-narrative);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            25% { background-position: 100% 50%; }
+            50% { background-position: 100% 100%; }
+            75% { background-position: 0% 100%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .game-container {
+            max-width: 700px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header {
+            text-align: center;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-family: var(--font-ui);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            max-width: 680px;
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: var(--radius-soft);
+            box-shadow:
+                inset 0 0 40px rgba(0,0,0,0.4),
+                0 8px 32px rgba(212, 175, 55, 0.15);
+            display: block;
+            cursor: pointer;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-medium);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+        }
+
+        .player-coins {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .coin-icon {
+            color: var(--accent-gold);
+        }
+
+        .pot-display {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-soft);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius-medium);
+            cursor: pointer;
+            font-family: var(--font-narrative);
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #8b3d3d, var(--accent-rose));
+            color: var(--text-primary);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(163, 59, 59, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-accent);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .message-box {
+            width: 100%;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--accent-warm);
+            border-radius: var(--radius-medium);
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.05rem;
+        }
+
+        .back-link {
+            margin-top: 15px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--accent-warm);
+        }
+
+        .game-over-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 18, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .game-over-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .game-over-text {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .game-over-text.win {
+            background: linear-gradient(135deg, var(--accent-sage), #4ade80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .game-over-text.lose {
+            background: linear-gradient(135deg, var(--accent-rose), #f87171);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Tutorial Styles */
+        .tutorial-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 18, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+        }
+
+        .tutorial-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .tutorial-card {
+            max-width: 520px;
+            width: 100%;
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: var(--radius-soft);
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                        0 0 40px rgba(212, 175, 55, 0.1);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .tutorial-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .tutorial-header h2 {
+            font-size: 1.8rem;
+            color: var(--accent-gold);
+            margin-bottom: 8px;
+        }
+
+        .tutorial-header .step-indicator {
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .tutorial-content {
+            min-height: 180px;
+        }
+
+        .tutorial-step {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tutorial-step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tutorial-step h3 {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .tutorial-step p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .tutorial-step .bird-list {
+            display: grid;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .tutorial-step .bird-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-medium);
+            border-left: 3px solid var(--accent-warm);
+        }
+
+        .tutorial-step .bird-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+
+        .tutorial-step .bird-info {
+            flex: 1;
+        }
+
+        .tutorial-step .bird-name {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .tutorial-step .bird-ability {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .tutorial-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tutorial-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tutorial-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border-accent);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tutorial-dot.active {
+            background: var(--accent-gold);
+            transform: scale(1.2);
+        }
+
+        .btn-text {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-narrative);
+            font-size: 0.95rem;
+            padding: 8px 16px;
+            transition: color 0.2s;
+        }
+
+        .btn-text:hover {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 500px) {
+            h1 { font-size: 1.8rem; }
+            .controls { flex-direction: column; }
+            .btn { width: 100%; }
+            .stats-bar { flex-direction: column; gap: 8px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Raven's Gambit</h1>
+            <p class="subtitle">A MANTLE Tavern Game</p>
+        </header>
+
+        <div class="stats-bar">
+            <div class="player-coins">
+                <span class="coin-icon">&#9733;</span>
+                <span>You: <strong id="playerCoins">5</strong></span>
+            </div>
+            <div class="pot-display">
+                Pot: <strong id="potAmount">0</strong>
+            </div>
+            <div class="player-coins">
+                <span>Seer: <strong id="aiCoins">5</strong></span>
+                <span class="coin-icon">&#9733;</span>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="680" height="520"></canvas>
+
+        <div class="message-box" id="messageBox">
+            The omens stir. Select a card from your hand to begin.
+        </div>
+
+        <div class="controls" id="controls">
+            <button class="btn btn-primary" id="raiseBtn">Raise (+1)</button>
+            <button class="btn btn-danger" id="foldBtn" disabled>Fold</button>
+            <button class="btn btn-secondary" id="newGameBtn">New Game</button>
+            <button class="btn btn-secondary" id="helpBtn">? Rules</button>
+        </div>
+
+        <a href="/games/liars-dice.html" class="back-link">Try Liar's Dice</a>
+        <a href="../dist/index.html" class="back-link" style="margin-top: 5px;">Return to MANTLE</a>
+    </div>
+
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-text" id="gameOverText">Victory!</div>
+        <button class="btn btn-primary" id="playAgainBtn">Play Again</button>
+    </div>
+
+    <!-- Tutorial Overlay -->
+    <div class="tutorial-overlay" id="tutorialOverlay">
+        <div class="tutorial-card">
+            <div class="tutorial-header">
+                <h2>Raven's Gambit</h2>
+                <div class="step-indicator">Step <span id="stepNum">1</span> of 4</div>
+            </div>
+
+            <div class="tutorial-content">
+                <!-- Step 1: The Premise -->
+                <div class="tutorial-step active" data-step="1">
+                    <h3>The Seer's Wager</h3>
+                    <p>Two seers sit across from each other, reading omens in the flight of birds. Each omen card you play reveals a vision - and a chance to claim the pot.</p>
+                    <p>You and your opponent each start with <strong>5 coins</strong>. First to claim all 10 wins the game.</p>
+                    <p>Each round, you'll play <strong>3 omen cards</strong> to form your vision. The seer with the strongest total claims the pot.</p>
+                </div>
+
+                <!-- Step 2: The Birds -->
+                <div class="tutorial-step" data-step="2">
+                    <h3>The Five Omens</h3>
+                    <div class="bird-list">
+                        <div class="bird-item">
+                            <div class="bird-icon">&#128055;</div>
+                            <div class="bird-info">
+                                <div class="bird-name">Crow (2-5)</div>
+                                <div class="bird-ability">Thief - Steal 1 coin from opponent's bet</div>
+                            </div>
+                        </div>
+                        <div class="bird-item">
+                            <div class="bird-icon">&#129417;</div>
+                            <div class="bird-info">
+                                <div class="bird-name">Owl (4-7)</div>
+                                <div class="bird-ability">Foresight - Draw a card, discard one</div>
+                            </div>
+                        </div>
+                        <div class="bird-item">
+                            <div class="bird-icon">&#129413;</div>
+                            <div class="bird-info">
+                                <div class="bird-name">Hawk (6-9)</div>
+                                <div class="bird-ability">Strike - Opponent's omen loses 2 power</div>
+                            </div>
+                        </div>
+                        <div class="bird-item">
+                            <div class="bird-icon">&#129413;</div>
+                            <div class="bird-info">
+                                <div class="bird-name">Vulture (3-6)</div>
+                                <div class="bird-ability">Scavenge - +1 power per card in discard</div>
+                            </div>
+                        </div>
+                        <div class="bird-item" style="border-left-color: var(--accent-gold);">
+                            <div class="bird-icon">&#128038;</div>
+                            <div class="bird-info">
+                                <div class="bird-name">Raven (1-10)</div>
+                                <div class="bird-ability">Trickster - Copy the last ability played</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Playing -->
+                <div class="tutorial-step" data-step="3">
+                    <h3>How to Play</h3>
+                    <p><strong>1. Ante Up</strong> - Each round starts with 1 coin from each player in the pot.</p>
+                    <p><strong>2. Play Cards</strong> - Click a card in your hand to play it. You and the opponent alternate, playing 3 cards each.</p>
+                    <p><strong>3. Abilities Trigger</strong> - When a card is played, its ability activates immediately.</p>
+                    <p><strong>4. Compare Omens</strong> - After 3 cards each, the higher total power wins the pot.</p>
+                    <p><strong>5. Raise</strong> - Before playing a card, you can raise the stakes by 1 coin. The opponent must match or fold.</p>
+                </div>
+
+                <!-- Step 4: Strategy -->
+                <div class="tutorial-step" data-step="4">
+                    <h3>Strategy Tips</h3>
+                    <p><strong>Watch the discard pile</strong> - Vultures grow stronger as more cards are discarded.</p>
+                    <p><strong>Save your Ravens</strong> - The Trickster can copy powerful abilities at the perfect moment.</p>
+                    <p><strong>Raise with confidence</strong> - If you have strong cards, make your opponent pay to see them.</p>
+                    <p><strong>Hawks counter high cards</strong> - A well-timed Strike can swing the round.</p>
+                    <p>The ancient Seer across from you is cunning but predictable. Learn their patterns!</p>
+                </div>
+            </div>
+
+            <div class="tutorial-nav">
+                <button class="btn-text" id="tutorialSkip">Skip</button>
+                <div class="tutorial-dots">
+                    <div class="tutorial-dot active" data-dot="1"></div>
+                    <div class="tutorial-dot" data-dot="2"></div>
+                    <div class="tutorial-dot" data-dot="3"></div>
+                    <div class="tutorial-dot" data-dot="4"></div>
+                </div>
+                <button class="btn btn-primary" id="tutorialNext">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // GAME CONSTANTS
+        // ============================================
+        const COLORS = {
+            bgPrimary: '#0f0f12',
+            bgSecondary: '#16161a',
+            bgCard: '#1c1c21',
+            textPrimary: '#f0ede8',
+            textSecondary: '#a8a29e',
+            textMuted: '#78716c',
+            accentGold: '#D4AF37',
+            accentWarm: '#c9a55c',
+            accentSage: '#2d8a55',
+            accentRose: '#a33b3b',
+            borderSubtle: '#2a2a32',
+            cardBack: '#2a2a35',
+        };
+
+        const BIRD_TYPES = {
+            crow: { name: 'Crow', icon: '&#128055;', color: '#4a4a6a', minPower: 2, maxPower: 5, ability: 'Thief' },
+            owl: { name: 'Owl', icon: '&#129417;', color: '#6b5b4d', minPower: 4, maxPower: 7, ability: 'Foresight' },
+            hawk: { name: 'Hawk', icon: '&#129413;', color: '#8b5533', minPower: 6, maxPower: 9, ability: 'Strike' },
+            vulture: { name: 'Vulture', icon: '&#128054;', color: '#4d4d4d', minPower: 3, maxPower: 6, ability: 'Scavenge' },
+            raven: { name: 'Raven', icon: '&#128038;', color: '#2a2a4e', minPower: 1, maxPower: 10, ability: 'Trickster' },
+        };
+
+        const CARD_WIDTH = 70;
+        const CARD_HEIGHT = 100;
+        const CARD_GAP = 10;
+
+        // ============================================
+        // GAME STATE
+        // ============================================
+        let gameState = {
+            playerHand: [],
+            aiHand: [],
+            playerField: [],
+            aiField: [],
+            deck: [],
+            discard: [],
+            playerCoins: 5,
+            aiCoins: 5,
+            pot: 0,
+            currentTurn: 'player', // 'player' or 'ai'
+            roundPhase: 'betting', // 'betting', 'playing', 'resolution'
+            cardsPlayedThisRound: 0,
+            selectedCardIndex: -1,
+            lastAbilityUsed: null,
+            playerPowerMod: 0,
+            aiPowerMod: 0,
+            gameOver: false,
+            message: '',
+            animating: false,
+        };
+
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const messageBox = document.getElementById('messageBox');
+        const playerCoinsEl = document.getElementById('playerCoins');
+        const aiCoinsEl = document.getElementById('aiCoins');
+        const potAmountEl = document.getElementById('potAmount');
+        const raiseBtn = document.getElementById('raiseBtn');
+        const foldBtn = document.getElementById('foldBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const gameOverText = document.getElementById('gameOverText');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+
+        // ============================================
+        // DECK & CARDS
+        // ============================================
+        function createDeck() {
+            const deck = [];
+            for (const [type, info] of Object.entries(BIRD_TYPES)) {
+                // Create cards across the power range
+                for (let power = info.minPower; power <= info.maxPower; power++) {
+                    deck.push({ type, power, ...info });
+                }
+            }
+            return shuffle(deck);
+        }
+
+        function shuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function drawCards(hand, count) {
+            for (let i = 0; i < count; i++) {
+                if (gameState.deck.length === 0) {
+                    // Reshuffle discard into deck
+                    gameState.deck = shuffle([...gameState.discard]);
+                    gameState.discard = [];
+                }
+                if (gameState.deck.length > 0) {
+                    hand.push(gameState.deck.pop());
+                }
+            }
+        }
+
+        // ============================================
+        // GAME LOGIC
+        // ============================================
+        function initGame() {
+            gameState = {
+                playerHand: [],
+                aiHand: [],
+                playerField: [],
+                aiField: [],
+                deck: createDeck(),
+                discard: [],
+                playerCoins: 5,
+                aiCoins: 5,
+                pot: 0,
+                currentTurn: 'player',
+                roundPhase: 'playing',
+                cardsPlayedThisRound: 0,
+                selectedCardIndex: -1,
+                lastAbilityUsed: null,
+                playerPowerMod: 0,
+                aiPowerMod: 0,
+                gameOver: false,
+                message: 'The omens stir. Select a card from your hand.',
+                animating: false,
+            };
+
+            drawCards(gameState.playerHand, 6);
+            drawCards(gameState.aiHand, 6);
+            startRound();
+            updateUI();
+            render();
+            hideGameOver();
+        }
+
+        function startRound() {
+            // Ante
+            if (gameState.playerCoins > 0 && gameState.aiCoins > 0) {
+                gameState.playerCoins--;
+                gameState.aiCoins--;
+                gameState.pot = 2;
+            }
+
+            gameState.playerField = [];
+            gameState.aiField = [];
+            gameState.cardsPlayedThisRound = 0;
+            gameState.playerPowerMod = 0;
+            gameState.aiPowerMod = 0;
+            gameState.lastAbilityUsed = null;
+            gameState.roundPhase = 'playing';
+            gameState.currentTurn = 'player';
+
+            // Draw back to 6 cards
+            while (gameState.playerHand.length < 6 && (gameState.deck.length > 0 || gameState.discard.length > 0)) {
+                drawCards(gameState.playerHand, 1);
+            }
+            while (gameState.aiHand.length < 6 && (gameState.deck.length > 0 || gameState.discard.length > 0)) {
+                drawCards(gameState.aiHand, 1);
+            }
+
+            setMessage('New round! Pot is ' + gameState.pot + ' coins. Play a card.');
+            updateUI();
+        }
+
+        function playCard(hand, field, cardIndex, isPlayer) {
+            const card = hand.splice(cardIndex, 1)[0];
+            field.push(card);
+            gameState.cardsPlayedThisRound++;
+
+            // Trigger ability
+            triggerAbility(card, isPlayer);
+
+            return card;
+        }
+
+        function triggerAbility(card, isPlayer) {
+            const opponent = isPlayer ? 'ai' : 'player';
+
+            switch (card.type) {
+                case 'crow':
+                    // Steal 1 coin from opponent's potential winnings (reduce their effective power)
+                    if (isPlayer && gameState.aiCoins > 0) {
+                        gameState.aiCoins--;
+                        gameState.pot++;
+                        setMessage(`Crow steals a coin! Pot is now ${gameState.pot}.`);
+                    } else if (!isPlayer && gameState.playerCoins > 0) {
+                        gameState.playerCoins--;
+                        gameState.pot++;
+                        setMessage(`Crow steals from you! Pot is now ${gameState.pot}.`);
+                    }
+                    break;
+
+                case 'owl':
+                    // Draw a card (simplified - just draw 1)
+                    if (isPlayer) {
+                        drawCards(gameState.playerHand, 1);
+                        setMessage('Owl grants foresight. You draw a card.');
+                    } else {
+                        drawCards(gameState.aiHand, 1);
+                        setMessage('Owl grants the Seer foresight.');
+                    }
+                    break;
+
+                case 'hawk':
+                    // Reduce opponent's power by 2
+                    if (isPlayer) {
+                        gameState.aiPowerMod -= 2;
+                        setMessage('Hawk strikes! Opponent loses 2 power.');
+                    } else {
+                        gameState.playerPowerMod -= 2;
+                        setMessage('Hawk strikes you! You lose 2 power.');
+                    }
+                    break;
+
+                case 'vulture':
+                    // +1 power per card in discard
+                    const bonus = gameState.discard.length;
+                    if (isPlayer) {
+                        gameState.playerPowerMod += bonus;
+                        setMessage(`Vulture scavenges +${bonus} power from the dead.`);
+                    } else {
+                        gameState.aiPowerMod += bonus;
+                        setMessage(`Vulture scavenges +${bonus} power.`);
+                    }
+                    break;
+
+                case 'raven':
+                    // Copy last ability
+                    if (gameState.lastAbilityUsed && gameState.lastAbilityUsed !== 'raven') {
+                        setMessage(`Raven mimics the ${gameState.lastAbilityUsed}!`);
+                        const mimicCard = { type: gameState.lastAbilityUsed };
+                        triggerAbility(mimicCard, isPlayer);
+                    } else {
+                        setMessage('Raven caws... but there is nothing to mimic.');
+                    }
+                    break;
+            }
+
+            gameState.lastAbilityUsed = card.type;
+        }
+
+        function calculatePower(field, powerMod) {
+            return field.reduce((sum, card) => sum + card.power, 0) + powerMod;
+        }
+
+        function resolveRound() {
+            gameState.roundPhase = 'resolution';
+
+            const playerPower = calculatePower(gameState.playerField, gameState.playerPowerMod);
+            const aiPower = calculatePower(gameState.aiField, gameState.aiPowerMod);
+
+            // Move played cards to discard
+            gameState.discard.push(...gameState.playerField, ...gameState.aiField);
+
+            setTimeout(() => {
+                if (playerPower > aiPower) {
+                    gameState.playerCoins += gameState.pot;
+                    setMessage(`Your omens triumph! (${playerPower} vs ${aiPower}) You claim ${gameState.pot} coins.`);
+                } else if (aiPower > playerPower) {
+                    gameState.aiCoins += gameState.pot;
+                    setMessage(`The Seer's vision prevails! (${aiPower} vs ${playerPower}) They claim ${gameState.pot} coins.`);
+                } else {
+                    // Tie - split pot
+                    const half = Math.floor(gameState.pot / 2);
+                    gameState.playerCoins += half;
+                    gameState.aiCoins += gameState.pot - half;
+                    setMessage(`The omens are balanced! (${playerPower} vs ${aiPower}) Pot is split.`);
+                }
+
+                gameState.pot = 0;
+                updateUI();
+                render();
+
+                // Check for game over
+                setTimeout(() => {
+                    if (gameState.playerCoins <= 0) {
+                        showGameOver(false);
+                    } else if (gameState.aiCoins <= 0) {
+                        showGameOver(true);
+                    } else {
+                        startRound();
+                        render();
+                    }
+                }, 1500);
+            }, 1000);
+        }
+
+        function aiTurn() {
+            if (gameState.gameOver || gameState.currentTurn !== 'ai') return;
+
+            gameState.animating = true;
+
+            setTimeout(() => {
+                // Simple AI: play highest power card, sometimes raise
+                const hand = gameState.aiHand;
+                if (hand.length === 0) {
+                    gameState.animating = false;
+                    return;
+                }
+
+                // Maybe raise
+                if (gameState.aiCoins > 1 && Math.random() < 0.3 && gameState.pot < 6) {
+                    gameState.aiCoins--;
+                    gameState.pot++;
+                    setMessage(`The Seer raises! Pot is now ${gameState.pot}.`);
+                    updateUI();
+                }
+
+                setTimeout(() => {
+                    // Pick a card - prefer higher power, but some randomness
+                    let bestIndex = 0;
+                    let bestScore = -1;
+
+                    hand.forEach((card, i) => {
+                        let score = card.power + Math.random() * 3;
+                        // Prefer vultures late (more discard)
+                        if (card.type === 'vulture') score += gameState.discard.length * 0.5;
+                        // Prefer ravens when there's a good ability to copy
+                        if (card.type === 'raven' && gameState.lastAbilityUsed === 'hawk') score += 3;
+
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestIndex = i;
+                        }
+                    });
+
+                    const card = playCard(gameState.aiHand, gameState.aiField, bestIndex, false);
+                    updateUI();
+                    render();
+
+                    // Check if round is over
+                    if (gameState.playerField.length >= 3 && gameState.aiField.length >= 3) {
+                        gameState.animating = false;
+                        resolveRound();
+                    } else {
+                        gameState.currentTurn = 'player';
+                        gameState.animating = false;
+                        setMessage('Your turn. Play a card.');
+                        render();
+                    }
+                }, 800);
+            }, 600);
+        }
+
+        function playerPlayCard(cardIndex) {
+            if (gameState.animating || gameState.currentTurn !== 'player') return;
+            if (gameState.roundPhase !== 'playing') return;
+            if (cardIndex < 0 || cardIndex >= gameState.playerHand.length) return;
+
+            const card = playCard(gameState.playerHand, gameState.playerField, cardIndex, true);
+            gameState.selectedCardIndex = -1;
+            updateUI();
+            render();
+
+            // Check if round is over
+            if (gameState.playerField.length >= 3 && gameState.aiField.length >= 3) {
+                resolveRound();
+            } else {
+                gameState.currentTurn = 'ai';
+                setTimeout(aiTurn, 500);
+            }
+        }
+
+        function raise() {
+            if (gameState.playerCoins < 1 || gameState.animating) return;
+
+            gameState.playerCoins--;
+            gameState.pot++;
+            setMessage(`You raise! Pot is now ${gameState.pot}. Play a card.`);
+            updateUI();
+            render();
+        }
+
+        function fold() {
+            if (gameState.pot <= 2) return; // Can't fold the ante
+
+            gameState.aiCoins += gameState.pot;
+            setMessage('You fold. The Seer claims the pot.');
+            gameState.pot = 0;
+            updateUI();
+
+            setTimeout(() => {
+                if (gameState.playerCoins <= 0) {
+                    showGameOver(false);
+                } else {
+                    startRound();
+                    render();
+                }
+            }, 1500);
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+        function render() {
+            ctx.fillStyle = COLORS.bgCard;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw table texture
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 50,
+                canvas.width / 2, canvas.height / 2, 400
+            );
+            gradient.addColorStop(0, '#1e1e26');
+            gradient.addColorStop(1, COLORS.bgCard);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw AI field (top)
+            drawField(gameState.aiField, canvas.width / 2, 80, 'Seer\'s Omens', false);
+
+            // Draw AI hand (face down)
+            drawHand(gameState.aiHand, canvas.width / 2, 30, true);
+
+            // Draw center area - power comparison
+            drawPowerComparison();
+
+            // Draw Player field
+            drawField(gameState.playerField, canvas.width / 2, 340, 'Your Omens', true);
+
+            // Draw Player hand
+            drawHand(gameState.playerHand, canvas.width / 2, 460, false);
+        }
+
+        function drawHand(hand, centerX, y, faceDown) {
+            const totalWidth = hand.length * (CARD_WIDTH + CARD_GAP) - CARD_GAP;
+            const startX = centerX - totalWidth / 2;
+
+            hand.forEach((card, i) => {
+                const x = startX + i * (CARD_WIDTH + CARD_GAP);
+                const isSelected = !faceDown && i === gameState.selectedCardIndex;
+                const yOffset = isSelected ? -15 : 0;
+
+                if (faceDown) {
+                    drawCardBack(x, y);
+                } else {
+                    drawCard(card, x, y + yOffset, isSelected);
+                }
+            });
+        }
+
+        function drawField(field, centerX, y, label, isPlayer) {
+            // Label
+            ctx.fillStyle = COLORS.textMuted;
+            ctx.font = "12px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'center';
+            ctx.fillText(label, centerX, y - 55);
+
+            // Power total
+            const power = calculatePower(field, isPlayer ? gameState.playerPowerMod : gameState.aiPowerMod);
+            ctx.fillStyle = COLORS.accentGold;
+            ctx.font = "bold 16px 'JetBrains Mono', monospace";
+            ctx.fillText(`Power: ${power}`, centerX, y - 38);
+
+            // Cards
+            const totalWidth = 3 * (CARD_WIDTH + CARD_GAP) - CARD_GAP;
+            const startX = centerX - totalWidth / 2;
+
+            for (let i = 0; i < 3; i++) {
+                const x = startX + i * (CARD_WIDTH + CARD_GAP);
+                if (field[i]) {
+                    drawCard(field[i], x, y, false);
+                } else {
+                    drawCardSlot(x, y);
+                }
+            }
+        }
+
+        function drawCard(card, x, y, highlighted) {
+            // Shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 4;
+
+            // Card background
+            ctx.fillStyle = card.color;
+            roundRect(ctx, x, y, CARD_WIDTH, CARD_HEIGHT, 8, true, false);
+
+            ctx.shadowColor = 'transparent';
+
+            // Border
+            ctx.strokeStyle = highlighted ? COLORS.accentGold : COLORS.accentWarm;
+            ctx.lineWidth = highlighted ? 3 : 1.5;
+            roundRect(ctx, x, y, CARD_WIDTH, CARD_HEIGHT, 8, false, true);
+
+            // Bird icon (using text for now)
+            ctx.fillStyle = COLORS.textPrimary;
+            ctx.font = "28px serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Render HTML entity as unicode
+            const iconMap = {
+                crow: '\u{1F426}',      // bird
+                owl: '\u{1F989}',       // owl
+                hawk: '\u{1F985}',      // eagle
+                vulture: '\u{1F985}',   // eagle (no vulture emoji)
+                raven: '\u{1F426}',     // bird (black)
+            };
+            ctx.fillText(iconMap[card.type] || '?', x + CARD_WIDTH / 2, y + 35);
+
+            // Power
+            ctx.fillStyle = COLORS.accentGold;
+            ctx.font = "bold 22px 'Crimson Pro', serif";
+            ctx.fillText(card.power, x + CARD_WIDTH / 2, y + 70);
+
+            // Name
+            ctx.fillStyle = COLORS.textPrimary;
+            ctx.font = "11px 'Crimson Pro', serif";
+            ctx.fillText(card.name, x + CARD_WIDTH / 2, y + 90);
+        }
+
+        function drawCardBack(x, y) {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 2;
+
+            ctx.fillStyle = COLORS.cardBack;
+            roundRect(ctx, x, y, CARD_WIDTH, CARD_HEIGHT, 8, true, false);
+
+            ctx.shadowColor = 'transparent';
+
+            ctx.strokeStyle = COLORS.borderSubtle;
+            ctx.lineWidth = 1;
+            roundRect(ctx, x, y, CARD_WIDTH, CARD_HEIGHT, 8, false, true);
+
+            // Pattern
+            ctx.fillStyle = COLORS.accentWarm;
+            ctx.globalAlpha = 0.3;
+            ctx.font = "24px serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('?', x + CARD_WIDTH / 2, y + CARD_HEIGHT / 2);
+            ctx.globalAlpha = 1;
+        }
+
+        function drawCardSlot(x, y) {
+            ctx.strokeStyle = COLORS.borderSubtle;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            roundRect(ctx, x, y, CARD_WIDTH, CARD_HEIGHT, 8, false, true);
+            ctx.setLineDash([]);
+        }
+
+        function drawPowerComparison() {
+            const centerY = canvas.height / 2 - 10;
+
+            // Divider line
+            ctx.strokeStyle = COLORS.borderSubtle;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(50, centerY);
+            ctx.lineTo(canvas.width - 50, centerY);
+            ctx.stroke();
+
+            // "VS" text
+            ctx.fillStyle = COLORS.textMuted;
+            ctx.font = "bold 14px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'center';
+            ctx.fillText('VS', canvas.width / 2, centerY + 5);
+
+            // Discard pile count
+            ctx.fillStyle = COLORS.textMuted;
+            ctx.font = "11px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'left';
+            ctx.fillText(`Discard: ${gameState.discard.length}`, 20, centerY + 5);
+        }
+
+        function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        // ============================================
+        // UI & INTERACTION
+        // ============================================
+        function setMessage(msg) {
+            gameState.message = msg;
+            messageBox.textContent = msg;
+        }
+
+        function updateUI() {
+            playerCoinsEl.textContent = gameState.playerCoins;
+            aiCoinsEl.textContent = gameState.aiCoins;
+            potAmountEl.textContent = gameState.pot;
+
+            raiseBtn.disabled = gameState.playerCoins < 1 || gameState.animating || gameState.currentTurn !== 'player';
+            foldBtn.disabled = gameState.pot <= 2 || gameState.animating;
+        }
+
+        function showGameOver(won) {
+            gameState.gameOver = true;
+            gameOverText.textContent = won ? 'Victory!' : 'Defeat';
+            gameOverText.className = 'game-over-text ' + (won ? 'win' : 'lose');
+            gameOverOverlay.classList.add('visible');
+        }
+
+        function hideGameOver() {
+            gameOverOverlay.classList.remove('visible');
+        }
+
+        // Canvas click handling
+        canvas.addEventListener('click', (e) => {
+            if (gameState.animating || gameState.currentTurn !== 'player') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            // Check if clicking on player's hand (y around 460)
+            if (y >= 430 && y <= 530) {
+                const hand = gameState.playerHand;
+                const totalWidth = hand.length * (CARD_WIDTH + CARD_GAP) - CARD_GAP;
+                const startX = canvas.width / 2 - totalWidth / 2;
+
+                for (let i = 0; i < hand.length; i++) {
+                    const cardX = startX + i * (CARD_WIDTH + CARD_GAP);
+                    if (x >= cardX && x <= cardX + CARD_WIDTH) {
+                        if (gameState.selectedCardIndex === i) {
+                            // Play the card
+                            playerPlayCard(i);
+                        } else {
+                            // Select the card
+                            gameState.selectedCardIndex = i;
+                            render();
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // Clicking elsewhere deselects
+            gameState.selectedCardIndex = -1;
+            render();
+        });
+
+        // Button handlers
+        raiseBtn.addEventListener('click', raise);
+        foldBtn.addEventListener('click', fold);
+        newGameBtn.addEventListener('click', initGame);
+        playAgainBtn.addEventListener('click', initGame);
+
+        // ============================================
+        // TUTORIAL
+        // ============================================
+        const tutorialOverlay = document.getElementById('tutorialOverlay');
+        const tutorialSteps = document.querySelectorAll('.tutorial-step');
+        const tutorialDots = document.querySelectorAll('.tutorial-dot');
+        const stepNumEl = document.getElementById('stepNum');
+        const tutorialNextBtn = document.getElementById('tutorialNext');
+        const tutorialSkipBtn = document.getElementById('tutorialSkip');
+
+        let currentTutorialStep = 1;
+        const TOTAL_STEPS = 4;
+        const TUTORIAL_SEEN_KEY = 'ravens_gambit_tutorial_seen';
+
+        function showTutorial() {
+            currentTutorialStep = 1;
+            updateTutorialStep();
+            tutorialOverlay.classList.add('visible');
+        }
+
+        function hideTutorial() {
+            tutorialOverlay.classList.remove('visible');
+            localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+        }
+
+        function updateTutorialStep() {
+            tutorialSteps.forEach(step => {
+                step.classList.remove('active');
+                if (parseInt(step.dataset.step) === currentTutorialStep) {
+                    step.classList.add('active');
+                }
+            });
+
+            tutorialDots.forEach(dot => {
+                dot.classList.remove('active');
+                if (parseInt(dot.dataset.dot) === currentTutorialStep) {
+                    dot.classList.add('active');
+                }
+            });
+
+            stepNumEl.textContent = currentTutorialStep;
+            tutorialNextBtn.textContent = currentTutorialStep === TOTAL_STEPS ? "Let's Play!" : 'Next';
+        }
+
+        tutorialNextBtn.addEventListener('click', () => {
+            if (currentTutorialStep < TOTAL_STEPS) {
+                currentTutorialStep++;
+                updateTutorialStep();
+            } else {
+                hideTutorial();
+            }
+        });
+
+        tutorialSkipBtn.addEventListener('click', hideTutorial);
+        helpBtn.addEventListener('click', showTutorial);
+
+        tutorialDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                currentTutorialStep = parseInt(dot.dataset.dot);
+                updateTutorialStep();
+            });
+        });
+
+        function checkFirstVisit() {
+            if (!localStorage.getItem(TUTORIAL_SEEN_KEY)) {
+                showTutorial();
+            }
+        }
+
+        // ============================================
+        // START GAME
+        // ============================================
+        initGame();
+        checkFirstVisit();
+    </script>
+</body>
+</html>
