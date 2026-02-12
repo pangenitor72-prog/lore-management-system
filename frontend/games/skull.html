@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Skull - A MANTLE Tavern Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f12;
+            --bg-secondary: #16161a;
+            --bg-card: #1c1c21;
+            --text-primary: #f0ede8;
+            --text-secondary: #a8a29e;
+            --text-muted: #78716c;
+            --accent-warm: #c9a55c;
+            --accent-gold: #D4AF37;
+            --accent-sage: #2d8a55;
+            --accent-rose: #a33b3b;
+            --border-subtle: #2a2a32;
+            --border-accent: #3d3d47;
+            --radius-medium: 8px;
+            --radius-soft: 12px;
+            --font-narrative: 'Crimson Pro', Georgia, serif;
+            --font-ui: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(-45deg, #0f0f12, #12121a, #0f1215, #15120f, #0f0f12);
+            background-size: 400% 400%;
+            animation: gradientShift 30s ease infinite;
+            color: var(--text-primary);
+            font-family: var(--font-narrative);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .game-container {
+            max-width: 650px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header { text-align: center; width: 100%; }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-family: var(--font-ui);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .score-bar {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-medium);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+        }
+
+        .score-item { text-align: center; }
+        .score-label { color: var(--text-muted); font-size: 0.75rem; }
+        .score-value { color: var(--accent-gold); font-weight: bold; font-size: 1.1rem; }
+
+        #gameCanvas {
+            width: 100%;
+            max-width: 620px;
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: var(--radius-soft);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.4), 0 8px 32px rgba(212, 175, 55, 0.15);
+            display: block;
+            cursor: pointer;
+        }
+
+        .message-box {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--accent-warm);
+            border-radius: var(--radius-medium);
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-soft);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-medium);
+            cursor: pointer;
+            font-family: var(--font-narrative);
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-warm), var(--accent-gold));
+            color: var(--bg-primary);
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-flower {
+            background: linear-gradient(135deg, #2d5a2d, var(--accent-sage));
+            color: var(--text-primary);
+        }
+
+        .btn-skull {
+            background: linear-gradient(135deg, #5a2d2d, var(--accent-rose));
+            color: var(--text-primary);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-accent);
+            color: var(--text-secondary);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            border-color: var(--accent-warm);
+            color: var(--accent-warm);
+        }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .bid-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bid-controls input {
+            width: 60px;
+            padding: 8px;
+            text-align: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-medium);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 1rem;
+        }
+
+        .back-link {
+            margin-top: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+        }
+        .back-link:hover { color: var(--accent-warm); }
+
+        .game-over-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 18, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        .game-over-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        .game-over-text {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+        .game-over-text.win {
+            background: linear-gradient(135deg, var(--accent-sage), #4ade80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .game-over-text.lose {
+            background: linear-gradient(135deg, var(--accent-rose), #f87171);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Tutorial */
+        .tutorial-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 18, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+        }
+        .tutorial-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        .tutorial-card {
+            max-width: 500px;
+            width: 100%;
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 2px solid var(--accent-gold);
+            border-radius: var(--radius-soft);
+            padding: 25px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .tutorial-card h2 {
+            color: var(--accent-gold);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .tutorial-card p, .tutorial-card li {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .tutorial-card strong { color: var(--text-primary); }
+
+        .tutorial-card ul { margin-left: 20px; margin-bottom: 15px; }
+
+        .tutorial-card .phase {
+            background: var(--bg-primary);
+            border-left: 3px solid var(--accent-warm);
+            padding: 10px 12px;
+            margin: 12px 0;
+            border-radius: var(--radius-medium);
+        }
+
+        .tutorial-card .phase-title {
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .tutorial-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .btn-text {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-narrative);
+            padding: 8px 16px;
+        }
+
+        @media (max-width: 500px) {
+            h1 { font-size: 1.8rem; }
+            .controls { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Skull</h1>
+            <p class="subtitle">A MANTLE Tavern Game</p>
+        </header>
+
+        <div class="score-bar">
+            <div class="score-item">
+                <div class="score-label">YOUR POINTS</div>
+                <div class="score-value" id="playerPoints">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">YOUR TILES</div>
+                <div class="score-value" id="playerTiles">4</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">CURRENT BID</div>
+                <div class="score-value" id="currentBid">-</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">RIVAL TILES</div>
+                <div class="score-value" id="aiTiles">4</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">RIVAL POINTS</div>
+                <div class="score-value" id="aiPoints">0</div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="620" height="400"></canvas>
+
+        <div class="message-box" id="messageBox">Place a tile to begin the round.</div>
+
+        <div class="controls" id="controls">
+            <button class="btn btn-flower" id="placeFlowerBtn">Place Flower</button>
+            <button class="btn btn-skull" id="placeSkullBtn">Place Skull</button>
+            <div class="bid-controls">
+                <button class="btn btn-primary" id="bidBtn" disabled>Bid</button>
+                <input type="number" id="bidInput" min="1" max="8" value="1">
+            </div>
+            <button class="btn btn-secondary" id="passBtn" disabled>Pass</button>
+            <button class="btn btn-secondary" id="newGameBtn">New Game</button>
+            <button class="btn btn-secondary" id="helpBtn">?</button>
+        </div>
+
+        <a href="/games/liars-dice.html" class="back-link">Liar's Dice</a>
+        <a href="/games/ravens-gambit.html" class="back-link" style="margin-left:15px;">Raven's Gambit</a>
+        <a href="/games/shut-the-box.html" class="back-link" style="margin-left:15px;">Shut the Box</a>
+        <a href="../dist/index.html" class="back-link" style="margin-top:8px;">Return to MANTLE</a>
+    </div>
+
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-text" id="gameOverText">Victory!</div>
+        <button class="btn btn-primary" id="playAgainBtn">Play Again</button>
+    </div>
+
+    <div class="tutorial-overlay" id="tutorialOverlay">
+        <div class="tutorial-card">
+            <h2>How to Play Skull</h2>
+            <p><strong>Skull</strong> is a game of pure bluff. No luck, no hidden information - just mind games.</p>
+            <p>You and your rival each have <strong>4 tiles</strong>: 3 Flowers and 1 Skull.</p>
+
+            <div class="phase">
+                <div class="phase-title">Phase 1: Place Tiles</div>
+                <p>Take turns placing tiles face-down on your stack. You must place at least one tile before bidding.</p>
+            </div>
+
+            <div class="phase">
+                <div class="phase-title">Phase 2: Bid or Place</div>
+                <p>Instead of placing, declare: "I can flip X tiles safely!" Your rival can raise the bid or pass.</p>
+            </div>
+
+            <div class="phase">
+                <div class="phase-title">Phase 3: Reveal</div>
+                <p>The highest bidder must flip that many tiles. <strong>You must flip all your own tiles first</strong>, then choose from your rival's stack (top tile only).</p>
+            </div>
+
+            <ul>
+                <li><strong>Flip a Skull?</strong> You lose one of your tiles permanently (chosen randomly, hidden).</li>
+                <li><strong>Succeed?</strong> You earn 1 point.</li>
+                <li><strong>First to 2 points wins!</strong></li>
+            </ul>
+
+            <p><em>The trick: place your skull, then bid high. Make them flip it. Or bluff with all flowers and bid safe. Read your rival.</em></p>
+
+            <div class="tutorial-nav">
+                <button class="btn-text" id="tutorialSkip">Skip</button>
+                <button class="btn btn-primary" id="tutorialStart">Got It!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONSTANTS
+        // ============================================
+        const COLORS = {
+            bgCard: '#1c1c21',
+            textPrimary: '#f0ede8',
+            textSecondary: '#a8a29e',
+            textMuted: '#78716c',
+            accentGold: '#D4AF37',
+            accentWarm: '#c9a55c',
+            accentSage: '#2d8a55',
+            accentRose: '#a33b3b',
+            borderSubtle: '#2a2a32',
+            tileBack: '#3a3a45',
+            flower: '#2d6a2d',
+            skull: '#6a2d2d',
+        };
+
+        const TILE_SIZE = 60;
+
+        // ============================================
+        // GAME STATE
+        // ============================================
+        let game = {
+            // Player tiles: array of {type: 'flower'|'skull', eliminated: bool}
+            playerTiles: [],
+            aiTiles: [],
+            // Stacks: array of tile types placed this round
+            playerStack: [],
+            aiStack: [],
+            // Points
+            playerPoints: 0,
+            aiPoints: 0,
+            // Bidding
+            currentBid: 0,
+            currentBidder: null, // 'player' or 'ai'
+            highestBidder: null,
+            // Phase: 'placing', 'bidding', 'revealing', 'roundEnd'
+            phase: 'placing',
+            turn: 'player',
+            // Reveal state
+            revealedPlayer: 0,
+            revealedAi: 0,
+            revealTarget: 0,
+            // Flags
+            playerPlacedThisRound: false,
+            aiPlacedThisRound: false,
+            playerPassed: false,
+            aiPassed: false,
+            gameOver: false,
+            message: '',
+        };
+
+        // ============================================
+        // DOM
+        // ============================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const messageBox = document.getElementById('messageBox');
+        const playerPointsEl = document.getElementById('playerPoints');
+        const playerTilesEl = document.getElementById('playerTiles');
+        const aiPointsEl = document.getElementById('aiPoints');
+        const aiTilesEl = document.getElementById('aiTiles');
+        const currentBidEl = document.getElementById('currentBid');
+        const placeFlowerBtn = document.getElementById('placeFlowerBtn');
+        const placeSkullBtn = document.getElementById('placeSkullBtn');
+        const bidBtn = document.getElementById('bidBtn');
+        const bidInput = document.getElementById('bidInput');
+        const passBtn = document.getElementById('passBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const gameOverText = document.getElementById('gameOverText');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+
+        // ============================================
+        // INIT
+        // ============================================
+        function initGame() {
+            game = {
+                playerTiles: [
+                    { type: 'flower' }, { type: 'flower' }, { type: 'flower' }, { type: 'skull' }
+                ],
+                aiTiles: [
+                    { type: 'flower' }, { type: 'flower' }, { type: 'flower' }, { type: 'skull' }
+                ],
+                playerStack: [],
+                aiStack: [],
+                playerPoints: 0,
+                aiPoints: 0,
+                currentBid: 0,
+                currentBidder: null,
+                highestBidder: null,
+                phase: 'placing',
+                turn: 'player',
+                revealedPlayer: 0,
+                revealedAi: 0,
+                revealTarget: 0,
+                playerPlacedThisRound: false,
+                aiPlacedThisRound: false,
+                playerPassed: false,
+                aiPassed: false,
+                gameOver: false,
+                message: 'Place a tile to begin.',
+            };
+            updateUI();
+            render();
+            hideGameOver();
+        }
+
+        function startNewRound() {
+            game.playerStack = [];
+            game.aiStack = [];
+            game.currentBid = 0;
+            game.currentBidder = null;
+            game.highestBidder = null;
+            game.phase = 'placing';
+            game.turn = 'player';
+            game.revealedPlayer = 0;
+            game.revealedAi = 0;
+            game.revealTarget = 0;
+            game.playerPlacedThisRound = false;
+            game.aiPlacedThisRound = false;
+            game.playerPassed = false;
+            game.aiPassed = false;
+            setMessage('New round. Place a tile.');
+            updateUI();
+            render();
+        }
+
+        // ============================================
+        // GAME LOGIC
+        // ============================================
+        function getAvailableTiles(isPlayer) {
+            const tiles = isPlayer ? game.playerTiles : game.aiTiles;
+            const stack = isPlayer ? game.playerStack : game.aiStack;
+            // Return tiles not yet placed this round
+            const placed = [...stack];
+            const available = [];
+            for (const tile of tiles) {
+                const idx = placed.findIndex(t => t === tile.type);
+                if (idx >= 0) {
+                    placed.splice(idx, 1);
+                } else {
+                    available.push(tile);
+                }
+            }
+            return available;
+        }
+
+        function canPlace(isPlayer, type) {
+            const available = getAvailableTiles(isPlayer);
+            return available.some(t => t.type === type);
+        }
+
+        function placeTile(isPlayer, type) {
+            if (isPlayer) {
+                game.playerStack.push(type);
+                game.playerPlacedThisRound = true;
+            } else {
+                game.aiStack.push(type);
+                game.aiPlacedThisRound = true;
+            }
+        }
+
+        function getTotalTilesPlaced() {
+            return game.playerStack.length + game.aiStack.length;
+        }
+
+        function makeBid(isPlayer, amount) {
+            game.currentBid = amount;
+            game.currentBidder = isPlayer ? 'player' : 'ai';
+            game.highestBidder = game.currentBidder;
+            game.phase = 'bidding';
+        }
+
+        function raiseBid(isPlayer, amount) {
+            if (amount > game.currentBid) {
+                game.currentBid = amount;
+                game.currentBidder = isPlayer ? 'player' : 'ai';
+                game.highestBidder = game.currentBidder;
+            }
+        }
+
+        function passBid(isPlayer) {
+            if (isPlayer) {
+                game.playerPassed = true;
+            } else {
+                game.aiPassed = true;
+            }
+        }
+
+        function startReveal() {
+            game.phase = 'revealing';
+            game.revealTarget = game.currentBid;
+            game.revealedPlayer = 0;
+            game.revealedAi = 0;
+            const bidder = game.highestBidder;
+            setMessage(`${bidder === 'player' ? 'You' : 'Rival'} must flip ${game.revealTarget} tiles.`);
+            updateUI();
+            render();
+
+            if (bidder === 'ai') {
+                setTimeout(aiReveal, 1000);
+            }
+        }
+
+        function getRevealed() {
+            return game.revealedPlayer + game.revealedAi;
+        }
+
+        function revealPlayerTile() {
+            if (game.revealedPlayer >= game.playerStack.length) return false;
+            game.revealedPlayer++;
+            return true;
+        }
+
+        function revealAiTile() {
+            if (game.revealedAi >= game.aiStack.length) return false;
+            game.revealedAi++;
+            return true;
+        }
+
+        function checkRevealedForSkull() {
+            // Check if any revealed tile is a skull
+            const bidder = game.highestBidder;
+
+            // Check player's revealed tiles
+            for (let i = 0; i < game.revealedPlayer; i++) {
+                if (game.playerStack[game.playerStack.length - 1 - i] === 'skull') {
+                    return { found: true, owner: 'player', bidder };
+                }
+            }
+
+            // Check AI's revealed tiles
+            for (let i = 0; i < game.revealedAi; i++) {
+                if (game.aiStack[game.aiStack.length - 1 - i] === 'skull') {
+                    return { found: true, owner: 'ai', bidder };
+                }
+            }
+
+            return { found: false };
+        }
+
+        function handleRevealOutcome() {
+            const result = checkRevealedForSkull();
+            const bidder = game.highestBidder;
+
+            if (result.found) {
+                // Bidder hit a skull - lose a tile
+                if (bidder === 'player') {
+                    const idx = Math.floor(Math.random() * game.playerTiles.length);
+                    game.playerTiles.splice(idx, 1);
+                    setMessage(`You hit a skull! You lose a tile. (${game.playerTiles.length} remaining)`);
+                } else {
+                    const idx = Math.floor(Math.random() * game.aiTiles.length);
+                    game.aiTiles.splice(idx, 1);
+                    setMessage(`Rival hit a skull! They lose a tile. (${game.aiTiles.length} remaining)`);
+                }
+            } else {
+                // Success - earn a point
+                if (bidder === 'player') {
+                    game.playerPoints++;
+                    setMessage(`Success! You flipped ${game.revealTarget} safely. +1 point!`);
+                } else {
+                    game.aiPoints++;
+                    setMessage(`Rival flipped ${game.revealTarget} safely. They earn a point.`);
+                }
+            }
+
+            game.phase = 'roundEnd';
+            updateUI();
+            render();
+
+            // Check for game over
+            setTimeout(() => {
+                if (game.playerPoints >= 2) {
+                    showGameOver(true);
+                } else if (game.aiPoints >= 2) {
+                    showGameOver(false);
+                } else if (game.playerTiles.length === 0) {
+                    showGameOver(false);
+                } else if (game.aiTiles.length === 0) {
+                    showGameOver(true);
+                } else {
+                    startNewRound();
+                }
+            }, 2000);
+        }
+
+        // ============================================
+        // PLAYER ACTIONS
+        // ============================================
+        function playerPlaceFlower() {
+            if (game.phase !== 'placing' && game.phase !== 'bidding') return;
+            if (game.turn !== 'player') return;
+            if (!canPlace(true, 'flower')) {
+                setMessage("No flowers left to place!");
+                return;
+            }
+
+            placeTile(true, 'flower');
+            setMessage('You placed a Flower.');
+            game.turn = 'ai';
+            updateUI();
+            render();
+            setTimeout(aiTurn, 800);
+        }
+
+        function playerPlaceSkull() {
+            if (game.phase !== 'placing' && game.phase !== 'bidding') return;
+            if (game.turn !== 'player') return;
+            if (!canPlace(true, 'skull')) {
+                setMessage("No skull left to place!");
+                return;
+            }
+
+            placeTile(true, 'skull');
+            setMessage('You placed your Skull.');
+            game.turn = 'ai';
+            updateUI();
+            render();
+            setTimeout(aiTurn, 800);
+        }
+
+        function playerBid() {
+            if (game.turn !== 'player') return;
+            if (!game.playerPlacedThisRound) {
+                setMessage("You must place at least one tile first!");
+                return;
+            }
+
+            const amount = parseInt(bidInput.value);
+            const max = getTotalTilesPlaced();
+
+            if (amount < 1 || amount > max) {
+                setMessage(`Bid must be between 1 and ${max}.`);
+                return;
+            }
+
+            if (game.phase === 'placing') {
+                makeBid(true, amount);
+                setMessage(`You bid ${amount}. Rival must raise or pass.`);
+            } else if (game.phase === 'bidding') {
+                if (amount <= game.currentBid) {
+                    setMessage(`Must bid higher than ${game.currentBid}.`);
+                    return;
+                }
+                raiseBid(true, amount);
+                setMessage(`You raise to ${amount}.`);
+            }
+
+            game.turn = 'ai';
+            updateUI();
+            render();
+            setTimeout(aiTurn, 800);
+        }
+
+        function playerPass() {
+            if (game.phase !== 'bidding' || game.turn !== 'player') return;
+
+            passBid(true);
+            setMessage('You pass. Rival wins the bid.');
+            updateUI();
+            render();
+            setTimeout(startReveal, 1000);
+        }
+
+        function playerRevealClick(targetOwner) {
+            if (game.phase !== 'revealing') return;
+            if (game.highestBidder !== 'player') return;
+
+            const needed = game.revealTarget - getRevealed();
+            if (needed <= 0) return;
+
+            // Must reveal own tiles first
+            if (game.revealedPlayer < game.playerStack.length) {
+                revealPlayerTile();
+                render();
+
+                const result = checkRevealedForSkull();
+                if (result.found) {
+                    setTimeout(handleRevealOutcome, 800);
+                    return;
+                }
+
+                if (getRevealed() >= game.revealTarget) {
+                    setTimeout(handleRevealOutcome, 800);
+                }
+                return;
+            }
+
+            // Then reveal AI tiles
+            if (targetOwner === 'ai' && game.revealedAi < game.aiStack.length) {
+                revealAiTile();
+                render();
+
+                const result = checkRevealedForSkull();
+                if (result.found) {
+                    setTimeout(handleRevealOutcome, 800);
+                    return;
+                }
+
+                if (getRevealed() >= game.revealTarget) {
+                    setTimeout(handleRevealOutcome, 800);
+                }
+            }
+        }
+
+        // ============================================
+        // AI LOGIC
+        // ============================================
+        function aiTurn() {
+            if (game.gameOver) return;
+            if (game.turn !== 'ai') return;
+
+            // Check if AI passed
+            if (game.aiPassed) {
+                startReveal();
+                return;
+            }
+
+            // Check if player passed during bidding
+            if (game.playerPassed && game.phase === 'bidding') {
+                startReveal();
+                return;
+            }
+
+            if (game.phase === 'placing') {
+                // AI decides: place or bid
+                const aiAvailable = getAvailableTiles(false);
+                const canBid = game.aiPlacedThisRound && getTotalTilesPlaced() > 0;
+
+                // Strategy: place 1-2 tiles, then maybe bid
+                if (game.aiStack.length < 1 || (aiAvailable.length > 1 && Math.random() < 0.5)) {
+                    // Place a tile
+                    const hasSkull = aiAvailable.some(t => t.type === 'skull');
+                    const placeSkull = hasSkull && game.aiStack.length >= 1 && Math.random() < 0.3;
+
+                    if (placeSkull && canPlace(false, 'skull')) {
+                        placeTile(false, 'skull');
+                        setMessage('Rival places a tile.');
+                    } else if (canPlace(false, 'flower')) {
+                        placeTile(false, 'flower');
+                        setMessage('Rival places a tile.');
+                    }
+                    game.turn = 'player';
+                    updateUI();
+                    render();
+                } else if (canBid) {
+                    // Start bidding
+                    const safeCount = game.aiStack.filter(t => t === 'flower').length;
+                    const bid = Math.max(1, safeCount);
+                    makeBid(false, bid);
+                    setMessage(`Rival bids ${bid}!`);
+                    game.turn = 'player';
+                    updateUI();
+                    render();
+                } else {
+                    game.turn = 'player';
+                    updateUI();
+                }
+            } else if (game.phase === 'bidding') {
+                // AI decides: raise or pass
+                const maxBid = getTotalTilesPlaced();
+                const aiSafe = game.aiStack.filter(t => t === 'flower').length;
+                const wouldNeedFromPlayer = game.currentBid + 1 - aiSafe;
+
+                // Pass if bid is too risky
+                if (game.currentBid >= maxBid || (game.currentBid > aiSafe && Math.random() < 0.6)) {
+                    passBid(false);
+                    setMessage('Rival passes.');
+                    updateUI();
+                    render();
+                    setTimeout(startReveal, 800);
+                } else {
+                    // Raise
+                    const raise = Math.min(game.currentBid + 1, maxBid);
+                    raiseBid(false, raise);
+                    setMessage(`Rival raises to ${raise}!`);
+                    game.turn = 'player';
+                    updateUI();
+                    render();
+                }
+            }
+        }
+
+        function aiReveal() {
+            if (game.phase !== 'revealing') return;
+            if (game.highestBidder !== 'ai') return;
+
+            const needed = game.revealTarget - getRevealed();
+            if (needed <= 0) {
+                handleRevealOutcome();
+                return;
+            }
+
+            // Must reveal own tiles first
+            if (game.revealedAi < game.aiStack.length) {
+                revealAiTile();
+                render();
+
+                const result = checkRevealedForSkull();
+                if (result.found) {
+                    setTimeout(handleRevealOutcome, 800);
+                    return;
+                }
+
+                setTimeout(aiReveal, 600);
+                return;
+            }
+
+            // Then reveal player tiles
+            if (game.revealedPlayer < game.playerStack.length) {
+                revealPlayerTile();
+                render();
+
+                const result = checkRevealedForSkull();
+                if (result.found) {
+                    setTimeout(handleRevealOutcome, 800);
+                    return;
+                }
+
+                if (getRevealed() >= game.revealTarget) {
+                    setTimeout(handleRevealOutcome, 800);
+                } else {
+                    setTimeout(aiReveal, 600);
+                }
+            }
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+        function render() {
+            // Background
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 50,
+                canvas.width / 2, canvas.height / 2, 350
+            );
+            gradient.addColorStop(0, '#1e1e26');
+            gradient.addColorStop(1, COLORS.bgCard);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw AI area (top)
+            drawPlayerArea(false, canvas.width / 2, 100);
+
+            // Draw player area (bottom)
+            drawPlayerArea(true, canvas.width / 2, 300);
+
+            // Center divider
+            ctx.strokeStyle = COLORS.borderSubtle;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(50, 200);
+            ctx.lineTo(canvas.width - 50, 200);
+            ctx.stroke();
+
+            ctx.fillStyle = COLORS.textMuted;
+            ctx.font = "12px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'center';
+            ctx.fillText('VS', canvas.width / 2, 205);
+        }
+
+        function drawPlayerArea(isPlayer, centerX, centerY) {
+            const tiles = isPlayer ? game.playerTiles : game.aiTiles;
+            const stack = isPlayer ? game.playerStack : game.aiStack;
+            const revealed = isPlayer ? game.revealedPlayer : game.revealedAi;
+            const label = isPlayer ? 'YOU' : 'RIVAL';
+
+            // Label
+            ctx.fillStyle = COLORS.textMuted;
+            ctx.font = "11px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'center';
+            ctx.fillText(label, centerX, centerY - 55);
+
+            // Draw tile count
+            ctx.fillStyle = COLORS.textSecondary;
+            ctx.font = "10px 'JetBrains Mono', monospace";
+            ctx.fillText(`${tiles.length} tiles remaining`, centerX, centerY - 42);
+
+            // Draw stack
+            const stackX = centerX;
+            const stackY = centerY;
+
+            if (stack.length === 0) {
+                // Empty stack placeholder
+                ctx.strokeStyle = COLORS.borderSubtle;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                roundRect(ctx, stackX - TILE_SIZE / 2, stackY - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE, 8, false, true);
+                ctx.setLineDash([]);
+            } else {
+                // Draw stacked tiles
+                for (let i = 0; i < stack.length; i++) {
+                    const offsetY = -i * 4;
+                    const offsetX = i * 2;
+                    const tileType = stack[i];
+                    const isRevealed = i >= stack.length - revealed;
+
+                    drawTile(stackX + offsetX - TILE_SIZE / 2, stackY + offsetY - TILE_SIZE / 2, tileType, isRevealed, isPlayer);
+                }
+            }
+
+            // Show stack count
+            if (stack.length > 0) {
+                ctx.fillStyle = COLORS.accentGold;
+                ctx.font = "bold 14px 'JetBrains Mono', monospace";
+                ctx.textAlign = 'center';
+                ctx.fillText(`${stack.length}`, centerX + 50, centerY + 5);
+            }
+        }
+
+        function drawTile(x, y, type, revealed, isPlayer) {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetY = 3;
+
+            if (revealed) {
+                ctx.fillStyle = type === 'skull' ? COLORS.skull : COLORS.flower;
+            } else {
+                ctx.fillStyle = COLORS.tileBack;
+            }
+
+            roundRect(ctx, x, y, TILE_SIZE, TILE_SIZE, 8, true, false);
+            ctx.shadowColor = 'transparent';
+
+            ctx.strokeStyle = revealed ? COLORS.accentGold : COLORS.borderSubtle;
+            ctx.lineWidth = revealed ? 2 : 1;
+            roundRect(ctx, x, y, TILE_SIZE, TILE_SIZE, 8, false, true);
+
+            // Icon
+            ctx.font = revealed ? "28px serif" : "20px serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (revealed) {
+                ctx.fillStyle = COLORS.textPrimary;
+                ctx.fillText(type === 'skull' ? '\u{1F480}' : '\u{1F33A}', x + TILE_SIZE / 2, y + TILE_SIZE / 2);
+            } else {
+                ctx.fillStyle = COLORS.textMuted;
+                ctx.fillText('?', x + TILE_SIZE / 2, y + TILE_SIZE / 2);
+            }
+        }
+
+        function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        // ============================================
+        // UI
+        // ============================================
+        function setMessage(msg) {
+            game.message = msg;
+            messageBox.textContent = msg;
+        }
+
+        function updateUI() {
+            playerPointsEl.textContent = game.playerPoints;
+            playerTilesEl.textContent = game.playerTiles.length;
+            aiPointsEl.textContent = game.aiPoints;
+            aiTilesEl.textContent = game.aiTiles.length;
+            currentBidEl.textContent = game.currentBid > 0 ? game.currentBid : '-';
+
+            const isPlayerTurn = game.turn === 'player' && !game.gameOver;
+            const canPlaceMore = getAvailableTiles(true).length > 0;
+            const inPlacing = game.phase === 'placing' || (game.phase === 'bidding' && canPlaceMore);
+
+            placeFlowerBtn.disabled = !isPlayerTurn || !inPlacing || !canPlace(true, 'flower');
+            placeSkullBtn.disabled = !isPlayerTurn || !inPlacing || !canPlace(true, 'skull');
+
+            const canBidNow = isPlayerTurn && game.playerPlacedThisRound && (game.phase === 'placing' || game.phase === 'bidding');
+            bidBtn.disabled = !canBidNow;
+            bidInput.max = getTotalTilesPlaced();
+            if (game.phase === 'bidding') {
+                bidInput.min = game.currentBid + 1;
+                bidInput.value = Math.max(parseInt(bidInput.value), game.currentBid + 1);
+            } else {
+                bidInput.min = 1;
+            }
+
+            passBtn.disabled = !isPlayerTurn || game.phase !== 'bidding';
+        }
+
+        function showGameOver(won) {
+            game.gameOver = true;
+            gameOverText.textContent = won ? 'Victory!' : 'Defeat';
+            gameOverText.className = 'game-over-text ' + (won ? 'win' : 'lose');
+            gameOverOverlay.classList.add('visible');
+        }
+
+        function hideGameOver() {
+            gameOverOverlay.classList.remove('visible');
+        }
+
+        // ============================================
+        // EVENTS
+        // ============================================
+        placeFlowerBtn.addEventListener('click', playerPlaceFlower);
+        placeSkullBtn.addEventListener('click', playerPlaceSkull);
+        bidBtn.addEventListener('click', playerBid);
+        passBtn.addEventListener('click', playerPass);
+        newGameBtn.addEventListener('click', initGame);
+        playAgainBtn.addEventListener('click', initGame);
+
+        canvas.addEventListener('click', (e) => {
+            if (game.phase !== 'revealing') return;
+            if (game.highestBidder !== 'player') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+            // Click on own stack (bottom) or AI stack (top)
+            if (y > 200) {
+                playerRevealClick('player');
+            } else {
+                playerRevealClick('ai');
+            }
+        });
+
+        // Tutorial
+        const TUTORIAL_KEY = 'skull_tutorial_seen';
+        const tutorialOverlay = document.getElementById('tutorialOverlay');
+
+        function showTutorial() {
+            tutorialOverlay.classList.add('visible');
+        }
+
+        function hideTutorial() {
+            tutorialOverlay.classList.remove('visible');
+            localStorage.setItem(TUTORIAL_KEY, 'true');
+        }
+
+        document.getElementById('tutorialSkip').addEventListener('click', hideTutorial);
+        document.getElementById('tutorialStart').addEventListener('click', hideTutorial);
+        helpBtn.addEventListener('click', showTutorial);
+
+        // ============================================
+        // START
+        // ============================================
+        initGame();
+        if (!localStorage.getItem(TUTORIAL_KEY)) {
+            showTutorial();
+        }
+    </script>
+</body>
+</html>
