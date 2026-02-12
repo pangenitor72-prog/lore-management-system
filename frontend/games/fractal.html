@@ -32,12 +32,12 @@
             position: fixed;
             bottom: 20px;
             left: 20px;
-            background: rgba(15, 15, 18, 0.95);
+            background: rgba(15, 15, 18, 0.92);
             border: 1px solid rgba(212, 175, 55, 0.3);
             border-radius: 8px;
             padding: 16px;
             z-index: 100;
-            min-width: 240px;
+            min-width: 220px;
             max-height: calc(100vh - 100px);
             overflow-y: auto;
             transition: opacity 0.3s, transform 0.3s;
@@ -60,7 +60,7 @@
         .control-section {
             margin-bottom: 14px;
             padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         .control-section:last-child {
@@ -129,20 +129,6 @@
         .btn.active {
             background: var(--accent-gold);
             color: var(--bg-primary);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
-        }
-
-        .btn.trip {
-            background: linear-gradient(90deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
-            background-size: 300% 100%;
-            animation: rainbow-btn 2s linear infinite;
-            color: #000;
-            font-weight: 700;
-        }
-
-        @keyframes rainbow-btn {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
         }
 
         .btn-row {
@@ -220,30 +206,6 @@
             opacity: 1;
         }
 
-        .palette-preview {
-            display: flex;
-            gap: 4px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-        }
-
-        .palette-swatch {
-            width: 28px;
-            height: 20px;
-            border-radius: 3px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border-color 0.2s, transform 0.2s;
-        }
-
-        .palette-swatch:hover {
-            transform: scale(1.1);
-        }
-
-        .palette-swatch.active {
-            border-color: var(--text-primary);
-        }
-
         body.fullscreen .controls,
         body.fullscreen .toggle-controls,
         body.fullscreen .nav-links {
@@ -257,35 +219,10 @@
         body.fullscreen .info:hover {
             opacity: 1;
         }
-
-        /* Trip mode indicator */
-        .trip-indicator {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 48px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            text-shadow: 0 0 20px rgba(255,255,255,0.5);
-        }
-
-        .trip-indicator.visible {
-            opacity: 1;
-            animation: pulse-trip 1s ease-out forwards;
-        }
-
-        @keyframes pulse-trip {
-            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-        }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
-
-    <div class="trip-indicator" id="tripIndicator">🌀</div>
 
     <div class="nav-links">
         <a href="/games/flow-field.html" class="back-link">✨ Flow Field</a>
@@ -296,7 +233,6 @@
     <div class="info" id="info">
         <div><strong>Zoom:</strong> <span id="zoomLevel">1.0x</span></div>
         <div><strong>Mode:</strong> <span id="modeDisplay">Mandelbrot</span></div>
-        <div><strong>FPS:</strong> <span id="fpsDisplay">--</span></div>
     </div>
 
     <button class="toggle-controls hidden" id="toggleBtn">⚙</button>
@@ -305,44 +241,40 @@
         <h3>Fractal Explorer</h3>
 
         <div class="control-section">
-            <button class="btn trip" id="tripBtn">🌀 TRIP MODE</button>
-        </div>
-
-        <div class="control-section">
-            <div class="control-section-title">Motion</div>
+            <div class="control-section-title">Flow</div>
             <div class="control-row">
                 <label>Auto-Zoom</label>
-                <input type="range" id="autoZoom" min="0" max="100" value="0" step="5">
+                <input type="range" id="autoZoom" min="0" max="50" value="0" step="1">
                 <span id="autoZoomVal">Off</span>
             </div>
             <div class="control-row">
-                <label>Drift</label>
-                <input type="range" id="drift" min="0" max="100" value="0" step="5">
-                <span id="driftVal">Off</span>
+                <label>Color Flow</label>
+                <input type="range" id="colorFlow" min="0" max="50" value="15" step="1">
+                <span id="colorFlowVal">15</span>
             </div>
             <div class="control-row">
-                <label>Rotation</label>
-                <input type="range" id="rotation" min="0" max="100" value="0" step="5">
-                <span id="rotationVal">Off</span>
+                <label>Shimmer</label>
+                <input type="range" id="shimmer" min="0" max="50" value="10" step="1">
+                <span id="shimmerVal">10</span>
             </div>
         </div>
 
         <div class="control-section">
-            <div class="control-section-title">Psychedelic</div>
+            <div class="control-section-title">Iridescence</div>
             <div class="control-row">
-                <label>Color Cycle</label>
-                <input type="range" id="colorCycle" min="0" max="100" value="0" step="5">
-                <span id="colorCycleVal">Off</span>
+                <label>Hue Spread</label>
+                <input type="range" id="hueSpread" min="30" max="360" value="180" step="10">
+                <span id="hueSpreadVal">180°</span>
             </div>
             <div class="control-row">
-                <label>Pulse</label>
-                <input type="range" id="pulse" min="0" max="100" value="0" step="5">
-                <span id="pulseVal">Off</span>
+                <label>Saturation</label>
+                <input type="range" id="saturation" min="30" max="100" value="70" step="5">
+                <span id="saturationVal">70%</span>
             </div>
             <div class="control-row">
-                <label>Warp</label>
-                <input type="range" id="warp" min="0" max="100" value="0" step="5">
-                <span id="warpVal">Off</span>
+                <label>Film Layers</label>
+                <input type="range" id="filmLayers" min="1" max="8" value="3" step="1">
+                <span id="filmLayersVal">3</span>
             </div>
         </div>
 
@@ -350,19 +282,9 @@
             <div class="control-section-title">Rendering</div>
             <div class="control-row">
                 <label>Detail</label>
-                <input type="range" id="iterations" min="50" max="500" value="150" step="25">
-                <span id="iterationsVal">150</span>
+                <input type="range" id="iterations" min="100" max="500" value="200" step="25">
+                <span id="iterationsVal">200</span>
             </div>
-            <div class="control-row">
-                <label>Color Bands</label>
-                <input type="range" id="colorBands" min="1" max="20" value="5" step="1">
-                <span id="colorBandsVal">5</span>
-            </div>
-        </div>
-
-        <div class="control-section">
-            <div class="control-section-title">Palette</div>
-            <div class="palette-preview" id="palettePreview"></div>
         </div>
 
         <div class="control-section">
@@ -384,33 +306,24 @@
         let width, height;
         let imageData, pixels;
 
-        // Timing
-        let lastTime = 0;
-        let frameCount = 0;
-        let fps = 0;
-
         // View state
         let view = {
             centerX: -0.5,
             centerY: 0,
             zoom: 1,
-            rotation: 0,
-            maxIter: 150,
-            colorBands: 5
+            maxIter: 200
         };
 
         // Animation state
         let anim = {
             autoZoom: 0,
-            drift: 0,
-            driftAngle: Math.random() * Math.PI * 2,
-            rotation: 0,
-            colorCycle: 0,
-            colorOffset: 0,
-            pulse: 0,
-            pulsePhase: 0,
-            warp: 0,
-            warpPhase: 0
+            colorFlow: 15,
+            colorPhase: 0,
+            shimmer: 10,
+            shimmerPhase: 0,
+            hueSpread: 180,
+            saturation: 70,
+            filmLayers: 3
         };
 
         // Julia
@@ -418,7 +331,6 @@
             enabled: false,
             cx: -0.7,
             cy: 0.27015,
-            morphSpeed: 0,
             morphPhase: 0
         };
 
@@ -426,72 +338,88 @@
         let isDragging = false;
         let dragStartX, dragStartY, dragStartCenterX, dragStartCenterY;
 
-        // Trip mode
-        let tripMode = false;
+        // ============================================
+        // THIN-FILM INTERFERENCE COLORING
+        // Oil-on-water iridescence simulation
+        // ============================================
+        function hslToRgb(h, s, l) {
+            h = h / 360;
+            s = s / 100;
+            l = l / 100;
 
-        // ============================================
-        // COLOR PALETTES - More psychedelic options
-        // ============================================
-        const palettes = {
-            gold: {
-                name: 'Gold',
-                colors: [[15,15,18],[45,35,20],[120,90,30],[212,175,55],[255,240,180],[212,175,55],[80,60,20]]
-            },
-            rainbow: {
-                name: 'Rainbow',
-                colors: [[255,0,0],[255,127,0],[255,255,0],[0,255,0],[0,255,255],[0,0,255],[139,0,255],[255,0,127]]
-            },
-            neon: {
-                name: 'Neon',
-                colors: [[0,0,0],[255,0,128],[0,255,255],[255,255,0],[255,0,255],[0,255,128],[255,128,0],[128,0,255]]
-            },
-            acid: {
-                name: 'Acid',
-                colors: [[0,20,0],[0,80,20],[0,200,50],[150,255,0],[255,255,100],[200,255,50],[50,180,30],[0,60,10]]
-            },
-            plasma: {
-                name: 'Plasma',
-                colors: [[10,0,20],[60,0,100],[150,0,180],[255,50,200],[255,150,255],[200,100,255],[100,0,150],[30,0,50]]
-            },
-            fire: {
-                name: 'Fire',
-                colors: [[0,0,0],[40,0,0],[100,20,0],[180,60,0],[255,120,0],[255,200,50],[255,255,150],[255,200,50]]
-            },
-            ocean: {
-                name: 'Ocean',
-                colors: [[0,5,20],[0,20,60],[0,60,120],[0,120,180],[50,180,220],[150,220,255],[200,240,255],[100,200,240]]
-            },
-            void: {
-                name: 'Void',
-                colors: [[5,0,10],[20,0,40],[50,0,80],[100,20,150],[180,80,220],[255,150,255],[200,100,200],[80,30,100]]
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
             }
-        };
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
 
-        let currentPalette = 'rainbow';
+        function getIridescentColor(iter, maxIter, colorPhase, shimmerPhase, x, y) {
+            if (iter < 0) return [8, 8, 12]; // Deep dark for inside set
+
+            // Normalize iteration with smooth coloring
+            const t = iter / maxIter;
+
+            // Base hue from iteration - creates the rainbow bands
+            const baseHue = (t * anim.hueSpread + colorPhase) % 360;
+
+            // Thin-film interference simulation
+            // Multiple "layers" create interference patterns
+            let hueShift = 0;
+            let lightnessShift = 0;
+
+            for (let layer = 1; layer <= anim.filmLayers; layer++) {
+                // Each layer has different frequency
+                const layerFreq = layer * 2.5;
+                const layerPhase = shimmerPhase * (0.3 + layer * 0.1);
+
+                // Interference based on iteration depth
+                const interference = Math.sin(t * Math.PI * layerFreq + layerPhase);
+
+                // Accumulate subtle shifts
+                hueShift += interference * (15 / layer);
+                lightnessShift += interference * (5 / layer);
+            }
+
+            // Final color
+            const hue = (baseHue + hueShift + 360) % 360;
+            const saturation = anim.saturation;
+
+            // Lightness varies with depth - brighter at edges, darker deep in
+            const baseLightness = 35 + t * 30;
+            const lightness = Math.max(15, Math.min(75, baseLightness + lightnessShift));
+
+            return hslToRgb(hue, saturation, lightness);
+        }
 
         // ============================================
         // FRACTAL COMPUTATION
         // ============================================
-        function computeFractal(x0, y0, maxIter, warpAmount, warpPhase) {
-            // Apply warp distortion
-            if (warpAmount > 0) {
-                const wx = Math.sin(y0 * 10 + warpPhase) * warpAmount * 0.1;
-                const wy = Math.cos(x0 * 10 + warpPhase) * warpAmount * 0.1;
-                x0 += wx;
-                y0 += wy;
-            }
-
+        function computeFractal(x0, y0, maxIter) {
             let x, y, x2, y2, iter = 0;
 
             if (julia.enabled) {
-                // Julia set with morphing
-                let jx = julia.cx, jy = julia.cy;
-                if (julia.morphSpeed > 0) {
-                    jx += Math.sin(julia.morphPhase) * 0.1;
-                    jy += Math.cos(julia.morphPhase * 1.3) * 0.1;
-                }
+                // Julia set with gentle morphing
+                let jx = julia.cx + Math.sin(julia.morphPhase) * 0.02;
+                let jy = julia.cy + Math.cos(julia.morphPhase * 0.7) * 0.02;
+
                 x = x0; y = y0;
                 x2 = x * x; y2 = y * y;
+
                 while (x2 + y2 <= 4 && iter < maxIter) {
                     y = 2 * x * y + jy;
                     x = x2 - y2 + jx;
@@ -501,6 +429,7 @@
             } else {
                 // Mandelbrot
                 x = 0; y = 0; x2 = 0; y2 = 0;
+
                 while (x2 + y2 <= 4 && iter < maxIter) {
                     y = 2 * x * y + y0;
                     x = x2 - y2 + x0;
@@ -511,37 +440,10 @@
 
             if (iter === maxIter) return -1;
 
-            // Smooth coloring
+            // Smooth iteration count
             const log_zn = Math.log(x2 + y2) / 2;
             const nu = Math.log(log_zn / Math.LN2) / Math.LN2;
             return iter + 1 - nu;
-        }
-
-        function getColor(iter, maxIter, colorOffset, pulseAmount) {
-            if (iter < 0) return [0, 0, 0];
-
-            const palette = palettes[currentPalette].colors;
-            const numColors = palette.length;
-
-            // Apply color offset (cycling) and pulse
-            let t = ((iter + colorOffset) * view.colorBands / maxIter) % 1;
-
-            // Pulse effect - modulate brightness
-            const pulseMod = 1 + Math.sin(pulseAmount) * 0.3;
-
-            const idx = t * (numColors - 1);
-            const i1 = Math.floor(idx) % numColors;
-            const i2 = (i1 + 1) % numColors;
-            const f = idx - Math.floor(idx);
-
-            const c1 = palette[i1];
-            const c2 = palette[i2];
-
-            return [
-                Math.min(255, Math.round((c1[0] + (c2[0] - c1[0]) * f) * pulseMod)),
-                Math.min(255, Math.round((c1[1] + (c2[1] - c1[1]) * f) * pulseMod)),
-                Math.min(255, Math.round((c1[2] + (c2[2] - c1[2]) * f) * pulseMod))
-            ];
         }
 
         // ============================================
@@ -550,31 +452,19 @@
         function render() {
             const scale = 4 / (view.zoom * Math.min(width, height));
             const maxIter = view.maxIter;
-            const cos_r = Math.cos(view.rotation);
-            const sin_r = Math.sin(view.rotation);
-            const warpAmount = anim.warp;
-            const warpPhase = anim.warpPhase;
-            const colorOffset = anim.colorOffset;
-            const pulseAmount = anim.pulsePhase;
+            const colorPhase = anim.colorPhase;
+            const shimmerPhase = anim.shimmerPhase;
 
             const cx = width / 2;
             const cy = height / 2;
 
             for (let py = 0; py < height; py++) {
                 for (let px = 0; px < width; px++) {
-                    // Screen to complex with rotation
-                    let dx = (px - cx) * scale;
-                    let dy = (py - cy) * scale;
+                    const real = view.centerX + (px - cx) * scale;
+                    const imag = view.centerY + (py - cy) * scale;
 
-                    // Apply rotation
-                    const rx = dx * cos_r - dy * sin_r;
-                    const ry = dx * sin_r + dy * cos_r;
-
-                    const real = view.centerX + rx;
-                    const imag = view.centerY + ry;
-
-                    const iter = computeFractal(real, imag, maxIter, warpAmount, warpPhase);
-                    const [r, g, b] = getColor(iter, maxIter, colorOffset, pulseAmount);
+                    const iter = computeFractal(real, imag, maxIter);
+                    const [r, g, b] = getIridescentColor(iter, maxIter, colorPhase, shimmerPhase, px, py);
 
                     const idx = (py * width + px) * 4;
                     pixels[idx] = r;
@@ -590,47 +480,25 @@
         // ============================================
         // ANIMATION LOOP
         // ============================================
-        function animate(timestamp) {
-            const dt = timestamp - lastTime;
-            lastTime = timestamp;
-
-            // FPS counter
-            frameCount++;
-            if (frameCount % 30 === 0) {
-                fps = Math.round(1000 / dt);
-                document.getElementById('fpsDisplay').textContent = fps;
+        function animate() {
+            // Gentle color flow - like oil slowly shifting
+            if (anim.colorFlow > 0) {
+                anim.colorPhase += anim.colorFlow * 0.02;
             }
 
-            // Update animations
+            // Subtle shimmer - interference pattern shifts
+            if (anim.shimmer > 0) {
+                anim.shimmerPhase += anim.shimmer * 0.008;
+            }
+
+            // Auto-zoom - slow meditative dive
             if (anim.autoZoom > 0) {
-                view.zoom *= 1 + anim.autoZoom * 0.001;
-                // Slowly drift toward interesting areas
-                if (anim.drift > 0) {
-                    const driftSpeed = anim.drift * 0.00001 / view.zoom;
-                    view.centerX += Math.cos(anim.driftAngle) * driftSpeed;
-                    view.centerY += Math.sin(anim.driftAngle) * driftSpeed;
-                    anim.driftAngle += 0.001;
-                }
+                view.zoom *= 1 + anim.autoZoom * 0.0003;
             }
 
-            if (anim.rotation > 0) {
-                view.rotation += anim.rotation * 0.0005;
-            }
-
-            if (anim.colorCycle > 0) {
-                anim.colorOffset += anim.colorCycle * 0.1;
-            }
-
-            if (anim.pulse > 0) {
-                anim.pulsePhase += anim.pulse * 0.05;
-            }
-
-            if (anim.warp > 0) {
-                anim.warpPhase += anim.warp * 0.02;
-            }
-
-            if (julia.morphSpeed > 0) {
-                julia.morphPhase += julia.morphSpeed * 0.01;
+            // Julia morphing - very gentle
+            if (julia.enabled) {
+                julia.morphPhase += 0.005;
             }
 
             // Update info
@@ -647,15 +515,9 @@
         // ============================================
         function screenToComplex(screenX, screenY) {
             const scale = 4 / (view.zoom * Math.min(width, height));
-            const cos_r = Math.cos(view.rotation);
-            const sin_r = Math.sin(view.rotation);
-            let dx = (screenX - width / 2) * scale;
-            let dy = (screenY - height / 2) * scale;
-            const rx = dx * cos_r - dy * sin_r;
-            const ry = dx * sin_r + dy * cos_r;
             return {
-                x: view.centerX + rx,
-                y: view.centerY + ry
+                x: view.centerX + (screenX - width / 2) * scale,
+                y: view.centerY + (screenY - height / 2) * scale
             };
         }
 
@@ -680,14 +542,8 @@
         canvas.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             const scale = 4 / (view.zoom * Math.min(width, height));
-            const cos_r = Math.cos(view.rotation);
-            const sin_r = Math.sin(view.rotation);
-            let dx = (e.clientX - dragStartX) * scale;
-            let dy = (e.clientY - dragStartY) * scale;
-            const rx = dx * cos_r - dy * sin_r;
-            const ry = dx * sin_r + dy * cos_r;
-            view.centerX = dragStartCenterX - rx;
-            view.centerY = dragStartCenterY - ry;
+            view.centerX = dragStartCenterX - (e.clientX - dragStartX) * scale;
+            view.centerY = dragStartCenterY - (e.clientY - dragStartY) * scale;
         });
 
         canvas.addEventListener('mouseup', () => {
@@ -706,10 +562,9 @@
                 julia.cx = complex.x;
                 julia.cy = complex.y;
                 julia.enabled = true;
-                julia.morphSpeed = 20;
                 document.getElementById('juliaBtn').classList.add('active');
                 document.getElementById('mandelbrotBtn').classList.remove('active');
-                document.getElementById('modeDisplay').textContent = 'Julia (morphing)';
+                document.getElementById('modeDisplay').textContent = 'Julia';
             }
         });
 
@@ -735,10 +590,8 @@
             e.preventDefault();
             if (e.touches.length === 1 && isDragging) {
                 const scale = 4 / (view.zoom * Math.min(width, height));
-                const dx = (e.touches[0].clientX - dragStartX) * scale;
-                const dy = (e.touches[0].clientY - dragStartY) * scale;
-                view.centerX = dragStartCenterX - dx;
-                view.centerY = dragStartCenterY - dy;
+                view.centerX = dragStartCenterX - (e.touches[0].clientX - dragStartX) * scale;
+                view.centerY = dragStartCenterY - (e.touches[0].clientY - dragStartY) * scale;
             } else if (e.touches.length === 2) {
                 const dx = e.touches[1].clientX - e.touches[0].clientX;
                 const dy = e.touches[1].clientY - e.touches[0].clientY;
@@ -774,95 +627,44 @@
             document.getElementById('zoomLevel').textContent = zoomStr;
         }
 
-        function initPalettePreview() {
-            const container = document.getElementById('palettePreview');
-            container.innerHTML = Object.entries(palettes).map(([key, p]) => {
-                const gradient = p.colors.slice(0, 4).map((c, i) =>
-                    `rgb(${c[0]},${c[1]},${c[2]}) ${i * 33}%`
-                ).join(', ');
-                return `<div class="palette-swatch ${key === currentPalette ? 'active' : ''}"
-                            data-palette="${key}"
-                            title="${p.name}"
-                            style="background: linear-gradient(90deg, ${gradient})"></div>`;
-            }).join('');
-
-            container.querySelectorAll('.palette-swatch').forEach(swatch => {
-                swatch.addEventListener('click', () => {
-                    document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('active'));
-                    swatch.classList.add('active');
-                    currentPalette = swatch.dataset.palette;
-                });
-            });
-        }
-
-        function setSlider(id, value) {
-            const slider = document.getElementById(id);
-            slider.value = value;
-            slider.dispatchEvent(new Event('input'));
-        }
-
-        // Trip mode
-        document.getElementById('tripBtn').addEventListener('click', () => {
-            tripMode = !tripMode;
-            const btn = document.getElementById('tripBtn');
-            const indicator = document.getElementById('tripIndicator');
-
-            if (tripMode) {
-                btn.classList.add('active');
-                indicator.classList.add('visible');
-                setTimeout(() => indicator.classList.remove('visible'), 1000);
-
-                // Enable all the psychedelic effects
-                setSlider('autoZoom', 30);
-                setSlider('drift', 50);
-                setSlider('rotation', 20);
-                setSlider('colorCycle', 60);
-                setSlider('pulse', 40);
-                setSlider('warp', 30);
-                currentPalette = 'rainbow';
-                document.querySelectorAll('.palette-swatch').forEach(s => {
-                    s.classList.toggle('active', s.dataset.palette === 'rainbow');
-                });
-            } else {
-                btn.classList.remove('active');
-                setSlider('autoZoom', 0);
-                setSlider('drift', 0);
-                setSlider('rotation', 0);
-                setSlider('colorCycle', 0);
-                setSlider('pulse', 0);
-                setSlider('warp', 0);
-            }
+        // Slider controls
+        document.getElementById('autoZoom').addEventListener('input', (e) => {
+            anim.autoZoom = parseInt(e.target.value);
+            document.getElementById('autoZoomVal').textContent = anim.autoZoom > 0 ? anim.autoZoom : 'Off';
         });
 
-        // Slider controls
-        function setupSlider(id, animKey, displayFn) {
-            document.getElementById(id).addEventListener('input', (e) => {
-                const val = parseInt(e.target.value);
-                anim[animKey] = val;
-                document.getElementById(id + 'Val').textContent = displayFn ? displayFn(val) : (val > 0 ? val : 'Off');
-            });
-        }
+        document.getElementById('colorFlow').addEventListener('input', (e) => {
+            anim.colorFlow = parseInt(e.target.value);
+            document.getElementById('colorFlowVal').textContent = anim.colorFlow > 0 ? anim.colorFlow : 'Off';
+        });
 
-        setupSlider('autoZoom', 'autoZoom');
-        setupSlider('drift', 'drift');
-        setupSlider('rotation', 'rotation');
-        setupSlider('colorCycle', 'colorCycle');
-        setupSlider('pulse', 'pulse');
-        setupSlider('warp', 'warp');
+        document.getElementById('shimmer').addEventListener('input', (e) => {
+            anim.shimmer = parseInt(e.target.value);
+            document.getElementById('shimmerVal').textContent = anim.shimmer > 0 ? anim.shimmer : 'Off';
+        });
+
+        document.getElementById('hueSpread').addEventListener('input', (e) => {
+            anim.hueSpread = parseInt(e.target.value);
+            document.getElementById('hueSpreadVal').textContent = anim.hueSpread + '°';
+        });
+
+        document.getElementById('saturation').addEventListener('input', (e) => {
+            anim.saturation = parseInt(e.target.value);
+            document.getElementById('saturationVal').textContent = anim.saturation + '%';
+        });
+
+        document.getElementById('filmLayers').addEventListener('input', (e) => {
+            anim.filmLayers = parseInt(e.target.value);
+            document.getElementById('filmLayersVal').textContent = anim.filmLayers;
+        });
 
         document.getElementById('iterations').addEventListener('input', (e) => {
             view.maxIter = parseInt(e.target.value);
             document.getElementById('iterationsVal').textContent = view.maxIter;
         });
 
-        document.getElementById('colorBands').addEventListener('input', (e) => {
-            view.colorBands = parseInt(e.target.value);
-            document.getElementById('colorBandsVal').textContent = view.colorBands;
-        });
-
         document.getElementById('mandelbrotBtn').addEventListener('click', () => {
             julia.enabled = false;
-            julia.morphSpeed = 0;
             document.getElementById('mandelbrotBtn').classList.add('active');
             document.getElementById('juliaBtn').classList.remove('active');
             document.getElementById('modeDisplay').textContent = 'Mandelbrot';
@@ -870,20 +672,16 @@
 
         document.getElementById('juliaBtn').addEventListener('click', () => {
             julia.enabled = true;
-            julia.morphSpeed = 20;
             document.getElementById('juliaBtn').classList.add('active');
             document.getElementById('mandelbrotBtn').classList.remove('active');
-            document.getElementById('modeDisplay').textContent = 'Julia (morphing)';
+            document.getElementById('modeDisplay').textContent = 'Julia';
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
             view.centerX = -0.5;
             view.centerY = 0;
             view.zoom = 1;
-            view.rotation = 0;
             julia.enabled = false;
-            julia.morphSpeed = 0;
-            anim.driftAngle = Math.random() * Math.PI * 2;
             document.getElementById('mandelbrotBtn').classList.add('active');
             document.getElementById('juliaBtn').classList.remove('active');
             document.getElementById('modeDisplay').textContent = 'Mandelbrot';
@@ -925,8 +723,6 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'f' || e.key === 'F') document.getElementById('fullscreenBtn').click();
             if (e.key === 'r' || e.key === 'R') document.getElementById('resetBtn').click();
-            if (e.key === 't' || e.key === 'T') document.getElementById('tripBtn').click();
-            if (e.key === ' ') { e.preventDefault(); document.getElementById('tripBtn').click(); }
             if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
         });
 
@@ -934,7 +730,7 @@
         // INIT
         // ============================================
         function resize() {
-            // Use lower resolution for better performance
+            // Half resolution for smooth animation
             const scale = 0.5;
             width = Math.floor(window.innerWidth * scale);
             height = Math.floor(window.innerHeight * scale);
@@ -942,7 +738,7 @@
             canvas.height = height;
             canvas.style.width = window.innerWidth + 'px';
             canvas.style.height = window.innerHeight + 'px';
-            ctx.imageSmoothingEnabled = false;
+            ctx.imageSmoothingEnabled = true;
             imageData = ctx.createImageData(width, height);
             pixels = imageData.data;
         }
@@ -957,7 +753,6 @@
         });
 
         resize();
-        initPalettePreview();
         requestAnimationFrame(animate);
     </script>
 </body>
