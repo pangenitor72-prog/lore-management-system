@@ -243,11 +243,6 @@
         <div class="control-section">
             <div class="control-section-title">Flow</div>
             <div class="control-row">
-                <label>Auto-Zoom</label>
-                <input type="range" id="autoZoom" min="0" max="50" value="0" step="1">
-                <span id="autoZoomVal">Off</span>
-            </div>
-            <div class="control-row">
                 <label>Color Flow</label>
                 <input type="range" id="colorFlow" min="0" max="50" value="15" step="1">
                 <span id="colorFlowVal">15</span>
@@ -316,7 +311,6 @@
 
         // Animation state
         let anim = {
-            autoZoom: 0,
             colorFlow: 15,
             colorPhase: 0,
             shimmer: 10,
@@ -491,11 +485,6 @@
                 anim.shimmerPhase += anim.shimmer * 0.008;
             }
 
-            // Auto-zoom - slow meditative dive
-            if (anim.autoZoom > 0) {
-                view.zoom *= 1 + anim.autoZoom * 0.0003;
-            }
-
             // Julia morphing - very gentle
             if (julia.enabled) {
                 julia.morphPhase += 0.005;
@@ -628,11 +617,6 @@
         }
 
         // Slider controls
-        document.getElementById('autoZoom').addEventListener('input', (e) => {
-            anim.autoZoom = parseInt(e.target.value);
-            document.getElementById('autoZoomVal').textContent = anim.autoZoom > 0 ? anim.autoZoom : 'Off';
-        });
-
         document.getElementById('colorFlow').addEventListener('input', (e) => {
             anim.colorFlow = parseInt(e.target.value);
             document.getElementById('colorFlowVal').textContent = anim.colorFlow > 0 ? anim.colorFlow : 'Off';
