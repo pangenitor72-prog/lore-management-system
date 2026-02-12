@@ -7,18 +7,12 @@
     <style>
         :root {
             --bg-primary: #0f0f12;
-            --bg-secondary: #16161a;
             --accent-gold: #D4AF37;
-            --accent-gold-dim: rgba(212, 175, 55, 0.6);
             --text-primary: #f0ede8;
             --text-secondary: #a8a29e;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             background: var(--bg-primary);
@@ -34,24 +28,6 @@
             left: 0;
         }
 
-        /* Loading overlay */
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: var(--accent-gold);
-            font-size: 14px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .loading.visible {
-            opacity: 1;
-        }
-
-        /* Controls Panel */
         .controls {
             position: fixed;
             bottom: 20px;
@@ -61,7 +37,7 @@
             border-radius: 8px;
             padding: 16px;
             z-index: 100;
-            min-width: 220px;
+            min-width: 240px;
             max-height: calc(100vh - 100px);
             overflow-y: auto;
             transition: opacity 0.3s, transform 0.3s;
@@ -82,8 +58,8 @@
         }
 
         .control-section {
-            margin-bottom: 16px;
-            padding-bottom: 12px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -104,30 +80,30 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .control-row label {
             color: var(--text-secondary);
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .control-row input[type="range"] {
-            width: 90px;
+            width: 80px;
             accent-color: var(--accent-gold);
         }
 
         .control-row span {
             color: var(--text-primary);
-            font-size: 11px;
-            width: 40px;
+            font-size: 10px;
+            width: 35px;
             text-align: right;
             font-family: monospace;
         }
 
         .btn {
             width: 100%;
-            padding: 8px 12px;
+            padding: 10px 12px;
             margin-top: 6px;
             background: linear-gradient(135deg, var(--accent-gold), #C9A959);
             border: none;
@@ -153,6 +129,20 @@
         .btn.active {
             background: var(--accent-gold);
             color: var(--bg-primary);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+
+        .btn.trip {
+            background: linear-gradient(90deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+            background-size: 300% 100%;
+            animation: rainbow-btn 2s linear infinite;
+            color: #000;
+            font-weight: 700;
+        }
+
+        @keyframes rainbow-btn {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
 
         .btn-row {
@@ -162,9 +152,9 @@
 
         .btn-row .btn {
             flex: 1;
+            padding: 8px;
         }
 
-        /* Toggle button */
         .toggle-controls {
             position: fixed;
             bottom: 20px;
@@ -189,7 +179,6 @@
             pointer-events: none;
         }
 
-        /* Info display */
         .info {
             position: fixed;
             top: 20px;
@@ -209,7 +198,6 @@
             color: var(--accent-gold);
         }
 
-        /* Navigation links */
         .nav-links {
             position: fixed;
             top: 20px;
@@ -232,15 +220,15 @@
             opacity: 1;
         }
 
-        /* Color palette preview */
         .palette-preview {
             display: flex;
             gap: 4px;
             margin-top: 8px;
+            flex-wrap: wrap;
         }
 
         .palette-swatch {
-            flex: 1;
+            width: 28px;
             height: 20px;
             border-radius: 3px;
             cursor: pointer;
@@ -249,39 +237,13 @@
         }
 
         .palette-swatch:hover {
-            transform: scaleY(1.2);
+            transform: scale(1.1);
         }
 
         .palette-swatch.active {
             border-color: var(--text-primary);
         }
 
-        /* Preset locations */
-        .presets {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .preset-btn {
-            padding: 6px 8px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 4px;
-            color: var(--text-secondary);
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .preset-btn:hover {
-            background: rgba(212, 175, 55, 0.2);
-            border-color: var(--accent-gold);
-            color: var(--text-primary);
-        }
-
-        /* Fullscreen hides most UI */
         body.fullscreen .controls,
         body.fullscreen .toggle-controls,
         body.fullscreen .nav-links {
@@ -295,24 +257,46 @@
         body.fullscreen .info:hover {
             opacity: 1;
         }
+
+        /* Trip mode indicator */
+        .trip-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+
+        .trip-indicator.visible {
+            opacity: 1;
+            animation: pulse-trip 1s ease-out forwards;
+        }
+
+        @keyframes pulse-trip {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
 
-    <div class="loading" id="loading">Rendering...</div>
+    <div class="trip-indicator" id="tripIndicator">🌀</div>
 
     <div class="nav-links">
         <a href="/games/flow-field.html" class="back-link">✨ Flow Field</a>
         <a href="/games/liars-dice.html" class="back-link">🎲 Liar's Dice</a>
-        <a href="/games/skull.html" class="back-link">💀 Skull</a>
         <a href="../dist/index.html" class="back-link">← MANTLE</a>
     </div>
 
     <div class="info" id="info">
         <div><strong>Zoom:</strong> <span id="zoomLevel">1.0x</span></div>
-        <div><strong>Center:</strong> <span id="centerCoords">0, 0</span></div>
         <div><strong>Mode:</strong> <span id="modeDisplay">Mandelbrot</span></div>
+        <div><strong>FPS:</strong> <span id="fpsDisplay">--</span></div>
     </div>
 
     <button class="toggle-controls hidden" id="toggleBtn">⚙</button>
@@ -321,296 +305,242 @@
         <h3>Fractal Explorer</h3>
 
         <div class="control-section">
-            <div class="control-section-title">Fractal Type</div>
-            <div class="btn-row">
-                <button class="btn active" id="mandelbrotBtn">Mandelbrot</button>
-                <button class="btn secondary" id="juliaBtn">Julia</button>
+            <button class="btn trip" id="tripBtn">🌀 TRIP MODE</button>
+        </div>
+
+        <div class="control-section">
+            <div class="control-section-title">Motion</div>
+            <div class="control-row">
+                <label>Auto-Zoom</label>
+                <input type="range" id="autoZoom" min="0" max="100" value="0" step="5">
+                <span id="autoZoomVal">Off</span>
+            </div>
+            <div class="control-row">
+                <label>Drift</label>
+                <input type="range" id="drift" min="0" max="100" value="0" step="5">
+                <span id="driftVal">Off</span>
+            </div>
+            <div class="control-row">
+                <label>Rotation</label>
+                <input type="range" id="rotation" min="0" max="100" value="0" step="5">
+                <span id="rotationVal">Off</span>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <div class="control-section-title">Psychedelic</div>
+            <div class="control-row">
+                <label>Color Cycle</label>
+                <input type="range" id="colorCycle" min="0" max="100" value="0" step="5">
+                <span id="colorCycleVal">Off</span>
+            </div>
+            <div class="control-row">
+                <label>Pulse</label>
+                <input type="range" id="pulse" min="0" max="100" value="0" step="5">
+                <span id="pulseVal">Off</span>
+            </div>
+            <div class="control-row">
+                <label>Warp</label>
+                <input type="range" id="warp" min="0" max="100" value="0" step="5">
+                <span id="warpVal">Off</span>
             </div>
         </div>
 
         <div class="control-section">
             <div class="control-section-title">Rendering</div>
             <div class="control-row">
-                <label>Iterations</label>
-                <input type="range" id="iterations" min="50" max="1000" value="200" step="10">
-                <span id="iterationsVal">200</span>
+                <label>Detail</label>
+                <input type="range" id="iterations" min="50" max="500" value="150" step="25">
+                <span id="iterationsVal">150</span>
             </div>
             <div class="control-row">
-                <label>Color Cycles</label>
-                <input type="range" id="colorCycles" min="1" max="10" value="3" step="0.5">
-                <span id="colorCyclesVal">3</span>
-            </div>
-            <div class="control-row">
-                <label>Smoothing</label>
-                <input type="range" id="smoothing" min="0" max="1" value="1" step="1">
-                <span id="smoothingVal">On</span>
+                <label>Color Bands</label>
+                <input type="range" id="colorBands" min="1" max="20" value="5" step="1">
+                <span id="colorBandsVal">5</span>
             </div>
         </div>
 
         <div class="control-section">
-            <div class="control-section-title">Color Palette</div>
+            <div class="control-section-title">Palette</div>
             <div class="palette-preview" id="palettePreview"></div>
         </div>
 
         <div class="control-section">
-            <div class="control-section-title">Animation</div>
-            <div class="control-row">
-                <label>Color Shift</label>
-                <input type="range" id="colorShift" min="0" max="100" value="0" step="5">
-                <span id="colorShiftVal">Off</span>
-            </div>
-            <div class="control-row" id="juliaAnimRow" style="display: none;">
-                <label>Julia Morph</label>
-                <input type="range" id="juliaMorph" min="0" max="100" value="0" step="5">
-                <span id="juliaMorphVal">Off</span>
+            <div class="control-section-title">Type</div>
+            <div class="btn-row">
+                <button class="btn active" id="mandelbrotBtn">Mandelbrot</button>
+                <button class="btn secondary" id="juliaBtn">Julia</button>
             </div>
         </div>
 
-        <div class="control-section">
-            <div class="control-section-title">Interesting Locations</div>
-            <div class="presets" id="presets"></div>
-        </div>
-
-        <button class="btn" id="fullscreenBtn">Fullscreen (F)</button>
-        <button class="btn secondary" id="resetBtn">Reset View (R)</button>
-        <button class="btn secondary" id="saveBtn">Save Image (S)</button>
+        <button class="btn secondary" id="resetBtn">Reset (R)</button>
+        <button class="btn secondary" id="fullscreenBtn">Fullscreen (F)</button>
     </div>
 
     <script>
-        // ============================================
-        // CONFIGURATION
-        // ============================================
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
         let width, height;
         let imageData, pixels;
 
+        // Timing
+        let lastTime = 0;
+        let frameCount = 0;
+        let fps = 0;
+
         // View state
         let view = {
             centerX: -0.5,
             centerY: 0,
             zoom: 1,
-            maxIter: 200,
-            colorCycles: 3,
-            smoothing: true,
-            colorShift: 0,
-            colorShiftSpeed: 0,
-            juliaMorph: 0,
-            juliaMorphSpeed: 0
+            rotation: 0,
+            maxIter: 150,
+            colorBands: 5
         };
 
-        // Julia set parameters
+        // Animation state
+        let anim = {
+            autoZoom: 0,
+            drift: 0,
+            driftAngle: Math.random() * Math.PI * 2,
+            rotation: 0,
+            colorCycle: 0,
+            colorOffset: 0,
+            pulse: 0,
+            pulsePhase: 0,
+            warp: 0,
+            warpPhase: 0
+        };
+
+        // Julia
         let julia = {
             enabled: false,
             cx: -0.7,
-            cy: 0.27015
+            cy: 0.27015,
+            morphSpeed: 0,
+            morphPhase: 0
         };
 
-        // Rendering state
-        let needsRender = true;
-        let isRendering = false;
-        let renderStartTime = 0;
-
-        // Interaction state
+        // Interaction
         let isDragging = false;
-        let dragStartX, dragStartY;
-        let dragStartCenterX, dragStartCenterY;
+        let dragStartX, dragStartY, dragStartCenterX, dragStartCenterY;
+
+        // Trip mode
+        let tripMode = false;
 
         // ============================================
-        // COLOR PALETTES
+        // COLOR PALETTES - More psychedelic options
         // ============================================
         const palettes = {
-            obsidian: {
-                name: 'Obsidian Gold',
-                colors: [
-                    [15, 15, 18],      // Deep black
-                    [45, 35, 20],      // Dark brown
-                    [120, 90, 30],     // Bronze
-                    [212, 175, 55],    // Gold
-                    [240, 220, 150],   // Bright gold
-                    [255, 250, 220],   // White gold
-                    [212, 175, 55],    // Gold
-                    [80, 60, 20],      // Dark gold
-                    [30, 25, 15],      // Near black
-                ]
+            gold: {
+                name: 'Gold',
+                colors: [[15,15,18],[45,35,20],[120,90,30],[212,175,55],[255,240,180],[212,175,55],[80,60,20]]
             },
-            ember: {
-                name: 'Ember',
-                colors: [
-                    [15, 10, 8],
-                    [60, 20, 10],
-                    [140, 40, 15],
-                    [220, 80, 20],
-                    [255, 140, 50],
-                    [255, 220, 150],
-                    [255, 180, 80],
-                    [180, 60, 20],
-                    [40, 15, 8],
-                ]
+            rainbow: {
+                name: 'Rainbow',
+                colors: [[255,0,0],[255,127,0],[255,255,0],[0,255,0],[0,255,255],[0,0,255],[139,0,255],[255,0,127]]
             },
-            arctic: {
-                name: 'Arctic',
-                colors: [
-                    [8, 12, 20],
-                    [20, 40, 80],
-                    [40, 80, 140],
-                    [80, 140, 200],
-                    [140, 200, 255],
-                    [220, 240, 255],
-                    [160, 200, 240],
-                    [60, 100, 160],
-                    [20, 30, 50],
-                ]
+            neon: {
+                name: 'Neon',
+                colors: [[0,0,0],[255,0,128],[0,255,255],[255,255,0],[255,0,255],[0,255,128],[255,128,0],[128,0,255]]
+            },
+            acid: {
+                name: 'Acid',
+                colors: [[0,20,0],[0,80,20],[0,200,50],[150,255,0],[255,255,100],[200,255,50],[50,180,30],[0,60,10]]
+            },
+            plasma: {
+                name: 'Plasma',
+                colors: [[10,0,20],[60,0,100],[150,0,180],[255,50,200],[255,150,255],[200,100,255],[100,0,150],[30,0,50]]
+            },
+            fire: {
+                name: 'Fire',
+                colors: [[0,0,0],[40,0,0],[100,20,0],[180,60,0],[255,120,0],[255,200,50],[255,255,150],[255,200,50]]
+            },
+            ocean: {
+                name: 'Ocean',
+                colors: [[0,5,20],[0,20,60],[0,60,120],[0,120,180],[50,180,220],[150,220,255],[200,240,255],[100,200,240]]
             },
             void: {
                 name: 'Void',
-                colors: [
-                    [10, 5, 15],
-                    [40, 20, 60],
-                    [80, 40, 120],
-                    [140, 60, 180],
-                    [200, 100, 220],
-                    [255, 180, 255],
-                    [220, 120, 200],
-                    [100, 50, 140],
-                    [30, 15, 45],
-                ]
-            },
-            forest: {
-                name: 'Forest',
-                colors: [
-                    [5, 15, 10],
-                    [15, 45, 30],
-                    [30, 90, 60],
-                    [60, 150, 100],
-                    [100, 200, 150],
-                    [180, 240, 200],
-                    [120, 200, 160],
-                    [50, 120, 80],
-                    [15, 40, 25],
-                ]
-            },
-            electric: {
-                name: 'Electric',
-                colors: [
-                    [0, 0, 10],
-                    [0, 20, 60],
-                    [0, 60, 140],
-                    [20, 120, 200],
-                    [80, 180, 255],
-                    [200, 240, 255],
-                    [255, 255, 200],
-                    [255, 200, 100],
-                    [140, 80, 40],
-                ]
+                colors: [[5,0,10],[20,0,40],[50,0,80],[100,20,150],[180,80,220],[255,150,255],[200,100,200],[80,30,100]]
             }
         };
 
-        let currentPalette = 'obsidian';
-
-        // ============================================
-        // PRESET LOCATIONS
-        // ============================================
-        const presets = [
-            { name: 'Overview', x: -0.5, y: 0, zoom: 1 },
-            { name: 'Seahorse Valley', x: -0.743643887037151, y: 0.131825904205330, zoom: 1000 },
-            { name: 'Elephant Valley', x: 0.281717921930775, y: 0.5771052841488505, zoom: 500 },
-            { name: 'Triple Spiral', x: -0.088625, y: 0.654913, zoom: 100 },
-            { name: 'Lightning', x: -1.256827152259138, y: -0.37962642612165, zoom: 2000 },
-            { name: 'Starfish', x: -0.374004139, y: 0.659792175, zoom: 5000 },
-            { name: 'Mini Mandelbrot', x: -1.7497591451303, y: 0.0000000037, zoom: 50000 },
-            { name: 'Spiral Galaxy', x: -0.761574, y: -0.0847596, zoom: 800 },
-        ];
-
-        const juliaPresets = [
-            { name: 'Classic', cx: -0.7, cy: 0.27015 },
-            { name: 'Dendrite', cx: 0, cy: 1 },
-            { name: 'Siegel Disk', cx: -0.391, cy: -0.587 },
-            { name: 'Rabbit', cx: -0.123, cy: 0.745 },
-            { name: 'San Marco', cx: -0.75, cy: 0 },
-            { name: 'Spiral', cx: 0.285, cy: 0.01 },
-            { name: 'Dragon', cx: -0.8, cy: 0.156 },
-            { name: 'Galaxies', cx: -0.4, cy: 0.6 },
-        ];
+        let currentPalette = 'rainbow';
 
         // ============================================
         // FRACTAL COMPUTATION
         // ============================================
-        function mandelbrot(x0, y0, maxIter) {
-            let x = 0, y = 0;
-            let x2 = 0, y2 = 0;
-            let iter = 0;
+        function computeFractal(x0, y0, maxIter, warpAmount, warpPhase) {
+            // Apply warp distortion
+            if (warpAmount > 0) {
+                const wx = Math.sin(y0 * 10 + warpPhase) * warpAmount * 0.1;
+                const wy = Math.cos(x0 * 10 + warpPhase) * warpAmount * 0.1;
+                x0 += wx;
+                y0 += wy;
+            }
 
-            while (x2 + y2 <= 4 && iter < maxIter) {
-                y = 2 * x * y + y0;
-                x = x2 - y2 + x0;
-                x2 = x * x;
-                y2 = y * y;
-                iter++;
+            let x, y, x2, y2, iter = 0;
+
+            if (julia.enabled) {
+                // Julia set with morphing
+                let jx = julia.cx, jy = julia.cy;
+                if (julia.morphSpeed > 0) {
+                    jx += Math.sin(julia.morphPhase) * 0.1;
+                    jy += Math.cos(julia.morphPhase * 1.3) * 0.1;
+                }
+                x = x0; y = y0;
+                x2 = x * x; y2 = y * y;
+                while (x2 + y2 <= 4 && iter < maxIter) {
+                    y = 2 * x * y + jy;
+                    x = x2 - y2 + jx;
+                    x2 = x * x; y2 = y * y;
+                    iter++;
+                }
+            } else {
+                // Mandelbrot
+                x = 0; y = 0; x2 = 0; y2 = 0;
+                while (x2 + y2 <= 4 && iter < maxIter) {
+                    y = 2 * x * y + y0;
+                    x = x2 - y2 + x0;
+                    x2 = x * x; y2 = y * y;
+                    iter++;
+                }
             }
 
             if (iter === maxIter) return -1;
 
             // Smooth coloring
-            if (view.smoothing) {
-                const log_zn = Math.log(x2 + y2) / 2;
-                const nu = Math.log(log_zn / Math.LN2) / Math.LN2;
-                return iter + 1 - nu;
-            }
-            return iter;
+            const log_zn = Math.log(x2 + y2) / 2;
+            const nu = Math.log(log_zn / Math.LN2) / Math.LN2;
+            return iter + 1 - nu;
         }
 
-        function juliaSet(x0, y0, cx, cy, maxIter) {
-            let x = x0, y = y0;
-            let x2 = x * x, y2 = y * y;
-            let iter = 0;
-
-            while (x2 + y2 <= 4 && iter < maxIter) {
-                y = 2 * x * y + cy;
-                x = x2 - y2 + cx;
-                x2 = x * x;
-                y2 = y * y;
-                iter++;
-            }
-
-            if (iter === maxIter) return -1;
-
-            if (view.smoothing) {
-                const log_zn = Math.log(x2 + y2) / 2;
-                const nu = Math.log(log_zn / Math.LN2) / Math.LN2;
-                return iter + 1 - nu;
-            }
-            return iter;
-        }
-
-        // ============================================
-        // COLOR MAPPING
-        // ============================================
-        function getColor(iter, maxIter) {
-            if (iter < 0) return [0, 0, 0]; // Inside set = black
+        function getColor(iter, maxIter, colorOffset, pulseAmount) {
+            if (iter < 0) return [0, 0, 0];
 
             const palette = palettes[currentPalette].colors;
             const numColors = palette.length;
 
-            // Apply color shift animation
-            const shifted = iter + view.colorShift;
+            // Apply color offset (cycling) and pulse
+            let t = ((iter + colorOffset) * view.colorBands / maxIter) % 1;
 
-            // Map iteration to color with cycling
-            const t = (shifted * view.colorCycles / maxIter) % 1;
+            // Pulse effect - modulate brightness
+            const pulseMod = 1 + Math.sin(pulseAmount) * 0.3;
+
             const idx = t * (numColors - 1);
             const i1 = Math.floor(idx) % numColors;
             const i2 = (i1 + 1) % numColors;
             const f = idx - Math.floor(idx);
 
-            // Interpolate between colors
             const c1 = palette[i1];
             const c2 = palette[i2];
 
             return [
-                Math.round(c1[0] + (c2[0] - c1[0]) * f),
-                Math.round(c1[1] + (c2[1] - c1[1]) * f),
-                Math.round(c1[2] + (c2[2] - c1[2]) * f)
+                Math.min(255, Math.round((c1[0] + (c2[0] - c1[0]) * f) * pulseMod)),
+                Math.min(255, Math.round((c1[1] + (c2[1] - c1[1]) * f) * pulseMod)),
+                Math.min(255, Math.round((c1[2] + (c2[2] - c1[2]) * f) * pulseMod))
             ];
         }
 
@@ -618,82 +548,96 @@
         // RENDERING
         // ============================================
         function render() {
-            if (isRendering) return;
-            isRendering = true;
-            renderStartTime = performance.now();
-            document.getElementById('loading').classList.add('visible');
-
             const scale = 4 / (view.zoom * Math.min(width, height));
             const maxIter = view.maxIter;
+            const cos_r = Math.cos(view.rotation);
+            const sin_r = Math.sin(view.rotation);
+            const warpAmount = anim.warp;
+            const warpPhase = anim.warpPhase;
+            const colorOffset = anim.colorOffset;
+            const pulseAmount = anim.pulsePhase;
 
-            // Get Julia parameters (possibly animated)
-            let jx = julia.cx;
-            let jy = julia.cy;
-            if (view.juliaMorphSpeed > 0) {
-                const t = performance.now() * 0.0001 * view.juliaMorphSpeed;
-                jx = julia.cx + Math.sin(t) * 0.1;
-                jy = julia.cy + Math.cos(t * 1.3) * 0.1;
-            }
+            const cx = width / 2;
+            const cy = height / 2;
 
-            // Render in chunks for responsiveness
-            let y = 0;
-            const chunkSize = 20;
+            for (let py = 0; py < height; py++) {
+                for (let px = 0; px < width; px++) {
+                    // Screen to complex with rotation
+                    let dx = (px - cx) * scale;
+                    let dy = (py - cy) * scale;
 
-            function renderChunk() {
-                const endY = Math.min(y + chunkSize, height);
+                    // Apply rotation
+                    const rx = dx * cos_r - dy * sin_r;
+                    const ry = dx * sin_r + dy * cos_r;
 
-                for (; y < endY; y++) {
-                    for (let x = 0; x < width; x++) {
-                        const real = view.centerX + (x - width / 2) * scale;
-                        const imag = view.centerY + (y - height / 2) * scale;
+                    const real = view.centerX + rx;
+                    const imag = view.centerY + ry;
 
-                        let iter;
-                        if (julia.enabled) {
-                            iter = juliaSet(real, imag, jx, jy, maxIter);
-                        } else {
-                            iter = mandelbrot(real, imag, maxIter);
-                        }
+                    const iter = computeFractal(real, imag, maxIter, warpAmount, warpPhase);
+                    const [r, g, b] = getColor(iter, maxIter, colorOffset, pulseAmount);
 
-                        const [r, g, b] = getColor(iter, maxIter);
-                        const idx = (y * width + x) * 4;
-                        pixels[idx] = r;
-                        pixels[idx + 1] = g;
-                        pixels[idx + 2] = b;
-                        pixels[idx + 3] = 255;
-                    }
-                }
-
-                if (y < height) {
-                    requestAnimationFrame(renderChunk);
-                } else {
-                    ctx.putImageData(imageData, 0, 0);
-                    isRendering = false;
-                    document.getElementById('loading').classList.remove('visible');
-                    needsRender = false;
+                    const idx = (py * width + px) * 4;
+                    pixels[idx] = r;
+                    pixels[idx + 1] = g;
+                    pixels[idx + 2] = b;
+                    pixels[idx + 3] = 255;
                 }
             }
 
-            renderChunk();
+            ctx.putImageData(imageData, 0, 0);
         }
 
         // ============================================
         // ANIMATION LOOP
         // ============================================
-        function animate() {
-            // Handle color shift animation
-            if (view.colorShiftSpeed > 0) {
-                view.colorShift += view.colorShiftSpeed * 0.5;
-                needsRender = true;
+        function animate(timestamp) {
+            const dt = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // FPS counter
+            frameCount++;
+            if (frameCount % 30 === 0) {
+                fps = Math.round(1000 / dt);
+                document.getElementById('fpsDisplay').textContent = fps;
             }
 
-            // Handle Julia morph animation
-            if (julia.enabled && view.juliaMorphSpeed > 0) {
-                needsRender = true;
+            // Update animations
+            if (anim.autoZoom > 0) {
+                view.zoom *= 1 + anim.autoZoom * 0.001;
+                // Slowly drift toward interesting areas
+                if (anim.drift > 0) {
+                    const driftSpeed = anim.drift * 0.00001 / view.zoom;
+                    view.centerX += Math.cos(anim.driftAngle) * driftSpeed;
+                    view.centerY += Math.sin(anim.driftAngle) * driftSpeed;
+                    anim.driftAngle += 0.001;
+                }
             }
 
-            if (needsRender && !isRendering) {
-                render();
+            if (anim.rotation > 0) {
+                view.rotation += anim.rotation * 0.0005;
             }
+
+            if (anim.colorCycle > 0) {
+                anim.colorOffset += anim.colorCycle * 0.1;
+            }
+
+            if (anim.pulse > 0) {
+                anim.pulsePhase += anim.pulse * 0.05;
+            }
+
+            if (anim.warp > 0) {
+                anim.warpPhase += anim.warp * 0.02;
+            }
+
+            if (julia.morphSpeed > 0) {
+                julia.morphPhase += julia.morphSpeed * 0.01;
+            }
+
+            // Update info
+            updateInfo();
+
+            // Render
+            render();
 
             requestAnimationFrame(animate);
         }
@@ -703,30 +647,25 @@
         // ============================================
         function screenToComplex(screenX, screenY) {
             const scale = 4 / (view.zoom * Math.min(width, height));
+            const cos_r = Math.cos(view.rotation);
+            const sin_r = Math.sin(view.rotation);
+            let dx = (screenX - width / 2) * scale;
+            let dy = (screenY - height / 2) * scale;
+            const rx = dx * cos_r - dy * sin_r;
+            const ry = dx * sin_r + dy * cos_r;
             return {
-                x: view.centerX + (screenX - width / 2) * scale,
-                y: view.centerY + (screenY - height / 2) * scale
+                x: view.centerX + rx,
+                y: view.centerY + ry
             };
         }
 
         canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            // Zoom toward mouse position
-            const complex = screenToComplex(mouseX, mouseY);
-
-            const zoomFactor = e.deltaY > 0 ? 0.8 : 1.25;
+            const complex = screenToComplex(e.clientX, e.clientY);
+            const zoomFactor = e.deltaY > 0 ? 0.85 : 1.18;
             view.zoom *= zoomFactor;
-
-            // Adjust center to zoom toward mouse
             view.centerX = complex.x + (view.centerX - complex.x) / zoomFactor;
             view.centerY = complex.y + (view.centerY - complex.y) / zoomFactor;
-
-            updateInfo();
-            needsRender = true;
         }, { passive: false });
 
         canvas.addEventListener('mousedown', (e) => {
@@ -740,16 +679,15 @@
 
         canvas.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-
             const scale = 4 / (view.zoom * Math.min(width, height));
-            const dx = e.clientX - dragStartX;
-            const dy = e.clientY - dragStartY;
-
-            view.centerX = dragStartCenterX - dx * scale;
-            view.centerY = dragStartCenterY - dy * scale;
-
-            updateInfo();
-            needsRender = true;
+            const cos_r = Math.cos(view.rotation);
+            const sin_r = Math.sin(view.rotation);
+            let dx = (e.clientX - dragStartX) * scale;
+            let dy = (e.clientY - dragStartY) * scale;
+            const rx = dx * cos_r - dy * sin_r;
+            const ry = dx * sin_r + dy * cos_r;
+            view.centerX = dragStartCenterX - rx;
+            view.centerY = dragStartCenterY - ry;
         });
 
         canvas.addEventListener('mouseup', () => {
@@ -762,25 +700,21 @@
             canvas.style.cursor = 'crosshair';
         });
 
-        // Double-click to set Julia parameter
         canvas.addEventListener('dblclick', (e) => {
+            const complex = screenToComplex(e.clientX, e.clientY);
             if (!julia.enabled) {
-                const complex = screenToComplex(e.clientX, e.clientY);
                 julia.cx = complex.x;
                 julia.cy = complex.y;
                 julia.enabled = true;
+                julia.morphSpeed = 20;
                 document.getElementById('juliaBtn').classList.add('active');
                 document.getElementById('mandelbrotBtn').classList.remove('active');
-                document.getElementById('modeDisplay').textContent = `Julia (${julia.cx.toFixed(3)}, ${julia.cy.toFixed(3)})`;
-                document.getElementById('juliaAnimRow').style.display = 'flex';
-                updatePresets();
-                needsRender = true;
+                document.getElementById('modeDisplay').textContent = 'Julia (morphing)';
             }
         });
 
         // Touch support
         let lastTouchDist = 0;
-        let lastTouchCenter = { x: 0, y: 0 };
 
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -794,10 +728,6 @@
                 const dx = e.touches[1].clientX - e.touches[0].clientX;
                 const dy = e.touches[1].clientY - e.touches[0].clientY;
                 lastTouchDist = Math.sqrt(dx * dx + dy * dy);
-                lastTouchCenter = {
-                    x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-                    y: (e.touches[0].clientY + e.touches[1].clientY) / 2
-                };
             }
         }, { passive: false });
 
@@ -805,35 +735,25 @@
             e.preventDefault();
             if (e.touches.length === 1 && isDragging) {
                 const scale = 4 / (view.zoom * Math.min(width, height));
-                const dx = e.touches[0].clientX - dragStartX;
-                const dy = e.touches[0].clientY - dragStartY;
-
-                view.centerX = dragStartCenterX - dx * scale;
-                view.centerY = dragStartCenterY - dy * scale;
-
-                updateInfo();
-                needsRender = true;
+                const dx = (e.touches[0].clientX - dragStartX) * scale;
+                const dy = (e.touches[0].clientY - dragStartY) * scale;
+                view.centerX = dragStartCenterX - dx;
+                view.centerY = dragStartCenterY - dy;
             } else if (e.touches.length === 2) {
                 const dx = e.touches[1].clientX - e.touches[0].clientX;
                 const dy = e.touches[1].clientY - e.touches[0].clientY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-
                 if (lastTouchDist > 0) {
-                    const zoomFactor = dist / lastTouchDist;
                     const center = {
                         x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
                         y: (e.touches[0].clientY + e.touches[1].clientY) / 2
                     };
-
                     const complex = screenToComplex(center.x, center.y);
+                    const zoomFactor = dist / lastTouchDist;
                     view.zoom *= zoomFactor;
                     view.centerX = complex.x + (view.centerX - complex.x) / zoomFactor;
                     view.centerY = complex.y + (view.centerY - complex.y) / zoomFactor;
-
-                    updateInfo();
-                    needsRender = true;
                 }
-
                 lastTouchDist = dist;
             }
         }, { passive: false });
@@ -844,49 +764,21 @@
         });
 
         // ============================================
-        // UI CONTROLS
+        // UI
         // ============================================
         function updateInfo() {
-            document.getElementById('zoomLevel').textContent = view.zoom >= 1000000
-                ? (view.zoom / 1000000).toFixed(1) + 'M×'
-                : view.zoom >= 1000
-                    ? (view.zoom / 1000).toFixed(1) + 'K×'
-                    : view.zoom.toFixed(1) + '×';
-            document.getElementById('centerCoords').textContent =
-                `${view.centerX.toFixed(6)}, ${view.centerY.toFixed(6)}`;
-        }
-
-        function updatePresets() {
-            const container = document.getElementById('presets');
-            const list = julia.enabled ? juliaPresets : presets;
-            container.innerHTML = list.map((p, i) =>
-                `<button class="preset-btn" data-index="${i}">${p.name}</button>`
-            ).join('');
-
-            container.querySelectorAll('.preset-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const i = parseInt(btn.dataset.index);
-                    if (julia.enabled) {
-                        julia.cx = juliaPresets[i].cx;
-                        julia.cy = juliaPresets[i].cy;
-                        document.getElementById('modeDisplay').textContent =
-                            `Julia (${julia.cx.toFixed(3)}, ${julia.cy.toFixed(3)})`;
-                    } else {
-                        view.centerX = presets[i].x;
-                        view.centerY = presets[i].y;
-                        view.zoom = presets[i].zoom;
-                        updateInfo();
-                    }
-                    needsRender = true;
-                });
-            });
+            const zoomStr = view.zoom >= 1e9 ? (view.zoom / 1e9).toFixed(1) + 'B×'
+                : view.zoom >= 1e6 ? (view.zoom / 1e6).toFixed(1) + 'M×'
+                : view.zoom >= 1e3 ? (view.zoom / 1e3).toFixed(1) + 'K×'
+                : view.zoom.toFixed(1) + '×';
+            document.getElementById('zoomLevel').textContent = zoomStr;
         }
 
         function initPalettePreview() {
             const container = document.getElementById('palettePreview');
             container.innerHTML = Object.entries(palettes).map(([key, p]) => {
-                const gradient = p.colors.slice(0, 5).map((c, i) =>
-                    `rgb(${c[0]},${c[1]},${c[2]}) ${i * 25}%`
+                const gradient = p.colors.slice(0, 4).map((c, i) =>
+                    `rgb(${c[0]},${c[1]},${c[2]}) ${i * 33}%`
                 ).join(', ');
                 return `<div class="palette-swatch ${key === currentPalette ? 'active' : ''}"
                             data-palette="${key}"
@@ -899,58 +791,102 @@
                     document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('active'));
                     swatch.classList.add('active');
                     currentPalette = swatch.dataset.palette;
-                    needsRender = true;
                 });
             });
         }
 
-        // Control event listeners
+        function setSlider(id, value) {
+            const slider = document.getElementById(id);
+            slider.value = value;
+            slider.dispatchEvent(new Event('input'));
+        }
+
+        // Trip mode
+        document.getElementById('tripBtn').addEventListener('click', () => {
+            tripMode = !tripMode;
+            const btn = document.getElementById('tripBtn');
+            const indicator = document.getElementById('tripIndicator');
+
+            if (tripMode) {
+                btn.classList.add('active');
+                indicator.classList.add('visible');
+                setTimeout(() => indicator.classList.remove('visible'), 1000);
+
+                // Enable all the psychedelic effects
+                setSlider('autoZoom', 30);
+                setSlider('drift', 50);
+                setSlider('rotation', 20);
+                setSlider('colorCycle', 60);
+                setSlider('pulse', 40);
+                setSlider('warp', 30);
+                currentPalette = 'rainbow';
+                document.querySelectorAll('.palette-swatch').forEach(s => {
+                    s.classList.toggle('active', s.dataset.palette === 'rainbow');
+                });
+            } else {
+                btn.classList.remove('active');
+                setSlider('autoZoom', 0);
+                setSlider('drift', 0);
+                setSlider('rotation', 0);
+                setSlider('colorCycle', 0);
+                setSlider('pulse', 0);
+                setSlider('warp', 0);
+            }
+        });
+
+        // Slider controls
+        function setupSlider(id, animKey, displayFn) {
+            document.getElementById(id).addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                anim[animKey] = val;
+                document.getElementById(id + 'Val').textContent = displayFn ? displayFn(val) : (val > 0 ? val : 'Off');
+            });
+        }
+
+        setupSlider('autoZoom', 'autoZoom');
+        setupSlider('drift', 'drift');
+        setupSlider('rotation', 'rotation');
+        setupSlider('colorCycle', 'colorCycle');
+        setupSlider('pulse', 'pulse');
+        setupSlider('warp', 'warp');
+
         document.getElementById('iterations').addEventListener('input', (e) => {
             view.maxIter = parseInt(e.target.value);
             document.getElementById('iterationsVal').textContent = view.maxIter;
-            needsRender = true;
         });
 
-        document.getElementById('colorCycles').addEventListener('input', (e) => {
-            view.colorCycles = parseFloat(e.target.value);
-            document.getElementById('colorCyclesVal').textContent = view.colorCycles.toFixed(1);
-            needsRender = true;
-        });
-
-        document.getElementById('smoothing').addEventListener('input', (e) => {
-            view.smoothing = e.target.value === '1';
-            document.getElementById('smoothingVal').textContent = view.smoothing ? 'On' : 'Off';
-            needsRender = true;
-        });
-
-        document.getElementById('colorShift').addEventListener('input', (e) => {
-            view.colorShiftSpeed = parseInt(e.target.value);
-            document.getElementById('colorShiftVal').textContent = view.colorShiftSpeed > 0 ? view.colorShiftSpeed : 'Off';
-        });
-
-        document.getElementById('juliaMorph').addEventListener('input', (e) => {
-            view.juliaMorphSpeed = parseInt(e.target.value);
-            document.getElementById('juliaMorphVal').textContent = view.juliaMorphSpeed > 0 ? view.juliaMorphSpeed : 'Off';
+        document.getElementById('colorBands').addEventListener('input', (e) => {
+            view.colorBands = parseInt(e.target.value);
+            document.getElementById('colorBandsVal').textContent = view.colorBands;
         });
 
         document.getElementById('mandelbrotBtn').addEventListener('click', () => {
             julia.enabled = false;
+            julia.morphSpeed = 0;
             document.getElementById('mandelbrotBtn').classList.add('active');
             document.getElementById('juliaBtn').classList.remove('active');
             document.getElementById('modeDisplay').textContent = 'Mandelbrot';
-            document.getElementById('juliaAnimRow').style.display = 'none';
-            updatePresets();
-            needsRender = true;
         });
 
         document.getElementById('juliaBtn').addEventListener('click', () => {
             julia.enabled = true;
+            julia.morphSpeed = 20;
             document.getElementById('juliaBtn').classList.add('active');
             document.getElementById('mandelbrotBtn').classList.remove('active');
-            document.getElementById('modeDisplay').textContent = `Julia (${julia.cx.toFixed(3)}, ${julia.cy.toFixed(3)})`;
-            document.getElementById('juliaAnimRow').style.display = 'flex';
-            updatePresets();
-            needsRender = true;
+            document.getElementById('modeDisplay').textContent = 'Julia (morphing)';
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            view.centerX = -0.5;
+            view.centerY = 0;
+            view.zoom = 1;
+            view.rotation = 0;
+            julia.enabled = false;
+            julia.morphSpeed = 0;
+            anim.driftAngle = Math.random() * Math.PI * 2;
+            document.getElementById('mandelbrotBtn').classList.add('active');
+            document.getElementById('juliaBtn').classList.remove('active');
+            document.getElementById('modeDisplay').textContent = 'Mandelbrot';
         });
 
         document.getElementById('fullscreenBtn').addEventListener('click', () => {
@@ -963,32 +899,11 @@
             }
         });
 
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            view.centerX = -0.5;
-            view.centerY = 0;
-            view.zoom = 1;
-            julia.enabled = false;
-            document.getElementById('mandelbrotBtn').classList.add('active');
-            document.getElementById('juliaBtn').classList.remove('active');
-            document.getElementById('modeDisplay').textContent = 'Mandelbrot';
-            document.getElementById('juliaAnimRow').style.display = 'none';
-            updateInfo();
-            updatePresets();
-            needsRender = true;
-        });
-
-        document.getElementById('saveBtn').addEventListener('click', () => {
-            const link = document.createElement('a');
-            link.download = `fractal-${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
-
         // Toggle controls
         const controls = document.getElementById('controls');
         const toggleBtn = document.getElementById('toggleBtn');
-
         let controlsTimeout;
+
         document.addEventListener('mousemove', () => {
             controls.classList.remove('hidden');
             toggleBtn.classList.add('hidden');
@@ -1006,39 +921,30 @@
             toggleBtn.classList.add('hidden');
         });
 
-        // Keyboard shortcuts
+        // Keyboard
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'f' || e.key === 'F') {
-                document.getElementById('fullscreenBtn').click();
-            }
-            if (e.key === 'r' || e.key === 'R') {
-                document.getElementById('resetBtn').click();
-            }
-            if (e.key === 's' || e.key === 'S') {
-                document.getElementById('saveBtn').click();
-            }
-            if (e.key === 'j' || e.key === 'J') {
-                document.getElementById('juliaBtn').click();
-            }
-            if (e.key === 'm' || e.key === 'M') {
-                document.getElementById('mandelbrotBtn').click();
-            }
-            if (e.key === 'Escape' && document.fullscreenElement) {
-                document.exitFullscreen();
-            }
+            if (e.key === 'f' || e.key === 'F') document.getElementById('fullscreenBtn').click();
+            if (e.key === 'r' || e.key === 'R') document.getElementById('resetBtn').click();
+            if (e.key === 't' || e.key === 'T') document.getElementById('tripBtn').click();
+            if (e.key === ' ') { e.preventDefault(); document.getElementById('tripBtn').click(); }
+            if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
         });
 
         // ============================================
-        // INITIALIZATION
+        // INIT
         // ============================================
         function resize() {
-            width = window.innerWidth;
-            height = window.innerHeight;
+            // Use lower resolution for better performance
+            const scale = 0.5;
+            width = Math.floor(window.innerWidth * scale);
+            height = Math.floor(window.innerHeight * scale);
             canvas.width = width;
             canvas.height = height;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            ctx.imageSmoothingEnabled = false;
             imageData = ctx.createImageData(width, height);
             pixels = imageData.data;
-            needsRender = true;
         }
 
         window.addEventListener('resize', resize);
@@ -1050,12 +956,9 @@
             setTimeout(resize, 100);
         });
 
-        // Start
         resize();
-        updateInfo();
-        updatePresets();
         initPalettePreview();
-        animate();
+        requestAnimationFrame(animate);
     </script>
 </body>
 </html>
