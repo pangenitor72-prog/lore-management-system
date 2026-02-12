@@ -243,6 +243,11 @@
         <div class="control-section">
             <div class="control-section-title">Flow</div>
             <div class="control-row">
+                <label>Breathe</label>
+                <input type="range" id="breathe" min="0" max="50" value="15" step="1">
+                <span id="breatheVal">15</span>
+            </div>
+            <div class="control-row">
                 <label>Color Flow</label>
                 <input type="range" id="colorFlow" min="0" max="50" value="15" step="1">
                 <span id="colorFlowVal">15</span>
@@ -311,6 +316,9 @@
 
         // Animation state
         let anim = {
+            breathe: 15,
+            breathePhase: 0,
+            baseZoom: 1,
             colorFlow: 15,
             colorPhase: 0,
             shimmer: 10,
@@ -485,6 +493,13 @@
                 anim.shimmerPhase += anim.shimmer * 0.008;
             }
 
+            // Breathing zoom - oscillates between 0.7x and 1.4x of base zoom
+            if (anim.breathe > 0) {
+                anim.breathePhase += anim.breathe * 0.0003;
+                const breatheFactor = 1 + Math.sin(anim.breathePhase) * 0.35;
+                view.zoom = anim.baseZoom * breatheFactor;
+            }
+
             // Julia morphing - very gentle
             if (julia.enabled) {
                 julia.morphPhase += 0.005;
@@ -515,6 +530,7 @@
             const complex = screenToComplex(e.clientX, e.clientY);
             const zoomFactor = e.deltaY > 0 ? 0.85 : 1.18;
             view.zoom *= zoomFactor;
+            anim.baseZoom = view.zoom; // Update base for breathing
             view.centerX = complex.x + (view.centerX - complex.x) / zoomFactor;
             view.centerY = complex.y + (view.centerY - complex.y) / zoomFactor;
         }, { passive: false });
@@ -593,6 +609,7 @@
                     const complex = screenToComplex(center.x, center.y);
                     const zoomFactor = dist / lastTouchDist;
                     view.zoom *= zoomFactor;
+                    anim.baseZoom = view.zoom; // Update base for breathing
                     view.centerX = complex.x + (view.centerX - complex.x) / zoomFactor;
                     view.centerY = complex.y + (view.centerY - complex.y) / zoomFactor;
                 }
@@ -617,6 +634,14 @@
         }
 
         // Slider controls
+        document.getElementById('breathe').addEventListener('input', (e) => {
+            anim.breathe = parseInt(e.target.value);
+            document.getElementById('breatheVal').textContent = anim.breathe > 0 ? anim.breathe : 'Off';
+            if (anim.breathe === 0) {
+                view.zoom = anim.baseZoom; // Reset to base when disabled
+            }
+        });
+
         document.getElementById('colorFlow').addEventListener('input', (e) => {
             anim.colorFlow = parseInt(e.target.value);
             document.getElementById('colorFlowVal').textContent = anim.colorFlow > 0 ? anim.colorFlow : 'Off';
