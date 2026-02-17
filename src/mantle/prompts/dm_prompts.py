@@ -647,6 +647,7 @@ Write the narrative now:"""
         memory_context: str = "",
         decoherence_context: str = "",
         investment_context: str = "",
+        npc_personality_context: str = "",
         # Entity and Relationship Context
         db_context: str = "",
         # Story State
@@ -728,6 +729,10 @@ Write the narrative now:"""
         # Investment context (what player cares about)
         if investment_context:
             context_parts.append(investment_context)
+
+        # NPC personality context (OCEAN profiles for scene NPCs)
+        if npc_personality_context:
+            context_parts.append(npc_personality_context)
 
         # Entity graph context
         if db_context:

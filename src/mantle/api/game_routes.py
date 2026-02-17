@@ -41,6 +41,8 @@ from src.mantle.core.models import OCEANProfile
 
 # D&D Rules Integration
 from src.mantle.api.dnd_routes import _characters, CharacterSheet
+from src.mantle.dnd5e.integration.dm_agent_hooks import DnD5eHooks
+from src.mantle.dnd5e.presentation.narration import NarrationHelper
 
 # Shared Session State
 from src.mantle.api.session_state import (
@@ -2318,6 +2320,18 @@ class CharacterConfirmRequest(BaseModel):
     backstory: str = Field(default="")
 
 
+class QuickConceptRequest(BaseModel):
+    """Request to generate a character from a brief concept description."""
+    concept: str = Field(
+        ...,
+        min_length=5,
+        max_length=500,
+        description="Brief character concept (e.g., 'a grizzled dwarf warrior')"
+    )
+    world_id: str = Field(..., description="World ID for character options")
+    player_id: Optional[str] = Field(default="", description="Player ID")
+
+
 # ============================================================
 # SESSION STORE (in-memory + Neo4j persistence for continuity)
 # ============================================================
@@ -2757,13 +2771,21 @@ def resolve_mechanical_action(
     Resolve a mechanical action using the D&D 5e engine.
 
     Returns:
-        Dict with roll result, narrative description, and any state changes
+        Dict with roll result, narrative description, full result objects for NarrationHelper,
+        and any state changes.
     """
+    from src.mantle.dnd5e.engine.combat_resolver import DamageType, WEAPON_DAMAGE
+    from src.mantle.dnd5e.models.ability_scores import AbilityName
+
     result = {
         "action_type": action_info["action_type"],
         "rolls": [],
         "narrative_hint": "",
         "character_update": None,
+        # Full result objects for NarrationHelper
+        "attack_result": None,
+        "damage_result": None,
+        "check_result": None,
     }
 
     if action_info["action_type"] == "attack":
@@ -2771,6 +2793,9 @@ def resolve_mechanical_action(
         target_ac = 13  # Default moderate difficulty
         attack = CombatResolver.resolve_attack(character, target_ac)
         filtered = VisibilityFilter.filter_attack_result(attack, visibility)
+
+        # Store full result for NarrationHelper
+        result["attack_result"] = attack
 
         result["rolls"].append({
             "type": "attack",
@@ -2782,11 +2807,25 @@ def resolve_mechanical_action(
             "display": filtered.get("display", ""),
         })
 
-        if attack.is_hit and attack.damage_roll:
+        # Roll damage if attack hit
+        if attack.is_hit:
+            # Use default weapon damage (longsword)
+            damage_dice, damage_type = WEAPON_DAMAGE.get("longsword", ("1d8", DamageType.SLASHING))
+            ability_mod = character.ability_scores.get_modifier(AbilityName.STR)
+
+            damage = CombatResolver.roll_damage(
+                damage_dice,
+                damage_type,
+                ability_modifier=ability_mod,
+                is_critical=attack.is_critical,
+            )
+            result["damage_result"] = damage
+
             result["rolls"].append({
                 "type": "damage",
-                "damage": attack.damage_total,
-                "damage_type": attack.damage_type,
+                "damage": damage.damage_total,
+                "total": damage.damage_total,
+                "damage_type": damage.damage_type.value,
             })
 
         result["narrative_hint"] = filtered.get("description", attack.narrative_outcome)
@@ -2797,6 +2836,9 @@ def resolve_mechanical_action(
 
         check = CheckEngine.skill_check(character, skill, dc)
         filtered = VisibilityFilter.filter_check_result(check, visibility)
+
+        # Store full result for NarrationHelper
+        result["check_result"] = check
 
         result["rolls"].append({
             "type": "skill",
@@ -3599,6 +3641,66 @@ async def confirm_character_narrative(request: CharacterConfirmRequest):
         )
 
 
+@router.post("/character/quick-create")
+async def quick_create_character(request: QuickConceptRequest):
+    """
+    Generate a complete character from a brief concept description.
+
+    This is the "Quick Start" path for character creation:
+    1. Player provides a brief concept (e.g., "a grizzled dwarf warrior")
+    2. AI generates a complete character with mechanics and narrative
+    3. Returns the ready-to-play character
+
+    For more detailed creation, use /character/extract + /character/confirm.
+    """
+    from src.mantle.dnd5e.creation.concept_generator import ConceptGenerator
+
+    # Get world data
+    lore_base = _lore_bases.get(request.world_id)
+    if not lore_base:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"World '{request.world_id}' not found"
+        )
+
+    genre = lore_base.get("mechanics_genre", "fantasy")
+    char_opts = lore_base.get("character_options", {})
+
+    # Create concept generator with world-specific options
+    generator = ConceptGenerator(
+        gemini_client=None,  # Use keyword parsing for now (faster, no API call)
+        genre=genre,
+        world_character_options=char_opts,
+    )
+
+    try:
+        # Generate character from concept
+        character, inferred_prefs = generator.generate_from_concept_sync(
+            concept=request.concept,
+            player_id=request.player_id or "",
+        )
+
+        # Store character
+        _characters[character.character_id] = character
+
+        logger.info(f"Quick-created character: {character.name} ({character.character_id}) from concept: '{request.concept[:50]}...'")
+
+        return {
+            "success": True,
+            "character_id": character.character_id,
+            "character": character.to_summary_dict(),
+            "inferred_preferences": inferred_prefs,
+            "message": f"Created {character.name}, a {character.origin} {character.archetype}",
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to quick-create character: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create character: {str(e)}"
+        )
+
+
 @router.post("/session/{session_id}/action", response_model=DMResponse)
 async def process_action(
     request: Request,
@@ -3667,6 +3769,7 @@ async def process_action(
     logger.info(f"Processing action for session {session_id}: {action.action[:50]}...")
 
     # D&D Rules Integration - detect and resolve mechanical actions
+    # Uses DnD5eHooks for action classification and NarrationHelper for prose
     mechanical_result = None
     character_update = None
     mechanical_context = ""
@@ -3681,49 +3784,73 @@ async def process_action(
                     visibility = RulesVisibility(session.get("rules_visibility", "guided"))
                     mechanical_result = resolve_mechanical_action(action_info, character, visibility)
 
-                    # Build context for AI narrative - soft guidance, not rigid constraints
+                    # Build context for AI narrative using NarrationHelper for prose
                     # The AI should respect outcomes but has latitude on HOW to narrate them
                     if mechanical_result.get("rolls"):
                         roll = mechanical_result["rolls"][0]
                         if roll.get("type") == "attack":
                             total = roll.get("total", 0)
                             is_crit = roll.get("is_critical", False)
+                            attack_result = mechanical_result.get("attack_result")
+
+                            # Get prose narration from NarrationHelper
+                            if attack_result:
+                                prose = NarrationHelper.narrate_attack(attack_result)
+                            else:
+                                prose = "strikes" if roll.get("is_hit") else "misses"
 
                             if roll.get("is_hit"):
                                 dmg = mechanical_result["rolls"][1]["damage"] if len(mechanical_result["rolls"]) > 1 else 0
+                                damage_result = mechanical_result.get("damage_result")
+
+                                # Add damage prose if available
+                                if damage_result:
+                                    damage_prose = NarrationHelper.narrate_damage(damage_result, "the target")
+                                    prose = f"{prose}, {damage_prose}"
+
                                 if is_crit:
-                                    mechanical_context = f"[DICE OUTCOME: Critical hit! {dmg} damage. This should feel spectacular - a perfect strike, a moment of triumph. But you decide how to describe it.]"
+                                    mechanical_context = f"[DICE OUTCOME: Critical hit! {prose}. {dmg} damage. This should feel spectacular.]"
                                 elif total >= 18:
-                                    mechanical_context = f"[DICE OUTCOME: Solid hit ({total} vs AC). {dmg} damage. A clean, effective strike. Narrate the success however fits the moment.]"
+                                    mechanical_context = f"[DICE OUTCOME: Solid hit ({total} vs AC). {prose}. {dmg} damage.]"
                                 else:
-                                    mechanical_context = f"[DICE OUTCOME: Hit ({total} vs AC). {dmg} damage. The attack connects - could be a solid blow, a lucky graze, or anything in between. You have latitude here.]"
+                                    mechanical_context = f"[DICE OUTCOME: Hit ({total} vs AC). {prose}. {dmg} damage.]"
                             else:
-                                # Miss - give context on how close it was
+                                # Miss - get contextual hint
+                                hint = NarrationHelper.get_contextual_hint(attack_result=attack_result) if attack_result else ""
                                 if total >= 11:  # Close miss
-                                    mechanical_context = f"[DICE OUTCOME: Near miss ({total} vs AC). The attack doesn't land cleanly. This could be a dodge, a parry, armor deflection, or a blade that just barely misses. Make it feel close, not embarrassing.]"
+                                    mechanical_context = f"[DICE OUTCOME: Near miss ({total} vs AC). {prose}. {hint}]"
                                 else:  # Clear miss
-                                    mechanical_context = f"[DICE OUTCOME: Miss ({total} vs AC). The attack fails to connect. Narrate this in whatever way serves the story - a skilled dodge, bad footing, divine intervention. Avoid making the character look foolish unless that fits the tone.]"
+                                    mechanical_context = f"[DICE OUTCOME: Miss ({total} vs AC). {prose}. {hint}]"
 
                         elif roll.get("type") == "skill":
                             skill_name = roll.get('skill', 'skill').title()
                             total = roll.get("total", 0)
                             dc = roll.get("dc", 15)
                             margin = total - dc
+                            check_result = mechanical_result.get("check_result")
+
+                            # Get prose narration from NarrationHelper
+                            if check_result:
+                                prose = NarrationHelper.narrate_check(check_result)
+                                hint = NarrationHelper.get_contextual_hint(check_result=check_result)
+                            else:
+                                prose = "succeeds" if roll.get("success") else "fails"
+                                hint = ""
 
                             if roll.get("success"):
                                 if margin >= 10:
-                                    mechanical_context = f"[DICE OUTCOME: Exceptional {skill_name} success ({total} vs DC {dc}). This went very well. Narrate accordingly, but you decide how spectacular.]"
+                                    mechanical_context = f"[DICE OUTCOME: Exceptional {skill_name} success ({total} vs DC {dc}). {prose}. {hint}]"
                                 elif margin >= 5:
-                                    mechanical_context = f"[DICE OUTCOME: Solid {skill_name} success ({total} vs DC {dc}). The character accomplishes their goal competently. You decide the details.]"
+                                    mechanical_context = f"[DICE OUTCOME: Solid {skill_name} success ({total} vs DC {dc}). {prose}.]"
                                 else:
-                                    mechanical_context = f"[DICE OUTCOME: {skill_name} success ({total} vs DC {dc}). They succeed, but just barely. Could be clean or messy - your call based on what's interesting.]"
+                                    mechanical_context = f"[DICE OUTCOME: {skill_name} success ({total} vs DC {dc}). {prose}. {hint}]"
                             else:
                                 if margin >= -2:  # Very close failure
-                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check falls just short ({total} vs DC {dc}). So close. This shouldn't feel like incompetence - more like bad luck, tough circumstances, or a worthy challenge. Maybe partial progress?]"
+                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check falls just short ({total} vs DC {dc}). {prose}. {hint}]"
                                 elif margin >= -5:
-                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check fails ({total} vs DC {dc}). It doesn't work out. Create an interesting complication rather than a humiliating failure - unless humiliation serves the story.]"
+                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check fails ({total} vs DC {dc}). {prose}.]"
                                 else:
-                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check fails significantly ({total} vs DC {dc}). This went poorly. You have latitude on consequences - could be comedic, dramatic, or simply unfortunate. Match the tone of the scene.]"
+                                    mechanical_context = f"[DICE OUTCOME: {skill_name} check fails significantly ({total} vs DC {dc}). {prose}.]"
 
                     logger.info(f"Mechanical action resolved: {mechanical_result['action_type']}")
 
@@ -3731,43 +3858,68 @@ async def process_action(
                     # This is where damage actually affects HP!
                     if mechanical_result.get("rolls") and game_state:
                         for roll in mechanical_result["rolls"]:
-                            if roll.get("type") == "attack" and roll.get("is_hit"):
-                                # Find the damage roll
-                                dmg_roll = next(
-                                    (r for r in mechanical_result["rolls"] if r.get("type") == "damage"),
-                                    None
-                                )
-                                if dmg_roll:
-                                    damage = dmg_roll.get("total") or dmg_roll.get("damage", 0)
-                                    target = roll.get("target", "enemy")
-                                    # Apply damage to target (NPC/enemy)
-                                    # For now we track this in the mechanical_context for the DM
-                                    logger.info(f"[COMBAT] Player dealt {damage} damage to {target}")
-                                    # Apply damage to target - auto-register if not tracked
-                                    try:
-                                        game_state.apply_damage_to_npc(target, damage, source="player")
-                                    except ValueError:
-                                        # Target not tracked - auto-register with estimated stats
-                                        # Scale HP/AC based on player level for balanced encounters
-                                        player_level = 1
-                                        if game_state.character:
-                                            player_level = getattr(game_state.character, 'level', 1) or 1
-                                        # Base HP: 15 + (5 * level), AC: 12 + (level // 4)
-                                        estimated_hp = 15 + (5 * player_level)
-                                        estimated_ac = 12 + (player_level // 4)
+                            if roll.get("type") == "attack":
+                                # Record attack stats
+                                is_hit = roll.get("is_hit", False)
+                                is_crit = roll.get("is_critical", False)
+                                is_crit_miss = roll.get("roll") == 1  # Natural 1
 
-                                        from src.mantle.engine.game_state import CombatantState
-                                        auto_npc = CombatantState(
-                                            id=target.lower().replace(" ", "_"),
-                                            name=target,
-                                            max_hp=estimated_hp,
-                                            current_hp=estimated_hp,
-                                            armor_class=estimated_ac,
+                                if is_hit:
+                                    # Find the damage roll
+                                    dmg_roll = next(
+                                        (r for r in mechanical_result["rolls"] if r.get("type") == "damage"),
+                                        None
+                                    )
+                                    if dmg_roll:
+                                        damage = dmg_roll.get("total") or dmg_roll.get("damage", 0)
+                                        # Record attack with damage
+                                        game_state.record_attack(
+                                            hit=True,
+                                            damage=damage,
+                                            is_critical=is_crit,
+                                            is_crit_miss=False,
                                         )
-                                        game_state.add_npc(auto_npc)
-                                        logger.info(f"[COMBAT] Auto-registered NPC '{target}' with HP:{estimated_hp} AC:{estimated_ac}")
-                                        # Now apply the damage
-                                        game_state.apply_damage_to_npc(target, damage, source="player")
+                                        target = roll.get("target", "enemy")
+                                        # Apply damage to target (NPC/enemy)
+                                        # For now we track this in the mechanical_context for the DM
+                                        logger.info(f"[COMBAT] Player dealt {damage} damage to {target}")
+                                        # Apply damage to target - auto-register if not tracked
+                                        try:
+                                            game_state.apply_damage_to_npc(target, damage, source="player")
+                                        except ValueError:
+                                            # Target not tracked - auto-register with estimated stats
+                                            # Scale HP/AC based on player level for balanced encounters
+                                            player_level = 1
+                                            if game_state.character:
+                                                player_level = getattr(game_state.character, 'level', 1) or 1
+                                            # Base HP: 15 + (5 * level), AC: 12 + (level // 4)
+                                            estimated_hp = 15 + (5 * player_level)
+                                            estimated_ac = 12 + (player_level // 4)
+
+                                            from src.mantle.engine.game_state import CombatantState
+                                            auto_npc = CombatantState(
+                                                id=target.lower().replace(" ", "_"),
+                                                name=target,
+                                                max_hp=estimated_hp,
+                                                current_hp=estimated_hp,
+                                                armor_class=estimated_ac,
+                                            )
+                                            game_state.add_npc(auto_npc)
+                                            logger.info(f"[COMBAT] Auto-registered NPC '{target}' with HP:{estimated_hp} AC:{estimated_ac}")
+                                            # Now apply the damage
+                                            game_state.apply_damage_to_npc(target, damage, source="player")
+                                else:
+                                    # Record miss
+                                    game_state.record_attack(
+                                        hit=False,
+                                        damage=0,
+                                        is_critical=False,
+                                        is_crit_miss=is_crit_miss,
+                                    )
+                            elif roll.get("type") == "skill":
+                                # Record skill check stats
+                                success = roll.get("success", False)
+                                game_state.record_check(success)
 
                 except Exception as e:
                     logger.warning(f"Failed to resolve mechanical action: {e}")
@@ -5160,6 +5312,92 @@ async def _get_graph_aware_entity_context(
         return ""
 
 
+async def _get_scene_npc_personality_context(
+    db: Neo4jDatabase,
+    world_id: str,
+    npc_names: List[str],
+) -> str:
+    """
+    Fetch OCEAN personality profiles for NPCs in the current scene.
+    Returns focused guidance for how each NPC should speak and behave.
+
+    This gives the DM explicit, prominent personality guidance for NPCs
+    actively present in the scene, rather than burying it in the knowledge graph.
+    """
+    if not npc_names or not db:
+        return ""
+
+    try:
+        # Build query to find Characters matching any of the NPC names
+        # Use case-insensitive matching for robustness
+        query = """
+        MATCH (e:Entity {world_id: $world_id})
+        WHERE e.entity_type = 'Character'
+          AND e.openness IS NOT NULL
+          AND toLower(e.name) IN $npc_names_lower
+        RETURN e.name AS name,
+               e.openness AS openness,
+               e.conscientiousness AS conscientiousness,
+               e.extraversion AS extraversion,
+               e.agreeableness AS agreeableness,
+               e.neuroticism AS neuroticism
+        """
+
+        npc_names_lower = [name.lower() for name in npc_names]
+        results = await db.execute_query(query, {
+            "world_id": world_id,
+            "npc_names_lower": npc_names_lower,
+        })
+
+        if not results:
+            logger.debug(f"[NPC-OCEAN] No OCEAN data found for scene NPCs: {npc_names}")
+            return ""
+
+        # Build personality context for each NPC found
+        npc_blocks = []
+        for r in results:
+            try:
+                ocean = OCEANProfile(
+                    openness=r.get("openness", 0.5),
+                    conscientiousness=r.get("conscientiousness", 0.5),
+                    extraversion=r.get("extraversion", 0.5),
+                    agreeableness=r.get("agreeableness", 0.5),
+                    neuroticism=r.get("neuroticism", 0.5),
+                )
+
+                name = r.get("name", "Unknown")
+                behavioral = ocean.get_behavioral_summary()
+                dialogue = ocean.get_dialogue_style()
+
+                # Only include if we have meaningful personality data
+                if behavioral or (dialogue and dialogue != "neutral conversational style"):
+                    block = f"{name.upper()}"
+                    if behavioral:
+                        block += f"\n- Personality: {behavioral}"
+                    if dialogue and dialogue != "neutral conversational style":
+                        block += f"\n- Dialogue: {dialogue}"
+                    npc_blocks.append(block)
+
+            except Exception as e:
+                logger.debug(f"[NPC-OCEAN] Failed to build profile for {r.get('name')}: {e}")
+                continue
+
+        if not npc_blocks:
+            return ""
+
+        # Format the complete context block
+        context = "\n=== NPCs IN THIS SCENE ===\n\n"
+        context += "\n\n".join(npc_blocks)
+        context += "\n\nEmbody these personalities when these NPCs speak or act."
+
+        logger.debug(f"[NPC-OCEAN] Injecting personality context for {len(npc_blocks)} NPCs")
+        return context
+
+    except Exception as e:
+        logger.warning(f"[NPC-OCEAN] Failed to get personality context: {e}")
+        return ""
+
+
 async def _record_narrative_events_to_memory(
     narrative: str,
     player_action: str,
@@ -5842,6 +6080,21 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         except Exception as e:
             logger.warning(f"[MEMORY] Failed to get context: {e}")
 
+    # Build NPC personality context for scene NPCs (OCEAN profiles)
+    # This gives the DM explicit guidance on how NPCs in the current scene should speak/behave
+    npc_personality_context = ""
+    if db and world_id and last_dm_response:
+        try:
+            scene_npc_names = _extract_entity_names_from_text(last_dm_response)
+            if scene_npc_names:
+                npc_personality_context = await _get_scene_npc_personality_context(
+                    db=db,
+                    world_id=world_id,
+                    npc_names=scene_npc_names[:5],  # Limit to top 5 NPCs
+                )
+        except Exception as e:
+            logger.warning(f"[NPC-OCEAN] Failed to get personality context: {e}")
+
     # Build decoherence context (world evolved while player was away)
     decoherence_context_str = ""
     decoherence_engine = session.get("decoherence_engine")
@@ -5900,6 +6153,7 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         memory_context=memory_context_str,
         decoherence_context=decoherence_context_str,
         investment_context=investment_context_str,
+        npc_personality_context=npc_personality_context,
         # Entity Context
         db_context=db_context,
         # Story State

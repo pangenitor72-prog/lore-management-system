@@ -189,6 +189,76 @@ class GameState:
     # Events this turn (for frontend notifications)
     pending_events: List[GameEvent] = field(default_factory=list)
 
+    # Session statistics (for tracking mechanical events)
+    session_stats: Dict[str, int] = field(default_factory=lambda: {
+        "combats_started": 0,
+        "combats_completed": 0,
+        "attacks_made": 0,
+        "attacks_hit": 0,
+        "damage_dealt": 0,
+        "damage_taken": 0,
+        "checks_made": 0,
+        "checks_succeeded": 0,
+        "spells_cast": 0,
+        "healing_done": 0,
+        "critical_hits": 0,
+        "critical_misses": 0,
+    })
+
+    # =========================================================================
+    # STATISTICS TRACKING METHODS
+    # =========================================================================
+
+    def record_attack(self, hit: bool, damage: int = 0, is_critical: bool = False, is_crit_miss: bool = False) -> None:
+        """Record an attack for session statistics."""
+        self.session_stats["attacks_made"] += 1
+        if hit:
+            self.session_stats["attacks_hit"] += 1
+            self.session_stats["damage_dealt"] += damage
+        if is_critical:
+            self.session_stats["critical_hits"] += 1
+        if is_crit_miss:
+            self.session_stats["critical_misses"] += 1
+
+    def record_check(self, success: bool) -> None:
+        """Record a skill/ability check for session statistics."""
+        self.session_stats["checks_made"] += 1
+        if success:
+            self.session_stats["checks_succeeded"] += 1
+
+    def record_spell_cast(self) -> None:
+        """Record a spell cast for session statistics."""
+        self.session_stats["spells_cast"] += 1
+
+    def get_session_summary(self) -> Dict[str, Any]:
+        """Get a summary of the session's mechanical events."""
+        stats = self.session_stats
+        return {
+            "session_id": self.session_id,
+            "turn_count": self.turn_count,
+            "character": {
+                "name": self.character.name if self.character else "None",
+                "class": self.character.character_class.value if self.character else "None",
+                "level": self.character.level if self.character else 0,
+                "hp": f"{self.character.current_hit_points}/{self.character.max_hit_points}" if self.character else "0/0",
+            } if self.character else None,
+            "combats": stats["combats_completed"],
+            "attacks": {
+                "total": stats["attacks_made"],
+                "hit_rate": stats["attacks_hit"] / stats["attacks_made"] if stats["attacks_made"] > 0 else 0,
+                "critical_hits": stats["critical_hits"],
+                "critical_misses": stats["critical_misses"],
+            },
+            "checks": {
+                "total": stats["checks_made"],
+                "success_rate": stats["checks_succeeded"] / stats["checks_made"] if stats["checks_made"] > 0 else 0,
+            },
+            "damage_dealt": stats["damage_dealt"],
+            "damage_taken": stats["damage_taken"],
+            "healing_done": stats["healing_done"],
+            "spells_cast": stats["spells_cast"],
+        }
+
     # =========================================================================
     # STATE MUTATION METHODS - These are the ONLY way to change state
     # =========================================================================
@@ -206,6 +276,9 @@ class GameState:
         old_hp = self.character.current_hit_points
         self.character = self.character.take_damage(amount)
         actual_damage = old_hp - self.character.current_hit_points
+
+        # Record stats
+        self.session_stats["damage_taken"] += actual_damage
 
         event = GameEvent(
             type=GameEventType.DAMAGE_TAKEN,
@@ -270,6 +343,9 @@ class GameState:
         old_hp = self.character.current_hit_points
         self.character = self.character.heal(amount)
         actual_healing = self.character.current_hit_points - old_hp
+
+        # Record stats
+        self.session_stats["healing_done"] += actual_healing
 
         event = GameEvent(
             type=GameEventType.HP_CHANGED,
@@ -434,6 +510,7 @@ class GameState:
         """Start a combat encounter with the given enemies."""
         self.combat = CombatState(active=True, round=1)
         self.phase = "combat"
+        self.session_stats["combats_started"] += 1
 
         # Add player
         if self.character:
@@ -471,6 +548,7 @@ class GameState:
         """End the current combat encounter."""
         self.combat.active = False
         self.phase = "active"
+        self.session_stats["combats_completed"] += 1
 
         # Sync player HP back from combat state
         if self.character:
@@ -676,6 +754,7 @@ class GameState:
             "location": self.location,
             "active_npcs": {k: v.to_dict() for k, v in self.active_npcs.items()},
             "combat": self.combat.to_dict(),
+            "session_stats": self.session_stats,
         }
 
     @classmethod
@@ -718,6 +797,10 @@ class GameState:
         # Restore combat
         if data.get("combat"):
             state.combat = CombatState.from_dict(data["combat"])
+
+        # Restore session stats (preserve existing stats if resuming session)
+        if data.get("session_stats"):
+            state.session_stats.update(data["session_stats"])
 
         return state
 
