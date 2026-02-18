@@ -142,6 +142,9 @@ from src.mantle.api.helpers.narrative_extraction import (
     extract_scene_npcs_from_narrative as _extract_scene_npcs_from_narrative,
     get_npc_ids_for_memory_context as _get_npc_ids_for_memory_context,
     apply_legend_reputation_to_new_npcs as _apply_legend_reputation_to_new_npcs,
+    audit_narrative_for_contradictions as _audit_narrative_for_contradictions,
+    detect_and_apply_npc_state_changes as _detect_and_apply_npc_state_changes,
+    get_npc_overlay_state_context as _get_npc_overlay_state_context,
 )
 
 
@@ -2292,6 +2295,10 @@ class DMResponse(BaseModel):
     state_changes: Optional[List[Dict[str, Any]]] = None
     # Visual Engine: assessment for image generation
     visual_assessment: Optional[Dict[str, Any]] = None
+    # Auditor: contradictions detected in narrative vs world lore
+    narrative_contradictions: Optional[List[Dict[str, Any]]] = None
+    # Overlay: NPC state changes (death, capture, departure)
+    npc_state_changes: Optional[List[Dict[str, Any]]] = None
 
 
 # ============================================================
@@ -4076,6 +4083,7 @@ async def process_action(
                     session=session,
                     memory_manager=memory_manager,
                     session_id=session_id,
+                    db=db,  # Pass db for canon_id matching
                 )
             )
 
@@ -4131,6 +4139,14 @@ async def process_action(
         except Exception as e:
             logger.error(f"Failed to update session turn_count: {e}")
 
+    # Get auditor and overlay data from session (populated by _handle_active_play)
+    narrative_contradictions = session.pop("last_narrative_contradictions", None)
+    npc_state_changes = session.pop("last_npc_state_changes", None)
+
+    # Store contradictions for next turn's prompt (feeds auditor back to DM)
+    if narrative_contradictions:
+        session["previous_contradictions"] = narrative_contradictions
+
     return DMResponse(
         narrative=response_text,
         session_id=session_id,
@@ -4144,6 +4160,8 @@ async def process_action(
         heat_matches=heat_matches if heat_matches else None,
         state_changes=state_changes if state_changes else None,
         visual_assessment=visual_assessment,
+        narrative_contradictions=narrative_contradictions,
+        npc_state_changes=npc_state_changes,
     )
 
 
@@ -5153,6 +5171,7 @@ async def _extract_and_apply_relationship_changes(
     session: Dict[str, Any],
     memory_manager,
     session_id: str,
+    db=None,  # Neo4j db for canon_id matching
 ) -> None:
     """
     Extract and apply NPC relationship changes from player-NPC interactions.
@@ -5182,13 +5201,39 @@ async def _extract_and_apply_relationship_changes(
             logger.debug("[RELATIONSHIP] No NPCs detected in narrative, skipping extraction")
             return
 
-        # Build NPC list with names and IDs
-        # For now, use the entity names as both name and ID
-        # TODO: Match against knowledge graph for canonical IDs
-        npcs_present = [
-            {"name": name, "canon_id": name.lower().replace(" ", "_")}
-            for name in entities_in_scene[:5]  # Limit to 5 NPCs per scene
-        ]
+        # Match entity names against knowledge graph to get canonical IDs
+        # This ensures impressions are stored with real IDs that can be retrieved later
+        npcs_present = []
+        world_id = session.get("session_world_id") or session.get("world_id")
+
+        if db and world_id:
+            try:
+                # Query Neo4j for matching Characters
+                query = """
+                MATCH (e:Entity {world_id: $world_id})
+                WHERE e.entity_type = 'Character'
+                  AND ANY(name IN $names WHERE toLower(e.name) CONTAINS toLower(name))
+                RETURN e.canon_id as id, e.name as name
+                LIMIT 5
+                """
+                results = await db.execute(query, {"world_id": world_id, "names": entities_in_scene[:10]})
+                for record in results:
+                    npcs_present.append({
+                        "name": record.get("name"),
+                        "canon_id": record.get("id"),
+                    })
+                if npcs_present:
+                    logger.debug(f"[RELATIONSHIP] Matched {len(npcs_present)} NPCs to canon_ids: {[n['canon_id'] for n in npcs_present]}")
+            except Exception as e:
+                logger.warning(f"[RELATIONSHIP] Failed to match NPCs to canon_ids: {e}")
+
+        # Fallback: use synthesized IDs if no db or no matches
+        if not npcs_present:
+            npcs_present = [
+                {"name": name, "canon_id": name.lower().replace(" ", "_")}
+                for name in entities_in_scene[:5]
+            ]
+            logger.debug("[RELATIONSHIP] Using synthesized NPC IDs (no db or no matches)")
 
         # Create agent and extract changes
         agent = RelationshipExtractionAgent(
@@ -5712,19 +5757,68 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
             logger.warning(f"[MEMORY] Failed to get context: {e}")
 
     # Build NPC personality context for scene NPCs (OCEAN profiles)
-    # This gives the DM explicit guidance on how NPCs in the current scene should speak/behave
+    # ONLY inject for NPCs being introduced for the first time, not every turn
     npc_personality_context = ""
     if db and world_id and last_dm_response:
         try:
             scene_npc_names = _extract_entity_names_from_text(last_dm_response)
             if scene_npc_names:
-                npc_personality_context = await _get_scene_npc_personality_context(
-                    db=db,
-                    world_id=world_id,
-                    npc_names=scene_npc_names[:5],  # Limit to top 5 NPCs
-                )
+                # Track which NPCs have already been introduced
+                introduced_npcs = set(session.get("introduced_npc_names", []))
+
+                # Filter to only NEW NPCs (first introduction)
+                new_npc_names = [name for name in scene_npc_names if name.lower() not in introduced_npcs]
+
+                if new_npc_names:
+                    npc_personality_context = await _get_scene_npc_personality_context(
+                        db=db,
+                        world_id=world_id,
+                        npc_names=new_npc_names[:5],
+                    )
+                    # Mark these NPCs as introduced
+                    introduced_npcs.update(name.lower() for name in new_npc_names[:5])
+                    session["introduced_npc_names"] = list(introduced_npcs)
+                    logger.debug(f"[NPC-OCEAN] Introducing {len(new_npc_names)} new NPCs with OCEAN profiles")
         except Exception as e:
             logger.warning(f"[NPC-OCEAN] Failed to get personality context: {e}")
+
+    # Build NPC state context from session overlays (dead/captured/missing NPCs)
+    # This ensures the DM knows which NPCs are unavailable THIS SESSION
+    npc_state_context = ""
+    if db and world_id and session.get("session_id"):
+        try:
+            npc_state_context = await _get_npc_overlay_state_context(
+                world_id=world_id,
+                session_id=session.get("session_id"),
+                db=db,
+            )
+        except Exception as e:
+            logger.warning(f"[OVERLAY] Failed to get NPC state context: {e}")
+
+    # Check for previous auditor contradictions and inject as warnings
+    # This feeds auditor results back to the DM for self-correction
+    previous_contradictions = session.get("previous_contradictions", [])
+    if previous_contradictions:
+        contradiction_warnings = []
+        for c in previous_contradictions[:3]:  # Limit to 3 most recent
+            contradiction_warnings.append(f"- {c.get('entity_name', 'Unknown')}: {c.get('description', 'Unknown issue')}")
+
+        if contradiction_warnings:
+            auditor_warning = "\n=== CONTINUITY WARNINGS ===\n"
+            auditor_warning += "The following issues were detected in recent narrative:\n"
+            auditor_warning += "\n".join(contradiction_warnings)
+            auditor_warning += "\nPlease maintain consistency with established facts."
+
+            # Append to npc_state_context or create if empty
+            if npc_state_context:
+                npc_state_context += "\n\n" + auditor_warning
+            else:
+                npc_state_context = auditor_warning
+
+            logger.info(f"[AUDITOR] Injecting {len(contradiction_warnings)} contradiction warnings into DM prompt")
+
+        # Clear after injection (don't repeat the same warnings)
+        session["previous_contradictions"] = []
 
     # Build decoherence context (world evolved while player was away)
     decoherence_context_str = ""
@@ -5785,6 +5879,7 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         decoherence_context=decoherence_context_str,
         investment_context=investment_context_str,
         npc_personality_context=npc_personality_context,
+        npc_state_context=npc_state_context,
         # Entity Context
         db_context=db_context,
         # Story State
@@ -5829,6 +5924,47 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
             logger.info(f"[ARC] Post-narrative: phase={arc_context['current_phase']}, tension={arc_context['tension_level']}, progress={arc_context['journey_progress']:.0%}")
         except Exception as e:
             logger.warning(f"[ARC] Failed to process narrative: {e}")
+
+    # Audit narrative for contradictions against world lore
+    # This catches issues like dead NPCs appearing alive, missing characters showing up, etc.
+    if narrative and db:
+        try:
+            world_id = session.get("session_world_id") or session.get("world_id")
+            if world_id:
+                contradictions = await _audit_narrative_for_contradictions(
+                    narrative=narrative,
+                    world_id=world_id,
+                    db=db,
+                    session_id=session.get("session_id", "unknown"),
+                )
+                if contradictions:
+                    # Store contradictions in session for potential UI display
+                    session["last_narrative_contradictions"] = contradictions
+                    # For now, just log - don't block the narrative
+                    for c in contradictions:
+                        logger.warning(f"[AUDITOR] {c['severity']}: {c['description']}")
+        except Exception as e:
+            logger.warning(f"[AUDITOR] Failed to audit narrative: {e}")
+
+    # Detect and apply NPC state changes to session overlays
+    # This allows NPCs to die/get captured/flee during a session without mutating canon
+    if narrative and db:
+        try:
+            world_id = session.get("session_world_id") or session.get("world_id")
+            session_id = session.get("session_id")
+            if world_id and session_id:
+                state_changes = await _detect_and_apply_npc_state_changes(
+                    narrative=narrative,
+                    world_id=world_id,
+                    session_id=session_id,
+                    db=db,
+                )
+                if state_changes:
+                    session["last_npc_state_changes"] = state_changes
+                    for change in state_changes:
+                        logger.info(f"[OVERLAY] NPC state change: {change['npc_name']} -> {change['changes']}")
+        except Exception as e:
+            logger.warning(f"[OVERLAY] Failed to detect NPC state changes: {e}")
 
     # Record entity observations for decoherence tracking
     # This updates "last seen" timestamps for entities that appeared in the narrative

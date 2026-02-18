@@ -235,7 +235,7 @@ class Neo4jDatabase:
         result = await self.execute(
             """
             MATCH (e:Entity {canon_id: $cid})
-            OPTIONAL MATCH (s:Session {session_id: $sid})-[:CONTAINS]->(i:Instance)-[:INSTANCE_OF]->(e)
+            OPTIONAL MATCH (s:Session {session_id: $sid})-[:CONTAINS]->(i:Instance)-[:OVERRIDES]->(e)
             RETURN COALESCE(properties(i), properties(e)) as entity,
                    i IS NOT NULL as is_overlay
             """,

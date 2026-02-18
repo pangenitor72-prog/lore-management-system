@@ -648,6 +648,7 @@ Write the narrative now:"""
         decoherence_context: str = "",
         investment_context: str = "",
         npc_personality_context: str = "",
+        npc_state_context: str = "",  # Overlay state: dead/captured/missing NPCs
         # Entity and Relationship Context
         db_context: str = "",
         # Story State
@@ -733,6 +734,10 @@ Write the narrative now:"""
         # NPC personality context (OCEAN profiles for scene NPCs)
         if npc_personality_context:
             context_parts.append(npc_personality_context)
+
+        # NPC state context (dead/captured/missing from session overlays)
+        if npc_state_context:
+            context_parts.append(npc_state_context)
 
         # Entity graph context
         if db_context:

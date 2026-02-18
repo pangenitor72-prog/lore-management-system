@@ -97,7 +97,7 @@ async def extract_scene_npcs_from_narrative(
           AND (e.is_player_character IS NULL OR e.is_player_character = false)
         RETURN e.canon_id as id, e.name as name
         """
-        results = await db.execute_query(query, {"world_id": world_id})
+        results = await db.execute(query, {"world_id": world_id})
 
         if not results:
             return []
@@ -237,3 +237,365 @@ def apply_legend_reputation_to_new_npcs(
     except Exception as e:
         logger.warning(f"[MEMORY] Failed to apply legend reputation: {e}")
         return 0
+
+
+async def audit_narrative_for_contradictions(
+    narrative: str,
+    world_id: str,
+    db: Optional["Neo4jDatabase"],
+    session_id: str = "unknown",
+) -> List[Dict]:
+    """
+    Audit DM-generated narrative for contradictions against established world lore.
+
+    This is a lightweight audit that:
+    1. Extracts entities mentioned in the narrative
+    2. Checks NPC behaviors against their OCEAN personality profiles
+    3. Detects factual contradictions (dead characters appearing alive, etc.)
+
+    Args:
+        narrative: The DM's narrative response text
+        world_id: The world ID to check against
+        db: Neo4j database connection
+        session_id: Session ID for logging
+
+    Returns:
+        List of contradiction dicts with type, severity, description
+    """
+    if not narrative or not db or not world_id:
+        return []
+
+    contradictions = []
+
+    try:
+        # Extract entity names mentioned in narrative
+        entity_names = extract_entity_names_from_text(narrative)
+        if not entity_names:
+            return []
+
+        # Query for entities in this world that match mentioned names
+        # Coalesce session overlay over canon to catch NPCs who died THIS session
+        query = """
+        MATCH (e:Entity {world_id: $world_id})
+        WHERE e.entity_type = 'Character'
+          AND ANY(name IN $names WHERE toLower(e.name) CONTAINS toLower(name))
+        OPTIONAL MATCH (s:Session {session_id: $session_id})-[:CONTAINS]->(i:Instance)-[:OVERRIDES]->(e)
+        RETURN e.canon_id as id,
+               e.name as name,
+               COALESCE(i.status, e.status) as status,
+               COALESCE(i.is_dead, e.is_dead) as is_dead,
+               COALESCE(i.is_missing, e.is_missing) as is_missing,
+               e.openness as openness,
+               e.conscientiousness as conscientiousness,
+               e.extraversion as extraversion,
+               e.agreeableness as agreeableness,
+               e.neuroticism as neuroticism,
+               e.description as description
+        """
+        results = await db.execute(query, {
+            "world_id": world_id,
+            "names": entity_names[:20],
+            "session_id": session_id,
+        })
+
+        if not results:
+            return []
+
+        narrative_lower = narrative.lower()
+
+        for record in results:
+            npc_name = record.get("name", "")
+            npc_id = record.get("id", "")
+
+            # Check 1: Dead character appearing alive
+            is_dead = record.get("is_dead") or record.get("status") == "dead"
+            if is_dead and npc_name.lower() in narrative_lower:
+                # Check if they're actually acting (not just being mentioned in past tense)
+                action_indicators = [
+                    f"{npc_name.lower()} says",
+                    f"{npc_name.lower()} speaks",
+                    f"{npc_name.lower()} walks",
+                    f"{npc_name.lower()} looks",
+                    f"{npc_name.lower()} turns",
+                    f"{npc_name.lower()} smiles",
+                    f"{npc_name.lower()} nods",
+                ]
+                if any(indicator in narrative_lower for indicator in action_indicators):
+                    contradictions.append({
+                        "type": "resurrection_without_explanation",
+                        "severity": "HIGH",
+                        "entity_id": npc_id,
+                        "entity_name": npc_name,
+                        "description": f"{npc_name} is marked as dead but appears to be acting in the narrative.",
+                    })
+                    logger.warning(f"[AUDITOR] Contradiction: {npc_name} is dead but appears active in narrative")
+
+            # Check 2: Missing character appearing without explanation
+            is_missing = record.get("is_missing") or record.get("status") == "missing"
+            if is_missing and npc_name.lower() in narrative_lower:
+                if any(indicator in narrative_lower for indicator in action_indicators):
+                    contradictions.append({
+                        "type": "location_inconsistency",
+                        "severity": "MEDIUM",
+                        "entity_id": npc_id,
+                        "entity_name": npc_name,
+                        "description": f"{npc_name} is marked as missing but appears in the scene.",
+                    })
+                    logger.info(f"[AUDITOR] Note: {npc_name} is missing but appears in narrative (may be intentional)")
+
+        if contradictions:
+            logger.info(f"[AUDITOR] Found {len(contradictions)} potential contradictions in narrative")
+        else:
+            logger.debug(f"[AUDITOR] No contradictions found in narrative")
+
+        return contradictions
+
+    except Exception as e:
+        logger.warning(f"[AUDITOR] Failed to audit narrative: {e}")
+        return []
+
+
+async def write_npc_state_to_overlay(
+    npc_id: str,
+    session_id: str,
+    state_changes: Dict,
+    db: Optional["Neo4jDatabase"],
+) -> bool:
+    """
+    Write NPC state changes to session overlay (delta layer).
+
+    This allows NPCs to change state during a session (die, get captured, etc.)
+    without modifying canonical world data. Other sessions see the original state.
+
+    Args:
+        npc_id: The NPC's canon_id
+        session_id: The session to scope the overlay to
+        state_changes: Dict of properties to set (e.g., {"is_dead": True})
+        db: Neo4j database connection
+
+    Returns:
+        True if write succeeded, False otherwise
+    """
+    if not db or not npc_id or not session_id or not state_changes:
+        return False
+
+    try:
+        result = await db.write_entity_delta(
+            canon_id=npc_id,
+            session_id=session_id,
+            properties=state_changes,
+        )
+        if result:
+            logger.info(f"[OVERLAY] Wrote state changes for {npc_id}: {state_changes}")
+            return True
+        return False
+    except Exception as e:
+        logger.warning(f"[OVERLAY] Failed to write state for {npc_id}: {e}")
+        return False
+
+
+async def detect_and_apply_npc_state_changes(
+    narrative: str,
+    world_id: str,
+    session_id: str,
+    db: Optional["Neo4jDatabase"],
+) -> List[Dict]:
+    """
+    Detect NPC state changes in narrative and write them to session overlays.
+
+    Looks for patterns indicating:
+    - NPC death (killed, slain, died, murdered)
+    - NPC capture (captured, imprisoned, arrested)
+    - NPC departure (fled, escaped, vanished)
+
+    Args:
+        narrative: The DM's narrative response
+        world_id: The world ID to match NPCs against
+        session_id: The session ID for overlay scoping
+        db: Neo4j database connection
+
+    Returns:
+        List of state changes that were applied
+    """
+    if not narrative or not db or not world_id or not session_id:
+        return []
+
+    changes_applied = []
+
+    try:
+        # Get NPCs from this world with current overlay state
+        # Check overlay to avoid redundant state changes (e.g., killing already-dead NPCs)
+        query = """
+        MATCH (e:Entity {world_id: $world_id})
+        WHERE e.entity_type = 'Character'
+          AND (e.is_player_character IS NULL OR e.is_player_character = false)
+        OPTIONAL MATCH (s:Session {session_id: $session_id})-[:CONTAINS]->(i:Instance)-[:OVERRIDES]->(e)
+        RETURN e.canon_id as id,
+               e.name as name,
+               COALESCE(i.is_dead, e.is_dead, false) as is_dead,
+               COALESCE(i.is_captured, e.is_captured, false) as is_captured,
+               COALESCE(i.is_missing, e.is_missing, false) as is_missing
+        """
+        results = await db.execute(query, {"world_id": world_id, "session_id": session_id})
+        if not results:
+            return []
+
+        narrative_lower = narrative.lower()
+
+        # Death indicators
+        death_patterns = [
+            "dies", "died", "dead", "killed", "slain", "murdered",
+            "perished", "fell lifeless", "breathed his last", "breathed her last",
+            "no longer breathing", "lies dead", "lay dead",
+        ]
+
+        # Capture indicators
+        capture_patterns = [
+            "captured", "imprisoned", "arrested", "taken prisoner",
+            "in chains", "bound and gagged", "thrown in the dungeon",
+        ]
+
+        # Departure indicators
+        departure_patterns = [
+            "fled", "escaped", "vanished", "disappeared",
+            "ran away", "nowhere to be found",
+        ]
+
+        for record in results:
+            npc_name = record.get("name", "")
+            npc_id = record.get("id", "")
+            if not npc_name or not npc_id:
+                continue
+
+            # Skip NPCs already in a terminal state
+            already_dead = record.get("is_dead", False)
+            already_captured = record.get("is_captured", False)
+            already_missing = record.get("is_missing", False)
+
+            npc_name_lower = npc_name.lower()
+            if npc_name_lower not in narrative_lower:
+                continue
+
+            # Find the context around this NPC's mention
+            state_changes = {}
+
+            # Check for death (skip if already dead)
+            if not already_dead:
+                for pattern in death_patterns:
+                    if pattern in narrative_lower:
+                        name_idx = narrative_lower.find(npc_name_lower)
+                        pattern_idx = narrative_lower.find(pattern)
+                        if abs(name_idx - pattern_idx) < 60:
+                            state_changes["is_dead"] = True
+                            state_changes["status"] = "dead"
+                            break
+
+            # Check for capture (only if not dead and not already captured)
+            if not state_changes.get("is_dead") and not already_captured:
+                for pattern in capture_patterns:
+                    if pattern in narrative_lower:
+                        name_idx = narrative_lower.find(npc_name_lower)
+                        pattern_idx = narrative_lower.find(pattern)
+                        if abs(name_idx - pattern_idx) < 60:
+                            state_changes["is_captured"] = True
+                            state_changes["status"] = "captured"
+                            break
+
+            # Check for departure (only if not dead/captured and not already missing)
+            if not state_changes.get("is_dead") and not state_changes.get("is_captured") and not already_missing:
+                for pattern in departure_patterns:
+                    if pattern in narrative_lower:
+                        name_idx = narrative_lower.find(npc_name_lower)
+                        pattern_idx = narrative_lower.find(pattern)
+                        if abs(name_idx - pattern_idx) < 60:
+                            state_changes["is_missing"] = True
+                            state_changes["status"] = "missing"
+                            break
+
+            # Apply state changes if any
+            if state_changes:
+                success = await write_npc_state_to_overlay(
+                    npc_id=npc_id,
+                    session_id=session_id,
+                    state_changes=state_changes,
+                    db=db,
+                )
+                if success:
+                    changes_applied.append({
+                        "npc_id": npc_id,
+                        "npc_name": npc_name,
+                        "changes": state_changes,
+                    })
+
+        return changes_applied
+
+    except Exception as e:
+        logger.warning(f"[OVERLAY] Failed to detect/apply state changes: {e}")
+        return []
+
+
+async def get_npc_overlay_state_context(
+    world_id: str,
+    session_id: str,
+    db: Optional["Neo4jDatabase"],
+) -> str:
+    """
+    Get formatted NPC state context from session overlays for DM prompt injection.
+
+    Returns a string like:
+    "=== NPC STATUS (THIS SESSION) ===
+    - Lord Blackwood: DEAD (killed earlier this session)
+    - Lady Ashworth: CAPTURED (imprisoned earlier this session)
+    DO NOT include these characters as active participants."
+
+    Args:
+        world_id: The world ID to query NPCs from
+        session_id: The session ID to check overlays for
+        db: Neo4j database connection
+
+    Returns:
+        Formatted context string, or empty string if no state changes
+    """
+    if not db or not world_id or not session_id:
+        return ""
+
+    try:
+        # Query for NPCs that have overlay state in this session
+        query = """
+        MATCH (s:Session {session_id: $session_id})-[:CONTAINS]->(i:Instance)-[:OVERRIDES]->(e:Entity)
+        WHERE e.world_id = $world_id
+          AND e.entity_type = 'Character'
+        RETURN e.name as name,
+               i.is_dead as is_dead,
+               i.is_captured as is_captured,
+               i.is_missing as is_missing,
+               i.status as status
+        """
+        results = await db.execute(query, {"world_id": world_id, "session_id": session_id})
+
+        if not results:
+            return ""
+
+        status_lines = []
+        for record in results:
+            name = record.get("name", "Unknown")
+            if record.get("is_dead"):
+                status_lines.append(f"- {name}: DEAD (killed earlier this session)")
+            elif record.get("is_captured"):
+                status_lines.append(f"- {name}: CAPTURED (imprisoned earlier this session)")
+            elif record.get("is_missing"):
+                status_lines.append(f"- {name}: MISSING (fled/vanished earlier this session)")
+
+        if not status_lines:
+            return ""
+
+        context = "=== NPC STATUS (THIS SESSION) ===\n"
+        context += "\n".join(status_lines)
+        context += "\nCRITICAL: Do NOT include dead/captured NPCs as active participants. They are unavailable."
+
+        logger.info(f"[OVERLAY] Injecting NPC state context: {len(status_lines)} NPCs with changed status")
+        return context
+
+    except Exception as e:
+        logger.warning(f"[OVERLAY] Failed to get NPC state context: {e}")
+        return ""

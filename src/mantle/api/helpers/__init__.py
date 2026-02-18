@@ -22,6 +22,10 @@ from .narrative_extraction import (
     extract_scene_npcs_from_narrative,
     get_npc_ids_for_memory_context,
     apply_legend_reputation_to_new_npcs,
+    audit_narrative_for_contradictions,
+    write_npc_state_to_overlay,
+    detect_and_apply_npc_state_changes,
+    get_npc_overlay_state_context,
 )
 
 __all__ = [
@@ -39,4 +43,10 @@ __all__ = [
     "extract_scene_npcs_from_narrative",
     "get_npc_ids_for_memory_context",
     "apply_legend_reputation_to_new_npcs",
+    # Auditor
+    "audit_narrative_for_contradictions",
+    # Overlay/Instance system
+    "write_npc_state_to_overlay",
+    "detect_and_apply_npc_state_changes",
+    "get_npc_overlay_state_context",
 ]
