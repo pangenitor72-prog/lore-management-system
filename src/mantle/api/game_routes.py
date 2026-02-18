@@ -2512,17 +2512,18 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
 
         # Restore Arc Engine from saved state if available
         arc_engine_state = session_data.pop("arc_engine_state", None)
+        session_genre = session_data.get("genre", "fantasy")
         if arc_engine_state and ARC_ENGINE_AVAILABLE:
             try:
                 session_data["arc_engine"] = ArcEngine.from_dict(arc_engine_state)
                 logger.debug(f"Restored Arc Engine state for session {session_id}")
             except Exception as arc_err:
                 logger.warning(f"Failed to restore Arc Engine for {session_id}: {arc_err}")
-                # Create fresh Arc Engine if restoration fails
-                session_data["arc_engine"] = ArcEngine(session_id=session_id)
+                # Create fresh Arc Engine with genre if restoration fails
+                session_data["arc_engine"] = ArcEngine(session_id=session_id, genre=session_genre)
         elif ARC_ENGINE_AVAILABLE:
-            # No saved state - create fresh Arc Engine
-            session_data["arc_engine"] = ArcEngine(session_id=session_id)
+            # No saved state - create fresh Arc Engine with genre
+            session_data["arc_engine"] = ArcEngine(session_id=session_id, genre=session_genre)
 
         # Restore Creative Catalyst from saved state if available
         catalyst_state = session_data.pop("creative_catalyst_state", None)
@@ -3245,7 +3246,8 @@ async def create_session(
         "description_inferred_lethality": None,
         "description_inferred_morality": None,
         # Arc Engine for narrative pacing (per-session instance)
-        "arc_engine": ArcEngine(session_id=session_id) if ARC_ENGINE_AVAILABLE else None,
+        # Uses genre-specific arc variants (horror, mystery, heist, etc.)
+        "arc_engine": ArcEngine(session_id=session_id, genre=primary_genre) if ARC_ENGINE_AVAILABLE else None,
         # Creative Catalyst for narrative variety (per-session instance)
         "creative_catalyst": CreativeCatalyst(genre=primary_genre),
         # Memory Manager for NPC beliefs, impressions, legends (per-session instance)
@@ -8741,10 +8743,11 @@ async def load_game(
                 arc_engine = ArcEngine.from_dict(arc_state)
                 session_data["arc_engine"] = arc_engine
                 arc_context = {
-                    "current_phase": arc_engine.current_phase.value,
-                    "phase_display": arc_engine.current_phase.value.replace("_", " ").title(),
+                    "current_phase": arc_engine.current_phase_id,
+                    "phase_display": arc_engine.current_phase_id.replace("_", " ").title(),
                     "tension_level": arc_engine.tension_level.value,
                     "journey_progress": arc_engine.journey_progress,
+                    "genre_arc": arc_engine.genre_arc.value,
                 }
             except Exception as e:
                 logger.warning(f"Failed to restore Arc Engine: {e}")
@@ -8758,15 +8761,17 @@ async def load_game(
             {"role": "system", "content": f"PREVIOUS CHAPTER SUMMARY:\n{session_summary}"}
         ]
 
-        # Reset Arc Engine to Call to Adventure (new story arc)
+        # Reset Arc Engine to opening phase (new story arc with genre awareness)
         if ARC_ENGINE_AVAILABLE:
-            new_arc = ArcEngine()
+            session_genre = session_data.get("genre", "fantasy")
+            new_arc = ArcEngine(genre=session_genre)
             session_data["arc_engine"] = new_arc
             arc_context = {
-                "current_phase": "CALL_TO_ADVENTURE",
-                "phase_display": "Call To Adventure",
+                "current_phase": new_arc.current_phase_id,
+                "phase_display": new_arc.current_phase_id.replace("_", " ").title(),
                 "tension_level": "low",
                 "journey_progress": 0.0,
+                "genre_arc": new_arc.genre_arc.value,
             }
 
         narrative = session_summary

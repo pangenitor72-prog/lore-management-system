@@ -12,6 +12,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
+from typing import Union
+
 from .models import (
     StoryPhase,
     StoryAct,
@@ -32,6 +34,11 @@ from .preference_adapter import (
     get_adapted_tension_target,
     get_adapted_pacing_guidance,
 )
+from .genre_arcs import (
+    GenreArcType,
+    GenrePhase,
+    get_arc_type_for_genre,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,18 +48,29 @@ class ArcEngine:
     Main interface for the narrative arc system.
 
     Integrates:
-    - Story Phase Manager (Campbell's 12 stages)
+    - Story Phase Manager (Campbell's 12 stages or genre-specific arcs)
     - Tension Tracker (rising/falling action)
     - Beat Suggester (narrative guidance)
     - Episode Manager (pacing and boundaries)
 
     The Arc Engine whispers to the DM - it suggests, never commands.
     Player agency and DM creativity remain paramount.
+
+    Supports genre-specific arc variants:
+    - HEROIC: Campbell's Hero's Journey (fantasy, mythology, adventure)
+    - HORROR: Descent → Confrontation → Survival/Loss
+    - MYSTERY: Setup → Investigation → Revelation
+    - HEIST: Assembly → Planning → Execution → Escape
+    - ROMANCE: Meeting → Tension → Crisis → Union
+    - SURVIVAL: Collapse → Scarcity → Community → Hope
+    - WESTERN: Arrival → Conflict → Showdown → Departure
+    - CYBERPUNK: Awakening → Resistance → Confrontation → Change
     """
 
     def __init__(
         self,
         session_id: Optional[str] = None,
+        genre: str = "fantasy",
         episode_config: Optional[EpisodeConfig] = None,
     ):
         """
@@ -60,10 +78,17 @@ class ArcEngine:
 
         Args:
             session_id: Optional session ID for tracking
+            genre: World genre (determines arc type). Defaults to "fantasy" (heroic arc).
             episode_config: Optional episode configuration
         """
         self._session_id = session_id
-        self._phase_manager = StoryPhaseManager()
+
+        # Determine arc type from genre
+        self._genre = genre
+        self._genre_arc = get_arc_type_for_genre(genre)
+
+        # Initialize components with genre awareness
+        self._phase_manager = StoryPhaseManager(genre_arc=self._genre_arc)
         self._tension_tracker = TensionTracker()
         self._beat_suggester = BeatSuggester()
         self._episode_manager = EpisodeManager(config=episode_config)
@@ -72,18 +97,31 @@ class ArcEngine:
         if session_id:
             self._phase_manager._state.session_id = session_id
 
-        logger.info(f"ArcEngine initialized for session {session_id or 'anonymous'}")
+        logger.info(
+            f"ArcEngine initialized for session {session_id or 'anonymous'} "
+            f"with {self._genre_arc.value} arc (genre: {genre})"
+        )
 
     # === PROPERTIES ===
 
     @property
-    def current_phase(self) -> StoryPhase:
-        """Get current story phase."""
+    def genre_arc(self) -> GenreArcType:
+        """Get the genre arc type."""
+        return self._genre_arc
+
+    @property
+    def current_phase(self) -> Union[StoryPhase, GenrePhase]:
+        """Get current story phase (StoryPhase for heroic, GenrePhase for others)."""
         return self._phase_manager.current_phase
 
     @property
-    def current_act(self) -> StoryAct:
-        """Get current act (Departure/Initiation/Return)."""
+    def current_phase_id(self) -> str:
+        """Get current phase ID as string (works for both phase types)."""
+        return self._phase_manager.current_phase_id
+
+    @property
+    def current_act(self) -> str:
+        """Get current act (Departure/Initiation/Return or genre-specific act)."""
         return self._phase_manager.current_act
 
     @property
@@ -157,11 +195,12 @@ class ArcEngine:
             current_tension=self.current_tension,
         )
 
-        # Generate beat suggestions
+        # Generate beat suggestions with genre awareness
         suggested_beats = self._beat_suggester.suggest_beats(
             phase=self.current_phase,
             current_tension=self.current_tension,
             count=3,
+            genre_arc=self._genre_arc.value,
         )
 
         # Build and return context
@@ -257,7 +296,7 @@ class ArcEngine:
             "episode_number": self.episode_number,
             "recap": recap,
             "pacing": pacing,
-            "phase_at_end": self.current_phase.value,
+            "phase_at_end": self.current_phase_id,
             "tension_at_end": self.current_tension,
         }
 
@@ -297,47 +336,65 @@ class ArcEngine:
         phase = self.current_phase
         tension = self.current_tension
         trend = self._tension_tracker.trend
+        is_heroic = self._genre_arc == GenreArcType.HEROIC
 
-        # Get arc-adapted description (falls back to default if no preferences)
-        arc_type = preferences.get("protagonist_arc") if preferences else None
+        # Get phase name and act
+        if isinstance(phase, GenrePhase):
+            phase_name = phase.name
+            phase_act = phase.act.title()
+            phase_description = phase.description
+        else:
+            phase_name = phase.value.replace('_', ' ').title()
+            phase_act = phase.act.value.title()
+            # Get arc-adapted description for heroic phases
+            arc_type = preferences.get("protagonist_arc") if preferences else None
+            phase_description = get_adapted_description(phase, arc_type)
+
         lethality = preferences.get("lethality") if preferences else None
-        description = get_adapted_description(phase, arc_type)
 
         if subtle:
             # For campaigns: guidance without explicit structure
             tension_word = "calm" if tension < 0.3 else "building" if tension < 0.6 else "high"
             # Get a single beat suggestion for gentle guidance
-            beats = self._beat_suggester.suggest_beats(phase=phase, current_tension=tension, count=1)
+            beats = self._beat_suggester.suggest_beats(
+                phase=phase,
+                current_tension=tension,
+                count=1,
+                genre_arc=self._genre_arc.value,
+            )
             beat_hint = f"\nOpportunity: {beats[0].description}" if beats else ""
             return f"""
 Narrative energy: {tension_word}, {trend}
-{description}{beat_hint}"""
+{phase_description}{beat_hint}"""
 
         # For finite stories: more explicit structure helps pacing
+        arc_label = f"{self._genre_arc.value.upper()} ARC" if not is_heroic else "NARRATIVE ARC"
         lines = [
-            f"\n=== NARRATIVE ARC ===",
-            f"Phase: {phase.value.replace('_', ' ').title()} ({phase.act.value.title()})",
+            f"\n=== {arc_label} ===",
+            f"Phase: {phase_name} ({phase_act})",
             f"Tension: {tension:.0%} ({self.tension_level.value}), {trend}",
         ]
 
-        # Add adapted phase description
-        if description:
-            lines.append(f"Focus: {description}")
+        # Add phase description
+        if phase_description:
+            lines.append(f"Focus: {phase_description}")
 
         # Add pacing guidance — prefer lethality-adapted version, fall back to default
-        lethality_pacing = get_adapted_pacing_guidance(phase, lethality)
-        if lethality_pacing:
-            lines.append(f"Pacing: {lethality_pacing}")
-        else:
-            pacing_note = self._tension_tracker.get_pacing_guidance(phase, lethality=lethality)
-            if pacing_note:
-                lines.append(f"Pacing: {pacing_note}")
+        if is_heroic:
+            lethality_pacing = get_adapted_pacing_guidance(phase, lethality)
+            if lethality_pacing:
+                lines.append(f"Pacing: {lethality_pacing}")
+            else:
+                pacing_note = self._tension_tracker.get_pacing_guidance(phase, lethality=lethality)
+                if pacing_note:
+                    lines.append(f"Pacing: {pacing_note}")
 
         # Add beat suggestions for narrative direction
         beats = self._beat_suggester.suggest_beats(
             phase=phase,
             current_tension=tension,
             count=2,  # Top 2 suggestions to avoid prompt bloat
+            genre_arc=self._genre_arc.value,
         )
         if beats:
             lines.append("Consider:")
@@ -361,6 +418,7 @@ Narrative energy: {tension_word}, {trend}
             phase=self.current_phase,
             current_tension=self.current_tension,
             count=count,
+            genre_arc=self._genre_arc.value,
         )
 
     # === INTERNAL HELPERS ===
@@ -385,6 +443,8 @@ Narrative energy: {tension_word}, {trend}
         """Export full state for persistence."""
         return {
             "session_id": self._session_id,
+            "genre": self._genre,
+            "genre_arc": self._genre_arc.value,
             "phase_manager": self._phase_manager.to_dict(),
             "tension_tracker": self._tension_tracker.to_dict(),
             "beat_suggester": self._beat_suggester.to_dict(),
@@ -394,7 +454,8 @@ Narrative energy: {tension_word}, {trend}
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ArcEngine":
         """Restore from dictionary."""
-        engine = cls(session_id=data.get("session_id"))
+        genre = data.get("genre", "fantasy")
+        engine = cls(session_id=data.get("session_id"), genre=genre)
         engine._phase_manager = StoryPhaseManager.from_dict(
             data.get("phase_manager", {})
         )
@@ -413,11 +474,23 @@ Narrative energy: {tension_word}, {trend}
 
     def get_status(self) -> Dict[str, Any]:
         """Get comprehensive status of the arc engine."""
+        phase = self.current_phase
+
+        # Get expected tension (works for both phase types)
+        if isinstance(phase, GenrePhase):
+            expected_tension = phase.expected_tension
+            phase_value = phase.id
+        else:
+            expected_tension = phase.expected_tension
+            phase_value = phase.value
+
         return {
             "session_id": self._session_id,
+            "genre": self._genre,
+            "genre_arc": self._genre_arc.value,
             "phase": {
-                "current": self.current_phase.value,
-                "act": self.current_act.value,
+                "current": phase_value,
+                "act": self.current_act,
                 "progress": self._phase_manager.state.phase_progress,
                 "journey_progress": self.journey_progress,
             },
@@ -425,7 +498,7 @@ Narrative energy: {tension_word}, {trend}
                 "value": self.current_tension,
                 "level": self.tension_level.value,
                 "trend": self._tension_tracker.trend,
-                "expected_for_phase": self.current_phase.expected_tension,
+                "expected_for_phase": expected_tension,
             },
             "episode": self._episode_manager.get_pacing_status(),
             "milestones": {

@@ -286,6 +286,8 @@ class BeatSuggester:
 
     Uses the current story phase and tension state to recommend
     appropriate narrative beats while respecting player agency.
+
+    Supports genre-specific beat templates for non-heroic arcs.
     """
 
     def __init__(self):
@@ -295,34 +297,60 @@ class BeatSuggester:
 
     def suggest_beats(
         self,
-        phase: StoryPhase,
+        phase,  # StoryPhase or GenrePhase
         current_tension: float,
         count: int = 3,
         avoid_types: Optional[List[BeatType]] = None,
+        genre_arc: Optional[str] = None,
     ) -> List[NarrativeBeat]:
         """
         Generate beat suggestions for the current narrative moment.
 
         Args:
-            phase: Current story phase
+            phase: Current story phase (StoryPhase or GenrePhase)
             current_tension: Current tension level (0.0-1.0)
             count: Number of suggestions to return
             avoid_types: Beat types to avoid (for variety)
+            genre_arc: Optional genre arc type for genre-specific templates
 
         Returns:
             List of suggested narrative beats, sorted by priority
         """
         avoid_types = avoid_types or []
-        templates = PHASE_BEAT_TEMPLATES.get(phase, [])
+
+        # Get phase ID as string (works for both StoryPhase and GenrePhase)
+        phase_id = phase.id if hasattr(phase, 'id') else phase.value
+
+        # Get templates - prefer genre-specific if available
+        templates = []
+        if genre_arc and genre_arc != "heroic":
+            from .genre_arcs import GenreArcType, get_beat_templates_for_phase
+            try:
+                arc_type = GenreArcType(genre_arc)
+                templates = get_beat_templates_for_phase(arc_type, phase_id)
+            except (ValueError, KeyError):
+                pass  # Fall back to default templates
+
+        # Fall back to Campbell templates if no genre templates found
+        if not templates:
+            templates = PHASE_BEAT_TEMPLATES.get(phase, [])
 
         # Score and filter templates
         scored_beats = []
         for template in templates:
-            if template["type"] in avoid_types:
+            # Handle beat type as either BeatType enum or string
+            beat_type = template["type"]
+            if isinstance(beat_type, str):
+                try:
+                    beat_type = BeatType(beat_type.lower())
+                except ValueError:
+                    continue  # Skip invalid beat types
+
+            if beat_type in avoid_types:
                 continue
 
             # Avoid repeating recent beat types
-            if template["type"] in self._recent_beat_types[-2:]:
+            if beat_type in self._recent_beat_types[-2:]:
                 continue
 
             # Calculate score based on tension alignment and priority
@@ -331,9 +359,9 @@ class BeatSuggester:
             total_score = template["priority"] * tension_score
 
             beat = NarrativeBeat(
-                beat_type=template["type"],
+                beat_type=beat_type,
                 description=template["template"],
-                phase_alignment=phase,
+                phase_alignment=phase_id,
                 tension_target=template["tension_target"],
                 priority=total_score,
             )
@@ -353,7 +381,7 @@ class BeatSuggester:
         self,
         current_tension: float,
         target_tension: float,
-        phase: StoryPhase,
+        phase,  # StoryPhase or GenrePhase
     ) -> Optional[NarrativeBeat]:
         """
         Suggest a beat specifically to adjust tension toward target.
@@ -361,11 +389,14 @@ class BeatSuggester:
         Args:
             current_tension: Current tension level
             target_tension: Desired tension level
-            phase: Current story phase
+            phase: Current story phase (StoryPhase or GenrePhase)
 
         Returns:
             A beat suggestion designed to move tension in the right direction
         """
+        # Get phase ID as string
+        phase_id = phase.id if hasattr(phase, 'id') else phase.value
+
         needs_increase = target_tension > current_tension + 0.1
         needs_decrease = target_tension < current_tension - 0.1
 
@@ -382,7 +413,7 @@ class BeatSuggester:
                     return NarrativeBeat(
                         beat_type=template["type"],
                         description=f"[Escalate] {template['template']}",
-                        phase_alignment=phase,
+                        phase_alignment=phase_id,
                         tension_target=target_tension,
                         priority=0.9,
                     )
@@ -390,7 +421,7 @@ class BeatSuggester:
             return NarrativeBeat(
                 beat_type=BeatType.OBSTACLE,
                 description="Introduce an unexpected complication or danger",
-                phase_alignment=phase,
+                phase_alignment=phase_id,
                 tension_target=target_tension,
                 priority=0.8,
             )
@@ -407,7 +438,7 @@ class BeatSuggester:
                     return NarrativeBeat(
                         beat_type=template["type"],
                         description=f"[Release] {template['template']}",
-                        phase_alignment=phase,
+                        phase_alignment=phase_id,
                         tension_target=target_tension,
                         priority=0.9,
                     )
@@ -415,42 +446,78 @@ class BeatSuggester:
             return NarrativeBeat(
                 beat_type=BeatType.REST,
                 description="Allow a moment of calm or reflection",
-                phase_alignment=phase,
+                phase_alignment=phase_id,
                 tension_target=target_tension,
                 priority=0.8,
             )
 
         return None
 
-    def suggest_cliffhanger(self, phase: StoryPhase) -> NarrativeBeat:
+    def suggest_cliffhanger(self, phase) -> NarrativeBeat:
         """
         Suggest a cliffhanger beat for ending an episode.
 
         Args:
-            phase: Current story phase
+            phase: Current story phase (StoryPhase or GenrePhase)
 
         Returns:
             A cliffhanger beat appropriate for the phase
         """
-        cliffhangers = {
-            StoryPhase.ORDINARY_WORLD: "A mysterious stranger arrives with urgent news",
-            StoryPhase.CALL_TO_ADVENTURE: "The full scope of the threat is revealed",
-            StoryPhase.REFUSAL_OF_THE_CALL: "The cost of refusal becomes tragically clear",
-            StoryPhase.MEETING_THE_MENTOR: "The mentor reveals a dark secret about the quest",
-            StoryPhase.CROSSING_THE_THRESHOLD: "The first true danger of the new world appears",
-            StoryPhase.TESTS_ALLIES_ENEMIES: "An ally's loyalty comes into question",
-            StoryPhase.APPROACH_TO_INMOST_CAVE: "The true nature of the ordeal is glimpsed",
-            StoryPhase.ORDEAL: "At the moment of crisis, an unexpected twist",
-            StoryPhase.REWARD: "The victory is revealed to have a terrible price",
-            StoryPhase.THE_ROAD_BACK: "The enemy was not truly defeated",
-            StoryPhase.RESURRECTION: "The final choice presents itself",
-            StoryPhase.RETURN_WITH_ELIXIR: "Seeds of a new adventure are planted",
+        # Get phase ID as string
+        phase_id = phase.id if hasattr(phase, 'id') else phase.value
+
+        # Campbell cliffhangers for heroic arcs
+        heroic_cliffhangers = {
+            "ordinary_world": "A mysterious stranger arrives with urgent news",
+            "call_to_adventure": "The full scope of the threat is revealed",
+            "refusal_of_the_call": "The cost of refusal becomes tragically clear",
+            "meeting_the_mentor": "The mentor reveals a dark secret about the quest",
+            "crossing_the_threshold": "The first true danger of the new world appears",
+            "tests_allies_enemies": "An ally's loyalty comes into question",
+            "approach_to_inmost_cave": "The true nature of the ordeal is glimpsed",
+            "ordeal": "At the moment of crisis, an unexpected twist",
+            "reward": "The victory is revealed to have a terrible price",
+            "the_road_back": "The enemy was not truly defeated",
+            "resurrection": "The final choice presents itself",
+            "return_with_elixir": "Seeds of a new adventure are planted",
         }
+
+        # Genre-specific cliffhangers
+        genre_cliffhangers = {
+            # Horror
+            "normalcy": "Something is wrong with the familiar",
+            "intrusion": "The horror reveals itself briefly",
+            "investigation": "A terrible truth emerges",
+            "descent": "Escape routes close off one by one",
+            "confrontation": "The horror shows its true nature",
+            "cost": "Someone must make an impossible choice",
+            "survival": "The nightmare seems to end... but does it?",
+            "aftermath": "Seeds of future dread are planted",
+            # Mystery
+            "crime": "The crime is worse than it first appeared",
+            "scene": "A vital clue points in an unexpected direction",
+            "suspects": "The prime suspect has an alibi... or do they?",
+            "complications": "A new crime changes everything",
+            "breakthrough": "The key evidence comes with a cost",
+            "resolution": "Justice comes, but questions remain",
+            # Heist
+            "opportunity": "The score is bigger than imagined",
+            "assembly": "A crucial team member has secrets",
+            "planning": "A flaw in the plan is discovered",
+            "preparation": "Someone is watching",
+            "execution": "Everything goes wrong at once",
+            "complication": "The real threat reveals itself",
+            "escape": "Freedom is within reach... but at what cost?",
+        }
+
+        # Combine both dictionaries
+        all_cliffhangers = {**heroic_cliffhangers, **genre_cliffhangers}
+        description = all_cliffhangers.get(phase_id, "End on an unresolved moment of tension")
 
         return NarrativeBeat(
             beat_type=BeatType.CLIFFHANGER,
-            description=cliffhangers.get(phase, "End on an unresolved moment of tension"),
-            phase_alignment=phase,
+            description=description,
+            phase_alignment=phase_id,
             tension_target=0.75,
             priority=1.0,
         )

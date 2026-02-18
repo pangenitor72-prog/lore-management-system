@@ -215,7 +215,10 @@ class NarrativeBeat(BaseModel):
     beat_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     beat_type: BeatType
     description: str = Field(..., min_length=1)
-    phase_alignment: StoryPhase
+    phase_alignment: str = Field(
+        ...,
+        description="Phase ID this beat aligns with (StoryPhase value or genre phase ID)"
+    )
     tension_target: float = Field(ge=0.0, le=1.0)
     priority: float = Field(default=0.5, ge=0.0, le=1.0)
 
