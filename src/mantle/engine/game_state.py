@@ -174,6 +174,10 @@ class GameState:
     location: str = "Unknown"
     active_npcs: Dict[str, CombatantState] = field(default_factory=dict)
 
+    # Scene NPCs - NPCs present in current narrative scene (for memory system)
+    # These are NPC IDs (canon_ids) extracted from DM narrative
+    scene_npcs: List[str] = field(default_factory=list)
+
     # Combat state
     combat: CombatState = field(default_factory=CombatState)
 
@@ -503,6 +507,32 @@ class GameState:
             logger.info(f"[GameState] Removed NPC: {npc.name}")
 
     # =========================================================================
+    # SCENE NPC TRACKING (for Memory System)
+    # =========================================================================
+
+    def set_scene_npcs(self, npc_ids: List[str]) -> None:
+        """Update NPCs present in current narrative scene."""
+        self.scene_npcs = list(npc_ids)
+        logger.debug(f"[GameState] Scene NPCs set to: {npc_ids}")
+
+    def add_scene_npc(self, npc_id: str) -> None:
+        """Add an NPC to the current scene."""
+        if npc_id not in self.scene_npcs:
+            self.scene_npcs.append(npc_id)
+            logger.debug(f"[GameState] Added scene NPC: {npc_id}")
+
+    def remove_scene_npc(self, npc_id: str) -> None:
+        """Remove an NPC from the current scene."""
+        if npc_id in self.scene_npcs:
+            self.scene_npcs.remove(npc_id)
+            logger.debug(f"[GameState] Removed scene NPC: {npc_id}")
+
+    def clear_scene_npcs(self) -> None:
+        """Clear all NPCs from the current scene."""
+        self.scene_npcs.clear()
+        logger.debug("[GameState] Cleared all scene NPCs")
+
+    # =========================================================================
     # COMBAT MANAGEMENT
     # =========================================================================
 
@@ -753,6 +783,7 @@ class GameState:
             "history": self.history,
             "location": self.location,
             "active_npcs": {k: v.to_dict() for k, v in self.active_npcs.items()},
+            "scene_npcs": self.scene_npcs,
             "combat": self.combat.to_dict(),
             "session_stats": self.session_stats,
         }
@@ -793,6 +824,9 @@ class GameState:
         # Restore NPCs
         for npc_id, npc_data in data.get("active_npcs", {}).items():
             state.active_npcs[npc_id] = CombatantState.from_dict(npc_data)
+
+        # Restore scene NPCs (for memory system)
+        state.scene_npcs = data.get("scene_npcs", [])
 
         # Restore combat
         if data.get("combat"):
