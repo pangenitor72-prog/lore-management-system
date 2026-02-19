@@ -25,6 +25,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from pydantic import BaseModel, Field
 
+from src.mantle.core.models import NPCStatBlock
+
 logger = logging.getLogger(__name__)
 
 # Thread pool for blocking Gemini calls
@@ -831,6 +833,111 @@ TEXT TO ANALYZE:
         "cultist": {"openness": 0.7, "conscientiousness": 0.6, "agreeableness": 0.3},
     }
 
+    # Role/archetype to stat block tendencies for NPC capabilities
+    # Keys: strength, dexterity, constitution, intelligence, wisdom, charisma, hp, ac, threat, style
+    ROLE_STAT_HINTS = {
+        # Warriors & Fighters - high STR/CON, medium DEX
+        "warrior": {"strength": 15, "constitution": 14, "dexterity": 12, "hp": 45, "ac": 16, "threat": "moderate", "style": "melee"},
+        "knight": {"strength": 16, "constitution": 14, "dexterity": 10, "charisma": 12, "hp": 52, "ac": 18, "threat": "serious", "style": "melee"},
+        "soldier": {"strength": 14, "constitution": 13, "dexterity": 12, "hp": 32, "ac": 16, "threat": "minor", "style": "melee"},
+        "guard": {"strength": 13, "constitution": 12, "dexterity": 11, "hp": 22, "ac": 14, "threat": "minor", "style": "melee"},
+        "barbarian": {"strength": 17, "constitution": 15, "dexterity": 13, "hp": 67, "ac": 13, "threat": "serious", "style": "melee"},
+        "mercenary": {"strength": 14, "constitution": 13, "dexterity": 14, "hp": 38, "ac": 15, "threat": "moderate", "style": "melee"},
+        "paladin": {"strength": 16, "constitution": 14, "charisma": 14, "wisdom": 12, "hp": 52, "ac": 18, "threat": "serious", "style": "melee"},
+
+        # Rogues & Shadows - high DEX, medium INT/CHA
+        "assassin": {"dexterity": 17, "intelligence": 14, "constitution": 12, "hp": 45, "ac": 15, "threat": "serious", "style": "melee"},
+        "thief": {"dexterity": 15, "intelligence": 12, "charisma": 12, "hp": 18, "ac": 13, "threat": "minor", "style": "melee"},
+        "spy": {"dexterity": 14, "intelligence": 15, "charisma": 14, "hp": 27, "ac": 12, "threat": "moderate", "style": "ranged"},
+        "rogue": {"dexterity": 15, "constitution": 12, "intelligence": 13, "hp": 27, "ac": 14, "threat": "moderate", "style": "melee"},
+
+        # Scholars & Mystics - high INT/WIS, low physical
+        "wizard": {"intelligence": 17, "wisdom": 14, "constitution": 10, "hp": 22, "ac": 12, "threat": "serious", "style": "spellcaster"},
+        "mage": {"intelligence": 16, "wisdom": 13, "constitution": 10, "hp": 27, "ac": 12, "threat": "moderate", "style": "spellcaster"},
+        "archmage": {"intelligence": 18, "wisdom": 15, "constitution": 12, "hp": 45, "ac": 15, "threat": "deadly", "style": "spellcaster"},
+        "sage": {"intelligence": 16, "wisdom": 16, "charisma": 12, "hp": 18, "ac": 10, "threat": "minor", "style": "non-combatant"},
+        "scholar": {"intelligence": 15, "wisdom": 14, "hp": 11, "ac": 10, "threat": "trivial", "style": "non-combatant"},
+        "priest": {"wisdom": 16, "charisma": 14, "constitution": 12, "hp": 27, "ac": 13, "threat": "moderate", "style": "spellcaster"},
+        "oracle": {"wisdom": 17, "intelligence": 14, "charisma": 13, "hp": 18, "ac": 10, "threat": "minor", "style": "spellcaster"},
+        "lich": {"intelligence": 18, "wisdom": 16, "charisma": 14, "constitution": 16, "hp": 135, "ac": 17, "threat": "deadly", "style": "spellcaster"},
+
+        # Leaders & Authority - high CHA, balanced physical
+        "king": {"charisma": 16, "intelligence": 14, "wisdom": 14, "strength": 12, "hp": 45, "ac": 15, "threat": "moderate", "style": "melee"},
+        "queen": {"charisma": 16, "intelligence": 15, "wisdom": 14, "hp": 38, "ac": 14, "threat": "moderate", "style": "non-combatant"},
+        "lord": {"charisma": 14, "intelligence": 13, "strength": 12, "hp": 32, "ac": 15, "threat": "minor", "style": "melee"},
+        "captain": {"strength": 15, "charisma": 14, "constitution": 14, "hp": 45, "ac": 17, "threat": "moderate", "style": "melee"},
+        "commander": {"strength": 14, "charisma": 15, "wisdom": 13, "hp": 52, "ac": 17, "threat": "serious", "style": "melee"},
+        "chief": {"strength": 14, "charisma": 14, "constitution": 13, "hp": 38, "ac": 14, "threat": "moderate", "style": "melee"},
+
+        # Common Folk - average stats, low HP
+        "merchant": {"charisma": 14, "intelligence": 13, "wisdom": 12, "hp": 11, "ac": 10, "threat": "trivial", "style": "non-combatant"},
+        "innkeeper": {"charisma": 13, "constitution": 12, "wisdom": 12, "hp": 15, "ac": 10, "threat": "trivial", "style": "non-combatant"},
+        "bartender": {"charisma": 12, "constitution": 13, "strength": 12, "hp": 15, "ac": 10, "threat": "trivial", "style": "non-combatant"},
+        "farmer": {"strength": 13, "constitution": 13, "wisdom": 11, "hp": 15, "ac": 10, "threat": "trivial", "style": "non-combatant"},
+        "blacksmith": {"strength": 16, "constitution": 14, "hp": 22, "ac": 11, "threat": "minor", "style": "melee"},
+        "healer": {"wisdom": 15, "intelligence": 13, "charisma": 12, "hp": 18, "ac": 10, "threat": "trivial", "style": "non-combatant"},
+
+        # Villains & Threats
+        "villain": {"charisma": 15, "intelligence": 14, "wisdom": 12, "hp": 65, "ac": 15, "threat": "serious", "style": "melee"},
+        "tyrant": {"charisma": 16, "strength": 14, "constitution": 14, "hp": 78, "ac": 17, "threat": "deadly", "style": "melee"},
+        "cultist": {"wisdom": 13, "constitution": 11, "charisma": 12, "hp": 18, "ac": 12, "threat": "minor", "style": "spellcaster"},
+
+        # Outcasts & Mysterious
+        "hermit": {"wisdom": 16, "intelligence": 14, "constitution": 12, "hp": 18, "ac": 10, "threat": "trivial", "style": "non-combatant"},
+        "wanderer": {"dexterity": 13, "wisdom": 14, "constitution": 13, "hp": 22, "ac": 12, "threat": "minor", "style": "melee"},
+        "stranger": {"dexterity": 12, "wisdom": 13, "charisma": 11, "hp": 15, "ac": 11, "threat": "trivial", "style": "non-combatant"},
+        "exile": {"constitution": 13, "wisdom": 12, "dexterity": 12, "hp": 22, "ac": 11, "threat": "minor", "style": "melee"},
+    }
+
+    # Default stats for unrecognized roles
+    DEFAULT_STAT_BLOCK = {
+        "strength": 10, "dexterity": 10, "constitution": 10,
+        "intelligence": 10, "wisdom": 10, "charisma": 10,
+        "hp": 11, "ac": 10, "threat": "trivial", "style": "non-combatant"
+    }
+
+    # Trait keywords that modify ability scores
+    TRAIT_STAT_HINTS = {
+        "strong": {"strength": 2},
+        "muscular": {"strength": 2, "constitution": 1},
+        "powerful": {"strength": 3},
+        "weak": {"strength": -2},
+        "frail": {"strength": -2, "constitution": -2},
+        "agile": {"dexterity": 2},
+        "quick": {"dexterity": 2},
+        "nimble": {"dexterity": 2},
+        "graceful": {"dexterity": 2},
+        "clumsy": {"dexterity": -2},
+        "slow": {"dexterity": -2},
+        "tough": {"constitution": 2},
+        "hardy": {"constitution": 2},
+        "resilient": {"constitution": 2},
+        "sickly": {"constitution": -2},
+        "fragile": {"constitution": -2},
+        "clever": {"intelligence": 2},
+        "brilliant": {"intelligence": 3},
+        "cunning": {"intelligence": 2},
+        "wise": {"wisdom": 2},
+        "perceptive": {"wisdom": 2},
+        "insightful": {"wisdom": 2},
+        "foolish": {"intelligence": -2, "wisdom": -2},
+        "naive": {"wisdom": -2},
+        "charismatic": {"charisma": 2},
+        "charming": {"charisma": 2},
+        "intimidating": {"charisma": 2, "strength": 1},
+        "beautiful": {"charisma": 2},
+        "handsome": {"charisma": 2},
+        "ugly": {"charisma": -1},
+        "ancient": {"wisdom": 2, "strength": -1, "dexterity": -1},
+        "old": {"wisdom": 1, "strength": -1, "dexterity": -1},
+        "young": {"dexterity": 1, "wisdom": -1},
+        "youthful": {"dexterity": 1},
+        "massive": {"strength": 2, "constitution": 2},
+        "hulking": {"strength": 3, "constitution": 2, "dexterity": -1},
+        "tiny": {"strength": -2, "dexterity": 2},
+        "small": {"strength": -1, "dexterity": 1},
+    }
+
     # Description keywords that hint at personality
     DESCRIPTION_OCEAN_HINTS = {
         # High Openness
@@ -943,6 +1050,142 @@ TEXT TO ANALYZE:
             scores[dim] = max(0.0, min(1.0, scores[dim]))
 
         return OCEANProfile(**scores)
+
+    def _generate_stat_block_for_character(
+        self,
+        name: str,
+        description: str = "",
+        traits: List[str] = None,
+        tags: List[str] = None,
+    ) -> NPCStatBlock:
+        """
+        Generate stat block for an NPC based on role and traits.
+
+        Priority:
+        1. Role keywords from name/tags (strongest signal)
+        2. Description keyword hints
+        3. Trait-based adjustments
+        4. Default commoner stats
+
+        Includes variance so not every "guard" is identical - occasionally
+        you'll get an unusually strong merchant or a clumsy assassin.
+        """
+        # Start with default stats (copy to avoid mutation)
+        stats = dict(self.DEFAULT_STAT_BLOCK)
+
+        # 1. Check for role keywords - prioritize tags (explicit), then name, then description
+        # Use word boundary matching to avoid "guard" matching "guards"
+        matched_role = None
+        matched_role_stats = None
+
+        # Priority 1: Check tags first (most explicit signal)
+        tags_lower = [t.lower() for t in (tags or [])]
+        for role, role_stats in self.ROLE_STAT_HINTS.items():
+            if role in tags_lower:
+                matched_role = role
+                matched_role_stats = role_stats
+                break
+
+        # Priority 2: Check name (word boundary match)
+        if not matched_role:
+            name_lower = name.lower()
+            for role, role_stats in self.ROLE_STAT_HINTS.items():
+                # Use word boundary to match whole words only
+                if re.search(rf'\b{re.escape(role)}\b', name_lower):
+                    matched_role = role
+                    matched_role_stats = role_stats
+                    break
+
+        # Priority 3: Check description (word boundary match)
+        if not matched_role and description:
+            desc_lower = description.lower()
+            for role, role_stats in self.ROLE_STAT_HINTS.items():
+                # Use word boundary to match whole words only
+                if re.search(rf'\b{re.escape(role)}\b', desc_lower):
+                    matched_role = role
+                    matched_role_stats = role_stats
+                    break
+
+        # Apply matched role stats
+        if matched_role_stats:
+            for key, value in matched_role_stats.items():
+                if key in ["hp", "ac", "threat", "style"]:
+                    stats[key] = value
+                else:
+                    # Ability scores: use role value if higher than default
+                    stats[key] = max(stats.get(key, 10), value)
+
+        # 2. Trait-based adjustments (physical descriptors)
+        for trait in (traits or []):
+            trait_lower = trait.lower().strip()
+            if trait_lower in self.TRAIT_STAT_HINTS:
+                for ability, delta in self.TRAIT_STAT_HINTS[trait_lower].items():
+                    if ability in ["hp", "ac"]:
+                        stats[ability] = max(1, stats[ability] + delta * 5)
+                    else:
+                        current = stats.get(ability, 10)
+                        stats[ability] = max(3, min(20, current + delta))
+
+        # 3. Add variance for flavor (±1-2 to random abilities)
+        # ~20% chance of an "unorthodox" stat distribution
+        if random.random() < 0.2:
+            # Pick 1-2 abilities to vary unexpectedly
+            abilities = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]
+            variance_abilities = random.sample(abilities, k=random.randint(1, 2))
+            for ability in variance_abilities:
+                # Could be higher or lower than expected
+                delta = random.choice([-3, -2, 2, 3])
+                current = stats.get(ability, 10)
+                stats[ability] = max(6, min(18, current + delta))
+                logger.debug(f"[STAT VARIANCE] {name}: {ability} adjusted by {delta}")
+
+        # 4. Minor random variance on all stats (±1) for variety
+        for ability in ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]:
+            variance = random.randint(-1, 1)
+            current = stats.get(ability, 10)
+            stats[ability] = max(3, min(20, current + variance))
+
+        # 5. HP variance based on constitution
+        con_mod = (stats["constitution"] - 10) // 2
+        hp_variance = random.randint(-3, 3)
+        stats["hp"] = max(1, stats["hp"] + con_mod * 2 + hp_variance)
+
+        # 6. Generate signature actions based on style
+        actions = []
+        style = stats.get("style", "non-combatant")
+        str_mod = (stats["strength"] - 10) // 2
+        dex_mod = (stats["dexterity"] - 10) // 2
+        int_mod = (stats["intelligence"] - 10) // 2
+        wis_mod = (stats["wisdom"] - 10) // 2
+
+        if style == "melee":
+            attack_mod = max(str_mod, dex_mod)
+            attack_bonus = attack_mod + 2  # Assume proficiency
+            damage_mod = str_mod
+            damage_str = f"1d8{'+' + str(damage_mod) if damage_mod > 0 else (str(damage_mod) if damage_mod < 0 else '')}"
+            actions.append(f"Melee Attack +{attack_bonus} ({damage_str})")
+        elif style == "ranged":
+            attack_bonus = dex_mod + 2
+            damage_str = f"1d6{'+' + str(dex_mod) if dex_mod > 0 else ''}"
+            actions.append(f"Ranged Attack +{attack_bonus} ({damage_str})")
+        elif style == "spellcaster":
+            spell_mod = max(int_mod, wis_mod)
+            spell_dc = 8 + spell_mod + 2  # Assume proficiency
+            actions.append(f"Spellcasting (DC {spell_dc})")
+
+        return NPCStatBlock(
+            strength=stats["strength"],
+            dexterity=stats["dexterity"],
+            constitution=stats["constitution"],
+            intelligence=stats["intelligence"],
+            wisdom=stats["wisdom"],
+            charisma=stats["charisma"],
+            hit_points=stats["hp"],
+            armor_class=stats["ac"],
+            threat_level=stats["threat"],
+            attack_style=stats["style"],
+            signature_actions=actions,
+        )
 
     def _clean_json_response(self, text: str) -> str:
         """Clean markdown fences from LLM response."""
@@ -1443,6 +1686,36 @@ TEXT TO ANALYZE:
                         props["fears"] = entity.fears
                     characters_with_ocean += 1
                     logger.debug(f"[LORE INGESTION] OCEAN profile generated successfully for '{entity.name}'")
+
+                    # Generate stat block for NPC capabilities
+                    try:
+                        stat_block = self._generate_stat_block_for_character(
+                            name=entity.name,
+                            description=entity.description or "",
+                            traits=entity.traits,
+                            tags=entity.tags,
+                        )
+
+                        # Store stat block properties (prefixed with stat_ for clarity)
+                        props["stat_strength"] = stat_block.strength
+                        props["stat_dexterity"] = stat_block.dexterity
+                        props["stat_constitution"] = stat_block.constitution
+                        props["stat_intelligence"] = stat_block.intelligence
+                        props["stat_wisdom"] = stat_block.wisdom
+                        props["stat_charisma"] = stat_block.charisma
+                        props["stat_hit_points"] = stat_block.hit_points
+                        props["stat_armor_class"] = stat_block.armor_class
+                        props["stat_threat_level"] = stat_block.threat_level
+                        props["stat_attack_style"] = stat_block.attack_style
+                        props["stat_signature_actions"] = stat_block.signature_actions
+
+                        logger.debug(
+                            f"[LORE INGESTION] Stat block generated for '{entity.name}': "
+                            f"HP {stat_block.hit_points}, AC {stat_block.armor_class}, "
+                            f"Threat: {stat_block.threat_level}, Style: {stat_block.attack_style}"
+                        )
+                    except Exception as stat_err:
+                        logger.warning(f"[LORE INGESTION] Stat block generation failed for '{entity.name}': {stat_err}")
                 except Exception as ocean_err:
                     logger.error(f"[LORE INGESTION] OCEAN generation failed for '{entity.name}': {ocean_err}", exc_info=True)
                     # Continue without OCEAN profile rather than failing the entire entity

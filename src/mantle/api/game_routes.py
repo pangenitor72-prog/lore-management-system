@@ -4880,31 +4880,33 @@ async def _get_graph_aware_entity_context(
         if not results:
             return ""
 
-        # Bucket entities
+        # Import compact formatter
+        from src.mantle.prompts.formatters import format_entity_compact
+
+        # Bucket entities by knowledge level
         known, rumored, secrets = [], [], []
         for r in results:
-            desc = (r.get("description") or "")[:120]
             name = r.get("name", "Unknown")
+            desc = (r.get("description") or "")[:80]  # Shorter for compact format
             etype = r.get("type", "Entity")
             confidence = r.get("confidence", "CONFIRMED")
+            bucket = r.get("knowledge", "SECRET")
 
-            # Format relationships (outgoing, incoming, and factions)
-            rel_parts = []
-            # Outgoing: "SERVES Lord Blackwood"
-            for rel in (r.get("rels_out") or []):
+            # Build relationships list for compact format
+            relationships = []
+            # Outgoing: SERVES Lord Blackwood
+            for rel in (r.get("rels_out") or [])[:2]:
                 if rel.get("target"):
-                    rel_parts.append(f"{rel['type']} {rel['target']}")
-            # Incoming: "Lord Blackwood EMPLOYS"
-            for rel in (r.get("rels_in") or []):
+                    relationships.append({"type": rel["type"], "target": rel["target"]})
+            # Incoming: Lord Blackwood EMPLOYS (flip to target perspective)
+            for rel in (r.get("rels_in") or [])[:1]:
                 if rel.get("source"):
-                    rel_parts.append(f"{rel['source']} {rel['type']}")
+                    relationships.append({"type": f"{rel['source']} {rel['type']}", "target": "this"})
             # Faction membership
-            for faction in (r.get("factions") or []):
-                rel_parts.append(f"member of {faction}")
-            rel_str = f". {', '.join(rel_parts)}" if rel_parts else ""
+            for faction in (r.get("factions") or [])[:1]:
+                relationships.append({"type": "MEMBER_OF", "target": faction})
 
-            # Add OCEAN dialogue style for Characters
-            dialogue_str = ""
+            # Add dialogue style for Characters (append to description)
             if etype == "Character" and r.get("openness") is not None:
                 try:
                     ocean = OCEANProfile(
@@ -4916,17 +4918,23 @@ async def _get_graph_aware_entity_context(
                     )
                     style = ocean.get_dialogue_style()
                     if style and style != "neutral conversational style":
-                        dialogue_str = f" [Speaks: {style}]"
+                        # Append style hint to description
+                        desc = f"{desc} [speaks: {style[:30]}]"
                 except Exception:
-                    pass  # Graceful degradation if OCEAN data is malformed
+                    pass
 
-            # Mark low-confidence entities so DM knows to treat them as flexible
-            confidence_marker = ""
+            # Mark low-confidence entities
             if confidence in ("SPECULATIVE", "AI_GENERATED"):
-                confidence_marker = " [unverified - treat as flexible]"
+                desc = f"{desc} [flexible]"
 
-            entry = f"- {name} ({etype}): {desc}{rel_str}{dialogue_str}{confidence_marker}"
-            bucket = r.get("knowledge", "SECRET")
+            # Use compact formatter
+            entry = format_entity_compact(
+                name=name,
+                description=desc,
+                knowledge_level=bucket,
+                relationships=relationships if relationships else None,
+            )
+
             if bucket == "KNOWN":
                 known.append(entry)
             elif bucket == "RUMORED":
@@ -4934,26 +4942,21 @@ async def _get_graph_aware_entity_context(
             else:
                 secrets.append(entry)
 
-        # Format for DM prompt
-        sections = ["\n=== KNOWLEDGE GRAPH (entities in your world) ==="]
+        # Compact format for DM prompt
+        sections = ["=== WORLD KNOWLEDGE ==="]
+        sections.append("KNOWN=established facts | RUMORED=drop hints | SECRET=reveal dramatically with [DISCOVERY:]")
 
         if known:
-            sections.append("\nENTITIES THE PLAYER KNOWS:")
+            sections.append("\n[KNOWN]")
             sections.extend(known)
 
         if rumored:
-            sections.append("\nRUMORS THE PLAYER HAS HEARD (develop these, add detail):")
+            sections.append("\n[RUMORED]")
             sections.extend(rumored)
 
         if secrets:
-            sections.append("\nSECRETS THE PLAYER DOESN'T KNOW YET (reveal when dramatically appropriate):")
+            sections.append("\n[SECRET]")
             sections.extend(secrets)
-
-        sections.append(
-            "\nWeave KNOWN entities as established facts. Drop hints about RUMORED entities."
-            "\nWhen revealing a SECRET, use [DISCOVERY:] tag so the system tracks it."
-            "\nFor Characters with [Speaks:] tags, embody that dialogue style when they talk."
-        )
 
         return "\n".join(sections)
 
@@ -4968,11 +4971,17 @@ async def _get_scene_npc_personality_context(
     npc_names: List[str],
 ) -> str:
     """
-    Fetch OCEAN personality profiles for NPCs in the current scene.
-    Returns focused guidance for how each NPC should speak and behave.
+    Fetch OCEAN personality profiles and stat blocks for NPCs in the current scene.
+    Returns focused guidance for how each NPC should speak, behave, and what they're capable of.
 
-    This gives the DM explicit, prominent personality guidance for NPCs
-    actively present in the scene, rather than burying it in the knowledge graph.
+    Uses compact formatting to minimize tokens while preserving essential information.
+    Format: NAME | combat_style, HP X, threat | NOTABLE_STATS
+            Style: dialogue style
+
+    Stats help inform:
+    - Physical tasks: "Can this blacksmith lift the fallen beam?" (STR)
+    - Mental tasks: "Would this merchant notice the pickpocket?" (WIS)
+    - Combat: "How tough is this guard in a fight?" (HP, AC, threat_level)
     """
     if not npc_names or not db:
         return ""
@@ -4980,17 +4989,27 @@ async def _get_scene_npc_personality_context(
     try:
         # Build query to find Characters matching any of the NPC names
         # Use case-insensitive matching for robustness
+        # Include both OCEAN personality data and stat block data
         query = """
         MATCH (e:Entity {world_id: $world_id})
         WHERE e.entity_type = 'Character'
-          AND e.openness IS NOT NULL
           AND toLower(e.name) IN $npc_names_lower
         RETURN e.name AS name,
                e.openness AS openness,
                e.conscientiousness AS conscientiousness,
                e.extraversion AS extraversion,
                e.agreeableness AS agreeableness,
-               e.neuroticism AS neuroticism
+               e.neuroticism AS neuroticism,
+               e.stat_strength AS stat_strength,
+               e.stat_dexterity AS stat_dexterity,
+               e.stat_constitution AS stat_constitution,
+               e.stat_intelligence AS stat_intelligence,
+               e.stat_wisdom AS stat_wisdom,
+               e.stat_charisma AS stat_charisma,
+               e.stat_hit_points AS stat_hit_points,
+               e.stat_armor_class AS stat_armor_class,
+               e.stat_threat_level AS stat_threat_level,
+               e.stat_attack_style AS stat_attack_style
         """
 
         npc_names_lower = [name.lower() for name in npc_names]
@@ -5000,51 +5019,74 @@ async def _get_scene_npc_personality_context(
         })
 
         if not results:
-            logger.debug(f"[NPC-OCEAN] No OCEAN data found for scene NPCs: {npc_names}")
+            logger.debug(f"[NPC-CONTEXT] No data found for scene NPCs: {npc_names}")
             return ""
 
-        # Build personality context for each NPC found
+        # Import compact formatter
+        from src.mantle.prompts.formatters import format_npc_compact
+
+        # Build personality + capability context for each NPC found
         npc_blocks = []
         for r in results:
             try:
-                ocean = OCEANProfile(
-                    openness=r.get("openness", 0.5),
-                    conscientiousness=r.get("conscientiousness", 0.5),
-                    extraversion=r.get("extraversion", 0.5),
-                    agreeableness=r.get("agreeableness", 0.5),
-                    neuroticism=r.get("neuroticism", 0.5),
+                name = r.get("name", "Unknown")
+
+                # Get dialogue style from OCEAN if available
+                dialogue_style = ""
+                if r.get("openness") is not None:
+                    ocean = OCEANProfile(
+                        openness=r.get("openness", 0.5),
+                        conscientiousness=r.get("conscientiousness", 0.5),
+                        extraversion=r.get("extraversion", 0.5),
+                        agreeableness=r.get("agreeableness", 0.5),
+                        neuroticism=r.get("neuroticism", 0.5),
+                    )
+                    dialogue_style = ocean.get_dialogue_style()
+
+                # Get stat info
+                threat = r.get("stat_threat_level", "trivial")
+                style = r.get("stat_attack_style", "non-combatant")
+                hp = r.get("stat_hit_points", 0) or 0
+
+                # Build notable stats list (only extremes, ≥15 or ≤7, to save tokens)
+                notables = []
+                for stat_name in ["strength", "dexterity", "intelligence", "wisdom", "charisma"]:
+                    val = r.get(f"stat_{stat_name}")
+                    if val is not None:
+                        if val >= 15:
+                            notables.append(f"{stat_name[:3].upper()} {val}")
+                        elif val <= 7:
+                            notables.append(f"{stat_name[:3].upper()} {val}")
+
+                # Use compact formatter
+                block = format_npc_compact(
+                    name=name,
+                    dialogue_style=dialogue_style,
+                    threat_level=threat,
+                    attack_style=style,
+                    hp=hp,
+                    notables=notables if notables else None,
                 )
 
-                name = r.get("name", "Unknown")
-                behavioral = ocean.get_behavioral_summary()
-                dialogue = ocean.get_dialogue_style()
-
-                # Only include if we have meaningful personality data
-                if behavioral or (dialogue and dialogue != "neutral conversational style"):
-                    block = f"{name.upper()}"
-                    if behavioral:
-                        block += f"\n- Personality: {behavioral}"
-                    if dialogue and dialogue != "neutral conversational style":
-                        block += f"\n- Dialogue: {dialogue}"
+                if block:
                     npc_blocks.append(block)
 
             except Exception as e:
-                logger.debug(f"[NPC-OCEAN] Failed to build profile for {r.get('name')}: {e}")
+                logger.debug(f"[NPC-CONTEXT] Failed to build profile for {r.get('name')}: {e}")
                 continue
 
         if not npc_blocks:
             return ""
 
-        # Format the complete context block
-        context = "\n=== NPCs IN THIS SCENE ===\n\n"
-        context += "\n\n".join(npc_blocks)
-        context += "\n\nEmbody these personalities when these NPCs speak or act."
+        # Format the complete context block (compact header)
+        context = "=== SCENE NPCs ===\n"
+        context += "\n".join(npc_blocks)
 
-        logger.debug(f"[NPC-OCEAN] Injecting personality context for {len(npc_blocks)} NPCs")
+        logger.debug(f"[NPC-CONTEXT] Injecting compact profiles for {len(npc_blocks)} NPCs")
         return context
 
     except Exception as e:
-        logger.warning(f"[NPC-OCEAN] Failed to get personality context: {e}")
+        logger.warning(f"[NPC-CONTEXT] Failed to get NPC context: {e}")
         return ""
 
 
@@ -5634,13 +5676,12 @@ ESTABLISHED LORE (stay true to these characters and details):
     # Query knowledge graph for entities bucketed by party_knowledge
     # Includes relationship traversal and KNOWN/RUMORED/SECRET sections
     db_context = ""
+    semantic_context = ""  # Keep separate for priority-based token budgeting
     if db:
         db_context = await _get_graph_aware_entity_context(db, session, game_state)
 
-        # Add semantically relevant entities based on player's action
-        semantic_context = await _get_semantically_relevant_entities(db, player_input, session)
-        if semantic_context:
-            db_context = db_context + semantic_context
+        # Get semantically relevant entities based on player's action (separate for budgeting)
+        semantic_context = await _get_semantically_relevant_entities(db, player_input, session) or ""
 
     # Build character context - prefer game_state (authoritative) over _characters
     char_context = ""
@@ -5707,52 +5748,63 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         except Exception as e:
             logger.warning(f"[ARC] Failed to get context injection: {e}")
 
-    # Build memory context for NPC beliefs, impressions, legends
+    # Build memory context for NPC beliefs, impressions, legends (compact format)
     memory_context_str = ""
     memory_manager = session.get("memory_manager")
     if memory_manager:
         try:
+            from src.mantle.prompts.formatters import format_memory_relationship_compact
+
             memory_lines = []
-            # Get player legends (mythology about the player)
+
+            # Get player legends (mythology about the player) - compact format
             legends = memory_manager.get_player_legends()
             if legends:
-                legend_strs = [f'"{l.epithet}"' for l in legends[:3]]
-                memory_lines.append(f"PLAYER REPUTATION: Known as {', '.join(legend_strs)}")
+                legend_strs = [f'"{l.epithet}"' for l in legends[:2]]
+                memory_lines.append(f"REPUTATION: {' | '.join(legend_strs)}")
 
-            # Get active narrative threads (unresolved tensions)
+            # Get active narrative threads (unresolved tensions) - compact format
             threads = memory_manager.get_active_threads()
             if threads:
-                thread_strs = [f"- {t.description} (urgency: {t.urgency:.0%})" for t in threads[:3]]
-                memory_lines.append("OPEN THREADS:\n" + "\n".join(thread_strs))
+                thread_strs = [f"{t.description[:40]}..." if len(t.description) > 40 else t.description for t in threads[:2]]
+                memory_lines.append(f"THREADS: {' | '.join(thread_strs)}")
 
-            # Get impressions (how NPCs view the player)
-            friendly = memory_manager.get_friendly_npcs()
-            hostile = memory_manager.get_hostile_npcs()
-            if friendly or hostile:
-                impression_parts = []
-                if friendly:
-                    impression_parts.append(f"{len(friendly)} friendly NPCs")
-                if hostile:
-                    impression_parts.append(f"{len(hostile)} hostile NPCs")
-                memory_lines.append(f"NPC DISPOSITION: {', '.join(impression_parts)}")
-
-            # Get per-NPC relationship context for NPCs in the current scene
-            # This gives the DM specific guidance on how each NPC should behave
+            # Get per-NPC relationship context for NPCs in the current scene - compact format
             # Use scene_npcs from GameState (proper canon_ids from previous turn's extraction)
             scene_npc_ids = _get_npc_ids_for_memory_context(session, game_state)
             if scene_npc_ids:
-                # Get formatted relationship context for scene NPCs using actual canon_ids
-                relationship_context = memory_manager.get_formatted_relationship_context(scene_npc_ids)
-                if relationship_context:
-                    # Add behavioral guidance when we have relationship data
-                    from src.mantle.prompts.dm_prompts import DMPrompts
-                    memory_lines.append(relationship_context)
-                    memory_lines.append(DMPrompts.get_npc_relationship_behavior())
-                    logger.debug(f"[MEMORY] Injecting relationship context for {len(scene_npc_ids)} scene NPCs: {scene_npc_ids}")
+                impression_lines = []
+                for npc_id in scene_npc_ids[:3]:  # Max 3 NPCs
+                    impression = memory_manager.get_npc_impression(npc_id)
+                    if impression:
+                        # Get NPC name from session or use ID
+                        npc_name = npc_id
+                        # Compact format: Name (role) → feeling (reason) | Trust: LEVEL
+                        trust_label = "HIGH" if impression.trust > 0.7 else "MED" if impression.trust > 0.4 else "LOW"
+                        feeling = impression.valence.value
+                        reason = impression.summary[:30] if impression.summary else ""
+                        compact = f"{npc_name} → {feeling}"
+                        if reason:
+                            compact += f" ({reason})"
+                        compact += f" | Trust: {trust_label}"
+                        # Add behavioral flags
+                        flags = []
+                        if impression.will_help:
+                            flags.append("helps")
+                        if impression.will_share_secrets:
+                            flags.append("shares secrets")
+                        if impression.will_betray:
+                            flags.append("may betray")
+                        if flags:
+                            compact += f" | {', '.join(flags)}"
+                        impression_lines.append(compact)
+                if impression_lines:
+                    memory_lines.append("MEMORY:\n  " + "\n  ".join(impression_lines))
+                    logger.debug(f"[MEMORY] Injecting compact relationship context for {len(scene_npc_ids)} scene NPCs")
 
             if memory_lines:
-                memory_context_str = "\n=== WORLD MEMORY ===\n" + "\n".join(memory_lines)
-                logger.debug(f"[MEMORY] Injecting context: {len(legends)} legends, {len(threads)} threads")
+                memory_context_str = "\n".join(memory_lines)
+                logger.debug(f"[MEMORY] Injecting compact context: {len(legends)} legends, {len(threads)} threads")
         except Exception as e:
             logger.warning(f"[MEMORY] Failed to get context: {e}")
 
@@ -5795,27 +5847,23 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         except Exception as e:
             logger.warning(f"[OVERLAY] Failed to get NPC state context: {e}")
 
-    # Check for previous auditor contradictions and inject as warnings
+    # Check for previous auditor contradictions - keep separate for budget prioritization
     # This feeds auditor results back to the DM for self-correction
+    auditor_warnings_str = ""
     previous_contradictions = session.get("previous_contradictions", [])
     if previous_contradictions:
+        from src.mantle.prompts.formatters import format_warning_compact
         contradiction_warnings = []
         for c in previous_contradictions[:3]:  # Limit to 3 most recent
-            contradiction_warnings.append(f"- {c.get('entity_name', 'Unknown')}: {c.get('description', 'Unknown issue')}")
+            warning = format_warning_compact(
+                issue_type="CONTINUITY",
+                detail=f"{c.get('entity_name', 'Unknown')}: {c.get('description', 'Unknown issue')}"
+            )
+            contradiction_warnings.append(warning)
 
         if contradiction_warnings:
-            auditor_warning = "\n=== CONTINUITY WARNINGS ===\n"
-            auditor_warning += "The following issues were detected in recent narrative:\n"
-            auditor_warning += "\n".join(contradiction_warnings)
-            auditor_warning += "\nPlease maintain consistency with established facts."
-
-            # Append to npc_state_context or create if empty
-            if npc_state_context:
-                npc_state_context += "\n\n" + auditor_warning
-            else:
-                npc_state_context = auditor_warning
-
-            logger.info(f"[AUDITOR] Injecting {len(contradiction_warnings)} contradiction warnings into DM prompt")
+            auditor_warnings_str = "\n".join(contradiction_warnings)
+            logger.info(f"[AUDITOR] Prepared {len(contradiction_warnings)} contradiction warnings for DM prompt")
 
         # Clear after injection (don't repeat the same warnings)
         session["previous_contradictions"] = []
@@ -5855,9 +5903,9 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
     # Handle genre blending
     genre_display = session.get("genre_blend", genre)
 
-    # Build integrated prompt using V3.0 philosophy as foundation
+    # Build integrated prompt using V3.0 philosophy as foundation with token budgeting
     from src.mantle.prompts.dm_prompts import DMPrompts
-    prompt = DMPrompts.build_integrated_prompt(
+    prompt, budget_report = DMPrompts.build_integrated_prompt(
         # Character and World
         character_name=character if character else "the protagonist",
         character_context=char_context,
@@ -5891,6 +5939,17 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         guidance_instruction=_get_guidance_instruction(needs_guidance),
         adaptive_context=adaptive_context if adaptive_context else "",
         catalyst_directive=_get_active_play_catalyst_directive(session),
+        # Budget-prioritized sections (separate for proper prioritization)
+        auditor_warnings=auditor_warnings_str,
+        semantic_context=semantic_context,
+    )
+
+    # Log budget report
+    if budget_report.get("sections_excluded"):
+        logger.info(f"[PROMPT BUDGET] Excluded: {budget_report['sections_excluded']}")
+    logger.debug(
+        f"[PROMPT BUDGET] {budget_report['tokens_used']}/{budget_report['available_tokens']} tokens "
+        f"({budget_report['utilization_pct']}%), {len(budget_report['sections_included'])} sections"
     )
 
     # Use protected AI call with guardrails

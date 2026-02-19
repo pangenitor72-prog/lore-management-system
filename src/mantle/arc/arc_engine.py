@@ -317,6 +317,7 @@ class ArcEngine:
     def get_dm_context_injection(
         self,
         subtle: bool = False,
+        compact: bool = True,
         preferences: Optional[Dict[str, str]] = None,
     ) -> str:
         """
@@ -325,6 +326,7 @@ class ArcEngine:
         Args:
             subtle: If True, provide gentle guidance without explicit phase names.
                    Use for campaigns where structure should emerge naturally.
+            compact: If True, use token-efficient format (default).
             preferences: Optional storytelling preferences dict with keys:
                          protagonist_arc, lethality, moral_complexity.
                          When provided, adapts all language to match the player's
@@ -362,12 +364,47 @@ class ArcEngine:
                 count=1,
                 genre_arc=self._genre_arc.value,
             )
-            beat_hint = f"\nOpportunity: {beats[0].description}" if beats else ""
+            beat_hint = f" | Opportunity: {beats[0].description}" if beats else ""
+            if compact:
+                # Compact subtle: single line
+                return f"ARC: {tension_word}, {trend} | {phase_description[:60]}{beat_hint}"
             return f"""
 Narrative energy: {tension_word}, {trend}
 {phase_description}{beat_hint}"""
 
         # For finite stories: more explicit structure helps pacing
+        if compact:
+            # Compact format: ARC: Phase | Tension: X% (level, trend) | Progress: Y%
+            # Suggest: [TYPE] description | [TYPE] description
+            progress_pct = int(self.journey_progress * 100)
+            parts = [
+                f"ARC: {phase_name}",
+                f"Tension: {tension:.0%} ({self.tension_level.value}, {trend})",
+                f"Progress: {progress_pct}%",
+            ]
+            result = " | ".join(parts)
+
+            # Add focus (truncated)
+            if phase_description:
+                short_focus = phase_description[:80]
+                if len(phase_description) > 80:
+                    short_focus = short_focus.rsplit(' ', 1)[0] + "..."
+                result += f"\nFocus: {short_focus}"
+
+            # Add beat suggestions (compact)
+            beats = self._beat_suggester.suggest_beats(
+                phase=phase,
+                current_tension=tension,
+                count=2,
+                genre_arc=self._genre_arc.value,
+            )
+            if beats:
+                beat_parts = [f"[{b.beat_type.value.upper()}] {b.description[:40]}" for b in beats]
+                result += f"\nSuggest: {' | '.join(beat_parts)}"
+
+            return result
+
+        # Verbose format (legacy)
         arc_label = f"{self._genre_arc.value.upper()} ARC" if not is_heroic else "NARRATIVE ARC"
         lines = [
             f"\n=== {arc_label} ===",

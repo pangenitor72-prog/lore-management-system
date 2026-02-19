@@ -1,7 +1,12 @@
 """DM Agent Prompts - All prompts for the AI Dungeon Master."""
 
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, Optional
+import logging
+
+from .context_manager import PromptContextManager, ContextPriority, PromptBudget
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class PromptMetadata:
@@ -290,6 +295,15 @@ Then STOP. Let the player decide what their character thinks, feels, and does.
 - Reward engagement with richer outcomes
 - End on openings, not conclusions
 - Remember: the story is theirs. You're here to make it vivid.
+
+=== CONTEXT FORMAT KEY ===
+Context sections use compact notation:
+- Stats: HP=hit points, AC=armor, STR/DEX/CON/INT/WIS/CHA=ability scores
+- Threat: trivial/minor/moderate/serious/deadly (NPC danger level)
+- Knowledge: [KNOWN]/[RUMORED]/[SECRET]=what the party knows
+- Arrows (→): relationships or cause/effect
+- Pipes (|): separate inline data fields
+- ⚠️: warnings about continuity or world state
 
 === USING YOUR TOOLS ===
 You have access to rich data: OCEAN personality profiles, trust levels, relationship history,
@@ -660,15 +674,27 @@ Write the narrative now:"""
         guidance_instruction: str = "",
         adaptive_context: str = "",
         catalyst_directive: str = "",
-    ) -> str:
+        # Auditor warnings
+        auditor_warnings: str = "",
+        # Semantic search results
+        semantic_context: str = "",
+        # Budget configuration
+        budget: Optional[PromptBudget] = None,
+    ) -> Tuple[str, Dict]:
         """
-        Build the complete DM prompt with V3.0 philosophy as foundation.
+        Build the complete DM prompt with V3.0 philosophy and token budget awareness.
 
         This integrates:
         1. Narrative philosophy (how to think)
         2. Session context (what to know)
         3. Operational instructions (how to output)
+        4. Token budget management (what fits)
+
+        Returns:
+            Tuple of (prompt_string, budget_report)
         """
+        # Initialize context manager
+        manager = PromptContextManager(budget=budget)
 
         # Build the character description block
         char_description = character_context if character_context else f"A capable protagonist named {character_name}."
@@ -689,70 +715,10 @@ Write the narrative now:"""
             setting_description=setting_description,
         )
 
-        # Build context injection section
-        context_parts = []
-
-        # Mechanics visibility (if player has preference)
-        if visibility_guidance:
-            context_parts.append(visibility_guidance)
-
-        # Story scope (one-shot vs campaign pacing)
-        if scope_guidance:
-            context_parts.append(scope_guidance)
-
-        # Genre context
-        if genre:
-            genre_block = f"\nGENRE: {genre.upper()}"
-            if genre_voice:
-                genre_block += f"\nVoice: {genre_voice}"
-            context_parts.append(genre_block)
-
-        # Magic/realism rules
-        if magic_guidance:
-            context_parts.append(magic_guidance)
-
-        # Storytelling preferences (lethality, morality)
-        if storytelling_prefs:
-            context_parts.append(storytelling_prefs)
-
-        # Arc Engine context (Hero's Journey phase, tension)
-        if arc_context:
-            context_parts.append(arc_context)
-
-        # Memory context (legends, threads, impressions)
-        if memory_context:
-            context_parts.append(memory_context)
-
-        # Decoherence context (world changes)
-        if decoherence_context:
-            context_parts.append(decoherence_context)
-
-        # Investment context (what player cares about)
-        if investment_context:
-            context_parts.append(investment_context)
-
-        # NPC personality context (OCEAN profiles for scene NPCs)
-        if npc_personality_context:
-            context_parts.append(npc_personality_context)
-
-        # NPC state context (dead/captured/missing from session overlays)
-        if npc_state_context:
-            context_parts.append(npc_state_context)
-
-        # Entity graph context
-        if db_context:
-            context_parts.append(f"\n=== WORLD ENTITIES ===\n{db_context}")
-
-        context_section = "\n".join(context_parts) if context_parts else ""
-
-        # Build story state section
-        story_state = f"""
-=== CURRENT SESSION ===
+        # Build current scene block
+        scene_block = f"""=== CURRENT SESSION ===
 
 PROTAGONIST: {character_name}
-
-STORY SO FAR:
-{history_text if history_text else 'The story is just beginning.'}
 
 CURRENT SCENE:
 {current_scene if current_scene else 'The story is just beginning.'}
@@ -761,28 +727,195 @@ PLAYER'S ACTION: {player_input}"""
 
         # Add mechanical context if present
         if mechanical_context:
-            story_state += f"\n{mechanical_context}"
-
-        # Add guidance instruction if needed
-        if guidance_instruction:
-            story_state += f"\n{guidance_instruction}"
+            scene_block += f"\n{mechanical_context}"
 
         # Add adaptive context if present
         if adaptive_context:
-            story_state += f"\nSTORYTELLING ADJUSTMENT: {adaptive_context}"
+            scene_block += f"\nSTORYTELLING ADJUSTMENT: {adaptive_context}"
 
-        # Add catalyst directive if present
+        # =====================================================================
+        # CRITICAL SECTIONS - Always included
+        # =====================================================================
+        manager.add("base_system", base_prompt, ContextPriority.CRITICAL)
+        manager.add("current_scene", scene_block, ContextPriority.CRITICAL)
+        manager.add("player_input", f"PLAYER INPUT: {player_input}", ContextPriority.CRITICAL)
+
+        # =====================================================================
+        # HIGH PRIORITY - Include unless severely constrained
+        # =====================================================================
+
+        # History (story so far)
+        if history_text:
+            history_block = f"STORY SO FAR:\n{history_text}"
+            manager.add("history", history_block, ContextPriority.HIGH)
+
+        # World lore summary
+        if world_context:
+            manager.add("world_lore", world_context, ContextPriority.HIGH)
+
+        # NPC state overlay (dead/captured/missing - critical for continuity)
+        if npc_state_context:
+            manager.add("npc_state_overlay", npc_state_context, ContextPriority.HIGH)
+
+        # =====================================================================
+        # MEDIUM PRIORITY - Include if budget allows
+        # =====================================================================
+
+        # Knowledge graph entities
+        if db_context:
+            graph_block = f"=== WORLD ENTITIES ===\n{db_context}"
+            manager.add("knowledge_graph", graph_block, ContextPriority.MEDIUM)
+
+        # Arc Engine context
+        if arc_context:
+            manager.add("arc_context", arc_context, ContextPriority.MEDIUM)
+
+        # NPC personality (OCEAN profiles)
+        if npc_personality_context:
+            manager.add("npc_personality", npc_personality_context, ContextPriority.MEDIUM)
+
+        # Memory context (legends, threads, impressions)
+        if memory_context:
+            manager.add("memory_context", memory_context, ContextPriority.MEDIUM)
+
+        # =====================================================================
+        # LOW PRIORITY - Skip if budget tight
+        # =====================================================================
+
+        # Storytelling preferences
+        if storytelling_prefs:
+            manager.add("storytelling_prefs", storytelling_prefs, ContextPriority.LOW)
+
+        # Auditor warnings
+        if auditor_warnings:
+            manager.add("auditor_warnings", auditor_warnings, ContextPriority.LOW)
+
+        # Semantic search results
+        if semantic_context:
+            manager.add("semantic_search", semantic_context, ContextPriority.LOW)
+
+        # Decoherence context
+        if decoherence_context:
+            manager.add("decoherence_context", decoherence_context, ContextPriority.LOW)
+
+        # Investment context
+        if investment_context:
+            manager.add("investment_context", investment_context, ContextPriority.LOW)
+
+        # Catalyst directive
         if catalyst_directive:
-            story_state += f"\n{catalyst_directive}"
+            manager.add("catalyst_directive", catalyst_directive, ContextPriority.LOW)
 
-        # Combine everything
-        full_prompt = f"""{base_prompt}
+        # Guidance instruction
+        if guidance_instruction:
+            manager.add("guidance_instruction", guidance_instruction, ContextPriority.LOW)
 
-{context_section}
+        # Genre context (usually baked into world tone, so lower priority)
+        if genre:
+            genre_block = f"GENRE: {genre.upper()}"
+            if genre_voice:
+                genre_block += f" | Voice: {genre_voice}"
+            manager.add("genre", genre_block, ContextPriority.LOW)
 
-{story_state}
+        # Magic guidance (usually baked into world, so lower priority)
+        if magic_guidance:
+            manager.add("magic_guidance", magic_guidance, ContextPriority.LOW)
 
-{DMPrompts.OPERATIONAL_FOOTER}"""
+        # Visibility guidance
+        if visibility_guidance:
+            manager.add("visibility_guidance", visibility_guidance, ContextPriority.LOW)
 
-        return full_prompt
+        # Scope guidance
+        if scope_guidance:
+            manager.add("scope_guidance", scope_guidance, ContextPriority.LOW)
+
+        # =====================================================================
+        # BUILD PROMPT
+        # =====================================================================
+        parts, report = manager.build()
+
+        # Combine parts with proper formatting
+        prompt_body = "\n\n".join(parts)
+
+        # Add operational footer
+        full_prompt = f"{prompt_body}\n\n{DMPrompts.OPERATIONAL_FOOTER}"
+
+        logger.debug(
+            f"[PROMPT BUILD] {report['tokens_used']}/{report['available_tokens']} tokens "
+            f"({report['utilization_pct']}%), "
+            f"included: {len(report['sections_included'])}, "
+            f"excluded: {len(report['sections_excluded'])}"
+        )
+
+        return full_prompt, report
+
+    @staticmethod
+    def build_integrated_prompt_legacy(
+        # Character and World
+        character_name: str = "the protagonist",
+        character_context: str = "",
+        world_name: str = "the story",
+        world_tone: str = "",
+        world_context: str = "",
+        admin_world_context: str = "",
+        # Genre and Style
+        genre: str = "",
+        genre_voice: str = "",
+        magic_guidance: str = "",
+        # Session Context
+        visibility_guidance: str = "",
+        scope_guidance: str = "",
+        storytelling_prefs: str = "",
+        # Dynamic Systems Context
+        arc_context: str = "",
+        memory_context: str = "",
+        decoherence_context: str = "",
+        investment_context: str = "",
+        npc_personality_context: str = "",
+        npc_state_context: str = "",  # Overlay state: dead/captured/missing NPCs
+        # Entity and Relationship Context
+        db_context: str = "",
+        # Story State
+        history_text: str = "",
+        current_scene: str = "",
+        player_input: str = "",
+        # Mechanics (optional)
+        mechanical_context: str = "",
+        guidance_instruction: str = "",
+        adaptive_context: str = "",
+        catalyst_directive: str = "",
+    ) -> str:
+        """
+        Legacy version without budget tracking. Returns just the prompt string.
+        Kept for backward compatibility.
+        """
+        prompt, _ = DMPrompts.build_integrated_prompt(
+            character_name=character_name,
+            character_context=character_context,
+            world_name=world_name,
+            world_tone=world_tone,
+            world_context=world_context,
+            admin_world_context=admin_world_context,
+            genre=genre,
+            genre_voice=genre_voice,
+            magic_guidance=magic_guidance,
+            visibility_guidance=visibility_guidance,
+            scope_guidance=scope_guidance,
+            storytelling_prefs=storytelling_prefs,
+            arc_context=arc_context,
+            memory_context=memory_context,
+            decoherence_context=decoherence_context,
+            investment_context=investment_context,
+            npc_personality_context=npc_personality_context,
+            npc_state_context=npc_state_context,
+            db_context=db_context,
+            history_text=history_text,
+            current_scene=current_scene,
+            player_input=player_input,
+            mechanical_context=mechanical_context,
+            guidance_instruction=guidance_instruction,
+            adaptive_context=adaptive_context,
+            catalyst_directive=catalyst_directive,
+        )
+        return prompt
 

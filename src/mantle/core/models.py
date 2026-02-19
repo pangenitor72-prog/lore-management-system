@@ -379,6 +379,68 @@ class OCEANProfile(BaseModel):
         return "; ".join(styles) if styles else "neutral conversational style"
 
 
+class NPCStatBlock(BaseModel):
+    """
+    Lightweight stat block for NPC storytelling reference.
+
+    Provides mechanical anchors for the AI DM to understand NPC capabilities:
+    - Physical tasks: "Can this blacksmith lift the fallen beam?" (STR)
+    - Mental tasks: "Would this merchant notice the pickpocket?" (WIS)
+    - Combat: "How tough is this guard in a fight?" (HP, AC, threat_level)
+
+    Generated during ingestion alongside OCEAN personality profiles.
+    """
+
+    # Ability Scores (6 core stats, typically 8-18 for most NPCs)
+    strength: int = Field(ge=1, le=30, default=10)
+    dexterity: int = Field(ge=1, le=30, default=10)
+    constitution: int = Field(ge=1, le=30, default=10)
+    intelligence: int = Field(ge=1, le=30, default=10)
+    wisdom: int = Field(ge=1, le=30, default=10)
+    charisma: int = Field(ge=1, le=30, default=10)
+
+    # Derived Combat Stats
+    hit_points: int = Field(ge=1, default=11)  # Average commoner
+    armor_class: int = Field(ge=5, le=25, default=10)
+
+    # Combat Classification
+    threat_level: str = Field(default="trivial")  # trivial, minor, moderate, serious, deadly
+    attack_style: str = Field(default="non-combatant")  # melee, ranged, spellcaster, non-combatant
+
+    # Signature Abilities (for DM flavor)
+    signature_actions: List[str] = Field(default_factory=list)
+    # e.g., ["Longsword +5 (1d8+3)", "Shield Bash (prone)"]
+
+    model_config = ConfigDict(validate_assignment=True)
+
+    def get_modifier(self, ability: str) -> int:
+        """Calculate ability modifier for a given ability score."""
+        score = getattr(self, ability.lower(), 10)
+        return (score - 10) // 2
+
+    def get_notable_abilities(self) -> List[str]:
+        """Return list of notably high (≥15) or low (≤7) abilities."""
+        notables = []
+        for ability in ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]:
+            score = getattr(self, ability)
+            if score >= 15:
+                notables.append(f"{ability[:3].upper()} {score}")
+            elif score <= 7:
+                notables.append(f"{ability[:3].upper()} {score}")
+        return notables
+
+    def get_combat_summary(self) -> str:
+        """Get compact combat summary for DM prompt injection."""
+        if self.threat_level == "trivial" or self.attack_style == "non-combatant":
+            return "Non-combatant"
+
+        parts = [f"{self.attack_style}, HP {self.hit_points}, {self.threat_level} threat"]
+        notables = self.get_notable_abilities()
+        if notables:
+            parts.append(f"Notable: {', '.join(notables)}")
+        return "; ".join(parts)
+
+
 class PersonalityTemplates:
     """Preset OCEAN profiles for common NPC archetypes."""
     
