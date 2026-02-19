@@ -301,6 +301,9 @@ Context sections use compact notation:
 - Stats: HP=hit points, AC=armor, STR/DEX/CON/INT/WIS/CHA=ability scores
 - Threat: trivial/minor/moderate/serious/deadly (NPC danger level)
 - Knowledge: [KNOWN]/[RUMORED]/[SECRET]=what the party knows
+- Confidence: (rumored)=present with "some say...", (unverified)=present as legend/myth, no marker=established fact
+- OCEAN: [↑O ↓E ↑A] = personality (O=openness, C=conscientiousness, E=extraversion, A=agreeableness, N=neuroticism)
+  ↑=high (>0.7), ↓=low (<0.3). Descriptors: curious/practical, precise/casual, talkative/reserved, warm/blunt, anxious/steady
 - Arrows (→): relationships or cause/effect
 - Pipes (|): separate inline data fields
 - ⚠️: warnings about continuity or world state

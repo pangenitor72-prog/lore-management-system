@@ -319,6 +319,7 @@ class ArcEngine:
         subtle: bool = False,
         compact: bool = True,
         preferences: Optional[Dict[str, str]] = None,
+        character_name: Optional[str] = None,
     ) -> str:
         """
         Get text to inject into the DM's prompt for arc awareness.
@@ -331,6 +332,7 @@ class ArcEngine:
                          protagonist_arc, lethality, moral_complexity.
                          When provided, adapts all language to match the player's
                          chosen arc and lethality.
+            character_name: Optional character name for beat description substitution.
 
         Returns:
             Context string for prompt injection
@@ -354,6 +356,12 @@ class ArcEngine:
 
         lethality = preferences.get("lethality") if preferences else None
 
+        # Helper to substitute {character} placeholder in beat descriptions
+        def sub_char(desc: str) -> str:
+            if character_name:
+                return desc.replace("{character}", character_name)
+            return desc.replace("{character}", "the protagonist")
+
         if subtle:
             # For campaigns: guidance without explicit structure
             tension_word = "calm" if tension < 0.3 else "building" if tension < 0.6 else "high"
@@ -364,7 +372,7 @@ class ArcEngine:
                 count=1,
                 genre_arc=self._genre_arc.value,
             )
-            beat_hint = f" | Opportunity: {beats[0].description}" if beats else ""
+            beat_hint = f" | Opportunity: {sub_char(beats[0].description)}" if beats else ""
             if compact:
                 # Compact subtle: single line
                 return f"ARC: {tension_word}, {trend} | {phase_description[:60]}{beat_hint}"
@@ -399,7 +407,7 @@ Narrative energy: {tension_word}, {trend}
                 genre_arc=self._genre_arc.value,
             )
             if beats:
-                beat_parts = [f"[{b.beat_type.value.upper()}] {b.description[:40]}" for b in beats]
+                beat_parts = [f"[{b.beat_type.value.upper()}] {sub_char(b.description)[:40]}" for b in beats]
                 result += f"\nSuggest: {' | '.join(beat_parts)}"
 
             return result
@@ -437,7 +445,7 @@ Narrative energy: {tension_word}, {trend}
             lines.append("Consider:")
             for beat in beats:
                 # Format: "- [COMBAT] Face the supreme challenge - everything at stake"
-                lines.append(f"  - [{beat.beat_type.value.upper()}] {beat.description}")
+                lines.append(f"  - [{beat.beat_type.value.upper()}] {sub_char(beat.description)}")
 
         return "\n".join(lines)
 

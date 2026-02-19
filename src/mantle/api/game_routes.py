@@ -4832,10 +4832,10 @@ async def _get_graph_aware_entity_context(
         known_ids = [e.get("canon_id", "") for e in game_state.known_entities]
 
     try:
+        # Include all confidence levels - DM will present uncertain entities with qualifiers
         results = await db.execute("""
             MATCH (e:Entity)
             WHERE e.world_id IN [$session_world_id, $world_id]
-              AND coalesce(e.confidence_level, 'CONFIRMED') <> 'UNCERTAIN'
             // Outgoing relationships (e.g., "SERVES Lord Blackwood")
             OPTIONAL MATCH (e)-[r_out]->(t_out:Entity)
             // Incoming relationships (e.g., "Lord Blackwood EMPLOYS this character")
@@ -4923,9 +4923,14 @@ async def _get_graph_aware_entity_context(
                 except Exception:
                     pass
 
-            # Mark low-confidence entities
-            if confidence in ("SPECULATIVE", "AI_GENERATED"):
-                desc = f"{desc} [flexible]"
+            # Add confidence qualifiers - DM should present uncertain info with hedging
+            # CONFIRMED/PROBABLE = state as fact
+            # SPECULATIVE/AI_GENERATED = "rumors say...", "some believe..."
+            # UNCERTAIN = "legends whisper...", "unconfirmed tales mention..."
+            if confidence == "UNCERTAIN":
+                desc = f"(unverified) {desc}"
+            elif confidence in ("SPECULATIVE", "AI_GENERATED"):
+                desc = f"(rumored) {desc}"
 
             # Use compact formatter
             entry = format_entity_compact(
@@ -4944,7 +4949,8 @@ async def _get_graph_aware_entity_context(
 
         # Compact format for DM prompt
         sections = ["=== WORLD KNOWLEDGE ==="]
-        sections.append("KNOWN=established facts | RUMORED=drop hints | SECRET=reveal dramatically with [DISCOVERY:]")
+        sections.append("KNOWN=facts | RUMORED=hints | SECRET=reveal with [DISCOVERY:]")
+        sections.append("(rumored)=present with uncertainty | (unverified)=treat as legend/myth")
 
         if known:
             sections.append("\n[KNOWN]")
@@ -5031,17 +5037,12 @@ async def _get_scene_npc_personality_context(
             try:
                 name = r.get("name", "Unknown")
 
-                # Get dialogue style from OCEAN if available
-                dialogue_style = ""
-                if r.get("openness") is not None:
-                    ocean = OCEANProfile(
-                        openness=r.get("openness", 0.5),
-                        conscientiousness=r.get("conscientiousness", 0.5),
-                        extraversion=r.get("extraversion", 0.5),
-                        agreeableness=r.get("agreeableness", 0.5),
-                        neuroticism=r.get("neuroticism", 0.5),
-                    )
-                    dialogue_style = ocean.get_dialogue_style()
+                # Get OCEAN values directly for compact formatting
+                openness = r.get("openness")
+                conscientiousness = r.get("conscientiousness")
+                extraversion = r.get("extraversion")
+                agreeableness = r.get("agreeableness")
+                neuroticism = r.get("neuroticism")
 
                 # Get stat info
                 threat = r.get("stat_threat_level", "trivial")
@@ -5058,14 +5059,19 @@ async def _get_scene_npc_personality_context(
                         elif val <= 7:
                             notables.append(f"{stat_name[:3].upper()} {val}")
 
-                # Use compact formatter
+                # Use compact formatter with OCEAN values
                 block = format_npc_compact(
                     name=name,
-                    dialogue_style=dialogue_style,
                     threat_level=threat,
                     attack_style=style,
                     hp=hp,
                     notables=notables if notables else None,
+                    # Pass OCEAN values for compact [↓E ↑A] format
+                    openness=openness,
+                    conscientiousness=conscientiousness,
+                    extraversion=extraversion,
+                    agreeableness=agreeableness,
+                    neuroticism=neuroticism,
                 )
 
                 if block:
@@ -5743,7 +5749,11 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
     if arc_engine:
         try:
             use_subtle = session_scope == "campaign"
-            arc_context_str = arc_engine.get_dm_context_injection(subtle=use_subtle, preferences=arc_preferences)
+            arc_context_str = arc_engine.get_dm_context_injection(
+                subtle=use_subtle,
+                preferences=arc_preferences,
+                character_name=character if character else None,
+            )
             logger.debug(f"[ARC] Injecting context (subtle={use_subtle}, arc={arc_preferences.get('protagonist_arc') if arc_preferences else 'default'}): phase={arc_engine.current_phase.value}, tension={arc_engine.tension_level.value}")
         except Exception as e:
             logger.warning(f"[ARC] Failed to get context injection: {e}")
@@ -5808,29 +5818,21 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
         except Exception as e:
             logger.warning(f"[MEMORY] Failed to get context: {e}")
 
-    # Build NPC personality context for scene NPCs (OCEAN profiles)
-    # ONLY inject for NPCs being introduced for the first time, not every turn
+    # Build NPC personality context for ALL scene NPCs (OCEAN profiles)
+    # Compact format [↓E ↑A ↓N] is token-efficient enough to inject every turn
     npc_personality_context = ""
     if db and world_id and last_dm_response:
         try:
             scene_npc_names = _extract_entity_names_from_text(last_dm_response)
             if scene_npc_names:
-                # Track which NPCs have already been introduced
-                introduced_npcs = set(session.get("introduced_npc_names", []))
-
-                # Filter to only NEW NPCs (first introduction)
-                new_npc_names = [name for name in scene_npc_names if name.lower() not in introduced_npcs]
-
-                if new_npc_names:
-                    npc_personality_context = await _get_scene_npc_personality_context(
-                        db=db,
-                        world_id=world_id,
-                        npc_names=new_npc_names[:5],
-                    )
-                    # Mark these NPCs as introduced
-                    introduced_npcs.update(name.lower() for name in new_npc_names[:5])
-                    session["introduced_npc_names"] = list(introduced_npcs)
-                    logger.debug(f"[NPC-OCEAN] Introducing {len(new_npc_names)} new NPCs with OCEAN profiles")
+                # Inject OCEAN for all scene NPCs (up to 5) - compact format is ~8 tokens each
+                npc_personality_context = await _get_scene_npc_personality_context(
+                    db=db,
+                    world_id=world_id,
+                    npc_names=scene_npc_names[:5],
+                )
+                if npc_personality_context:
+                    logger.debug(f"[NPC-OCEAN] Injecting OCEAN for {len(scene_npc_names[:5])} scene NPCs")
         except Exception as e:
             logger.warning(f"[NPC-OCEAN] Failed to get personality context: {e}")
 

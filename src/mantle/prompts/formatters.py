@@ -69,6 +69,81 @@ def format_character_compact(
 # NPC CONTEXT (PERSONALITY + STATS)
 # =============================================================================
 
+# OCEAN trait abbreviations for compact format
+OCEAN_DESCRIPTORS = {
+    "openness": {
+        "high": "curious",      # Creative, imaginative
+        "low": "practical",     # Conventional, traditional
+    },
+    "conscientiousness": {
+        "high": "precise",      # Organized, disciplined
+        "low": "casual",        # Spontaneous, flexible
+    },
+    "extraversion": {
+        "high": "talkative",    # Outgoing, energetic
+        "low": "reserved",      # Withdrawn, quiet
+    },
+    "agreeableness": {
+        "high": "warm",         # Cooperative, trusting
+        "low": "blunt",         # Skeptical, competitive
+    },
+    "neuroticism": {
+        "high": "anxious",      # Sensitive, moody
+        "low": "steady",        # Confident, stable
+    },
+}
+
+
+def format_ocean_compact(
+    openness: float = None,
+    conscientiousness: float = None,
+    extraversion: float = None,
+    agreeableness: float = None,
+    neuroticism: float = None,
+) -> str:
+    """
+    Format OCEAN personality as ultra-compact style hints.
+
+    Only shows EXTREME traits (>0.7 or <0.3) that affect dialogue.
+
+    Before (~25 tokens):
+        "terse and needs prompting; warm and helpful; confident and assured"
+
+    After (~8 tokens):
+        [↓E ↑A ↓N] reserved/warm/steady
+
+    Returns empty string if no extreme traits.
+    """
+    if all(v is None for v in [openness, conscientiousness, extraversion, agreeableness, neuroticism]):
+        return ""
+
+    arrows = []
+    descriptors = []
+
+    traits = [
+        ("O", "openness", openness),
+        ("C", "conscientiousness", conscientiousness),
+        ("E", "extraversion", extraversion),
+        ("A", "agreeableness", agreeableness),
+        ("N", "neuroticism", neuroticism),
+    ]
+
+    for abbrev, trait_name, value in traits:
+        if value is None:
+            continue
+        if value > 0.7:
+            arrows.append(f"↑{abbrev}")
+            descriptors.append(OCEAN_DESCRIPTORS[trait_name]["high"])
+        elif value < 0.3:
+            arrows.append(f"↓{abbrev}")
+            descriptors.append(OCEAN_DESCRIPTORS[trait_name]["low"])
+
+    if not arrows:
+        return ""  # No extreme traits = neutral personality
+
+    return f"[{' '.join(arrows)}] {'/'.join(descriptors)}"
+
+
 def format_npc_compact(
     name: str,
     dialogue_style: str = "",
@@ -76,17 +151,23 @@ def format_npc_compact(
     attack_style: str = "non-combatant",
     hp: int = 0,
     notables: List[str] = None,
+    # OCEAN values for compact formatting
+    openness: float = None,
+    conscientiousness: float = None,
+    extraversion: float = None,
+    agreeableness: float = None,
+    neuroticism: float = None,
 ) -> str:
     """
-    Format NPC context compactly.
+    Format NPC context compactly with OCEAN personality.
 
     Before (~100 tokens per NPC):
         CAPTAIN VARN
         Captain Varn has a personality that is confident and assured...
 
-    After (~40 tokens per NPC):
-        CAPTAIN VARN | melee, HP 45, moderate | STR 15, CON 14
-        Style: confident, precise
+    After (~25 tokens per NPC):
+        CAPTAIN VARN | melee, HP 45, moderate | STR 15
+        [↓E ↑A ↓N] reserved/warm/steady
     """
     parts = [name.upper()]
 
@@ -101,9 +182,18 @@ def format_npc_compact(
 
     result = " | ".join(parts)
 
-    # Add dialogue style on second line if present
-    if dialogue_style and dialogue_style != "neutral conversational style":
-        # Shorten common patterns
+    # Add OCEAN compact format if values provided
+    ocean_str = format_ocean_compact(
+        openness=openness,
+        conscientiousness=conscientiousness,
+        extraversion=extraversion,
+        agreeableness=agreeableness,
+        neuroticism=neuroticism,
+    )
+    if ocean_str:
+        result += f"\n{ocean_str}"
+    # Fall back to dialogue_style if no OCEAN values
+    elif dialogue_style and dialogue_style != "neutral conversational style":
         style = dialogue_style.replace(" and ", ", ").replace("; ", ", ")
         result += f"\nStyle: {style}"
 

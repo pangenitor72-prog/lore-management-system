@@ -434,7 +434,9 @@ async def detect_and_apply_npc_state_changes(
                e.name as name,
                COALESCE(i.is_dead, e.is_dead, false) as is_dead,
                COALESCE(i.is_captured, e.is_captured, false) as is_captured,
-               COALESCE(i.is_missing, e.is_missing, false) as is_missing
+               COALESCE(i.is_missing, e.is_missing, false) as is_missing,
+               COALESCE(i.is_hostile, false) as is_hostile,
+               COALESCE(i.is_injured, false) as is_injured
         """
         results = await db.execute(query, {"world_id": world_id, "session_id": session_id})
         if not results:
@@ -459,6 +461,18 @@ async def detect_and_apply_npc_state_changes(
         departure_patterns = [
             "fled", "escaped", "vanished", "disappeared",
             "ran away", "nowhere to be found",
+        ]
+
+        # Hostility indicators (NPC turns against player)
+        hostile_patterns = [
+            "attacks you", "draws weapon", "turns hostile", "betrays",
+            "snarls", "lunges at", "swings at", "threatens",
+        ]
+
+        # Injury indicators
+        injury_patterns = [
+            "wounded", "injured", "bleeding", "hurt", "limping",
+            "clutches wound", "staggers", "collapses",
         ]
 
         for record in results:
@@ -512,6 +526,27 @@ async def detect_and_apply_npc_state_changes(
                             state_changes["status"] = "missing"
                             break
 
+            # Check for hostility (only if still active - not dead/captured/missing)
+            if not state_changes.get("is_dead") and not state_changes.get("is_captured") and not state_changes.get("is_missing"):
+                for pattern in hostile_patterns:
+                    if pattern in narrative_lower:
+                        name_idx = narrative_lower.find(npc_name_lower)
+                        pattern_idx = narrative_lower.find(pattern)
+                        if abs(name_idx - pattern_idx) < 60:
+                            state_changes["is_hostile"] = True
+                            state_changes["disposition"] = "hostile"
+                            break
+
+            # Check for injury (can stack with other non-terminal states)
+            if not state_changes.get("is_dead"):
+                for pattern in injury_patterns:
+                    if pattern in narrative_lower:
+                        name_idx = narrative_lower.find(npc_name_lower)
+                        pattern_idx = narrative_lower.find(pattern)
+                        if abs(name_idx - pattern_idx) < 60:
+                            state_changes["is_injured"] = True
+                            break
+
             # Apply state changes if any
             if state_changes:
                 success = await write_npc_state_to_overlay(
@@ -561,6 +596,7 @@ async def get_npc_overlay_state_context(
 
     try:
         # Query for NPCs that have overlay state in this session
+        # Includes terminal states (dead/captured/missing) and mood/disposition changes
         query = """
         MATCH (s:Session {session_id: $session_id})-[:CONTAINS]->(i:Instance)-[:OVERRIDES]->(e:Entity)
         WHERE e.world_id = $world_id
@@ -569,6 +605,9 @@ async def get_npc_overlay_state_context(
                i.is_dead as is_dead,
                i.is_captured as is_captured,
                i.is_missing as is_missing,
+               i.is_hostile as is_hostile,
+               i.is_injured as is_injured,
+               i.disposition as disposition,
                i.status as status
         """
         results = await db.execute(query, {"world_id": world_id, "session_id": session_id})
@@ -576,25 +615,37 @@ async def get_npc_overlay_state_context(
         if not results:
             return ""
 
-        status_lines = []
+        # Compact format: ⚠️ NPC STATE: Name=STATUS | Name=STATUS
+        unavailable = []  # Dead/Captured/Missing - can't participate
+        changed = []      # Mood/disposition changes - still active
+
         for record in results:
             name = record.get("name", "Unknown")
             if record.get("is_dead"):
-                status_lines.append(f"- {name}: DEAD (killed earlier this session)")
+                unavailable.append(f"{name}=DEAD")
             elif record.get("is_captured"):
-                status_lines.append(f"- {name}: CAPTURED (imprisoned earlier this session)")
+                unavailable.append(f"{name}=CAPTURED")
             elif record.get("is_missing"):
-                status_lines.append(f"- {name}: MISSING (fled/vanished earlier this session)")
+                unavailable.append(f"{name}=MISSING")
+            elif record.get("is_hostile"):
+                changed.append(f"{name}=HOSTILE")
+            elif record.get("is_injured"):
+                changed.append(f"{name}=INJURED")
+            elif record.get("disposition"):
+                changed.append(f"{name}={record['disposition'].upper()}")
 
-        if not status_lines:
+        if not unavailable and not changed:
             return ""
 
-        context = "=== NPC STATUS (THIS SESSION) ===\n"
-        context += "\n".join(status_lines)
-        context += "\nCRITICAL: Do NOT include dead/captured NPCs as active participants. They are unavailable."
+        lines = []
+        if unavailable:
+            lines.append(f"⚠️ UNAVAILABLE: {' | '.join(unavailable)}")
+            lines.append("(Do not include these NPCs as active participants)")
+        if changed:
+            lines.append(f"NPC CHANGES: {' | '.join(changed)}")
 
-        logger.info(f"[OVERLAY] Injecting NPC state context: {len(status_lines)} NPCs with changed status")
-        return context
+        logger.info(f"[OVERLAY] Injecting NPC state: {len(unavailable)} unavailable, {len(changed)} changed")
+        return "\n".join(lines)
 
     except Exception as e:
         logger.warning(f"[OVERLAY] Failed to get NPC state context: {e}")
