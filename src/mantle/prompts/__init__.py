@@ -58,6 +58,6 @@ __all__ = [
     'format_storytelling_prefs_compact',
 ]
 
-PROMPT_VERSION = "3.0.0"
-LAST_UPDATED = "2026-02-19"
+PROMPT_VERSION = "3.1.0"  # v66: Added compact formatters, OCEAN, beat suggestions
+LAST_UPDATED = "2026-02-20"
 

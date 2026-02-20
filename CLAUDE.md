@@ -90,6 +90,13 @@ lore-management-system/
 │   │   │   ├── engine/          # Dice, checks, combat
 │   │   │   ├── creation/        # Character creation flows
 │   │   │   └── presentation/    # Visibility filtering
+│   │   ├── prompts/             # Prompt library (v66)
+│   │   │   ├── dm_prompts.py    # V3.0 DM system prompt
+│   │   │   ├── context_manager.py # Token budget system
+│   │   │   └── formatters.py    # Compact formatters (OCEAN, NPC, etc.)
+│   │   ├── arc/                 # Narrative pacing engine
+│   │   │   ├── arc_engine.py    # Hero's Journey phases, tension
+│   │   │   └── beat_suggester.py # Beat suggestion templates
 │   │   ├── ingestion/           # Lore ingestion pipeline
 │   │   ├── memory/              # Session memory (SQLite)
 │   │   └── services/            # Business logic
@@ -409,20 +416,23 @@ Revisit how the rules system (D&D 5e mechanics in `src/mantle/dnd5e/`) is implem
 - Is the current implementation aligned with The Narrow Path philosophy?
 - How do the rules interact with storytelling preferences (lethality, etc.)?
 
+### Active Systems (v66)
+These systems are now **wired into active gameplay**:
+
+- **OCEAN Personality Profiles** — `src/mantle/prompts/formatters.py:format_ocean_compact()` — Compact format `[↓E ↑A ↓N] reserved/warm/steady` injected for ALL scene NPCs every turn. DM sees personality-driven dialogue guidance.
+
+- **Arc Engine Beat Suggestions** — `src/mantle/arc/arc_engine.py:get_dm_context_injection()` — Beat suggestions like `[COMPLICATION] ally betrays | [REVELATION] hidden truth` injected each turn with character name substitution.
+
+- **Memory System** — `src/mantle/memory/` — Three-tier memory wired: Echoes, Whispers, Beliefs, Impressions, Legends, Threads. Compact format injected into DM context.
+
+- **Confidence Level Filtering** — `src/mantle/api/game_routes.py:_get_graph_aware_entity_context()` — Entities marked with `(rumored)` or `(unverified)` qualifiers based on confidence level. DM presents uncertain info with hedging.
+
+- **Overlay/Instance System** — `src/mantle/api/helpers/narrative_extraction.py` — Session-scoped NPC state tracking: death, capture, missing, hostility, injury. Detected from narrative patterns, written to overlays, injected into DM context.
+
 ### TODO: Dormant Systems to Activate
-These systems are **built but not wired into active gameplay**. Each has working code that just needs to be connected.
-
-- **OCEAN Personality Profiles** — `src/mantle/core/models.py:238-549`, `personality_pipeline.py` — Every NPC has a full 5-factor personality model with dialogue style guidance ("terse and needs prompting" vs "warm and helpful"). DM never sees OCEAN data during play. **Wire:** Inject `OCEANProfile.get_dialogue_style()` into DM context when an NPC is present in a scene.
-
-- **Arc Engine Beat Suggestions** — `src/mantle/arc/` (8 files) — Tracks Hero's Journey phases, tension (0.0-1.0), and suggests next narrative beats. The engine processes narrative for state tracking but its suggestions are not used. **Wire:** Call `suggest_beats()` and inject pacing guidance into the DM prompt.
-
-- **Memory System** — `src/mantle/memory/` (4 files: manager.py, models.py, experiential.py) — Three-tier memory: Neo4j (canonical) + Vectors (semantic) + Experiential (NPC beliefs/impressions about the player). Complete framework, never called from gameplay endpoints. **Wire:** Call `memory.record_event()` on game events, query `memory.get_npc_beliefs()` before DM generates NPC dialogue.
+These systems are **built but not wired into active gameplay**:
 
 - **Entity Embeddings / Vector Search** — `src/mantle/services/vector_service.py`, `embedding_service.py` — 768-dim Gemini embeddings indexed in Neo4j. Generated during ingestion, barely queried in gameplay. **Wire:** Use semantic similarity for finding relevant entities based on current scene context, not just name matching.
-
-- **Overlay/Instance System** — `src/mantle/db/neo4j_adapter.py:172-278` — Session-scoped entity mutations: `read_entity_with_overlay()`, `write_entity_delta()`. Lets NPCs develop opinions or locations change state without touching canon data. Built, almost never used. **Wire:** Use overlays to track NPC relationship changes during gameplay sessions.
-
-- **Confidence Level Filtering** — Entities have `confidence_level` (CONFIRMED, PROBABLE, SPECULATIVE, UNCERTAIN, AI_GENERATED). Indexed but never filtered during gameplay. **Wire:** DM could present uncertain entities with qualifiers ("you've heard rumors that...") based on confidence.
 
 - **Auditor Agent in Gameplay** — `src/mantle/agents/auditor_agent.py` — Detects 9 contradiction types (temporal impossibility, resurrection without explanation, etc.). Currently admin/ingestion only. **Wire:** Run auditor on DM-generated narrative to flag when the DM contradicts established lore mid-session.
 

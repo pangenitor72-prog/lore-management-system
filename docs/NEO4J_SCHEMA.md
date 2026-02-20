@@ -386,3 +386,60 @@ CREATE (a:Archetype {
 })
 MERGE (w)-[:HAS_ARCHETYPE]->(a)
 ```
+
+## Session Overlay System (v66)
+
+The overlay system allows session-scoped mutations to entities without modifying canon data.
+
+### Session Node
+
+Represents a gameplay session.
+
+**Properties:**
+- `session_id`: string - Unique session identifier
+- `created_at`: datetime - When the session started
+
+### Instance Node
+
+Represents a session-scoped overlay of an Entity. Stores delta properties that override the canon Entity for this session only.
+
+**Properties:**
+- `canon_id`: string - Links to the original Entity
+- `created_at`: datetime - When the overlay was created
+- `updated_at`: datetime - Last modification time
+- `is_dead`: boolean - NPC died during this session
+- `is_captured`: boolean - NPC was captured/imprisoned
+- `is_missing`: boolean - NPC fled/vanished
+- `is_hostile`: boolean - NPC turned hostile toward player
+- `is_injured`: boolean - NPC was injured
+- `disposition`: string - Current disposition (e.g., "hostile", "friendly")
+- `status`: string - General status description
+
+### Relationships
+
+```cypher
+// Session contains Instance overlays
+(s:Session)-[:CONTAINS]->(i:Instance)
+
+// Instance overrides canonical Entity
+(i:Instance)-[:OVERRIDES]->(e:Entity)
+```
+
+### Example: NPC Death Overlay
+
+```cypher
+// When an NPC dies during a session:
+MATCH (s:Session {session_id: $sid})
+MATCH (e:Entity {canon_id: $cid})
+MERGE (s)-[:CONTAINS]->(i:Instance {canon_id: $cid})
+ON CREATE SET i.created_at = datetime()
+MERGE (i)-[:OVERRIDES]->(e)
+SET i.is_dead = true, i.status = 'dead', i.updated_at = datetime()
+
+// Reading with overlay coalesce:
+MATCH (e:Entity {canon_id: $cid})
+OPTIONAL MATCH (s:Session {session_id: $sid})-[:CONTAINS]->(i:Instance)-[:OVERRIDES]->(e)
+RETURN COALESCE(properties(i), properties(e)) as entity
+```
+
+Canon entities remain immutable. All session-specific changes are stored in Instance overlays and automatically coalesced during reads.

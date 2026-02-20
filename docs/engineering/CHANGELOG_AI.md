@@ -1,3 +1,19 @@
+## 2026-02-20: v66 - Wire Dormant Systems
+
+- **OCEAN Compact Format:** Added `format_ocean_compact()` in `src/mantle/prompts/formatters.py`. Outputs `[↓E ↑A ↓N] reserved/warm/steady` for personality. OCEAN profiles now inject for ALL scene NPCs every turn (not just first introduction).
+
+- **Arc Engine Beat Suggestions:** Wired `suggest_beats()` into DM context. Added `character_name` parameter to `get_dm_context_injection()` for placeholder substitution. Output: `Suggest: [COMPLICATION] ally betrays | [REVELATION] hidden truth`
+
+- **Confidence Level Filtering:** Updated `_get_graph_aware_entity_context()` to include UNCERTAIN entities and add `(rumored)` / `(unverified)` qualifiers based on confidence level.
+
+- **Extended Overlay System:** Added hostility and injury detection patterns in `narrative_extraction.py`. Overlay context now uses compact format: `⚠️ UNAVAILABLE: Name=DEAD | Name=CAPTURED`
+
+- **Token Budget System:** Added `src/mantle/prompts/context_manager.py` with `PromptContextManager` class. Priority-based context inclusion (CRITICAL/HIGH/MEDIUM/LOW). 50-60% token reduction via compact formatters.
+
+- **Format Key:** Added context format documentation to DM system prompt explaining abbreviations (OCEAN arrows, stats, knowledge levels).
+
+---
+
 ## 2025-11-29: Migration to Neo4j & Test Suite Cleanup
 
 -   **Database Migration:** The backend has been fully migrated from SQLite to Neo4j. All database interactions now use the `src/neo4j_adapter.py` module.
