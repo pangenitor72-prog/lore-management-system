@@ -58,24 +58,24 @@ class TokenBudget:
     For safety, we estimate higher.
     """
     # Per-request limits (Gemini 2.0 Flash has 1M context window)
-    max_input_tokens_per_request: int = 32000   # Allow complex gameplay prompts
-    max_output_tokens_per_request: int = 16000  # Allow detailed narrative responses
+    max_input_tokens_per_request: int = 64000   # Allow complex gameplay prompts (doubled)
+    max_output_tokens_per_request: int = 32000  # Allow detailed narrative responses (doubled)
 
-    # Per-session limits
-    max_tokens_per_session: int = 400000   # ~400k tokens per session (doubled for longer sessions)
-    max_requests_per_session: int = 200    # Max 200 AI calls per session
+    # Per-session limits (doubled)
+    max_tokens_per_session: int = 800000   # ~800k tokens per session
+    max_requests_per_session: int = 400    # Max 400 AI calls per session
 
-    # Hourly rate limits
-    max_requests_per_hour: int = 60        # 1 per minute average
-    max_tokens_per_hour: int = 100000      # 100k tokens/hour
+    # Hourly rate limits (doubled)
+    max_requests_per_hour: int = 120       # 2 per minute average
+    max_tokens_per_hour: int = 200000      # 200k tokens/hour
 
-    # Daily limits
-    max_tokens_per_day: int = 500000       # 500k tokens/day
-    max_requests_per_day: int = 500        # 500 requests/day
+    # Daily limits (doubled)
+    max_tokens_per_day: int = 1000000      # 1M tokens/day
+    max_requests_per_day: int = 1000       # 1000 requests/day
 
-    # Cost limits (in USD)
-    max_cost_per_session: float = 1.00     # $1 per session (doubled for longer sessions)
-    max_cost_per_day: float = 5.00         # $5 per day
+    # Cost limits (in USD, doubled)
+    max_cost_per_session: float = 2.00     # $2 per session
+    max_cost_per_day: float = 10.00        # $10 per day
 
     # Pricing (USD per 1M tokens) - conservative estimates
     input_cost_per_million: float = 0.10   # $0.10 per 1M input
@@ -86,27 +86,27 @@ class TokenBudget:
         """Get budget configuration for a tier."""
         if tier == BudgetTier.FREE:
             return cls(
-                max_tokens_per_session=10000,
-                max_requests_per_session=20,
-                max_requests_per_hour=10,
-                max_tokens_per_hour=20000,
-                max_tokens_per_day=50000,
-                max_requests_per_day=50,
-                max_cost_per_session=0.10,
-                max_cost_per_day=0.50,
+                max_tokens_per_session=20000,      # Doubled
+                max_requests_per_session=40,       # Doubled
+                max_requests_per_hour=20,          # Doubled
+                max_tokens_per_hour=40000,         # Doubled
+                max_tokens_per_day=100000,         # Doubled
+                max_requests_per_day=100,          # Doubled
+                max_cost_per_session=0.20,         # Doubled
+                max_cost_per_day=1.00,             # Doubled
             )
         elif tier == BudgetTier.STANDARD:
-            return cls()  # Default values
+            return cls()  # Default values (already doubled above)
         elif tier == BudgetTier.PREMIUM:
             return cls(
-                max_tokens_per_session=200000,
-                max_requests_per_session=500,
-                max_requests_per_hour=120,
-                max_tokens_per_hour=500000,
-                max_tokens_per_day=2000000,
-                max_requests_per_day=2000,
-                max_cost_per_session=2.00,
-                max_cost_per_day=20.00,
+                max_tokens_per_session=400000,     # Doubled
+                max_requests_per_session=1000,     # Doubled
+                max_requests_per_hour=240,         # Doubled
+                max_tokens_per_hour=1000000,       # Doubled
+                max_tokens_per_day=4000000,        # Doubled
+                max_requests_per_day=4000,         # Doubled
+                max_cost_per_session=4.00,         # Doubled
+                max_cost_per_day=40.00,            # Doubled
             )
         else:  # UNLIMITED
             return cls(

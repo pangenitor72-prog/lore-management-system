@@ -429,14 +429,11 @@ These systems are now **wired into active gameplay**:
 
 - **Overlay/Instance System** — `src/mantle/api/helpers/narrative_extraction.py` — Session-scoped NPC state tracking: death, capture, missing, hostility, injury. Detected from narrative patterns, written to overlays, injected into DM context.
 
-### TODO: Dormant Systems to Activate
-These systems are **built but not wired into active gameplay**:
+- **Entity Embeddings / Vector Search** — `src/mantle/api/game_routes.py:_get_semantically_relevant_entities()` — 768-dim Gemini embeddings via vector search. Finds thematically related entities based on player action (e.g., "investigate the murder" surfaces the secret murderer). Compact format with confidence qualifiers.
 
-- **Entity Embeddings / Vector Search** — `src/mantle/services/vector_service.py`, `embedding_service.py` — 768-dim Gemini embeddings indexed in Neo4j. Generated during ingestion, barely queried in gameplay. **Wire:** Use semantic similarity for finding relevant entities based on current scene context, not just name matching.
+- **Auditor Agent in Gameplay** — `src/mantle/api/helpers/narrative_extraction.py:audit_narrative_for_contradictions()` — Checks DM narrative for contradictions against established lore. Detects dead NPCs appearing alive, missing characters showing up, OCEAN personality inconsistencies. Stores contradictions in session, injected into next turn's DM prompt with compact `⚠️ CONTINUITY:` format.
 
-- **Auditor Agent in Gameplay** — `src/mantle/agents/auditor_agent.py` — Detects 9 contradiction types (temporal impossibility, resurrection without explanation, etc.). Currently admin/ingestion only. **Wire:** Run auditor on DM-generated narrative to flag when the DM contradicts established lore mid-session.
-
-- **Relationship Graph Traversal** — `query_agent.py` has `RELATIONSHIP_ALLOWLIST` for KNOWS, ALLIED_WITH, ENEMY_OF, MEMBER_OF, etc. Relationships exist in Neo4j but are rarely traversed in gameplay. **Status:** Partially activated in v50 (Narrative Heat system queries one hop). Could go deeper for faction dynamics and NPC social networks.
+- **Relationship Graph Traversal** — `src/mantle/api/game_routes.py:_get_npc_social_network()` — Two-hop relationship traversal for scene NPCs. Shows faction co-members, allies/enemies, and connection chains (A knows B who serves C). Compact `SOCIAL:` format.
 
 ### Narrative Heat System (v50)
 The Narrative Heat system connects the knowledge graph to active gameplay:

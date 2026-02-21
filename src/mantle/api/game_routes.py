@@ -2617,17 +2617,17 @@ async def _recover_session_from_db(session_id: str, db) -> Optional[Dict[str, An
         return None
 
 
-# Global guardrails - Beta testing configuration
-# Conservative daily limit ($2) to stay well within $20/month budget
+# Global guardrails - Beta testing configuration (doubled limits)
+# Daily limit $4 to stay within $40/month budget
 _beta_budget = TokenBudget(
-    max_tokens_per_session=150000,      # 150k tokens/session (~50-70 turns)
-    max_requests_per_session=200,        # 200 AI calls per session
-    max_requests_per_hour=300,           # 5 requests/min across all users
-    max_tokens_per_hour=500000,          # 500k tokens/hour
-    max_tokens_per_day=2000000,          # 2M tokens/day
-    max_requests_per_day=2000,           # 2000 requests/day
-    max_cost_per_session=0.50,           # $0.50 per session max
-    max_cost_per_day=2.00,               # $2/day max - alerts if approaching $20/month budget
+    max_tokens_per_session=300000,       # 300k tokens/session (~100-140 turns)
+    max_requests_per_session=400,        # 400 AI calls per session
+    max_requests_per_hour=600,           # 10 requests/min across all users
+    max_tokens_per_hour=1000000,         # 1M tokens/hour
+    max_tokens_per_day=4000000,          # 4M tokens/day
+    max_requests_per_day=4000,           # 4000 requests/day
+    max_cost_per_session=1.00,           # $1.00 per session max
+    max_cost_per_day=4.00,               # $4/day max
 )
 _token_tracker = TokenTracker(budget=_beta_budget)
 _gemini_breaker = get_circuit_breaker("gemini")
@@ -4971,6 +4971,109 @@ async def _get_graph_aware_entity_context(
         return ""
 
 
+async def _get_npc_social_network(
+    db: Neo4jDatabase,
+    world_id: str,
+    npc_names: List[str],
+) -> str:
+    """
+    Fetch two-hop relationship networks for scene NPCs.
+
+    Returns faction dynamics and social connections:
+    - Who else is in the same faction?
+    - Who are their allies/enemies?
+    - Connection chains (A knows B who serves C)
+
+    Uses compact format to minimize tokens.
+    """
+    if not npc_names or not db or len(npc_names) == 0:
+        return ""
+
+    try:
+        npc_names_lower = [name.lower() for name in npc_names[:3]]  # Limit to 3 NPCs
+
+        # Query two-hop relationships
+        # 1. Same faction members (who else is in their faction?)
+        # 2. Allies and enemies of their allies (social network)
+        results = await db.execute("""
+            MATCH (npc:Entity {world_id: $world_id, entity_type: 'Character'})
+            WHERE toLower(npc.name) IN $npc_names_lower
+
+            // Faction co-members (two-hop through faction)
+            OPTIONAL MATCH (npc)-[:MEMBER_OF|:BELONGS_TO]->(faction:Entity {entity_type: 'Faction'})
+                          <-[:MEMBER_OF|:BELONGS_TO]-(co_member:Entity {entity_type: 'Character'})
+            WHERE co_member <> npc
+
+            // Direct relationships
+            OPTIONAL MATCH (npc)-[r:KNOWS|ALLIED_WITH|ENEMY_OF|SERVES|EMPLOYS]->(direct:Entity)
+
+            // Two-hop social network (friend of friend, enemy of ally)
+            OPTIONAL MATCH (npc)-[:ALLIED_WITH|KNOWS]->(ally:Entity)
+                          -[:ALLIED_WITH|ENEMY_OF]->(network:Entity)
+            WHERE network <> npc
+
+            WITH npc,
+                 collect(DISTINCT {faction: faction.name, member: co_member.name})[0..3] AS faction_members,
+                 collect(DISTINCT {type: type(r), target: direct.name})[0..4] AS direct_rels,
+                 collect(DISTINCT {via: ally.name, rel: 'connected', target: network.name})[0..2] AS network_rels
+
+            RETURN npc.name AS name,
+                   faction_members,
+                   direct_rels,
+                   network_rels
+        """, {
+            "world_id": world_id,
+            "npc_names_lower": npc_names_lower,
+        })
+
+        if not results:
+            return ""
+
+        lines = []
+        for r in results:
+            name = r.get("name", "Unknown")
+            faction_members = r.get("faction_members") or []
+            direct_rels = r.get("direct_rels") or []
+            network_rels = r.get("network_rels") or []
+
+            # Skip if no relationships found
+            if not faction_members and not direct_rels and not network_rels:
+                continue
+
+            parts = [f"{name}:"]
+
+            # Direct relationships
+            for rel in direct_rels:
+                if rel.get("target"):
+                    parts.append(f"→{rel['type']} {rel['target']}")
+
+            # Faction co-members
+            factions_shown = set()
+            for fm in faction_members:
+                faction = fm.get("faction")
+                member = fm.get("member")
+                if faction and member and faction not in factions_shown:
+                    factions_shown.add(faction)
+                    parts.append(f"[{faction}: also {member}]")
+
+            # Network connections (two-hop)
+            for nr in network_rels:
+                if nr.get("via") and nr.get("target"):
+                    parts.append(f"(via {nr['via']}→{nr['target']})")
+
+            if len(parts) > 1:  # Has more than just name
+                lines.append(" ".join(parts))
+
+        if not lines:
+            return ""
+
+        return "SOCIAL: " + " | ".join(lines)
+
+    except Exception as e:
+        logger.debug(f"[GRAPH] Failed to get NPC social network: {e}")
+        return ""
+
+
 async def _get_scene_npc_personality_context(
     db: Neo4jDatabase,
     world_id: str,
@@ -5353,7 +5456,8 @@ async def _get_semantically_relevant_entities(
                 MATCH (e:Entity {canon_id: $canon_id})
                 WHERE e.world_id IN [$session_world_id, $world_id]
                 RETURN e.name AS name, e.description AS description,
-                       e.entity_type AS type, e.party_knowledge AS knowledge
+                       e.entity_type AS type, e.party_knowledge AS knowledge,
+                       e.confidence_level AS confidence
             """, {
                 "canon_id": r.get("id"),
                 "session_world_id": session_world_id,
@@ -5368,17 +5472,25 @@ async def _get_semantically_relevant_entities(
         if not filtered:
             return ""
 
-        # Format for DM prompt
-        lines = ["\n=== SEMANTICALLY RELEVANT (thematically connected to player's action) ==="]
+        # Format for DM prompt - compact format
+        lines = ["SEMANTIC: (thematically relevant to action)"]
         for e in filtered:
-            desc = (e.get("description") or "")[:80]
+            desc = (e.get("description") or "")[:60]
             name = e.get("name", "Unknown")
             etype = e.get("type", "Entity")
             knowledge = e.get("knowledge", "SECRET")
+            confidence = e.get("confidence", "CONFIRMED")
             score = e.get("score", 0)
-            lines.append(f"- {name} ({etype}, {knowledge}): {desc} [relevance: {score:.0%}]")
 
-        lines.append("Consider weaving these thematically related elements if dramatically appropriate.")
+            # Add confidence qualifiers
+            qualifier = ""
+            if confidence == "UNCERTAIN":
+                qualifier = "(unverified) "
+            elif confidence in ("SPECULATIVE", "AI_GENERATED"):
+                qualifier = "(rumored) "
+
+            lines.append(f"- {qualifier}{name} ({etype}/{knowledge}) {score:.0%}: {desc}")
+
         logger.debug(f"[VECTOR] Found {len(filtered)} semantically relevant entities")
         return "\n".join(lines)
 
@@ -5833,6 +5945,17 @@ CHARACTER: {dnd_char.name}, a {dnd_char.race} {dnd_char.character_class}
                 )
                 if npc_personality_context:
                     logger.debug(f"[NPC-OCEAN] Injecting OCEAN for {len(scene_npc_names[:5])} scene NPCs")
+
+                # Also get two-hop social network for faction dynamics
+                social_network_context = await _get_npc_social_network(
+                    db=db,
+                    world_id=world_id,
+                    npc_names=scene_npc_names[:3],  # Limit to top 3 NPCs
+                )
+                if social_network_context:
+                    # Append to personality context
+                    npc_personality_context = f"{npc_personality_context}\n{social_network_context}"
+                    logger.debug(f"[GRAPH] Added social network context for scene NPCs")
         except Exception as e:
             logger.warning(f"[NPC-OCEAN] Failed to get personality context: {e}")
 

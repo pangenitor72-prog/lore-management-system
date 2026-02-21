@@ -24,7 +24,7 @@ class VectorService:
 
     async def store_embedding(
         self,
-        entity_id: str,
+        canon_id: str,
         text: str,
         label: str = "Entity"
     ) -> Optional[List[float]]:
@@ -34,17 +34,17 @@ class VectorService:
 
         embedding = self.orchestrator.generate_embedding(text)
         if not embedding:
-            logger.error(f"Failed to generate embedding for: {entity_id}")
+            logger.error(f"Failed to generate embedding for: {canon_id}")
             return None
 
         cypher = f"""
-        MATCH (e:{label} {{entity_id: $entity_id}})
+        MATCH (e:{label} {{canon_id: $canon_id}})
         SET e.embedding = $embedding
-        RETURN e.entity_id AS id
+        RETURN e.canon_id AS id
         """
 
         await self.db.execute(cypher, {
-            "entity_id": entity_id,
+            "canon_id": canon_id,
             "embedding": embedding
         })
 
@@ -67,14 +67,15 @@ class VectorService:
             return []
 
         # 2. Query Neo4j vector index
+        # Index name must match schema_init.py: 'entity_embeddings'
         cypher = """
         CALL db.index.vector.queryNodes(
-            'entity_embedding_index',
+            'entity_embeddings',
             $limit,
             $embedding
         )
         YIELD node, score
-        RETURN node.entity_id AS id,
+        RETURN node.canon_id AS id,
                node.name AS name,
                score
         ORDER BY score DESC

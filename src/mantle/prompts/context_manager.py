@@ -37,33 +37,33 @@ class ContextSection:
 @dataclass
 class PromptBudget:
     """Token budget configuration."""
-    total_budget: int = 8000
-    reserve_tokens: int = 450  # Buffer for model response overhead
+    total_budget: int = 16000  # Doubled from 8000
+    reserve_tokens: int = 900  # Buffer for model response overhead (doubled)
 
-    # Per-section token limits
+    # Per-section token limits (all doubled)
     section_limits: Dict[str, int] = field(default_factory=lambda: {
         # CRITICAL - always included
-        "base_system": 2500,
-        "current_scene": 750,
-        "player_input": 250,
-        "character_context": 300,
+        "base_system": 5000,
+        "current_scene": 1500,
+        "player_input": 500,
+        "character_context": 600,
         # HIGH - include unless severely constrained
-        "history": 600,
-        "world_lore": 400,
-        "npc_state_overlay": 150,
+        "history": 1200,
+        "world_lore": 800,
+        "npc_state_overlay": 300,
         # MEDIUM - include if budget allows
-        "knowledge_graph": 500,
-        "arc_context": 200,
-        "npc_personality": 200,
-        "memory_context": 300,
+        "knowledge_graph": 1000,
+        "arc_context": 400,
+        "npc_personality": 400,
+        "memory_context": 600,
         # LOW - skip if budget tight
-        "storytelling_prefs": 150,
-        "auditor_warnings": 100,
-        "semantic_search": 150,
-        "decoherence_context": 150,
-        "investment_context": 100,
-        "catalyst_directive": 75,
-        "guidance_instruction": 100,
+        "storytelling_prefs": 300,
+        "auditor_warnings": 200,
+        "semantic_search": 300,
+        "decoherence_context": 300,
+        "investment_context": 200,
+        "catalyst_directive": 150,
+        "guidance_instruction": 200,
     })
 
 

@@ -1,3 +1,15 @@
+## 2026-02-21: v67 - Double Token & Request Limits
+
+- **Prompt Token Budget Doubled:** `context_manager.py` total budget 8k → 16k tokens. All section limits doubled (base_system 2.5k → 5k, history 600 → 1.2k, etc.).
+
+- **Request Limits Doubled:** `token_budget.py` defaults doubled across all tiers. Requests per session 200 → 400, per hour 60 → 120, per day 500 → 1,000. Token limits similarly doubled.
+
+- **Beta Configuration Doubled:** `game_routes.py` beta limits doubled. Tokens per session 150k → 300k, requests per day 2k → 4k, cost per day $2 → $4.
+
+- **Verified Dormant Systems:** Confirmed Vector Search, Auditor Agent, and Graph Traversal are properly wired end-to-end. Removed duplicate auditor code.
+
+---
+
 ## 2026-02-20: v66 - Wire Dormant Systems
 
 - **OCEAN Compact Format:** Added `format_ocean_compact()` in `src/mantle/prompts/formatters.py`. Outputs `[↓E ↑A ↓N] reserved/warm/steady` for personality. OCEAN profiles now inject for ALL scene NPCs every turn (not just first introduction).
@@ -11,6 +23,12 @@
 - **Token Budget System:** Added `src/mantle/prompts/context_manager.py` with `PromptContextManager` class. Priority-based context inclusion (CRITICAL/HIGH/MEDIUM/LOW). 50-60% token reduction via compact formatters.
 
 - **Format Key:** Added context format documentation to DM system prompt explaining abbreviations (OCEAN arrows, stats, knowledge levels).
+
+- **Entity Embeddings / Vector Search:** Fixed index name mismatch (`entity_embedding_index` → `entity_embeddings`), property name (`entity_id` → `canon_id`). Compact output format with confidence qualifiers. Now properly queries Neo4j vector index.
+
+- **Auditor Agent in Gameplay:** Verified existing `audit_narrative_for_contradictions()` in `narrative_extraction.py` is wired. Checks DM narrative for dead NPCs, missing characters, OCEAN inconsistencies. Contradictions stored in session, injected into next turn's DM prompt with `⚠️ CONTINUITY:` format.
+
+- **Relationship Graph Traversal:** Added `_get_npc_social_network()` for two-hop traversal. Shows faction co-members, allies/enemies, connection chains. Compact `SOCIAL:` format injected alongside NPC personality context.
 
 ---
 

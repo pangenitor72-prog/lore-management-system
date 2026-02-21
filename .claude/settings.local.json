@@ -81,7 +81,25 @@
       "Bash(del test_mantle.py)",
       "Bash(tasklist:*)",
       "Bash(git revert:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(copy \"frontend\\\\dist\\\\index.html\" \"frontend\\\\index.html\")",
+      "Bash(cd:*)",
+      "Bash(pip install:*)",
+      "Bash(for file in data/lore_bases/seeds/*.json)",
+      "Bash(do if ! grep -q \"mechanics_genre\" \"$file\")",
+      "Bash(fi)",
+      "Bash(fly machines list:*)",
+      "Bash(fly machines lease:*)",
+      "Bash(fly machines lease clear:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(fly machines start:*)",
+      "Bash(fly machines stop:*)",
+      "Bash(Genres?\" section. One fewer screen in the Advanced Setup flow.\n\nBefore: start → welcome → setup → story\nAfter:  start → setup → story\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(du:*)",
+      "Bash(for f in \"ingestion/segmenter\" \"ingestion/smart_ingestor\" \"ingestion/personality_pipeline\" \"ingestion/neo4j_mapper\" \"dnd5e/models/races\" \"dnd5e/models/classes\" \"dnd5e/models/abilities\" \"dnd5e/models/ability_scores\" \"dnd5e/models/backgrounds\" \"dnd5e/models/features\" \"dnd5e/creation/classic_flow\" \"dnd5e/creation/guided_flow\" \"dnd5e/genre/terminology\" \"dnd5e/integration/dm_agent_hooks\" \"dnd5e/integration/session_tracker\" \"dnd5e/presentation/narration\" \"core/utils\" \"orchestrator/cli\")",
+      "Bash(do echo \"=== $f ===\")",
+      "Bash(for f in db/entity_repository db/character_schema core/normalization core/config core/entity_factory creative/catalyst suggestions/action_engine ui/api_client visual/cache_manager visual/engine visual/prompt_builder visual/types guardrails/circuit_breaker guardrails/token_budget auditor/rule_based_auditor auditor/semantic_auditor orchestrator/orchestrator orchestrator/context_provider orchestrator/protocols orchestrator/task_manager orchestrator/prompts/orchestrator_prompts orchestrator/prompts/sub_agent_prompts orchestrator/sub_agents/base orchestrator/sub_agents/llm_agent orchestrator/sub_agents/adapters/auditor_adapter orchestrator/sub_agents/adapters/query_adapter orchestrator/sub_agents/development/code_generator orchestrator/sub_agents/development/convention_checker orchestrator/sub_agents/lore/entity_creator orchestrator/sub_agents/lore/world_builder memory/experiential prompts/boundary_prompts prompts/auditor_prompts prompts/query_prompts services/embedding_orchestrator)",
+      "Bash(do echo -n \"$f: \")"
     ]
   }
 }

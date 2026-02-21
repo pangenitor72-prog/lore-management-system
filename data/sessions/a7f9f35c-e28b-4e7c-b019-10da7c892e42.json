@@ -1,0 +1,42 @@
+{
+  "session_id": "a7f9f35c-e28b-4e7c-b019-10da7c892e42",
+  "world_id": "custom",
+  "character": null,
+  "inventory": {
+    "items": [],
+    "currency": {
+      "gold": 10,
+      "silver": 0,
+      "copper": 0
+    },
+    "gold": 10,
+    "silver": 0,
+    "copper": 0,
+    "equipped_slots": {
+      "main_hand": null,
+      "off_hand": null,
+      "two_hand": null,
+      "head": null,
+      "body": null,
+      "hands": null,
+      "feet": null,
+      "neck": null,
+      "ring_1": null,
+      "ring_2": null,
+      "accessory": null
+    },
+    "equipped": {}
+  },
+  "turn_count": 0,
+  "phase": "session_0",
+  "history": [],
+  "location": "Unknown",
+  "active_npcs": {},
+  "combat": {
+    "active": false,
+    "round": 0,
+    "turn_index": 0,
+    "combatants": {},
+    "initiative_order": []
+  }
+}
