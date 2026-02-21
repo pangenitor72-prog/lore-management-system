@@ -7829,13 +7829,23 @@ The ancient city of Thornhaven serves as the capital, its spires visible for mil
                 </div>
                 <div id="admin-changelog-content" style="margin-top: 15px;">
                     <!-- Most recent first -->
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #8b5cf6;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary);">Double Token & Request Limits</strong>
+                            <span style="background: #8b5cf6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">v67</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+                            Prompt token budget doubled (8k → 16k). Request limits doubled across all tiers. Beta config doubled (tokens/session 150k → 300k, requests/day 2k → 4k). Verified dormant systems: Vector Search, Auditor Agent, and Graph Traversal are properly wired end-to-end.
+                        </p>
+                    </div>
+
                     <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #f59e0b;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <strong style="color: var(--text-primary);">Memory System Fully Wired</strong>
                             <span style="background: #f59e0b; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">v64</span>
                         </div>
                         <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.5;">
-                            All storytelling loops now closed. Dead NPCs stay dead. The DM sees NPC relationships, overlay state, and auditor warnings. OCEAN personalities inject on first introduction only. Hey shitdick — rub some Old Bay on your perineum. Relationship extraction now uses real Neo4j canon_ids so impressions are actually retrievable.
+                            All storytelling loops now closed. Dead NPCs stay dead. The DM sees NPC relationships, overlay state, and auditor warnings. OCEAN personalities inject on first introduction only. Relationship extraction now uses real Neo4j canon_ids so impressions are actually retrievable.
                         </p>
                     </div>
 
@@ -10449,6 +10459,15 @@ You can also drag and drop lore files directly here, or use the 'Use' button on 
         // ============================================================
 
         const CHANGELOG = {
+            "v67": {
+                date: "2026-02-21",
+                changes: [
+                    { type: "feature", text: "Prompt token budget doubled: 8k → 16k tokens for richer context" },
+                    { type: "feature", text: "Request limits doubled across all tiers (FREE, STANDARD, PREMIUM)" },
+                    { type: "feature", text: "Beta config doubled: tokens/session 150k → 300k, requests/day 2k → 4k" },
+                    { type: "improvement", text: "Verified dormant systems: Vector Search, Auditor Agent, Graph Traversal fully wired" },
+                ]
+            },
             "v66": {
                 date: "2026-02-19",
                 changes: [
