@@ -153,15 +153,22 @@ async def lifespan(app: FastAPI):
     # -------------------------
     neo4j_uri = os.getenv("NEO4J_URI")
     neo4j_user = os.getenv("NEO4J_USER", "neo4j")
-    neo4j_password = os.getenv("NEO4J_PASSWORD", "password")
+    neo4j_password = os.getenv("NEO4J_PASSWORD")
+    is_production = (os.getenv("LMS_ENV") or os.getenv("APP_ENV") or "").lower() == "production"
 
     # Default to None/empty to prevent AttributeError in endpoints
     app.state.neo4j_db = None
     app.state.lore_bases = {}
     connected = False
 
-    if not neo4j_uri:
+    if not neo4j_uri or not neo4j_uri.strip():
         logger.error("NEO4J_URI missing — application cannot start fully")
+        if is_production:
+            raise RuntimeError("NEO4J_URI is required in production")
+    elif not neo4j_password or not neo4j_password.strip():
+        logger.error("NEO4J_PASSWORD missing — database connection disabled")
+        if is_production:
+            raise RuntimeError("NEO4J_PASSWORD is required in production")
     else:
         app.state.neo4j_db = Neo4jDatabase(neo4j_uri, neo4j_user, neo4j_password)
         connected = await connect_neo4j_with_timeout(app.state.neo4j_db)
