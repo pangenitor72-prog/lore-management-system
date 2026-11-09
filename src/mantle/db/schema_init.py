@@ -361,7 +361,7 @@ async def initialize_schema(
     # Get connection details from environment if not provided
     uri = uri or os.getenv("NEO4J_URI")
     user = user or os.getenv("NEO4J_USER", "neo4j")
-    password = password or os.getenv("NEO4J_PASSWORD", "password")
+    password = password or os.getenv("NEO4J_PASSWORD")
 
     if not uri:
         raise ValueError("NEO4J_URI is required for schema initialization.")

@@ -13,6 +13,11 @@ dist/
 build/
 
 # Environment & Secrets
+# Ignore environment files at any depth, except explicitly sanitized templates.
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.template
 .env
 .env.local
 .env.txt

@@ -269,18 +269,31 @@ setup_env_file() {
     # NEO4J_URI is fixed.
     # SSL_CERT_PATH and SSL_KEY_PATH are handled by certbot.
 
-    # API_SECRET_KEY
-    if grep -q "^API_SECRET_KEY=\s*$" "$ENV_FILE"; then
-        echo "Please enter a value for API_SECRET_KEY:"
-        read -s API_SECRET_KEY_VALUE
-        sudo sed -i "s/^API_SECRET_KEY=\s*$/API_SECRET_KEY=$API_SECRET_KEY_VALUE/" "$ENV_FILE"
-    fi
+    # Prompt for credentials without putting their values in command-line arguments.
+    # The template contains placeholders only; existing configured values are preserved.
+    python3 - "$ENV_FILE" <<'PY_CONFIGURE_SECRETS'
+from getpass import getpass
+from pathlib import Path
+import sys
 
-    # EMBEDDING_API_KEY
-    if grep -q "^EMBEDDING_API_KEY=\s*$" "$ENV_FILE"; then
-        echo "Please enter a value for EMBEDDING_API_KEY:"
-        read -s EMBEDDING_API_KEY_VALUE
-        sudo sed -i "s/^EMBEDDING_API_KEY=\s*$/EMBEDDING_API_KEY=$EMBEDDING_API_KEY_VALUE/" "$ENV_FILE"
+path = Path(sys.argv[1])
+contents = path.read_text()
+for key in ("NEO4J_PASSWORD", "API_SECRET_KEY", "EMBEDDING_API_KEY"):
+    marker = f"{key}=CHANGE_ME_{key}"
+    if marker in contents.splitlines():
+        value = getpass(f"Enter {key}: ")
+        if not value.strip():
+            raise SystemExit(f"{key} cannot be blank")
+        contents = contents.replace(marker, f"{key}={value}", 1)
+path.write_text(contents)
+path.chmod(0o600)
+PY_CONFIGURE_SECRETS
+
+    # Reuse the configured password for the Neo4j container instead of
+    # prompting independently for a potentially different value.
+    if [ -z "${NEO4J_PASSWORD-}" ]; then
+        NEO4J_PASSWORD=$(sed -n 's/^NEO4J_PASSWORD=//p' "$ENV_FILE")
+        export NEO4J_PASSWORD
     fi
 
     echo ".env.production file checked and configured."
