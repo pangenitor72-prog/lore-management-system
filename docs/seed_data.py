@@ -3,7 +3,7 @@ from neo4j import GraphDatabase
 
 # Config
 URI = os.getenv("NEO4J_URI")
-AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "password"))
+AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD"))
 
 if not URI:
     URI = "bolt://localhost:7687"
