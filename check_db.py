@@ -7,7 +7,7 @@ load_dotenv()
 
 URI = os.getenv("NEO4J_URI")
 USER = os.getenv("NEO4J_USER", "neo4j")
-PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
+PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 if not URI:
     URI = "bolt://localhost:7687"
