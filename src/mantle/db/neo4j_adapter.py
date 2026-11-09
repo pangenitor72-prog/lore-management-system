@@ -39,6 +39,17 @@ class Neo4jDatabase:
         else:
             self.auth = (user, password)
 
+        # Reject missing/blank connection details before creating a driver.
+        # Retain legacy argument forms for existing callers.
+        if not isinstance(uri, str) or not uri.strip():
+            raise ValueError("Neo4j URI is required")
+        if (
+            not isinstance(self.auth, tuple)
+            or len(self.auth) != 2
+            or any(not isinstance(part, str) or not part.strip() for part in self.auth)
+        ):
+            raise ValueError("Neo4j username and password are required")
+
         self.uri = uri
         self.database = database
         self.connection_timeout = connection_timeout
