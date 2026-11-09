@@ -278,7 +278,7 @@ import sys
 
 path = Path(sys.argv[1])
 contents = path.read_text()
-for key in ("API_SECRET_KEY", "EMBEDDING_API_KEY"):
+for key in ("NEO4J_PASSWORD", "API_SECRET_KEY", "EMBEDDING_API_KEY"):
     marker = f"{key}=CHANGE_ME_{key}"
     if marker in contents.splitlines():
         value = getpass(f"Enter {key}: ")
@@ -288,6 +288,13 @@ for key in ("API_SECRET_KEY", "EMBEDDING_API_KEY"):
 path.write_text(contents)
 path.chmod(0o600)
 PY_CONFIGURE_SECRETS
+
+    # Reuse the configured password for the Neo4j container instead of
+    # prompting independently for a potentially different value.
+    if [ -z "${NEO4J_PASSWORD-}" ]; then
+        NEO4J_PASSWORD=$(sed -n 's/^NEO4J_PASSWORD=//p' "$ENV_FILE")
+        export NEO4J_PASSWORD
+    fi
 
     echo ".env.production file checked and configured."
 }
